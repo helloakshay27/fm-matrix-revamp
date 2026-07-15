@@ -15,8 +15,9 @@ import { toast } from 'sonner';
 import { moduleService, LockModule } from '@/services/moduleService';
 import { CreateModuleDialog } from './CreateModuleDialog';
 import { EditModuleDialog } from './EditModuleDialog';
-
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 export const LockModuleList = () => {
+      const { shouldShow } = useDynamicPermissions();
   const [modules, setModules] = useState<LockModule[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -88,12 +89,12 @@ export const LockModuleList = () => {
     <div className="space-y-6 p-4 lg:p-6">
       <div className="flex justify-between items-center">
         <h1 className="text-xl lg:text-2xl font-bold text-[#1a1a1a]">Lock Modules</h1>
+        {shouldShow("Lock Module","create")&&(
         <Button onClick={handleCreateModule} className="bg-[#C72030] hover:bg-[#A11D2A] text-white">
           <Plus className="w-4 h-4 mr-2" />
           Add Module
-        </Button>
+        </Button>)}
       </div>
-
       <div className="bg-white rounded-lg border border-gray-200 p-4 lg:p-6">
         {/* Search */}
         <div className="mb-6">
@@ -128,7 +129,7 @@ export const LockModuleList = () => {
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                       Loading modules...
                     </div>
-                  </TableCell>
+                  </TableCell>   
                 </TableRow>
               ) : filteredModules.length === 0 ? (
                 <TableRow>
@@ -141,6 +142,7 @@ export const LockModuleList = () => {
                   <TableRow key={module.id} className="hover:bg-gray-50">
                       <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {shouldShow("Lock Module","update")&&(
                         <Button
                           variant="ghost"
                           size="sm"
@@ -148,7 +150,8 @@ export const LockModuleList = () => {
                           className="h-8 w-8 p-0"
                         >
                           <Edit className="h-4 w-4" />
-                        </Button>
+                        </Button>)}
+                        {shouldShow("Lock Module","destroy")&&(
                         <Button
                           variant="ghost"
                           size="sm"
@@ -156,7 +159,7 @@ export const LockModuleList = () => {
                           className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </Button>)}
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">{module.name}</TableCell>

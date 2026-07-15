@@ -25,7 +25,9 @@ const Index = () => {
       // Only look for Employee-specific modules
       if (
         module.module_name === "Employee Sidebar" ||
-        module.module_name === "Employee Projects Sidebar"
+        module.module_name === "Employee Projects Sidebar" ||
+        module.module_name === "Employee Business Compass" ||
+        module.module_name === "Employee Admin Compass"
       ) {
         // Find first active function with a react_link
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,7 +58,9 @@ const Index = () => {
       // Skip Employee Sidebar and Employee Projects Sidebar modules
       if (
         module.module_name === "Employee Sidebar" ||
-        module.module_name === "Employee Projects Sidebar"
+        module.module_name === "Employee Projects Sidebar" ||
+        module.module_name === "Employee Business Compass" ||
+        module.module_name === "Employee Admin Compass"
       ) {
         continue;
       }
@@ -124,7 +128,8 @@ const Index = () => {
       userEmail === "deveshjain928@gmail.com" ||
       userEmail === "abdul.ghaffar@lockated.com" ||
       userEmail === "mailroom2@zs.com" ||
-      userEmail === "abdul.g@gophygital.work";
+      userEmail === "abdul.g@gophygital.work" ||
+      userEmail === "zs@lockated.com";
 
     const isPulseSite =
       hostname.includes("pulse.lockated.com") ||
@@ -132,6 +137,11 @@ const Index = () => {
       hostname.includes("pulse.gophygital.work") ||
       hostname.includes("pulse-uat.panchshil.com");
     const isClubSite = hostname.includes("club.lockated.com");
+
+    if (currentUser?.is_vendor && currentUser?.supplier_id) {
+      navigate(`/vendor/dashboard`, { replace: true });
+      return;
+    }
 
     // PRIORITY 1: Localhost with userType-based routing (highest priority for localhost)
     if (userType && isLocalhost) {
@@ -167,7 +177,8 @@ const Index = () => {
       (isWebSite && userEmail === "deveshjain928@gmail.com") ||
       userEmail === "abdul.ghaffar@lockated.com" ||
       userEmail === "mailroom2@zs.com" ||
-      userEmail === "abdul.g@gophygital.work"
+      userEmail === "abdul.g@gophygital.work" ||
+      userEmail === "zs@lockated.com"
     ) {
       // For these companies and domains, use dynamic routing from permissions
       if (userRole) {
@@ -187,8 +198,6 @@ const Index = () => {
       navigate("/safety/m-safe/internal", { replace: true });
     } else if (isClubSite) {
       navigate("/club-management/membership", { replace: true });
-    } else if (isPulseSite) {
-      navigate("/maintenance/ticket", { replace: true });
     } else {
       navigate("/maintenance/asset", { replace: true });
     }

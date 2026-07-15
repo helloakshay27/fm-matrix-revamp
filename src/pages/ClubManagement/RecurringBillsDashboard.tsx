@@ -9,6 +9,16 @@ import { TicketPagination } from "@/components/TicketPagination";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
 import axios from "axios";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 
 // Type definitions for Bill
 interface Bill {
@@ -130,6 +140,9 @@ export const RecurringBillsDashboard: React.FC = () => {
     has_next_page: false,
     has_prev_page: false,
   });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Bill | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
   const lock_account_id = localStorage.getItem('lock_account_id');
@@ -297,7 +310,7 @@ export const RecurringBillsDashboard: React.FC = () => {
       <span
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || "bg-gray-100 text-gray-800"}`}
       >
-        {status.toUpperCase()}
+        {status.replace(/_/g, " ").toUpperCase()}
       </span>
     );
   };
@@ -325,7 +338,7 @@ export const RecurringBillsDashboard: React.FC = () => {
         >
           <Eye className="w-4 h-4" />
         </button>
-        {/* <button
+        <button
           onClick={() => handleEdit(bill.id)}
           className="p-1 text-black hover:bg-gray-100 rounded"
           title="Edit"
@@ -333,12 +346,15 @@ export const RecurringBillsDashboard: React.FC = () => {
           <Edit className="w-4 h-4" />
         </button>
         <button
-          onClick={() => handleDelete(bill.id)}
+          onClick={() => {
+            setDeleteTarget(bill);
+            setShowDeleteModal(true);
+          }}
           className="p-1 text-black hover:bg-gray-100 rounded"
           title="Delete"
         >
           <Trash2 className="w-4 h-4" />
-        </button> */}
+        </button>
       </div>
     ),
     date: (
@@ -408,13 +424,44 @@ export const RecurringBillsDashboard: React.FC = () => {
   };
 
   const handleEdit = (id: number) => {
-    navigate(`/accounting/bills/edit/${id}`);
+    navigate(`/accounting/recurring-bills/edit/${id}`);
   };
 
   const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this bill?")) {
-      toast.success("Bill deleted successfully!", {});
+    const bill = billData.find(b => b.id === id) || null;
+    if (bill) {
+      setDeleteTarget(bill);
+      setShowDeleteModal(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      setDeleteLoading(true);
+      setLoading(true);
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const lock_account_id = localStorage.getItem('lock_account_id');
+
+      await axios.delete(
+        `https://${baseUrl}/lock_account_bills/${deleteTarget.id}.json${lock_account_id ? `?lock_account_id=${lock_account_id}` : ''}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      toast.success('Bill deleted successfully!');
+      setShowDeleteModal(false);
+      setDeleteTarget(null);
       fetchBillData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+    } catch (error: unknown) {
+      console.error('Error deleting bill:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to delete bill: ${errorMessage}`);
+    } finally {
+      setDeleteLoading(false);
+      setLoading(false);
     }
   };
 
@@ -437,10 +484,11 @@ export const RecurringBillsDashboard: React.FC = () => {
         loading={loading}
         leftActions={
           <Button
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            // className="fm-button-fix fm-button-brand !rounded-md !px-4 !py-2 !text-sm !font-semibold"
+             className='fm-button-fix fm-button-brand px-4 py-2P'
             onClick={() => navigate("/accounting/recurring-bills/create")}
           >
-            <Plus className="w-4 h-4 mr-2" /> New
+            <Plus className="w-4 h-4" /> Add
           </Button>
         }
       />
@@ -456,6 +504,52 @@ export const RecurringBillsDashboard: React.FC = () => {
           onPerPageChange={handlePerPageChange}
         />
       )}
+      {/* Delete confirmation modal (matches provided UI) */}
+      <AlertDialog
+        open={showDeleteModal}
+        onOpenChange={(open) => {
+          setShowDeleteModal(open);
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Bill</AlertDialogTitle>
+
+            <AlertDialogDescription>
+              Once you delete this bill, you won't be able to retrieve it later.
+              Are you sure you want to delete {deleteTarget?.bill_number || 'this bill'}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>
+              Cancel
+            </AlertDialogCancel>
+
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmDelete();
+              }}
+              disabled={deleteLoading}
+              style={{
+                backgroundColor: "#dc2626",
+                color: "#ffffff",
+                border: "none",
+              }}
+              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#b91c1c";
+              }}
+              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#dc2626";
+              }}
+            >
+              {deleteLoading ? "Deleting..." : "OK"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

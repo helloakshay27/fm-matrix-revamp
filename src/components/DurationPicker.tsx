@@ -36,17 +36,19 @@ export const DurationPicker = ({
     const [manualDuration, setManualDuration] = useState("");
     const [totalHoursInput, setTotalHoursInput] = useState("");
     const pickerRef = useRef(null);
+    const hasInitializedFromEditRef = useRef(false);
 
-    /** ✅ Sync initial dailyHours from props if editing */
+    /** ✅ Sync initial dailyHours from props if editing (one-time only) */
     useEffect(() => {
-        if (isEdit && Array.isArray(dateWiseHours) && dateWiseHours.length > 0 && dailyHours.length === 0) {
+        if (isEdit && Array.isArray(dateWiseHours) && dateWiseHours.length > 0 && !hasInitializedFromEditRef.current) {
             const initialHours = dateWiseHours.map(h => {
                 const total = (h.hours || 0) + (h.minutes || 0) / 60;
                 return total > 0 ? formatTotalHours(total) : "";
             });
             setDailyHours(initialHours);
+            hasInitializedFromEditRef.current = true;
         }
-    }, [dateWiseHours, isEdit]);
+    }, [isEdit, dateWiseHours]);
 
     const parseHours = (val) => {
         if (!val) return 0;
@@ -175,7 +177,7 @@ export const DurationPicker = ({
     };
 
     // let hoursPerDay = shift?.[0]?.total_hour - 1 || 8;
-    let hoursPerDay = 0.5; // Default to 30 minutes (0.5 hours)
+    let hoursPerDay = 8; // Default to 30 minutes (0.5 hours)
 
     if (!Array.isArray(shift) && shift?.shift) {
         const [startTime, endTime] = shift.shift.split(" to ");
@@ -318,76 +320,88 @@ export const DurationPicker = ({
                 // Both dates - calculate for range
                 const allDays = getAllDays(startDate, endDate, shift);
                 setDaysList(allDays);
-                const defaultHours = allDays.map((d) =>
-                    d.isWorking ? formatTotalHours(hoursPerDay) : ""
-                );
-                setDailyHours(defaultHours);
 
-                const total = defaultHours.reduce((sum, h) => sum + parseHours(h), 0);
-                setTotalWorkingHours(total);
-                if (onChange) onChange(total);
+                // Only set defaults if not in edit mode or not already initialized
+                if (!isEdit || !hasInitializedFromEditRef.current) {
+                    const defaultHours = allDays.map((d) =>
+                        d.isWorking ? formatTotalHours(0.5) : ""
+                    );
+                    setDailyHours(defaultHours);
 
-                if (onDateWiseHoursChange) {
-                    const dateWise = allDays.map((d, idx) => {
-                        const formattedDate = formatLocalDate(d.date);
-                        return {
-                            id: getIdFromExistingHours(formattedDate),
-                            hours: parseHours(defaultHours[idx]),
-                            minutes: 0,
-                            date: formattedDate,
-                        };
-                    });
-                    onDateWiseHoursChange(dateWise);
+                    const total = defaultHours.reduce((sum, h) => sum + parseHours(h), 0);
+                    setTotalWorkingHours(total);
+                    if (onChange) onChange(total);
+
+                    if (onDateWiseHoursChange) {
+                        const dateWise = allDays.map((d, idx) => {
+                            const formattedDate = formatLocalDate(d.date);
+                            return {
+                                id: getIdFromExistingHours(formattedDate),
+                                hours: parseHours(defaultHours[idx]),
+                                minutes: 0,
+                                date: formattedDate,
+                            };
+                        });
+                        onDateWiseHoursChange(dateWise);
+                    }
                 }
             } else if (endDate && !startDate) {
                 // Only end date - calculate for that day
                 const allDays = getAllDays(endDate, endDate, shift);
                 setDaysList(allDays);
-                const defaultHours = allDays.map((d) =>
-                    d.isWorking ? formatTotalHours(hoursPerDay) : ""
-                );
-                setDailyHours(defaultHours);
 
-                const total = defaultHours.reduce((sum, h) => sum + parseHours(h), 0);
-                setTotalWorkingHours(total);
-                if (onChange) onChange(total);
+                // Only set defaults if not in edit mode or not already initialized
+                if (!isEdit || !hasInitializedFromEditRef.current) {
+                    const defaultHours = allDays.map((d) =>
+                        d.isWorking ? formatTotalHours(0.5) : ""
+                    );
+                    setDailyHours(defaultHours);
 
-                if (onDateWiseHoursChange) {
-                    const dateWise = allDays.map((d, idx) => {
-                        const formattedDate = formatLocalDate(d.date);
-                        return {
-                            id: getIdFromExistingHours(formattedDate),
-                            hours: parseHours(defaultHours[idx]),
-                            minutes: 0,
-                            date: formattedDate,
-                        };
-                    });
-                    onDateWiseHoursChange(dateWise);
+                    const total = defaultHours.reduce((sum, h) => sum + parseHours(h), 0);
+                    setTotalWorkingHours(total);
+                    if (onChange) onChange(total);
+
+                    if (onDateWiseHoursChange) {
+                        const dateWise = allDays.map((d, idx) => {
+                            const formattedDate = formatLocalDate(d.date);
+                            return {
+                                id: getIdFromExistingHours(formattedDate),
+                                hours: parseHours(defaultHours[idx]),
+                                minutes: 0,
+                                date: formattedDate,
+                            };
+                        });
+                        onDateWiseHoursChange(dateWise);
+                    }
                 }
             } else if (startDate && !endDate) {
                 // Only start date - calculate for that day
                 const allDays = getAllDays(startDate, startDate, shift);
                 setDaysList(allDays);
-                const defaultHours = allDays.map((d) =>
-                    d.isWorking ? formatTotalHours(hoursPerDay) : ""
-                );
-                setDailyHours(defaultHours);
 
-                const total = defaultHours.reduce((sum, h) => sum + parseHours(h), 0);
-                setTotalWorkingHours(total);
-                if (onChange) onChange(total);
+                // Only set defaults if not in edit mode or not already initialized
+                if (!isEdit || !hasInitializedFromEditRef.current) {
+                    const defaultHours = allDays.map((d) =>
+                        d.isWorking ? formatTotalHours(0.5) : ""
+                    );
+                    setDailyHours(defaultHours);
 
-                if (onDateWiseHoursChange) {
-                    const dateWise = allDays.map((d, idx) => {
-                        const formattedDate = formatLocalDate(d.date);
-                        return {
-                            id: getIdFromExistingHours(formattedDate),
-                            hours: parseHours(defaultHours[idx]),
-                            minutes: 0,
-                            date: formattedDate,
-                        };
-                    });
-                    onDateWiseHoursChange(dateWise);
+                    const total = defaultHours.reduce((sum, h) => sum + parseHours(h), 0);
+                    setTotalWorkingHours(total);
+                    if (onChange) onChange(total);
+
+                    if (onDateWiseHoursChange) {
+                        const dateWise = allDays.map((d, idx) => {
+                            const formattedDate = formatLocalDate(d.date);
+                            return {
+                                id: getIdFromExistingHours(formattedDate),
+                                hours: parseHours(defaultHours[idx]),
+                                minutes: 0,
+                                date: formattedDate,
+                            };
+                        });
+                        onDateWiseHoursChange(dateWise);
+                    }
                 }
             } else {
                 // No dates selected
@@ -426,19 +440,33 @@ export const DurationPicker = ({
         }
     }, [dailyHours, taskType]);
 
+    /** ✅ When in edit mode, recalculate totals when daysList becomes available */
+    useEffect(() => {
+        if (isEdit && hasInitializedFromEditRef.current && taskType === "flexible" && dailyHours.length > 0 && daysList.length > 0) {
+            const total = dailyHours.reduce((sum, h) => sum + parseHours(h), 0);
+            setTotalWorkingHours(total);
+            if (onChange) onChange(total);
+
+            if (onDateWiseHoursChange) {
+                const dateWise = daysList.map((d, idx) => {
+                    const formattedDate = formatLocalDate(d.date);
+                    const total = parseHours(dailyHours[idx]);
+                    const hours = Math.floor(total);
+                    const minutes = Math.round((total - hours) * 60);
+
+                    return {
+                        id: getIdFromExistingHours(formattedDate),
+                        hours,
+                        minutes,
+                        date: formattedDate,
+                    };
+                });
+                onDateWiseHoursChange(dateWise);
+            }
+        }
+    }, [daysList.length]);
+
     const validateAndClose = () => {
-        // if (totalWorkingHours <= 0) {
-        //     toast.error("Total hours must be greater than 0");
-        //     return false;
-        // }
-
-        // // Additional check for "defined hours" if needed
-        // // For example, ensuring shift produces some hours in standard mode
-        // if (taskType === "standard" && hoursPerDay <= 0) {
-        //     toast.error("Shift hours must be defined and greater than 0");
-        //     return false;
-        // }
-
         setIsOpen(false);
         return true;
     };
@@ -636,17 +664,28 @@ export const DurationPicker = ({
                     <div className="mt-6 flex gap-3">
                         <button
                             onClick={() => {
-                                // Clear only input-related values
-                                setDailyHours([]);
+                                // Reset each day to 30 minutes (0.5 hours)
+                                const thirtyMinutes = "0:30";
+                                const resetHours = daysList.map(d => d.isWorking ? thirtyMinutes : "");
+                                setDailyHours(resetHours);
                                 setManualDuration("");
                                 setTotalHoursInput("");
 
-                                // We keep daysList and totalWorkingHours (if calculated from dates)
-                                // to ensure the structural view remains visible.
-                                if (taskType === "flexible") {
-                                    setTotalWorkingHours(0);
-                                    if (onChange) onChange(0);
-                                    if (onDateWiseHoursChange) onDateWiseHoursChange([]);
+                                // Calculate total working hours: 30 minutes × number of working days
+                                const workingDaysCount = daysList.filter(d => d.isWorking).length;
+                                const totalHours = workingDaysCount * 0.5; // 0.5 hours = 30 minutes
+                                setTotalWorkingHours(totalHours);
+
+                                if (onChange) onChange(totalHours);
+
+                                // Update dateWiseHours callback with 30 minutes for each working day
+                                if (onDateWiseHoursChange && daysList.length > 0) {
+                                    const dateWise = daysList.map((d) => ({
+                                        date: d.date,
+                                        hours: d.isWorking ? 0 : 0,
+                                        minutes: d.isWorking ? 30 : 0,
+                                    }));
+                                    onDateWiseHoursChange(dateWise);
                                 }
                             }}
                             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 font-medium"

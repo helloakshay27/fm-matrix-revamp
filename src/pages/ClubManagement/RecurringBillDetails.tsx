@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +31,10 @@ import {
   Copy,
   Share2,
   ShoppingCart,
+  CirclePlus,
+  ClipboardList,
+  Eye,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -46,6 +52,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import axios from "axios";
+import PurchaseDocumentPdf from "./purchasepdftamplate";
 // Types
 interface SalesOrderItem {
   id: number;
@@ -219,6 +226,10 @@ export const RecurringBillDetails = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("order-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showApprovalLog, setShowApprovalLog] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+  const recurringBillPdfRef = useRef<HTMLDivElement | null>(null);
   const [transactionRecords, setTransactionRecords] = useState<
     TransactionRecord[]
   >([]);
@@ -309,6 +320,13 @@ export const RecurringBillDetails = () => {
     return colors[status] || colors.draft;
   };
 
+  const getApprovalStatusBadge = (status: any) => {
+    const s = String(status || "").toLowerCase();
+    if (s === "approved") return "bg-green-100 text-green-800";
+    if (s === "rejected") return "bg-red-100 text-red-800";
+    return "bg-yellow-100 text-yellow-800";
+  };
+
   const handleEdit = () => {
     navigate(`/accounting/sales-order/edit/${id}`);
   };
@@ -324,20 +342,61 @@ export const RecurringBillDetails = () => {
   };
 
   const handlePrint = () => {
-    window.print();
+    setActiveTab("pdf");
+    setTimeout(() => window.print(), 0);
   };
 
-  const handleDownload = () => {
-    sonnerToast.success("Downloading sales order PDF...");
+  const handleDownload = async () => {
+    try {
+      setPdfGenerating(true);
+      setRenderDownloadPdf(true);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      if (!recurringBillPdfRef.current) {
+        throw new Error("PDF preview is not ready yet");
+      }
+
+      const canvas = await html2canvas(recurringBillPdfRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`RecurringBill-${salesOrder?.bill_number || id || "download"}.pdf`);
+      sonnerToast.success("Recurring bill PDF downloaded successfully");
+    } catch (error) {
+      console.error("Error generating recurring bill PDF:", error);
+      sonnerToast.error("Failed to download recurring bill PDF");
+    } finally {
+      setPdfGenerating(false);
+      setRenderDownloadPdf(false);
+    }
   };
 
-  const handleSendEmail = () => {
-    sonnerToast.success("Email sent successfully");
-  };
-
-  const handleClone = () => {
-    sonnerToast.success("Sales order cloned successfully");
-    navigate("/accounting/sales-order/create");
+  const handleConvertToBill = () => {
+    navigate(`/accounting/bills/create?recurring_bill_id=${id}`, {
+      state: { recurringBillId: id },
+    });
   };
 
   if (loading) {
@@ -361,7 +420,7 @@ export const RecurringBillDetails = () => {
         }
         taxBreakdown[tax.name].amount += taxAmount;
       });
-    }else if (item.tax_type === "tax_rate" && item.tax_group) {
+    } else if (item.tax_type === "tax_rate" && item.tax_group) {
       // Non-Maharashtra: tax_group is actually a single tax rate object
       const rate = item.tax_group.rate ?? 0;
       const name = item.tax_group.name ?? "Tax";
@@ -373,6 +432,20 @@ export const RecurringBillDetails = () => {
     }
   });
   const taxRows = Object.entries(taxBreakdown);
+  const formatDate = (date?: string | null) => {
+    if (!date || date === "null" || date === "0000-00-00") return "-";
+
+    const d = new Date(date);
+    if (isNaN(d.getTime()) || d.getTime() === 0) return "-";
+
+    return d.toLocaleDateString("en-IN");
+  };
+
+  const formatCurrency = (amount?: number | string | null) =>
+    `Rs. ${Number(amount || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -402,8 +475,46 @@ export const RecurringBillDetails = () => {
 
           <div className="flex items-center gap-2">
             <Badge className={`${getStatusColor(salesOrder.status)} border`}>
-              {/* {salesOrder.status.toUpperCase()} */}
+              {salesOrder.status?.replace(/_/g, " ").toUpperCase()}
             </Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setActiveTab("pdf")}
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              PDF
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDownload}
+              disabled={pdfGenerating}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {pdfGenerating ? "Downloading..." : "Download PDF"}
+            </Button>
+            {(salesOrder as any)?.approval_status?.approval_levels?.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowApprovalLog(true)}
+                className="gap-2"
+              >
+                <ClipboardList className="h-4 w-4" />
+                Approval Log
+              </Button>
+            )}
+            <Button
+              size="sm"
+              onClick={handleConvertToBill}
+              className="gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              Convert to Bill
+            </Button>
           </div>
         </div>
 
@@ -478,6 +589,8 @@ export const RecurringBillDetails = () => {
                 { label: "Bill Details", value: "order-details" },
                 { label: "Vendor Info", value: "customer-info" },
                 { label: "History", value: "history" },
+                { label: "Activity Logs", value: "activity-logs" },
+                { label: "PDF", value: "pdf" },
               ].map((tab) => (
                 <TabsTrigger
                   key={tab.value}
@@ -531,7 +644,7 @@ export const RecurringBillDetails = () => {
                         {salesOrder?.vendor_name}
                       </p>
                     </div>
-                     <div>
+                    <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Source of Supply
                       </p>
@@ -539,7 +652,7 @@ export const RecurringBillDetails = () => {
                         {salesOrder?.source_of_supply}
                       </p>
                     </div>
-                     <div>
+                    <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Destination of Supply
                       </p>
@@ -566,24 +679,57 @@ export const RecurringBillDetails = () => {
 
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
-                        Bill Date
+                        Start On
                       </p>
                       <p className="text-base font-semibold mt-1">
-                        {new Date(salesOrder?.bill_date).toLocaleDateString(
-                          "en-IN"
-                        )}
+                        {formatDate(salesOrder?.recurring_detail?.start_date)}
                       </p>
                     </div>
+
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
-                        Due Date
+                        Ends On
                       </p>
                       <p className="text-base font-semibold mt-1">
-                        {new Date(salesOrder?.due_date).toLocaleDateString(
-                          "en-IN"
-                        )}
+                        {formatDate(salesOrder?.recurring_detail?.end_date)}
                       </p>
                     </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Repeat Value
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {salesOrder?.recurring_detail?.repeat_value}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Repeat Type
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {salesOrder?.recurring_detail?.repeat_type}
+                      </p>
+                    </div>
+
+
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Never Expires
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {salesOrder?.recurring_detail?.never_expires ? "Yes" : "No"}
+                      </p>
+                    </div>
+
+
+
+
+
+
+
+
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Payment Terms
@@ -986,9 +1132,192 @@ export const RecurringBillDetails = () => {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent
+              value="activity-logs"
+              className="p-3 sm:p-6 space-y-6"
+              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Activity Logs
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {Array.isArray((salesOrder as any)?.activity_logs) &&
+                    (salesOrder as any).activity_logs.length > 0 ? (
+                    <div className="divide-y">
+                      {(salesOrder as any).activity_logs.map((log: any, idx: number) => {
+                        const key = `${log?.date || ""}-${log?.time || ""}-${idx}`;
+                        const hint = `${log?.action || ""} ${log?.message || ""}`.toLowerCase();
+                        const isConverted = hint.includes("convert");
+                        const isCreated = hint.includes("create");
+                        const isAccepted = hint.includes("accept");
+                        const isSent = hint.includes("sent");
+                        const Icon = isConverted || isCreated ? CirclePlus : (isAccepted || isSent ? Eye : FileText);
+                        const iconWrapClass =
+                          isConverted || isCreated
+                            ? "bg-green-50 text-green-600 border-green-100"
+                            : isAccepted || isSent
+                              ? "bg-sky-50 text-sky-600 border-sky-100"
+                              : "bg-gray-50 text-gray-500 border-gray-100";
+
+                        return (
+                          <div key={key} className="flex gap-6 py-5">
+                            <div className="min-w-[170px] text-sm text-muted-foreground">
+                              <div>{log?.date || "—"} {log?.time || ""}</div>
+                            </div>
+
+                            <div className={`w-9 h-9 rounded-full border flex items-center justify-center ${iconWrapClass}`}>
+                              <Icon className="h-5 w-5" />
+                            </div>
+
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-foreground">
+                                {log?.message || "—"}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                by <span className="font-medium text-foreground">{log?.user || "—"}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No activity logs found.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent
+              value="pdf"
+              className="p-3 sm:p-6 space-y-6"
+              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-primary" />
+                      Recurring Bill PDF
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={handlePrint}>
+                        <Printer className="h-4 w-4 mr-2" />
+                        Print
+                      </Button>
+                      <Button size="sm" onClick={handleDownload} disabled={pdfGenerating}>
+                        <Download className="h-4 w-4 mr-2" />
+                        {pdfGenerating ? "Downloading..." : "Download PDF"}
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-auto rounded-lg border bg-muted/30 p-4">
+                    <div className="mx-auto bg-white" ref={activeTab === "pdf" ? recurringBillPdfRef : null}>
+                      <PurchaseDocumentPdf
+                        documentTitle="RECURRING BILL"
+                        documentNumber={salesOrder.bill_number}
+                        documentDate={(salesOrder as any)?.bill_date || (salesOrder as any)?.recurring_detail?.start_date}
+                        status={salesOrder.status}
+                        vendorName={(salesOrder as any)?.vendor_name}
+                        partyLabel="Vendor"
+                        items={salesOrder.item_details || []}
+                        data={salesOrder}
+                        taxRows={taxRows}
+                        formatDate={formatDate}
+                        formatCurrency={formatCurrency}
+                        secondaryDateLabel="Start Date"
+                        secondaryDate={(salesOrder as any)?.recurring_detail?.start_date}
+                        referenceNumber={(salesOrder as any)?.order_number}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      {renderDownloadPdf && activeTab !== "pdf" && (
+        <div className="fixed left-[-10000px] top-0">
+          <div ref={recurringBillPdfRef}>
+            <PurchaseDocumentPdf
+              documentTitle="RECURRING BILL"
+              documentNumber={salesOrder.bill_number}
+              documentDate={(salesOrder as any)?.bill_date || (salesOrder as any)?.recurring_detail?.start_date}
+              status={salesOrder.status}
+              vendorName={(salesOrder as any)?.vendor_name}
+              partyLabel="Vendor"
+              items={salesOrder.item_details || []}
+              data={salesOrder}
+              taxRows={taxRows}
+              formatDate={formatDate}
+              formatCurrency={formatCurrency}
+              secondaryDateLabel="Start Date"
+              secondaryDate={(salesOrder as any)?.recurring_detail?.start_date}
+              referenceNumber={(salesOrder as any)?.order_number}
+            />
+          </div>
+        </div>
+      )}
+
+      <Dialog open={showApprovalLog} onOpenChange={setShowApprovalLog}>
+        <DialogContent className="max-w-4xl">
+          <div className="flex items-center justify-between">
+            <DialogHeader>
+              <DialogTitle className="text-[#C72030]">Approval Log</DialogTitle>
+            </DialogHeader>
+            <button
+              type="button"
+              onClick={() => setShowApprovalLog(false)}
+              className="p-2 rounded hover:bg-muted"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="rounded-lg border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
+                  <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">Sr.No.</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Approval Level</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Approved By</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Date</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Status</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Remark</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Users</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {((salesOrder as any)?.approval_status?.approval_levels || []).map((lvl: any, index: number) => (
+                  <TableRow key={lvl?.id ?? index}>
+                    <TableCell className="font-medium">{index + 1}</TableCell>
+                    <TableCell className="font-medium">{lvl?.name || "—"}</TableCell>
+                    <TableCell className="font-medium">{lvl?.approved_by || "—"}</TableCell>
+                    <TableCell className="font-medium">{lvl?.approved_at || "—"}</TableCell>
+                    <TableCell>
+                      <span className={`px-3 py-1 rounded text-xs font-semibold ${getApprovalStatusBadge(lvl?.status)}`}>
+                        {String(lvl?.status || "pending").toUpperCase()}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{lvl?.rejection_reason || "—"}</TableCell>
+                    <TableCell className="text-sm">{Array.isArray(lvl?.users) ? lvl.users.map((u: any) => u?.name || u).filter(Boolean).join(", ") : "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

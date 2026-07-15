@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchProjectsTags, createProjectsTags, updateProjectsTags, deleteProjectsTags } from "@/store/slices/projectTagSlice";
 import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const columns: ColumnConfig[] = [
     {
@@ -45,6 +46,7 @@ const tagTypeOptions = [
 ];
 
 const ProjectTags = () => {
+    const { shouldShow } = useDynamicPermissions();
     const dispatch = useDispatch<AppDispatch>();
     // @ts-ignore - store typing might lag slightly in IDE but slice is updated
     const { projectTags, loading } = useSelector((state: RootState) => state.projectTags);
@@ -58,7 +60,7 @@ const ProjectTags = () => {
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        dispatch(fetchProjectsTags());
+        dispatch(fetchProjectsTags({ active: true }));
     }, [dispatch]);
 
     const openAddDialog = () => {
@@ -109,11 +111,11 @@ const ProjectTags = () => {
 
             if (isEditMode && editingId) {
                 await dispatch(updateProjectsTags({ id: editingId, data: payload })).unwrap();
-                dispatch(fetchProjectsTags());
+                dispatch(fetchProjectsTags({ active: true }));
                 toast.success('Tag updated successfully');
             } else {
                 await dispatch(createProjectsTags(payload)).unwrap();
-                dispatch(fetchProjectsTags());
+                dispatch(fetchProjectsTags({ active: true }));
                 toast.success('Tag created successfully');
             }
 
@@ -149,7 +151,7 @@ const ProjectTags = () => {
 
         try {
             await dispatch(updateProjectsTags({ id, data: payload })).unwrap();
-            dispatch(fetchProjectsTags());
+            dispatch(fetchProjectsTags({ active: true }));
         } catch (error) {
             console.error("Failed to toggle status", error);
         }
@@ -158,6 +160,7 @@ const ProjectTags = () => {
     const renderActions = (item: any) => {
         return (
             <div className="flex gap-2">
+                {shouldShow("Project Tags","update")&&(
                 <Button
                     size="sm"
                     variant="ghost"
@@ -165,7 +168,7 @@ const ProjectTags = () => {
                     onClick={() => openEditDialog(item)}
                 >
                     <Edit className="w-4 h-4" />
-                </Button>
+                </Button>)}
                 {/* <Button
                     size="sm"
                     variant="ghost"
@@ -210,13 +213,14 @@ const ProjectTags = () => {
 
     const leftActions = (
         <>
+        {shouldShow("Project Tags","create")&&(
             <Button
                 className="bg-[#C72030] hover:bg-[#A01020] text-white"
                 onClick={openAddDialog}
             >
                 <Plus className="w-4 h-4 mr-2" />
                 Add
-            </Button>
+            </Button>)}
         </>
     )
 

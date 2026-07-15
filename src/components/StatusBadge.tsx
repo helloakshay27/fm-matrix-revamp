@@ -13,6 +13,7 @@ export interface StatusBadgeProps {
   status: string;
   assetId: string | number;
   onStatusUpdate?: () => void; // Callback to refresh data
+  onBreakdownSelect?: () => void; // Callback when breakdown is selected
   disabled?: boolean;
 }
 
@@ -20,6 +21,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   status,
   assetId,
   onStatusUpdate,
+  onBreakdownSelect,
   disabled = false
 }) => {
   const [currentStatus, setCurrentStatus] = useState<string>(status);
@@ -69,6 +71,14 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   };
 
   const updateAssetStatus = async (newStatus: string) => {
+    // If breakdown is selected, call the callback instead of updating directly
+    if (newStatus === "breakdown") {
+      if (onBreakdownSelect) {
+        onBreakdownSelect();
+      }
+      return;
+    }
+
     if (newStatus === currentStatus) return;
 
     setIsUpdating(true);
@@ -76,7 +86,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     try {
       const body = {
         pms_asset: {
-          status: newStatus === "breakdown" ? newStatus : newStatus,
+          status: newStatus,
           breakdown:
             newStatus === "in_use"
               ? "false"

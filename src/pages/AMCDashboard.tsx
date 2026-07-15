@@ -1,30 +1,73 @@
-import React, { useState, useEffect, memo, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState, useEffect, memo, useRef } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // MUI components for revamped Filter dialog
-import { Box, Typography, FormControl, InputLabel, Select as MUISelect, MenuItem, TextField } from '@mui/material';
-import { Plus, Eye, Trash2, BarChart3, Download, Settings, Flag, Filter, Pencil, CalendarPlus } from 'lucide-react';
-import { AMCAnalyticsFilterDialog } from '@/components/AMCAnalyticsFilterDialog';
-import { amcAnalyticsAPI, AMCStatusData, AMCStatusSummary, AMCTypeDistribution, AMCExpiryAnalysis, AMCServiceTrackingLog, AMCVendorPerformance, AMCComplianceReport, AMCUnitResourceData, AMCServiceStatsData, AMCLocationCoverageNode } from '@/services/amcAnalyticsAPI';
-import { amcAnalyticsDownloadAPI } from '@/services/amcAnalyticsDownloadAPI';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchAMCData } from '@/store/slices/amcSlice';
-import { AMCAnalyticsSelector } from '@/components/AMCAnalyticsSelector';
-import { AMCStatusCard } from '@/components/AMCStatusCard';
-import { AMCTypeDistributionCard } from '@/components/AMCTypeDistributionCard';
-import { AMCExpiryAnalysisCard } from '@/components/AMCExpiryAnalysisCard';
-import { AMCServiceTrackingCard } from '@/components/AMCServiceTrackingCard';
-import { AMCVendorPerformanceCard } from '@/components/AMCVendorPerformanceCard';
-import { AMCUnitResourceCard } from '@/components/AMCUnitResourceCard';
-import { AMCServiceStatsCard } from '@/components/AMCServiceStatsCard';
-import { AMCCoverageByLocationCard } from '@/components/AMCCoverageByLocationCard';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import {
+  Box,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select as MUISelect,
+  MenuItem,
+  TextField,
+} from "@mui/material";
+import {
+  Plus,
+  Eye,
+  Trash2,
+  BarChart3,
+  Download,
+  Settings,
+  Flag,
+  Filter,
+  Pencil,
+  CalendarPlus,
+} from "lucide-react";
+import { AMCAnalyticsFilterDialog } from "@/components/AMCAnalyticsFilterDialog";
+import {
+  amcAnalyticsAPI,
+  AMCStatusData,
+  AMCStatusSummary,
+  AMCTypeDistribution,
+  AMCExpiryAnalysis,
+  AMCServiceTrackingLog,
+  AMCVendorPerformance,
+  AMCComplianceReport,
+  AMCUnitResourceData,
+  AMCServiceStatsData,
+  AMCLocationCoverageNode,
+} from "@/services/amcAnalyticsAPI";
+import { amcAnalyticsDownloadAPI } from "@/services/amcAnalyticsDownloadAPI";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchAMCData } from "@/store/slices/amcSlice";
+import { AMCAnalyticsSelector } from "@/components/AMCAnalyticsSelector";
+import { AMCStatusCard } from "@/components/AMCStatusCard";
+import { AMCTypeDistributionCard } from "@/components/AMCTypeDistributionCard";
+import { AMCExpiryAnalysisCard } from "@/components/AMCExpiryAnalysisCard";
+import { AMCServiceTrackingCard } from "@/components/AMCServiceTrackingCard";
+import { AMCVendorPerformanceCard } from "@/components/AMCVendorPerformanceCard";
+import { AMCUnitResourceCard } from "@/components/AMCUnitResourceCard";
+import { AMCServiceStatsCard } from "@/components/AMCServiceStatsCard";
+import { AMCCoverageByLocationCard } from "@/components/AMCCoverageByLocationCard";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   Pagination,
   PaginationEllipsis,
@@ -33,32 +76,51 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '@/components/ui/pagination';
-import axios from 'axios';
-import { toast } from 'sonner';
+} from "@/components/ui/pagination";
+import axios from "axios";
+import { toast } from "sonner";
 // Replaced shadcn Dialog with MUI Dialog for Filter modal
-import { Dialog as MUIDialog, DialogContent as MUIDialogContent, DialogActions as MUIDialogActions, IconButton } from '@mui/material';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
-import { AmcBulkUploadModal } from '@/components/water-asset-details/AmcBulkUploadModal';
-import { useDebounce } from '@/hooks/useDebounce';
-import { StatsCard } from '@/components/StatsCard';
-import { AddVisitModal } from '@/components/AddVisitModal';
+import {
+  Dialog as MUIDialog,
+  DialogContent as MUIDialogContent,
+  DialogActions as MUIDialogActions,
+  IconButton,
+} from "@mui/material";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { AmcBulkUploadModal } from "@/components/water-asset-details/AmcBulkUploadModal";
+import { useDebounce } from "@/hooks/useDebounce";
+import { StatsCard } from "@/components/StatsCard";
+import { AddVisitModal } from "@/components/AddVisitModal";
+import { buildReturnToPath } from "@/utils/listBackNavigation";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Unified analytics color palette
 const analyticsColorPalette = {
-  primary: '#C4B99D', // warm beige
-  secondary: '#DAD6CA', // light taupe
-  tertiary: '#D5DBDB', // soft gray
-  primaryLight: '#DDD4C4', // lighter warm beige
-  secondaryLight: '#E8E5DD', // lighter taupe
-  tertiaryLight: '#E5E9E9', // lighter gray
+  primary: "#C4B99D", // warm beige
+  secondary: "#DAD6CA", // light taupe
+  tertiary: "#D5DBDB", // soft gray
+  primaryLight: "#DDD4C4", // lighter warm beige
+  secondaryLight: "#E8E5DD", // lighter taupe
+  tertiaryLight: "#E5E9E9", // lighter gray
 };
 
 // Sortable Chart Item Component
-const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
+const SortableChartItem = ({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) => {
   const {
     attributes,
     listeners,
@@ -77,13 +139,13 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
   const handlePointerDown = (e: React.PointerEvent) => {
     const target = e.target as HTMLElement;
     if (
-      target.closest('button') ||
-      target.closest('[data-download]') ||
-      target.closest('svg') ||
-      target.tagName === 'BUTTON' ||
-      target.tagName === 'SVG' ||
-      target.closest('.download-btn') ||
-      target.closest('[data-download-button]')
+      target.closest("button") ||
+      target.closest("[data-download]") ||
+      target.closest("svg") ||
+      target.tagName === "BUTTON" ||
+      target.tagName === "SVG" ||
+      target.closest(".download-btn") ||
+      target.closest("[data-download-button]")
     ) {
       e.stopPropagation();
       return;
@@ -143,8 +205,18 @@ interface AMCRecord {
   service_name?: string;
   status: string;
   amc_assets?: Array<{ id: number; asset_id: number; asset_name: string }>;
-  associated_assets?: Array<{ id: number; asset_id: number; asset_name: string }>;
-  amc_services?: Array<{ id: number; service_id: number; service_name: string; group_name?: string; sub_group_name?: string }>;
+  associated_assets?: Array<{
+    id: number;
+    asset_id: number;
+    asset_name: string;
+  }>;
+  amc_services?: Array<{
+    id: number;
+    service_id: number;
+    service_name: string;
+    group_name?: string;
+    sub_group_name?: string;
+  }>;
 }
 
 interface SelectOption {
@@ -155,65 +227,144 @@ interface SelectOption {
 const initialAmcData: AMCRecord[] = [];
 
 const columns: ColumnConfig[] = [
-  { key: 'actions', label: 'Actions', sortable: false, defaultVisible: true },
-  { key: 'id', label: 'ID', sortable: true, defaultVisible: true },
-  { key: 'asset_name', label: 'Asset/ Service Name', sortable: true, defaultVisible: true },
-  { key: 'associated_asset_service', label: 'Associated Asset/Service', sortable: false, defaultVisible: true },
-  { key: 'amc_type', label: 'AMC Type', sortable: true, defaultVisible: true },
-  { key: 'vendor_name', label: 'Vendor Name', sortable: true, defaultVisible: true },
-  { key: 'contract_name', label: 'Contract Name', sortable: true, defaultVisible: true },
-  { key: 'amc_start_date', label: 'Start Date', sortable: true, defaultVisible: true },
-  { key: 'amc_end_date', label: 'End Date', sortable: true, defaultVisible: true },
-  { key: 'amc_first_service', label: 'First Service', sortable: true, defaultVisible: true },
-  { key: 'total_days_remaining', label: 'Days Remaining', sortable: true, defaultVisible: true },
-  { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
-  { key: 'active', label: 'Status', sortable: true, defaultVisible: true },
+  { key: "actions", label: "Actions", sortable: false, defaultVisible: true },
+  { key: "id", label: "ID", sortable: true, defaultVisible: true },
+  {
+    key: "asset_name",
+    label: "Asset/ Service Name",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "associated_asset_service",
+    label: "Associated Asset/Service",
+    sortable: false,
+    defaultVisible: true,
+  },
+  { key: "amc_type", label: "AMC Type", sortable: true, defaultVisible: true },
+  {
+    key: "vendor_name",
+    label: "Vendor Name",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "contract_name",
+    label: "Contract Name",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "amc_start_date",
+    label: "Start Date",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "amc_end_date",
+    label: "End Date",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "amc_first_service",
+    label: "First Service",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "total_days_remaining",
+    label: "Days Remaining",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "created_at",
+    label: "Created On",
+    sortable: true,
+    defaultVisible: true,
+  },
+  { key: "active", label: "Status", sortable: true, defaultVisible: true },
 ];
 
 // Helper function to format asset/service names with ellipsis
-const formatNamesWithEllipsis = (names: string[], maxDisplay: number = 3): string => {
-  if (!names || names.length === 0) return '-';
+const formatNamesWithEllipsis = (
+  names: string[],
+  maxDisplay: number = 3
+): string => {
+  if (!names || names.length === 0) return "-";
 
   if (names.length <= maxDisplay) {
-    return names.join(', ');
+    return names.join(", ");
   }
 
-  return `${names.slice(0, maxDisplay).join(', ')} ...`;
+  return `${names.slice(0, maxDisplay).join(", ")} ...`;
 };
 
 export const AMCDashboard = () => {
-  // Ref for anchoring MUI Select menus inside filter dialog
   const filterDialogRef = useRef<HTMLDivElement | null>(null);
   const amcTypeControlRef = useRef<HTMLDivElement | null>(null);
+  const serviceNameControlRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+
+  const location = useLocation();
   const dispatch = useAppDispatch();
-  const baseUrl = localStorage.getItem('baseUrl');
-  const token = localStorage.getItem('token');
-  const { data: apiData, loading: reduxLoading, error } = useAppSelector((state) => state.amc);
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+  const {
+    data: apiData,
+    loading: reduxLoading,
+    error,
+  } = useAppSelector((state) => state.amc);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [visibleSections, setVisibleSections] = useState<string[]>([
-    'statusChart', 'typeChart', 'resourceChart', 'agingMatrix'
+    "statusChart",
+    "typeChart",
+    "resourceChart",
+    "agingMatrix",
   ]);
-  const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'typeChart', 'resourceChart', 'agingMatrix']);
+  const [chartOrder, setChartOrder] = useState<string[]>([
+    "statusChart",
+    "typeChart",
+    "resourceChart",
+    "agingMatrix",
+  ]);
   const [filter, setFilter] = useState<string | null>(null);
   const [amcTypeFilter, setAmcTypeFilter] = useState<string | null>(null);
   const [startDateFilter, setStartDateFilter] = useState<string | null>(null);
   const [endDateFilter, setEndDateFilter] = useState<string | null>(null);
   const [vendorNameFilter, setVendorNameFilter] = useState<string | null>(null);
   const [assetNameFilter, setAssetNameFilter] = useState<string | null>(null);
-  const [serviceNameFilter, setServiceNameFilter] = useState<string | null>(null);
+  const [serviceNameFilter, setServiceNameFilter] = useState<string | null>(
+    null
+  );
   const [groupFilter, setGroupFilter] = useState<string | null>(null);
   const [subGroupFilter, setSubGroupFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [tempAmcTypeFilter, setTempAmcTypeFilter] = useState<string | null>(null);
-  const [tempStartDateFilter, setTempStartDateFilter] = useState<string | null>(null);
-  const [tempEndDateFilter, setTempEndDateFilter] = useState<string | null>(null);
-  const [tempVendorNameFilter, setTempVendorNameFilter] = useState<string | null>(null);
-  const [tempAssetNameFilter, setTempAssetNameFilter] = useState<string | null>(null);
-  const [tempServiceNameFilter, setTempServiceNameFilter] = useState<string | null>(null);
+  const [tempAmcTypeFilter, setTempAmcTypeFilter] = useState<string | null>(
+    null
+  );
+  const [tempStartDateFilter, setTempStartDateFilter] = useState<string | null>(
+    null
+  );
+  const [tempEndDateFilter, setTempEndDateFilter] = useState<string | null>(
+    null
+  );
+  const [tempVendorNameFilter, setTempVendorNameFilter] = useState<
+    string | null
+  >(null);
+  const [tempAssetNameFilter, setTempAssetNameFilter] = useState<string | null>(
+    null
+  );
+  const [tempServiceNameFilter, setTempServiceNameFilter] = useState<
+    string | null
+  >(null);
   const [tempGroupFilter, setTempGroupFilter] = useState<string | null>(null);
-  const [tempSubGroupFilter, setTempSubGroupFilter] = useState<string | null>(null);
+  const [tempSubGroupFilter, setTempSubGroupFilter] = useState<string | null>(
+    null
+  );
   const [tempStatusFilter, setTempStatusFilter] = useState<string | null>(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -221,9 +372,9 @@ export const AMCDashboard = () => {
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [showAddVisitModal, setShowAddVisitModal] = useState(false);
-  const [addVisitAmcId, setAddVisitAmcId] = useState<string>('');
+  const [addVisitAmcId, setAddVisitAmcId] = useState<string>("");
   const [isExpiringFilterActive, setIsExpiringFilterActive] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 600);
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
@@ -236,26 +387,67 @@ export const AMCDashboard = () => {
     service_stats: false,
     expiry_analysis: false,
     service_tracking: false,
-    coverage_by_location: false
+    coverage_by_location: false,
   });
 
-  const [amcAnalyticsData, setAmcAnalyticsData] = useState<AMCStatusData | null>(null);
-  const [amcStatusSummary, setAmcStatusSummary] = useState<AMCStatusSummary | null>(null);
-  const [amcTypeDistribution, setAmcTypeDistribution] = useState<AMCTypeDistribution[] | null>(null);
-  const [amcExpiryAnalysis, setAmcExpiryAnalysis] = useState<AMCExpiryAnalysis[] | null>(null);
-  const [amcServiceTracking, setAmcServiceTracking] = useState<AMCServiceTrackingLog[] | null>(null);
-  const [amcVendorPerformance, setAmcVendorPerformance] = useState<AMCVendorPerformance[] | null>(null);
-  const [amcComplianceReport, setAmcComplianceReport] = useState<AMCComplianceReport | null>(null);
-  const [amcUnitResourceData, setAmcUnitResourceData] = useState<AMCUnitResourceData[] | null>(null);
-  const [amcServiceStatsData, setAmcServiceStatsData] = useState<AMCServiceStatsData[] | null>(null);
-  const [amcCoverageData, setAmcCoverageData] = useState<AMCLocationCoverageNode[] | null>(null);
+  const [amcAnalyticsData, setAmcAnalyticsData] =
+    useState<AMCStatusData | null>(null);
+  const [amcStatusSummary, setAmcStatusSummary] =
+    useState<AMCStatusSummary | null>(null);
+  const [amcTypeDistribution, setAmcTypeDistribution] = useState<
+    AMCTypeDistribution[] | null
+  >(null);
+  const [amcExpiryAnalysis, setAmcExpiryAnalysis] = useState<
+    AMCExpiryAnalysis[] | null
+  >(null);
+  const [amcServiceTracking, setAmcServiceTracking] = useState<
+    AMCServiceTrackingLog[] | null
+  >(null);
+  const [amcVendorPerformance, setAmcVendorPerformance] = useState<
+    AMCVendorPerformance[] | null
+  >(null);
+  const [amcComplianceReport, setAmcComplianceReport] =
+    useState<AMCComplianceReport | null>(null);
+  const [amcUnitResourceData, setAmcUnitResourceData] = useState<
+    AMCUnitResourceData[] | null
+  >(null);
+  const [amcServiceStatsData, setAmcServiceStatsData] = useState<
+    AMCServiceStatsData[] | null
+  >(null);
+  const [amcCoverageData, setAmcCoverageData] = useState<
+    AMCLocationCoverageNode[] | null
+  >(null);
   // const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'service_tracking', 'coverage_by_location']);
-  const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'coverage_by_location']);
+  const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<
+    string[]
+  >([
+    "status_overview",
+    "type_distribution",
+    "unit_resource_wise",
+    "service_stats",
+    "expiry_analysis",
+    "coverage_by_location",
+  ]);
 
-  const [analyticsChartOrder, setAnalyticsChartOrder] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'coverage_by_location']);
+  const [analyticsChartOrder, setAnalyticsChartOrder] = useState<string[]>([
+    "status_overview",
+    "type_distribution",
+    "unit_resource_wise",
+    "service_stats",
+    "expiry_analysis",
+    "coverage_by_location",
+  ]);
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
   // Track which summary tile is selected; null means none selected on initial load
-  const [selectedSummary, setSelectedSummary] = useState<null | 'total' | 'active' | 'inactive' | 'underObservation' | 'expiring' | 'totalCost'>(null);
+  const [selectedSummary, setSelectedSummary] = useState<
+    | null
+    | "total"
+    | "active"
+    | "inactive"
+    | "underObservation"
+    | "expiring"
+    | "totalCost"
+  >(null);
 
   // Filter dropdown options (fetched from APIs)
   const [assetOptions, setAssetOptions] = useState<SelectOption[]>([]);
@@ -268,7 +460,9 @@ export const AMCDashboard = () => {
     groups: false,
     subGroups: false,
   });
-  const [tempGroupIdForSubGroups, setTempGroupIdForSubGroups] = useState<number | null>(null);
+  const [tempGroupIdForSubGroups, setTempGroupIdForSubGroups] = useState<
+    number | null
+  >(null);
 
   const getDefaultDateRange = () => {
     const today = new Date();
@@ -276,29 +470,32 @@ export const AMCDashboard = () => {
     lastYear.setFullYear(today.getFullYear() - 1);
 
     const formatDate = (date: Date) => {
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, "0");
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
       const year = date.getFullYear();
       return `${day}/${month}/${year}`;
     };
 
     return {
       startDate: formatDate(lastYear),
-      endDate: formatDate(today)
+      endDate: formatDate(today),
     };
   };
 
-  const [analyticsDateRange, setAnalyticsDateRange] = useState<{ startDate: string; endDate: string }>(getDefaultDateRange());
+  const [analyticsDateRange, setAnalyticsDateRange] = useState<{
+    startDate: string;
+    endDate: string;
+  }>(getDefaultDateRange());
 
   const convertDateStringToDate = (dateString: string): Date => {
-    const [day, month, year] = dateString.split('/');
+    const [day, month, year] = dateString.split("/");
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   };
 
   const formatDateForAPI = (date: Date): string => {
     const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
@@ -339,13 +536,17 @@ export const AMCDashboard = () => {
 
     // Set all individual cards to loading initially (only for selected analytics)
     const newLoadingStates = {
-      status_overview: selectedAnalyticsOptions?.includes('status_overview'),
-      type_distribution: selectedAnalyticsOptions?.includes('type_distribution'),
-      unit_resource_wise: selectedAnalyticsOptions?.includes('unit_resource_wise'),
-      service_stats: selectedAnalyticsOptions?.includes('service_stats'),
-      expiry_analysis: selectedAnalyticsOptions?.includes('expiry_analysis'),
-      service_tracking: selectedAnalyticsOptions?.includes('service_tracking'),
-      coverage_by_location: selectedAnalyticsOptions?.includes('coverage_by_location')
+      status_overview: selectedAnalyticsOptions?.includes("status_overview"),
+      type_distribution:
+        selectedAnalyticsOptions?.includes("type_distribution"),
+      unit_resource_wise:
+        selectedAnalyticsOptions?.includes("unit_resource_wise"),
+      service_stats: selectedAnalyticsOptions?.includes("service_stats"),
+      expiry_analysis: selectedAnalyticsOptions?.includes("expiry_analysis"),
+      service_tracking: selectedAnalyticsOptions?.includes("service_tracking"),
+      coverage_by_location: selectedAnalyticsOptions?.includes(
+        "coverage_by_location"
+      ),
     };
     setLoadingStates(newLoadingStates);
 
@@ -354,87 +555,105 @@ export const AMCDashboard = () => {
       const promises = [];
 
       // Status Overview
-      if (selectedAnalyticsOptions?.includes('status_overview')) {
+      if (selectedAnalyticsOptions?.includes("status_overview")) {
         promises.push(
           Promise.all([
             amcAnalyticsAPI.getAMCStatusData(startDate, endDate),
-            amcAnalyticsAPI.getAMCStatusSummary(startDate, endDate)
+            amcAnalyticsAPI.getAMCStatusSummary(startDate, endDate),
           ]).then(([statusData, statusSummary]) => {
             setAmcAnalyticsData(statusData);
             setAmcStatusSummary(statusSummary);
-            setLoadingStates(prev => ({ ...prev, status_overview: false }));
+            setLoadingStates((prev) => ({ ...prev, status_overview: false }));
             return { statusData, statusSummary };
           })
         );
       }
 
       // Type Distribution
-      if (selectedAnalyticsOptions?.includes('type_distribution')) {
+      if (selectedAnalyticsOptions?.includes("type_distribution")) {
         promises.push(
-          amcAnalyticsAPI.getAMCTypeDistribution(startDate, endDate)
-            .then(data => {
+          amcAnalyticsAPI
+            .getAMCTypeDistribution(startDate, endDate)
+            .then((data) => {
               setAmcTypeDistribution(data);
-              setLoadingStates(prev => ({ ...prev, type_distribution: false }));
+              setLoadingStates((prev) => ({
+                ...prev,
+                type_distribution: false,
+              }));
               return data;
             })
         );
       }
 
       // Unit Resource Wise
-      if (selectedAnalyticsOptions?.includes('unit_resource_wise')) {
+      if (selectedAnalyticsOptions?.includes("unit_resource_wise")) {
         promises.push(
-          amcAnalyticsAPI.getAMCUnitResourceWise(startDate, endDate)
-            .then(data => {
+          amcAnalyticsAPI
+            .getAMCUnitResourceWise(startDate, endDate)
+            .then((data) => {
               setAmcUnitResourceData(data);
-              setLoadingStates(prev => ({ ...prev, unit_resource_wise: false }));
+              setLoadingStates((prev) => ({
+                ...prev,
+                unit_resource_wise: false,
+              }));
               return data;
             })
         );
       }
 
       // Service Stats
-      if (selectedAnalyticsOptions?.includes('service_stats')) {
+      if (selectedAnalyticsOptions?.includes("service_stats")) {
         promises.push(
-          amcAnalyticsAPI.getAMCServiceStats(startDate, endDate)
-            .then(data => {
+          amcAnalyticsAPI
+            .getAMCServiceStats(startDate, endDate)
+            .then((data) => {
               setAmcServiceStatsData(data);
-              setLoadingStates(prev => ({ ...prev, service_stats: false }));
+              setLoadingStates((prev) => ({ ...prev, service_stats: false }));
               return data;
             })
         );
       }
 
       // Expiry Analysis
-      if (selectedAnalyticsOptions?.includes('expiry_analysis')) {
+      if (selectedAnalyticsOptions?.includes("expiry_analysis")) {
         promises.push(
-          amcAnalyticsAPI.getAMCExpiryAnalysis(startDate, endDate)
-            .then(data => {
+          amcAnalyticsAPI
+            .getAMCExpiryAnalysis(startDate, endDate)
+            .then((data) => {
               setAmcExpiryAnalysis(data);
-              setLoadingStates(prev => ({ ...prev, expiry_analysis: false }));
+              setLoadingStates((prev) => ({ ...prev, expiry_analysis: false }));
               return data;
             })
         );
       }
 
       // Service Tracking
-      if (selectedAnalyticsOptions?.includes('service_tracking')) {
+      if (selectedAnalyticsOptions?.includes("service_tracking")) {
         promises.push(
-          amcAnalyticsAPI.getAMCServiceTracking(startDate, endDate)
-            .then(data => {
+          amcAnalyticsAPI
+            .getAMCServiceTracking(startDate, endDate)
+            .then((data) => {
               setAmcServiceTracking(data);
-              setLoadingStates(prev => ({ ...prev, service_tracking: false }));
+              setLoadingStates((prev) => ({
+                ...prev,
+                service_tracking: false,
+              }));
               return data;
             })
         );
       }
 
       // Coverage by Location
-      if (selectedAnalyticsOptions?.includes('coverage_by_location')) {
+      if (selectedAnalyticsOptions?.includes("coverage_by_location")) {
         promises.push(
-          amcAnalyticsAPI.getAMCCoverageByLocation(startDate, endDate)
-            .then(data => {
+          amcAnalyticsAPI
+            .getAMCCoverageByLocation(startDate, endDate)
+            .then((data) => {
               setAmcCoverageData(data);
-              setLoadingStates(prev => ({ ...prev, coverage_by_location: false }));
+              setLoadingStates((prev) => ({
+                ...prev,
+                coverage_by_location: false,
+              }));
               return data;
             })
         );
@@ -442,20 +661,23 @@ export const AMCDashboard = () => {
 
       // Fetch vendor performance and compliance report (not displayed in selected cards)
       promises.push(
-        amcAnalyticsAPI.getAMCVendorPerformance(startDate, endDate).then(data => {
-          setAmcVendorPerformance(data);
-          return data;
-        }),
-        amcAnalyticsAPI.getAMCComplianceReport(startDate, endDate).then(data => {
-          setAmcComplianceReport(data);
-          return data;
-        })
+        amcAnalyticsAPI
+          .getAMCVendorPerformance(startDate, endDate)
+          .then((data) => {
+            setAmcVendorPerformance(data);
+            return data;
+          }),
+        amcAnalyticsAPI
+          .getAMCComplianceReport(startDate, endDate)
+          .then((data) => {
+            setAmcComplianceReport(data);
+            return data;
+          })
       );
 
       await Promise.all(promises);
-
     } catch (error) {
-      console.error('Error fetching AMC analytics data:', error);
+      console.error("Error fetching AMC analytics data:", error);
 
       // Reset all loading states on error
       setLoadingStates({
@@ -465,7 +687,7 @@ export const AMCDashboard = () => {
         service_stats: false,
         expiry_analysis: false,
         service_tracking: false,
-        coverage_by_location: false
+        coverage_by_location: false,
       });
 
       // toast.error('Failed to fetch AMC analytics data');
@@ -474,15 +696,27 @@ export const AMCDashboard = () => {
     }
   };
 
-  const handleAnalyticsFilterApply = (filters: { startDate: string; endDate: string }) => {
+  const handleAnalyticsFilterApply = (filters: {
+    startDate: string;
+    endDate: string;
+  }) => {
     setAnalyticsDateRange(filters);
     const startDate = convertDateStringToDate(filters.startDate);
     const endDate = convertDateStringToDate(filters.endDate);
     fetchAMCAnalyticsData(startDate, endDate);
   };
 
-  const amcData = apiData && typeof apiData === 'object' && 'asset_amcs' in apiData && Array.isArray((apiData as any).asset_amcs) ? (apiData as any).asset_amcs : initialAmcData;
-  const pagination = (apiData && typeof apiData === 'object' && 'pagination' in apiData) ? (apiData as any).pagination : { current_page: 1, total_count: 0, total_pages: 1 };
+  const amcData =
+    apiData &&
+      typeof apiData === "object" &&
+      "asset_amcs" in apiData &&
+      Array.isArray((apiData as any).asset_amcs)
+      ? (apiData as any).asset_amcs
+      : initialAmcData;
+  const pagination =
+    apiData && typeof apiData === "object" && "pagination" in apiData
+      ? (apiData as any).pagination
+      : { current_page: 1, total_count: 0, total_pages: 1 };
   const paginationSafe = {
     current_page: Number((pagination as any)?.current_page) || 1,
     total_count: Number((pagination as any)?.total_count) || 0,
@@ -492,7 +726,7 @@ export const AMCDashboard = () => {
   const uniqueVendorNames = Array.from(
     new Set<string>(
       (amcData || [])
-        .map((amc: AMCRecord) => (amc.vendor_name || '').trim())
+        .map((amc: AMCRecord) => (amc.vendor_name || "").trim())
         .filter(Boolean) as string[]
     )
   ).sort((a, b) => a.localeCompare(b));
@@ -502,12 +736,24 @@ export const AMCDashboard = () => {
       if (!isFilterModalOpen) return;
       if (!baseUrl || !token) return;
 
-      setFiltersOptionsLoading({ assets: true, services: true, groups: true, subGroups: false });
+      setFiltersOptionsLoading({
+        assets: true,
+        services: true,
+        groups: true,
+        subGroups: false,
+      });
       try {
         const [assetsResp, servicesResp, groupsResp] = await Promise.all([
-          axios.get(`https://${baseUrl}/pms/assets/get_assets.json`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`https://${baseUrl}/pms/services/get_services.json`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`https://${baseUrl}/pms/assets/get_asset_group_sub_group.json`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`https://${baseUrl}/pms/assets/get_assets.json`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`https://${baseUrl}/pms/services/get_services.json`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(
+            `https://${baseUrl}/pms/assets/get_asset_group_sub_group.json`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          ),
         ]);
 
         const assetsData = assetsResp.data;
@@ -516,19 +762,30 @@ export const AMCDashboard = () => {
 
         const assetsArr: SelectOption[] = Array.isArray(assetsData)
           ? assetsData
-            .map((a: any) => ({ id: Number(a.id), name: String(a.name ?? '').trim() }))
+            .map((a: any) => ({
+              id: Number(a.id),
+              name: String(a.name ?? "").trim(),
+            }))
             .filter((a: SelectOption) => a.id && a.name)
           : [];
 
         const servicesArr: SelectOption[] = Array.isArray(servicesData)
           ? servicesData
-            .map((s: any) => ({ id: Number(s.id), name: String(s.service_name ?? s.name ?? '').trim() }))
+            .map((s: any) => ({
+              id: Number(s.id),
+              name: String(s.service_name ?? s.name ?? "").trim(),
+            }))
             .filter((s: SelectOption) => s.id && s.name)
           : [];
 
-        const groupsArr: SelectOption[] = Array.isArray(groupsData?.asset_groups)
+        const groupsArr: SelectOption[] = Array.isArray(
+          groupsData?.asset_groups
+        )
           ? groupsData.asset_groups
-            .map((g: any) => ({ id: Number(g.id), name: String(g.name ?? '').trim() }))
+            .map((g: any) => ({
+              id: Number(g.id),
+              name: String(g.name ?? "").trim(),
+            }))
             .filter((g: SelectOption) => g.id && g.name)
           : [];
 
@@ -540,12 +797,17 @@ export const AMCDashboard = () => {
         setServiceOptions(servicesArr);
         setGroupOptions(groupsArr);
       } catch (e) {
-        console.error('Failed to fetch filter dropdown options', e);
+        console.error("Failed to fetch filter dropdown options", e);
         setAssetOptions([]);
         setServiceOptions([]);
         setGroupOptions([]);
       } finally {
-        setFiltersOptionsLoading(prev => ({ ...prev, assets: false, services: false, groups: false }));
+        setFiltersOptionsLoading((prev) => ({
+          ...prev,
+          assets: false,
+          services: false,
+          groups: false,
+        }));
       }
     };
 
@@ -561,7 +823,7 @@ export const AMCDashboard = () => {
         return;
       }
 
-      setFiltersOptionsLoading(prev => ({ ...prev, subGroups: true }));
+      setFiltersOptionsLoading((prev) => ({ ...prev, subGroups: true }));
       try {
         const resp = await axios.get(
           `https://${baseUrl}/pms/assets/get_asset_group_sub_group.json?group_id=${tempGroupIdForSubGroups}`,
@@ -569,36 +831,63 @@ export const AMCDashboard = () => {
         );
         const arr: SelectOption[] = Array.isArray(resp.data?.asset_groups)
           ? resp.data.asset_groups
-            .map((sg: any) => ({ id: Number(sg.id), name: String(sg.name ?? '').trim() }))
+            .map((sg: any) => ({
+              id: Number(sg.id),
+              name: String(sg.name ?? "").trim(),
+            }))
             .filter((sg: SelectOption) => sg.id && sg.name)
           : [];
         arr.sort((a, b) => a.name.localeCompare(b.name));
         setSubGroupOptions(arr);
       } catch (e) {
-        console.error('Failed to fetch sub groups', e);
+        console.error("Failed to fetch sub groups", e);
         setSubGroupOptions([]);
       } finally {
-        setFiltersOptionsLoading(prev => ({ ...prev, subGroups: false }));
+        setFiltersOptionsLoading((prev) => ({ ...prev, subGroups: false }));
       }
     };
 
     fetchSubGroups();
   }, [isFilterModalOpen, baseUrl, token, tempGroupIdForSubGroups]);
 
-  const totalAMCs = amcAnalyticsData ? (amcAnalyticsData.active_amcs + amcAnalyticsData.inactive_amcs) :
-    ((apiData && typeof apiData === 'object' && 'total_amcs_count' in apiData) ? (apiData as any).total_amcs_count : paginationSafe.total_count || 0);
-  const activeAMCs = amcAnalyticsData?.active_amcs ||
-    ((apiData && typeof apiData === 'object' && 'active_amcs_count' in apiData) ? (apiData as any).active_amcs_count : 0);
-  const inactiveAMCs = amcAnalyticsData?.inactive_amcs ||
-    ((apiData && typeof apiData === 'object' && 'inactive_amcs_count' in apiData) ? (apiData as any).inactive_amcs_count : 0);
-  const flaggedAMCs = (apiData && typeof apiData === 'object' && 'flagged_amcs_count' in apiData) ? (apiData as any).flagged_amcs_count : 0;
-  const expiringIn90Days = (apiData && typeof apiData === 'object' && 'expiring_in_fifteen_days' in apiData) ? (apiData as any).expiring_in_fifteen_days : 0;
-  const serviceTotalAMCs = amcUnitResourceData?.find(item => item.type === 'Services')?.count || 0;
-  const assetTotalAMCs = amcUnitResourceData?.find(item => item.type === 'Assets')?.count || 0;
+  const totalAMCs = amcAnalyticsData
+    ? amcAnalyticsData.active_amcs + amcAnalyticsData.inactive_amcs
+    : apiData && typeof apiData === "object" && "total_amcs_count" in apiData
+      ? (apiData as any).total_amcs_count
+      : paginationSafe.total_count || 0;
+  const activeAMCs =
+    amcAnalyticsData?.active_amcs ||
+    (apiData && typeof apiData === "object" && "active_amcs_count" in apiData
+      ? (apiData as any).active_amcs_count
+      : 0);
+  const inactiveAMCs =
+    amcAnalyticsData?.inactive_amcs ||
+    (apiData && typeof apiData === "object" && "inactive_amcs_count" in apiData
+      ? (apiData as any).inactive_amcs_count
+      : 0);
+  const flaggedAMCs =
+    apiData && typeof apiData === "object" && "flagged_amcs_count" in apiData
+      ? (apiData as any).flagged_amcs_count
+      : 0;
+  const expiringIn90Days =
+    apiData &&
+      typeof apiData === "object" &&
+      "expiring_in_fifteen_days" in apiData
+      ? (apiData as any).expiring_in_fifteen_days
+      : 0;
+  const serviceTotalAMCs =
+    amcUnitResourceData?.find((item) => item.type === "Services")?.count || 0;
+  const assetTotalAMCs =
+    amcUnitResourceData?.find((item) => item.type === "Assets")?.count || 0;
 
-  const fetchFilteredAMCs = async (filterValue: string | null, page: number = 1, expiryFilter?: string, searchTerm: string = '') => {
+  const fetchFilteredAMCs = async (
+    filterValue: string | null,
+    page: number = 1,
+    expiryFilter?: string,
+    searchTerm: string = ""
+  ) => {
     if (!baseUrl || !token) {
-      toast.error('Missing base URL, token, or site ID');
+      toast.error("Missing base URL, token, or site ID");
       return;
     }
 
@@ -608,20 +897,20 @@ export const AMCDashboard = () => {
 
     const effectiveStatus =
       statusFilter ||
-      (filterValue === 'UnderObservation' ? 'under_observation' : filterValue);
+      (filterValue === "UnderObservation" ? "under_observation" : filterValue);
 
-    if (effectiveStatus === 'active') {
-      queryParams.push('q[status_eq]=active');
-    } else if (effectiveStatus === 'inactive') {
-      queryParams.push('q[status_eq]=inactive');
-    } else if (effectiveStatus === 'under_observation') {
-      queryParams.push('q[status_eq]=under_observation');
-    } else if (effectiveStatus === 'expired') {
-      queryParams.push('q[status_eq]=expired');
+    if (effectiveStatus === "active") {
+      queryParams.push("q[status_eq]=active");
+    } else if (effectiveStatus === "inactive") {
+      queryParams.push("q[status_eq]=inactive");
+    } else if (effectiveStatus === "under_observation") {
+      queryParams.push("q[status_eq]=under_observation");
+    } else if (effectiveStatus === "expired") {
+      queryParams.push("q[status_eq]=expired");
     }
 
-    if (expiryFilter === 'expiring_in_15_days') {
-      queryParams.push('q[expire_in_15_days_eq]=true');
+    if (expiryFilter === "expiring_in_15_days") {
+      queryParams.push("q[expire_in_15_days_eq]=true");
     } else if (expiryFilter) {
       queryParams.push(`q[amc_end_date_lteq]=${expiryFilter}`);
     }
@@ -636,27 +925,39 @@ export const AMCDashboard = () => {
       queryParams.push(`q[amc_end_date_eq]=${endDateFilter}`);
     }
     if (vendorNameFilter) {
-      queryParams.push(`q[supplier_company_name_cont]=${encodeURIComponent(vendorNameFilter)}`);
+      queryParams.push(
+        `q[supplier_company_name_cont]=${encodeURIComponent(vendorNameFilter)}`
+      );
     }
     if (assetNameFilter) {
-      queryParams.push(`q[amc_assets_asset_name_cont]=${encodeURIComponent(assetNameFilter)}`);
+      queryParams.push(
+        `q[amc_assets_asset_name_cont]=${encodeURIComponent(assetNameFilter)}`
+      );
     }
     if (serviceNameFilter) {
-      queryParams.push(`q[amc_services_service_name_cont]=${encodeURIComponent(serviceNameFilter)}`);
+      queryParams.push(
+        `q[amc_services_service_name_cont]=${encodeURIComponent(serviceNameFilter)}`
+      );
     }
     if (groupFilter) {
-      queryParams.push(`q[amc_assets_asset_pms_asset_group_id_eq]=${encodeURIComponent(groupFilter)}`);
+      queryParams.push(
+        `q[amc_assets_asset_pms_asset_group_id_eq]=${encodeURIComponent(groupFilter)}`
+      );
     }
     if (subGroupFilter) {
-      queryParams.push(`q[amc_assets_asset_pms_asset_sub_group_id_eq]=${encodeURIComponent(subGroupFilter)}`);
+      queryParams.push(
+        `q[amc_assets_asset_pms_asset_sub_group_id_eq]=${encodeURIComponent(subGroupFilter)}`
+      );
     }
 
     if (searchTerm && searchTerm.trim()) {
-      queryParams.push(`q[id_value_or_amc_assets_resource_name_or_amc_type_or_supplier_company_name_or_contract_name_cont]=${encodeURIComponent(searchTerm.trim())}`);
+      queryParams.push(
+        `q[id_value_or_amc_assets_resource_name_or_amc_type_or_supplier_company_name_or_contract_name_cont]=${encodeURIComponent(searchTerm.trim())}`
+      );
     }
 
     if (queryParams.length > 0) {
-      url += `&${queryParams.join('&')}`;
+      url += `&${queryParams.join("&")}`;
     }
 
     try {
@@ -674,15 +975,18 @@ export const AMCDashboard = () => {
           active: item.status, // Map status to active for backward compatibility, if needed
         })),
       };
-      dispatch(fetchAMCData.fulfilled(mappedData, 'fetchAMCData', undefined));
+      dispatch(fetchAMCData.fulfilled(mappedData, "fetchAMCData", undefined));
       // Only adjust currentPage if server corrected an out-of-range request
-      if (fetchedData.pagination && fetchedData.pagination.current_page !== page) {
+      if (
+        fetchedData.pagination &&
+        fetchedData.pagination.current_page !== page
+      ) {
         setCurrentPage(fetchedData.pagination.current_page);
       }
     } catch (error) {
-      console.error('Error fetching AMC data:', error);
-      dispatch(fetchAMCData.rejected(error as any, 'fetchAMCData', undefined));
-      toast.error('Failed to fetch AMC data');
+      console.error("Error fetching AMC data:", error);
+      dispatch(fetchAMCData.rejected(error as any, "fetchAMCData", undefined));
+      toast.error("Failed to fetch AMC data");
     } finally {
       setLoading(false);
     }
@@ -695,7 +999,7 @@ export const AMCDashboard = () => {
     setEndDateFilter(null);
     setCurrentPage(1);
     setIsExpiringFilterActive(true);
-    fetchFilteredAMCs(null, 1, 'expiring_in_15_days', debouncedSearchQuery);
+    fetchFilteredAMCs(null, 1, "expiring_in_15_days", debouncedSearchQuery);
   };
 
   useEffect(() => {
@@ -703,7 +1007,11 @@ export const AMCDashboard = () => {
       fetchFilteredAMCs(
         filter,
         currentPage,
-        isExpiringFilterActive ? formatDateForAPI(new Date(new Date().setDate(new Date().getDate() + 90))) : undefined,
+        isExpiringFilterActive
+          ? formatDateForAPI(
+            new Date(new Date().setDate(new Date().getDate() + 90))
+          )
+          : undefined,
         debouncedSearchQuery
       );
     }
@@ -732,7 +1040,7 @@ export const AMCDashboard = () => {
 
   // Load analytics APIs only when the Analytics tab is selected
   useEffect(() => {
-    if (activeTab === 'analytics') {
+    if (activeTab === "analytics") {
       const startDate = convertDateStringToDate(analyticsDateRange.startDate);
       const endDate = convertDateStringToDate(analyticsDateRange.endDate);
       fetchAMCAnalyticsData(startDate, endDate);
@@ -740,11 +1048,19 @@ export const AMCDashboard = () => {
   }, [activeTab]);
 
   const handleAddClick = () => {
-    navigate('/maintenance/amc/add');
+    navigate("/maintenance/amc/add");
   };
 
   const handleViewDetails = (id: number) => {
-    navigate(`/maintenance/amc/details/${id}`);
+    navigate(`/maintenance/amc/details/${id}`, {
+      state: {
+        returnTo: buildReturnToPath(
+          location.pathname,
+          location.search,
+          location.hash
+        ),
+      },
+    });
   };
 
   const handleImportClick = () => {
@@ -754,7 +1070,7 @@ export const AMCDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(amcData.map(item => item.id.toString()));
+      setSelectedItems(amcData.map((item) => item.id.toString()));
     } else {
       setSelectedItems([]);
     }
@@ -762,17 +1078,26 @@ export const AMCDashboard = () => {
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
     if (checked) {
-      setSelectedItems(prev => [...prev, itemId]);
+      setSelectedItems((prev) => [...prev, itemId]);
     } else {
-      setSelectedItems(prev => prev.filter(id => id !== itemId));
+      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
     }
   };
 
   const handleBulkDelete = (selectedItems: AMCRecord[]) => {
-    const selectedIds = selectedItems.map(item => item.id);
+    const selectedIds = selectedItems.map((item) => item.id);
     setSelectedItems([]);
     toast.success(`Selected AMCs (${selectedIds.length}) deleted`);
-    fetchFilteredAMCs(filter, currentPage, isExpiringFilterActive ? formatDateForAPI(new Date(new Date().setDate(new Date().getDate() + 90))) : undefined, debouncedSearchQuery);
+    fetchFilteredAMCs(
+      filter,
+      currentPage,
+      isExpiringFilterActive
+        ? formatDateForAPI(
+          new Date(new Date().setDate(new Date().getDate() + 90))
+        )
+        : undefined,
+      debouncedSearchQuery
+    );
   };
 
   const handleSelectionChange = (selectedSections: string[]) => {
@@ -782,44 +1107,44 @@ export const AMCDashboard = () => {
   const handleExport = async () => {
     try {
       if (!baseUrl || !token) {
-        toast.error('Missing base URL, token, or site ID');
+        toast.error("Missing base URL, token, or site ID");
         return;
       }
 
       let url = `https://${baseUrl}/pms/asset_amcs/export.xlsx`;
       if (selectedItems.length > 0) {
-        const ids = selectedItems.join(',');
+        const ids = selectedItems.join(",");
         url += `&ids=${ids}`;
       }
 
       const response = await axios.get(url, {
-        responseType: 'blob',
+        responseType: "blob",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.data || response.data.size === 0) {
-        toast.error('Empty file received from server');
+        toast.error("Empty file received from server");
         return;
       }
 
       const blob = new Blob([response.data], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
 
       const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = 'amc_export.xlsx';
+      link.download = "amc_export.xlsx";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
-      toast.success('AMC data exported successfully');
+      toast.success("AMC data exported successfully");
     } catch (error) {
-      console.error('Export failed:', error);
-      toast.error('Failed to export AMC data');
+      console.error("Export failed:", error);
+      toast.error("Failed to export AMC data");
     }
   };
 
@@ -847,18 +1172,23 @@ export const AMCDashboard = () => {
 
   const handleAnalyticsSelectionChange = (options: string[]) => {
     setSelectedAnalyticsOptions(options);
-    setAnalyticsChartOrder(prevOrder => {
-      const newOrder = prevOrder.filter(chartType => options.includes(chartType));
-      const newCharts = options.filter(chartType => !prevOrder.includes(chartType));
+    setAnalyticsChartOrder((prevOrder) => {
+      const newOrder = prevOrder.filter((chartType) =>
+        options.includes(chartType)
+      );
+      const newCharts = options.filter(
+        (chartType) => !prevOrder.includes(chartType)
+      );
       return [...newOrder, ...newCharts];
     });
   };
 
   const renderCell = (item: AMCRecord, columnKey: string) => {
     switch (columnKey) {
-      case 'actions':
+      case "actions":
         return (
           <div className="flex items-center justify-center gap-1">
+            {/* {shouldShow("AMC", "show") && ( */}
             <div
               onClick={() => handleViewDetails(item.id)}
               className="p-1 cursor-pointer hover:text-gray-700"
@@ -866,6 +1196,7 @@ export const AMCDashboard = () => {
             >
               <Eye className="w-4 h-4" />
             </div>
+            {/* )} */}
             <div
               title="Flag AMC"
               onClick={(e) => {
@@ -875,9 +1206,10 @@ export const AMCDashboard = () => {
               className="p-1 cursor-pointer hover:text-[#C72030]"
             >
               <Flag
-                className={`w-4 h-4 ${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
+                className={`w-4 h-4 ${item.is_flagged ? "text-red-500 fill-red-500" : "text-gray-600"}`}
               />
             </div>
+            {/* {shouldShow("AMC", "update") && ( */}
             <Link
               to={`/maintenance/amc/edit/${item.id}`}
               className="p-1 text-gray-600"
@@ -885,79 +1217,98 @@ export const AMCDashboard = () => {
             >
               <Pencil className="w-4 h-4" />
             </Link>
+            {/* )} */}
           </div>
         );
-      case 'id':
+      case "id":
         return <span className="font-medium">{item.id}</span>;
-      case 'asset_name':
-        if (item.amc_type === 'Asset') {
+      case "asset_name":
+        if (item.amc_type === "Asset") {
           // Get asset names from amc_assets array
-          const assetNames = item.amc_assets?.map(asset => asset.asset_name).filter(Boolean) || [];
+          const assetNames =
+            item.amc_assets?.map((asset) => asset.asset_name).filter(Boolean) ||
+            [];
           if (assetNames.length > 0) {
             return formatNamesWithEllipsis(assetNames);
           }
-          return item.asset_name || '-';
-        } else if (item.amc_type === 'Service') {
+          return item.asset_name || "-";
+        } else if (item.amc_type === "Service") {
           // Get service names from amc_services array
-          const serviceNames = item.amc_services?.map(service => service.service_name).filter(Boolean) || [];
+          const serviceNames =
+            item.amc_services
+              ?.map((service) => service.service_name)
+              .filter(Boolean) || [];
           if (serviceNames.length > 0) {
             return formatNamesWithEllipsis(serviceNames);
           }
-          return item.service_name || '-';
+          return item.service_name || "-";
         } else {
-          return '-';
+          return "-";
         }
-      case 'associated_asset_service': {
+      case "associated_asset_service": {
         const rawAssocAssets = Array.isArray(item.associated_assets)
           ? item.associated_assets
-          : Array.isArray(item.amc_assets) ? item.amc_assets : [];
-        const rawAssocServices = Array.isArray(item.amc_services) ? item.amc_services : [];
-        const count = item.amc_type === 'Service'
-          ? rawAssocServices.length
-          : item.amc_type === 'Asset'
-            ? rawAssocAssets.length
-            : rawAssocAssets.length + rawAssocServices.length;
-        const label = item.amc_type === 'Service' ? 'Service' : 'Asset';
+          : Array.isArray(item.amc_assets)
+            ? item.amc_assets
+            : [];
+        const rawAssocServices = Array.isArray(item.amc_services)
+          ? item.amc_services
+          : [];
+        const count =
+          item.amc_type === "Service"
+            ? rawAssocServices.length
+            : item.amc_type === "Asset"
+              ? rawAssocAssets.length
+              : rawAssocAssets.length + rawAssocServices.length;
+        const label = item.amc_type === "Service" ? "Service" : "Asset";
         return count > 0 ? (
           <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#EDEAE3] text-[#1a1a1a]">
-            {count} {label}{count !== 1 ? 's' : ''}
+            {count} {label}
+            {count !== 1 ? "s" : ""}
           </span>
-        ) : '-';
+        ) : (
+          "-"
+        );
       }
-      case 'amc_type':
-        return item.amc_type || '-';
-      case 'vendor_name':
-        return item.vendor_name || '-';
-      case 'contract_name':
-        return item.contract_name || '-';
-      case 'amc_start_date':
-        return item.amc_start_date ? new Date(item.amc_start_date).toLocaleDateString() : '-';
-      case 'amc_end_date':
-        return item.amc_end_date ? new Date(item.amc_end_date).toLocaleDateString() : '-';
-      case 'amc_first_service':
-        return item.amc_first_service ? new Date(item.amc_first_service).toLocaleDateString() : '-';
-      case 'total_days_remaining':
-        return item.total_days_remaining || '-';
-      case 'active':
-
+      case "amc_type":
+        return item.amc_type || "-";
+      case "vendor_name":
+        return item.vendor_name || "-";
+      case "contract_name":
+        return item.contract_name || "-";
+      case "amc_start_date":
+        return item.amc_start_date
+          ? new Date(item.amc_start_date).toLocaleDateString()
+          : "-";
+      case "amc_end_date":
+        return item.amc_end_date
+          ? new Date(item.amc_end_date).toLocaleDateString()
+          : "-";
+      case "amc_first_service":
+        return item.amc_first_service
+          ? new Date(item.amc_first_service).toLocaleDateString()
+          : "-";
+      case "total_days_remaining":
+        return item.total_days_remaining || "-";
+      case "active":
         const statusColors = {
-          active: '#d5dbdb',
-          inactive: '#c4b89d',
-          under_observation: '#dbc2a9',
-          expired: '#ef4444',
+          active: "#d5dbdb",
+          inactive: "#c4b89d",
+          under_observation: "#dbc2a9",
+          expired: "#ef4444",
         };
 
         const statusLabels: Record<string, string> = {
-          active: 'Active',
-          inactive: 'Inactive',
-          under_observation: 'Under Observation',
-          expired: 'Expired',
-          '': '',
+          active: "Active",
+          inactive: "Inactive",
+          under_observation: "Under Observation",
+          expired: "Expired",
+          "": "",
         };
 
-        const selectedValue = (item.status ?? '').toLowerCase(); // Normalize to lowercase
-        const isExpired = selectedValue === 'expired';
-        const triggerBackgroundColor = statusColors[selectedValue] || '#d3d3d3';
+        const selectedValue = (item.status ?? "").toLowerCase(); // Normalize to lowercase
+        const isExpired = selectedValue === "expired";
+        const triggerBackgroundColor = statusColors[selectedValue] || "#d3d3d3";
         return (
           <div className="relative group">
             <Select
@@ -969,33 +1320,44 @@ export const AMCDashboard = () => {
 
                 const newStatus = value; // "active", "inactive", or "under_observation"
                 if (!baseUrl || !token) {
-                  toast.error('Missing base URL, token, or site ID');
+                  toast.error("Missing base URL, token, or site ID");
                   return;
                 }
                 try {
                   // Optimistic update
                   const updatedAmcData = amcData.map((record) =>
-                    record.id === item.id ? { ...record, status: value } : record
+                    record.id === item.id
+                      ? { ...record, status: value }
+                      : record
                   );
                   const updatedApiData = {
                     ...((apiData as any) || {}),
                     asset_amcs: updatedAmcData,
                     active_amcs_count:
-                      value === 'active'
+                      value === "active"
                         ? (apiData as any).active_amcs_count + 1
-                        : (apiData as any).active_amcs_count - (item.status === 'active' ? 1 : 0),
+                        : (apiData as any).active_amcs_count -
+                        (item.status === "active" ? 1 : 0),
                     inactive_amcs_count:
-                      value === 'inactive'
+                      value === "inactive"
                         ? (apiData as any).inactive_amcs_count + 1
-                        : (apiData as any).inactive_amcs_count - (item.status === 'inactive' ? 1 : 0),
+                        : (apiData as any).inactive_amcs_count -
+                        (item.status === "inactive" ? 1 : 0),
                     under_observation:
-                      value === 'under_observation'
+                      value === "under_observation"
                         ? ((apiData as any).under_observation || 0) + 1
-                        : (apiData as any).under_observation - (item.status === 'under_observation' ? 1 : 0),
+                        : (apiData as any).under_observation -
+                        (item.status === "under_observation" ? 1 : 0),
                     total_amcs_count: (apiData as any).total_amcs_count,
                   };
 
-                  dispatch(fetchAMCData.fulfilled(updatedApiData, 'fetchAMCData', undefined));
+                  dispatch(
+                    fetchAMCData.fulfilled(
+                      updatedApiData,
+                      "fetchAMCData",
+                      undefined
+                    )
+                  );
 
                   const response = await axios.put(
                     `https://${baseUrl}/pms/asset_amcs/${item.id}.json`,
@@ -1012,20 +1374,24 @@ export const AMCDashboard = () => {
                   );
                   if (response.status === 200) {
                     toast.success(`Status updated to ${value}`);
-                    if (activeTab === 'analytics') {
+                    if (activeTab === "analytics") {
                       const { startDate, endDate } = analyticsDateRange;
                       const startDateObj = convertDateStringToDate(startDate);
                       const endDateObj = convertDateStringToDate(endDate);
                       await fetchAMCAnalyticsData(startDateObj, endDateObj);
                     }
                   } else {
-                    dispatch(fetchAMCData.fulfilled(apiData, 'fetchAMCData', undefined));
-                    toast.error('Failed to update AMC status');
+                    dispatch(
+                      fetchAMCData.fulfilled(apiData, "fetchAMCData", undefined)
+                    );
+                    toast.error("Failed to update AMC status");
                   }
                 } catch (error) {
-                  console.error('Error updating AMC status:', error);
-                  dispatch(fetchAMCData.fulfilled(apiData, 'fetchAMCData', undefined));
-                  toast.error('Failed to update AMC status');
+                  console.error("Error updating AMC status:", error);
+                  dispatch(
+                    fetchAMCData.fulfilled(apiData, "fetchAMCData", undefined)
+                  );
+                  toast.error("Failed to update AMC status");
                 } finally {
                   setTogglingIds((prev) => {
                     const newSet = new Set(prev);
@@ -1040,55 +1406,71 @@ export const AMCDashboard = () => {
                 className="w-[140px] text-center"
                 style={{
                   backgroundColor: triggerBackgroundColor,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '0 8px',
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "0 8px",
                 }}
               >
                 <SelectValue
                   placeholder="Select Status"
                   className="text-center"
-                  style={{ textAlign: 'center', marginRight: '8px', color: '#000' }}
+                  style={{
+                    textAlign: "center",
+                    marginRight: "8px",
+                    color: "#000",
+                  }}
                 >
-                  {statusLabels[selectedValue] || 'Select Status'}
+                  {statusLabels[selectedValue] || "Select Status"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="text-center">
-                <SelectItem value="active" className="text-center" style={{ backgroundColor: '#d5dbdb', color: '#fff' }}>
+                <SelectItem
+                  value="active"
+                  className="text-center"
+                  style={{ backgroundColor: "#d5dbdb", color: "#fff" }}
+                >
                   Active
                 </SelectItem>
-                <SelectItem value="inactive" className="text-center" style={{ backgroundColor: '#c4b89d', color: '#fff' }}>
+                <SelectItem
+                  value="inactive"
+                  className="text-center"
+                  style={{ backgroundColor: "#c4b89d", color: "#fff" }}
+                >
                   Inactive
                 </SelectItem>
-                <SelectItem value="under_observation" className="text-center" style={{ backgroundColor: '#dbc2a9', color: '#fff' }}>
+                <SelectItem
+                  value="under_observation"
+                  className="text-center"
+                  style={{ backgroundColor: "#dbc2a9", color: "#fff" }}
+                >
                   Under Observation
                 </SelectItem>
               </SelectContent>
             </Select>
           </div>
         );
-      case 'created_at':
+      case "created_at":
         return item.created_at
-          ? new Date(item.created_at).toLocaleString('en-IN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
+          ? new Date(item.created_at).toLocaleString("en-IN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
             hour12: true,
           })
-          : '-';
+          : "-";
       default:
-        return '-';
+        return "-";
     }
   };
 
   const bulkActions = [
     {
-      label: 'Delete Selected',
+      label: "Delete Selected",
       icon: Trash2,
-      variant: 'destructive' as const,
+      variant: "destructive" as const,
       onClick: handleBulkDelete,
     },
   ];
@@ -1096,7 +1478,7 @@ export const AMCDashboard = () => {
   const handleSingleAmcFlag = async (amcItem: AMCRecord) => {
     try {
       if (!baseUrl || !token) {
-        toast.error('Missing base URL or token');
+        toast.error("Missing base URL or token");
         return;
       }
 
@@ -1118,13 +1500,13 @@ export const AMCDashboard = () => {
       if (response.status === 200) {
         dispatch(fetchAMCData());
         toast.dismiss();
-        toast.success(`Flag ${updatedFlag ? 'Activated' : 'Deactivated'}`);
+        toast.success(`Flag ${updatedFlag ? "Activated" : "Deactivated"}`);
       } else {
-        toast.error('Failed to update AMC flag');
+        toast.error("Failed to update AMC flag");
       }
     } catch (error) {
-      console.error('Flag update error:', error);
-      toast.error('Failed to update AMC flag');
+      console.error("Flag update error:", error);
+      toast.error("Failed to update AMC flag");
     }
   };
 
@@ -1139,7 +1521,7 @@ export const AMCDashboard = () => {
       items.push(
         <PaginationItem key={1}>
           <PaginationLink
-            className='cursor-pointer'
+            className="cursor-pointer"
             onClick={() => handlePageChange(1)}
             isActive={currentPage === 1}
           >
@@ -1154,7 +1536,7 @@ export const AMCDashboard = () => {
           items.push(
             <PaginationItem key={i}>
               <PaginationLink
-                className='cursor-pointer'
+                className="cursor-pointer"
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
               >
@@ -1182,7 +1564,7 @@ export const AMCDashboard = () => {
             items.push(
               <PaginationItem key={i}>
                 <PaginationLink
-                  className='cursor-pointer'
+                  className="cursor-pointer"
                   onClick={() => handlePageChange(i)}
                   isActive={currentPage === i}
                 >
@@ -1203,7 +1585,7 @@ export const AMCDashboard = () => {
           items.push(
             <PaginationItem key={i}>
               <PaginationLink
-                className='cursor-pointer'
+                className="cursor-pointer"
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
               >
@@ -1224,7 +1606,7 @@ export const AMCDashboard = () => {
         items.push(
           <PaginationItem key={totalPages}>
             <PaginationLink
-              className='cursor-pointer'
+              className="cursor-pointer"
               onClick={() => handlePageChange(totalPages)}
               isActive={currentPage === totalPages}
             >
@@ -1238,7 +1620,7 @@ export const AMCDashboard = () => {
         items.push(
           <PaginationItem key={i}>
             <PaginationLink
-              className='cursor-pointer'
+              className="cursor-pointer"
               onClick={() => handlePageChange(i)}
               isActive={currentPage === i}
             >
@@ -1258,41 +1640,71 @@ export const AMCDashboard = () => {
   };
 
   const statusData = [
-    { name: 'Active', value: activeAMCs, color: '#c6b692' },
-    { name: 'Inactive', value: inactiveAMCs, color: '#d8dcdd' }
+    { name: "Active", value: activeAMCs, color: "#c6b692" },
+    { name: "Inactive", value: inactiveAMCs, color: "#d8dcdd" },
   ];
 
   const resourceTypeData = [
-    { name: 'Services', value: serviceTotalAMCs, color: '#c6b692' },
-    { name: 'Assets', value: assetTotalAMCs, color: '#d8dcdd' }
+    { name: "Services", value: serviceTotalAMCs, color: "#c6b692" },
+    { name: "Assets", value: assetTotalAMCs, color: "#d8dcdd" },
   ];
 
   const amcTypeData = amcData.reduce((acc, amc) => {
-    const type = amc.amc_type || 'Unknown';
+    const type = amc.amc_type || "Unknown";
     acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {});
 
-  const resourceChartData = Object.entries(amcTypeData).map(([name, value]) => ({ name, value }));
+  const resourceChartData = Object.entries(amcTypeData).map(
+    ([name, value]) => ({ name, value })
+  );
 
   const agingMatrixData = [
-    { priority: 'P1', '0-30': 5, '31-60': 2, '61-90': 3, '91-180': 1, '180+': 8 },
-    { priority: 'P2', '0-30': 3, '31-60': 1, '61-90': 2, '91-180': 0, '180+': 2 },
-    { priority: 'P3', '0-30': 2, '31-60': 0, '61-90': 1, '91-180': 1, '180+': 4 },
-    { priority: 'P4', '0-30': 1, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 3 }
+    {
+      priority: "P1",
+      "0-30": 5,
+      "31-60": 2,
+      "61-90": 3,
+      "91-180": 1,
+      "180+": 8,
+    },
+    {
+      priority: "P2",
+      "0-30": 3,
+      "31-60": 1,
+      "61-90": 2,
+      "91-180": 0,
+      "180+": 2,
+    },
+    {
+      priority: "P3",
+      "0-30": 2,
+      "31-60": 0,
+      "61-90": 1,
+      "91-180": 1,
+      "180+": 4,
+    },
+    {
+      priority: "P4",
+      "0-30": 1,
+      "31-60": 0,
+      "61-90": 0,
+      "91-180": 0,
+      "180+": 3,
+    },
   ];
 
   const today = new Date();
   const thirtyDaysFromNow = new Date();
   thirtyDaysFromNow.setDate(today.getDate() + 30);
 
-  const upcomingExpiries = amcData.filter(amc => {
+  const upcomingExpiries = amcData.filter((amc) => {
     if (!amc.amc_end_date) return false;
     const endDate = new Date(amc.amc_end_date);
     return endDate >= today && endDate <= thirtyDaysFromNow;
   }).length;
 
-  const expiredAMCs = amcData.filter(amc => {
+  const expiredAMCs = amcData.filter((amc) => {
     if (!amc.amc_end_date) return false;
     const endDate = new Date(amc.amc_end_date);
     return endDate < today;
@@ -1301,9 +1713,9 @@ export const AMCDashboard = () => {
   const validAMCs = totalAMCs - upcomingExpiries - expiredAMCs;
 
   const expiryData = [
-    { name: 'Valid', value: validAMCs, color: '#4ade80' },
-    { name: 'Expiring Soon', value: upcomingExpiries, color: '#fb923c' },
-    { name: 'Expired', value: expiredAMCs, color: '#ef4444' }
+    { name: "Valid", value: validAMCs, color: "#4ade80" },
+    { name: "Expiring Soon", value: upcomingExpiries, color: "#fb923c" },
+    { name: "Expired", value: expiredAMCs, color: "#ef4444" },
   ];
 
   const handleActionClick = () => {
@@ -1338,7 +1750,7 @@ export const AMCDashboard = () => {
     setCurrentPage(1);
     setIsExpiringFilterActive(false);
     setSelectedSummary(null);
-    toast.success('Filters applied');
+    toast.success("Filters applied");
   };
 
   const handleResetFilters = () => {
@@ -1365,7 +1777,7 @@ export const AMCDashboard = () => {
     setIsExpiringFilterActive(false);
     setSelectedSummary(null);
     fetchFilteredAMCs(null, 1, undefined, debouncedSearchQuery);
-    toast.success('Filters reset');
+    toast.success("Filters reset");
   };
 
   const handleTotalAMCClick = () => {
@@ -1379,36 +1791,38 @@ export const AMCDashboard = () => {
   };
 
   const handleActiveAMCClick = () => {
-    setFilter('active');
+    setFilter("active");
     setAmcTypeFilter(null);
     setStartDateFilter(null);
     setEndDateFilter(null);
     setCurrentPage(1);
     setIsExpiringFilterActive(false);
-    fetchFilteredAMCs('active', 1, undefined, debouncedSearchQuery);
+    fetchFilteredAMCs("active", 1, undefined, debouncedSearchQuery);
   };
 
   const handleInactiveAMCClick = () => {
-    setFilter('inactive');
+    setFilter("inactive");
     setAmcTypeFilter(null);
     setStartDateFilter(null);
     setEndDateFilter(null);
     setCurrentPage(1);
     setIsExpiringFilterActive(false);
-    fetchFilteredAMCs('inactive', 1, undefined, debouncedSearchQuery);
+    fetchFilteredAMCs("inactive", 1, undefined, debouncedSearchQuery);
   };
 
   const handleFlaggedAMCClick = () => {
-    setFilter('UnderObservation');
+    setFilter("UnderObservation");
     setAmcTypeFilter(null);
     setStartDateFilter(null);
     setEndDateFilter(null);
     setCurrentPage(1);
     setIsExpiringFilterActive(false);
-    fetchFilteredAMCs('UnderObservation', 1, undefined, debouncedSearchQuery);
+    fetchFilteredAMCs("UnderObservation", 1, undefined, debouncedSearchQuery);
   };
 
-  const uniqueAmcTypes = Array.from(new Set(amcData.map(amc => amc.amc_type).filter(type => type))).sort();
+  const uniqueAmcTypes = Array.from(
+    new Set(amcData.map((amc) => amc.amc_type).filter((type) => type))
+  ).sort();
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
@@ -1418,7 +1832,12 @@ export const AMCDashboard = () => {
         </div>
       )}
       <>
-        <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="amclist" className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          defaultValue="amclist"
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
             <TabsTrigger
               value="amclist"
@@ -1450,7 +1869,10 @@ export const AMCDashboard = () => {
             </TabsTrigger> */}
           </TabsList>
 
-          <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+          <TabsContent
+            value="analytics"
+            className="space-y-4 sm:space-y-6 mt-4 sm:mt-6"
+          >
             <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
               <div className="flex items-center gap-2">
                 <Button
@@ -1460,36 +1882,58 @@ export const AMCDashboard = () => {
                 >
                   <Filter className="w-4 h-4" />
                 </Button>
-                <AMCAnalyticsSelector onSelectionChange={handleAnalyticsSelectionChange} />
+                <AMCAnalyticsSelector
+                  onSelectionChange={handleAnalyticsSelectionChange}
+                />
               </div>
             </div>
 
             <div className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-120">
-                {selectedAnalyticsOptions?.includes('status_overview') && (
-                  <SectionLoader loading={loadingStates.status_overview} className="h-full">
+                {selectedAnalyticsOptions?.includes("status_overview") && (
+                  <SectionLoader
+                    loading={loadingStates.status_overview}
+                    className="h-full"
+                  >
                     <AMCStatusCard
                       data={amcStatusSummary}
                       colorPalette={analyticsColorPalette}
                       headerClassName="text-[#1A1A1A]"
                       onDownload={async () => {
-                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                        await amcAnalyticsDownloadAPI.downloadAMCStatusData(startDate, endDate);
+                        const startDate = convertDateStringToDate(
+                          analyticsDateRange.startDate
+                        );
+                        const endDate = convertDateStringToDate(
+                          analyticsDateRange.endDate
+                        );
+                        await amcAnalyticsDownloadAPI.downloadAMCStatusData(
+                          startDate,
+                          endDate
+                        );
                       }}
                     />
                   </SectionLoader>
                 )}
-                {selectedAnalyticsOptions?.includes('type_distribution') && (
-                  <SectionLoader loading={loadingStates.type_distribution} className="h-full">
+                {selectedAnalyticsOptions?.includes("type_distribution") && (
+                  <SectionLoader
+                    loading={loadingStates.type_distribution}
+                    className="h-full"
+                  >
                     <AMCTypeDistributionCard
                       data={amcTypeDistribution}
                       colorPalette={analyticsColorPalette}
                       headerClassName="text-[#1A1A1A]"
                       onDownload={async () => {
-                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                        await amcAnalyticsDownloadAPI.downloadAMCTypeDistribution(startDate, endDate);
+                        const startDate = convertDateStringToDate(
+                          analyticsDateRange.startDate
+                        );
+                        const endDate = convertDateStringToDate(
+                          analyticsDateRange.endDate
+                        );
+                        await amcAnalyticsDownloadAPI.downloadAMCTypeDistribution(
+                          startDate,
+                          endDate
+                        );
                       }}
                     />
                   </SectionLoader>
@@ -1497,30 +1941,50 @@ export const AMCDashboard = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-                {selectedAnalyticsOptions?.includes('unit_resource_wise') && (
-                  <SectionLoader loading={loadingStates.unit_resource_wise} className="h-full">
+                {selectedAnalyticsOptions?.includes("unit_resource_wise") && (
+                  <SectionLoader
+                    loading={loadingStates.unit_resource_wise}
+                    className="h-full"
+                  >
                     <AMCUnitResourceCard
                       data={amcUnitResourceData}
                       colorPalette={analyticsColorPalette}
                       headerClassName="text-[#1A1A1A]"
                       onDownload={async () => {
-                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                        await amcAnalyticsDownloadAPI.downloadAMCUnitResourceWise(startDate, endDate);
+                        const startDate = convertDateStringToDate(
+                          analyticsDateRange.startDate
+                        );
+                        const endDate = convertDateStringToDate(
+                          analyticsDateRange.endDate
+                        );
+                        await amcAnalyticsDownloadAPI.downloadAMCUnitResourceWise(
+                          startDate,
+                          endDate
+                        );
                       }}
                     />
                   </SectionLoader>
                 )}
-                {selectedAnalyticsOptions?.includes('service_stats') && (
-                  <SectionLoader loading={loadingStates.service_stats} className="h-full">
+                {selectedAnalyticsOptions?.includes("service_stats") && (
+                  <SectionLoader
+                    loading={loadingStates.service_stats}
+                    className="h-full"
+                  >
                     <AMCServiceStatsCard
                       data={amcServiceStatsData}
                       colorPalette={analyticsColorPalette}
                       headerClassName="text-[#1A1A1A]"
                       onDownload={async () => {
-                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                        await amcAnalyticsDownloadAPI.downloadAMCServiceStats(startDate, endDate);
+                        const startDate = convertDateStringToDate(
+                          analyticsDateRange.startDate
+                        );
+                        const endDate = convertDateStringToDate(
+                          analyticsDateRange.endDate
+                        );
+                        await amcAnalyticsDownloadAPI.downloadAMCServiceStats(
+                          startDate,
+                          endDate
+                        );
                       }}
                     />
                   </SectionLoader>
@@ -1542,31 +2006,51 @@ export const AMCDashboard = () => {
                   </div>
                 )} */}
 
-              {selectedAnalyticsOptions?.includes('coverage_by_location') && (
-                <SectionLoader loading={loadingStates.coverage_by_location} className="h-full">
+              {selectedAnalyticsOptions?.includes("coverage_by_location") && (
+                <SectionLoader
+                  loading={loadingStates.coverage_by_location}
+                  className="h-full"
+                >
                   <AMCCoverageByLocationCard
                     data={amcCoverageData}
                     colorPalette={analyticsColorPalette}
                     headerClassName="text-[#1A1A1A]"
                     onDownload={async () => {
-                      const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                      const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                      await amcAnalyticsDownloadAPI.downloadAMCCoverageByLocation(startDate, endDate);
+                      const startDate = convertDateStringToDate(
+                        analyticsDateRange.startDate
+                      );
+                      const endDate = convertDateStringToDate(
+                        analyticsDateRange.endDate
+                      );
+                      await amcAnalyticsDownloadAPI.downloadAMCCoverageByLocation(
+                        startDate,
+                        endDate
+                      );
                     }}
                   />
                 </SectionLoader>
               )}
 
-              {selectedAnalyticsOptions?.includes('expiry_analysis') && (
-                <SectionLoader loading={loadingStates.expiry_analysis} className="w-full lg:w-3/5 h-full">
+              {selectedAnalyticsOptions?.includes("expiry_analysis") && (
+                <SectionLoader
+                  loading={loadingStates.expiry_analysis}
+                  className="w-full lg:w-3/5 h-full"
+                >
                   <AMCExpiryAnalysisCard
                     data={amcExpiryAnalysis}
                     colorPalette={analyticsColorPalette}
                     headerClassName="text-[#1A1A1A]"
                     onDownload={async () => {
-                      const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                      const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                      await amcAnalyticsDownloadAPI.downloadAMCExpiryAnalysis(startDate, endDate);
+                      const startDate = convertDateStringToDate(
+                        analyticsDateRange.startDate
+                      );
+                      const endDate = convertDateStringToDate(
+                        analyticsDateRange.endDate
+                      );
+                      await amcAnalyticsDownloadAPI.downloadAMCExpiryAnalysis(
+                        startDate,
+                        endDate
+                      );
                     }}
                   />
                 </SectionLoader>
@@ -1576,107 +2060,164 @@ export const AMCDashboard = () => {
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center">
                     <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No analytics selected. Please select at least one report to view.</p>
+                    <p className="text-muted-foreground">
+                      No analytics selected. Please select at least one report
+                      to view.
+                    </p>
                   </div>
                 </div>
               )}
             </div>
           </TabsContent>
 
-          <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+          <TabsContent
+            value="amclist"
+            className="space-y-4 sm:space-y-6 mt-4 sm:mt-6"
+          >
             <div className="grid grid-cols-3 gap-2 sm:gap-4">
-
               <StatsCard
                 title="Total AMCs"
                 value={(apiData as any)?.total_amcs_count || 0}
-                selected={selectedSummary === 'total'}
-                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+                selected={selectedSummary === "total"}
+                icon={
+                  <Settings
+                    className="w-6 h-6 sm:w-8 sm:h-8"
+                    style={{ color: "#C72030" }}
+                  />
+                }
                 // bgColor="#C4B89D54"
                 // isSelected={selectedSummary === 'total'}
-                onClick={() => { setSelectedSummary('total'); handleTotalAMCClick(); }}
+                onClick={() => {
+                  setSelectedSummary("total");
+                  handleTotalAMCClick();
+                }}
               />
 
               <StatsCard
                 title="Active AMCs"
                 value={(apiData as any)?.active_amcs_count || 0}
-                selected={selectedSummary === 'active'}
-                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+                selected={selectedSummary === "active"}
+                icon={
+                  <Settings
+                    className="w-6 h-6 sm:w-8 sm:h-8"
+                    style={{ color: "#C72030" }}
+                  />
+                }
                 // bgColor="#C4B89D54"
                 // isSelected={selectedSummary === 'active'}
-                onClick={() => { setSelectedSummary('active'); handleActiveAMCClick(); }}
+                onClick={() => {
+                  setSelectedSummary("active");
+                  handleActiveAMCClick();
+                }}
               />
 
               <StatsCard
                 title="Inactive AMCs"
                 value={(apiData as any)?.inactive_amcs_count || 0}
-                selected={selectedSummary === 'inactive'}
-                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+                selected={selectedSummary === "inactive"}
+                icon={
+                  <Settings
+                    className="w-6 h-6 sm:w-8 sm:h-8"
+                    style={{ color: "#C72030" }}
+                  />
+                }
                 // bgColor="#C4B89D54"
                 // isSelected={selectedSummary === 'inactive'}
-                onClick={() => { setSelectedSummary('inactive'); handleInactiveAMCClick(); }}
+                onClick={() => {
+                  setSelectedSummary("inactive");
+                  handleInactiveAMCClick();
+                }}
               />
 
               <StatsCard
                 title="Under Observation"
                 value={(apiData as any)?.under_observation || 0}
-                selected={selectedSummary === 'underObservation'}
-                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+                selected={selectedSummary === "underObservation"}
+                icon={
+                  <Settings
+                    className="w-6 h-6 sm:w-8 sm:h-8"
+                    style={{ color: "#C72030" }}
+                  />
+                }
                 // bgColor="#C4B89D54"
                 // isSelected={selectedSummary === 'underObservation'}
-                onClick={() => { setSelectedSummary('underObservation'); handleFlaggedAMCClick(); }}
+                onClick={() => {
+                  setSelectedSummary("underObservation");
+                  handleFlaggedAMCClick();
+                }}
               />
 
               <StatsCard
                 title="Expiring Soon (15 days)"
                 value={(apiData as any)?.expiring_in_fifteen_days || 0}
-                selected={selectedSummary === 'expiring'}
-                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+                selected={selectedSummary === "expiring"}
+                icon={
+                  <Settings
+                    className="w-6 h-6 sm:w-8 sm:h-8"
+                    style={{ color: "#C72030" }}
+                  />
+                }
                 // bgColor="#C4B89D54"
                 // isSelected={selectedSummary === 'expiring'}
                 onClick={() => {
-                  handleExpiringIn90DaysClick(); setSelectedSummary('expiring');
+                  handleExpiringIn90DaysClick();
+                  setSelectedSummary("expiring");
                 }}
               />
               <StatsCard
                 title="Total AMC Cost"
-                value={`${localStorage.getItem("currency") ?? ''} ${(apiData as any)?.total_amc_cost?.toLocaleString() || 0}`}
-                selected={selectedSummary === 'totalCost'}
-                icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+                value={`${localStorage.getItem("currency") ?? ""} ${(apiData as any)?.total_amc_cost?.toLocaleString() || 0}`}
+                selected={selectedSummary === "totalCost"}
+                icon={
+                  <Settings
+                    className="w-6 h-6 sm:w-8 sm:h-8"
+                    style={{ color: "#C72030" }}
+                  />
+                }
                 // bgColor="#C4B89D54"
                 // isSelected={false}
-                onClick={() => { handleTotalAMCClick(); }}
+                onClick={() => {
+                  handleTotalAMCClick();
+                }}
               />
-
-
             </div>
 
-            <AmcBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
+            <AmcBulkUploadModal
+              isOpen={showBulkUploadModal}
+              onClose={() => setShowBulkUploadModal(false)}
+            />
 
             {showActionPanel && (
               <SelectionPanel
                 actions={[
+                  // {
+                  //   label: "Add Visit",
+                  //   icon: CalendarPlus,
+                  //   onClick: () => {
+                  //     if (selectedItems.length !== 1) {
+                  //       toast.error(
+                  //         "Please select exactly 1 AMC to add a visit"
+                  //       );
+                  //       return;
+                  //     }
+                  //     setAddVisitAmcId(selectedItems[0]);
+                  //     setShowAddVisitModal(true);
+                  //   },
+                  // },
                   {
-                    label: 'Add Visit',
-                    icon: CalendarPlus,
-                    onClick: () => {
-                      if (selectedItems.length !== 1) {
-                        toast.error('Please select exactly 1 AMC to add a visit');
-                        return;
-                      }
-                      setAddVisitAmcId(selectedItems[0]);
-                      setShowAddVisitModal(true);
-                    },
+                    label: "Add AMC",
+                    icon: Plus,
+                    onClick: () => navigate("/maintenance/amc/add"),
                   },
                   {
-                    label: 'Add AMC',
+                    label: "Add Schedule",
                     icon: Plus,
-                    onClick: () => navigate('/maintenance/amc/add'),
+                    onClick: () =>
+                      navigate(
+                        `/maintenance/schedule/add?type=AMC${selectedItems.length > 0 ? `&amc_id=${selectedItems[0]}` : ""}`
+                      ),
                   },
-                  {
-                    label: 'Add Schedule',
-                    icon: Plus,
-                    onClick: () => navigate('/maintenance/schedule/add?type=AMC'),
-                  }]}
+                ]}
                 onClearSelection={clearSelectionsAndClosePanel}
               />
             )}
@@ -1706,6 +2247,7 @@ export const AMCDashboard = () => {
               pagination={false}
               onFilterClick={handleFiltersClick}
               leftActions={
+                // shouldShow("AMC", "create") && (
                 <Button
                   onClick={handleActionClick}
                   className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
@@ -1713,6 +2255,7 @@ export const AMCDashboard = () => {
                   <Plus className="w-4 h-4" />
                   Action
                 </Button>
+                // )
               }
               enableSearch={true}
               searchTerm={searchQuery}
@@ -1725,15 +2268,35 @@ export const AMCDashboard = () => {
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious
-                      onClick={() => handlePageChange(Math.max(1, paginationSafe.current_page - 1))}
-                      className={paginationSafe.current_page === 1 ? 'pointer-events-none opacity-50' : ''}
+                      onClick={() =>
+                        handlePageChange(
+                          Math.max(1, paginationSafe.current_page - 1)
+                        )
+                      }
+                      className={
+                        paginationSafe.current_page === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
                     />
                   </PaginationItem>
                   {renderPaginationItems()}
                   <PaginationItem>
                     <PaginationNext
-                      onClick={() => handlePageChange(Math.min(paginationSafe.total_pages, paginationSafe.current_page + 1))}
-                      className={paginationSafe.current_page === paginationSafe.total_pages ? 'pointer-events-none opacity-50' : ''}
+                      onClick={() =>
+                        handlePageChange(
+                          Math.min(
+                            paginationSafe.total_pages,
+                            paginationSafe.current_page + 1
+                          )
+                        )
+                      }
+                      className={
+                        paginationSafe.current_page ===
+                          paginationSafe.total_pages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
                     />
                   </PaginationItem>
                 </PaginationContent>
@@ -1747,19 +2310,22 @@ export const AMCDashboard = () => {
           onClose={() => setIsFilterModalOpen(false)}
           maxWidth="md"
           fullWidth
-          PaperProps={{ sx: { borderRadius: '5px', overflow: 'hidden' } }}
+          PaperProps={{ sx: { borderRadius: "5px", overflow: "hidden" } }}
         >
           <MUIDialogContent sx={{ p: 0 }}>
             <div className="p-6" ref={filterDialogRef}>
               <div className="flex items-start justify-between mb-6">
-                <Typography variant="h6" className="!text-[20px] font-extrabold text-[#0f172a]">
+                <Typography
+                  variant="h6"
+                  className="!text-[20px] font-extrabold text-[#0f172a]"
+                >
                   FILTER BY
                 </Typography>
                 <IconButton
                   aria-label="close"
                   size="small"
                   onClick={() => setIsFilterModalOpen(false)}
-                  sx={{ opacity: 0.7, '&:hover': { opacity: 1 } }}
+                  sx={{ opacity: 0.7, "&:hover": { opacity: 1 } }}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1787,76 +2353,155 @@ export const AMCDashboard = () => {
                         <MUISelect
                           labelId="status-filter-label"
                           label="Status"
-                          value={tempStatusFilter || 'all'}
-                          onChange={(e) => setTempStatusFilter(e.target.value === 'all' ? null : (e.target.value as string))}
+                          value={tempStatusFilter || "all"}
+                          onChange={(e) =>
+                            setTempStatusFilter(
+                              e.target.value === "all"
+                                ? null
+                                : (e.target.value as string)
+                            )
+                          }
                         >
                           <MenuItem value="all">All Status</MenuItem>
                           <MenuItem value="active">Active</MenuItem>
                           <MenuItem value="inactive">Inactive</MenuItem>
-                          <MenuItem value="under_observation">Under Observation</MenuItem>
+                          <MenuItem value="under_observation">
+                            Under Observation
+                          </MenuItem>
                           <MenuItem value="expired">Expired</MenuItem>
                         </MUISelect>
                       </FormControl>
                     </div>
                     <div>
                       <FormControl fullWidth size="small">
-                        <InputLabel id="vendor-filter-label">Vendor Name</InputLabel>
+                        <InputLabel id="vendor-filter-label">
+                          Vendor Name
+                        </InputLabel>
                         <MUISelect
                           labelId="vendor-filter-label"
                           label="Vendor Name"
-                          value={tempVendorNameFilter || 'all'}
-                          onChange={(e) => setTempVendorNameFilter(e.target.value === 'all' ? null : (e.target.value as string))}
+                          value={tempVendorNameFilter || "all"}
+                          onChange={(e) =>
+                            setTempVendorNameFilter(
+                              e.target.value === "all"
+                                ? null
+                                : (e.target.value as string)
+                            )
+                          }
                         >
                           <MenuItem value="all">All Vendors</MenuItem>
                           {uniqueVendorNames.map((v) => (
-                            <MenuItem key={v} value={v}>{v}</MenuItem>
+                            <MenuItem key={v} value={v}>
+                              {v}
+                            </MenuItem>
                           ))}
                         </MUISelect>
                       </FormControl>
                     </div>
                     <div>
                       <FormControl fullWidth size="small">
-                        <InputLabel id="asset-name-filter-label">Asset Name</InputLabel>
+                        <InputLabel id="asset-name-filter-label">
+                          Asset Name
+                        </InputLabel>
                         <MUISelect
                           labelId="asset-name-filter-label"
                           label="Asset Name"
-                          value={tempAssetNameFilter || 'all'}
-                          onChange={(e) => setTempAssetNameFilter(e.target.value === 'all' ? null : (e.target.value as string))}
+                          value={tempAssetNameFilter || "all"}
+                          onChange={(e) =>
+                            setTempAssetNameFilter(
+                              e.target.value === "all"
+                                ? null
+                                : (e.target.value as string)
+                            )
+                          }
                         >
                           <MenuItem value="all">All Assets</MenuItem>
                           {assetOptions.map((a) => (
-                            <MenuItem key={a.id} value={a.name}>{a.name}</MenuItem>
+                            <MenuItem key={a.id} value={a.name}>
+                              {a.name}
+                            </MenuItem>
                           ))}
                         </MUISelect>
                       </FormControl>
                     </div>
                     <div>
-                      <FormControl fullWidth size="small">
-                        <InputLabel id="service-name-filter-label">Service Name</InputLabel>
+                      <FormControl
+                        fullWidth
+                        size="small"
+                        ref={serviceNameControlRef}
+                      >
+                        <InputLabel id="service-name-filter-label">
+                          Service Name
+                        </InputLabel>
                         <MUISelect
                           labelId="service-name-filter-label"
                           label="Service Name"
-                          value={tempServiceNameFilter || 'all'}
-                          onChange={(e) => setTempServiceNameFilter(e.target.value === 'all' ? null : (e.target.value as string))}
+                          value={tempServiceNameFilter || "all"}
+                          onChange={(e) =>
+                            setTempServiceNameFilter(
+                              e.target.value === "all"
+                                ? null
+                                : (e.target.value as string)
+                            )
+                          }
+                          MenuProps={{
+                            PaperProps: {
+                              sx: {
+                                mt: 0.5,
+                                borderRadius: "10px",
+                                boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
+                                maxWidth:
+                                  serviceNameControlRef.current?.offsetWidth ||
+                                  "100%",
+                              },
+                            },
+                          }}
                         >
                           <MenuItem value="all">All Services</MenuItem>
                           {serviceOptions.map((s) => (
-                            <MenuItem key={s.id} value={s.name}>{s.name}</MenuItem>
+                            <MenuItem key={s.id} value={s.name}>
+                              <div className="truncate w-full" title={s.name}>
+                                {s.name}
+                              </div>
+                            </MenuItem>
                           ))}
                         </MUISelect>
                       </FormControl>
                     </div>
                     <div>
-                      <FormControl fullWidth size="small" ref={amcTypeControlRef}>
+                      <FormControl
+                        fullWidth
+                        size="small"
+                        ref={amcTypeControlRef}
+                      >
                         <InputLabel id="amc-type-label">AMC Type</InputLabel>
                         <MUISelect
                           labelId="amc-type-label"
                           label="AMC Type"
-                          value={tempAmcTypeFilter || 'all'}
-                          onChange={(e) => setTempAmcTypeFilter(e.target.value === 'all' ? null : e.target.value as string)}
-                          sx={{ '& .MuiSelect-select': { display: 'flex', alignItems: 'center' } }}
+                          value={tempAmcTypeFilter || "all"}
+                          onChange={(e) =>
+                            setTempAmcTypeFilter(
+                              e.target.value === "all"
+                                ? null
+                                : (e.target.value as string)
+                            )
+                          }
+                          sx={{
+                            "& .MuiSelect-select": {
+                              display: "flex",
+                              alignItems: "center",
+                            },
+                          }}
                           MenuProps={{
-                            PaperProps: { sx: { mt: 0.5, borderRadius: '10px', boxShadow: '0 6px 18px rgba(0,0,0,0.18)', minWidth: amcTypeControlRef.current?.offsetWidth } },
+                            PaperProps: {
+                              sx: {
+                                mt: 0.5,
+                                borderRadius: "10px",
+                                boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
+                                minWidth:
+                                  amcTypeControlRef.current?.offsetWidth,
+                              },
+                            },
                           }}
                         >
                           <MenuItem value="all">All Types</MenuItem>
@@ -1871,34 +2516,58 @@ export const AMCDashboard = () => {
                         <MUISelect
                           labelId="group-filter-label"
                           label="Group"
-                          value={tempGroupFilter || 'all'}
+                          value={tempGroupFilter || "all"}
                           onChange={(e) => {
-                            const nextGroupId = e.target.value === 'all' ? null : (e.target.value as string);
+                            const nextGroupId =
+                              e.target.value === "all"
+                                ? null
+                                : (e.target.value as string);
                             setTempGroupFilter(nextGroupId);
-                            setTempGroupIdForSubGroups(nextGroupId ? Number(nextGroupId) : null);
+                            setTempGroupIdForSubGroups(
+                              nextGroupId ? Number(nextGroupId) : null
+                            );
                             // Reset subgroup when group changes
                             setTempSubGroupFilter(null);
                           }}
                         >
                           <MenuItem value="all">All Groups</MenuItem>
                           {groupOptions.map((g) => (
-                            <MenuItem key={g.id} value={String(g.id)}>{g.name}</MenuItem>
+                            <MenuItem key={g.id} value={String(g.id)}>
+                              {g.name}
+                            </MenuItem>
                           ))}
                         </MUISelect>
                       </FormControl>
                     </div>
                     <div>
-                      <FormControl fullWidth size="small" disabled={subGroupOptions.length === 0 || filtersOptionsLoading.subGroups}>
-                        <InputLabel id="subgroup-filter-label">Sub Group</InputLabel>
+                      <FormControl
+                        fullWidth
+                        size="small"
+                        disabled={
+                          subGroupOptions.length === 0 ||
+                          filtersOptionsLoading.subGroups
+                        }
+                      >
+                        <InputLabel id="subgroup-filter-label">
+                          Sub Group
+                        </InputLabel>
                         <MUISelect
                           labelId="subgroup-filter-label"
                           label="Sub Group"
-                          value={tempSubGroupFilter || 'all'}
-                          onChange={(e) => setTempSubGroupFilter(e.target.value === 'all' ? null : (e.target.value as string))}
+                          value={tempSubGroupFilter || "all"}
+                          onChange={(e) =>
+                            setTempSubGroupFilter(
+                              e.target.value === "all"
+                                ? null
+                                : (e.target.value as string)
+                            )
+                          }
                         >
                           <MenuItem value="all">All Sub Groups</MenuItem>
                           {subGroupOptions.map((sg) => (
-                            <MenuItem key={sg.id} value={String(sg.id)}>{sg.name}</MenuItem>
+                            <MenuItem key={sg.id} value={String(sg.id)}>
+                              {sg.name}
+                            </MenuItem>
                           ))}
                         </MUISelect>
                       </FormControl>
@@ -1909,8 +2578,10 @@ export const AMCDashboard = () => {
                         type="date"
                         size="small"
                         fullWidth
-                        value={tempStartDateFilter || ''}
-                        onChange={(e) => setTempStartDateFilter(e.target.value || null)}
+                        value={tempStartDateFilter || ""}
+                        onChange={(e) =>
+                          setTempStartDateFilter(e.target.value || null)
+                        }
                         InputLabelProps={{ shrink: true }}
                       />
                     </div>
@@ -1920,8 +2591,10 @@ export const AMCDashboard = () => {
                         type="date"
                         size="small"
                         fullWidth
-                        value={tempEndDateFilter || ''}
-                        onChange={(e) => setTempEndDateFilter(e.target.value || null)}
+                        value={tempEndDateFilter || ""}
+                        onChange={(e) =>
+                          setTempEndDateFilter(e.target.value || null)
+                        }
                         InputLabelProps={{ shrink: true }}
                       />
                     </div>
@@ -1929,11 +2602,11 @@ export const AMCDashboard = () => {
                 </div>
               </Box>
 
-              <div className="flex justify-end gap-4 mt-12 pt-6 border-t">
+              <div className="flex justify-center gap-2 mt-12 pt-6 border-t">
                 <Button
                   variant="outline"
                   onClick={handleResetFilters}
-                  className="h-11 px-6 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/5"
+                  className="px-4 py-2 text-sm font-medium rounded hover:opacity-80 transition-opacity"
                 >
                   Clear All
                 </Button>

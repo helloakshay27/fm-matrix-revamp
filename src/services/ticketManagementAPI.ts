@@ -317,26 +317,26 @@ export const ticketManagementAPI = {
         sitesLength: response.data.sites?.length || 0,
         sampleSites: response.data.sites?.slice(0, 3)
       });
-      
+
       const rawSites = response.data.sites || [];
-      
+
       // Map the raw site data to SiteOption format
       const sites: SiteOption[] = rawSites.map((site: any) => ({
         id: site.id,
         name: site.name || site.site_name || `Site ${site.id}`,
         site_name: site.name || site.site_name // Keep for backward compatibility
       }));
-      
+
       console.log('🔄 Mapped Sites:', {
         originalCount: rawSites.length,
         mappedCount: sites.length,
         sampleMappedSites: sites.slice(0, 3)
       });
-      
+
       if (sites.length === 0) {
         console.warn('⚠️ No sites found in response');
       }
-      
+
       return sites;
     } catch (error) {
       console.error('❌ Error fetching sites:', error);
@@ -365,25 +365,25 @@ export const ticketManagementAPI = {
         usersArray: response.data.users,
         usersLength: response.data.users?.length || 0
       });
-      
+
       const rawUsers = response.data.users || [];
-      
+
       // Map the raw user data to UserOption format
       const users: UserOption[] = rawUsers.map((user: any) => ({
         id: user.id,
         name: user.full_name || user.email || `User ${user.id}`
       }));
-      
+
       console.log('🔄 Mapped FM Users:', {
         originalCount: rawUsers.length,
         mappedCount: users.length,
         sampleMappedUsers: users.slice(0, 3)
       });
-      
+
       if (users.length === 0) {
         console.warn('⚠️ No FM users found in response');
       }
-      
+
       return users;
     } catch (error) {
       console.error('❌ Error fetching FM Users:', error);
@@ -407,25 +407,25 @@ export const ticketManagementAPI = {
         categoriesArray: response.data.support_staff_categories,
         categoriesLength: response.data.support_staff_categories?.length || 0
       });
-      
+
       const rawCategories = response.data.support_staff_categories || response.data || [];
-      
+
       // Map the raw category data to standard format
       const categories = rawCategories.map((category: any) => ({
         id: category.id,
         name: category.name || category.category_name || `Category ${category.id}`
       }));
-      
+
       console.log('🔄 Mapped Support Staff Categories:', {
         originalCount: rawCategories.length,
         mappedCount: categories.length,
         sampleMappedCategories: categories.slice(0, 3)
       });
-      
+
       if (categories.length === 0) {
         console.warn('⚠️ No support staff categories found in response');
       }
-      
+
       return categories;
     } catch (error) {
       console.error('❌ Error fetching Support Staff Categories:', error);
@@ -444,25 +444,25 @@ export const ticketManagementAPI = {
         typesArray: response.data.item_movement_types || response.data,
         typesLength: (response.data.item_movement_types || response.data)?.length || 0
       });
-      
+
       const rawTypes = response.data.item_movement_types || response.data || [];
-      
+
       // Map the raw type data to standard format
       const types = rawTypes.map((type: any) => ({
         id: type.id,
         name: type.name || type.movement_type || `Type ${type.id}`
       }));
-      
+
       console.log('🔄 Mapped Item Movement Types:', {
         originalCount: rawTypes.length,
         mappedCount: types.length,
         sampleMappedTypes: types.slice(0, 3)
       });
-      
+
       if (types.length === 0) {
         console.warn('⚠️ No item movement types found in response');
       }
-      
+
       return types;
     } catch (error) {
       console.error('❌ Error fetching Item Movement Types:', error);
@@ -481,25 +481,25 @@ export const ticketManagementAPI = {
         itemsArray: response.data.item_movement || response.data.movement_types || response.data.item_types || response.data,
         itemsLength: (response.data.item_movement || response.data.movement_types || response.data.item_types || response.data)?.length || 0
       });
-      
+
       const rawItems = response.data.item_movement || response.data.movement_types || response.data.item_types || response.data || [];
-      
+
       // Map the raw item data to standard format
       const items = rawItems.map((item: any) => ({
         id: item.id,
         name: item.name || item.type || item.movement_type || `Item ${item.id}`
       }));
-      
+
       console.log('🔄 Mapped Item Types:', {
         originalCount: rawItems.length,
         mappedCount: items.length,
         sampleMappedItems: items.slice(0, 3)
       });
-      
+
       if (items.length === 0) {
         console.warn('⚠️ No item types found in response');
       }
-      
+
       return items;
     } catch (error) {
       console.error('❌ Error fetching Item Types:', error);
@@ -511,30 +511,30 @@ export const ticketManagementAPI = {
   // Categories
   async createCategory(data: CategoryFormData, emailData: CategoryEmailData) {
     const formData = new FormData();
-    
+
     // Add category data
     formData.append('helpdesk_category[name]', data.name);
     formData.append('helpdesk_category[tat]', data.tat);
     formData.append('helpdesk_category[customer_enabled]', data.customer_enabled ? '1' : '0');
     formData.append('helpdesk_category[society_id]', data.society_id);
     formData.append('helpdesk_category[of_phase]', 'pms');
-    
+
     if (data.icon) {
       formData.append('helpdesk_category[icon]', data.icon);
     }
-    
+
     // Add FAQ data
     data.complaint_faqs_attributes.forEach((faq, index) => {
       formData.append(`helpdesk_category[complaint_faqs_attributes][${index}][question]`, faq.question);
       formData.append(`helpdesk_category[complaint_faqs_attributes][${index}][answer]`, faq.answer);
       formData.append(`helpdesk_category[complaint_faqs_attributes][${index}][_destroy]`, faq._destroy.toString());
     });
-    
+
     // Add email data
     emailData.email.forEach((email, index) => {
       formData.append(`category_email[email][${index}]`, email);
     });
-    
+
     const response = await apiClient.post('/pms/admin/helpdesk_categories.json', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
@@ -586,7 +586,7 @@ export const ticketManagementAPI = {
     const queryParams = new URLSearchParams();
     queryParams.append('page', page.toString());
     queryParams.append('per_page', perPage.toString());
-    
+
     const url = `${ENDPOINTS.SOCIETY_GATES}?${queryParams.toString()}`;
     const response = await apiClient.get(url);
     return response.data;
@@ -595,13 +595,13 @@ export const ticketManagementAPI = {
   // Tickets
   async getTickets(page: number = 1, perPage: number = 20, filters?: TicketFilters): Promise<TicketListResponse> {
     const queryParams = new URLSearchParams();
-    
+
     // Add pagination
     queryParams.append('page', page.toString());
     queryParams.append('per_page', perPage.toString());
-    
+
     console.log('🔵 API getTickets called with filters:', filters);
-    
+
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
@@ -644,7 +644,7 @@ export const ticketManagementAPI = {
   // New ticket creation method
   async createTicket(ticketData: CreateTicketFormData, attachments: File[] = []) {
     const formData = new FormData();
-    
+
     // Add all ticket data with complaint[] prefix
     formData.append('complaint[of_phase]', ticketData.of_phase);
     formData.append('complaint[site_id]', ticketData.site_id.toString());
@@ -663,7 +663,7 @@ export const ticketManagementAPI = {
     } else if ('supplier_id' in ticketData && ticketData.supplier_id) {
       formData.append('complaint[supplier_id]', String(ticketData.supplier_id));
     }
-    
+
     // Add severity if provided
     if (ticketData.severity) {
       formData.append('complaint[severity]', ticketData.severity);
@@ -685,7 +685,7 @@ export const ticketManagementAPI = {
     if (ticketData.sub_category_id) {
       formData.append('complaint[sub_category_id]', ticketData.sub_category_id.toString());
     }
-    
+
     // Add all location parameters
     if (ticketData.area_id) {
       formData.append('complaint[area_id]', ticketData.area_id.toString());
@@ -743,26 +743,26 @@ export const ticketManagementAPI = {
   // Subcategories
   async createSubCategory(data: SubCategoryFormData) {
     const formData = new FormData();
-    
+
     formData.append('helpdesk_sub_category[helpdesk_category_id]', data.helpdesk_category_id.toString());
     formData.append('helpdesk_sub_category[customer_enabled]', data.customer_enabled ? '1' : '0');
-    
+
     if (data.icon) {
       formData.append('helpdesk_sub_category[icon]', data.icon);
     }
-    
+
     // Add tags - use array format as specified in API
     data.sub_category_tags.forEach((tag) => {
       formData.append('sub_category_tags[]', tag);
     });
-    
+
     // Add location enabled flags
     Object.entries(data.location_enabled).forEach(([key, value]) => {
       if (value !== undefined) {
         formData.append(`location_enabled[${key}]`, value ? 'true' : 'false');
       }
     });
-    
+
     // Add location data - use array format as specified in API
     Object.entries(data.location_data).forEach(([key, ids]) => {
       if (ids && ids.length > 0) {
@@ -771,18 +771,20 @@ export const ticketManagementAPI = {
         });
       }
     });
-    
+
     // Add engineer assignments - use array format as specified in API
     data.complaint_worker.assign_to.forEach((id) => {
       formData.append('complaint_worker[assign_to][]', id.toString());
     });
-    
+
     const response = await apiClient.post('/pms/admin/create_helpdesk_sub_category.json', formData);
     return response.data;
   },
 
-  async getSubCategories() {
-    const response = await apiClient.get('/pms/admin/get_all_helpdesk_sub_categories.json');
+  async getSubCategories(page: number = 1, perPage: number = 20, search: string = '') {
+    const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
+    const url = `/pms/admin/get_all_helpdesk_sub_categories.json?page=${page}&per_page=${perPage}${searchParam}`;
+    const response = await apiClient.get(url);
     return response.data;
   },
 
@@ -798,7 +800,7 @@ export const ticketManagementAPI = {
     // Add the ID to the FormData
     formData.append('id', subCategoryId.toString());
     formData.append('active', '1');
-    
+
     const response = await apiClient.post('/pms/admin/modify_helpdesk_sub_category.json', formData);
     return response.data;
   },
@@ -899,12 +901,12 @@ export const ticketManagementAPI = {
             end_hour: day.end_hour.toString(),
             end_min: day.end_min.toString().padStart(2, '0')
           };
-          
+
           // Only include id for existing records (id > 0)
           if (day.id > 0) {
             attributes.id = day.id.toString();
           }
-          
+
           return attributes;
         })
       },
@@ -914,7 +916,7 @@ export const ticketManagementAPI = {
   },
 
   async downloadSampleFile() {
-    const response = await apiClient.get('/assets/operational_import.xlsx', {
+    const response = await apiClient.get('/operational_import.xlsx', {
       responseType: 'blob'
     });
     return response.data;
@@ -923,7 +925,7 @@ export const ticketManagementAPI = {
   async uploadOperationalFile(file: File) {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const response = await apiClient.post('/helpdesk_operations/import', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
@@ -966,7 +968,7 @@ export const ticketManagementAPI = {
     try {
       // Create URL-encoded data for the PATCH request (matching EditStatusDialog pattern)
       const params = new URLSearchParams();
-      
+
       if (updateData.priority) {
         params.append('complaint[priority]', updateData.priority);
       }
@@ -1048,7 +1050,7 @@ export const ticketManagementAPI = {
     requests: number;
   }> {
     const queryParams = new URLSearchParams();
-    
+
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
@@ -1071,7 +1073,7 @@ export const ticketManagementAPI = {
 
     const url = `${ENDPOINTS.TICKETS_SUMMARY}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await apiClient.get(url);
-    
+
     // Ensure pending_tickets is included even if not returned by API
     const summary = {
       total_tickets: 0,
@@ -1084,14 +1086,14 @@ export const ticketManagementAPI = {
       requests: 0,
       ...response.data
     };
-    
+
     return summary;
   },
 
   // Export tickets with filters in Excel format
   async exportTicketsExcel(filters?: TicketFilters): Promise<Blob> {
     const queryParams = new URLSearchParams();
-    
+
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
@@ -1136,7 +1138,7 @@ export const ticketManagementAPI = {
   async tagVendorsToComplaint(data: { complaint_id: string; vendor_ids: string[] }) {
     const formData = new FormData();
     formData.append('complaint_id', data.complaint_id);
-    
+
     // Add vendor IDs as array
     data.vendor_ids.forEach((vendorId) => {
       formData.append('vendor_ids[]', vendorId);
@@ -1212,27 +1214,27 @@ export const ticketManagementAPI = {
         length: visitorData.capturedPhoto ? visitorData.capturedPhoto.length : 0,
         type: visitorData.capturedPhoto ? (visitorData.capturedPhoto.startsWith('data:') ? 'base64' : 'url') : 'none'
       });
-      
+
       const formData = new FormData();
-      
+
       // Static fields
       formData.append('gatekeeper[created_by]', 'Gatekeeper');
       formData.append('gatekeeper[IsDelete]', '0');
       formData.append('gatekeeper[approve]', '0');
-      
+
       // Add parent_gk_id if provided from visitor info
-    if (visitorData.parentGkId) {
-      formData.append('gatekeeper[parent_gk_id]', visitorData.parentGkId);
-      console.log('✅ Added parent_gk_id to FormData:', visitorData.parentGkId);
-    } else {
-      formData.append('gatekeeper[parent_gk_id]', '');
-      console.log('⚠️ No parent_gk_id provided - using empty string');
-    }
-      
+      if (visitorData.parentGkId) {
+        formData.append('gatekeeper[parent_gk_id]', visitorData.parentGkId);
+        console.log('✅ Added parent_gk_id to FormData:', visitorData.parentGkId);
+      } else {
+        formData.append('gatekeeper[parent_gk_id]', '');
+        console.log('⚠️ No parent_gk_id provided - using empty string');
+      }
+
       // Add resource_id (site_id) to the payload
       formData.append('gatekeeper[resource_id]', currentUserSiteId);
       console.log('✅ Added resource_id to FormData:', currentUserSiteId);
-      
+
       // Dynamic fields based on visitor type
       if (visitorData.visitorType === 'support') {
         formData.append('gatekeeper[guest_type]', 'Support Staff');
@@ -1245,7 +1247,7 @@ export const ticketManagementAPI = {
         formData.append('gatekeeper[support_staff_id]', '');
         formData.append('gatekeeper[support_staff_estimated_time]', '0');
       }
-      
+
       // Host and building
       if (visitorData.host) {
         formData.append('gatekeeper[person_to_meet_id]', visitorData.host);
@@ -1253,7 +1255,7 @@ export const ticketManagementAPI = {
       if (visitorData.tower) {
         formData.append('gatekeeper[building_id]', visitorData.tower);
       }
-      
+
       // Host details (when host is "others")
       if (visitorData.hostName) {
         formData.append('gatekeeper[visitor_host_name]', visitorData.hostName);
@@ -1264,7 +1266,7 @@ export const ticketManagementAPI = {
       if (visitorData.hostEmail) {
         formData.append('gatekeeper[visitor_host_email]', visitorData.hostEmail);
       }
-      
+
       // Basic visitor details
       formData.append('gatekeeper[guest_name]', visitorData.visitorName);
       if (visitorData.visitPurpose) {
@@ -1275,7 +1277,7 @@ export const ticketManagementAPI = {
       formData.append('gatekeeper[guest_from]', visitorData.visitorComingFrom);
       formData.append('gatekeeper[guest_vehicle_number]', visitorData.vehicleNumber || 'FILTERED');
       formData.append('gatekeeper[remarks]', visitorData.remarks);
-      
+
       // Expected at - only include for expected visitors
       if (visitorData.expected_at) {
         // Convert datetime-local format (YYYY-MM-DDTHH:MM) to the backend expected format
@@ -1286,7 +1288,7 @@ export const ticketManagementAPI = {
       } else {
         console.log('📅 No expected_at field - likely unexpected visitor');
       }
-      
+
       // Frequency and dates
       if (visitorData.frequency === 'frequently') {
         if (visitorData.passValidFrom) {
@@ -1301,7 +1303,7 @@ export const ticketManagementAPI = {
           const formattedToDate = `${toDate.getDate().toString().padStart(2, '0')}/${(toDate.getMonth() + 1).toString().padStart(2, '0')}/${toDate.getFullYear()}`;
           formData.append('gatekeeper[pass_end_date]', formattedToDate);
         }
-        
+
         // Days permitted (0=Sunday, 1=Monday, ..., 6=Saturday)
         if (visitorData.daysPermitted) {
           const dayMapping = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
@@ -1315,11 +1317,11 @@ export const ticketManagementAPI = {
         formData.append('gatekeeper[pass_start_date]', '');
         formData.append('gatekeeper[pass_end_date]', '');
       }
-      
+
       formData.append('gatekeeper[mimo_type]', 'move_in');
       formData.append('value', visitorData.frequency === 'frequently' ? 'Frequently' : 'Once');
       formData.append('skip_approval', visitorData.skipHostApproval.toString());
-      
+
       // Additional visitors
       if (visitorData.additionalVisitors && visitorData.additionalVisitors.length > 0) {
         visitorData.additionalVisitors.forEach((visitor, index) => {
@@ -1332,7 +1334,7 @@ export const ticketManagementAPI = {
           }
         });
       }
-      
+
       // Goods/Items (if goods inwards is enabled)
       if (visitorData.goodsInwards && visitorData.goodsData && visitorData.items) {
         const timestamp = Date.now();
@@ -1346,7 +1348,7 @@ export const ticketManagementAPI = {
         if (visitorData.host) {
           formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_of_id]`, visitorData.host);
         }
-        
+
         // Transport mode mapping
         const transportMapping: { [key: string]: string } = {
           truck: 'By Truck',
@@ -1357,10 +1359,10 @@ export const ticketManagementAPI = {
         };
         const mappedTransport = transportMapping[visitorData.goodsData.modeOfTransport] || 'By Hand';
         formData.append(`gatekeeper[item_movements_attributes][${timestamp}][mode_of_transport]`, mappedTransport);
-        
+
         formData.append(`gatekeeper[item_movements_attributes][${timestamp}][lr_number]`, visitorData.goodsData.lrNumber || 'FILTERED');
         formData.append(`gatekeeper[item_movements_attributes][${timestamp}][trip_id]`, visitorData.goodsData.tripId);
-        
+
         // Add items
         visitorData.items.forEach((item, itemIndex) => {
           if (item.selectItem && item.quantity) {
@@ -1371,46 +1373,46 @@ export const ticketManagementAPI = {
             formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_details_attributes][${itemTimestamp}][_destroy]`, 'false');
           }
         });
-        
+
         // Pass the selected item movement type ID instead of hardcoded value
         formData.append('item_movement_type_id', visitorData.goodsData.selectType || '1');
       }
-      
+
       // Add photo if captured or from existing visitor
       if (visitorData.capturedPhoto) {
         const isBase64 = visitorData.capturedPhoto.startsWith('data:image/');
         const isURL = visitorData.capturedPhoto.startsWith('http://') || visitorData.capturedPhoto.startsWith('https://');
-        
+
         console.log('📷 Processing photo for upload...', {
           type: isBase64 ? 'Base64 (newly captured)' : isURL ? 'URL (existing visitor photo)' : 'Unknown',
           dataLength: visitorData.capturedPhoto.length,
           preview: visitorData.capturedPhoto.substring(0, 80) + '...'
         });
-        
+
         try {
           let blob: Blob;
-          
+
           if (isBase64) {
             // For base64 data URLs (newly captured photos), convert directly to blob
             console.log('📷 Converting base64 to blob directly...');
-            
+
             // Extract the base64 data after the comma
             const base64Data = visitorData.capturedPhoto.split(',')[1];
-            
+
             // Extract MIME type from data URL
             const mimeMatch = visitorData.capturedPhoto.match(/data:([^;]+);/);
             const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-            
+
             // Convert base64 to binary
             const binaryString = atob(base64Data);
             const bytes = new Uint8Array(binaryString.length);
             for (let i = 0; i < binaryString.length; i++) {
               bytes[i] = binaryString.charCodeAt(i);
             }
-            
+
             // Create blob from binary data
             blob = new Blob([bytes], { type: mimeType });
-            
+
             console.log('📷 Base64 converted to blob:', {
               blobSize: blob.size,
               blobType: blob.type,
@@ -1420,13 +1422,13 @@ export const ticketManagementAPI = {
             // For URLs (existing visitor photos), fetch and convert to blob
             console.log('📷 Fetching photo from URL...');
             const response = await fetch(visitorData.capturedPhoto);
-            
+
             if (!response.ok) {
               throw new Error(`Failed to fetch photo: ${response.status} ${response.statusText}`);
             }
-            
+
             blob = await response.blob();
-            
+
             console.log('📷 URL photo converted to blob:', {
               blobSize: blob.size,
               blobType: blob.type
@@ -1434,20 +1436,20 @@ export const ticketManagementAPI = {
           } else {
             throw new Error('Unknown photo format - must be base64 data URL or HTTP(S) URL');
           }
-          
+
           if (blob.size === 0) {
             throw new Error('Photo blob is empty (0 bytes)');
           }
-          
+
           console.log('📷 Photo conversion successful:', {
             blobSize: blob.size,
             blobType: blob.type
           });
-          
+
           // Append the photo to FormData with proper filename and MIME type
           const fileName = 'visitor_photo.jpg';
           formData.append('gatekeeper[image]', blob, fileName);
-          
+
           console.log('✅ Photo successfully added to FormData as gatekeeper[image]');
           console.log('📷 Photo blob details:', {
             size: blob.size,
@@ -1476,7 +1478,7 @@ export const ticketManagementAPI = {
         try {
           console.log('📄 Processing visitor documents for upload...');
           console.log('📋 Documents count:', visitorData.visitor_documents.length);
-          
+
           // Process each file
           visitorData.visitor_documents.forEach((file, index) => {
             console.log(`📄 Processing file ${index + 1}:`, {
@@ -1484,7 +1486,7 @@ export const ticketManagementAPI = {
               size: file.size,
               type: file.type
             });
-            
+
             // Ensure it's a valid file
             if (file instanceof File) {
               // Use the format: gate_pass[attachments][] with proper filename and content-type
@@ -1496,7 +1498,7 @@ export const ticketManagementAPI = {
               throw new Error(`Invalid file type at index ${index}`);
             }
           });
-          
+
           console.log(`✅ All ${visitorData.visitor_documents.length} visitor documents processed successfully`);
         } catch (documentError) {
           console.error('❌ Error processing visitor documents:', documentError);
@@ -1505,7 +1507,7 @@ export const ticketManagementAPI = {
       } else {
         console.log('⚠️ No visitor documents uploaded - skipping document upload');
       }
-      
+
       // Log FormData contents for debugging
       console.log('📋 FormData entries:');
       let imageFound = false;
@@ -1523,24 +1525,24 @@ export const ticketManagementAPI = {
           console.log(`  ${key}: ${value}`);
         }
       }
-      
+
       if (!imageFound) {
         console.error('🚨 CRITICAL: gatekeeper[image] NOT FOUND in FormData!');
       } else {
         console.log('✅ CONFIRMED: gatekeeper[image] is present in FormData and will be sent to API');
       }
-      
+
       console.log('🚀 Sending visitor creation request to:', ENDPOINTS.CREATE_VISITOR);
       console.log('📤 Request will include multipart form data with file attachments');
-      
+
       const response = await apiClient.post(ENDPOINTS.CREATE_VISITOR, formData, {
-        headers: { 
+        headers: {
           'Content-Type': 'multipart/form-data'
         },
         // Ensure the request timeout is sufficient for file uploads
         timeout: 60000 // 60 seconds for large files
       });
-      
+
       console.log('✅ Visitor created successfully:', response.data);
       return response.data;
     } catch (error) {
@@ -1572,7 +1574,7 @@ export const ticketManagementAPI = {
       const payload = {
         society_gate: gateData
       };
-      
+
       const response = await apiClient.put(`${ENDPOINTS.UPDATE_SOCIETY_GATE}/${gateId}.json`, payload);
       return response.data;
     } catch (error) {

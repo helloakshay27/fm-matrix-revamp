@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, FileText, Eye, Settings, AlertCircle, X, Flag } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { buildReturnToPath } from '@/utils/listBackNavigation';
 import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
 import { ImportLocationsModal } from '@/components/ImportLocationsModal';
 import { ServiceFilterModal } from '@/components/ServiceFilterModal';
@@ -22,6 +23,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { useDebounce } from '@/hooks/useDebounce';
 import { StatsCard } from '@/components/StatsCard';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface ServiceRecord {
   id: number;
@@ -97,6 +99,9 @@ const initialServiceData: ServiceRecord[] = [];
 
 export const ServiceDashboard = () => {
   const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
+
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const servicesState = useAppSelector((state) => state.services);
   const apiData = servicesState.data as ServicesApiData | undefined;
@@ -114,7 +119,10 @@ export const ServiceDashboard = () => {
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return Number(params.get('page')) || 1;
+  });
   const [downloadedQRCodes, setDownloadedQRCodes] = useState<Set<string>>(new Set());
   const [downloadingQR, setDownloadingQR] = useState(false);
   // Track which summary tile is selected; null => no highlight on initial load
@@ -127,6 +135,14 @@ export const ServiceDashboard = () => {
     };
     dispatch(fetchServicesData({ active: activeFilter, page: currentPage, filters: filtersWithSearch }));
   }, [dispatch, activeFilter, currentPage, appliedFilters, debouncedSearchQuery]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlPage = Number(params.get('page')) || 1;
+    if (urlPage !== currentPage) {
+      navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
+    }
+  }, [currentPage]);
 
   const servicesData = useMemo(
     () => (apiData && Array.isArray(apiData.pms_services) ? apiData.pms_services : initialServiceData),
@@ -531,7 +547,13 @@ export const ServiceDashboard = () => {
       setDownloadingQR(false);
     }
   }, [downloadingQR, selectedItems, servicesData, downloadedQRCodes]);
-  const handleViewService = useCallback((id: number) => navigate(`/maintenance/service/details/${id}`), [navigate]);
+  const handleViewService = useCallback(
+    (id: number) =>
+      navigate(`/maintenance/service/details/${id}`, {
+        state: { returnTo: buildReturnToPath(location.pathname, `?page=${currentPage}`) },
+      }),
+    [navigate, location.pathname, currentPage]
+  );
 
   const handleTotalServicesClick = () => {
     setActiveFilter(undefined);
@@ -730,9 +752,10 @@ export const ServiceDashboard = () => {
       case 'actions':
         return (
           <div className="flex items-center gap-2">
+            {shouldShow("Soft Services","show")&&(
             <Button variant="ghost" size="sm" onClick={() => handleViewService(item.id)}>
               <Eye className="w-4 h-4" />
-            </Button>
+            </Button>)}
             <div title="Flag Service">
               <Flag
                 className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
@@ -896,9 +919,10 @@ export const ServiceDashboard = () => {
 
   const leftActions = useMemo(() => (
     <div className="flex flex-wrap gap-3">
-      <Button onClick={handleActionClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
+      {shouldShow("Soft Services","create")&&(
+      <Button onClick={handleActionClick} className="fm-button-fix fm-button-brand !h-8 !min-h-8 !px-3 !py-1.5 text-sm">
         <Plus className="w-4 h-4" /> Action
-      </Button>
+      </Button>)}
       {selectedItems.length > 0 && (
         <Button
           className="bg-primary text-primary-foreground hover:bg-primary/90"

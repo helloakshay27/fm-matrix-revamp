@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, Fragment } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -101,13 +101,16 @@ const mapOutboundRecord = (item: any): OutboundMail => ({
 
 export const OutboundListPage = () => {
   const navigate = useNavigate();
-
+  const location = useLocation();
   const [outboundMails, setOutboundMails] = useState<OutboundMail[]>([]);
   const [loading, setLoading] = useState(false);
   const [showActionPanel, setShowActionPanel] = useState(false);
 
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+});
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
 
@@ -255,6 +258,13 @@ export const OutboundListPage = () => {
     });
   }, [counts]);
 
+  useEffect(() => {
+    navigate(`${location.pathname}?page=${currentPage}`, {
+        replace: true,
+    });
+}, [currentPage]);
+
+
   // Fetch vendors and senders when filter modal opens
   useEffect(() => {
     const fetchFilterData = async () => {
@@ -336,7 +346,7 @@ export const OutboundListPage = () => {
   const endRecord = Math.min(currentPage * PER_PAGE, totalRecords);
 
   const handleViewOutbound = (id: number) => {
-    navigate(`/vas/mailroom/outbound/${id}`);
+    navigate(`/vas/mailroom/outbound/${id}?page=${currentPage}`);
   };
 
   const columns: ColumnConfig[] = [

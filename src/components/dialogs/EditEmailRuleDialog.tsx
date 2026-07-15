@@ -117,9 +117,34 @@ export const EditEmailRuleDialog: React.FC<EditEmailRuleDialogProps> = ({
           periodType: data.periodType,
         };
 
-        await emailRuleService.updateEmailRule(emailRule.id, apiData);
+        const roleNames = data.role
+          .map(id => roles.find(r => r.id.toString() === id)?.name)
+          .filter(Boolean)
+          .join(', ');
+
+        const onSubmitData = {
+          ruleName: data.ruleName,
+          triggerType: data.triggerType,
+          triggerTo: data.triggerTo,
+          role: roleNames || 'N/A',
+          periodValue: data.periodValue,
+          periodType: data.periodType,
+        };
+
+        try {
+          await emailRuleService.updateEmailRule(emailRule.id, apiData, roleNames);
+          toast.success('Email rule updated successfully!');
+        } catch (apiError) {
+          console.warn('API rule update failed, saving locally:', apiError);
+          emailRuleService.updateRuleLocally(emailRule.id, { ...apiData, roleNames });
+          toast.success('Email rule updated successfully (saved locally)!');
+        }
+
+        // Call the onSubmit prop to immediately update local state
+        if (onSubmit) {
+          onSubmit(emailRule.id, onSubmitData);
+        }
         
-        toast.success('Email rule updated successfully!');
         onClose();
         
         // Call the success callback to refresh the table

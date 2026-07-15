@@ -28,7 +28,7 @@ import { toast } from 'sonner';
 
 const emailRuleSchema = z.object({
   ruleName: z.string().min(1, 'Rule name is required'),
-  triggerType: z.enum(['PPM', 'AMC']),
+  triggerType: z.enum(['PPM', 'AMC','Asset Breakdown', 'Asset InUse', 'Asset Breakdown Reminder']),
   triggerTo: z.enum(['Site Admin', 'Occupant Admin', 'Supplier']),
   role: z.array(z.string()).min(1, 'At least one role is required'),
   periodValue: z.number().min(1, 'Period value must be at least 1'),
@@ -111,9 +111,34 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
         periodType: data.periodType,
       };
 
-      await emailRuleService.createEmailRule(apiData);
+      const roleNames = data.role
+        .map(id => roles.find(r => r.id.toString() === id)?.name)
+        .filter(Boolean)
+        .join(', ');
+
+      const onSubmitData = {
+        ruleName: data.ruleName,
+        triggerType: data.triggerType,
+        triggerTo: data.triggerTo,
+        role: roleNames || 'N/A',
+        periodValue: data.periodValue,
+        periodType: data.periodType,
+      };
+
+      try {
+        await emailRuleService.createEmailRule(apiData, roleNames);
+        toast.success('Email rule created successfully!');
+      } catch (apiError) {
+        console.warn('API rule creation failed, saving locally:', apiError);
+        emailRuleService.saveRuleLocally(apiData, undefined);
+        toast.success('Email rule created successfully (saved locally)!');
+      }
+
+      // Call the onSubmit prop to immediately update local state
+      if (onSubmit) {
+        onSubmit(onSubmitData);
+      }
       
-      toast.success('Email rule created successfully!');
       reset();
       setSelectedRoles([]);
       onClose();

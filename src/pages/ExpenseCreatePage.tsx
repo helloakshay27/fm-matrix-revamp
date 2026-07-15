@@ -19,8 +19,10 @@ import {
   FormControlLabel,
   Radio,
   Checkbox,
+  Tooltip,
+  CircularProgress,
 } from '@mui/material';
-import { Close, CloudUpload, Search } from '@mui/icons-material';
+import { Close, CloudUpload, Search, EditOutlined } from '@mui/icons-material';
 import { Receipt, FileText } from 'lucide-react';
 import { toast as sonnerToast } from 'sonner';
 
@@ -72,6 +74,48 @@ interface ExpenseLine {
   taxExemptionId: string | number | null;
 }
 
+interface MileageRate {
+  id: string;
+  startDate: string;
+  rate: string;
+}
+
+const EMPTY_MILEAGE_RATE = (): MileageRate => ({
+  id: `mr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+  startDate: '',
+  rate: '',
+});
+
+const MILEAGE_CATEGORY_OPTIONS: string[] = [
+  'Office Supplies',
+  'Advertising And Marketing',
+  'Bank Fees and Charges',
+  'Credit Card Charges',
+  'Travel Expense',
+  'Telephone Expense',
+  'Automobile Expense',
+  'IT and Internet Expenses',
+  'Rent Expense',
+  'Janitorial Expense',
+  'Postage',
+  'Bad Debt',
+  'Printing and Stationery',
+  'Salaries and Employee Wages',
+  'Meals and Entertainment',
+  'Depreciation Expense',
+  'Consultant Expense',
+  'Repairs and Maintenance',
+  'Other Expenses',
+  'Lodging',
+  'Purchase Discounts',
+  'Raw Materials And Consumables',
+  'Merchandise',
+  'Transportation Expense',
+  'Depreciation And Amortisation',
+  'Contract Assets',
+  'Fuel/Mileage Expenses',
+];
+
 const EMPTY_LINE = (): ExpenseLine => ({
   accountId: '',
   accountType: 'goods',
@@ -84,6 +128,14 @@ const EMPTY_LINE = (): ExpenseLine => ({
   taxExemptionId: null,
 });
 
+const GST_TREATMENT_MAP: Record<string, string> = {
+  'registered_regular': 'registered_business_regular',
+  'registered_composition': 'registered_business_composition',
+};
+
+const normalizeGstTreatment = (val: string): string => {
+  return GST_TREATMENT_MAP[val] || val;
+};
 // ── Indian states list ───────────────────────────────────────────────────────
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa',
@@ -142,6 +194,7 @@ export const ExpenseCreatePage: React.FC = () => {
   const [vendor, setVendor] = useState('');
   const [customer, setCustomer] = useState('');
   const [billedOn, setBilledOn] = useState(false);
+  const [markUpPercent, setMarkUpPercent] = useState<number>(1);
   const [gstTreatment, setGstTreatment] = useState('');
   const [sourceOfSupply, setSourceOfSupply] = useState('');
   const [destinationOfSupply, setDestinationOfSupply] = useState('Maharashtra'); // ✅ full name default
@@ -188,6 +241,38 @@ export const ExpenseCreatePage: React.FC = () => {
 
   const [showTagModal, setShowTagModal] = useState(false);
   const [reportingTagAccount, setReportingTagAccount] = useState('');
+
+  // Vendor detail state
+  const [vendorDetail, setVendorDetail] = useState<any>(null);
+  const [vendorDetailLoading, setVendorDetailLoading] = useState(false);
+  const [gstDetails, setGstDetails] = useState<any[]>([]);
+  const [selectedGstDetailId, setSelectedGstDetailId] = useState<any>(null);
+
+  // Edit modals
+  const [gstPickerModalOpen, setGstPickerModalOpen] = useState(false);
+  const [gstModalOpen, setGstModalOpen] = useState(false);
+  const [gstTreatmentDraft, setGstTreatmentDraft] = useState('');
+  const [gstManageModalOpen, setGstManageModalOpen] = useState(false);
+  const [showNewGstForm, setShowNewGstForm] = useState(false);
+  const [editingGstDetailId, setEditingGstDetailId] = useState<any>(null);
+  const [newGstForm, setNewGstForm] = useState({
+    gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: ''
+  });
+  const [sourceModalOpen, setSourceModalOpen] = useState(false);
+  const [sourceDraft, setSourceDraft] = useState('');
+  const [destinationModalOpen, setDestinationModalOpen] = useState(false);
+  const [destinationDraft, setDestinationDraft] = useState('');
+
+  // ── Mileage Preferences Modal ─────────────────────────────────────────────
+  const [mileageModalOpen, setMileageModalOpen] = useState(false);
+  const [associateEmployeesToExpenses, setAssociateEmployeesToExpenses] = useState(false);
+  const [defaultMileageCategory, setDefaultMileageCategory] = useState('Fuel/Mileage Expenses');
+  const [defaultMileageUnit, setDefaultMileageUnit] = useState<'km' | 'mile'>('km');
+  const [mileageRates, setMileageRates] = useState([EMPTY_MILEAGE_RATE()]);
+
+  const selectedGstDetail = gstDetails.find(
+    g => String(g.id) === String(selectedGstDetailId)
+  ) || gstDetails.find(g => g.primary) || gstDetails[0] || null;
 
   // ── Fetch account ledgers ─────────────────────────────────────────────────
   useEffect(() => {
@@ -309,6 +394,9 @@ export const ExpenseCreatePage: React.FC = () => {
     }, 0);
   };
 
+  // ✅ Auto-calculated tax amount for the single-expense view
+  const taxAmount = calculateTaxForAmount(parseFloat(amount) || 0, taxType, taxGroupId);
+
   const calculateSubtotal = () =>
     lines.reduce((sum, line) => sum + (parseFloat(line.amount) || 0), 0);
 
@@ -374,6 +462,29 @@ export const ExpenseCreatePage: React.FC = () => {
   const removeReceipt = (index: number) =>
     setReceipts(prev => prev.filter((_, i) => i !== index));
 
+  // ── Mileage rate row helpers ───────────────────────────────────────────────
+  const addMileageRate = () => {
+    setMileageRates(prev => [...prev, EMPTY_MILEAGE_RATE()]);
+  };
+
+  const removeMileageRate = (id: string) => {
+    setMileageRates(prev => (prev.length > 1 ? prev.filter(r => r.id !== id) : prev));
+  };
+
+  const updateMileageRate = (id: string, patch: Partial<MileageRate>) => {
+    setMileageRates(prev => prev.map(r => (r.id === id ? { ...r, ...patch } : r)));
+  };
+
+  const handleMileagePreferencesSave = () => {
+    // UI-only for now — no API call yet.
+    // Backend wiring (payload + endpoint) will be added once params are finalized.
+    setMileageModalOpen(false);
+  };
+
+  const handleMileagePreferencesCancel = () => {
+    setMileageModalOpen(false);
+  };
+
   // ── Update a single line field ────────────────────────────────────────────
   const updateLine = (idx: number, patch: Partial<ExpenseLine>) => {
     setLines(prev => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
@@ -427,6 +538,147 @@ export const ExpenseCreatePage: React.FC = () => {
     return errorMessages.length === 0;
   };
 
+  const fetchVendorDetail = async (vendorId: string) => {
+    if (!vendorId) {
+      setVendorDetail(null);
+      setGstDetails([]);
+      setSelectedGstDetailId(null);
+      setGstTreatment('');
+      setSourceOfSupply('');
+      return;
+    }
+    const apiUrl = getApiUrl();
+    const token = localStorage.getItem('token');
+
+    // Reset previous vendor's GST state immediately, before the new
+    // request resolves, so stale values never linger on screen.
+    setVendorDetail(null);
+    setGstDetails([]);
+    setSelectedGstDetailId(null);
+    setGstTreatment('');
+    setSourceOfSupply('');
+
+    setVendorDetailLoading(true);
+    try {
+      const res = await axios.get(
+        `${apiUrl}/pms/suppliers/${vendorId}.json?access_token=${token}`
+      );
+      const data = res.data?.supplier || res.data;
+      setVendorDetail(data);
+
+      // Always set (with fallback), never skip — guarantees new vendor's
+      // value (even if empty) overwrites the old one.
+      setGstTreatment(data.gst_preference ? normalizeGstTreatment(data.gst_preference) : '');
+
+      const nextGst: any[] = Array.isArray(data.gst_details) ? data.gst_details : [];
+      setGstDetails(nextGst);
+      const primaryGst = nextGst.find(g => g.primary) || nextGst[0] || data.primary_gst_detail || null;
+
+      setSelectedGstDetailId(primaryGst?.id ?? null);
+      setSourceOfSupply(primaryGst?.place_of_supply || '');
+    } catch (err) {
+      sonnerToast.error('Failed to load vendor details');
+      // Keep the reset state — don't show old vendor's data on failure.
+    } finally {
+      setVendorDetailLoading(false);
+    }
+  };
+
+
+  // const fetchVendorDetail = async (vendorId: string) => {
+  //   if (!vendorId) {
+  //     setVendorDetail(null);
+  //     setGstDetails([]);
+  //     setSelectedGstDetailId(null);
+  //     setGstTreatment('');
+  //     setSourceOfSupply('');
+  //     return;
+  //   }
+  //   const apiUrl = getApiUrl();
+  //   const token = localStorage.getItem('token');
+  //   setVendorDetailLoading(true);
+  //   try {
+  //     const res = await axios.get(
+  //       `${apiUrl}/pms/suppliers/${vendorId}.json?access_token=${token}`
+  //     );
+
+  //     // ✅ ADD THESE LOGS:
+  //     console.log('🔍 Full API response:', res.data);
+  //     console.log('🔍 supplier object:', res.data?.supplier);
+  //     console.log('🔍 gst_preference raw:', res.data?.supplier?.gst_preference || res.data?.gst_preference);
+  //     console.log('🔍 gst_details:', res.data?.supplier?.gst_details || res.data?.gst_details);
+
+  //     const data = res.data?.supplier || res.data;
+
+  //     console.log('🔍 data after parse:', data);
+  //     console.log('🔍 data.gst_preference:', data.gst_preference);
+
+  //     setVendorDetail(data);
+  //     if (data.gst_preference) setGstTreatment(normalizeGstTreatment(data.gst_preference));
+
+  //     console.log('🔍 setGstTreatment called with:', data.gst_preference);
+
+  //     const nextGst: any[] = Array.isArray(data.gst_details) ? data.gst_details : [];
+  //     setGstDetails(nextGst);
+  //     const primaryGst = nextGst.find(g => g.primary) || nextGst[0] || data.primary_gst_detail || null;
+  //     if (primaryGst) {
+  //       setSelectedGstDetailId(primaryGst.id ?? null);
+  //       if (primaryGst.place_of_supply) setSourceOfSupply(primaryGst.place_of_supply);
+  //     }
+  //   } catch (err) {
+  //     console.error('❌ fetchVendorDetail error:', err);
+  //     sonnerToast.error('Failed to load vendor details');
+  //   } finally {
+  //     setVendorDetailLoading(false);
+  //   }
+  // };
+  const handleVendorChange = (vendorId: string) => {
+    setVendor(vendorId);
+    fetchVendorDetail(vendorId);
+  };
+
+  const handleGstinDropdownChange = (value: any) => {
+    setSelectedGstDetailId(value);
+    const selected = gstDetails.find(g => String(g.id) === String(value));
+    if (selected?.place_of_supply) setSourceOfSupply(selected.place_of_supply);
+    setGstPickerModalOpen(false);
+  };
+
+  const handleSaveAndSelectGst = async () => {
+    if (!vendor || !newGstForm.gstin || !newGstForm.place_of_supply) {
+      sonnerToast.error('GSTIN and Place of Supply are required');
+      return;
+    }
+    const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+    const normalized = newGstForm.gstin.toUpperCase().trim();
+    if (!gstinRegex.test(normalized)) {
+      sonnerToast.error('Invalid GSTIN format. e.g. 27AAAAA1234A1Z5');
+      return;
+    }
+    const apiUrl = getApiUrl();
+    const token = localStorage.getItem('token');
+    const gstAttr: any = {
+      ...(editingGstDetailId ? { id: Number(editingGstDetailId) || editingGstDetailId } : {}),
+      gstin: normalized,
+      place_of_supply: newGstForm.place_of_supply,
+      business_legal_name: newGstForm.business_legal_name || '',
+      business_trade_name: newGstForm.business_trade_name || '',
+    };
+    try {
+      await axios.put(
+        `${apiUrl}/pms/suppliers/${vendor}.json?access_token=${token}`,
+        { pms_supplier: { gst_details_attributes: [gstAttr] } }
+      );
+      setShowNewGstForm(false);
+      setEditingGstDetailId(null);
+      setGstManageModalOpen(false);
+      sonnerToast.success('Tax information saved');
+      await fetchVendorDetail(vendor);
+    } catch (err) {
+      sonnerToast.error('Failed to save tax information');
+    }
+  };
+
   // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!validate()) return;
@@ -459,7 +711,6 @@ export const ExpenseCreatePage: React.FC = () => {
           },
         ];
       } else {
-        // Multiple lines — ✅ all fields correctly mapped
         expenseAccountsAttributes = lines.map(line => ({
           lock_account_ledger_id: parseInt(line.accountId),
           account_type: line.accountType,
@@ -529,20 +780,23 @@ export const ExpenseCreatePage: React.FC = () => {
     <>
       <div>
         <label className="block text-sm font-medium mb-2">Vendor</label>
-        <FormControl fullWidth>
-          <Select
-            value={vendor}
-            onChange={e => setVendor(e.target.value)}
-            displayEmpty
-            sx={fieldStyles}
-            disabled={loadingVendors}
-          >
-            <MenuItem value="">{loadingVendors ? 'Loading...' : 'Select a vendor'}</MenuItem>
-            {vendors.map(v => (
-              <MenuItem key={v.id} value={v.id.toString()}>{v.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <div className="flex items-center gap-3">
+          <FormControl sx={{ flex: 1 }}>
+            <Select
+              value={vendor}
+              onChange={e => handleVendorChange(e.target.value)}
+              displayEmpty
+              sx={fieldStyles}
+              disabled={loadingVendors}
+            >
+              <MenuItem value="">{loadingVendors ? 'Loading...' : 'Select a vendor'}</MenuItem>
+              {vendors.map(v => (
+                <MenuItem key={v.id} value={v.id.toString()}>{v.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {vendorDetailLoading && <CircularProgress size={20} />}
+        </div>
       </div>
 
       <div>
@@ -632,14 +886,25 @@ export const ExpenseCreatePage: React.FC = () => {
           <div className="bg-white p-8 rounded-lg shadow-xl">Creating expense...</div>
         </div>
       )}
-
       <header className="sticky top-0 bg-background z-10 pb-4">
-        <div>
-          <h1 className="text-2xl font-bold">New Expense</h1>
-          <p className="text-sm text-muted-foreground mt-1">Create a new expense record</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">New Expense</h1>
+            <p className="text-sm text-muted-foreground mt-1">Create a new expense record</p>
+          </div>
+
+          <div className="flex flex-col items-end">
+            <label className="block text-sm font-medium mb-2">Mileage</label>
+            <button
+              type="button"
+              className="text-sm text-primary hover:underline"
+              onClick={() => setMileageModalOpen(true)}
+            >
+              Record Mileage
+            </button>
+          </div>
         </div>
       </header>
-
       <div className="space-y-6">
         <Section title="Expense Details" icon={<Receipt className="w-5 h-5" />}>
           {/* ── SINGLE VIEW ──────────────────────────────────────────────── */}
@@ -779,8 +1044,32 @@ export const ExpenseCreatePage: React.FC = () => {
                 </div>
               )}
 
-              {/* GST fields */}
+              {/* GST fields - always show vendor dropdown */}
               <GstFields />
+
+              {/* Vendor GST Details Card - show when vendor is selected */}
+              {vendorDetail && (
+                <div className="md:col-span-2">
+                  <div className="border border-gray-200 rounded-lg bg-gray-50 px-4 py-4 space-y-3">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Vendor GST Details
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500 min-w-[120px]">GSTIN:</span>
+                        <span className="text-gray-800 font-medium">
+                          {selectedGstDetail?.gstin || vendorDetail?.primary_gst_detail?.gstin || '—'}
+                        </span>
+                        <IconButton size="small" onClick={() => setGstPickerModalOpen(true)}>
+                          <EditOutlined fontSize="small" className="text-blue-500" />
+                        </IconButton>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              )}
 
               {/* Tax */}
               <div>
@@ -807,6 +1096,15 @@ export const ExpenseCreatePage: React.FC = () => {
                     ))}
                   </Select>
                 </FormControl>
+
+                {/* ✅ Tax Amount — read-only calculation */}
+                {taxType === 'tax_group' && taxGroupId && (
+                  <div className="mt-3 p-3 bg-blue-50 rounded-md border border-blue-100">
+                    <p className="text-sm text-gray-700">
+                      Tax Amount = ₹<span className="font-semibold text-blue-600">{taxAmount.toFixed(2)}</span>
+                    </p>
+                  </div>
+                )}
 
                 {taxType === 'non_taxable' && (
                   <div className="mt-3">
@@ -917,17 +1215,54 @@ export const ExpenseCreatePage: React.FC = () => {
                     </Select>
                   </FormControl>
                   {customer && (
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={billedOn}
-                          onChange={e => setBilledOn(e.target.checked)}
-                          size="small"
-                        />
-                      }
-                      label="billed"
-                      className="mt-2"
-                    />
+                    <div className="mt-2 flex items-center gap-4 flex-wrap">
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={billedOn}
+                            onChange={e => setBilledOn(e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="billed"
+                      />
+                      {billedOn && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-700">Mark up by</span>
+                          <Tooltip
+                            title="Enter the percentage by which you want to mark up this expense amount while invoicing the customer."
+                            arrow
+                          >
+                            <IconButton size="small" sx={{ p: 0 }}>
+                              <span style={{
+                                fontSize: 14,
+                                color: '#888',
+                                border: '1px solid #aaa',
+                                borderRadius: '50%',
+                                width: 16,
+                                height: 16,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 'bold',
+                                cursor: 'default'
+                              }}>i</span>
+                            </IconButton>
+                          </Tooltip>
+                          <TextField
+                            size="small"
+                            type="number"
+                            value={markUpPercent}
+                            onChange={e => setMarkUpPercent(parseFloat(e.target.value) || 0)}
+                            inputProps={{ min: 0, step: 0.1 }}
+                            InputProps={{
+                              endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                            }}
+                            sx={{ width: 200 }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="flex flex-col">
@@ -940,6 +1275,7 @@ export const ExpenseCreatePage: React.FC = () => {
                     Associate Tags
                   </button>
                 </div>
+
               </div>
             </div>
           ) : (
@@ -983,10 +1319,53 @@ export const ExpenseCreatePage: React.FC = () => {
                 </div>
               </div>
 
-              {/* GST block */}
+              {/* GST block - always show vendor dropdown */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <GstFields />
               </div>
+
+              {/* Vendor GST Details Card - show when vendor is selected */}
+              {vendorDetail && (
+                <div className="md:col-span-2">
+                  <div className="border border-gray-200 rounded-lg bg-gray-50 px-4 py-4 space-y-3">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Vendor GST Details
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500 min-w-[120px]">GST Treatment:</span>
+                        <span className="text-gray-800 font-medium">
+                          {GST_TREATMENTS.find(t => t.value === vendorDetail?.gst_preference)?.label || vendorDetail?.gst_preference || '—'}
+                        </span>
+                        <IconButton size="small" onClick={() => { setGstTreatmentDraft(vendorDetail?.gst_preference || ''); setGstModalOpen(true); }}>
+                          <EditOutlined fontSize="small" className="text-blue-500" />
+                        </IconButton>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500 min-w-[120px]">GSTIN:</span>
+                        <span className="text-gray-800 font-medium">
+                          {selectedGstDetail?.gstin || vendorDetail?.primary_gst_detail?.gstin || '—'}
+                        </span>
+                        <IconButton size="small" onClick={() => setGstPickerModalOpen(true)}>
+                          <EditOutlined fontSize="small" className="text-blue-500" />
+                        </IconButton>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <input type="checkbox" id="reverseCharge" checked={reverseCharge}
+                        onChange={e => { const checked = e.target.checked; setReverseCharge(checked); if (checked) { setAmountIs('exclusive'); setAmountsAre('exclusive'); } }} />
+                      <label htmlFor="reverseCharge" className="text-sm text-gray-700">
+                        This transaction is applicable for reverse charge
+                      </label>
+                    </div>
+                    {reverseCharge && (
+                      <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 flex items-center gap-2">
+                        <span>ℹ️</span> Reverse Charge is applicable — tax overridden to zero.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Amounts are + Tax Override */}
               <div className="space-y-3">
@@ -1325,17 +1704,54 @@ export const ExpenseCreatePage: React.FC = () => {
                     </Select>
                   </FormControl>
                   {customer && (
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={billedOn}
-                          onChange={e => setBilledOn(e.target.checked)}
-                          size="small"
-                        />
-                      }
-                      label="billed"
-                      className="mt-2"
-                    />
+                    <div className="mt-2 flex items-center gap-4 flex-wrap">
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={billedOn}
+                            onChange={e => setBilledOn(e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="billed"
+                      />
+                      {billedOn && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-700">Mark up by</span>
+                          <Tooltip
+                            title="Enter the percentage by which you want to mark up this expense amount while invoicing the customer."
+                            arrow
+                          >
+                            <IconButton size="small" sx={{ p: 0 }}>
+                              <span style={{
+                                fontSize: 14,
+                                color: '#888',
+                                border: '1px solid #aaa',
+                                borderRadius: '50%',
+                                width: 16,
+                                height: 16,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 'bold',
+                                cursor: 'default'
+                              }}>i</span>
+                            </IconButton>
+                          </Tooltip>
+                          <TextField
+                            size="small"
+                            type="number"
+                            value={markUpPercent}
+                            onChange={e => setMarkUpPercent(parseFloat(e.target.value) || 0)}
+                            inputProps={{ min: 0, step: 0.1 }}
+                            InputProps={{
+                              endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                            }}
+                            sx={{ width: 100 }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -1450,6 +1866,166 @@ export const ExpenseCreatePage: React.FC = () => {
         </Button>
       </div>
 
+      {/* GST Treatment Edit Modal */}
+      <Dialog open={gstModalOpen} onClose={() => setGstModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Configure Tax Preferences</DialogTitle>
+        <DialogContent>
+          <TextField label="GST Treatment" select fullWidth value={gstTreatmentDraft}
+            onChange={e => setGstTreatmentDraft(e.target.value)} size="small" sx={{ mt: 1 }}>
+            {GST_TREATMENTS.map(opt => (
+              <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+            ))}
+          </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained"
+            onClick={() => { setGstTreatment(gstTreatmentDraft); setVendorDetail((prev: any) => prev ? { ...prev, gst_preference: gstTreatmentDraft } : prev); setGstModalOpen(false); }}
+            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+            Update
+          </Button>
+          <Button variant="outlined" onClick={() => setGstModalOpen(false)}
+            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* GSTIN Picker Modal */}
+      <Dialog open={gstPickerModalOpen} onClose={() => setGstPickerModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogContent className="!p-0">
+          <div className="max-h-[240px] overflow-y-auto">
+            {gstDetails.length === 0 && (
+              <div className="px-4 py-6 text-center text-sm text-gray-400">No GST details found</div>
+            )}
+            {gstDetails.map(gst => (
+              <button key={gst.id} type="button"
+                className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 text-sm ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''}`}
+                onClick={() => handleGstinDropdownChange(gst.id)}>
+                {gst.gstin} — {gst.place_of_supply}
+                {gst.primary && <span className="ml-2 text-xs text-green-600 italic">(Primary)</span>}
+              </button>
+            ))}
+          </div>
+          <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
+            <button type="button" className="text-blue-600 text-sm"
+              onClick={() => { setGstPickerModalOpen(false); setShowNewGstForm(false); setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setGstManageModalOpen(true); }}>
+              ⚙ Manage Tax Informations
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* GST Manage Modal */}
+      <Dialog open={gstManageModalOpen} onClose={() => setGstManageModalOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Manage Tax Informations
+          <IconButton size="small" onClick={() => setGstManageModalOpen(false)}><Close fontSize="small" /></IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <div className="space-y-4">
+            <Button variant="contained" size="small"
+              onClick={() => { setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setShowNewGstForm(true); }}
+              sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+              Add New Tax Information
+            </Button>
+            {showNewGstForm && (
+              <div className="border border-gray-200 bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TextField label="GSTIN*" fullWidth value={newGstForm.gstin} size="small"
+                  onChange={e => setNewGstForm(p => ({ ...p, gstin: e.target.value.toUpperCase() }))}
+                  error={!!newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)}
+                  helperText={newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin) ? 'Invalid GSTIN. e.g. 27AAAAA1234A1Z5' : ''}
+                  inputProps={{ maxLength: 15 }} />
+                <TextField label="Place of Supply*" select fullWidth value={newGstForm.place_of_supply} size="small"
+                  onChange={e => setNewGstForm(p => ({ ...p, place_of_supply: e.target.value }))}>
+                  <MenuItem value="">Select</MenuItem>
+                  {INDIAN_STATES.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                </TextField>
+                <TextField label="Business Legal Name" fullWidth value={newGstForm.business_legal_name} size="small"
+                  onChange={e => setNewGstForm(p => ({ ...p, business_legal_name: e.target.value }))} />
+                <TextField label="Business Trade Name" fullWidth value={newGstForm.business_trade_name} size="small"
+                  onChange={e => setNewGstForm(p => ({ ...p, business_trade_name: e.target.value }))} />
+                <div className="md:col-span-2 flex gap-2">
+                  <Button variant="contained" size="small" onClick={handleSaveAndSelectGst}
+                    sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+                    {editingGstDetailId ? 'Save' : 'Save and Select'}
+                  </Button>
+                  <Button variant="outlined" size="small"
+                    onClick={() => { setShowNewGstForm(false); setEditingGstDetailId(null); }}
+                    sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+            <div className="border border-gray-200 rounded-md overflow-hidden">
+              <div className="grid grid-cols-4 bg-gray-50 text-xs font-semibold text-gray-500 px-4 py-2">
+                <div>GSTIN</div><div>PLACE OF SUPPLY</div><div>LEGAL NAME</div><div></div>
+              </div>
+              <div className="max-h-[280px] overflow-y-auto">
+                {gstDetails.map(gst => (
+                  <div key={gst.id}
+                    className={`grid grid-cols-4 px-4 py-2 text-sm border-t border-gray-100 cursor-pointer hover:bg-gray-50 ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''}`}
+                    onClick={() => handleGstinDropdownChange(gst.id)}>
+                    <div>{gst.gstin}{gst.primary && <div className="text-green-600 text-xs italic">(Primary)</div>}</div>
+                    <div>{gst.place_of_supply || '—'}</div>
+                    <div>{gst.business_legal_name || '—'}</div>
+                    <div className="flex justify-end gap-1">
+                      {!gst.primary && (
+                        <IconButton size="small" onClick={e => { e.stopPropagation(); setEditingGstDetailId(gst.id); setNewGstForm({ gstin: gst.gstin, place_of_supply: gst.place_of_supply, business_legal_name: gst.business_legal_name || '', business_trade_name: gst.business_trade_name || '' }); setShowNewGstForm(true); }}>
+                          <EditOutlined fontSize="small" />
+                        </IconButton>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button variant="outlined" size="small" onClick={() => setGstManageModalOpen(false)}
+            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Source of Supply Edit Modal */}
+      <Dialog open={sourceModalOpen} onClose={() => setSourceModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Edit Source of Supply</DialogTitle>
+        <DialogContent>
+          <TextField label="Source of Supply" select fullWidth value={sourceDraft}
+            onChange={e => setSourceDraft(e.target.value)} size="small" sx={{ mt: 1 }}>
+            <MenuItem value="">Select state</MenuItem>
+            {INDIAN_STATES.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+          </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained"
+            onClick={() => { setSourceOfSupply(sourceDraft); setSourceModalOpen(false); }}
+            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>Update</Button>
+          <Button variant="outlined" onClick={() => setSourceModalOpen(false)}
+            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Destination of Supply Edit Modal */}
+      <Dialog open={destinationModalOpen} onClose={() => setDestinationModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Edit Destination of Supply</DialogTitle>
+        <DialogContent>
+          <TextField label="Destination of Supply" select fullWidth value={destinationDraft}
+            onChange={e => setDestinationDraft(e.target.value)} size="small" sx={{ mt: 1 }}>
+            <MenuItem value="">Select state</MenuItem>
+            {INDIAN_STATES.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+          </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained"
+            onClick={() => { setDestinationOfSupply(destinationDraft); setDestinationModalOpen(false); }}
+            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>Update</Button>
+          <Button variant="outlined" onClick={() => setDestinationModalOpen(false)}
+            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Reporting Tags Modal */}
       {/* <Dialog open={showTagModal} onClose={() => setShowTagModal(false)} maxWidth="xs" fullWidth>
         <DialogTitle className="flex justify-between items-center" padding={2}>
@@ -1522,6 +2098,182 @@ export const ExpenseCreatePage: React.FC = () => {
             Save
           </Button>
           <Button onClick={() => setShowTagModal(false)}>
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Mileage Preferences Modal */}
+      <Dialog
+        open={mileageModalOpen}
+        onClose={() => setMileageModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Set your mileage preferences
+          <IconButton size="small" onClick={() => setMileageModalOpen(false)}>
+            <Close fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ py: 3 }}>
+          <div className="space-y-6">
+
+            {/* Associate employees to expenses */}
+            <FormControlLabel
+              control={
+                <input
+                  type="checkbox"
+                  checked={associateEmployeesToExpenses}
+                  onChange={e => setAssociateEmployeesToExpenses(e.target.checked)}
+                />
+              }
+              label="Associate employees to expenses"
+            />
+
+            {/* Mileage Preference Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold">Mileage Preference</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Default Mileage Category */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Default Mileage Category
+                  </label>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      value={defaultMileageCategory}
+                      onChange={e => setDefaultMileageCategory(e.target.value)}
+                      sx={fieldStyles}
+                    >
+                      {MILEAGE_CATEGORY_OPTIONS.map(opt => (
+                        <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+
+                {/* Default Unit */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Default Unit</label>
+                  <RadioGroup
+                    row
+                    value={defaultMileageUnit}
+                    onChange={e => setDefaultMileageUnit(e.target.value as 'km' | 'mile')}
+                  >
+                    <FormControlLabel value="km" control={<Radio />} label="Km" />
+                    <FormControlLabel value="mile" control={<Radio />} label="Mile" />
+                  </RadioGroup>
+                </div>
+              </div>
+            </div>
+
+            {/* Mileage Rates Section */}
+            <div className="space-y-3 border-t pt-4">
+              <div>
+                <h3 className="text-sm font-semibold">Mileage Rates</h3>
+                <p className="text-xs text-gray-500 mt-2">
+                  Any mileage expense recorded on or after the start date will have the
+                  corresponding mileage rate. You can create a default rate (created without
+                  specifying a date), which will be applicable for mileage expenses recorded
+                  before the initial start date.
+                </p>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">
+                        START DATE
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">
+                        MILEAGE RATE
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {mileageRates.map((rate, idx) => (
+                      <tr key={rate.id}>
+                        {/* Start Date */}
+                        <td className="px-4 py-2">
+                          <TextField
+                            type="date"
+                            value={rate.startDate}
+                            onChange={e => updateMileageRate(rate.id, { startDate: e.target.value })}
+                            placeholder="dd/MM/yyyy"
+                            InputLabelProps={{ shrink: true }}
+                            sx={fieldStyles}
+                            size="small"
+                          />
+                        </td>
+
+                        {/* Mileage Rate with INR prefix */}
+                        <td className="px-4 py-2">
+                          <TextField
+                            type="number"
+                            value={rate.rate}
+                            onChange={e => {
+                              const parsed = parseFloat(e.target.value);
+                              const safe = isNaN(parsed) ? '' : Math.max(0, parsed).toString();
+                              updateMileageRate(rate.id, { rate: safe });
+                            }}
+                            inputProps={{ min: 0, step: 0.01 }}
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">INR</InputAdornment>
+                              ),
+                            }}
+                            sx={fieldStyles}
+                            size="small"
+                          />
+                        </td>
+
+                        {/* Remove row — hidden for the first row */}
+                        <td className="px-4 py-2 text-right">
+                          {idx > 0 && (
+                            <IconButton
+                              size="small"
+                              onClick={() => removeMileageRate(rate.id)}
+                            >
+                              <Close fontSize="small" />
+                            </IconButton>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <button
+                type="button"
+                className="text-blue-600 hover:underline text-sm font-medium"
+                onClick={addMileageRate}
+              >
+                + Add Mileage Rate
+              </button>
+            </div>
+
+          </div>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button
+            variant="contained"
+            onClick={handleMileagePreferencesSave}
+            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}
+          >
+            Save
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={handleMileagePreferencesCancel}
+            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}
+          >
             Cancel
           </Button>
         </DialogActions>

@@ -268,12 +268,7 @@ export const AddCRMCustomerPage = () => {
                   fullWidth
                   size="small"
                   value={formData.customerName}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (/^[A-Za-z0-9\s]*$/.test(value)) {
-                      handleInputChange("customerName", value);
-                    }
-                  }}
+                  onChange={(e) => handleInputChange("customerName", e.target.value)}
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "8px",
@@ -534,8 +529,8 @@ export const AddCRMCustomerPage = () => {
             ))}
             <Button
               onClick={addNewDomain}
-              variant="outline"
-              className="mt-4 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+              className="fm-button-fix fm-button-brand px-4 py-2"
+              variant="ghost"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Domain
@@ -696,8 +691,8 @@ export const AddCRMCustomerPage = () => {
             {/* Add Lease Button */}
             <Button
               onClick={addNewLease}
-              variant="outline"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Lease

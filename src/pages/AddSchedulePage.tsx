@@ -338,6 +338,10 @@ export const AddSchedulePage = () => {
   const [assetGroups, setAssetGroups] = useState<AssetGroup[]>([]);
   const [assetSubGroups, setAssetSubGroups] = useState<AssetSubGroup[]>([]);
   const [selectedAssetGroup, setSelectedAssetGroup] = useState<number | undefined>();
+  const [indivGroupFilter, setIndivGroupFilter] = useState<string>('');
+  const [indivSubGroupFilter, setIndivSubGroupFilter] = useState<string>('');
+  const [indivSubGroups, setIndivSubGroups] = useState<AssetSubGroup[]>([]);
+  const [indivFilteredAssets, setIndivFilteredAssets] = useState<any[]>([]);
   const [emailRules, setEmailRules] = useState<EmailRule[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
@@ -376,6 +380,133 @@ export const AddSchedulePage = () => {
   // Add draft modal state
   const [showDraftModal, setShowDraftModal] = useState(false);
   const [hasSavedDraft, setHasSavedDraft] = useState(false);
+
+  // AMC details (when navigated from AMC list with amc_id param)
+  const amcIdFromUrl = new URLSearchParams(window.location.search).get('amc_id');
+  const [amcDetails, setAmcDetails] = useState<any>(null);
+  const [selectedAmcFrequencyId, setSelectedAmcFrequencyId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!amcIdFromUrl) return;
+    fetch(`${API_CONFIG.BASE_URL}/pms/asset_amcs/${amcIdFromUrl}.json`, {
+      headers: { Authorization: getAuthHeader() }
+    })
+      .then(res => res.json())
+      .then(data => setAmcDetails(data))
+      .catch(err => console.error('Failed to fetch AMC details', err));
+  }, [amcIdFromUrl]);
+
+  // Pre-fill form from AMC details once loaded
+  useEffect(() => {
+    if (!amcDetails) return;
+
+    setFormData(prev => ({
+      ...prev,
+      activityName: amcDetails.contract_name || prev.activityName,
+      scheduleFor: 'Asset',
+      supplier: amcDetails.supplier_id ? String(amcDetails.supplier_id) : prev.supplier,
+      startFrom: amcDetails.amc_start_date || prev.startFrom,
+      endAt: amcDetails.amc_end_date || prev.endAt,
+      asset: Array.isArray(amcDetails.amc_assets) && amcDetails.amc_assets.length > 0
+        ? amcDetails.amc_assets.map((a: any) => String(a.asset_id))
+        : prev.asset,
+      // Set plan duration to Day / 1 when coming from AMC
+      planDuration: 'day',
+      planDurationValue: '1',
+      category: 'Non Technical',
+      lockOverdueTask: 'false',
+      // Pre-fill technician as assigned user and backup assignee
+      ...(amcDetails.technician_id != null && {
+        assignToType: 'user',
+        selectedUsers: [String(amcDetails.technician_id)],
+        backupAssignee: String(amcDetails.technician_id),
+      }),
+    }));
+
+    if (amcDetails.contract_name) {
+      setActivityNameValidationResult(null);
+    }
+
+    // Frequency configs take priority; fall back to top-level cron_expression
+    const frequencyConfigs = amcDetails.frequency_configs;
+    if (Array.isArray(frequencyConfigs) && frequencyConfigs.length > 0) {
+      const first = frequencyConfigs[0];
+      setSelectedAmcFrequencyId(first.id);
+      if (first.cron_expression) {
+        const parsed = parseCronExpression(first.cron_expression);
+        if (parsed) setTimeSetupData(parsed);
+      }
+    } else if (amcDetails.cron_expression) {
+      const parsed = parseCronExpression(amcDetails.cron_expression);
+      if (parsed) setTimeSetupData(parsed);
+    }
+  }, [amcDetails]);
+
+  // Auto-load full asset list (with all fields) when Individual mode is active
+  useEffect(() => {
+    if (formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual') {
+      loadIndivFilteredAssets('', '');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.scheduleFor, formData.checklistType]);
+
+  const parseCronExpression = (cron: string) => {
+    if (!cron) return null;
+    const parts = cron.trim().split(/\s+/);
+    if (parts.length < 5) return null;
+    const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+
+    const reverseWeekdayMap: Record<string, string> = {
+      '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday',
+      '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday',
+    };
+    const reverseMonthMap: Record<string, string> = {
+      '1': 'January', '2': 'February', '3': 'March', '4': 'April',
+      '5': 'May', '6': 'June', '7': 'July', '8': 'August',
+      '9': 'September', '10': 'October', '11': 'November', '12': 'December',
+    };
+
+    const selectedMinutes = minute && minute !== '*' && minute !== '?'
+      ? minute.split(',').map(m => m.trim().padStart(2, '0'))
+      : ['00'];
+    const selectedHours = hour && hour !== '*' && hour !== '?'
+      ? hour.split(',').map(h => h.trim().padStart(2, '0'))
+      : ['12'];
+
+    let dayMode = 'weekdays';
+    let selectedWeekdays: string[] = [];
+    let selectedDays: string[] = [];
+    if (dayOfWeek && dayOfWeek !== '*' && dayOfWeek !== '?') {
+      selectedWeekdays = dayOfWeek.split(',').map(d => reverseWeekdayMap[d.trim()]).filter(Boolean);
+      dayMode = 'weekdays';
+    } else if (dayOfMonth && dayOfMonth !== '*' && dayOfMonth !== '?') {
+      selectedDays = dayOfMonth.split(',').map(d => d.trim().padStart(2, '0'));
+      dayMode = 'specific';
+    }
+
+    let monthMode = 'all';
+    let selectedMonths: string[] = [];
+    if (month && month !== '*' && month !== '?') {
+      selectedMonths = month.split(',').map(m => reverseMonthMap[m.trim()]).filter(Boolean);
+      if (selectedMonths.length > 0) monthMode = 'specific';
+    }
+
+    return {
+      hourMode: 'specific',
+      minuteMode: 'specific',
+      dayMode,
+      monthMode,
+      selectedHours,
+      selectedMinutes,
+      selectedWeekdays,
+      selectedDays,
+      selectedMonths,
+      betweenMinuteStart: '00',
+      betweenMinuteEnd: '59',
+      betweenMonthStart: 'January',
+      betweenMonthEnd: 'December',
+    };
+  };
 
   // Determine schedule type from URL
   const getScheduleTypeFromUrl = () => {
@@ -807,6 +938,30 @@ export const AddSchedulePage = () => {
       });
     } finally {
       setLoading(prev => ({ ...prev, subGroups: false }));
+    }
+  };
+
+  const loadIndivSubGroups = async (groupId: string) => {
+    try {
+      const data = await assetService.getAssetSubGroups(Number(groupId));
+      setIndivSubGroups(data.asset_groups);
+    } catch (e) {
+      setIndivSubGroups([]);
+    }
+  };
+
+  const loadIndivFilteredAssets = async (groupId: string = '', subGroupId: string = '') => {
+    try {
+      let url = `${API_CONFIG.BASE_URL}/pms/assets/get_assets.json`;
+      const params: string[] = [];
+      if (groupId) params.push(`group_id=${groupId}`);
+      if (subGroupId) params.push(`sub_group_id=${subGroupId}`);
+      if (params.length > 0) url += `?${params.join('&')}`;
+      const response = await fetch(url, { headers: { Authorization: getAuthHeader() } });
+      const data = await response.json();
+      setIndivFilteredAssets(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setIndivFilteredAssets([]);
     }
   };
 
@@ -2165,12 +2320,46 @@ export const AddSchedulePage = () => {
           };
         });
 
-        // Update the first section with template tasks
-        setQuestionSections(sections =>
-          sections.map((section, index) =>
-            index === 0 ? { ...section, tasks: templateTasks } : section
-          )
+        // Group tasks by group_id + sub_group_id → one section per unique pair
+        const sectionOrder: string[] = [];
+        const sectionTaskMap: Record<string, typeof templateTasks> = {};
+
+        templateTasks.forEach(task => {
+          const key = `${task.group}__${task.subGroup}`;
+          if (!sectionTaskMap[key]) {
+            sectionOrder.push(key);
+            sectionTaskMap[key] = [];
+          }
+          sectionTaskMap[key].push(task);
+        });
+
+        const newSections = sectionOrder.map((key, i) => ({
+          id: (Date.now() + i).toString(),
+          title: 'Questions',
+          autoTicket: false,
+          ticketLevel: 'checklist',
+          ticketAssignedTo: '',
+          ticketCategory: '',
+          tasks: sectionTaskMap[key],
+        }));
+
+        setQuestionSections(
+          newSections.length > 0
+            ? newSections
+            : [{
+                id: Date.now().toString(),
+                title: 'Questions',
+                autoTicket: false,
+                ticketLevel: 'checklist',
+                ticketAssignedTo: '',
+                ticketCategory: '',
+                tasks: templateTasks,
+              }]
         );
+
+        // Populate sub-group options for every group_id present in the template
+        const uniqueGroupIds = [...new Set(templateTasks.map((t: any) => t.group).filter(Boolean))];
+        uniqueGroupIds.forEach((gid: string) => loadTaskSubGroups(gid));
 
         // Only update form data if fields are empty (don't overwrite user input)
         setFormData(prev => ({
@@ -2672,10 +2861,7 @@ export const AddSchedulePage = () => {
 
   const handleBack = () => {
     if (activeStep > 0) {
-      const newActiveStep = activeStep - 1;
-      // Remove completion status from steps after the new active step
-      setCompletedSteps(completedSteps.filter(step => step < newActiveStep));
-      setActiveStep(newActiveStep);
+      handleStepClick(activeStep - 1);
     }
   };
 
@@ -3739,86 +3925,173 @@ export const AddSchedulePage = () => {
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
                 {/* Conditional Asset/Service Dropdown - Show based on scheduleFor */}
                 {formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && (
-                  <Box sx={{ minWidth: 0 }}>
-                    <FormControl
-                      fullWidth
-                      variant="outlined"
-                      sx={{
-                        '& .MuiInputBase-root': {
-                          ...fieldStyles,
-                          minWidth: 0, // allow the control to shrink inside the grid column
-                        },
-                      }}
-                    >
-                      <InputLabel shrink>
-                        Select Assets <span style={{ color: 'red' }}>*</span>
-                      </InputLabel>
+                  <Box sx={{ gridColumn: '1 / -1' }}>
+                    {(() => {
+                      // client-side derived lists — no extra API calls
+                      const uniqueGroups = Array.from(new Set(indivFilteredAssets.map(a => a.asset_group).filter(Boolean))) as string[];
+                      const uniqueSubGroups = Array.from(new Set(
+                        indivFilteredAssets
+                          .filter(a => !indivGroupFilter || a.asset_group === indivGroupFilter)
+                          .map(a => a.asset_sub_group)
+                          .filter(Boolean)
+                      )) as string[];
+                      const displayAssets = indivFilteredAssets.filter(a =>
+                        (!indivGroupFilter || a.asset_group === indivGroupFilter) &&
+                        (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)
+                      );
+                      const isLocked = stepIndex < activeStep && editingStep !== stepIndex;
+                      return (
+                        <>
+                          {/* Group / SubGroup filter row */}
+                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3, mb: 2 }}>
+                            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': { ...fieldStyles } }}>
+                              <InputLabel shrink>Asset Group</InputLabel>
+                              <Select
+                                label="Asset Group"
+                                notched
+                                displayEmpty
+                                value={indivGroupFilter}
+                                onChange={e => {
+                                  setIndivGroupFilter(e.target.value as string);
+                                  setIndivSubGroupFilter('');
+                                }}
+                                disabled={isLocked}
+                              >
+                                <MenuItem value=""><em>All Groups</em></MenuItem>
+                                {uniqueGroups.map(g => (
+                                  <MenuItem key={g} value={g}>{g}</MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
 
-                      <Select
-                        multiple
-                        label="Select Assets"
-                        notched
-                        displayEmpty
-                        value={formData.asset}
-                        onChange={e => handleAutocompleteChange('asset', assets.filter(asset => e.target.value.includes(asset.id.toString())))}
-                        renderValue={(selected) => {
-                          if (!selected || selected.length === 0) {
-                            return <span style={{ color: '#aaa' }}>Select Assets</span>;
-                          }
-                          const names = assets
-                            .filter(asset => selected.includes(asset.id.toString()))
-                            .map(asset => asset.name)
-                            .join(', ');
-                          return (
-                            <span
-                              title={names}
-                              style={{
-                                display: 'inline-block',
-                                maxWidth: '100%',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}
-                            >
-                              {names}
-                            </span>
-                          );
-                        }}
-                        disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.assets}
-                        sx={{
-                          minWidth: 0,
-                          width: '100%',
-                          maxWidth: '100%',
-                          '& .MuiSelect-select': {
-                            display: 'block',
-                            minWidth: 0,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }
-                        }}
-                        MenuProps={{
-                          PaperProps: {
-                            style: {
-                              minWidth: 200,
-                              maxWidth: 520,
-                              width: 'auto'
-                            }
-                          }
-                        }}
-                      >
-                        <MenuItem value="">Select Assets</MenuItem>
-                        {assets && assets.map((option) => (
-                          <MenuItem key={option.id} value={option.id.toString()}>{option.name}</MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': { ...fieldStyles } }}>
+                              <InputLabel shrink>Asset Sub-Group</InputLabel>
+                              <Select
+                                label="Asset Sub-Group"
+                                notched
+                                displayEmpty
+                                value={indivSubGroupFilter}
+                                onChange={e => setIndivSubGroupFilter(e.target.value as string)}
+                                disabled={!indivGroupFilter || isLocked}
+                              >
+                                <MenuItem value=""><em>All Sub-Groups</em></MenuItem>
+                                {uniqueSubGroups.map(sg => (
+                                  <MenuItem key={sg} value={sg}>{sg}</MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </Box>
 
-                    {loading.assets && (
-                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                        Loading assets...
-                      </Typography>
-                    )}
+                          {/* Assets list table with checkboxes */}
+                          <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 1, overflow: 'auto', maxHeight: 400 }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Work Sans, sans-serif', fontSize: '13px', minWidth: '900px' }}>
+                              <thead>
+                                <tr style={{ backgroundColor: '#EDEAE3', position: 'sticky', top: 0, zIndex: 1 }}>
+                                  {!isLocked && (
+                                    <th style={{ padding: '9px 12px', textAlign: 'center', borderBottom: '1px solid #e0e0e0', width: '48px', backgroundColor: '#EDEAE3' }}>
+                                      <input
+                                        type="checkbox"
+                                        title="Select all visible"
+                                        checked={displayAssets.length > 0 && displayAssets.every(a => formData.asset.includes(a.id.toString()))}
+                                        onChange={e => {
+                                          if (e.target.checked) {
+                                            const merged = Array.from(new Set([...formData.asset, ...displayAssets.map(a => a.id.toString())]));
+                                            setFormData(prev => ({ ...prev, asset: merged }));
+                                          } else {
+                                            const removeSet = new Set(displayAssets.map(a => a.id.toString()));
+                                            setFormData(prev => ({ ...prev, asset: prev.asset.filter(id => !removeSet.has(id)) }));
+                                          }
+                                        }}
+                                        style={{ cursor: 'pointer', width: '15px', height: '15px' }}
+                                      />
+                                    </th>
+                                  )}
+                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', width: '52px', backgroundColor: '#EDEAE3' }}>S.No.</th>
+                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Asset Name</th>
+                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Ext. Ref. ID</th>
+                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Group</th>
+                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Sub Group</th>
+                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Site</th>
+                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Building</th>
+                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Wing</th>
+                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Floor</th>
+                                  <th style={{ padding: '9px 12px', textAlign: 'left', borderBottom: '1px solid #e0e0e0', fontWeight: 600, color: '#1a1a1a', backgroundColor: '#EDEAE3' }}>Room</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                          {loading.assets ? (
+                            <tr>
+                              <td colSpan={11} style={{ padding: '16px', textAlign: 'center', color: '#888' }}>Loading assets...</td>
+                            </tr>
+                          ) : displayAssets.length === 0 ? (
+                            <tr>
+                              <td colSpan={11} style={{ padding: '16px', textAlign: 'center', color: '#aaa' }}>
+                                {indivFilteredAssets.length === 0 ? 'No assets found' : 'No assets match the selected filters'}
+                              </td>
+                            </tr>
+                          ) : (
+                            displayAssets.map((asset, idx) => {
+                              const isChecked = formData.asset.includes(asset.id.toString());
+                              const loc = asset.location || {};
+                              return (
+                                <tr
+                                  key={asset.id}
+                                  style={{
+                                    backgroundColor: isChecked ? '#fff8f6' : idx % 2 === 0 ? '#fff' : '#fafafa',
+                                    cursor: isLocked ? 'default' : 'pointer',
+                                    transition: 'background-color 0.1s'
+                                  }}
+                                  onClick={() => {
+                                    if (isLocked) return;
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      asset: isChecked
+                                        ? prev.asset.filter(id => id !== asset.id.toString())
+                                        : Array.from(new Set([...prev.asset, asset.id.toString()]))
+                                    }));
+                                  }}
+                                >
+                                  {!isLocked && (
+                                    <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', textAlign: 'center' }}>
+                                      <input
+                                        type="checkbox"
+                                        checked={isChecked}
+                                        onChange={() => {}}
+                                        onClick={e => e.stopPropagation()}
+                                        style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: '#da7756' }}
+                                      />
+                                    </td>
+                                  )}
+                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#666' }}>{idx + 1}</td>
+                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#1a1a1a', fontWeight: isChecked ? 600 : 400 }}>{asset.name || '—'}</td>
+                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{asset.ext_reference_id || '—'}</td>
+                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{asset.asset_group || '—'}</td>
+                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{asset.asset_sub_group || '—'}</td>
+                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{loc.site || '—'}</td>
+                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{loc.building || '—'}</td>
+                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{loc.wing || '—'}</td>
+                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{loc.floor || '—'}</td>
+                                  <td style={{ padding: '7px 12px', borderBottom: '1px solid #f0f0f0', color: '#555' }}>{loc.room || '—'}</td>
+                                </tr>
+                              );
+                            })
+                          )}
+                              </tbody>
+                            </table>
+                          </Box>
+                          {formData.asset.length > 0 && (
+                            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#da7756', fontWeight: 500 }}>
+                              {formData.asset.length} asset{formData.asset.length > 1 ? 's' : ''} selected
+                              {displayAssets.length < indivFilteredAssets.length && (
+                                <span style={{ color: '#888', marginLeft: 8 }}>
+                                  (showing {displayAssets.length} of {indivFilteredAssets.length})
+                                </span>
+                              )}
+                            </Typography>
+                          )}
+                        </>
+                      );
+                    })()}
                   </Box>
                 )}
 
@@ -5932,19 +6205,52 @@ export const AddSchedulePage = () => {
 
       case 3: // Time Setup
         return (
-          <TimeSetupStep
-            data={timeSetupData}
-            onChange={(field, value) => {
-              setTimeSetupData(prev => ({ ...prev, [field]: value }));
-            }}
-            isCompleted={false}
-            isCollapsed={false}
-            disabled={3 < activeStep && editingStep !== 3}
-            onEdit={() => {
-              setActiveStep(3);
-              setEditingStep(3);
-            }}
-          />
+          <>
+            {amcIdFromUrl && Array.isArray(amcDetails?.frequency_configs) && amcDetails.frequency_configs.length > 0 && (
+              <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-4">
+                <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
+                  <div className="text-sm font-semibold text-[#C72030] uppercase mb-4">AMC Frequency</div>
+                  <div className="max-w-sm">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Frequency</label>
+                    <select
+                      value={selectedAmcFrequencyId ?? ''}
+                      onChange={(e) => {
+                        const id = Number(e.target.value);
+                        setSelectedAmcFrequencyId(id);
+                        const cfg = amcDetails.frequency_configs.find((f: any) => f.id === id);
+                        if (cfg?.cron_expression) {
+                          const parsed = parseCronExpression(cfg.cron_expression);
+                          if (parsed) setTimeSetupData(parsed);
+                        }
+                      }}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                    >
+                      {amcDetails.frequency_configs.map((cfg: any) => (
+                        <option key={cfg.id} value={cfg.id}>
+                          {cfg.frequency.charAt(0).toUpperCase() + cfg.frequency.slice(1)}
+                          {cfg.description ? ` — ${cfg.description}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+            <TimeSetupStep
+              key={selectedAmcFrequencyId ?? 'default'}
+              data={timeSetupData}
+              onChange={(field, value) => {
+                setTimeSetupData(prev => ({ ...prev, [field]: value }));
+              }}
+              isCompleted={false}
+              isCollapsed={false}
+              disabled={3 < activeStep && editingStep !== 3}
+              onEdit={() => {
+                setActiveStep(3);
+                setEditingStep(3);
+              }}
+            />
+          </>
         );
 
       case 4: // Mapping
@@ -6161,6 +6467,77 @@ export const AddSchedulePage = () => {
         </div>
       </div>
 
+      {/* AMC Details Card (shown when navigated from AMC list) */}
+      {amcDetails && (
+        <Box sx={{ mb: 3, p: 3, backgroundColor: '#fff', border: '1px solid #e0e0e0', borderRadius: 1 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: '#1a1a1a', textTransform: 'uppercase', fontSize: '14px' }}>
+            AMC Details
+          </Typography>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-6 gap-y-3 text-sm">
+            <div>
+              <span className="text-gray-500 block">Contract Name</span>
+              <span className="font-medium text-gray-900">{amcDetails.contract_name || '-'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block">Vendor</span>
+              <span className="font-medium text-gray-900">{amcDetails.vendor_name || amcDetails.amc_vendor_name || '-'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block">AMC Type</span>
+              <span className="font-medium text-gray-900">{amcDetails.amc_type || '-'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block">Status</span>
+              <span className="font-medium text-gray-900 capitalize">{amcDetails.status || '-'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block">Period</span>
+              <span className="font-medium text-gray-900">{amcDetails.amc_period || '-'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block">Site</span>
+              <span className="font-medium text-gray-900">{amcDetails.site_name || '-'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block">AMC Cost</span>
+              <span className="font-medium text-gray-900">{amcDetails.amc_cost != null ? amcDetails.amc_cost.toLocaleString('en-IN') : '-'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block">Payment Term</span>
+              <span className="font-medium text-gray-900 capitalize">{amcDetails.payment_term || '-'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block">No. of Visits</span>
+              <span className="font-medium text-gray-900">{amcDetails.no_of_visits ?? '-'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block">First Service</span>
+              <span className="font-medium text-gray-900">{amcDetails.amc_first_service || '-'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block">Vendor Email</span>
+              <span className="font-medium text-gray-900">{amcDetails.amc_vendor_email || '-'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block">Vendor Mobile</span>
+              <span className="font-medium text-gray-900">{amcDetails.amc_vendor_mobile || '-'}</span>
+            </div>
+            {amcDetails.amc_assets && amcDetails.amc_assets.length > 0 && (
+              <div className="col-span-2 sm:col-span-3 md:col-span-4">
+                <span className="text-gray-500 block">Assets</span>
+                <span className="font-medium text-gray-900">{amcDetails.amc_assets.map((a: any) => a.asset_name).join(', ')}</span>
+              </div>
+            )}
+            {amcDetails.remarks && (
+              <div className="col-span-2 sm:col-span-3 md:col-span-4">
+                <span className="text-gray-500 block">Remarks</span>
+                <span className="font-medium text-gray-900">{amcDetails.remarks}</span>
+              </div>
+            )}
+          </div>
+        </Box>
+      )}
+
       {/* Custom Stepper - Bordered Box Design */}
       <Box sx={{ mb: 4 }}>
         {/* Main Stepper - Show all steps with proper progression */}
@@ -6229,52 +6606,65 @@ export const AddSchedulePage = () => {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-center items-center mt-6 pt-4 sm:pt-6">
-        {activeStep < steps.length - 1 ? (
-          <>
-            {activeStep === 3 ? ( // Time Setup step - has Save button to submit and move to Mapping
-              <div className="flex justify-center gap-4">
-                <RedButton
-                  onClick={handleSaveToDraft}
-                  disabled={isSubmitting}
-                >
-                  Save to Draft
-                </RedButton>
-                <RedButton
-                  onClick={handleSave}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Submitting...' : 'Submit'}
-                </RedButton>
-              </div>
-            ) : (
-              <div className="flex justify-center gap-4">
-                <RedButton
-                  onClick={handleProceedToSave}
-                  disabled={isSubmitting}
-                >
-                  Proceed to Save
-                </RedButton>
-                <RedButton
-                  onClick={handleSaveToDraft}
-                  disabled={isSubmitting}
-                >
-                  Save to Draft
-                </RedButton>
-              </div>
-            )}
-          </>
-        ) : (
-          // Mapping section (last step) - has Submit button only
-          <div className="flex justify-center gap-4">
+      <div className="flex justify-between items-center mt-6 pt-4 sm:pt-6">
+        <div>
+          {activeStep > 0 && (
+            <button
+              onClick={handleBack}
+              disabled={isSubmitting}
+              className="border border-[#da7756] text-[#da7756] px-6 py-2 rounded-md hover:bg-[#da7756] hover:text-white transition-colors text-sm sm:text-base disabled:opacity-50"
+              style={{ fontFamily: 'Work Sans, sans-serif' }}
+            >
+              Back
+            </button>
+          )}
+        </div>
+
+        <div className="flex gap-4">
+          {activeStep < steps.length - 1 ? (
+            <>
+              {activeStep === 3 ? ( // Time Setup step - has Save button to submit and move to Mapping
+                <>
+                  <RedButton
+                    onClick={handleSaveToDraft}
+                    disabled={isSubmitting}
+                  >
+                    Save to Draft
+                  </RedButton>
+                  <RedButton
+                    onClick={handleSave}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit'}
+                  </RedButton>
+                </>
+              ) : (
+                <>
+                  <RedButton
+                    onClick={handleProceedToSave}
+                    disabled={isSubmitting}
+                  >
+                    Proceed to Save
+                  </RedButton>
+                  <RedButton
+                    onClick={handleSaveToDraft}
+                    disabled={isSubmitting}
+                  >
+                    Save to Draft
+                  </RedButton>
+                </>
+              )}
+            </>
+          ) : (
+            // Mapping section (last step) - has Submit button only
             <RedButton
               onClick={handleSave}
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </RedButton>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Completed Sections */}

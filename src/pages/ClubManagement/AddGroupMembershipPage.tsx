@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Upload, X, Copy, Info } from 'lucide-react';
+import { ArrowLeft, Upload, X, Copy, Info, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     TextField,
@@ -21,8 +21,28 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import { getFullUrl, getAuthenticatedFetchOptions, API_CONFIG } from '@/config/apiConfig';
-import { getToken } from '@/utils/auth';
 import axios from 'axios';
+import { getToken } from '@/utils/auth';
+
+// Helper function to detect file type
+const getFileType = (filename: string): 'image' | 'pdf' | 'other' => {
+    const imageExtensions = /\.(jpg|jpeg|png|webp|gif|svg)$/i;
+    const pdfExtension = /\.pdf$/i;
+
+    if (imageExtensions.test(filename)) return 'image';
+    if (pdfExtension.test(filename)) return 'pdf';
+    return 'other';
+};
+
+// Helper function to get file display info
+const getFileDisplayInfo = (filename: string) => {
+    const fileType = getFileType(filename);
+    return {
+        type: fileType,
+        isPdf: fileType === 'pdf',
+        isImage: fileType === 'image',
+    };
+};
 
 // Interfaces
 interface OccupantUserResponse {
@@ -167,10 +187,41 @@ const REFERRED_BY_OPTIONS = [
     { value: 'Other', label: 'Other' }
 ];
 
+// Club Member API response interface
+interface ClubMemberResponse {
+    id: number;
+    user_id: number;
+    status: string;
+    membership_number: string;
+    user_name: string;
+    user_email: string;
+    user_mobile: string;
+    avatar: string | null;
+    identification_image: string | null;
+    society_flat_id: number | null;
+    referred_by: string;
+    emergency_contact_name: string;
+    access_card_enabled: boolean;
+    access_card_id: string | null;
+    snag_answers: any[];
+    user: {
+        id: number;
+        firstname: string;
+        lastname: string;
+        email: string;
+        mobile: string;
+        gender: string | null;
+        birth_date: string | null;
+        addresses: any[];
+    } | null;
+    house: { id: number; name: string } | null;
+    plan_details: { name: string; id: number; price: number } | null;
+}
+
 // Member interface for multi-member form
 interface MemberData {
     id: string;
-    userSelectionMode: 'select' | 'manual';
+    userSelectionMode: 'select' | 'manual' | 'created_member';
     selectedUser: string;
     selectedUserId: number | null;
     formData: {
@@ -219,8 +270,15 @@ interface MemberData {
     communicationChannel: string[];
     profession: string;
     companyName: string;
+    companyAddress: string;
     corporateInterest: 'yes' | 'no' | '';
+    raisedBillToThisUser: boolean;
+    billTo: 'user' | 'company' | '';
+    billingCompanyName: string;
+    billingGstinNo: string;
+    billingCompanyAddress: string;
 }
+
 
 export const AddGroupMembershipPage = () => {
     const navigate = useNavigate();
@@ -287,7 +345,13 @@ export const AddGroupMembershipPage = () => {
             communicationChannel: [],
             profession: '',
             companyName: '',
+            companyAddress: '',
             corporateInterest: '',
+            raisedBillToThisUser: false,
+            billTo: '',
+            billingCompanyName: '',
+            billingGstinNo: '',
+            billingCompanyAddress: '',
         };
         return [initialMember];
     });
@@ -313,6 +377,10 @@ export const AddGroupMembershipPage = () => {
     // Dropdown data
     const [users, setUsers] = useState<OccupantUserResponse[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
+
+    // Club members dropdown data
+    const [clubMembers, setClubMembers] = useState<ClubMemberResponse[]>([]);
+    const [loadingClubMembers, setLoadingClubMembers] = useState(false);
 
     // Get site and company from localStorage
     const getSiteIdFromStorage = () => {
@@ -377,6 +445,7 @@ export const AddGroupMembershipPage = () => {
         loadUsers();
         loadMembershipPlans();
         loadAmenities();
+        loadClubMembers();
 
         // Load membership data if in edit mode
         if (isEditMode && id) {
@@ -547,7 +616,7 @@ export const AddGroupMembershipPage = () => {
                     const mobile = userData.mobile || memberData.user_mobile || '';
                     const birthDate = userData.birth_date || '';
                     const gender = userData.gender || '';
-
+                    console.log(memberData)
                     // Build member object
                     const newMember: MemberData = {
                         id: memberId,
@@ -571,7 +640,7 @@ export const AddGroupMembershipPage = () => {
                             address_type: userData.addresses?.[0]?.address_type || 'residential',
                             residentType: '',
                             relationWithOwner: '',
-                            houseId: memberData.house_id?.toString() || '',
+                            houseId: memberData.society_flat_id?.toString() || '',
                             membershipNumber: memberData.membership_number || '',
                             accessCardId: memberData.access_card_id?.toString() || '',
                             membershipType: '',
@@ -600,18 +669,31 @@ export const AddGroupMembershipPage = () => {
                         communicationChannel: [],
                         profession: '',
                         companyName: '',
+                        companyAddress: '',
                         corporateInterest: '',
+                        raisedBillToThisUser: memberData?.raised_bill_to_user ?? false,
+                        billTo: memberData?.bill_to || '',
+                        billingCompanyName: memberData?.billing_company_name || '',
+                        billingGstinNo: memberData?.billing_gstin || '',
+                        billingCompanyAddress: memberData?.billing_address || '',
                     };
+
+                    console.log(newMember)
 
                     // Parse snag_answers (new format)
                     if (memberData.snag_answers && Array.isArray(memberData.snag_answers)) {
                         console.log(`Member ${index + 1} has snag_answers:`, memberData.snag_answers.length);
                         const snagByQ: { [key: number]: string[] } = {};
+                        const snagCommentsByQ: { [key: number]: string } = {};
                         memberData.snag_answers.forEach((a: any) => {
                             const q = Number(a.question_id);
                             if (!snagByQ[q]) snagByQ[q] = [];
                             if (a.ans_descr !== undefined && a.ans_descr !== null) {
                                 snagByQ[q].push(String(a.ans_descr));
+                            }
+                            // Also capture comments
+                            if (a.comments !== undefined && a.comments !== null && a.comments.trim()) {
+                                snagCommentsByQ[q] = a.comments;
                             }
                         });
 
@@ -619,14 +701,17 @@ export const AddGroupMembershipPage = () => {
                         if (snagByQ[1] && snagByQ[1].length > 0) {
                             const val = snagByQ[1][0].toUpperCase();
                             newMember.hasInjuries = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+                            if (snagCommentsByQ[1]) newMember.injuryDetails = snagCommentsByQ[1];
                         }
                         if (snagByQ[2] && snagByQ[2].length > 0) {
                             const val = snagByQ[2][0].toUpperCase();
                             newMember.hasPhysicalRestrictions = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+                            if (snagCommentsByQ[2]) newMember.physicalRestrictionsDetails = snagCommentsByQ[2];
                         }
                         if (snagByQ[3] && snagByQ[3].length > 0) {
                             const val = snagByQ[3][0].toUpperCase();
                             newMember.hasCurrentMedication = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+                            if (snagCommentsByQ[3]) newMember.medicationDetails = snagCommentsByQ[3];
                         }
                         if (snagByQ[4] && snagByQ[4].length > 0) {
                             newMember.pilatesExperience = snagByQ[4][0] || '';
@@ -656,8 +741,7 @@ export const AddGroupMembershipPage = () => {
                             newMember.companyName = snagByQ[12][0] || '';
                         }
                         if (snagByQ[13] && snagByQ[13].length > 0) {
-                            const val = snagByQ[13][0].toUpperCase();
-                            newMember.corporateInterest = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+                            newMember.companyAddress = snagByQ[13][0] || '';
                         }
                     }
                     // Also parse old format answers if present
@@ -785,6 +869,79 @@ export const AddGroupMembershipPage = () => {
         } finally {
             setLoadingUsers(false);
         }
+    };
+
+    // Load created club members from API
+    const loadClubMembers = async () => {
+        setLoadingClubMembers(true);
+        try {
+            const baseUrl = API_CONFIG.BASE_URL;
+            const token = API_CONFIG.TOKEN;
+            const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members.json`);
+            url.searchParams.append('access_token', token || '');
+
+            const response = await fetch(url.toString(), {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch club members');
+
+            const data = await response.json();
+            const members = data.club_members || [];
+            setClubMembers(members);
+        } catch (error) {
+            console.error('Error loading club members:', error);
+        } finally {
+            setLoadingClubMembers(false);
+        }
+    };
+
+    // Helper: parse snag_answers into member questionnaire fields
+    const parseSnagAnswersIntoMember = (snagAnswers: any[], memberToUpdate: MemberData): Partial<MemberData> => {
+        const updates: Partial<MemberData> = {};
+        if (!snagAnswers || !Array.isArray(snagAnswers)) return updates;
+
+        const snagByQ: { [key: number]: string[] } = {};
+        const snagCommentsByQ: { [key: number]: string } = {};
+        snagAnswers.forEach((a: any) => {
+            const q = Number(a.question_id);
+            if (!snagByQ[q]) snagByQ[q] = [];
+            if (a.ans_descr !== undefined && a.ans_descr !== null) {
+                snagByQ[q].push(String(a.ans_descr));
+            }
+            if (a.comments && a.comments.trim()) {
+                snagCommentsByQ[q] = a.comments;
+            }
+        });
+
+        if (snagByQ[1]?.length > 0) {
+            const val = snagByQ[1][0].toUpperCase();
+            updates.hasInjuries = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+            if (snagCommentsByQ[1]) updates.injuryDetails = snagCommentsByQ[1];
+        }
+        if (snagByQ[2]?.length > 0) {
+            const val = snagByQ[2][0].toUpperCase();
+            updates.hasPhysicalRestrictions = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+            if (snagCommentsByQ[2]) updates.physicalRestrictionsDetails = snagCommentsByQ[2];
+        }
+        if (snagByQ[3]?.length > 0) {
+            const val = snagByQ[3][0].toUpperCase();
+            updates.hasCurrentMedication = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+            if (snagCommentsByQ[3]) updates.medicationDetails = snagCommentsByQ[3];
+        }
+        if (snagByQ[4]?.length > 0) updates.pilatesExperience = snagByQ[4][0] || '';
+        if (snagByQ[5]?.length > 0) updates.fitnessGoals = snagByQ[5];
+        if (snagByQ[6]?.length > 0) updates.interestedSessions = snagByQ[6];
+        if (snagByQ[7]?.length > 0) updates.heardAbout = snagByQ[7][0] || '';
+        if (snagByQ[8]?.length > 0) updates.motivations = snagByQ[8];
+        if (snagByQ[9]?.length > 0) updates.updatePreferences = snagByQ[9];
+        if (snagByQ[10]?.length > 0) updates.communicationChannel = snagByQ[10];
+        if (snagByQ[11]?.length > 0) updates.profession = snagByQ[11][0] || '';
+        if (snagByQ[12]?.length > 0) updates.companyName = snagByQ[12][0] || '';
+        if (snagByQ[13]?.length > 0) updates.companyAddress = snagByQ[13][0] || '';
+
+        return updates;
     };
 
     // Handle user selection - now handled inline in JSX onChange handlers
@@ -970,7 +1127,7 @@ export const AddGroupMembershipPage = () => {
         // Question 13: Corporate interest
         answersObj['13'] = [
             {
-                answer: member.corporateInterest.toUpperCase() || '',
+                answer: member.companyAddress || '',
                 comments: ''
             }
         ];
@@ -1024,20 +1181,33 @@ export const AddGroupMembershipPage = () => {
             }
 
             // Mandatory file validations - only for add mode
-            if (!isEditMode) {
-                if (!member.idCardFile) {
-                    toast.error(`${memberLabel}: Please upload ID card (mandatory)`);
-                    return;
-                }
+            // if (!isEditMode) {
+            //     if (!member.idCardFile) {
+            //         toast.error(`${memberLabel}: Please upload ID card (mandatory)`);
+            //         return;
+            //     }
 
-                if (!member.residentPhotoFile) {
-                    toast.error(`${memberLabel}: Please upload resident photo (mandatory)`);
-                    return;
-                }
-            }
+            //     if (!member.residentPhotoFile) {
+            //         toast.error(`${memberLabel}: Please upload resident photo (mandatory)`);
+            //         return;
+            //     }
+            // }
 
-            if (cardAllocated && !member.formData.accessCardId) {
-                toast.error(`${memberLabel}: Please enter access card ID`);
+            // if (cardAllocated && !member.formData.accessCardId?.trim()) {
+            //     toast.error(`${memberLabel}: Access Card ID is required when Access Card Allocation is enabled`);
+            //     return;
+            // }
+        }
+
+        // Validate for duplicate Access Card IDs if cardAllocated is true
+        if (cardAllocated) {
+            const accessCardIds = members
+                .map(m => m.formData.accessCardId?.trim().toLowerCase())
+                .filter(id => id); // Filter out empty values
+
+            const uniqueIds = new Set(accessCardIds);
+            if (uniqueIds.size !== accessCardIds.length) {
+                toast.error('All Access Card IDs must be unique. Please ensure no duplicate card IDs are assigned');
                 return;
             }
         }
@@ -1131,7 +1301,16 @@ export const AddGroupMembershipPage = () => {
                     custom_amenities: selectedAddOns.map(addOnId => ({
                         facility_setup_id: addOnId,
                         access: true
-                    }))
+                    })),
+                    billing: {
+                        raised_bill_to_user: member.raisedBillToThisUser,
+                        bill_to: member.billTo || null,
+                        ...(member.billTo === 'company' && {
+                            billing_company_name: member.billingCompanyName,
+                            billing_gstin: member.billingGstinNo,
+                            billing_address: member.billingCompanyAddress,
+                        }),
+                    },
                 };
 
                 // Add files if present
@@ -1394,7 +1573,9 @@ export const AddGroupMembershipPage = () => {
         hasInjuries: '',
         injuryDetails: '',
         hasPhysicalRestrictions: '',
+        physicalRestrictionsDetails: '',
         hasCurrentMedication: '',
+        medicationDetails: '',
         pilatesExperience: '',
         fitnessGoals: [],
         fitnessGoalsOther: '',
@@ -1406,7 +1587,13 @@ export const AddGroupMembershipPage = () => {
         communicationChannel: [],
         profession: '',
         companyName: '',
+        companyAddress: '',
         corporateInterest: '',
+        raisedBillToThisUser: false,
+        billTo: '',
+        billingCompanyName: '',
+        billingGstinNo: '',
+        billingCompanyAddress: '',
     });
 
     // Replace the card-specific add/remove functions with a single unified approach
@@ -1476,6 +1663,7 @@ export const AddGroupMembershipPage = () => {
             communicationChannel: [...previousMember.communicationChannel],
             profession: previousMember.profession,
             companyName: previousMember.companyName,
+            companyAddress: previousMember.companyAddress,
             corporateInterest: previousMember.corporateInterest,
         });
         toast.success('All data copied from previous member');
@@ -1692,7 +1880,7 @@ export const AddGroupMembershipPage = () => {
                                                     row
                                                     value={member.userSelectionMode}
                                                     onChange={(e) => {
-                                                        const mode = e.target.value as 'select' | 'manual';
+                                                        const mode = e.target.value as 'select' | 'manual' | 'created_member';
                                                         updateMember(member.id, {
                                                             userSelectionMode: mode,
                                                             selectedUser: '',
@@ -1705,15 +1893,43 @@ export const AddGroupMembershipPage = () => {
                                                                 mobile: '',
                                                                 dateOfBirth: '',
                                                                 gender: '',
-                                                            }
+                                                                address: '',
+                                                                address_line_two: '',
+                                                                city: '',
+                                                                state: '',
+                                                                country: '',
+                                                                pin_code: '',
+                                                                houseId: '',
+                                                            },
+                                                            idCardPreview: null,
+                                                            residentPhotoPreview: null,
+                                                            hasInjuries: '',
+                                                            injuryDetails: '',
+                                                            hasPhysicalRestrictions: '',
+                                                            physicalRestrictionsDetails: '',
+                                                            hasCurrentMedication: '',
+                                                            medicationDetails: '',
+                                                            pilatesExperience: '',
+                                                            fitnessGoals: [],
+                                                            fitnessGoalsOther: '',
+                                                            interestedSessions: [],
+                                                            interestedSessionsOther: '',
+                                                            heardAbout: '',
+                                                            motivations: [],
+                                                            updatePreferences: [],
+                                                            communicationChannel: [],
+                                                            profession: '',
+                                                            companyName: '',
+                                                            companyAddress: '',
+                                                            corporateInterest: '',
                                                         });
                                                     }}
                                                 >
-                                                    {/* <FormControlLabel
-                                                        value="select"
+                                                    <FormControlLabel
+                                                        value="created_member"
                                                         control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                                                        label="Select User"
-                                                    /> */}
+                                                        label="Select Created Member"
+                                                    />
                                                     <FormControlLabel
                                                         value="manual"
                                                         control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
@@ -1722,7 +1938,88 @@ export const AddGroupMembershipPage = () => {
                                                 </RadioGroup>
                                             </div>
 
-                                            {/* User Selection Dropdown */}
+                                            {/* Created Club Members Dropdown */}
+                                            {member.userSelectionMode === 'created_member' && (
+                                                <div className="mb-6">
+                                                    <FormControl fullWidth>
+                                                        <TextField
+                                                            select
+                                                            label="Select Member *"
+                                                            value={member.selectedUser}
+                                                            onChange={(e) => {
+                                                                const memberId = e.target.value;
+
+                                                                const cm = clubMembers.find(m => m.id.toString() === memberId);
+                                                                if (!cm) return;
+
+                                                                const userData = cm.user;
+                                                                const address = userData?.addresses?.[0] || {};
+
+                                                                // Parse snag answers into questionnaire fields
+                                                                const snagUpdates = parseSnagAnswersIntoMember(cm.snag_answers || [], member);
+
+                                                                // Resolve avatar URL
+                                                                let avatarUrl: string | null = null;
+                                                                if (cm.avatar) {
+                                                                    avatarUrl = cm.avatar.startsWith('%2F')
+                                                                        ? `https://${localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com'}${decodeURIComponent(cm.avatar)}`
+                                                                        : cm.avatar;
+                                                                }
+
+                                                                updateMember(member.id, {
+                                                                    selectedUser: memberId,
+                                                                    selectedUserId: cm.user_id,
+                                                                    formData: {
+                                                                        ...member.formData,
+                                                                        firstName: userData?.firstname || '',
+                                                                        lastName: userData?.lastname || '',
+                                                                        email: userData?.email || cm.user_email || '',
+                                                                        mobile: userData?.mobile || cm.user_mobile || '',
+                                                                        dateOfBirth: userData?.birth_date || '',
+                                                                        gender: userData?.gender || '',
+                                                                        address: address.address || '',
+                                                                        address_line_two: address.address_line_two || '',
+                                                                        city: address.city || '',
+                                                                        state: address.state || '',
+                                                                        country: address.country || '',
+                                                                        pin_code: address.pin_code || '',
+                                                                        address_type: address.address_type || 'residential',
+                                                                        houseId: cm.society_flat_id?.toString() || '',
+                                                                        emergencyContactName: cm.emergency_contact_name || '',
+                                                                        membershipNumber: cm.membership_number || '',
+                                                                        accessCardId: cm.access_card_id || '',
+                                                                        referredBy: cm.referred_by || '',
+                                                                    },
+                                                                    idCardPreview: cm.identification_image || null,
+                                                                    residentPhotoPreview: avatarUrl,
+                                                                    ...snagUpdates,
+                                                                });
+                                                            }}
+                                                            sx={fieldStyles}
+                                                            disabled={loadingClubMembers}
+                                                        >
+                                                            {loadingClubMembers ? (
+                                                                <MenuItem value="">Loading members...</MenuItem>
+                                                            ) : clubMembers.length === 0 ? (
+                                                                <MenuItem value="">No created members found</MenuItem>
+                                                            ) : (
+                                                                clubMembers.map((cm) => (
+                                                                    <MenuItem key={cm.id} value={cm.id.toString()}>
+                                                                        {cm.user_name?.trim()} — {cm.user_email} ({cm.membership_number})
+                                                                    </MenuItem>
+                                                                ))
+                                                            )}
+                                                        </TextField>
+                                                    </FormControl>
+                                                    {member.selectedUser && (
+                                                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                                            <span>✓</span> Member data has been auto-populated below. You can edit any fields.
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Legacy occupant user dropdown - kept hidden but functional */}
                                             {member.userSelectionMode === 'select' && (
                                                 <div className="mb-6">
                                                     <FormControl fullWidth>
@@ -1768,9 +2065,16 @@ export const AddGroupMembershipPage = () => {
                                                 </div>
                                             )}
 
-                                            {/* Manual User Details */}
-                                            {member.userSelectionMode === 'manual' && (
-                                                <div className="space-y-4">
+                                            {/* User Details Form - shown for both manual entry and created member selection */}
+                                            {(member.userSelectionMode === 'manual' || member.userSelectionMode === 'created_member') && (
+                                                <div
+                                                    className="space-y-4"
+                                                    style={
+                                                        member.userSelectionMode === 'created_member' && !member.selectedUser
+                                                            ? { opacity: 0.45, pointerEvents: 'none', userSelect: 'none' }
+                                                            : {}
+                                                    }
+                                                >
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         <TextField
                                                             label="First Name *"
@@ -1918,6 +2222,18 @@ export const AddGroupMembershipPage = () => {
                                                                 )}
                                                             </Select>
                                                         </FormControl>
+
+                                                        {cardAllocated && (
+                                                            <TextField
+                                                                label="Access Card ID"
+                                                                value={member.formData.accessCardId || ''}
+                                                                onChange={(e) => updateMember(member.id, { formData: { ...member.formData, accessCardId: e.target.value } })}
+                                                                sx={fieldStyles}
+                                                                fullWidth
+                                                                placeholder="Enter Access Card ID"
+                                                                helperText="Assign a unique access card ID for this user"
+                                                            />
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
@@ -2006,24 +2322,128 @@ export const AddGroupMembershipPage = () => {
                                             </div>
                                         </div>
 
-                                        {/* Section 3: Upload Documents */}
+                                        {/* Section 3: Billing Info */}
                                         <div className="mb-8 pt-8 border-t border-gray-200">
                                             <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
                                                 <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">3</div>
-                                                Upload Documents {!isEditMode && <span className="text-red-500">*</span>}
+                                                Billing Info
+                                            </h4>
+
+                                            <div className="space-y-4">
+                                                <FormControlLabel
+                                                    control={
+                                                        <Checkbox
+                                                            checked={member.raisedBillToThisUser}
+                                                            onChange={(e) => updateMember(member.id, {
+                                                                raisedBillToThisUser: e.target.checked,
+                                                                billTo: e.target.checked ? member.billTo : '',
+                                                            })}
+                                                            disabled={memberIndex !== 0}
+                                                            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                                        />
+                                                    }
+                                                    label="Raised bill to this user"
+                                                />
+
+                                                {memberIndex === 0 && member.raisedBillToThisUser && (
+                                                    <div className="space-y-4">
+                                                        <RadioGroup
+                                                            row
+                                                            value={member.billTo}
+                                                            onChange={(e) => updateMember(member.id, { billTo: e.target.value as 'user' | 'company' })}
+                                                        >
+                                                            <FormControlLabel
+                                                                value="user"
+                                                                control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                                                                label="Bill to User"
+                                                            />
+                                                            <FormControlLabel
+                                                                value="company"
+                                                                control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                                                                label="Bill to Company"
+                                                            />
+                                                        </RadioGroup>
+
+                                                        {member.billTo === 'user' && (
+                                                            <div className="bg-gray-50 rounded-lg p-4 space-y-3 border border-gray-200">
+                                                                <p className="text-sm font-medium text-gray-700">User Information</p>
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                    <div>
+                                                                        <p className="text-xs text-gray-500 mb-1">Name</p>
+                                                                        <p className="text-sm font-medium text-gray-800">
+                                                                            {[member.formData.firstName, member.formData.lastName].filter(Boolean).join(' ') || '—'}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-xs text-gray-500 mb-1">Email</p>
+                                                                        <p className="text-sm font-medium text-gray-800">{member.formData.email || '—'}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-xs text-gray-500 mb-1">Address</p>
+                                                                    <p className="text-sm font-medium text-gray-800">
+                                                                        {[member.formData.address, member.formData.address_line_two, member.formData.city, member.formData.state, member.formData.country, member.formData.pin_code].filter(Boolean).join(', ') || '—'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {member.billTo === 'company' && (
+                                                            <div className="space-y-4">
+                                                                <TextField
+                                                                    label="Company Name"
+                                                                    value={member.billingCompanyName}
+                                                                    onChange={(e) => updateMember(member.id, { billingCompanyName: e.target.value })}
+                                                                    sx={fieldStyles}
+                                                                    fullWidth
+                                                                />
+                                                                <TextField
+                                                                    label="GSTIN No."
+                                                                    value={member.billingGstinNo}
+                                                                    onChange={(e) => updateMember(member.id, { billingGstinNo: e.target.value })}
+                                                                    sx={fieldStyles}
+                                                                    fullWidth
+                                                                />
+                                                                <TextField
+                                                                    label="Address"
+                                                                    value={member.billingCompanyAddress}
+                                                                    onChange={(e) => updateMember(member.id, { billingCompanyAddress: e.target.value })}
+                                                                    sx={fieldStyles}
+                                                                    fullWidth
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Section 4: Upload Documents */}
+                                        <div className="mb-8 pt-8 border-t border-gray-200">
+                                            <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">4</div>
+                                                Upload Documents
                                             </h4>
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                                 {/* ID Card Upload */}
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        ID Card {!isEditMode && <span className="text-red-500">*</span>}
+                                                        ID Card
                                                     </label>
                                                     <div className={`border-2 border-dashed rounded-lg p-6 text-center ${member.idCardFile || member.idCardPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'}`}>
                                                         {(member.idCardFile || member.idCardPreview) ? (
                                                             <div>
-                                                                {member.idCardPreview && (
+                                                                {member.idCardPreview && getFileDisplayInfo(member.idCardFile?.name || member.idCardPreview).isImage && (
                                                                     <img src={member.idCardPreview} alt="ID Card" className="max-h-40 mx-auto rounded mb-3" />
+                                                                )}
+                                                                {member.idCardPreview && getFileDisplayInfo(member.idCardFile?.name || member.idCardPreview).isPdf && (
+                                                                    <div className="flex flex-col items-center justify-center mb-3">
+                                                                        <div className="w-14 h-14 flex items-center justify-center border-2 border-red-300 rounded-lg bg-red-50 mb-2">
+                                                                            <FileText className="w-8 h-8 text-red-600" />
+                                                                        </div>
+                                                                        <span className="text-xs text-red-600 font-semibold">PDF Document</span>
+                                                                    </div>
                                                                 )}
                                                                 <div className="flex items-center justify-between">
                                                                     <span className="text-sm text-gray-600">{member.idCardFile?.name || 'Existing ID Card'}</span>
@@ -2036,7 +2456,7 @@ export const AddGroupMembershipPage = () => {
                                                             <div>
                                                                 <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
                                                                 <p className="text-sm text-gray-500 mb-2">Upload ID Card</p>
-                                                                <input type="file" accept="image/*" onChange={(e) => handleIdCardUpload(member.id, e)} className="hidden" id={`id-card-${member.id}`} />
+                                                                <input type="file" accept="image/*,.pdf" onChange={(e) => handleIdCardUpload(member.id, e)} className="hidden" id={`id-card-${member.id}`} />
                                                                 <label htmlFor={`id-card-${member.id}`}>
                                                                     <Button variant="outline" className="cursor-pointer" asChild><span>Choose File</span></Button>
                                                                 </label>
@@ -2048,13 +2468,21 @@ export const AddGroupMembershipPage = () => {
                                                 {/* Member Photo Upload */}
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Member Photo {!isEditMode && <span className="text-red-500">*</span>}
+                                                        Member Photo
                                                     </label>
                                                     <div className={`border-2 border-dashed rounded-lg p-6 text-center ${member.residentPhotoFile || member.residentPhotoPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'}`}>
                                                         {(member.residentPhotoFile || member.residentPhotoPreview) ? (
                                                             <div>
-                                                                {member.residentPhotoPreview && (
+                                                                {member.residentPhotoPreview && getFileDisplayInfo(member.residentPhotoFile?.name || member.residentPhotoPreview).isImage && (
                                                                     <img src={member.residentPhotoPreview} alt="Photo" className="max-h-40 mx-auto rounded mb-3" />
+                                                                )}
+                                                                {member.residentPhotoPreview && getFileDisplayInfo(member.residentPhotoFile?.name || member.residentPhotoPreview).isPdf && (
+                                                                    <div className="flex flex-col items-center justify-center mb-3">
+                                                                        <div className="w-14 h-14 flex items-center justify-center border-2 border-red-300 rounded-lg bg-red-50 mb-2">
+                                                                            <FileText className="w-8 h-8 text-red-600" />
+                                                                        </div>
+                                                                        <span className="text-xs text-red-600 font-semibold">PDF Document</span>
+                                                                    </div>
                                                                 )}
                                                                 <div className="flex items-center justify-between">
                                                                     <span className="text-sm text-gray-600">{member.residentPhotoFile?.name || 'Existing Photo'}</span>
@@ -2067,7 +2495,7 @@ export const AddGroupMembershipPage = () => {
                                                             <div>
                                                                 <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
                                                                 <p className="text-sm text-gray-500 mb-2">Upload Photo</p>
-                                                                <input type="file" accept="image/*" onChange={(e) => handleResidentPhotoUpload(member.id, e)} className="hidden" id={`photo-${member.id}`} />
+                                                                <input type="file" accept="image/*,.pdf" onChange={(e) => handleResidentPhotoUpload(member.id, e)} className="hidden" id={`photo-${member.id}`} />
                                                                 <label htmlFor={`photo-${member.id}`}>
                                                                     <Button variant="outline" className="cursor-pointer" asChild><span>Choose File</span></Button>
                                                                 </label>
@@ -2149,10 +2577,10 @@ export const AddGroupMembershipPage = () => {
                                             </div>
                                         </div>
 
-                                        {/* Section 4: Health & Wellness */}
+                                        {/* Section 5: Health & Wellness */}
                                         <div className="mb-8 pt-8 border-t border-gray-200">
                                             <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">4</div>
+                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">5</div>
                                                 Health & Wellness Information
                                             </h4>
 
@@ -2273,10 +2701,10 @@ export const AddGroupMembershipPage = () => {
                                             </div>
                                         </div>
 
-                                        {/* Section 5: Activity Interests */}
+                                        {/* Section 6: Activity Interests */}
                                         <div className="mb-8 pt-8 border-t border-gray-200">
                                             <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">5</div>
+                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">6</div>
                                                 Activity Interests
                                             </h4>
 
@@ -2330,10 +2758,10 @@ export const AddGroupMembershipPage = () => {
                                             </div>
                                         </div>
 
-                                        {/* Section 6: Lifestyle & Communication */}
+                                        {/* Section 7: Lifestyle & Communication */}
                                         <div className="mb-8 pt-8 border-t border-gray-200">
                                             <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">6</div>
+                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">7</div>
                                                 Lifestyle & Communication
                                             </h4>
 
@@ -2391,7 +2819,7 @@ export const AddGroupMembershipPage = () => {
                                         {/* Section 7: Occupation */}
                                         <div className="pt-8 border-t border-gray-200">
                                             <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">7</div>
+                                                <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">8</div>
                                                 Occupation & Demographics
                                             </h4>
 
@@ -2667,7 +3095,23 @@ export const AddGroupMembershipPage = () => {
                                             control={
                                                 <Checkbox
                                                     checked={cardAllocated}
-                                                    onChange={(e) => setCardAllocated(e.target.checked)}
+                                                    onChange={(e) => {
+                                                        const isChecked = e.target.checked;
+                                                        setCardAllocated(isChecked);
+
+                                                        // Clear all access card IDs if unchecking
+                                                        if (!isChecked) {
+                                                            setMembers(prevMembers =>
+                                                                prevMembers.map(member => ({
+                                                                    ...member,
+                                                                    formData: {
+                                                                        ...member.formData,
+                                                                        accessCardId: ''
+                                                                    }
+                                                                }))
+                                                            );
+                                                        }
+                                                    }}
                                                     sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
                                                 />
                                             }
@@ -2675,26 +3119,12 @@ export const AddGroupMembershipPage = () => {
                                         />
                                     </div>
 
-                                    {/* Access Card ID (shown only if Access Card Allocated is checked) */}
                                     {cardAllocated && (
-                                        <div className="mt-4">
-                                            <TextField
-                                                label="Enter Access Card ID"
-                                                value={members[0]?.formData.accessCardId || ''}
-                                                onChange={(e) => {
-                                                    const firstMember = members[0];
-                                                    if (firstMember) {
-                                                        updateMember(firstMember.id, {
-                                                            formData: {
-                                                                ...firstMember.formData,
-                                                                accessCardId: e.target.value
-                                                            }
-                                                        });
-                                                    }
-                                                }}
-                                                sx={fieldStyles}
-                                                fullWidth
-                                            />
+                                        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200 flex items-start gap-2">
+                                            <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                                            <p className="text-sm text-blue-800">
+                                                Access Card ID is now required for each user. Each user will have their own unique access card ID in the User Information section below.
+                                            </p>
                                         </div>
                                     )}
                                 </div>

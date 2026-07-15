@@ -5,15 +5,12 @@ import createApiSlice from "../api/apiSlice";
 // Fetch all sprints with optional filtering
 export const fetchSprints = createAsyncThunk(
     "fetchSprints",
-    async ({ token, baseUrl, filters }: { token: string; baseUrl: string; filters?: any }, { rejectWithValue }) => {
+    async ({ token, baseUrl, filters, page }: { token: string; baseUrl: string; filters?: any; page?: number }, { rejectWithValue }) => {
         try {
-            let url = `https://${baseUrl}/sprints.json`;
-
-            // Add filters if provided
-            if (filters) {
-                const params = new URLSearchParams(filters).toString();
-                url += `?${params}`;
-            }
+            const params: Record<string, any> = { ...(filters || {}) };
+            if (page) params.page = page;
+            const queryString = new URLSearchParams(params).toString();
+            const url = `https://${baseUrl}/sprints.json${queryString ? `?${queryString}` : ""}`;
 
             const response = await axios.get(url, {
                 headers: {

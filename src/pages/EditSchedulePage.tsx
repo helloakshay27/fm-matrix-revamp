@@ -57,17 +57,26 @@ import { assetService } from '@/services/assetService';
 
 // Styled Components
 const RedButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#C72030',
-  color: 'white',
+  backgroundColor: '#DA7756',
+  color: '#ffffff !important',
   borderRadius: 4,
   textTransform: 'none',
   padding: '10px 20px',
   fontFamily: 'Work Sans, sans-serif',
   fontWeight: 500,
-  boxShadow: '0 2px 4px rgba(199, 32, 48, 0.2)',
+  boxShadow: '0 2px 4px rgba(218, 119, 86, 0.2)',
+  '&.MuiButton-root': {
+    color: '#ffffff !important',
+  },
   '&:hover': {
-    backgroundColor: '#B8252F',
-    boxShadow: '0 4px 8px rgba(199, 32, 48, 0.3)',
+    backgroundColor: '#DA7756',
+    color: '#ffffff !important',
+    boxShadow: '0 2px 4px rgba(218, 119, 86, 0.2)',
+  },
+  '&.Mui-disabled': {
+    backgroundColor: '#DA7756',
+    color: '#ffffff !important',
+    opacity: 0.65,
   },
 }));
 
@@ -2371,18 +2380,17 @@ export const EditSchedulePage = () => {
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box sx={{
-            backgroundColor: '#C72030',
+            backgroundColor: '#DA7756',
             borderRadius: '50%',
             width: '32px',
             height: '32px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '2'
           }}>
             <Cog size={16} color="white" />
           </Box>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030', textTransform: 'uppercase' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#DA7756', textTransform: 'uppercase' }}>
             Basic Configuration
           </Typography>
         </Box>
@@ -2638,7 +2646,7 @@ export const EditSchedulePage = () => {
         mb: 3
       }}>
         <Box sx={{
-          backgroundColor: '#C72030',
+          backgroundColor: '#DA7756',
           borderRadius: '50%',
           width: '32px',
           height: '32px',
@@ -2648,7 +2656,7 @@ export const EditSchedulePage = () => {
         }}>
           <Cog size={16} color="white" />
         </Box>
-        <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030', textTransform: 'uppercase' }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: '#DA7756', textTransform: 'uppercase' }}>
           Schedule Setup
         </Typography>
       </Box>
@@ -3297,8 +3305,8 @@ export const EditSchedulePage = () => {
     <div>
       {/* Header Outside the Box */}
       <div className="flex justify-between items-center p-6">
-        <div className="flex items-center gap-2 text-[#C72030] text-lg font-semibold" style={{ textTransform: 'uppercase' }}>
-          <span className="bg-[#C72030] text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
+        <div className="flex items-center gap-2 text-lg font-semibold" style={{ textTransform: 'uppercase', color: '#DA7756' }}>
+          <span className="bg-[#DA7756] text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
             <Cog className="w-6 h-6" />
           </span>
           QUESTION SETUP
@@ -4189,7 +4197,7 @@ export const EditSchedulePage = () => {
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box sx={{
-            backgroundColor: '#C72030',
+            backgroundColor: '#DA7756',
             borderRadius: '50%',
             width: '32px',
             height: '32px',
@@ -4199,7 +4207,7 @@ export const EditSchedulePage = () => {
           }}>
             <Cog size={16} color="white" />
           </Box>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030', textTransform: 'uppercase' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#DA7756', textTransform: 'uppercase' }}>
             Time Setup
           </Typography>
         </Box>

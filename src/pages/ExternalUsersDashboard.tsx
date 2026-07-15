@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation} from 'react-router-dom';
 import { Users, UserCheck, Clock, Shield, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +29,7 @@ interface ExternalUser {
   designation: string;
   employee_id: string;
   created_by_id: number;
-  access_level: number;
+  access_level: number; 
   user_type: string;
   lock_user_permission_status: string;
   face_added: boolean | string;
@@ -71,9 +71,13 @@ export const ExternalUsersDashboard = () => {
   const [updatingIds, setUpdatingIds] = useState<Set<number>>(new Set());
   const [confirmDeleteUser, setConfirmDeleteUser] = useState<ExternalUser | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
   const [pagination, setPagination] = useState<ApiPagination>({ current_page: 1, total_pages: 1, total_count: 0 });
   const navigate = useNavigate();
+  const location = useLocation();
   const pageSize = 25; // backend default (adjust if needed)
 
   // Permission: show Action button only for these userIds
@@ -135,13 +139,13 @@ export const ExternalUsersDashboard = () => {
         }));
         setExternalUsers(users);
         if (response.data.pagination) {
-          setPagination({
-            current_page: response.data.pagination.current_page,
+          setPagination(prev => ({
+            ...prev,
             total_pages: response.data.pagination.total_pages,
             total_count: response.data.pagination.total_count,
-          });
+          }));
         } else {
-          setPagination({ current_page: page, total_pages: 1, total_count: users.length });
+          setPagination(prev => ({ ...prev, total_pages: 1, total_count: users.length }));
         }
       } catch (err) {
         if (axios.isCancel?.(err) || (err as any)?.name === 'CanceledError' || (err as any)?.code === 'ERR_CANCELED') {
@@ -198,44 +202,40 @@ export const ExternalUsersDashboard = () => {
   ];
 
 
+  const pillBadge = (bg: string, color: string, label: string) => (
+    <span
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+      style={{ backgroundColor: bg, color }}
+    >
+      {label}
+    </span>
+  );
+
   const getStatusBadge = (status: string) => {
-    if (!status) {
-      return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
-    }
+    if (!status) return pillBadge('#f3f4f6', '#6b7280', 'Unknown');
     switch (status.toLowerCase()) {
-      case 'approved':
-        return <Badge className="bg-green-500 text-white hover:bg-green-600">Approved</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-500 text-white hover:bg-yellow-600">Pending</Badge>;
-      case 'rejected':
-        // Present 'rejected' as 'Deactivated' per product requirement
-        return <Badge className="bg-red-500 text-white hover:bg-red-600">Deactivated</Badge>;
-      default:
-        return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{status}</Badge>;
+      case 'approved':  return pillBadge('#dcfce7', '#15803d', 'Approved');
+      case 'pending':   return pillBadge('#fff3e0', '#da7756', 'Pending');
+      case 'rejected':  return pillBadge('#fee2e2', '#dc2626', 'Deactivated');
+      default:          return pillBadge('#f3f4f6', '#6b7280', status);
     }
   };
 
   const getTypeBadge = (type: string) => {
-    if (!type) {
-      return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
-    }
+    if (!type) return pillBadge('#f3f4f6', '#6b7280', 'Unknown');
     switch (type.toLowerCase()) {
-      case 'external':
-        return <Badge className="bg-orange-500 text-white hover:bg-orange-600">External</Badge>;
-      case 'contractor':
-        return <Badge className="bg-purple-500 text-white hover:bg-purple-600">Contractor</Badge>;
-      case 'vendor':
-        return <Badge className="bg-blue-500 text-white hover:bg-blue-600">Vendor</Badge>;
-      default:
-        return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{type}</Badge>;
+      case 'external':   return pillBadge('#fff3e0', '#da7756', 'External');
+      case 'contractor': return pillBadge('#f3e8ff', '#7e22ce', 'Contractor');
+      case 'vendor':     return pillBadge('#dbeafe', '#1d4ed8', 'Vendor');
+      default:           return pillBadge('#f3f4f6', '#6b7280', type);
     }
   };
 
   const getYesNoBadge = (value: boolean | string) => {
     const isYes = value === true || value === 'yes' || value === 'Yes';
-    return <Badge className={isYes ? "bg-green-500 text-white hover:bg-green-600" : "bg-red-500 text-white hover:bg-red-600"}>
-      {isYes ? 'Yes' : 'No'}
-    </Badge>;
+    return isYes
+      ? pillBadge('#dcfce7', '#15803d', 'Yes')
+      : pillBadge('#fee2e2', '#dc2626', 'No');
   };
 
   const columns: ColumnConfig[] = [
@@ -296,7 +296,8 @@ export const ExternalUsersDashboard = () => {
           <div className="w-full flex justify-center">
             <div
               onClick={() => !disabled && handleToggleActive(user)}
-              className={`mx-auto relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-400'} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              className={`mx-auto relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              style={{ backgroundColor: isActive ? '#da7756' : '#9ca3af' }}
             >
               <span
                 className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'}`}
@@ -531,11 +532,14 @@ export const ExternalUsersDashboard = () => {
 
   const handleCancelDelete = () => setConfirmDeleteUser(null);
 
+ useEffect(() => {
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
+  }, [page]);
+
   const handlePageChange = (newPage: number) => {
-    // Relax guard: when server doesn't send total_pages for filtered queries,
-    // allow navigation based on page bounds only; we'll fetch and adjust UI from results.
     if (newPage < 1 || newPage === page) return;
     setPage(newPage);
+    navigate(`${location.pathname}?page=${newPage}`, { replace: true });
   };
 
 
@@ -616,7 +620,8 @@ export const ExternalUsersDashboard = () => {
                 {canSeeActionButton && (
                   <Button
                     onClick={handleActionClick}
-                    className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+                    className="fm-button-fix fm-button-brand px-4 py-2"
+                    variant="ghost"
                   >
                     <Plus className="w-4 h-4" />
                     Action
@@ -624,7 +629,8 @@ export const ExternalUsersDashboard = () => {
                 )}
                 <Button
                   onClick={() => navigate('/safety/m-safe/external-users/multiple-delete')}
-                  className="text-white bg-red-500 hover:bg-red-600"
+                  className="fm-button-fix fm-button-brand px-4 py-2"
+                  variant="ghost"
                 >
                   <Trash2 className="w-4 h-4" />
                   User Deletion

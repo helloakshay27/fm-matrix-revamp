@@ -39,6 +39,7 @@ interface GRNDetails {
 
 interface InventoryItem {
   inventoryType: string;
+  itemNo: string;
   expectedQuantity: string;
   receivedQuantity: string;
   approvedQuantity: string;
@@ -97,7 +98,7 @@ export const AddGRNDashboard = () => {
     invoiceAmount: "",
     paymentMode: "",
     invoiceDate: "",
-    postingDate: "",
+    postingDate: new Date().toISOString().split('T')[0],
     otherExpense: "",
     loadingExpense: "",
     adjustmentAmount: "",
@@ -107,6 +108,7 @@ export const AddGRNDashboard = () => {
   const [inventoryDetails, setInventoryDetails] = useState<InventoryItem[]>([
     {
       inventoryType: "",
+      itemNo: "",
       expectedQuantity: "",
       receivedQuantity: "",
       approvedQuantity: "",
@@ -194,6 +196,7 @@ export const AddGRNDashboard = () => {
         const inventoryItem = {
           ...item,
           inventoryType: item.inventory.id,
+          itemNo: item.item_no || "",
           rate: item.rate || "",
           cgstRate: item.cgst_rate || "",
           cgstAmount: item.cgst_amount || "",
@@ -457,6 +460,7 @@ export const AddGRNDashboard = () => {
         notes: grnDetails.notes,
         pms_grn_inventories_attributes: inventoryDetails.map((item) => ({
           pms_inventory_id: item.inventoryType,
+          item_no: item.itemNo,
           quantity: item.expectedQuantity,
           unit: item.receivedQuantity,
           approved_qty: item.approvedQuantity,
@@ -650,7 +654,7 @@ export const AddGRNDashboard = () => {
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
+              InputProps={{ sx: fieldStyles, readOnly: true }}
               sx={{ mt: 1 }}
             />
 
@@ -774,6 +778,20 @@ export const AddGRNDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {item.itemNo && (
+                <TextField
+                  label="Item No."
+                  value={item.itemNo}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+              )}
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Inventory Type</InputLabel>
                 <MuiSelect
@@ -787,6 +805,7 @@ export const AddGRNDashboard = () => {
                     )
                   }
                   displayEmpty
+                  disabled={grnDetails.purchaseOrder > 0}
                   sx={fieldStyles}
                 >
                   <MenuItem value="">
@@ -805,17 +824,19 @@ export const AddGRNDashboard = () => {
                 type="number"
                 placeholder="Expected Quantity"
                 value={item.expectedQuantity}
-                onChange={(e) =>
-                  handleInventoryChange(
-                    index,
-                    "expectedQuantity",
-                    e.target.value
-                  )
-                }
+                onChange={(e) => {
+                  if (!grnDetails.purchaseOrder) {
+                    handleInventoryChange(index, "expectedQuantity", e.target.value);
+                  }
+                }}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                InputProps={{
+                  sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                  readOnly: grnDetails.purchaseOrder > 0,
+                }}
+                slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                 sx={{ mt: 1 }}
               />
 
@@ -835,6 +856,7 @@ export const AddGRNDashboard = () => {
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
+                slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                 sx={{ mt: 1 }}
               />
 
@@ -854,6 +876,7 @@ export const AddGRNDashboard = () => {
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
+                slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                 sx={{ mt: 1 }}
               />
 
@@ -874,6 +897,7 @@ export const AddGRNDashboard = () => {
                 InputProps={{
                   sx: { ...fieldStyles },
                 }}
+                slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                 sx={{ mt: 1 }}
               />
 
@@ -884,15 +908,17 @@ export const AddGRNDashboard = () => {
                 value={item.rate}
                 onChange={(e) => {
                   const value = e.target.value;
-
-                  if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                  if (!grnDetails.purchaseOrder && (value === "" || /^\d*\.?\d{0,2}$/.test(value))) {
                     handleInventoryChange(index, "rate", value);
                   }
                 }}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                InputProps={{
+                  sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                  readOnly: grnDetails.purchaseOrder > 0,
+                }}
                 sx={{ mt: 1 }}
               />
 
@@ -903,15 +929,17 @@ export const AddGRNDashboard = () => {
                 value={item.cgstRate}
                 onChange={(e) => {
                   const value = e.target.value;
-
-                  if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                  if (!grnDetails.purchaseOrder && (value === "" || /^\d*\.?\d{0,2}$/.test(value))) {
                     handleInventoryChange(index, "cgstRate", value);
                   }
                 }}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                InputProps={{
+                  sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                  readOnly: grnDetails.purchaseOrder > 0,
+                }}
                 sx={{ mt: 1 }}
               />
 
@@ -927,6 +955,7 @@ export const AddGRNDashboard = () => {
                   sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                   readOnly: true,
                 }}
+                slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                 sx={{ mt: 1 }}
               />
 
@@ -937,15 +966,17 @@ export const AddGRNDashboard = () => {
                 value={item.sgstRate}
                 onChange={(e) => {
                   const value = e.target.value;
-
-                  if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                  if (!grnDetails.purchaseOrder && (value === "" || /^\d*\.?\d{0,2}$/.test(value))) {
                     handleInventoryChange(index, "sgstRate", value);
                   }
                 }}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                InputProps={{
+                  sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                  readOnly: grnDetails.purchaseOrder > 0,
+                }}
                 sx={{ mt: 1 }}
               />
 
@@ -961,6 +992,7 @@ export const AddGRNDashboard = () => {
                   sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                   readOnly: true,
                 }}
+                slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                 sx={{ mt: 1 }}
               />
 
@@ -971,15 +1003,17 @@ export const AddGRNDashboard = () => {
                 value={item.igstRate}
                 onChange={(e) => {
                   const value = e.target.value;
-
-                  if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                  if (!grnDetails.purchaseOrder && (value === "" || /^\d*\.?\d{0,2}$/.test(value))) {
                     handleInventoryChange(index, "igstRate", value);
                   }
                 }}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                InputProps={{
+                  sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                  readOnly: grnDetails.purchaseOrder > 0,
+                }}
                 sx={{ mt: 1 }}
               />
 
@@ -995,6 +1029,7 @@ export const AddGRNDashboard = () => {
                   sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                   readOnly: true,
                 }}
+                slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                 sx={{ mt: 1 }}
               />
 
@@ -1029,6 +1064,7 @@ export const AddGRNDashboard = () => {
                   sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                   readOnly: true,
                 }}
+                slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                 sx={{ mt: 1 }}
               />
 
@@ -1044,6 +1080,7 @@ export const AddGRNDashboard = () => {
                   sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                   readOnly: true,
                 }}
+                slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                 sx={{ mt: 1 }}
               />
 
@@ -1059,6 +1096,7 @@ export const AddGRNDashboard = () => {
                   sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                   readOnly: true,
                 }}
+                slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                 sx={{ mt: 1 }}
               />
 
@@ -1074,6 +1112,7 @@ export const AddGRNDashboard = () => {
                   sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                   readOnly: true,
                 }}
+                slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                 sx={{ mt: 1 }}
               />
             </div>

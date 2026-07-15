@@ -16,6 +16,7 @@ import InputLabel from '@mui/material/InputLabel';
 import { API_CONFIG } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, User, DollarSign, NotepadText } from "lucide-react";
 
 
 
@@ -64,9 +65,10 @@ const TransactionsAdd = () => {
     //     setRows(updated);
     // };
 
+
     const handleRowChange = (idx, field, value) => {
         // Prevent negative values for debit/credit
-        if ((field === 'debit' || field === 'credit')) {
+        if (field === 'debit' || field === 'credit') {
             let val = value;
             // Remove minus sign if present
             if (typeof val === 'string') {
@@ -74,12 +76,10 @@ const TransactionsAdd = () => {
             }
             // Prevent negative numbers
             if (Number(val) < 0) val = '';
-            // Format to 2 decimal places if not empty and is a number
-            if (val !== '' && !isNaN(Number(val))) {
-                // Only format if not typing decimal point
-                if (!val.endsWith('.')) {
-                    val = Number(val).toFixed(2);
-                }
+            // Allow only up to 2 decimal places if decimal is present
+            if (val && val.includes('.')) {
+                const [intPart, decPart] = val.split('.');
+                val = intPart + '.' + (decPart ? decPart.slice(0, 2) : '');
             }
             setRows(prevRows => prevRows.map((row, i) => {
                 if (i !== idx) return row;
@@ -136,6 +136,7 @@ const TransactionsAdd = () => {
         };
     };
 
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         // Required field validation
@@ -159,25 +160,47 @@ const TransactionsAdd = () => {
             toast.error('Please ensure that the Debits and Credits are equal.');
             return;
         }
-        const payload = buildJournalPayload();
-        console.log('Payload to send:', payload);
+
+        // Build FormData payload
+        const formData = new FormData();
+        const lock_account_id = localStorage.getItem("lock_account_id");
+        formData.append('lock_account_transaction[transaction_type]', transactionType);
+        formData.append('lock_account_transaction[transaction_date]', date);
+        formData.append('lock_account_transaction[voucher_number]', journalNo);
+        formData.append('lock_account_transaction[description]', notes);
+        formData.append('lock_account_transaction[reference]', reference);
+        formData.append('lock_account_transaction[publish]', 'false');
+        formData.append('lock_account_transaction[lock_account_id]', lock_account_id);
+        formData.append('lock_account_transaction[reporting_method]', reportingMethod);
+
+        rows.forEach((row, idx) => {
+            if (!row.account) return;
+            formData.append(`lock_account_transaction_records[${idx}][ledger_id]`, row.account);
+            formData.append(`lock_account_transaction_records[${idx}][cost_centre_id]`, '1');
+            if (row.debit && Number(row.debit) > 0) formData.append(`lock_account_transaction_records[${idx}][dr]`, row.debit);
+            if (row.credit && Number(row.credit) > 0) formData.append(`lock_account_transaction_records[${idx}][cr]`, row.credit);
+        });
+
+        // Attach files
+        attachments.forEach((file, idx) => {
+            formData.append('attachments[]', file);
+        });
+
         const baseUrl = API_CONFIG.BASE_URL;
         const token = API_CONFIG.TOKEN;
         try {
             const url = `${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions.json`;
-            const response = await axios.post(url, payload, {
+            const response = await axios.post(url, formData, {
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'multipart/form-data',
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
             });
             console.log('API response:', response.data);
             navigate('/accounting/transactions');
-            // Optionally show success message or redirect
         } catch (error) {
             console.error('Error submitting journal entry:', error);
             toast.error('Failed to create journal entry');
-            // Optionally show error message
         }
     };
 
@@ -186,9 +209,25 @@ const TransactionsAdd = () => {
     //     // Submit logic here
     // };
 
+    const handleClose = () => {
+		navigate("/accounting/transactions");
+	};
     return (
         <div className="w-full min-h-screen bg-gray-50 p-0 m-0">
             <div className="w-full max-w-full px-8 py-8 mx-auto">
+                <div className="mb-6">
+                                    <div className="flex items-end justify-between gap-2">
+                                        <Button
+                                            variant="ghost"
+                                            onClick={handleClose}
+                                            className="p-0"
+                                        >
+                                            <ArrowLeft className="w-4 h-4 mr-2" />
+                                            Back to Transactions List
+                                        </Button>
+                
+                                    </div>
+                                </div>
                 <h2 className="text-2xl font-semibold text-[#1a1a1a] mb-6">New Transaction</h2>
                 <form className="space-y-6" onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

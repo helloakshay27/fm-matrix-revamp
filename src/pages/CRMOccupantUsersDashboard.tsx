@@ -12,6 +12,7 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { getUser } from '@/utils/auth';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Define column configuration for EnhancedTable
 const columns: ColumnConfig[] = [
@@ -32,6 +33,7 @@ const columns: ColumnConfig[] = [
 ];
 
 const CRMOccupantUsersDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const dispatch = useAppDispatch();
   const navigate = useNavigate()
   const baseUrl = localStorage.getItem('baseUrl');
@@ -262,9 +264,13 @@ const CRMOccupantUsersDashboard = () => {
 
   // Render actions for each row
   const renderActions = (user: any) => (
-    <Button variant="ghost" size="sm" onClick={() => navigate(`/crm/occupant-users/${user.id}`)}>
-      <Eye className="w-4 h-4" />
-    </Button>
+    <>
+      {shouldShow("Occupant Users", "show") && (
+      <Button variant="ghost" size="sm" onClick={() => navigate(`/crm/occupant-users/${user.id}`)}>
+        <Eye className="w-4 h-4" />
+      </Button>
+      )}
+    </>
   );
 
   console.log(occupantUsers)

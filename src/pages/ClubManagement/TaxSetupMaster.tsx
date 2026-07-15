@@ -374,7 +374,7 @@ export const TaxSetupMaster: React.FC = () => {
   });
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-2 space-y-6">
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Tax Setup </h1>
       </header>
@@ -393,7 +393,8 @@ export const TaxSetupMaster: React.FC = () => {
             className="bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => setAddModalOpen(true)}
           >
-            <Plus className="w-4 h-4 mr-2" /> Add
+            <Plus className="w-4 h-4 mr-2 !text-white" /> 
+            <span className="!text-white" >Add</span> 
           </Button>
         )}
       />
@@ -435,7 +436,7 @@ export const TaxSetupMaster: React.FC = () => {
           }
         }}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl bg-white data-[state=open]:animate-in">
           <DialogHeader>
             <DialogTitle>New {addForm.tax_type.toUpperCase()}</DialogTitle>
           </DialogHeader>
@@ -682,7 +683,7 @@ export const TaxSetupMaster: React.FC = () => {
           }
         }}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl bg-white data-[state=open]:animate-in">
           <DialogHeader>
             <DialogTitle>Edit {editForm.tax_type.toUpperCase()}</DialogTitle>
           </DialogHeader>

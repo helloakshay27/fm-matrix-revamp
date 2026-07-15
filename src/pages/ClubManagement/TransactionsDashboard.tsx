@@ -147,14 +147,14 @@ export const TransactionsDashboard = () => {
   });
 
   const perPage = 20;
-
+const lock_account_id = localStorage.getItem("lock_account_id");
   // Fetch journal entries
   const fetchJournals = useCallback(async () => {
     setLoading(true);
     try {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
-      const url = `${baseUrl}/lock_accounts/3/lock_account_transactions.json`;
+      const url = `${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions.json`;
       const response = await axios.get(url, {
         headers: {
           'Content-Type': 'application/json',
@@ -562,7 +562,7 @@ export const TransactionsDashboard = () => {
             title="Edit"
             className="p-0"
           >
-            {/* <Edit className="w-4 h-4" /> */}
+            <Edit className="w-4 h-4" />
           </Button>
         </div>
       );
@@ -639,6 +639,9 @@ export const TransactionsDashboard = () => {
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">All Transactions</h1>
+      </div>
       {/* Memberships Table */}
       <div className="overflow-x-auto animate-fade-in">
         {searchLoading && (

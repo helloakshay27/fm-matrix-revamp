@@ -123,27 +123,39 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
     // },
   ];
 
+  // Build query string manually to preserve brackets (axios encodes them and breaks the API)
+  const buildTicketUrl = (baseStatus?: string): string => {
+    const base = `${API_CONFIG.BASE_URL}/pms/assets/assets_tickets`;
+    let qs = `q[pms_asset_id_in][]=${assetId}`;
+
+    if (baseStatus) {
+      if (['open', 'closed', 'pending', 'duplicate'].includes(baseStatus)) {
+        qs += `&q[complaint_status_fixed_state_eq]=${baseStatus}`;
+      } else if (['complaints', 'suggestions', 'requests'].includes(baseStatus)) {
+        qs += `&q[complaint_type_eq]=${baseStatus.slice(0, -1)}`;
+      }
+    }
+    return `${base}?${qs}`;
+  };
+
   // Fetch all counts on mount
   const fetchTicketCounts = async () => {
     try {
-      const response = await axios.get(
-        `${API_CONFIG.BASE_URL}/pms/assets/${assetId}/tickets.json`,
-        {
-          params: { id: assetId },
-          headers: {
-            Authorization: getAuthHeader(),
-          },
-        }
-      );
-      const data = response.data;
+      const url = buildTicketUrl();
+      const resp = await fetch(url, {
+        headers: {
+          Authorization: getAuthHeader(),
+          Accept: 'application/json',
+        },
+      });
+      if (!resp.ok) throw new Error(`Status ${resp.status}`);
+      const data = await resp.json();
       setTicketCounts({
         open: data.open || 0,
         closed: data.closed || 0,
-        // pending: data.pending || 0,
         complaints: data.complaints || 0,
         suggestions: data.suggestions || 0,
         requests: data.requests || 0,
-        // duplicate: data.duplicate || 0,
       });
     } catch (err) {
       console.error('Failed to fetch ticket counts', err);
@@ -154,25 +166,16 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
   const fetchTickets = async (statusKey: string) => {
     setLoading(true);
     try {
-      const params: any = { id: assetId };
-
-      if (['open', 'closed', 'pending', 'duplicate'].includes(statusKey)) {
-        params['q[complaint_status_fixed_state_eq]'] = statusKey;
-      } else if (['complaints', 'suggestions', 'requests'].includes(statusKey)) {
-        params['q[complaint_type_eq]'] = statusKey.slice(0, -1); // complaint, suggestion, request
-      }
-
-      const response = await axios.get(
-        `${API_CONFIG.BASE_URL}/pms/assets/${assetId}/tickets.json`,
-        {
-          params,
-          headers: {
-            Authorization: getAuthHeader(),
-          },
-        }
-      );
-
-      setTickets(response.data.tickets || []);
+      const url = buildTicketUrl(statusKey);
+      const resp = await fetch(url, {
+        headers: {
+          Authorization: getAuthHeader(),
+          Accept: 'application/json',
+        },
+      });
+      if (!resp.ok) throw new Error(`Status ${resp.status}`);
+      const data = await resp.json();
+      setTickets(data.tickets || []);
     } catch (error) {
       console.error('Failed to fetch tickets', error);
     } finally {

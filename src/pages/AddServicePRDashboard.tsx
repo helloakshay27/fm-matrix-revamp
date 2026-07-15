@@ -652,7 +652,7 @@ export const AddServicePRDashboard = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []) as File[];
     const validFileTypes = ['application/pdf'];
-    const maxFileSizeBytes = 12 * 1024 * 1024; // 12 MB
+    const maxFileSizeBytes = 50 * 1024 * 1024; // 50 MB
     const validFiles: File[] = [];
 
     selectedFiles.forEach((file) => {

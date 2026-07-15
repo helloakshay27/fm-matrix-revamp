@@ -8,7 +8,7 @@ import {
     fetchProjectTasks,
 } from "@/store/slices/projectTasksSlice";
 import { toast } from "sonner";
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarIcon, X, Mic, MicOff } from "lucide-react";
 import {
     Select,
     MenuItem,
@@ -19,7 +19,9 @@ import {
     Dialog,
     DialogContent,
     Slide,
+    IconButton,
 } from "@mui/material";
+import { Button as SubmitButton } from "@/components/ui/button";
 import { TransitionProps } from "@mui/material/transitions";
 import { TaskDatePicker } from "@/components/TaskDatePicker";
 import TasksOfDate from "@/components/TasksOfDate";
@@ -30,6 +32,9 @@ import { AddTagModal } from "./AddTagModal";
 import axios from "axios";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { SpeechInput } from "./SpeechInput";
+import { useSpeechToText } from "@/hooks/useSpeechToText";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -39,10 +44,10 @@ const Transition = forwardRef(function Transition(
 });
 
 const globalPriorityOptions = [
-    { value: 2, label: "Low" },
-    { value: 3, label: "Medium" },
-    { value: 4, label: "High" },
     { value: 5, label: "Urgent" },
+    { value: 4, label: "High" },
+    { value: 3, label: "Medium" },
+    { value: 2, label: "Low" },
 ];
 
 const Attachments = ({ attachments, setAttachments }) => {
@@ -215,6 +220,11 @@ const EditIssueModal = ({
     const [mentionTags, setMentionTags] = useState<any[]>([]);
     const [isTagModalOpen, setIsTagModalOpen] = useState(false);
 
+    // Responsible Person Change Modal State
+    const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false);
+    const [pendingResponsiblePerson, setPendingResponsiblePerson] = useState<string | null>(null);
+    const [responsiblePersonChangeReason, setResponsiblePersonChangeReason] = useState('');
+
     // Date picker states
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showStartDatePicker, setShowStartDatePicker] = useState(false);
@@ -226,12 +236,19 @@ const EditIssueModal = ({
     const [issueDuration, setIssueDuration] = useState();
     const [totalWorkingHours, setTotalWorkingHours] = useState(0);
     const [dateWiseHours, setDateWiseHours] = useState([]);
+    const [originalDateWiseHrs, setOriginalDateWiseHrs] = useState([]);
 
     const isSubmittingRef = useRef(false);
     const startDateRef = useRef(null);
     const endDateRef = useRef(null);
     const collapsibleRef = useRef(null);
     const startCollapsibleRef = useRef(null);
+    const quillRef = useRef<HTMLDivElement>(null);
+    const quillEditorRef = useRef<Quill | null>(null);
+    const descriptionRef = useRef("");
+    const [baseValue, setBaseValue] = useState("");
+
+    const { isListening, activeId, transcript, supported, startListening, stopListening } = useSpeechToText();
 
     const monthNames = [
         "Jan",
@@ -287,6 +304,7 @@ const EditIssueModal = ({
 
     const dispatch = useAppDispatch();
 
+
     // Populate form data when issueData changes
     useEffect(() => {
         if (issueData && openDialog) {
@@ -330,16 +348,35 @@ const EditIssueModal = ({
             if (issueData.project_management_id) setNewIssuesProjectId(issueData.project_management_id);
             if (issueData.milestone_id) setNewIssuesMilestoneId(issueData.milestone_id);
             if (issueData.task_management_id) setNewIssuesTaskId(issueData.task_management_id);
-            // subtask?
 
-            // Tags
-            if (issueData.tags) {
-                // If tags are strings, we might need to map them to objects {value, label}
-                // If they are objects, use them.
-                // In IssueDetailsPage, tags is string[].
-                // We need to match them with mentionTags to get IDs.
-                // This will be done in the effect that fetches mentionTags.
+            if (issueData.estimated_hour) {
+                setTotalWorkingHours(issueData.estimated_hour);
             }
+
+            if (Array.isArray(issueData.issue_allocation_times) && issueData.issue_allocation_times.length > 0) {
+                // Merge multiple records for the same date so DurationPicker shows correct totals
+                const mergedByDate = Object.values(
+                    issueData.issue_allocation_times.reduce((acc: any, entry: any) => {
+                        if (acc[entry.date]) {
+                            const totalMins =
+                                (acc[entry.date].hours * 60 + acc[entry.date].minutes) +
+                                (entry.hours * 60 + entry.minutes);
+                            acc[entry.date] = {
+                                ...acc[entry.date],
+                                hours: Math.floor(totalMins / 60),
+                                minutes: totalMins % 60,
+                            };
+                        } else {
+                            acc[entry.date] = { ...entry };
+                        }
+                        return acc;
+                    }, {})
+                );
+                setDateWiseHours(mergedByDate);
+                setOriginalDateWiseHrs(issueData.issue_allocation_times);
+            }
+
+            // Tags will be set in fetchMentionTags after fetching all available tags
         }
     }, [issueData, openDialog]);
 
@@ -392,10 +429,13 @@ const EditIssueModal = ({
             const tagsData = response.data || [];
             setMentionTags(tagsData);
 
-            // If we have issueData tags (names) and now we have all tags (with IDs),
-            // we can set the tags state.
+            // If we have issueData tags, match them with the fetched tags
             if (issueData?.tags && tagsData.length > 0) {
-                const matchedTags = tagsData.filter((t: any) => issueData.tags.includes(t.name))
+                // issueData.tags is an array of tag objects with company_tag_id
+                const issueTagIds = issueData.tags.map((t: any) => t?.company_tag_id || t?.id);
+
+                const matchedTags = tagsData
+                    .filter((t: any) => issueTagIds.includes(t.id))
                     .map((t: any) => ({
                         value: t.id,
                         label: t.name,
@@ -456,6 +496,62 @@ const EditIssueModal = ({
             setCalendarTaskHours(formattedHours);
         }
     }, [userAvailability]);
+
+    // Handle STT for Description
+    useEffect(() => {
+        if (isListening && transcript && activeId === "edit-issue-description") {
+            const newValue = baseValue ? `${baseValue} ${transcript}` : transcript;
+            if (quillEditorRef.current) {
+                const formattedValue = newValue.startsWith("<") ? newValue : `<p>${newValue}</p>`;
+                quillEditorRef.current.root.innerHTML = formattedValue;
+                setDescription(formattedValue);
+            }
+        }
+    }, [isListening, transcript, activeId, baseValue]);
+
+    // Keep ref always pointing to latest description so the Quill init timer can read it
+    useEffect(() => {
+        descriptionRef.current = description;
+    }, [description]);
+
+    // Initialize Quill Editor — wait for Dialog slide transition before mounting
+    useEffect(() => {
+        if (!openDialog) {
+            quillEditorRef.current = null;
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            if (quillRef.current && !quillEditorRef.current) {
+                quillEditorRef.current = new Quill(quillRef.current, {
+                    theme: "snow",
+                    placeholder: "Enter Description...",
+                    modules: {
+                        toolbar: [
+                            [{ header: [1, 2, 3, false] }],
+                            ["bold", "italic", "underline", "strike"],
+                            ["blockquote"],
+                            [{ list: "ordered" }, { list: "bullet" }],
+                            ["link"],
+                            ["clean"],
+                        ],
+                    },
+                });
+
+                // Prefill with latest description (set by issueData useEffect)
+                if (descriptionRef.current) {
+                    quillEditorRef.current.root.innerHTML = descriptionRef.current;
+                }
+
+                quillEditorRef.current.on("text-change", () => {
+                    const htmlContent = quillEditorRef.current?.root.innerHTML;
+                    setDescription(htmlContent || "");
+                });
+            }
+        }, 200);
+
+        return () => clearTimeout(timer);
+    }, [openDialog]);
 
     // Fetch tasks for start date
     useEffect(() => {
@@ -711,6 +807,11 @@ const EditIssueModal = ({
                 toast.error("Title is required");
                 return;
             }
+            const descriptionText = quillEditorRef.current?.getText().trim() || "";
+            if (!descriptionText || descriptionText === "\n") {
+                toast.error("Description is required");
+                return;
+            }
             if (!responsiblePerson) {
                 toast.error("Responsible Person is required");
                 return;
@@ -774,19 +875,37 @@ const EditIssueModal = ({
 
             formData.append("issue[estimated_hour]", String(totalWorkingHours || 0));
 
-            dateWiseHours.map((date: any) => {
-                formData.append(
-                    "issue[issue_allocation_times_attributes][][hours]",
-                    String(date.hours)
-                );
-                formData.append(
-                    "issue[issue_allocation_times_attributes][][minutes]",
-                    String(date.minutes)
-                );
-                formData.append(
-                    "issue[issue_allocation_times_attributes][][date]",
-                    date.date
-                );
+            const originalAllocations: any[] = issueData?.issue_allocation_times || [];
+            const currentUIMap = new Map(dateWiseHours.map((d: any) => [d.date, d]));
+
+            // Update or destroy existing records (keep their IDs)
+            const originalPayload = originalAllocations.map((allocation: any) => {
+                const uiEntry = currentUIMap.get(allocation.date);
+                return {
+                    ...(uiEntry || allocation),
+                    id: allocation.id,
+                    _destroy: !uiEntry,
+                };
+            });
+
+            // New records that have no matching original
+            const newPayload = dateWiseHours
+                .filter((d: any) => !originalAllocations.some((o: any) => o.date === d.date))
+                .map((d: any) => ({ ...d, id: null, _destroy: false }));
+
+            const allocationTimesAttributes = [...originalPayload, ...newPayload];
+
+            allocationTimesAttributes.forEach((entry: any, index: number) => {
+                const prefix = `issue[issue_allocation_times_attributes][${index}]`;
+                if (entry.id) {
+                    formData.append(`${prefix}[id]`, String(entry.id));
+                }
+                formData.append(`${prefix}[hours]`, String(entry.hours));
+                formData.append(`${prefix}[minutes]`, String(entry.minutes));
+                formData.append(`${prefix}[date]`, entry.date);
+                if (entry._destroy) {
+                    formData.append(`${prefix}[_destroy]`, "1");
+                }
             });
 
             attachments.forEach((file: any) => {
@@ -839,6 +958,7 @@ const EditIssueModal = ({
             handleCloseDialog,
             totalWorkingHours,
             dateWiseHours,
+            originalDateWiseHrs,
             baseUrl,
             token,
             issueData,
@@ -888,11 +1008,17 @@ const EditIssueModal = ({
                                 size="small"
                                 label="Title"
                                 value={title}
-                                onChange={(value) => setTitle(value)}
+                                onChange={(value) => {
+                                    if (value.length <= 200) setTitle(value);
+                                }}
                                 placeholder="Enter Issue Title"
                                 required
                                 variant="outlined"
+                                inputProps={{ maxLength: 200 }}
                             />
+                            <div className="flex justify-end mt-1">
+                                <span className="text-xs text-gray-500">{title.length}/200</span>
+                            </div>
                         </Box>
 
                         {/* Project and Milestone */}
@@ -975,36 +1101,45 @@ const EditIssueModal = ({
 
                         {/* Description */}
                         <Box sx={{ mb: 2 }}>
-                            <SpeechInput
-                                multiline
-                                name="description"
-                                minRows={4}
-                                maxRows={6}
-                                placeholder="Enter Description"
-                                label="Description"
-                                value={description}
-                                onChange={(value) => setDescription(value)}
-                                fullWidth
-                                variant="outlined"
-                                sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                        height: "auto !important",
-                                        padding: "2px !important",
-                                        display: "flex",
-                                    },
-                                    "& .MuiInputBase-input[aria-hidden='true']": {
-                                        flex: 0,
-                                        width: 0,
-                                        height: 0,
-                                        padding: "0 !important",
-                                        margin: 0,
-                                        display: "none",
-                                    },
-                                    "& .MuiInputBase-input": {
-                                        resize: "none !important",
-                                    },
-                                }}
-                            />
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="text-sm font-medium">
+                                    Description<span className="text-red-500">*</span>
+                                </label>
+                                {supported && (
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => {
+                                            if (isListening && activeId === "edit-issue-description") {
+                                                stopListening();
+                                            } else {
+                                                const currentText = quillEditorRef.current
+                                                    ? quillEditorRef.current.root.innerHTML
+                                                    : description;
+                                                setBaseValue(currentText === "<p><br></p>" ? "" : currentText);
+                                                startListening("edit-issue-description");
+                                            }
+                                        }}
+                                        color={isListening && activeId === "edit-issue-description" ? "secondary" : "default"}
+                                        sx={{ color: isListening && activeId === "edit-issue-description" ? "#C72030" : "inherit" }}
+                                    >
+                                        {isListening && activeId === "edit-issue-description" ? (
+                                            <Mic size={18} />
+                                        ) : (
+                                            <MicOff size={18} />
+                                        )}
+                                    </IconButton>
+                                )}
+                            </div>
+                            <div className="bc-description-toolbar-compact">
+                                <div
+                                    ref={quillRef}
+                                    style={{
+                                        border: "1px solid rgba(0, 0, 0, 0.23)",
+                                        borderRadius: "4px",
+                                        minHeight: "150px",
+                                    }}
+                                />
+                            </div>
                         </Box>
 
                         {/* Responsible Person */}
@@ -1014,16 +1149,22 @@ const EditIssueModal = ({
                                 <Select
                                     value={responsiblePerson}
                                     onChange={(e) => {
-                                        setResponsiblePerson(e.target.value);
-                                        if (e.target.value) {
-                                            dispatch(
-                                                fetchUserAvailability({
-                                                    baseUrl,
-                                                    token,
-                                                    id: e.target.value,
-                                                })
-                                            );
-                                            fetchShifts(e.target.value);
+                                        const newPersonId = e.target.value;
+                                        if (responsiblePerson && newPersonId !== responsiblePerson) {
+                                            setPendingResponsiblePerson(newPersonId);
+                                            setIsResponsibleModalOpen(true);
+                                        } else {
+                                            setResponsiblePerson(newPersonId);
+                                            if (newPersonId) {
+                                                dispatch(
+                                                    fetchUserAvailability({
+                                                        baseUrl,
+                                                        token,
+                                                        id: newPersonId,
+                                                    })
+                                                );
+                                                fetchShifts(newPersonId);
+                                            }
                                         }
                                     }}
                                     label="Responsible Person"
@@ -1125,7 +1266,7 @@ const EditIssueModal = ({
                         <Box sx={{ mb: 2 }}>
                             <Box sx={{ fontSize: "12px", mb: 1 }}>Efforts Duration</Box>
                             <DurationPicker
-                                dateWiseHours={[]}
+                                dateWiseHours={dateWiseHours}
                                 onChange={setIssueDuration}
                                 onDateWiseHoursChange={setDateWiseHours}
                                 startDate={startDate}
@@ -1138,6 +1279,7 @@ const EditIssueModal = ({
                                 totalWorkingHours={totalWorkingHours}
                                 setTotalWorkingHours={setTotalWorkingHours}
                                 shift={shift}
+                                isEdit={true}
                             />
                         </Box>
 
@@ -1288,13 +1430,13 @@ const EditIssueModal = ({
                         </Box>
 
                         {/* Attachments */}
-                        <Box sx={{ mb: 2 }}>
+                        {/* <Box sx={{ mb: 2 }}>
                             <Box sx={{ fontSize: "12px", mb: 1 }}>Attachments</Box>
                             <Attachments
                                 attachments={attachments}
                                 setAttachments={setAttachments}
                             />
-                        </Box>
+                        </Box> */}
 
                         {/* Submit Button */}
                         <Box
@@ -1332,7 +1474,157 @@ const EditIssueModal = ({
                 onClose={() => setIsTagModalOpen(false)}
                 onTagCreated={() => fetchMentionTags()}
             />
+            <style>{`
+                .ql-toolbar {
+                    border-top: 1px solid rgba(0, 0, 0, 0.23) !important;
+                    border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+                    border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+                    border-radius: 4px 4px 0 0;
+                    background-color: #fafafa;
+                    margin-bottom: 0 !important;
+                }
+                .ql-container {
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.23) !important;
+                    border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+                    border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+                    border-radius: 0 0 4px 4px;
+                    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+                    margin-top: 0 !important;
+                }
+                .ql-editor {
+                    padding: 12px 14px;
+                    font-size: 14px;
+                    line-height: 1.5;
+                }
+                .ql-editor.ql-blank::before {
+                    color: rgba(0, 0, 0, 0.6);
+                    font-style: normal;
+                }
+                .ql-toolbar button:hover { color: #01569E; }
+                .ql-toolbar button.ql-active { color: #01569E; }
+                @media (max-width: 640px) {
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow {
+                        display: flex !important;
+                        flex-wrap: nowrap !important;
+                        align-items: center !important;
+                        overflow-x: auto !important;
+                        padding: 3px 4px !important;
+                    }
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-formats {
+                        display: inline-flex !important;
+                        flex-shrink: 0 !important;
+                        margin-right: 3px !important;
+                    }
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow button {
+                        width: 16px !important;
+                        height: 16px !important;
+                        padding: 1px !important;
+                    }
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow button svg {
+                        width: 10px !important;
+                        height: 10px !important;
+                    }
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker {
+                        height: 16px !important;
+                        font-size: 9px !important;
+                    }
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker.ql-header {
+                        width: 62px !important;
+                    }
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker-label {
+                        padding-left: 3px !important;
+                        padding-right: 10px !important;
+                        line-height: 16px !important;
+                    }
+                    .bc-description-toolbar-compact .ql-toolbar.ql-snow .ql-picker-label svg {
+                        width: 10px !important;
+                        height: 10px !important;
+                    }
+                }
+            `}</style>
+
+            {/* Responsible Person Change Modal */}
+            <ResponsiblePersonChangeModal
+                isOpen={isResponsibleModalOpen}
+                onClose={() => {
+                    setIsResponsibleModalOpen(false);
+                    setPendingResponsiblePerson(null);
+                    setResponsiblePersonChangeReason('');
+                }}
+                onSubmit={(reason) => {
+                    if (pendingResponsiblePerson) {
+                        setResponsiblePerson(pendingResponsiblePerson);
+                        dispatch(
+                            fetchUserAvailability({
+                                baseUrl,
+                                token,
+                                id: pendingResponsiblePerson,
+                            })
+                        );
+                        fetchShifts(pendingResponsiblePerson);
+                        setIsResponsibleModalOpen(false);
+                        setPendingResponsiblePerson(null);
+                        setResponsiblePersonChangeReason('');
+                    }
+                }}
+            />
         </Dialog>
+    );
+};
+
+// Responsible Person Change Modal Component
+const ResponsiblePersonChangeModal = ({ isOpen, onClose, onSubmit }: any) => {
+    const [reason, setReason] = useState('');
+
+    useEffect(() => {
+        if (!isOpen) {
+            setReason('');
+        }
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error('Please enter a reason for changing the responsible person');
+            return;
+        }
+        onSubmit(reason);
+        setReason('');
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Responsible Person Change</h2>
+
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for changing responsible person..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        rows={4}
+                    />
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                    <SubmitButton
+                        variant="outline"
+                        onClick={onClose}
+                    >
+                        Cancel
+                    </SubmitButton>
+                    <SubmitButton
+                        onClick={handleSubmit}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    >
+                        Change Responsible Person
+                    </SubmitButton>
+                </div>
+            </div>
+        </div>
     );
 };
 

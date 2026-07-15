@@ -1,25 +1,20 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
-  Award,
   Brain,
-  Briefcase,
+  Calendar,
   CheckCircle2,
-  ClipboardList,
-  Clock,
-  Download,
+  ExternalLink,
   Eye,
-  FileCode2,
-  Globe,
-  Lock,
+  Gauge,
+  Loader2,
+  Mail,
   Search,
   Sparkles,
-  Target,
-  TrendingUp,
-  User,
   Users,
+  UserRound,
   UsersRound,
-  Loader2,
 } from "lucide-react";
 import {
   Line,
@@ -28,6 +23,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  CartesianGrid,
 } from "recharts";
 import { cn } from "@/lib/utils";
 import {
@@ -44,84 +40,54 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AdminViewEmulation } from "@/components/AdminViewEmulation";
-import { DiscAssessmentResultsModal } from "@/components/DiscAssessmentResultsModal";
 import { getToken, getBaseUrl } from "@/utils/auth";
 
-const LANGUAGES = [
-  { code: "en", label: "English" },
-  { code: "hi", label: "हिन्दी" },
-  { code: "bn", label: "বাংলা" },
-  { code: "mr", label: "मराठी" },
-  { code: "te", label: "తెలుగు" },
-  { code: "ta", label: "தமிழ்" },
-  { code: "gu", label: "ગુજરાતી" },
-  { code: "pa", label: "ਪੰਜਾਬੀ" },
-] as const;
+type DiscLetter = "D" | "I" | "S" | "C";
 
-/** YouTube video ID for embed — replace with your chosen DISC overview */
-const DISC_VIDEO_EMBED_ID = "MJFElqpVPIQ";
+const DISC_ORDER: DiscLetter[] = ["D", "I", "S", "C"];
 
-type TeamMember = {
-  id: string;
-  name: string;
-  role: string;
-  department: string;
-  avatarLetter: string;
-  avatarBg: string;
-  score: number;
-  scorePanelClass: string;
-  primaryBadge: { label: string; className: string };
-  secondaryBadge: { label: string; className: string };
-  trait: string;
-  discType: string;
-  pattern: string;
-};
-
-const MOCK_TEAM: TeamMember[] = [
-  {
-    id: "1",
-    name: "Ken Anderson",
-    role: "Manager",
-    department: "Design",
-    avatarLetter: "K",
-    avatarBg: "bg-violet-600",
-    score: 4274,
-    scorePanelClass: "bg-emerald-800",
-    primaryBadge: {
-      label: "S Primary",
-      className: "bg-emerald-500 text-white",
-    },
-    secondaryBadge: {
-      label: "D Secondary",
-      className: "bg-red-500 text-white",
-    },
-    trait: "Specialist",
-    discType: "S",
-    pattern: "SD",
+const DISC_STYLE = {
+  D: {
+    label: "Dominance",
+    short: "D",
+    fill: "bg-[#e11d48]",
+    text: "text-[#e11d48]",
+    border: "border-[#e11d48]",
+    chart: "#e11d48",
+    badge: "bg-[#e11d48]",
+    lightBg: "bg-[#e11d48]/5",
   },
-  {
-    id: "2",
-    name: "Alex Rivera",
-    role: "Developer",
-    department: "Front End",
-    avatarLetter: "A",
-    avatarBg: "bg-blue-600",
-    score: 7415,
-    scorePanelClass: "bg-red-800",
-    primaryBadge: {
-      label: "D Primary",
-      className: "bg-red-500 text-white",
-    },
-    secondaryBadge: {
-      label: "C Secondary",
-      className: "bg-blue-500 text-white",
-    },
-    trait: "Creative",
-    discType: "D",
-    pattern: "DC",
+  I: {
+    label: "Influence",
+    short: "I",
+    fill: "bg-[#f59e0b]",
+    text: "text-[#f59e0b]",
+    border: "border-[#f59e0b]",
+    chart: "#f59e0b",
+    badge: "bg-[#f59e0b]",
+    lightBg: "bg-[#f59e0b]/5",
   },
-];
+  S: {
+    label: "Steadiness",
+    short: "S",
+    fill: "bg-[#10b981]",
+    text: "text-[#10b981]",
+    border: "border-[#10b981]",
+    chart: "#10b981",
+    badge: "bg-[#10b981]",
+    lightBg: "bg-[#10b981]/5",
+  },
+  C: {
+    label: "Conscientiousness",
+    short: "C",
+    fill: "bg-[#3b82f6]",
+    text: "text-[#3b82f6]",
+    border: "border-[#3b82f6]",
+    chart: "#3b82f6",
+    badge: "border border-[#3b82f6] text-[#3b82f6] bg-white",
+    lightBg: "bg-[#3b82f6]/5",
+  },
+} as const;
 
 type ApiQuestion = {
   id: number;
@@ -132,72 +98,25 @@ type ApiQuestion = {
   }[];
 };
 
-type DiscLetter = "D" | "I" | "S" | "C";
-
-const DISC_ORDER: DiscLetter[] = ["D", "I", "S", "C"];
-
-const DISC_STYLE = {
-  D: {
-    label: "Dominance",
-    short: "D",
-    fill: "bg-red-500",
-    text: "text-red-600",
-    border: "border-red-400",
-    chart: "#ef4444",
-    bar: "bg-red-500",
-  },
-  I: {
-    label: "Influence",
-    short: "I",
-    fill: "bg-amber-500",
-    text: "text-amber-600",
-    border: "border-amber-400",
-    chart: "#f59e0b",
-    bar: "bg-amber-500",
-  },
-  S: {
-    label: "Steadiness",
-    short: "S",
-    fill: "bg-emerald-500",
-    text: "text-emerald-600",
-    border: "border-emerald-400",
-    chart: "#10b981",
-    bar: "bg-emerald-500",
-  },
-  C: {
-    label: "Conscientiousness",
-    short: "C",
-    fill: "bg-sky-600",
-    text: "text-sky-700",
-    border: "border-sky-500",
-    chart: "#0284c7",
-    bar: "bg-sky-600",
-  },
-} as const;
-
-/** Trait tiles in the completion report (standard DISC colors, readable on white UI). */
-const DISC_TILE: Record<DiscLetter, { bg: string; label: string }> = {
-  D: { bg: "#ef4444", label: "Dominance" },
-  I: { bg: "#eab308", label: "Influence" },
-  S: { bg: "#22c55e", label: "Steadiness" },
-  C: { bg: "#3b82f6", label: "Conscientiousness" },
-};
-
 type DiscProfileResult = {
   counts: Record<DiscLetter, number>;
   scores: Record<DiscLetter, number>;
+  percentages?: Record<DiscLetter, number>;
+  totalAnswers: number;
   primary: DiscLetter;
   secondary: DiscLetter;
   patternName: string;
   blendLabel: string;
   completedAt: string;
+  attemptId?: string | number;
+  encryptedAttemptId?: string;
 };
 
 const PATTERN_BY_BLEND: Record<string, string> = {
-  DI: "Persuasive Leader",
+  DI: "Creative",
   DC: "Challenger",
   DS: "Achiever",
-  ID: "Inspirational Driver",
+  ID: "Inspirational",
   IC: "Collaborative Analyst",
   IS: "Harmonizer",
   SD: "Steady Driver",
@@ -208,48 +127,48 @@ const PATTERN_BY_BLEND: Record<string, string> = {
   CS: "Quality Guardian",
 };
 
+const fadeUpMotion = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.28, ease: "easeOut" },
+};
+
 function patternNameFor(primary: DiscLetter, secondary: DiscLetter): string {
   if (primary === secondary) {
     return (
-      {
-        D: "Driver",
-        I: "Influencer",
-        S: "Stabilizer",
-        C: "Analyst",
-      }[primary] ?? "Balanced"
+      { D: "Driver", I: "Influencer", S: "Stabilizer", C: "Analyst" }[
+        primary
+      ] ?? "Balanced"
     );
   }
   const key = `${primary}${secondary}` as keyof typeof PATTERN_BY_BLEND;
   return PATTERN_BY_BLEND[key] ?? `${primary}${secondary} Blend`;
 }
 
-function computeDiscResult(answers: number[], questions: ApiQuestion[]): DiscProfileResult {
+function computeDiscResult(
+  answers: number[],
+  questions: ApiQuestion[]
+): DiscProfileResult {
   const counts: Record<DiscLetter, number> = { D: 0, I: 0, S: 0, C: 0 };
   for (let i = 0; i < questions.length; i++) {
     const idx = answers[i];
-    if (idx === undefined || idx < 0 || idx >= questions[i].options.length) continue;
+    if (idx === undefined || idx < 0 || idx >= questions[i].options.length)
+      continue;
     const dim = questions[i].options[idx].dimension as DiscLetter;
-    if (counts[dim] !== undefined) {
-      counts[dim] += 1;
-    }
+    if (counts[dim] !== undefined) counts[dim] += 1;
   }
-  const toScore = (n: number) =>
-    Math.max(1, Math.min(7, Math.round(1 + (n / questions.length) * 6)));
-  const scores: Record<DiscLetter, number> = {
-    D: toScore(counts.D),
-    I: toScore(counts.I),
-    S: toScore(counts.S),
-    C: toScore(counts.C),
-  };
+
   const sorted = [...DISC_ORDER].sort((a, b) => {
     if (counts[b] !== counts[a]) return counts[b] - counts[a];
     return DISC_ORDER.indexOf(a) - DISC_ORDER.indexOf(b);
   });
   const primary = sorted[0];
   const secondary = sorted[1];
+
   return {
     counts,
-    scores,
+    scores: { ...counts },
+    totalAnswers: questions.length,
     primary,
     secondary,
     patternName: patternNameFor(primary, secondary),
@@ -258,201 +177,337 @@ function computeDiscResult(answers: number[], questions: ApiQuestion[]): DiscPro
   };
 }
 
-const PROFILE_COPY: Record<
+// ─── Profile copy — loaded dynamically from API or falls back to these defaults ───
+const PROFILE_COPY_DEFAULTS: Record<
   DiscLetter,
   {
     archetype: string;
     understanding: string;
     patternNote: string;
-    famous: { name: string; role: string }[];
-    superpowers: string[];
-    growth: string[];
-    roles: string[];
-    toolkit: string[];
-    withOthers: { withType: string; tip: string }[];
+    superpowers: { title: string; desc: string }[];
+    growth: { title: string; desc: string }[];
+    roles: { title: string; desc: string }[];
+    toolkit: { title: string; desc: string }[];
+    withOthers: { withType: string; tip: string; label: string }[];
   }
 > = {
   D: {
-    archetype: "The Results Catalyst",
+    archetype: "The Result-Driver",
     understanding:
-      "You lean toward directness, pace, and outcomes. You are comfortable making calls, cutting through noise, and pushing initiatives forward. Under stress you may become more forceful — channel that energy into clarity and fair expectations so others can keep up.",
+      "In the fast-paced business landscape, you are the engine that drives growth and hits aggressive targets. You are highly valued for your ability to make quick decisions and take charge during a crisis. While you are exceptionally goal-oriented and efficient, you might sometimes overlook collaborative nuances. You perform at your best when you have autonomy and a clear focus on the bottom line—for you, it is all about the win.",
     patternNote:
-      "Your pattern shows a bias toward action and control. You add the most value when you pair decisiveness with brief context so teammates understand the “why” behind the push.",
-    famous: [
-      { name: "Steve Jobs", role: "Co-founder, Apple" },
-      { name: "Indra Nooyi", role: "Former CEO, PepsiCo" },
-      { name: "Jack Welch", role: "Former CEO, GE" },
-      { name: "Margaret Thatcher", role: "Former PM, UK" },
-    ],
+      "As a D-style, you possess a unique blend of decisiveness and drive. You don't just find problems; you charge through them. Your ability to cut through ambiguity and push toward results is a massive asset in any organisation. Your growth challenge is dealing with criticism and maintaining patience with slower-paced processes. Developing active listening and learning to present your decisions as collaborative wins will help you get buy-in faster.",
     superpowers: [
-      "Cutting through indecision and maintaining momentum",
-      "Owning tough calls when timelines are tight",
-      "Setting a high bar and modeling accountability",
+      {
+        title: "Unflinching Execution",
+        desc: "You cut through red tape and bureaucracy to get things done. When a milestone needs to be hit, you are the engine.",
+      },
+      {
+        title: "Crisis Leadership",
+        desc: "When things go wrong, you don't panic. You naturally step up, take control, and make the tough calls to stabilise the situation.",
+      },
+      {
+        title: "Fearless Boundary-Pushing",
+        desc: "You aren't afraid to challenge the status quo, demand better results, and drive aggressive growth.",
+      },
     ],
     growth: [
-      "Pausing to bring others along before you accelerate",
-      "Softening tone when stakes feel personal, not operational",
-      "Delegating outcomes, not just tasks, to build trust",
+      {
+        title: "Patience with Process",
+        desc: "Slowing down to ensure others are aligned before charging forward.",
+      },
+      {
+        title: "Active Listening",
+        desc: "Hearing out the 'why' from teammates instead of just demanding the 'what'.",
+      },
     ],
     roles: [
-      "Turnaround lead, sales director, operations owner",
-      "Crisis response, project rescue, zero-to-one launches",
-      "Roles where clarity and pace outweigh consensus cycles",
+      {
+        title: "Project Turnarounds",
+        desc: "Taking over failing projects and driving them to completion.",
+      },
+      {
+        title: "Sales Leadership",
+        desc: "Driving revenue targets and managing high-performance teams.",
+      },
     ],
     toolkit: [
-      "With I-styles: give them a headline first, then details on request",
-      "With S-styles: explain impact on people and stability, not just speed",
-      "With C-styles: share criteria and data; invite their risk scan",
+      {
+        title: "Direct Alignment",
+        desc: "Set clear goals without micromanaging the process.",
+      },
+      {
+        title: "Results Framing",
+        desc: "Present ideas in terms of outcomes and ROI, not process.",
+      },
     ],
     withOthers: [
-      { withType: "D-style", tip: "Agree on ownership fast; avoid competing agendas in the same lane." },
-      { withType: "I-style", tip: "Let them energize the room; you anchor scope and deadlines." },
-      { withType: "S-style", tip: "Signal stability; change in smaller, predictable steps." },
-      { withType: "C-style", tip: "Respect their need for accuracy; don’t confuse speed with carelessness." },
+      {
+        label: "Dominance (D)",
+        withType: "Dominance",
+        tip: "Be brief and direct. Focus on 'winning' together. Agree on boundaries immediately to avoid clashing egos.",
+      },
+      {
+        label: "Influence (I)",
+        withType: "Influence",
+        tip: "Allow space for small talk and rapport-building before diving into demands. Acknowledge their creativity before expecting the deliverable.",
+      },
+      {
+        label: "Steadiness (S)",
+        withType: "Steadiness",
+        tip: "Slow down. Don't just order—ask for their support. Explain how the change benefits the team to get their buy-in.",
+      },
+      {
+        label: "Conscientiousness (C)",
+        withType: "Conscientiousness",
+        tip: "Bring the data. They don't care about your gut feeling. Give them the 'Why' and 'How' in writing, then give them space to work.",
+      },
     ],
   },
   I: {
-    archetype: "The People Energizer",
+    archetype: "The People Energiser",
     understanding:
-      "You connect through enthusiasm, storytelling, and rapport. You help teams feel seen and motivated. When pressure rises, you may over-promise or avoid hard truths — balance optimism with specific commitments.",
+      "You are the spark that ignites enthusiasm in any room. You connect through stories, energy, and genuine warmth. Your ability to rally people around a vision makes you a natural in roles that require persuasion and relationship-building. You thrive in dynamic environments where creativity and collaboration are valued.",
     patternNote:
-      "Your pattern highlights social energy and persuasion. You shine when you translate vision into concrete next steps others can repeat.",
-    famous: [
-      { name: "Oprah Winfrey", role: "Media executive" },
-      { name: "Richard Branson", role: "Founder, Virgin" },
-      { name: "Ellen DeGeneres", role: "Entertainer & host" },
-      { name: "Tony Robbins", role: "Coach & author" },
-    ],
+      "As an I-style, your superpower is your ability to make people feel seen and heard. You bring optimism and energy that elevate team morale. Your growth challenge is maintaining follow-through once the initial excitement fades. Building systems for accountability and documentation will help turn your big ideas into lasting results.",
     superpowers: [
-      "Building buy-in across roles and seniority",
-      "Keeping morale visible during long initiatives",
-      "Spotlighting wins so progress feels real",
+      {
+        title: "Building Buy-In",
+        desc: "You naturally create enthusiasm and alignment across different roles and personalities.",
+      },
+      {
+        title: "Storytelling",
+        desc: "You communicate ideas in ways that are memorable, engaging, and inspiring.",
+      },
+      {
+        title: "Network Building",
+        desc: "You form genuine connections quickly and maintain relationships effortlessly.",
+      },
     ],
     growth: [
-      "Documenting decisions so follow-through matches the excitement",
-      "Saying no kindly to protect focus",
-      "Inviting quieter voices without putting them on the spot",
+      {
+        title: "Follow-Through",
+        desc: "Documenting decisions and seeing projects through to completion.",
+      },
+      {
+        title: "Detail Orientation",
+        desc: "Slowing down to check the fine print before moving forward.",
+      },
     ],
     roles: [
-      "Client success, marketing, facilitation, partnerships",
-      "Change management and culture initiatives",
-      "Roles where trust and narrative unlock execution",
+      {
+        title: "Client Success",
+        desc: "Managing relationships and ensuring client satisfaction.",
+      },
+      {
+        title: "Marketing & Partnerships",
+        desc: "Building brand presence and forming strategic alliances.",
+      },
     ],
     toolkit: [
-      "With D-styles: lead with outcomes, keep updates crisp",
-      "With I-styles: co-create energy but agree on one source of truth",
-      "With S-styles: check in privately; give time to process",
-      "With C-styles: share agendas early; welcome their questions",
+      {
+        title: "Energy Matching",
+        desc: "Keep morale visible and celebrate small wins publicly.",
+      },
+      {
+        title: "Visual Communication",
+        desc: "Use stories, visuals, and demos over reports and spreadsheets.",
+      },
     ],
     withOthers: [
-      { withType: "D-style", tip: "Match their pace in meetings; send a one-page recap after." },
-      { withType: "I-style", tip: "Brainstorm together, then assign owners and dates." },
-      { withType: "S-style", tip: "Reassure on process; avoid surprise pivots." },
-      { withType: "C-style", tip: "Bottom-line first, then offer depth if they want it." },
+      {
+        label: "Dominance (D)",
+        withType: "Dominance",
+        tip: "Match their pace in meetings; send a one-page recap after so they have the summary.",
+      },
+      {
+        label: "Influence (I)",
+        withType: "Influence",
+        tip: "Brainstorm together with energy, then assign clear owners and deadlines before ending the conversation.",
+      },
+      {
+        label: "Steadiness (S)",
+        withType: "Steadiness",
+        tip: "Reassure them on process and avoid surprise pivots—they need predictability to feel secure.",
+      },
+      {
+        label: "Conscientiousness (C)",
+        withType: "Conscientiousness",
+        tip: "Lead with the bottom line first, then offer the detail if they want it.",
+      },
     ],
   },
   S: {
     archetype: "The Reliable Anchor",
     understanding:
-      "You value consistency, loyalty, and calm collaboration. People trust you to listen and follow through. When overloaded, you may avoid conflict — practice naming trade-offs early so resentment doesn’t build.",
+      "You are the steady force that keeps teams grounded and functioning through change. You value consistency, loyalty, and genuine collaboration. Your patience and empathy make you someone others naturally turn to for support and guidance. You thrive in environments where you can build deep trust over time.",
     patternNote:
-      "Your pattern reflects patience and service to the team. You’re strongest when priorities are clear and change is communicated with empathy.",
-    famous: [
-      { name: "Mr. Rogers", role: "Educator & broadcaster" },
-      { name: "Dalai Lama", role: "Spiritual leader" },
-      { name: "Frederick Douglass", role: "Abolitionist & author" },
-      { name: "Mother Teresa", role: "Humanitarian" },
-    ],
+      "As an S-style, your greatest strength is creating psychological safety for your team. People feel comfortable being honest around you. Your growth challenge is asserting your own needs and speaking up before reaching capacity. Learning to set boundaries early and advocate for your ideas will amplify your already significant impact.",
     superpowers: [
-      "Creating psychological safety in steady, practical ways",
-      "Remembering commitments and interpersonal nuance",
-      "De-escalating tension without ignoring the issue",
+      {
+        title: "Psychological Safety",
+        desc: "Creating a calm, trusting environment where people feel safe to share and take risks.",
+      },
+      {
+        title: "Consistent Delivery",
+        desc: "You show up reliably and follow through on commitments without needing external pressure.",
+      },
+      {
+        title: "Deep Listening",
+        desc: "You hear not just what people say, but what they mean—making you an exceptional collaborator.",
+      },
     ],
     growth: [
-      "Asserting needs before you’re at capacity",
-      "Saying yes slowly when scope creeps",
-      "Pairing with a D- or I-buddy for decisive moments",
+      {
+        title: "Asserting Needs",
+        desc: "Speaking up about workload and boundaries before reaching overwhelm.",
+      },
+      {
+        title: "Embracing Change",
+        desc: "Building comfort with uncertainty and rapid pivots.",
+      },
     ],
     roles: [
-      "HR partner, customer care lead, program coordinator",
-      "Operations with repeat processes and stakeholder care",
-      "Roles where follow-through and trust define success",
+      {
+        title: "HR & People Partner",
+        desc: "Supporting employee wellbeing and team culture.",
+      },
+      {
+        title: "Customer Care",
+        desc: "Building long-term client relationships through trust and consistency.",
+      },
     ],
     toolkit: [
-      "With D-styles: propose options; they decide faster with two paths",
-      "With I-styles: gently redirect from idea sprawl to one priority",
-      "With S-styles: co-create routines; celebrate small milestones",
-      "With C-styles: align on standards; share progress in writing",
+      {
+        title: "Steady Pacing",
+        desc: "Check in with teammates privately to surface issues before they escalate.",
+      },
+      {
+        title: "Process Documentation",
+        desc: "Build reliable systems that others can follow consistently.",
+      },
     ],
     withOthers: [
-      { withType: "D-style", tip: "Prepare a concise recommendation; invite their call." },
-      { withType: "I-style", tip: "Affirm their ideas, then steer to one shared plan." },
-      { withType: "S-style", tip: "Check workload quietly; offer help swapping tasks." },
-      { withType: "C-style", tip: "Share timelines and quality bars up front." },
+      {
+        label: "Dominance (D)",
+        withType: "Dominance",
+        tip: "Prepare a concise recommendation and invite their decision—they respect clarity and brevity.",
+      },
+      {
+        label: "Influence (I)",
+        withType: "Influence",
+        tip: "Affirm their ideas warmly, then help steer to one shared plan with clear next steps.",
+      },
+      {
+        label: "Steadiness (S)",
+        withType: "Steadiness",
+        tip: "Check workload quietly and offer to swap tasks if someone is overwhelmed.",
+      },
+      {
+        label: "Conscientiousness (C)",
+        withType: "Conscientiousness",
+        tip: "Share timelines and quality expectations upfront so there are no surprises.",
+      },
     ],
   },
   C: {
     archetype: "The Quality Guardian",
     understanding:
-      "You prioritize accuracy, structure, and sound reasoning. You raise the quality bar and reduce rework. Under pressure you may over-analyze or withdraw — share “good enough” thresholds so speed and excellence coexist.",
+      "You are the person who catches what everyone else misses. You prioritise accuracy, structure, and sound reasoning in everything you do. Your ability to think systematically and identify risks before they become problems makes you invaluable in any technical or analytical role. You thrive when given space to work independently with clear standards.",
     patternNote:
-      "Your pattern points to precision and risk awareness. You deliver most when others understand your standards as a gift to the customer, not a bottleneck.",
-    famous: [
-      { name: "Bill Gates", role: "Co-founder, Microsoft" },
-      { name: "Albert Einstein", role: "Theoretical physicist" },
-      { name: "Mark Zuckerberg", role: "Co-founder, Meta" },
-      { name: "Angela Merkel", role: "Former Chancellor, Germany" },
-    ],
+      "As a C-style, your greatest strength is your commitment to getting it right. You bring rigour and precision that elevates the quality of everything your team produces. Your growth challenge is time-boxing your analysis to avoid perfectionism paralysis. Learning to communicate your findings as stories—not just data—will help your insights land with decision-makers.",
     superpowers: [
-      "Spotting flaws before they become incidents",
-      "Building systems, checklists, and repeatable quality",
-      "Making decisions with evidence instead of hype",
+      {
+        title: "Spotting Flaws Early",
+        desc: "You catch issues before they become incidents, saving time, money, and reputation.",
+      },
+      {
+        title: "Systematic Thinking",
+        desc: "You build processes and frameworks that stand up to scrutiny and scale.",
+      },
+      {
+        title: "Research Depth",
+        desc: "You go further than anyone else to ensure the analysis is thorough and defensible.",
+      },
     ],
     growth: [
-      "Time-boxing analysis so momentum isn’t lost",
-      "Sharing thinking earlier — even when imperfect",
-      "Recognizing when a 90% solution unlocks the team",
+      {
+        title: "Time-Boxing",
+        desc: "Setting a hard stop on analysis to prevent perfectionism from blocking progress.",
+      },
+      {
+        title: "Communicating Uncertainty",
+        desc: "Sharing findings even when the picture isn't fully complete.",
+      },
     ],
     roles: [
-      "Engineering lead, finance, compliance, research",
-      "QA, architecture, technical writing",
-      "Roles where rigor directly protects revenue or safety",
+      {
+        title: "Engineering & Architecture",
+        desc: "Designing systems that are robust, scalable, and well-documented.",
+      },
+      {
+        title: "QA & Compliance",
+        desc: "Ensuring standards are met and risks are identified proactively.",
+      },
     ],
     toolkit: [
-      "With D-styles: lead with the recommendation, keep appendix optional",
-      "With I-styles: translate enthusiasm into acceptance criteria",
-      "With S-styles: explain changes with empathy and sequence",
-      "With C-styles: align definitions; avoid duplicate audits",
+      {
+        title: "Data-Driven Arguments",
+        desc: "Always bring evidence. Quantify the risk and the recommended action.",
+      },
+      {
+        title: "Written Clarity",
+        desc: "Document decisions and rationale so the team can reference and learn.",
+      },
     ],
     withOthers: [
-      { withType: "D-style", tip: "Offer a clear binary choice with your risk view attached." },
-      { withType: "I-style", tip: "Capture their vision in measurable requirements." },
-      { withType: "S-style", tip: "Give predictable rhythms; avoid surprise rework." },
-      { withType: "C-style", tip: "Agree on sources of truth and version control early." },
+      {
+        label: "Dominance (D)",
+        withType: "Dominance",
+        tip: "Offer a clear binary choice with your risk view attached—they want the conclusion, not the full analysis.",
+      },
+      {
+        label: "Influence (I)",
+        withType: "Influence",
+        tip: "Capture their creative vision in measurable requirements so it can actually be built.",
+      },
+      {
+        label: "Steadiness (S)",
+        withType: "Steadiness",
+        tip: "Give predictable rhythms and avoid surprise rework—they plan carefully and need stability.",
+      },
+      {
+        label: "Conscientiousness (C)",
+        withType: "Conscientiousness",
+        tip: "Agree on sources of truth and version control early to avoid duplicate or conflicting work.",
+      },
     ],
   },
 };
 
-function scoreToPercent(score: number): number {
-  return Math.round((score / 7) * 100);
+function scoreToPercent(score: number, total: number): number {
+  if (!total) return 0;
+  return Math.round((score / total) * 100);
 }
 
 function DiscDonut({
   score,
+  totalAnswers,
   color,
   label,
 }: {
   score: number;
+  totalAnswers: number;
   color: string;
   label: string;
 }) {
-  const r = 38;
+  const r = 34;
   const c = 2 * Math.PI * r;
-  const pct = Math.min(100, Math.max(0, (score / 7) * 100));
+  const pct = Math.min(100, Math.max(0, (score / (totalAnswers || 15)) * 100));
   const dash = (pct / 100) * c;
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative h-[7.5rem] w-[7.5rem]">
+    <div className="flex flex-col items-center gap-3">
+      <div className="relative h-[66px] w-[66px]">
         <svg
           className="h-full w-full -rotate-90"
           viewBox="0 0 100 100"
@@ -463,8 +518,8 @@ function DiscDonut({
             cy={50}
             r={r}
             fill="none"
-            className="stroke-neutral-200"
-            strokeWidth={9}
+            className="stroke-[#f4f0eb]"
+            strokeWidth={8}
           />
           <circle
             cx={50}
@@ -472,28 +527,51 @@ function DiscDonut({
             r={r}
             fill="none"
             stroke={color}
-            strokeWidth={9}
+            strokeWidth={8}
             strokeLinecap="round"
             strokeDasharray={`${dash} ${c}`}
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-2xl font-bold tabular-nums text-neutral-900">
+          <span className="text-[18px] font-extrabold tabular-nums" style={{ color }}>
             {score}
           </span>
         </div>
       </div>
-      <span className="max-w-[6.5rem] text-center text-[10px] font-bold uppercase tracking-wide text-neutral-500">
+      <span className="text-[10px] font-extrabold uppercase tracking-[0.08em]" style={{ color }}>
         {label}
       </span>
     </div>
   );
 }
 
-function profileCardClass(extra?: string) {
-  return cn(
-    "rounded-2xl border border-[#DA7756]/15 bg-white p-5 shadow-md shadow-neutral-900/[0.04] sm:p-6",
-    extra
+function MemberHeaderBanner({
+  displayName,
+  patternName,
+  primaryType,
+}: {
+  displayName: string;
+  patternName: string;
+  primaryType: DiscLetter;
+}) {
+  const initial = displayName.trim().charAt(0).toUpperCase() || "?";
+  return (
+    <div className="rounded-[10px] bg-gradient-to-r from-[#b77bd2] via-[#cfabe0] to-[#eee5ef] px-5 py-5">
+      <div className="flex items-center gap-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-white bg-[#e77252] text-[18px] font-extrabold text-white shadow-sm">
+          {initial}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-[18px] font-extrabold text-[#2f2638]">
+            {displayName}
+          </p>
+          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1.5 text-[12px] font-semibold tracking-[0.05em] text-white shadow-sm backdrop-blur-md">
+            <span className="text-[12px] leading-none">✦</span>
+            {DISC_STYLE[primaryType].label}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -502,478 +580,552 @@ function DiscProfileReport({
   displayName,
   emailHint,
   onRetake,
+  showRetake = true,
+  profileCopy,
 }: {
   result: DiscProfileResult;
   displayName: string;
   emailHint: string;
   onRetake: () => void;
+  showRetake?: boolean;
+  profileCopy?: (typeof PROFILE_COPY_DEFAULTS)[DiscLetter];
 }) {
-  const copy = PROFILE_COPY[result.primary];
+  const copy = profileCopy ?? PROFILE_COPY_DEFAULTS[result.primary];
   const completed = new Date(result.completedAt);
-  const dateStr = completed.toLocaleDateString(undefined, {
+  const dateStr = completed.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
     year: "numeric",
-    month: "long",
-    day: "numeric",
   });
   const chartData = DISC_ORDER.map((L) => ({
     axis: L,
     score: result.scores[L],
   }));
-  const initial = displayName.trim().charAt(0).toUpperCase() || "Y";
+  const percentFor = (letter: DiscLetter) =>
+    result.percentages?.[letter] ??
+    scoreToPercent(result.scores[letter], result.totalAnswers);
+  const percentLabel = (value: number) =>
+    Number.isInteger(value)
+      ? `${value}%`
+      : `${value.toFixed(2).replace(/\.?0+$/, "")}%`;
+  const [expandedAccordion, setExpandedAccordion] = useState<string[]>([]);
+  const toggleAll = () =>
+    setExpandedAccordion((current) =>
+      current.length === 3 ? [] : ["p1", "p2", "p3"]
+    );
+
+  const card =
+    "overflow-hidden rounded-[14px] border border-[#ddd8d1] bg-white shadow-none";
+  const scoreTileStyle: Record<
+    DiscLetter,
+    { bg: string; border: string; primaryBorder: string; text: string; bar: string }
+  > = {
+    D: {
+      bg: "bg-[#fde8e8]",
+      border: "border-transparent",
+      primaryBorder: "border-[#f16b6b]",
+      text: "text-[#e85f5f]",
+      bar: "bg-[#e85f5f]",
+    },
+    I: {
+      bg: "bg-[#fff5dc]",
+      border: "border-transparent",
+      primaryBorder: "border-[#f2bd57]",
+      text: "text-[#d99205]",
+      bar: "bg-[#e6c98e]",
+    },
+    S: {
+      bg: "bg-[#e7f5ef]",
+      border: "border-transparent",
+      primaryBorder: "border-[#76bfae]",
+      text: "text-[#218b73]",
+      bar: "bg-[#b8d8cf]",
+    },
+    C: {
+      bg: "bg-[#e6f0fb]",
+      border: "border-transparent",
+      primaryBorder: "border-[#6aa0d6]",
+      text: "text-[#1f78b8]",
+      bar: "bg-[#b7cde4]",
+    },
+  };
 
   return (
-    <div className="space-y-6">
-      <div
-        className={cn(
-          profileCardClass("overflow-hidden p-0"),
-          "ring-1 ring-[#DA7756]/10"
-        )}
-      >
-        <div className="flex flex-col gap-4 bg-gradient-to-r from-[#DA7756] to-[#c45a3d] px-5 py-5 text-white sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-6">
-          <div className="flex gap-4">
-            <div
-              className={cn(
-                "flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-2xl font-bold backdrop-blur-sm",
-                "ring-2 ring-white/30"
-              )}
+    <motion.div
+      {...fadeUpMotion}
+      className="w-full space-y-3"
+      style={{ fontFamily: "'Poppins', sans-serif" }}
+    >
+      <div className="rounded-[14px] border border-[#ddd8d1] bg-white p-4 sm:p-5">
+        {showRetake && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={onRetake}
+              className="inline-flex h-9 items-center gap-2 rounded-[6px] border border-[#ef6f4f] bg-white px-4 text-[12px] font-semibold text-[#111827] transition-colors hover:bg-[#fff7f4]"
             >
-              {initial}
+              <Brain className="h-3.5 w-3.5" />
+              Retake Assessment
+            </button>
+          </div>
+        )}
+
+        <MemberHeaderBanner
+          displayName={displayName}
+          patternName={result.patternName}
+          primaryType={result.primary}
+        />
+
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#9a958f]">
+              DISC Profile
+            </p>
+            <p className="mt-1 text-[12px] font-semibold text-[#111827]">
+              {result.totalAnswers}/{result.totalAnswers} —{" "}
+              {DISC_STYLE[result.primary].label}
+            </p>
+          </div>
+          <div className="flex flex-col gap-1 text-[11px] font-medium text-[#9a958f] sm:items-end">
+            <div className="flex items-center gap-1.5">
+              <Mail className="h-3.5 w-3.5" />
+              {emailHint}
             </div>
-            <div>
-              <h2 className="text-xl font-bold tracking-tight sm:text-2xl">
-                {displayName}
-              </h2>
-              <span className="mt-2 inline-flex rounded-full bg-white/20 px-3 py-0.5 text-xs font-semibold backdrop-blur-sm">
-                {result.patternName}
-              </span>
+            <div className="flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5" />
+              Assessed {dateStr}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-white/40 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
-          >
-            <Download className="h-4 w-4" strokeWidth={2} />
-            Download / Print
-          </button>
         </div>
-        <div className="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
-          <p className="text-xs text-neutral-500 sm:text-sm">
-            <span className="font-medium text-neutral-600">{emailHint}</span>
-            <span className="mx-2 text-neutral-300">·</span>
-            Completed {dateStr}
-          </p>
 
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {DISC_ORDER.map((L) => {
-              const s = DISC_STYLE[L];
-              const sc = result.scores[L];
-              const isPrimary = L === result.primary;
-              const isSecondary = L === result.secondary && result.primary !== result.secondary;
-              return (
-                <div
-                  key={L}
-                  className={cn(
-                    "relative flex flex-col rounded-xl border bg-neutral-50/80 p-4",
-                    s.border,
-                    isPrimary && "bg-white ring-2 ring-[#DA7756]/30"
-                  )}
-                >
-                  {(isPrimary || isSecondary) && (
-                    <span
-                      className={cn(
-                        "absolute -top-2.5 left-3 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white",
-                        isPrimary ? "bg-[#DA7756]" : "bg-neutral-500"
-                      )}
-                    >
-                      {isPrimary ? "Primary" : "Secondary"}
-                    </span>
-                  )}
-                  <span className={cn("text-xs font-semibold", s.text)}>
-                    {s.label}
-                  </span>
-                  <span className="mt-2 text-3xl font-bold tabular-nums text-neutral-900">
-                    {sc}
-                  </span>
-                  <span className="mt-1 text-xs text-neutral-500">
-                    {scoreToPercent(sc)}% intensity
-                  </span>
-                  <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-neutral-200">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {DISC_ORDER.map((L) => {
+            const s = scoreTileStyle[L];
+            const sc = result.scores[L];
+            const isPrimary = L === result.primary;
+            const isSecondary =
+              L === result.secondary && result.primary !== result.secondary;
+            return (
+              <div
+                key={L}
+                className={cn(
+                  "relative rounded-[9px] border p-4",
+                  s.bg,
+                  isPrimary ? s.primaryBorder : s.border
+                )}
+              >
+                {isPrimary && (
+                  <div className="absolute -top-[8px] left-1/2 -translate-x-1/2 rounded-full bg-white px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-wide text-[#ef6f4f] shadow-sm">
+                    Primary
+                  </div>
+                )}
+                {isSecondary && (
+                  <div className="absolute -top-[8px] left-1/2 -translate-x-1/2 rounded-full bg-white px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-wide text-[#c98905] shadow-sm">
+                    Secondary
+                  </div>
+                )}
+                <p className={cn("text-[10px] font-extrabold uppercase tracking-[0.12em]", s.text)}>
+                  {DISC_STYLE[L].label}
+                </p>
+                <p className={cn("mt-1 text-[28px] font-extrabold leading-none", s.text)}>
+                  {sc}
+                </p>
+                <div className="mt-2 space-y-1.5">
+                  <div className="h-0.5 w-full overflow-hidden rounded-full bg-black/10">
                     <div
-                      className={cn("h-full rounded-full transition-all", s.bar)}
-                      style={{ width: `${scoreToPercent(sc)}%` }}
+                      className={cn("h-full rounded-full", s.bar)}
+                      style={{ width: `${percentFor(L)}%` }}
                     />
                   </div>
+                  <p className={cn("text-[10px] font-medium", s.text)}>
+                    {percentLabel(percentFor(L))}
+                  </p>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <div className={profileCardClass()}>
-        <div className="flex items-start gap-3">
-          <div
-            className={cn(
-              "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-lg font-bold text-white",
-              DISC_STYLE[result.primary].fill
-            )}
-          >
-            {result.primary}
+      {/* 2. Understanding Your Personality */}
+      <div className={card}>
+        <div className="p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[#fff0eb] text-[#ef6f4f]">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <div>
+              <h3 className="text-[15px] font-extrabold text-[#2f2d2b]">
+                {DISC_STYLE[result.primary].label} — {copy.archetype}
+              </h3>
+              <p className={cn("mt-0.5 text-[12px] font-semibold", DISC_STYLE[result.primary].text)}>
+                Understanding Your Personality Type
+              </p>
+            </div>
           </div>
+          <p className="mt-4 text-[13px] leading-[1.8] text-[#5f5a55]">
+            {copy.understanding}
+          </p>
+        </div>
+      </div>
+
+      {/* 3. Score Distribution */}
+      <div className={card}>
+        <div className="p-5 pb-2">
           <div>
-            <h3 className="text-lg font-bold text-neutral-900">
-              {DISC_STYLE[result.primary].label} – {copy.archetype}
+            <h3 className="text-[15px] font-extrabold text-[#2f2d2b]">
+              <span className="mr-2">📊</span>
+              DISC Score Distribution
             </h3>
-            <p className="mt-1 text-sm text-neutral-500">
-              Understanding your personality type
+            <p className="mt-1 text-[11px] font-medium text-[#a29d97]">
+              Your DISC assessment scores (out of {result.totalAnswers || 15})
             </p>
           </div>
         </div>
-        <p className="mt-4 text-sm leading-relaxed text-neutral-600">
-          {copy.understanding}
-        </p>
-      </div>
-
-      <div
-        className={cn(
-          profileCardClass("overflow-hidden p-0"),
-          "border-[#DA7756]/20"
-        )}
-      >
-        <div className="bg-gradient-to-r from-neutral-800 to-neutral-900 px-5 py-4 text-center text-white sm:px-6">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/90">
-            You&apos;re in good company
-          </p>
-          <p className="mt-1 text-sm text-white/75">
-            Leaders with a similar {result.primary}-style emphasis
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-4 bg-[#f6f4ee] p-5 sm:grid-cols-4 sm:p-6">
-          {copy.famous.map((person) => (
-            <div key={person.name} className="text-center">
-              <div
-                className={cn(
-                  "mx-auto flex h-16 w-16 items-center justify-center rounded-full text-lg font-bold text-white shadow-md",
-                  DISC_STYLE[result.primary].fill
-                )}
-              >
-                {person.name
-                  .split(" ")
-                  .map((w) => w[0])
-                  .join("")
-                  .slice(0, 2)}
-              </div>
-              <p className="mt-2 text-sm font-semibold text-neutral-900">
-                {person.name}
-              </p>
-              <p className="text-xs text-neutral-500">{person.role}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className={profileCardClass()}>
-        <h3 className="text-lg font-bold text-neutral-900">
-          DISC score distribution
-        </h3>
-        <p className="mt-1 text-sm text-neutral-500">
-          Relative strength on a 1–7 scale for each dimension
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-8 sm:justify-between">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-5 px-4 py-4 sm:grid-cols-4 sm:gap-x-10 sm:px-7">
           {DISC_ORDER.map((L) => (
             <DiscDonut
               key={L}
               score={result.scores[L]}
+              totalAnswers={result.totalAnswers}
               color={DISC_STYLE[L].chart}
               label={DISC_STYLE[L].label}
             />
           ))}
         </div>
-      </div>
-
-      <div className={profileCardClass()}>
-        <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-            <Brain className="h-6 w-6" strokeWidth={2} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-neutral-900">
-              {result.patternName}
-            </h3>
-            <p className="text-sm text-neutral-500">Your exact DISC pattern</p>
-            <p className="mt-0.5 text-xs font-medium text-[#DA7756]">
-              {result.blendLabel}
-            </p>
-          </div>
-        </div>
-        <div className="mt-6 h-56 w-full sm:h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={chartData}
-              margin={{ top: 8, right: 16, left: -20, bottom: 0 }}
-            >
-              <XAxis dataKey="axis" tick={{ fontSize: 12 }} />
-              <YAxis domain={[1, 7]} ticks={[1, 2, 3, 4, 5, 6, 7]} width={28} />
-              <Tooltip
-                formatter={(v: number) => [`${v}`, "Score"]}
-                labelFormatter={(l) => `${l} — ${DISC_STYLE[l as DiscLetter].label}`}
-              />
-              <Line
-                type="monotone"
-                dataKey="score"
-                stroke="#171717"
-                strokeWidth={2}
-                dot={{ r: 5, fill: "#171717", strokeWidth: 0 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-        <p className="mt-4 text-sm leading-relaxed text-neutral-600">
-          {copy.patternNote}
+        <p className="text-center text-[11px] font-medium text-[#aaa49d]">
+          Your DISC Profile Visualisation
         </p>
-      </div>
-
-      <div className={profileCardClass()}>
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
-            <Lock className="h-5 w-5" strokeWidth={2} />
+        <div className="px-4 pb-5 pt-2 sm:px-7">
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={chartData}
+                margin={{ top: 10, right: 16, left: -18, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="2 3"
+                  stroke="#eee8e1"
+                />
+                <XAxis
+                  dataKey="axis"
+                  tick={{ fontSize: 11, fill: "#9a958f" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  domain={[0, result.totalAnswers || 15]}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "#9a958f" }}
+                />
+                <Tooltip
+                  formatter={(v: number) => [`${v}`, "Score"]}
+                  labelFormatter={(l) =>
+                    `${l} — ${DISC_STYLE[l as DiscLetter]?.label ?? l}`
+                  }
+                  contentStyle={{
+                    borderRadius: 12,
+                    border: "1px solid #f0ebe8",
+                    fontFamily: "'Poppins', sans-serif",
+                  }}
+                />
+                <Line
+                  type="linear"
+                  dataKey="score"
+                  stroke="#DA7756"
+                  strokeWidth={2.25}
+                  dot={{ r: 5, fill: "#DA7756", strokeWidth: 0 }}
+                  activeDot={{ r: 8 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-neutral-900">
-              Your personalized action plan
-            </h3>
-            <p className="text-sm text-neutral-500">
-              Practical moves aligned with your {result.primary}-style strengths
+          <div className="mt-6 rounded-[8px] border border-[#efd6a5] bg-[#fff9f1] px-4 py-4">
+            <p className="text-[13px] leading-relaxed text-[#5f5a55]">
+              {copy.patternNote}
             </p>
           </div>
         </div>
-        <Accordion type="single" collapsible className="mt-5 space-y-2">
-          {[
-            {
-              id: "p1",
-              title: "Part 1: Your superpowers (top strengths)",
-              icon: Target,
-              iconClass: "text-emerald-600 bg-emerald-100",
-              items: copy.superpowers,
-            },
-            {
-              id: "p2",
-              title: "Part 2: Your growth zones (focus areas)",
-              icon: TrendingUp,
-              iconClass: "text-amber-600 bg-amber-100",
-              items: copy.growth,
-            },
-            {
-              id: "p3",
-              title: "Part 3: Where you thrive (best roles)",
-              icon: Briefcase,
-              iconClass: "text-sky-600 bg-sky-100",
-              items: copy.roles,
-            },
-            {
-              id: "p4",
-              title: "Part 4: Your interpersonal toolkit",
-              icon: UsersRound,
-              iconClass: "text-violet-600 bg-violet-100",
-              items: copy.toolkit,
-            },
-          ].map((section) => (
-            <AccordionItem
-              key={section.id}
-              value={section.id}
-              className="rounded-xl border border-neutral-200 bg-neutral-50/50 px-1"
-            >
-              <AccordionTrigger className="px-3 py-3 text-left hover:no-underline [&>svg]:text-neutral-400">
-                <span className="flex items-center gap-3">
-                  <span
-                    className={cn(
-                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-                      section.iconClass
-                    )}
-                  >
-                    <section.icon className="h-4 w-4" strokeWidth={2} />
+      </div>
+
+      {/* 5. Action Plan */}
+      <div className={card}>
+        <div className="flex items-center justify-between gap-3 px-5 pt-5">
+          <div className="flex items-center gap-3">
+            <div>
+              <h3 className="text-[15px] font-extrabold text-[#2f2d2b]">
+                <span className="mr-2">📋</span>
+                Your Personalised Action Plan
+              </h3>
+              <p className="mt-1 text-[11px] font-medium text-[#a29d97]">
+                One Sentence Action
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={toggleAll}
+            className="text-[11px] font-semibold text-[#e77252] transition-colors hover:text-[#c95f44]"
+          >
+            {expandedAccordion.length === 3 ? "Collapse All" : "Expand All"}
+          </button>
+        </div>
+        <div className="p-5">
+          <Accordion
+            type="multiple"
+            className="space-y-2"
+            value={expandedAccordion}
+            onValueChange={setExpandedAccordion}
+          >
+            {[
+              {
+                id: "p1",
+                title: "Part 1: Your Superpowers (Top Strengths)",
+                number: 1,
+                items: copy.superpowers,
+              },
+              {
+                id: "p2",
+                title: "Part 2: Growth Edges",
+                number: 2,
+                items: copy.growth,
+              },
+              {
+                id: "p3",
+                title: "Part 3: Personal Commitment",
+                number: 3,
+                items: [
+                  {
+                    title: "Your Next Steps",
+                    desc:
+                      "Choose one specific communication action for this week and review it with a teammate.",
+                  },
+                ],
+              },
+            ].map((section) => (
+              <AccordionItem
+                key={section.id}
+                value={section.id}
+                className="rounded-[7px] border border-[#ddd8d1] bg-white px-2 shadow-none data-[state=open]:border-[#ddd8d1]"
+              >
+                <AccordionTrigger className="px-3 py-3 text-left hover:no-underline [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-[#9a958f]">
+                  <span className="flex items-center gap-3">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#fff0eb] text-[11px] font-extrabold text-[#e77252]">
+                      {section.number}
+                    </span>
+                    <span className="text-[13px] font-semibold text-[#2f2d2b]">
+                      {section.title}
+                    </span>
                   </span>
-                  <span className="text-sm font-semibold text-neutral-900">
-                    {section.title}
-                  </span>
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="px-3 pb-3 pt-0">
-                <ul className="list-disc space-y-2 pl-8 text-sm text-neutral-600">
-                  {section.items.map((line) => (
-                    <li key={line}>{line}</li>
-                  ))}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+                </AccordionTrigger>
+                <AccordionContent className="px-3 pb-4 pt-0">
+                  <div className="space-y-2 pl-8">
+                    {section.items.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-[8px] bg-[#faf8f5] p-3"
+                      >
+                        <h5 className="text-[13px] font-bold text-[#2f2d2b]">
+                          {item.title}
+                        </h5>
+                        <p className="mt-1 text-[12px] leading-relaxed text-[#6d6862]">
+                          {item.desc}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
       </div>
 
-      <div className={profileCardClass()}>
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-neutral-200 text-neutral-700">
-            <ClipboardList className="h-5 w-5" strokeWidth={2} />
-          </div>
+      {/* 7. How You Work With Others */}
+      <div className={card}>
+        <div className="px-5 pt-5">
           <div>
-            <h3 className="text-lg font-bold text-neutral-900">
-              Personal commitment (your next steps)
+            <h3 className="text-[15px] font-extrabold text-[#2f2d2b]">
+              <span className="mr-2">🤝</span>
+              How You Work With Others
             </h3>
-            <p className="mt-1 text-sm text-neutral-500">
-              Jot notes here or in your journal — export via Print above.
+            <p className="mt-1 text-[11px] font-medium text-[#a29d97]">
+              Tips for collaborating across DISC styles
             </p>
           </div>
         </div>
-        <ol className="mt-5 space-y-6 text-sm text-neutral-700">
-          {[
-            "Which growth zone is currently holding you back the most — and what is one habit you will try this week?",
-            "Where can you apply a superpower in a project that needs it within the next 14 days?",
-            "Who on your team has a different primary style, and how will you adapt one conversation with them?",
-          ].map((q, i) => (
-            <li key={i}>
-              <span className="font-semibold text-neutral-900">
-                {i + 1}. {q}
-              </span>
-              <div className="mt-2 border-b border-dotted border-neutral-300 pb-1" />
-            </li>
-          ))}
-        </ol>
-      </div>
-
-      <div className={profileCardClass()}>
-        <div className="flex items-start gap-3">
-          <Award className="mt-0.5 h-5 w-5 shrink-0 text-[#DA7756]" strokeWidth={2} />
-          <div>
-            <h3 className="text-lg font-bold text-neutral-900">
-              How you work with others
-            </h3>
-            <p className="mt-1 text-sm text-neutral-500">
-              Tips when collaborating across DISC styles
-            </p>
-          </div>
-        </div>
-        <div className="mt-4 overflow-x-auto rounded-xl border border-neutral-200">
-          <table className="w-full min-w-[520px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-neutral-200 bg-[#DA7756]/10">
-                <th className="px-4 py-3 font-semibold text-neutral-800">
-                  When working with…
-                </th>
-                <th className="px-4 py-3 font-semibold text-neutral-800">
-                  Tips for your style
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {copy.withOthers.map((row) => (
-                <tr
-                  key={row.withType}
-                  className="border-b border-neutral-100 last:border-0"
-                >
-                  <td className="px-4 py-3 font-medium text-neutral-800">
-                    {row.withType}
-                  </td>
-                  <td className="px-4 py-3 text-neutral-600">{row.tip}</td>
+        <div className="p-5">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] text-left text-[13px]">
+              <thead>
+                <tr className="rounded-[6px] bg-[#f7f4ef]">
+                  <th className="w-[260px] rounded-l-[6px] px-4 py-3 text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#9a958f]">
+                    When working with...
+                  </th>
+                  <th className="rounded-r-[6px] px-4 py-3 text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#9a958f]">
+                    Tips for the {result.primary}-Style
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[#ece8e2]">
+                {copy.withOthers.map((row) => {
+                  const sType = row.withType.charAt(0) as DiscLetter;
+                  const circleBg: Record<DiscLetter, string> = {
+                    D: "#ee8f94",
+                    I: "#f5c879",
+                    S: "#9bd1c3",
+                    C: "#6aa0d6",
+                  };
+                  return (
+                    <tr
+                      key={row.withType}
+                      className="bg-white"
+                    >
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3 font-semibold text-[#2f2d2b]">
+                          <span
+                            className="relative h-7 w-7 shrink-0 rounded-full text-white"
+                            style={{ backgroundColor: circleBg[sType] }}
+                          >
+                            <span className="absolute left-1/2 top-1/2 block -translate-x-1/2 -translate-y-[45%] text-[13px] font-extrabold leading-none">
+                              {sType}
+                            </span>
+                          </span>
+                          <span className="text-[13px]">{row.label}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-[13px] leading-relaxed text-[#5f5a55]">
+                        {row.tip}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-
-      <div className="flex justify-center pb-2">
-        <button
-          type="button"
-          onClick={onRetake}
-          className="rounded-xl border border-neutral-300 bg-white px-6 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50"
-        >
-          Retake assessment
-        </button>
-      </div>
-    </div>
+    </motion.div>
   );
 }
 
 function TeamMemberCard({ member }: { member: any }) {
+  const primaryType = (member.primary_type || "D") as DiscLetter;
+  const secondaryType = member.secondary_type as DiscLetter | undefined;
   const avatarLetter = member.name?.[0]?.toUpperCase() || "?";
-
-  // Helper to color based on DISC type
-  const getDiscColor = (type: string) => {
-    switch (type) {
-      case 'D': return 'bg-red-500';
-      case 'I': return 'bg-amber-500';
-      case 'S': return 'bg-emerald-500';
-      case 'C': return 'bg-sky-600';
-      default: return 'bg-neutral-500';
-    }
+  const bannerColors: Record<DiscLetter, string> = {
+    D: "#e58d91",
+    I: "#efc985",
+    S: "#9fcabb",
+    C: "#6e9fd0",
   };
+  const badgeColors: Record<DiscLetter, { bg: string; text: string }> = {
+    D: { bg: "#ffe3e5", text: "#d94d55" },
+    I: { bg: "#fff1d4", text: "#c88705" },
+    S: { bg: "#e0f2eb", text: "#23836d" },
+    C: { bg: "#dfefff", text: "#2f74ad" },
+  };
+  const profileName = member.profile_name || "Specialist";
+  const typeBadge = (type: DiscLetter, label: string) => (
+    <span
+      className="inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-extrabold"
+      style={{
+        backgroundColor: badgeColors[type].bg,
+        color: badgeColors[type].text,
+      }}
+    >
+      <span
+        className="flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-black text-white"
+        style={{ backgroundColor: bannerColors[type] }}
+      >
+        {type}
+      </span>
+      {label}
+    </span>
+  );
 
   return (
-    <div
-      className={cn(
-        "flex flex-col overflow-hidden rounded-2xl border border-neutral-200/90 bg-[#DA7756]/10 shadow-md",
-        "ring-1 ring-neutral-900/[0.04]"
-      )}
+    <motion.div
+      {...fadeUpMotion}
+      whileHover={{ y: -3, boxShadow: "0 10px 24px rgba(15, 23, 42, 0.10)" }}
+      className="flex flex-col overflow-hidden rounded-[12px] border border-[#ded8cf] bg-white shadow-sm transition-all hover:shadow-md"
     >
-      <div className="flex gap-4 p-5">
-        <div
-          className={cn(
-            "flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white",
-            getDiscColor(member.primary_type)
-          )}
-        >
-          {avatarLetter}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-bold text-neutral-900">{member.name}</h3>
-          <p className="mt-0.5 text-sm text-neutral-500">
-            {member.department}
-          </p>
+      <style>
+        {`
+          .disc-team-score-text,
+          .disc-team-score-text * {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+          }
+          .disc-team-score-label {
+            color: rgba(255, 255, 255, 0.82) !important;
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.82) !important;
+          }
+        `}
+      </style>
+      <div
+        className="px-5 py-4 text-white"
+        style={{ backgroundColor: bannerColors[primaryType] }}
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/25 text-[16px] font-extrabold text-white">
+              {avatarLetter}
+            </div>
+            <div className="min-w-0">
+              <h3 className="truncate text-[14px] font-extrabold leading-tight text-white">
+                {member.name}
+              </h3>
+              <p className="mt-1 truncate text-[11px] font-medium text-white/85">
+                {member.department || "Team"}
+              </p>
+            </div>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="disc-team-score-label text-[9px] font-bold uppercase tracking-[0.11em]">
+              DISC Score
+            </p>
+            <p className="disc-team-score-text mt-0.5 text-[21px] font-extrabold leading-none tracking-tight">
+              {member.score_string || "0000"}
+            </p>
+          </div>
         </div>
       </div>
-
-      <div className={cn("mx-4 mb-4 rounded-xl px-4 py-4 text-white", getDiscColor(member.primary_type))}>
-        <p className="text-xs font-medium text-white/80">DISC Score</p>
-        <p className="mt-1 text-3xl font-bold tabular-nums tracking-tight">
-          {member.score_string || "0000"}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {member.primary_type && (
-            <span className="rounded-md bg-white/20 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-              {member.primary_type} Primary
-            </span>
-          )}
-          {member.secondary_type && (
-            <span className="rounded-md bg-white/10 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-              {member.secondary_type} Secondary
-            </span>
-          )}
+      <div className="flex flex-1 flex-col gap-4 px-5 py-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {typeBadge(primaryType, "Primary")}
+          {secondaryType && typeBadge(secondaryType, "Secondary")}
+          <span className="inline-flex h-6 items-center rounded-full bg-[#f3f0ec] px-3 text-[11px] font-semibold text-[#6c6660]">
+            {profileName}
+          </span>
         </div>
-        <p className="mt-3 w-fit border-b border-dotted border-white/70 text-sm font-medium text-white">
-          {member.profile_name}
-        </p>
-      </div>
-
-      <div className="mt-auto p-4 pt-0">
         <button
           type="button"
-          onClick={() => member.onViewReport?.(member.attempt_id)}
-          className={cn(
-            "flex w-full items-center justify-center gap-2 rounded-xl bg-[#DA7756]",
-            "py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#DA7756]/85"
-          )}
+          onClick={() =>
+            member.onViewReport?.(
+              member.attempt_id || member.encrypted_attempt_id,
+              member.name
+            )
+          }
+          className="mt-auto flex h-10 w-full items-center justify-center gap-2 rounded-[7px] border border-[#ddd6ce] bg-white text-[12px] font-bold text-[#2f2d2b] transition-colors hover:bg-[#faf8f5]"
         >
-          <Eye className="h-4 w-4" strokeWidth={2} />
+          <ExternalLink className="h-3.5 w-3.5" strokeWidth={2.2} />
           View Full Profile
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
-function TeamProfilesTabContent({ members, loading, onViewReport }: { members: any[], loading: boolean, onViewReport: (id: any) => void }) {
+function TeamProfilesTabContent({
+  members,
+  loading,
+  onViewReport,
+}: {
+  members: any[];
+  loading: boolean;
+  onViewReport: (id: any, name: string) => void;
+}) {
   const [search, setSearch] = useState("");
   const [discFilter, setDiscFilter] = useState("all");
   const [deptFilter, setDeptFilter] = useState("all");
@@ -983,100 +1135,87 @@ function TeamProfilesTabContent({ members, loading, onViewReport }: { members: a
       const q = search.trim().toLowerCase();
       const matchSearch =
         !q ||
-        m.name.toLowerCase().includes(q) ||
+        m.name?.toLowerCase().includes(q) ||
         m.department?.toLowerCase().includes(q) ||
         m.email?.toLowerCase().includes(q);
-      const matchDisc =
-        discFilter === "all" || m.primary_type === discFilter;
-      const matchDept =
-        deptFilter === "all" || m.department === deptFilter;
+      const matchDisc = discFilter === "all" || m.primary_type === discFilter;
+      const matchDept = deptFilter === "all" || m.department === deptFilter;
       return matchSearch && matchDisc && matchDept;
     });
   }, [search, discFilter, deptFilter, members]);
 
-  // Unique departments for filter
   const departments = useMemo(() => {
     const depts = new Set<string>();
-    members.forEach(m => { if (m.department) depts.add(m.department); });
+    members.forEach((m) => {
+      if (m.department) depts.add(m.department);
+    });
     return Array.from(depts).sort();
   }, [members]);
-
-  const filterFieldClass =
-    "space-y-1.5 min-w-0 flex-1 sm:min-w-[140px]";
 
   if (loading) {
     return (
       <div className="flex min-h-[400px] flex-col items-center justify-center py-20">
         <Loader2 className="h-10 w-10 animate-spin text-[#DA7756]" />
-        <p className="mt-4 text-sm font-medium text-neutral-600">Loading team profiles...</p>
+        <p className="mt-4 text-sm font-medium text-neutral-600">
+          Loading team profiles...
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm backdrop-blur-sm sm:p-5">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className={filterFieldClass}>
-            <label className="text-xs font-medium text-neutral-500">
-              Search by name
-            </label>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search team members..."
-                className="h-11 w-full rounded-xl border border-neutral-200 bg-white pl-10 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
-              />
-            </div>
-          </div>
-          <div className={filterFieldClass}>
-            <label className="text-xs font-medium text-neutral-500">
-              Filter by DISC type
-            </label>
-            <Select value={discFilter} onValueChange={setDiscFilter}>
-              <SelectTrigger className="h-11 rounded-xl border-neutral-200 bg-white">
-                <SelectValue placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="D">D</SelectItem>
-                <SelectItem value="I">I</SelectItem>
-                <SelectItem value="S">S</SelectItem>
-                <SelectItem value="C">C</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className={filterFieldClass}>
-            <label className="text-xs font-medium text-neutral-500">
-              Filter by Department
-            </label>
-            <Select value={deptFilter} onValueChange={setDeptFilter}>
-              <SelectTrigger className="h-11 rounded-xl border-neutral-200 bg-white">
-                <SelectValue placeholder="All Departments" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Departments</SelectItem>
-                {departments.map(dept => (
-                  <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative w-full sm:w-[240px]">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a5a29f]" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search team members"
+            className="h-10 w-full rounded-full border border-[#e5e8ee] bg-white pl-9 pr-3 text-[13px] font-medium text-[#2f2d2b] placeholder:text-[#aaa6a2] focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.18)]"
+          />
         </div>
+        <Select value={discFilter} onValueChange={setDiscFilter}>
+          <SelectTrigger className="h-10 w-full rounded-full border-[#e5e8ee] bg-white px-4 text-[13px] font-medium text-[#2f2d2b] shadow-none sm:w-[104px]">
+            <SelectValue placeholder="All type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All type</SelectItem>
+            <SelectItem value="D">D</SelectItem>
+            <SelectItem value="I">I</SelectItem>
+            <SelectItem value="S">S</SelectItem>
+            <SelectItem value="C">C</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={deptFilter} onValueChange={setDeptFilter}>
+          <SelectTrigger className="h-10 w-full rounded-full border-[#e5e8ee] bg-white px-4 text-[13px] font-medium text-[#2f2d2b] shadow-none sm:w-[142px]">
+            <SelectValue placeholder="All department" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All department</SelectItem>
+            {departments.map((dept) => (
+              <SelectItem key={dept} value={dept}>
+                {dept}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 py-16 text-center shadow-sm">
+        <div className="rounded-[12px] border border-[#ded8cf] bg-white py-16 text-center shadow-sm">
           <Users className="mx-auto h-10 w-10 text-neutral-300" />
-          <p className="mt-3 text-sm text-neutral-600">No team members match your filters.</p>
+          <p className="mt-3 text-sm text-neutral-500">
+            No team members match your filters.
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((member, idx) => (
-            <TeamMemberCard key={member.attempt_id || idx} member={{ ...member, onViewReport }} />
+            <TeamMemberCard
+              key={member.attempt_id || idx}
+              member={{ ...member, onViewReport }}
+            />
           ))}
         </div>
       )}
@@ -1093,7 +1232,7 @@ function AssessmentInterface({
   onNext,
   onPrevious,
   onFinish,
-  isSubmitting = false
+  isSubmitting = false,
 }: {
   currentQuestion: number;
   totalQuestions: number;
@@ -1105,98 +1244,107 @@ function AssessmentInterface({
   onFinish: () => void;
   isSubmitting?: boolean;
 }) {
+  const answered = selectedAnswer !== null;
+  const isLastQuestion = currentQuestion === totalQuestions - 1;
+
   return (
-    <div className="rounded-2xl border border-[#DA7756]/20 bg-[#fef6f4] p-6 shadow-sm sm:p-8">
-      {/* Progress Bar */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between text-sm text-neutral-600 mb-2">
-          <span>Question {currentQuestion + 1} of {totalQuestions}</span>
-          <span>{Math.round(((currentQuestion + 1) / totalQuestions) * 100)}% Complete</span>
-        </div>
-        <div className="h-2 w-full rounded-full bg-neutral-200 overflow-hidden">
-          <div
-            className="h-full bg-[#DA7756] transition-all duration-300 ease-out"
-            style={{ width: `${((currentQuestion + 1) / totalQuestions) * 100}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Question */}
-      <div className="mb-8">
-        <h2 className="text-xl font-bold text-neutral-900 mb-6">
-          {question.text}
-        </h2>
-
-        {/* Options */}
-        <div className="space-y-3">
-          {question.options.map((option, index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => onAnswerSelect(index)}
+    <motion.div
+      key={currentQuestion}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.24, ease: "easeOut" }}
+      className="w-full space-y-3"
+    >
+      <div>
+        <p className="mb-2 text-[12px] font-semibold text-[#252525]">
+          {currentQuestion + 1} of {totalQuestions} questions
+        </p>
+        <div className="grid w-full gap-1.5" style={{ gridTemplateColumns: `repeat(${totalQuestions}, minmax(0, 1fr))` }}>
+          {Array.from({ length: totalQuestions }).map((_, idx) => (
+            <span
+              key={idx}
               className={cn(
-                "w-full text-left p-4 rounded-xl border transition-all duration-200",
-                "hover:border-[#DA7756]/40 hover:bg-[#DA7756]/5",
-                selectedAnswer === index
-                  ? "border-[#DA7756] bg-[#DA7756]/10 shadow-sm"
-                  : "border-neutral-200 bg-white"
+                "h-1.5 rounded-full transition-colors duration-300",
+                idx <= currentQuestion ? "bg-[#e87355]" : "bg-[#e5e5e5]"
               )}
-            >
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  "h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors",
-                  selectedAnswer === index
-                    ? "border-[#DA7756] bg-[#DA7756]"
-                    : "border-neutral-300 bg-white"
-                )}>
-                  {selectedAnswer === index && (
-                    <div className="h-2 w-2 rounded-full bg-white" />
-                  )}
-                </div>
-                <span className={cn(
-                  "text-sm font-medium",
-                  selectedAnswer === index ? "text-[#DA7756]" : "text-neutral-900"
-                )}>
-                  {option.label}
-                </span>
-              </div>
-            </button>
+            />
           ))}
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="flex gap-3 justify-between">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.985 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.22, ease: "easeOut" }}
+        className="rounded-[16px] border border-[#e4e4e4] bg-white px-5 pb-5 pt-6"
+      >
+        <h2 className="text-[14px] font-extrabold text-[#111827]">
+          {question.text}
+        </h2>
+        <div className="my-6 h-px w-full bg-[#eeeeee]" />
+        <div className="space-y-4">
+          {question.options.map((option, index) => (
+            <motion.button
+              key={index}
+              type="button"
+              onClick={() => onAnswerSelect(index)}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: index * 0.04 }}
+              whileHover={{ x: 3 }}
+              whileTap={{ scale: 0.99 }}
+              className="flex h-12 w-full items-center gap-3 rounded-[12px] bg-[#f4f1ec] px-4 text-left transition-colors hover:bg-[#eeeae4]"
+            >
+              <span
+                className={cn(
+                  "flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                  selectedAnswer === index
+                    ? "border-[#e87355]"
+                    : "border-[#9b9b9b] bg-transparent"
+                )}
+              >
+                {selectedAnswer === index && (
+                  <span className="h-2 w-2 rounded-full bg-[#e87355]" />
+                )}
+              </span>
+              <span className="text-[13px] font-extrabold text-[#111827]">
+                {option.label}
+              </span>
+            </motion.button>
+          ))}
+        </div>
+      </motion.div>
+
+      <div className="flex justify-between gap-3">
         <button
           type="button"
           onClick={onPrevious}
           disabled={currentQuestion === 0}
           className={cn(
-            "px-6 py-3 rounded-xl font-medium transition-colors",
+            "h-10 rounded-[8px] px-5 text-[13px] font-semibold transition-colors",
             currentQuestion === 0
-              ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
-              : "border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"
+              ? "cursor-not-allowed border border-[#e8e8e8] bg-white text-[#c9c9c9]"
+              : "border border-[#e87355] bg-white text-[#e87355] hover:bg-[#fff7f4]"
           )}
         >
           Previous
         </button>
-
-        {currentQuestion === totalQuestions - 1 ? (
+        {isLastQuestion ? (
           <button
             type="button"
             onClick={onFinish}
-            disabled={selectedAnswer === null || isSubmitting}
+            disabled={!answered || isSubmitting}
             className={cn(
-              "px-6 py-3 rounded-xl font-medium text-white transition-colors flex items-center gap-2",
-              (selectedAnswer === null || isSubmitting)
-                ? "bg-neutral-300 cursor-not-allowed"
-                : "bg-[#DA7756] hover:bg-[#DA7756]/85"
+              "flex h-10 items-center gap-2 rounded-[8px] px-5 text-[13px] font-semibold text-white transition-colors",
+              !answered || isSubmitting
+                ? "cursor-not-allowed bg-[#d1d1d1]"
+                : "bg-[#e87355] shadow-sm hover:bg-[#d96648]"
             )}
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Submitting...
+                <Loader2 className="h-4 w-4 animate-spin" /> Submitting...
               </>
             ) : (
               "Finish Assessment"
@@ -1206,99 +1354,184 @@ function AssessmentInterface({
           <button
             type="button"
             onClick={onNext}
-            disabled={selectedAnswer === null}
+            disabled={!answered}
             className={cn(
-              "px-6 py-3 rounded-xl font-medium text-white transition-colors",
-              selectedAnswer === null
-                ? "bg-neutral-300 cursor-not-allowed"
-                : "bg-[#DA7756] hover:bg-[#DA7756]/85"
+              "h-10 rounded-[8px] px-5 text-[13px] font-semibold text-white transition-colors",
+              !answered
+                ? "cursor-not-allowed bg-[#d1d1d1]"
+                : "bg-[#e87355] shadow-sm hover:bg-[#d96648]"
             )}
           >
             Next
           </button>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
+// ─── Main Component ───────────────────────────────────────────────────────────
 const DiscPersonalityAssessment = () => {
   const [mainTab, setMainTab] = useState("report");
-  const [language, setLanguage] = useState<string>("en");
   const [assessmentStarted, setAssessmentStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
-  const [showResults, setShowResults] = useState(false);
   const [savedProfile, setSavedProfile] = useState<DiscProfileResult | null>(
     null
   );
-  const [selectedMemberReport, setSelectedMemberReport] = useState<DiscProfileResult | null>(null);
+  const [selectedMemberReport, setSelectedMemberReport] =
+    useState<DiscProfileResult | null>(null);
+  const [selectedMemberName, setSelectedMemberName] =
+    useState<string>("Team Member");
+  const [selectedMemberEmail, setSelectedMemberEmail] = useState<string>("");
   const [loadingReport, setLoadingReport] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [questions, setQuestions] = useState<ApiQuestion[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [teamProfiles, setTeamProfiles] = useState<any[]>([]);
-  const [loadingTeam, setLoadingTeam] = useState(false);
+
+  // ── Read logged-in user from localStorage ──
+  const currentUser = useMemo(() => {
+    try {
+      const raw =
+        localStorage.getItem("current_user") ||
+        localStorage.getItem("user") ||
+        localStorage.getItem("userData") ||
+        localStorage.getItem("userInfo") ||
+        null;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const fullName =
+          parsed.full_name ||
+          parsed.fullName ||
+          [
+            parsed.first_name || parsed.firstname,
+            parsed.last_name || parsed.lastname,
+          ]
+            .filter(Boolean)
+            .join(" ") ||
+          parsed.name ||
+          "";
+        const email = parsed.email || "";
+        return { name: fullName, email };
+      }
+    } catch {
+      /* ignore */
+    }
+    const name =
+      localStorage.getItem("user_full_name") ||
+      localStorage.getItem("full_name") ||
+      localStorage.getItem("user_name") ||
+      localStorage.getItem("emp_name") ||
+      localStorage.getItem("employee_name") ||
+      localStorage.getItem("name") ||
+      "";
+    const email =
+      localStorage.getItem("user_email") ||
+      localStorage.getItem("emp_email") ||
+      localStorage.getItem("email") ||
+      "";
+    return { name, email };
+  }, []);
 
   useEffect(() => {
     const fetchAssessmentData = async () => {
       try {
         setLoadingQuestions(true);
         const token = getToken();
-        const baseUrl = getBaseUrl() || "https://fm-uat-api.lockated.com";
-        const headers = {
+        const rawBase = getBaseUrl() || "https://fm-uat-api.lockated.com";
+        const baseUrl = rawBase.replace(/\/$/, "");
+        const headers: HeadersInit = {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
 
         const [qRes, rRes, tRes] = await Promise.all([
-          fetch(`${baseUrl}/disc_assessments/questions`, { headers }).catch(() => null),
-          fetch(`${baseUrl}/disc_assessments/my_report`, { headers }).catch(() => null),
-          fetch(`${baseUrl}/disc_assessments/team_profiles`, { headers }).catch(() => null)
+          fetch(`${baseUrl}/disc_assessments/questions`, { headers }).catch(
+            () => null
+          ),
+          fetch(`${baseUrl}/disc_assessments/my_report`, { headers }).catch(
+            () => null
+          ),
+          fetch(`${baseUrl}/disc_assessments/team_profiles`, { headers }).catch(
+            () => null
+          ),
         ]);
 
         if (qRes && qRes.ok) {
           const qData = await qRes.json();
-          if (qData.success && qData.data && qData.data.questions) {
-            setQuestions(qData.data.questions);
-          }
+          const qs: ApiQuestion[] =
+            qData?.data?.questions ?? qData?.questions ?? [];
+          if (qs.length > 0) setQuestions(qs);
         }
 
         if (rRes && rRes.ok) {
           const rData = await rRes.json();
-          if (rData.success && rData.data && rData.data.report) {
+          if (rData.success && rData.data?.report) {
             const report = rData.data.report;
-            const counts = {
+            const totalAnswers = report.total_answers || 15;
+            const rawCounts = {
               D: report.scores?.D || 0,
               I: report.scores?.I || 0,
               S: report.scores?.S || 0,
               C: report.scores?.C || 0,
             };
-            const toScore = (n: number) =>
-              Math.max(1, Math.min(7, Math.round(1 + (n / (report.total_answers || 15)) * 6)));
+            const percentages = {
+              D: report.percentages?.D || 0,
+              I: report.percentages?.I || 0,
+              S: report.percentages?.S || 0,
+              C: report.percentages?.C || 0,
+            };
+
+            const apiName =
+              report.user_name ||
+              report.name ||
+              rData.data?.user?.name ||
+              rData.data?.user?.full_name ||
+              "";
+            const apiEmail =
+              report.user_email ||
+              report.email ||
+              rData.data?.user?.email ||
+              "";
+            if (apiName && !localStorage.getItem("user_full_name"))
+              localStorage.setItem("user_full_name", apiName);
+            if (apiEmail && !localStorage.getItem("user_email"))
+              localStorage.setItem("user_email", apiEmail);
+
+            const primaryType = report.primary_type as DiscLetter;
+            const secondaryType = (report.secondary_type ||
+              report.primary_type) as DiscLetter;
 
             setSavedProfile({
-              counts,
-              scores: {
-                D: toScore(counts.D),
-                I: toScore(counts.I),
-                S: toScore(counts.S),
-                C: toScore(counts.C),
-              },
-              primary: report.primary_type as DiscLetter,
-              secondary: (report.secondary_type || report.primary_type) as DiscLetter,
-              patternName: report.profile_name || 'Balanced',
-              blendLabel: report.style_code || report.primary_type,
-              completedAt: report.generated_at || new Date().toISOString(),
+              counts: rawCounts,
+              scores: rawCounts,
+              percentages,
+              totalAnswers: totalAnswers,
+              primary: primaryType,
+              secondary: secondaryType,
+              patternName:
+                report.profile_name ||
+                patternNameFor(primaryType, secondaryType),
+              blendLabel:
+                report.style_code || `${primaryType} + ${secondaryType}`,
+              completedAt:
+                report.generated_at ||
+                report.submitted_at ||
+                new Date().toISOString(),
+              attemptId: report.attempt_id || report.id || undefined,
+              encryptedAttemptId:
+                report.encrypted_attempt_id ||
+                rData.data?.encrypted_attempt_id ||
+                undefined,
             });
           }
         }
 
         if (tRes && tRes.ok) {
           const tData = await tRes.json();
-          if (tData.success && tData.data && tData.data.profiles) {
+          if (tData.success && tData.data?.profiles)
             setTeamProfiles(tData.data.profiles);
-          }
         }
       } catch (error) {
         console.error("Error fetching assessment data:", error);
@@ -1306,46 +1539,69 @@ const DiscPersonalityAssessment = () => {
         setLoadingQuestions(false);
       }
     };
-
     fetchAssessmentData();
   }, []);
 
-  const fetchMemberReport = async (attemptId: number | string) => {
+  const fetchMemberReport = async (
+    attemptId: number | string,
+    memberName?: string
+  ) => {
     try {
       setLoadingReport(true);
+      const member = teamProfiles.find(
+        (m) =>
+          String(m.attempt_id) === String(attemptId) ||
+          String(m.encrypted_attempt_id) === String(attemptId)
+      );
+      setSelectedMemberName(memberName || member?.name || "Team Member");
+      setSelectedMemberEmail(member?.email || "");
+
       const token = getToken();
-      const baseUrl = getBaseUrl() || "https://fm-uat-api.lockated.com";
-      const response = await fetch(`${baseUrl}/disc_assessments/${attemptId}/report`, {
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+      const baseUrl = (
+        getBaseUrl() || "https://fm-uat-api.lockated.com"
+      ).replace(/\/$/, "");
+      const response = await fetch(
+        `${baseUrl}/disc_assessments/${attemptId}/report`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
         }
-      });
+      );
       const data = await response.json();
-      if (data.success && data.data && data.data.report) {
+      if (data.success && data.data?.report) {
         const report = data.data.report;
-        const counts = {
+        const totalAnswers = report.total_answers || 15;
+        const rawCounts = {
           D: report.scores?.D || 0,
           I: report.scores?.I || 0,
           S: report.scores?.S || 0,
           C: report.scores?.C || 0,
         };
-        const toScore = (n: number) =>
-          Math.max(1, Math.min(7, Math.round(1 + (n / (report.total_answers || 15)) * 6)));
-
+        const percentages = {
+          D: report.percentages?.D || 0,
+          I: report.percentages?.I || 0,
+          S: report.percentages?.S || 0,
+          C: report.percentages?.C || 0,
+        };
+        const primaryType = report.primary_type as DiscLetter;
+        const secondaryType = (report.secondary_type ||
+          report.primary_type) as DiscLetter;
         setSelectedMemberReport({
-          counts,
-          scores: {
-            D: toScore(counts.D),
-            I: toScore(counts.I),
-            S: toScore(counts.S),
-            C: toScore(counts.C),
-          },
-          primary: report.primary_type as DiscLetter,
-          secondary: (report.secondary_type || report.primary_type) as DiscLetter,
-          patternName: report.profile_name || 'Balanced',
-          blendLabel: report.style_code || report.primary_type,
-          completedAt: report.generated_at || new Date().toISOString(),
+          counts: rawCounts,
+          scores: rawCounts,
+          percentages,
+          totalAnswers: totalAnswers,
+          primary: primaryType,
+          secondary: secondaryType,
+          patternName:
+            report.profile_name || patternNameFor(primaryType, secondaryType),
+          blendLabel: report.style_code || `${primaryType} + ${secondaryType}`,
+          completedAt:
+            report.generated_at ||
+            report.submitted_at ||
+            new Date().toISOString(),
         });
       }
     } catch (error) {
@@ -1369,15 +1625,11 @@ const DiscPersonalityAssessment = () => {
   };
 
   const handleNext = () => {
-    if (currentQuestion < questions.length - 1) {
+    if (currentQuestion < questions.length - 1)
       setCurrentQuestion(currentQuestion + 1);
-    }
   };
-
   const handlePrevious = () => {
-    if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1);
-    }
+    if (currentQuestion > 0) setCurrentQuestion(currentQuestion - 1);
   };
 
   const handleFinish = async () => {
@@ -1385,444 +1637,628 @@ const DiscPersonalityAssessment = () => {
       (_, i) => answers[i] !== undefined && answers[i] !== null
     );
     if (!allAnswered || isSubmitting) return;
-
     try {
       setIsSubmitting(true);
       const token = getToken();
-      const baseUrl = getBaseUrl() || "https://fm-uat-api.lockated.com";
+      const baseUrl = (
+        getBaseUrl() || "https://fm-uat-api.lockated.com"
+      ).replace(/\/$/, "");
 
-      // Map answers to the format expected by the backend: [{ question_id: X, dimension: 'D' }, ...]
-      const formattedAnswers = answers.map((answerIndex, qIndex) => ({
-        question_id: questions[qIndex].id,
-        dimension: questions[qIndex].options[answerIndex].dimension
-      }));
+      const formattedAnswers = answers.map((answerIndex, qIndex) => {
+        const selectedOption = questions[qIndex].options[answerIndex];
+        return {
+          question_id: questions[qIndex].id,
+          dimension: selectedOption.dimension,
+          answers: selectedOption.label,
+        };
+      });
+      const url = `${baseUrl}/disc_assessments/submit`;
 
-      const response = await fetch(`${baseUrl}/disc_assessments/submit`, {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ answers: formattedAnswers })
+        body: JSON.stringify({
+          answers: formattedAnswers,
+        }),
       });
 
       const data = await response.json();
+      let result: DiscProfileResult;
 
-      if (data.success && data.data && data.data.report) {
+      if (data.success && data.data?.report) {
         const report = data.data.report;
-        const counts = {
+        const totalAnswers = report.total_answers || questions.length;
+        const rawCounts = {
           D: report.scores?.D || 0,
           I: report.scores?.I || 0,
           S: report.scores?.S || 0,
           C: report.scores?.C || 0,
         };
-        const toScore = (n: number) =>
-          Math.max(1, Math.min(7, Math.round(1 + (n / (report.total_answers || 15)) * 6)));
-
-        const result: DiscProfileResult = {
-          counts,
-          scores: {
-            D: toScore(counts.D),
-            I: toScore(counts.I),
-            S: toScore(counts.S),
-            C: toScore(counts.C),
-          },
-          primary: report.primary_type as DiscLetter,
-          secondary: (report.secondary_type || report.primary_type) as DiscLetter,
-          patternName: report.profile_name || 'Balanced',
-          blendLabel: report.style_code || report.primary_type,
-          completedAt: report.generated_at || new Date().toISOString(),
+        const percentages = {
+          D: report.percentages?.D || 0,
+          I: report.percentages?.I || 0,
+          S: report.percentages?.S || 0,
+          C: report.percentages?.C || 0,
         };
-
-        setSavedProfile(result);
-        setShowResults(true);
+        const primaryType = report.primary_type as DiscLetter;
+        const secondaryType = (report.secondary_type ||
+          report.primary_type) as DiscLetter;
+        result = {
+          counts: rawCounts,
+          scores: rawCounts,
+          percentages,
+          totalAnswers: totalAnswers,
+          primary: primaryType,
+          secondary: secondaryType,
+          patternName:
+            report.profile_name || patternNameFor(primaryType, secondaryType),
+          blendLabel: report.style_code || `${primaryType} + ${secondaryType}`,
+          completedAt:
+            report.generated_at ||
+            report.submitted_at ||
+            new Date().toISOString(),
+          attemptId:
+            report.attempt_id || data.data?.attempt_id || report.id || undefined,
+          encryptedAttemptId:
+            data.data?.encrypted_attempt_id ||
+            report.encrypted_attempt_id ||
+            undefined,
+        };
       } else {
-        // Fallback to local computation if API fails but let's try to notify user
-        console.error("Submission failed:", data.message);
-        setSavedProfile(computeDiscResult(answers, questions));
-        setShowResults(true);
+        result = computeDiscResult(answers, questions);
       }
-    } catch (error) {
-      console.error("Error submitting assessment:", error);
-      // Fallback
-      setSavedProfile(computeDiscResult(answers, questions));
-      setShowResults(true);
+
+      setSavedProfile(result);
+      setAssessmentStarted(false);
+      setMainTab("profile");
+    } catch (err) {
+      console.error("Submit error:", err);
+      const result = computeDiscResult(answers, questions);
+      setSavedProfile(result);
+      setAssessmentStarted(false);
+      setMainTab("profile");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCloseResults = () => {
-    setShowResults(false);
-    setAssessmentStarted(false);
-  };
-
-  const handleViewProfile = () => {
-    setShowResults(false);
-    setAssessmentStarted(false);
-    setMainTab("profile");
-  };
-
-  const handleExitAssessment = () => {
-    setAssessmentStarted(false);
-  };
-
-  // If assessment is started, show the assessment interface
-  if (assessmentStarted) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] w-full bg-[#f6f4ee] px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl space-y-6">
-          <header className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">
-                <Brain className="h-6 w-6 text-white" strokeWidth={2} />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
-                  DISC Personality Assessment
-                </h1>
-                <p className="text-sm text-neutral-500">
-                  Answer all questions to discover your personality profile
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleExitAssessment}
-              className="px-4 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900"
-            >
-              Exit Assessment
-            </button>
-          </header>
-
-          <AssessmentInterface
-            currentQuestion={currentQuestion}
-            totalQuestions={questions.length}
-            question={questions[currentQuestion]}
-            selectedAnswer={answers[currentQuestion] ?? null}
-            onAnswerSelect={handleAnswerSelect}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-            onFinish={handleFinish}
-            isSubmitting={isSubmitting}
-          />
-
-          {/* Results Popup */}
-          {showResults && savedProfile && (
-            <DiscAssessmentResultsModal
-              result={savedProfile}
-              onClose={handleCloseResults}
-              onViewProfile={handleViewProfile}
-              aboutYouOverride={(() => {
-                const first =
-                  PROFILE_COPY[savedProfile.primary].understanding
-                    .split(".")[0]
-                    ?.trim() ?? "";
-                return first ? `${first}.` : undefined;
-              })()}
-            />
-          )}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-[calc(100vh-4rem)] w-full bg-[#f6f4ee] px-4 py-6 sm:px-6">
-      <div className="mx-auto max-w-6xl space-y-8">
-        <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">
-            <Brain className="h-7 w-7 text-white" strokeWidth={2} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-              DISC Personality Assessment
-            </h1>
-            <p className="mt-1 text-sm text-neutral-500 sm:text-base">
-              Discover your DISC profile and understand your team
-            </p>
+    <div
+      className="min-h-[calc(100vh-5rem)] w-full bg-white px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
+      style={{ fontFamily: "'Poppins', sans-serif" }}
+    >
+      <div className="w-full space-y-7">
+        {/* Page Header */}
+        <header className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-4">
+            <div className="grid h-10 w-10 shrink-0 grid-cols-2 gap-0.5">
+              {[
+                { letter: "D", bg: "bg-[#f27655]" },
+                { letter: "I", bg: "bg-[#f7c86f]" },
+                { letter: "S", bg: "bg-[#56a8d6]" },
+                { letter: "C", bg: "bg-[#94d4ce]" },
+              ].map((item) => (
+                <span
+                  key={item.letter}
+                  className={cn(
+                    "flex items-center justify-center rounded-[4px] text-[9px] font-extrabold leading-none text-white",
+                    item.bg
+                  )}
+                >
+                  {item.letter}
+                </span>
+              ))}
+            </div>
+            <div>
+              <h1 className="text-[20px] font-extrabold leading-tight tracking-tight text-[#111827] sm:text-[24px]">
+                DISC Personality Assessment
+              </h1>
+              <p className="mt-1 text-[13px] font-medium text-[#64748b]">
+                Discover your DISC profile and understand your team.
+              </p>
+            </div>
           </div>
         </header>
 
-        <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
-          <TabsList
-            className={cn(
-              "grid h-auto w-full grid-cols-1 gap-1 rounded-xl border border-neutral-200/80 bg-neutral-100/90 p-2 sm:grid-cols-3"
-            )}
-          >
-            <TabsTrigger
-              value="report"
-              className={cn(
-                "gap-2 rounded-lg py-2.5 text-sm font-medium text-neutral-600",
-                "data-[state=active]:bg-[#DA7756]/10 data-[state=active]:text-neutral-900",
-                "data-[state=active]:shadow-sm"
-              )}
-            >
-              <FileCode2 className="h-4 w-4 shrink-0" />
-              Get Your Report
-            </TabsTrigger>
-            <TabsTrigger
-              value="profile"
-              className={cn(
-                "gap-2 rounded-lg py-2.5 text-sm font-medium text-neutral-600",
-                "data-[state=active]:bg-[#DA7756]/10 data-[state=active]:text-neutral-900",
-                "data-[state=active]:shadow-sm"
-              )}
-            >
-              <Eye className="h-4 w-4 shrink-0" />
-              Your Profile
-            </TabsTrigger>
-            <TabsTrigger
-              value="team"
-              className={cn(
-                "gap-2 rounded-lg py-2.5 text-sm font-medium text-neutral-600",
-                "data-[state=active]:bg-[#DA7756]/10 data-[state=active]:text-neutral-900",
-                "data-[state=active]:shadow-sm"
-              )}
-            >
-              <Users className="h-4 w-4 shrink-0" />
-              Team Profiles
-            </TabsTrigger>
+        <Tabs
+          value={mainTab}
+          onValueChange={(v) => {
+            setMainTab(v);
+            if (v !== "report") setAssessmentStarted(false);
+          }}
+          className="w-full"
+        >
+          <TabsList className="flex h-9 w-full max-w-full items-center justify-between gap-0.5 rounded-full border border-[#edf0f4] bg-white p-0.5 shadow-[0_6px_16px_rgba(15,23,42,0.06)] sm:inline-flex sm:h-11 sm:w-auto sm:justify-start sm:gap-1 sm:p-1">
+            {[
+              { value: "report", icon: Gauge, label: "Assessment" },
+              { value: "profile", icon: UserRound, label: "Your report" },
+              { value: "team", icon: UsersRound, label: "Team" },
+            ].map((t) => (
+              <TabsTrigger
+                key={t.value}
+                value={t.value}
+                className={cn(
+                  "inline-flex h-8 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-full px-1.5 text-[10px] font-semibold text-[#111827] transition-all sm:h-9 sm:flex-none sm:gap-2 sm:px-4 sm:text-[13px]",
+                  "data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm",
+                  "data-[state=inactive]:hover:bg-[#fff7f4]"
+                )}
+              >
+                <t.icon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                {t.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
-          <TabsContent value="report" className="mt-6 space-y-6 focus-visible:outline-none">
-            <div className="space-y-3 rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-5 shadow-sm sm:p-6">
-              <div className="flex items-center gap-2 text-sm font-medium text-neutral-700">
-                <Globe className="h-4 w-4 text-[#DA7756]" strokeWidth={2} />
-                <span>Language:</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {LANGUAGES.map((lang) => (
+          {/* ── Get Your Report Tab ── */}
+          <TabsContent
+            value="report"
+            className="mt-7 space-y-4 focus-visible:outline-none"
+          >
+            {assessmentStarted ? (
+              <div className="space-y-5">
+                <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+                  <p className="text-[12px] font-medium text-[#6d6d6d]">
+                    Answer all questions to discover your profile
+                  </p>
                   <button
-                    key={lang.code}
                     type="button"
-                    onClick={() => setLanguage(lang.code)}
-                    className={cn(
-                      "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
-                      language === lang.code
-                        ? "border-[#DA7756] bg-[#DA7756] text-white shadow-md shadow-[#DA7756]/20"
-                        : "border-transparent bg-neutral-100 text-neutral-600 hover:bg-neutral-200/80 hover:text-neutral-900"
-                    )}
+                    onClick={() => setAssessmentStarted(false)}
+                    className="h-9 rounded-[8px] border border-[#e87355] bg-white px-5 text-[13px] font-semibold text-[#2f2d2b] transition-colors hover:bg-[#fff7f4]"
                   >
-                    {lang.label}
+                    Exit
                   </button>
-                ))}
-              </div>
-            </div>
-
-            <Accordion type="single" collapsible className="space-y-3">
-              <AccordionItem
-                value="what-is"
-                className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 px-1 shadow-sm"
-              >
-                <AccordionTrigger
-                  className={cn(
-                    "px-4 py-4 text-left text-neutral-900 hover:no-underline",
-                    "[&>svg]:text-neutral-400"
-                  )}
-                >
-                  <span className="flex items-center gap-3">
-                    <Brain className="h-5 w-5 shrink-0 text-[#DA7756]" />
-                    What is DISC & How Will It Benefit You?
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 text-neutral-600">
-                  <p className="text-sm leading-relaxed">
-                    DISC is a behavior assessment framework that maps how people
-                    tend to act in work settings — Dominance, Influence,
-                    Steadiness, and Conscientiousness. Knowing your style helps
-                    you communicate better, reduce friction, and play to your
-                    strengths.
-                  </p>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem
-                value="how"
-                className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 px-1 shadow-sm"
-              >
-                <AccordionTrigger
-                  className={cn(
-                    "px-4 py-4 text-left text-neutral-900 hover:no-underline",
-                    "[&>svg]:text-neutral-400"
-                  )}
-                >
-                  <span className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 shrink-0 text-[#DA7756]" />
-                    How it works
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 text-neutral-600">
-                  <p className="text-sm leading-relaxed">
-                    You&apos;ll answer a short series of questions. There are no
-                    right or wrong answers — pick what feels most like you.
-                    Results summarize your primary and blend styles so you can
-                    use them in day-to-day collaboration.
-                  </p>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem
-                value="discover"
-                className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 px-1 shadow-sm"
-              >
-                <AccordionTrigger
-                  className={cn(
-                    "px-4 py-4 text-left text-neutral-900 hover:no-underline",
-                    "[&>svg]:text-neutral-400"
-                  )}
-                >
-                  What you&apos;ll discover
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 text-neutral-600">
-                  <p className="text-sm leading-relaxed">
-                    Your report highlights tendencies under pressure, in
-                    teamwork, and when making decisions — plus practical tips to
-                    work more effectively with colleagues who have different
-                    styles.
-                  </p>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-
-            <button
-              type="button"
-              className={cn(
-                "w-full rounded-xl bg-[#DA7756]",
-                "py-4 text-base font-bold text-white shadow-lg shadow-[#DA7756]/25",
-                "transition-transform hover:bg-[#DA7756]/85 hover:scale-[1.01] active:scale-[0.99]",
-                (loadingQuestions || questions.length === 0) && "opacity-70 cursor-not-allowed"
-              )}
-              onClick={handleStartAssessment}
-              disabled={loadingQuestions || questions.length === 0}
-            >
-              {loadingQuestions ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Loading assessment...
-                </span>
-              ) : (
-                "🚀 Start Assessment"
-              )}
-            </button>
-
-            <div className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-5 shadow-sm sm:p-6">
-              <div className="flex items-start gap-3">
-                <Brain className="mt-0.5 h-5 w-5 shrink-0 text-[#DA7756]" />
-                <div>
-                  <h2 className="text-base font-bold text-neutral-900 sm:text-lg">
-                    Watch: What is DISC?
-                  </h2>
-                  <p className="mt-1 text-sm text-neutral-500">
-                    A quick overview of the DISC model and how it applies to you
-                  </p>
+                </div>
+                {/* ── FULL WIDTH — no max-w wrapper ── */}
+                <div className="w-full">
+                  <AssessmentInterface
+                    currentQuestion={currentQuestion}
+                    totalQuestions={questions.length}
+                    question={questions[currentQuestion]}
+                    selectedAnswer={answers[currentQuestion] ?? null}
+                    onAnswerSelect={handleAnswerSelect}
+                    onNext={handleNext}
+                    onPrevious={handlePrevious}
+                    onFinish={handleFinish}
+                    isSubmitting={isSubmitting}
+                  />
                 </div>
               </div>
-              <div className="mt-4 aspect-video w-full overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100">
-                <iframe
-                  title="What is DISC — overview"
-                  src={`https://www.youtube.com/embed/${DISC_VIDEO_EMBED_ID}`}
-                  className="h-full w-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            </div>
+            ) : (
+              <>
+                {/* ── What is DISC accordion — warm brand colors ── */}
+                <Accordion type="single" collapsible defaultValue="what-is">
+                  <AccordionItem
+                    value="what-is"
+                    className="overflow-hidden rounded-[18px] border border-[#e5e8ee] bg-white shadow-none"
+                  >
+                    <AccordionTrigger className="border-b border-[#edf0f4] px-5 py-5 text-left hover:no-underline [&>svg]:h-6 [&>svg]:w-6 [&>svg]:rounded-full [&>svg]:border [&>svg]:border-[#e5e8ee] [&>svg]:p-1 [&>svg]:text-[#f06f4f]">
+                      <span className="flex items-center gap-3">
+                        <span className="grid h-5 w-5 shrink-0 grid-cols-2 gap-0.5">
+                          {[
+                            ["D", "bg-[#f27655]"],
+                            ["I", "bg-[#f7c86f]"],
+                            ["S", "bg-[#56a8d6]"],
+                            ["C", "bg-[#94d4ce]"],
+                          ].map(([letter, bg]) => (
+                            <span
+                              key={letter}
+                              className={cn(
+                                "flex items-center justify-center rounded-[2px] text-[5px] font-extrabold text-white",
+                                bg
+                              )}
+                            >
+                              {letter}
+                            </span>
+                          ))}
+                        </span>
+                        <span className="text-[13px] font-extrabold text-[#111827]">
+                          What is DISC & how will it benefit you?
+                        </span>
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-5 pb-6 pt-4">
+                      <p className="rounded-[14px] bg-[#eef6ff] px-4 py-5 text-[14px] font-medium leading-relaxed text-[#111827]">
+                        DISC is a behavioural assessment tool that measures four
+                        dimensions of personality — Dominance, Influence,
+                        Steadiness, and Conscientiousness. Taking this
+                        assessment will help you understand your natural working
+                        style, communication preferences, and how to collaborate
+                        more effectively with others.
+                      </p>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+
+                {/* ── What you'll discover accordion — warm brand colors ── */}
+                <Accordion type="single" collapsible>
+                  <AccordionItem
+                    value="discover"
+                    className="overflow-hidden rounded-[18px] border border-[#e5e8ee] bg-white shadow-none"
+                  >
+                    <AccordionTrigger className="px-5 py-5 text-left hover:no-underline [&>svg]:h-6 [&>svg]:w-6 [&>svg]:rounded-full [&>svg]:border [&>svg]:border-[#e5e8ee] [&>svg]:p-1 [&>svg]:text-[#f06f4f]">
+                      <span className="flex items-center gap-3">
+                        <Sparkles className="h-5 w-5 shrink-0 text-[#f97316]" />
+                        <span className="text-[13px] font-extrabold text-[#111827]">
+                          What you will discover?
+                        </span>
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-4 pb-4 pt-0">
+                      <div className="space-y-2">
+                        {[
+                          {
+                            text: "Your primary and secondary DISC personality types",
+                            color: "#e11d48",
+                          },
+                          {
+                            text: "Your key strengths and growth areas",
+                            color: "#f59e0b",
+                          },
+                          {
+                            text: "How you communicate and interact with others",
+                            color: "#3b82f6",
+                          },
+                          {
+                            text: "Ideal work environments and roles for you",
+                            color: "#10b981",
+                          },
+                          {
+                            text: "Your specific DISC profile with personalised recommendations",
+                            color: "#DA7756",
+                          },
+                        ].map((item, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 12,
+                              background: "rgba(218,119,86,0.06)",
+                              borderRadius: 10,
+                              padding: "12px 14px",
+                              borderLeft: `3px solid ${item.color}`,
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: 8,
+                                height: 8,
+                                minWidth: 8,
+                                borderRadius: "50%",
+                                background: item.color,
+                                display: "inline-block",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: 13,
+                                fontWeight: 500,
+                                color: "#374151",
+                                lineHeight: 1.4,
+                              }}
+                            >
+                              {item.text}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+
+                <div className="rounded-[18px] border border-[#e5e8ee] bg-white px-5 pb-3 pt-4 shadow-none">
+                  <p className="mb-5 text-[13px] font-extrabold uppercase tracking-[0.28em] text-[#111827]">
+                    Ready when you are
+                  </p>
+                  <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_330px] md:items-center">
+                  <div className="rounded-[14px] bg-[#fff6e5] px-4 py-5">
+                    <div>
+                      <h3 className="text-[14px] font-extrabold text-[#111827]">
+                        Complete your DISC assessment
+                      </h3>
+                      <p className="mt-5 max-w-xl text-[14px] font-medium leading-relaxed text-[#111827]">
+                        Answer a few quick questions to understand your work
+                        style, communication patterns, and best-fit
+                        collaboration approach.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className={cn(
+                        "mt-3 inline-flex h-10 w-full items-center justify-center rounded-[8px] bg-[#e77252] px-5 text-[13px] font-bold text-white shadow-sm transition-all hover:bg-[#d96648] active:scale-[0.99] sm:w-auto",
+                        (loadingQuestions || questions.length === 0) &&
+                          "opacity-60 cursor-not-allowed"
+                      )}
+                      onClick={handleStartAssessment}
+                      disabled={loadingQuestions || questions.length === 0}
+                    >
+                      {loadingQuestions ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" /> Loading
+                          assessment...
+                        </span>
+                      ) : (
+                        "Start Assessment"
+                      )}
+                    </button>
+                  </div>
+
+                  {/* ── Watch: What is DISC? Video — warm brand colors ── */}
+                  <div
+                    style={{
+                      background: "#FFF6E5",
+                      borderRadius: 14,
+                      overflow: "hidden",
+                      border: "0",
+                      width: "100%",
+                      boxShadow: "none",
+                    }}
+                  >
+                    <div style={{ padding: "8px 12px 5px 12px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 7,
+                          marginBottom: 2,
+                        }}
+                      >
+                        {/* Proper YouTube pill logo */}
+                        <svg
+                          viewBox="0 0 90 20"
+                          width="52"
+                          height="12"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-label="YouTube"
+                        >
+                          <rect width="90" height="20" rx="4" fill="#FF0000" />
+                          <path
+                            d="M12 5.5l-4.5 2.5v5l4.5 2.5V5.5z"
+                            fill="white"
+                          />
+                          <rect
+                            x="7.5"
+                            y="5.5"
+                            width="2"
+                            height="9"
+                            fill="white"
+                          />
+                          <text
+                            x="17"
+                            y="14"
+                            fill="white"
+                            fontSize="9"
+                            fontFamily="Arial,Helvetica,sans-serif"
+                            fontWeight="bold"
+                          >
+                            YouTube
+                          </text>
+                        </svg>
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: "#1f2937",
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          Watch: What is DISC?
+                        </span>
+                      </div>
+                      <p
+                        style={{
+                          fontSize: 11,
+                          color: "#6b7280",
+                          margin: 0,
+                          lineHeight: 1.35,
+                        }}
+                      >
+                        A quick overview of the DISC model and how it applies
+                        to you
+                      </p>
+                    </div>
+                    <div style={{ padding: "7px 10px 10px 10px" }}>
+                      <a
+                        href="https://youtu.be/C3T7LNHOaow"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "block",
+                          position: "relative",
+                          borderRadius: 10,
+                          overflow: "hidden",
+                          cursor: "pointer",
+                          height: 118,
+                        }}
+                      >
+                        <img
+                          src="https://img.youtube.com/vi/C3T7LNHOaow/maxresdefault.jpg"
+                          alt="What is DISC? — Watch on YouTube"
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            display: "block",
+                            objectFit: "cover",
+                          }}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              "https://img.youtube.com/vi/C3T7LNHOaow/hqdefault.jpg";
+                          }}
+                        />
+                        {/* Dark overlay + centred play button */}
+                        <div
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "rgba(0,0,0,0.30)",
+                            transition: "background 0.2s",
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.background =
+                              "rgba(0,0,0,0.45)")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.background =
+                              "rgba(0,0,0,0.30)")
+                          }
+                        >
+                          <svg
+                            viewBox="0 0 68 48"
+                            width="44"
+                            height="31"
+                            xmlns="http://www.w3.org/2000/svg"
+                            aria-label="Play on YouTube"
+                          >
+                            <path
+                              d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z"
+                              fill="#FF0000"
+                            />
+                            <path d="M45 24L27 14v20" fill="white" />
+                          </svg>
+                        </div>
+                        {/* Bottom-right YouTube badge */}
+                        <div
+                          style={{
+                            position: "absolute",
+                            bottom: 10,
+                            right: 10,
+                            background: "rgba(0,0,0,0.80)",
+                            borderRadius: 5,
+                            padding: "2px 7px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                          }}
+                        >
+                          <svg
+                            viewBox="0 0 68 48"
+                            width="12"
+                            height="9"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z"
+                              fill="#FF0000"
+                            />
+                            <path d="M45 24L27 14v20" fill="white" />
+                          </svg>
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 600,
+                              color: "#ffffff",
+                            }}
+                          >
+                            Watch on YouTube
+                          </span>
+                        </div>
+                      </a>
+                    </div>
+                  </div>
+                  </div>
+                </div>
+              </>
+            )}
           </TabsContent>
 
+          {/* ── Your Profile Tab ── */}
           <TabsContent
             value="profile"
-            className="mt-6 focus-visible:outline-none"
+            className="mt-5 focus-visible:outline-none"
           >
             {loadingQuestions ? (
-              <div className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
-                <div className="flex min-h-[min(60vh,440px)] flex-col items-center justify-center px-6 py-16 sm:min-h-[400px] sm:px-10 sm:py-20">
+              <div className="flex min-h-[400px] items-center justify-center rounded-2xl border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6]">
+                <div className="flex flex-col items-center gap-3">
                   <Loader2 className="h-10 w-10 animate-spin text-[#DA7756]" />
-                  <p className="mt-4 text-sm font-medium text-neutral-600">Loading your profile...</p>
+                  <p className="text-sm font-medium text-neutral-600">
+                    Loading your profile...
+                  </p>
                 </div>
               </div>
             ) : savedProfile ? (
-              <div
-                className={cn(
-                  "rounded-2xl border border-[#DA7756]/20 p-4 shadow-sm sm:p-6",
-                  "bg-gradient-to-b from-[#fef6f4] via-[#f6f4ee] to-[#ede8df]"
-                )}
-              >
-                <DiscProfileReport
-                  result={savedProfile}
-                  displayName="Your profile"
-                  emailHint="Saved on this device"
-                  onRetake={() => {
-                    setSavedProfile(null);
-                    setMainTab("report");
-                  }}
-                />
-              </div>
+              <DiscProfileReport
+                result={savedProfile}
+                displayName={currentUser.name || "You"}
+                emailHint={currentUser.email || ""}
+                onRetake={() => {
+                  setAnswers([]);
+                  setCurrentQuestion(0);
+                  setAssessmentStarted(true);
+                  setMainTab("report");
+                }}
+              />
             ) : (
-              <div className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
-                <div className="flex min-h-[min(60vh,440px)] flex-col items-center justify-center px-6 py-16 sm:min-h-[400px] sm:px-10 sm:py-20">
-                  <div className="mx-auto flex w-full max-w-md flex-col items-center text-center">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#DA7756]/10 sm:h-24 sm:w-24">
-                      <Brain
-                        className="h-11 w-11 text-[#DA7756] sm:h-14 sm:w-14"
-                        strokeWidth={1.5}
-                        aria-hidden
-                      />
-                    </div>
-                    <h2 className="mt-6 text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl">
-                      No profile yet
-                    </h2>
-                    <p className="mt-4 text-sm leading-relaxed text-neutral-500 sm:text-[15px]">
-                      You haven&apos;t completed a DISC assessment yet. Start
-                      the assessment to create your profile.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={handleStartAssessment}
-                      disabled={loadingQuestions || questions.length === 0}
-                      className={cn(
-                        "mt-10 flex items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-8 py-3 text-sm font-semibold text-white",
-                        "shadow-sm transition-colors",
-                        "hover:bg-[#DA7756]/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
-                        (loadingQuestions || questions.length === 0) && "opacity-70 cursor-not-allowed"
-                      )}
-                    >
-                      {loadingQuestions && <Loader2 className="h-4 w-4 animate-spin" />}
-                      Start assessment
-                    </button>
-                  </div>
-                </div>
+              <div className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] py-16 shadow-sm">
+                <Brain
+                  className="h-14 w-14 text-[#DA7756]/40"
+                  strokeWidth={1.5}
+                />
+                <h2 className="mt-5 text-xl font-extrabold text-neutral-800">
+                  No profile yet
+                </h2>
+                <p className="mt-2 text-sm text-neutral-500">
+                  You haven't completed a DISC assessment yet.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMainTab("report");
+                    handleStartAssessment();
+                  }}
+                  className="mt-8 rounded-2xl bg-[#DA7756] px-8 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#BC6B4A]"
+                >
+                  Start Assessment
+                </button>
               </div>
             )}
           </TabsContent>
 
-          <TabsContent
-            value="team"
-            className="mt-6 focus-visible:outline-none"
-          >
-            <TeamProfilesTabContent members={teamProfiles} loading={loadingQuestions} onViewReport={fetchMemberReport} />
-          </TabsContent>
-
-          {/* Member Report Modal */}
-          {selectedMemberReport && (
-            <DiscAssessmentResultsModal
-              result={selectedMemberReport}
-              onClose={() => setSelectedMemberReport(null)}
-              onViewProfile={() => {
-                // Already viewing
-              }}
-            />
-          )}
-
-          {/* Loading Overlay */}
-          {loadingReport && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
-              <div className="rounded-2xl bg-white p-6 shadow-xl">
-                <Loader2 className="h-8 w-8 animate-spin text-[#DA7756]" />
-                <p className="mt-2 text-sm font-medium text-neutral-600">Loading Report...</p>
+          {/* ── Team Profiles Tab ── */}
+          <TabsContent value="team" className="mt-5 focus-visible:outline-none">
+            {selectedMemberReport ? (
+              <div className="space-y-4">
+                <div className="flex items-center border-b border-[rgba(218,119,86,0.18)] pb-4">
+                  <button
+                    onClick={() => setSelectedMemberReport(null)}
+                    className="flex items-center gap-2 text-sm font-semibold text-[#CE8261] hover:text-[#BC6B4A] border border-[rgba(218,119,86,0.25)] bg-white rounded-xl px-3 py-2 transition-colors shadow-sm"
+                  >
+                    <ArrowLeft className="h-4 w-4" /> Back to Team
+                  </button>
+                </div>
+                {loadingReport ? (
+                  <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6]">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="h-10 w-10 animate-spin text-[#DA7756]" />
+                      <p className="text-sm font-semibold text-neutral-600">
+                        Loading Report...
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <DiscProfileReport
+                    result={selectedMemberReport}
+                    displayName={selectedMemberName}
+                    emailHint={selectedMemberEmail || "Team Member"}
+                    onRetake={() => setSelectedMemberReport(null)}
+                    showRetake={false}
+                  />
+                )}
               </div>
-            </div>
-          )}
+            ) : (
+              <TeamProfilesTabContent
+                members={teamProfiles}
+                loading={loadingQuestions}
+                onViewReport={fetchMemberReport}
+              />
+            )}
+          </TabsContent>
         </Tabs>
       </div>
     </div>

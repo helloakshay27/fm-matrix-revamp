@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useSearchParams } from "react-router-dom";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import debounce from "lodash/debounce";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { getUser } from "@/utils/auth";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Define interfaces for data structures
 interface TransformedFMUser {
@@ -107,64 +108,15 @@ const transformFMUserData = (apiUser: FMUser): TransformedFMUser => ({
   department: apiUser.department?.department_name ?? "",
 });
 
-const columns: ColumnConfig[] = [
-  { key: "id", label: "ID", sortable: true, draggable: true },
-  { key: "active", label: "Active", sortable: true, draggable: true },
-  { key: "userName", label: "User Name", sortable: true, draggable: true },
-  { key: "gender", label: "Gender", sortable: true, draggable: true },
-  { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
-  { key: "email", label: "Email", sortable: true, draggable: true },
-  {
-    key: "vendorCompany",
-    label: "Vendor Company Name",
-    sortable: true,
-    draggable: true,
-  },
-  {
-    key: "entityName",
-    label: "Entity Name",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "department", label: "Department", sortable: true, draggable: true },
-  { key: "unit", label: "Unit", sortable: true, draggable: true },
-  { key: "role", label: "Role", sortable: true, draggable: true },
-  {
-    key: "employeeId",
-    label: "Employee ID",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "createdBy", label: "Created By", sortable: true, draggable: true },
-  {
-    key: "accessLevel",
-    label: "Access Level",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "type", label: "Type", sortable: true, draggable: true },
-  { key: "status", label: "Status", sortable: true, draggable: true },
-  // {
-  //   key: "faceRecognition",
-  //   label: "Face Recognition",
-  //   sortable: true,
-  //   draggable: true,
-  // },
-  {
-    key: "appDownloaded",
-    label: "App Downloaded",
-    sortable: true,
-    draggable: true,
-  },
-];
-
 export const FMUserMasterDashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl") ?? "";
   const token = localStorage.getItem("token") ?? "";
   const { setCurrentSection } = useLayout() as LayoutContext;
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const dispatch = useDispatch<AppDispatch>();
   const user = getUser();
+  const { shouldShow } = useDynamicPermissions();
   const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
   const {
     loading,
@@ -196,6 +148,59 @@ export const FMUserMasterDashboard = () => {
     status: "",
     downloaded: undefined,
   });
+
+  const isClubSite = location.pathname.includes("club-management");
+
+  const columns: ColumnConfig[] = [
+    { key: "id", label: "ID", sortable: true, draggable: true },
+    { key: "active", label: "Active", sortable: true, draggable: true },
+    { key: "userName", label: "User Name", sortable: true, draggable: true },
+    { key: "gender", label: "Gender", sortable: true, draggable: true },
+    { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
+    { key: "email", label: "Email", sortable: true, draggable: true },
+    !isClubSite && {
+      key: "vendorCompany",
+      label: "Vendor Company Name",
+      sortable: true,
+      draggable: true,
+    },
+    !isClubSite && {
+      key: "entityName",
+      label: "Entity Name",
+      sortable: true,
+      draggable: true,
+    },
+    !isClubSite && { key: "department", label: "Department", sortable: true, draggable: true },
+    !isClubSite && { key: "unit", label: "Unit", sortable: true, draggable: true },
+    { key: "role", label: "Role", sortable: true, draggable: true },
+    {
+      key: "employeeId",
+      label: "Employee ID",
+      sortable: true,
+      draggable: true,
+    },
+    { key: "createdBy", label: "Created By", sortable: true, draggable: true },
+    {
+      key: "accessLevel",
+      label: "Access Level",
+      sortable: true,
+      draggable: true,
+    },
+    { key: "type", label: "Type", sortable: true, draggable: true },
+    { key: "status", label: "Status", sortable: true, draggable: true },
+    // {
+    //   key: "faceRecognition",
+    //   label: "Face Recognition",
+    //   sortable: true,
+    //   draggable: true,
+    // },
+    {
+      key: "appDownloaded",
+      label: "App Downloaded",
+      sortable: true,
+      draggable: true,
+    },
+  ];
 
   const [fmUsersData, setFmUsersData] = useState<TransformedFMUser[]>([]);
   const [fmForClone, setFmForClone] = useState([])
@@ -240,12 +245,21 @@ export const FMUserMasterDashboard = () => {
     }
   }
 
+  // useEffect(() => {
+  //   if (baseUrl && token) {
+  //     fetchUsers(1);
+  //     getShortFmUsers()
+  //   }
+  // }, [baseUrl, token]);
+
   useEffect(() => {
-    if (baseUrl && token) {
-      fetchUsers(1);
-      getShortFmUsers()
-    }
-  }, [baseUrl, token]);
+  if (baseUrl && token) {
+    const page = Number(searchParams.get("page")) || 1;
+
+    fetchUsers(page);
+    getShortFmUsers();
+  }
+}, [baseUrl, token]);
 
   // Debounced search function
   const debouncedSearch = useCallback(
@@ -536,28 +550,36 @@ export const FMUserMasterDashboard = () => {
       app_downloaded_eq: newFilters.downloaded,
     });
   };
+
+
   const handlePageChange = async (page: number) => {
-    console.log(page)
-    if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
-      return;
-    }
+  if (
+    page < 1 ||
+    page > pagination.total_pages ||
+    page === pagination.current_page ||
+    loading
+  ) {
+    return;
+  }
 
-    try {
-      setPagination((prev) => ({ ...prev, current_page: page }));
-      fetchUsers(page, {
-        lock_user_permission_status_eq: filters.status,
-        app_downloaded_eq: filters.downloaded,
-        firstname_cont: filters.name,
-        lastname_cont: filters.name,
-        email_cont: filters.email,
-        search_all_fields_cont: searchTerm
-      });
-    } catch (error) {
-      console.error("Error changing page:", error);
-      toast.error("Failed to load page data. Please try again.");
-    }
-  };
+  try {
+    setSearchParams({
+      page: page.toString(),
+    });
 
+    fetchUsers(page, {
+      lock_user_permission_status_eq: filters.status,
+      app_downloaded_eq: filters.downloaded,
+      firstname_cont: filters.name,
+      lastname_cont: filters.name,
+      email_cont: filters.email,
+      search_all_fields_cont: searchTerm,
+    });
+  } catch (error) {
+    console.error("Error changing page:", error);
+    toast.error("Failed to load page data. Please try again.");
+  }
+};
   const renderPaginationItems = () => {
     if (!pagination.total_pages || pagination.total_pages <= 0) {
       return null;
@@ -681,6 +703,7 @@ export const FMUserMasterDashboard = () => {
   };
 
   const renderActions = (user: TransformedFMUser) => (
+    shouldShow("Admin User", "show") && (
     <Button
       variant="ghost"
       size="sm"
@@ -689,6 +712,7 @@ export const FMUserMasterDashboard = () => {
     >
       <Eye className="w-4 h-4" />
     </Button>
+    )
   );
 
   const renderCell = (user: TransformedFMUser, columnKey: string) => {
@@ -738,7 +762,7 @@ export const FMUserMasterDashboard = () => {
     <>
       <Button
         onClick={() => setShowActionPanel(true)}
-        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
+        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2  flex items-center gap-2 border-0"
       >
         <Plus className="w-4 h-4" />
         Action
@@ -816,6 +840,7 @@ export const FMUserMasterDashboard = () => {
           onAdd={handleAddUser}
           onImport={() => setShowImportModal(true)}
           onClearSelection={() => setShowActionPanel(false)}
+          permissionKey="Admin User"
         />
       )}
 

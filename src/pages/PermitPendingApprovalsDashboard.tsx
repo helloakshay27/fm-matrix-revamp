@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation} from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Eye, Loader2 } from "lucide-react";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface PendingApproval {
   permit_id?: number;
@@ -21,10 +22,20 @@ interface ApiResponse {
 }
 
 export const PermitPendingApprovalsDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
+  const location = useLocation();
+  const[currentPage,setCurrentPage] = useState(()=>{
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(()=>{
+    navigate(`${location.pathname}?page=${currentPage}`,{replace:true});
+  },[currentPage])
 
   useEffect(() => {
     const fetchPendingApprovals = async () => {
@@ -83,7 +94,7 @@ export const PermitPendingApprovalsDashboard = () => {
     return resourceType.split('::').pop() || resourceType;
   };
 
-  const handleViewPermit = (permitId: number, levelId: number, resourceType: string) => {
+  const handleViewPermit = (permitId: number, levelId: number, resourceType: string,invoice_approval_history_id: string) => {
     const userId = localStorage.getItem('user_id') || localStorage.getItem('userId') || '';
 
     // Add null/undefined checks before converting to string
@@ -92,6 +103,7 @@ export const PermitPendingApprovalsDashboard = () => {
       user_id: userId,
       approve: 'true',
       type: 'approval',
+      invoice_approval_history_id: (invoice_approval_history_id ?? '').toString(),
       resource_type: resourceType === "Pms::PermitExtend" ? 'permit_extend' : resourceType === "Pms::Permit" ? 'permit' : resourceType === "Pms::PermitClosure" ? 'permit_closure' : "",
 
     });
@@ -175,19 +187,22 @@ export const PermitPendingApprovalsDashboard = () => {
           //   <Eye className="h-4 w-4" />
           // </Button>
           <div className="flex items-center gap-2">
-            <div title="View permit details">
-              <Eye
-                className="w-5 h-5 text-gray-600 cursor-pointer hover:text-[#C72030]"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleViewPermit(
-                    approval.permit_id || 0,
-                    approval.level_id || 0,
-                    approval.resource_type || ''
-                  );
-                }}
-              />
-            </div>
+            {shouldShow("Permit", "show") && (
+              <div title="View permit details">
+                <Eye
+                  className="w-5 h-5 text-gray-600 cursor-pointer hover:text-[#C72030]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewPermit(
+                      approval.permit_id || 0,
+                      approval.level_id || 0,
+                      approval.resource_type || '',
+                      approval.id || ''
+                    );
+                  }}
+                />
+              </div>
+            )}
           </div>
         );
       case 'permit_type':
@@ -229,6 +244,11 @@ export const PermitPendingApprovalsDashboard = () => {
           pagination={true}
           pageSize={15}
           storageKey="pending-approvals-table"
+          currentPage={currentPage}
+          onPageChange={(page) =>{
+            setCurrentPage(page);
+            navigate(`${location.pathname}?page=${page}`,{replace:true});
+          }}
         />
       </div>
     </div>

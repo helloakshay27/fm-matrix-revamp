@@ -76,12 +76,20 @@ const CashFlowStatementReport: React.FC = () => {
                 className="border px-4 py-2"
                 style={{ paddingLeft: `${depth * 20}px` }}
               >
-                {acc.name}
+                {acc.ledger_id ? (
+                  <span
+                    className="text-blue-600 cursor-pointer hover:underline"
+                    onClick={() => navigate(`/accounting/reports/cash-flow-statement/details/${acc.ledger_id}`)}
+                  >
+                    {acc.name}
+                  </span>
+                ) : (
+                  acc.name
+                )}
               </td>
               <td className="border px-4 py-2">
                 {acc.account_code || "-"}
               </td>
-
               <td className="border px-4 py-2 text-right">
                 {acc.values?.[0]?.total_formatted || "0.00"}
               </td>

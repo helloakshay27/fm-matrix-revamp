@@ -38,7 +38,6 @@ export interface UserRoleResponse {
   lock_modules?: LockModule[];
   activeFunctions?: ActiveFunction[]; // Add support for the actual API response
 }
-const org_id = localStorage.getItem("org_id");
 
 export const permissionService = {
   /**
@@ -76,20 +75,26 @@ export const permissionService = {
         throw new Error("NO_ROLE_ASSIGNED");
       }
     } catch (error: any) {
+      const status = error.response?.status;
+      const msg: string = error.response?.data?.message ?? error.message ?? "";
+
+      // 500 = server has no role for this user — non-fatal, app works with show-all fallback
+      if (status === 500) {
+        console.warn(
+          "get_user_role 500 — user may have no role assigned. Showing all content."
+        );
+        return null;
+      }
+
+      // No role assigned
+      if (msg.toLowerCase().includes("no role") || msg === "NO_ROLE_ASSIGNED") {
+        console.warn("No role assigned. Showing all content.");
+        return null;
+      }
+
+      // Any other error — log and return null to avoid page crash
       console.error("Error fetching user role:", error);
-      // Check for 500 Internal Server Error or "No Role" message
-      if (error.response?.status === 500) {
-        throw new Error("SERVER_ERROR_500");
-      }
-      // Check for "No Role" in error message
-      if (
-        error.response?.data?.message?.toLowerCase().includes("no role") ||
-        error.message === "NO_ROLE_ASSIGNED"
-      ) {
-        throw new Error("NO_ROLE_ASSIGNED");
-      }
-      // Re-throw other errors
-      throw error;
+      return null;
     }
   },
 

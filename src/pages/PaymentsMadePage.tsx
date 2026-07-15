@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { PaymentDetailView } from "./components/PaymentDetailView";
+import PaymentDetailView from "./components/PaymentDetailView";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +14,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { useDebounce } from "@/hooks/useDebounce";
 import { API_CONFIG } from "@/config/apiConfig";
-
+import { Eye, Edit, Trash2 } from "lucide-react";
 // API shape returned by lock_payments.json
 interface LockPayment {
   id: number;
@@ -71,6 +71,7 @@ interface LockPayment {
   payment_date?: string;
   payment_amount?: string | number;
   deposit_to_ledger_name?: string;
+  deposit_to_ledger?: string;
   bill_payments?: { formatted_number?: string; payment_date?: string }[];
 }
 
@@ -111,10 +112,10 @@ const mapLockPayment = (lp: LockPayment): Payment => {
   const dateRaw = lp.payment_date || lp.bill_payments?.[0]?.payment_date || lp.created_at || "";
   const date = dateRaw
     ? new Date(dateRaw).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
     : "-";
 
   const billNums = (lp.bill_payments || [])
@@ -132,7 +133,7 @@ const mapLockPayment = (lp: LockPayment): Payment => {
     amount: parseFloat(String(lp.paid_amount ?? lp.payment_amount ?? lp.total_amount ?? "0")) || 0,
     unused_amount: 0,
     bank_reference_number: lp.neft_reference || lp.order_number || lp.pg_transaction_id || "",
-    paid_through_account: lp.deposit_to_ledger_name || lp.payment_gateway || lp.bank_name || "-",
+    paid_through_account: lp.deposit_to_ledger_name || lp.deposit_to_ledger || lp.payment_gateway || lp.bank_name || "-",
     currency_symbol: "₹",
     tds_percentage: parseFloat(lp.tds_percentage || "0") || 0,
     tds_amount: parseFloat(lp.tds_amount || "0") || 0,
@@ -145,7 +146,7 @@ const mapLockPayment = (lp: LockPayment): Payment => {
 export const PaymentsMadePage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [viewMode, setViewMode] = useState<"list" | "detail">("list");
+  // const [viewMode, setViewMode] = useState<"list" | "detail">("list");
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(
     null
   );
@@ -183,7 +184,51 @@ export const PaymentsMadePage: React.FC = () => {
     setSelectedPaymentIds([]);
     sonnerToast.success("Payments deleted successfully");
   };
+
+  const handleDeletePayment = async (payment: Payment) => {
+    if (!window.confirm(`Are you sure you want to delete payment ${payment.payment_number}?`)) {
+      return;
+    }
+
+    setDeletingId(payment.id);
+    try {
+      const baseUrl = localStorage.getItem("baseUrl") || API_CONFIG.BASE_URL;
+      const token = localStorage.getItem("token") || API_CONFIG.TOKEN;
+
+      if (!baseUrl || !token) {
+        sonnerToast.error("Missing authentication or base URL");
+        setDeletingId(null);
+        return;
+      }
+
+      const apiUrl = baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
+
+      const response = await fetch(`${apiUrl}/lock_payments/${payment.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errBody = await response.text();
+        throw new Error(
+          `HTTP ${response.status}: ${errBody || response.statusText}`
+        );
+      }
+
+      sonnerToast.success("Payment deleted successfully");
+      fetchPayments(currentPage);
+    } catch (error: any) {
+      console.error("Failed to delete payment:", error);
+      sonnerToast.error(error.message || "Failed to delete payment");
+    } finally {
+      setDeletingId(null);
+    }
+  };
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [appliedFilters, setAppliedFilters] = useState<PaymentFilters>({});
 
@@ -214,10 +259,19 @@ export const PaymentsMadePage: React.FC = () => {
           sonnerToast.error("API not configured. Please log in.");
           return;
         }
-        // Accounting API always hits club-uat-api.lockated.com
-        const url = new URL(
-          "https://club-uat-api.lockated.com/lock_payments.json"
-        );
+        // Build payments endpoint URL (use configured base or fall back to club UAT)
+        const base = API_CONFIG.BASE_URL || "https://club-uat-api.lockated.com";
+        const url = new URL(`${base.replace(/\/+$/, "")}/lock_payments.json`);
+
+        // Attach lock account id if available
+        const lockAccountId = localStorage.getItem("lock_account_id");
+        if (lockAccountId) {
+          url.searchParams.append("lock_account_id", lockAccountId);
+        }
+
+        // Indicate we want payments made (1). For received payments use 0.
+        url.searchParams.append("q[payment_made_eq]", "1");
+
         url.searchParams.append("page", String(page));
         url.searchParams.append("per_page", String(perPage));
 
@@ -288,6 +342,13 @@ export const PaymentsMadePage: React.FC = () => {
   // Re-define columns inside component if needed or use constants
   // Column configuration for the enhanced table
   const columns: ColumnConfig[] = [
+    {
+      key: "actions",
+      label: "ACTIONS",
+      sortable: false,
+      hideable: false,
+      draggable: false,
+    },
     {
       key: "date",
       label: "DATE",
@@ -376,6 +437,38 @@ export const PaymentsMadePage: React.FC = () => {
   };
 
   const renderRow = (payment: Payment) => ({
+    actions: (
+      <>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() =>
+            navigate(`/accounting/payments-made/${payment.id}`)
+          }
+          title="View Details"
+        >
+          <Eye className="h-4 w-4 text-blue-600" />
+        </Button>
+
+        <button
+          onClick={() => navigate(`/accounting/payments-made/edit/${payment.id}`)}
+          className="p-1 text-black hover:bg-gray-100 rounded"
+          title="Edit"
+        >
+          <Edit className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={() => handleDeletePayment(payment)}
+          disabled={deletingId === payment.id || loading}
+          className="p-1 text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+          title="Delete"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </>
+    ),
+
     date: <span className="text-sm text-gray-900">{payment.date}</span>,
     payment_number: (
       <div
@@ -434,33 +527,40 @@ export const PaymentsMadePage: React.FC = () => {
     ),
   });
 
-  if (viewMode === "detail") {
-    return (
-      <div className="bg-white min-h-screen ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-        {loading ? (
-          <div className="flex items-center justify-center h-screen">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-700"></div>
-          </div>
-        ) : (
-          <PaymentDetailView
-            payments={filteredPayments}
-            selectedPaymentId={selectedPaymentId}
-            onSelectPayment={(id) => setSelectedPaymentId(id)}
-            onClose={() => {
-              setSearchParams({});
-              setViewMode("list");
-            }}
-          />
-        )}
-      </div>
-    );
-  }
+  // if (viewMode === "detail") {
+  // return (
+  //   <div className="bg-white min-h-screen ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+  //     {loading ? (
+  //       <div className="flex items-center justify-center h-screen">
+  //         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-700"></div>
+  //       </div>
+  //     ) : (
+  //       <PaymentDetailView
+  //         payments={filteredPayments}
+  //         selectedPaymentId={selectedPaymentId}
+  //         onSelectPayment={(id) => setSelectedPaymentId(id)}
+  //         onClose={() => {
+  //           setSearchParams({});
+  //           setViewMode("list");
+  //         }}
+  //       />
+  //     )}
+  //   </div>
+  // );
+  // }
 
   return (
     <div className="p-6 space-y-6 bg-white min-h-screen">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">All Payments</h1>
+      {/* Header with orange theme */}
+      {/* <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+        <span>Accounting</span>
+        <span>&gt;</span>
+        <span>Purchases</span>
+        <span>&gt;</span>
+        <span>Payments Made</span>
+      </div> */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="font-work-sans font-semibold text-2xl text-[#1a1a1a]">PAYMENTS MADE</h1>
       </div>
 
       <EnhancedTaskTable
@@ -468,11 +568,11 @@ export const PaymentsMadePage: React.FC = () => {
         columns={columns}
         leftActions={
           <Button
-            className="bg-[#d23f57] hover:bg-[#b03045] text-white gap-2 h-9 px-4 rounded-[4px]"
+            className="bg-[#C72030] hover:bg-[#b01a28] text-white"
             onClick={() => navigate("/accounting/payments-made/create")}
           >
-            <Plus className="h-4 w-4" />
-            New
+            <Plus className="h-4 w-4 mr-2" />
+            Add
           </Button>
         }
         rightActions={null}
@@ -486,8 +586,9 @@ export const PaymentsMadePage: React.FC = () => {
         searchPlaceholder="Search payments..."
         loading={loading}
         onRowClick={(payment) => {
-          setSelectedPaymentId(payment.id);
-          setViewMode("detail");
+          // setSelectedPaymentId(payment.id);
+          // setViewMode("detail");
+          // navigate(`/accounting/payments-made/${payment.id}`)
         }}
       />
 

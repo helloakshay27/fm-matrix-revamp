@@ -485,7 +485,7 @@ export class JobSheetPDFStyles {
           border: 0.5px solid #CCCCCC;
         }
 
-        .checklist-table th {
+        .checklist- {
           background: #f5f5f5;
           border: 0.5px solid #CCCCCC;
           padding: 12px 8px;
@@ -1204,6 +1204,87 @@ export class JobSheetPDFStyles {
         }
 
         /* SVG-Style Remarks Section */
+        /* ── Improved Remarks Section ── */
+        .pdf-remarks-section {
+          margin: 20px 0;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          overflow: hidden;
+          page-break-inside: avoid;
+        }
+
+        .pdf-remarks-header-bar {
+          background: #C8A882;
+          padding: 10px 16px;
+          display: flex;
+          align-items: center;
+        }
+
+        .pdf-remarks-header-text {
+          font-family: "Work Sans", Arial, sans-serif;
+          font-size: 12px;
+          font-weight: 700;
+          color: #ffffff;
+          letter-spacing: 0.8px;
+        }
+
+        .pdf-remarks-body {
+          background: #f9fafb;
+          padding: 12px 14px;
+          min-height: 56px;
+        }
+
+        .pdf-remark-row {
+          display: flex;
+          margin-bottom: 8px;
+          border-left: 3px solid #C72030;
+          border-radius: 0 6px 6px 0;
+          background: #ffffff;
+          overflow: hidden;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+
+        .pdf-remark-row:last-child {
+          margin-bottom: 0;
+        }
+
+        .pdf-remark-label-col {
+          background: #f3f4f6;
+          padding: 8px 12px;
+          font-family: "Work Sans", Arial, sans-serif;
+          font-size: 9px;
+          font-weight: 700;
+          color: #374151;
+          text-transform: uppercase;
+          letter-spacing: 0.4px;
+          min-width: 130px;
+          width: 130px;
+          flex-shrink: 0;
+          border-right: 1px solid #e5e7eb;
+          display: flex;
+          align-items: flex-start;
+          padding-top: 9px;
+        }
+
+        .pdf-remark-value-col {
+          padding: 8px 14px;
+          font-family: "Work Sans", Arial, sans-serif;
+          font-size: 10px;
+          color: #1f2937;
+          line-height: 1.6;
+          flex: 1;
+          word-break: break-word;
+        }
+
+        .pdf-remarks-empty {
+          font-family: "Work Sans", Arial, sans-serif;
+          font-size: 10px;
+          color: #9ca3af;
+          font-style: italic;
+          text-align: center;
+          padding: 12px 0;
+        }
+
         .svg-remarks-section {
           margin: 25px 0;
           position: relative;

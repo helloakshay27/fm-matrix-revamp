@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Quill from "quill";
+import "quill/dist/quill.snow.css";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -11,6 +13,7 @@ import {
   Trophy,
   Calendar,
   Clock,
+  Edit,
 } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
 import {
@@ -35,6 +38,7 @@ interface OfferData {
   id: string;
   offerTitle: string;
   couponCode: string;
+  couponCodeInput: string;
   displayName: string;
   partner: string;
   winningProbability: string;
@@ -44,6 +48,7 @@ interface OfferData {
   bannerImageName: string;
   rewardType: string;
   pointsValue: string;
+  validity?: string;
 }
 
 export const CreateContestPage: React.FC = () => {
@@ -65,6 +70,7 @@ export const CreateContestPage: React.FC = () => {
     id: Date.now().toString() + Math.random(),
     offerTitle: "",
     couponCode: "",
+    couponCodeInput: "",
     displayName: "",
     partner: "",
     winningProbability: "",
@@ -74,6 +80,7 @@ export const CreateContestPage: React.FC = () => {
     bannerImageName: "",
     rewardType: "Coupon Code",
     pointsValue: "",
+    validity: "",
   });
 
   // Helper function to get initial offers count based on contest type
@@ -83,14 +90,66 @@ export const CreateContestPage: React.FC = () => {
 
   // Form data ────────────────────────────────────────────────────────────────
   const [contestName, setContestName] = useState("");
+  const [nameValidating, setNameValidating] = useState(false);
+  const [nameExists, setNameExists] = useState<boolean | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const nameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [contestDescription, setContestDescription] = useState("");
   const [contestType, setContestType] = useState("");
+  const [usageType, setUsageType] = useState("");
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+
+  const handleContestNameChange = (value: string) => {
+    setContestName(value);
+    setNameExists(null);
+    setNameError(null);
+
+    if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
+
+    if (!value.trim()) return;
+
+    nameDebounceRef.current = setTimeout(async () => {
+      setNameValidating(true);
+      try {
+        const base = localStorage.getItem("baseUrl") || "";
+        const tok = localStorage.getItem("token") || "";
+        const res = await axios.post(
+          `https://${base}/contests/validate_name.json`,
+          { contest: { name: value.trim() } },
+          { headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" } }
+        );
+        setNameExists(res.data?.exists ?? false);
+        setNameError(null);
+      } catch (error: any) {
+        if (error.response?.status === 422) {
+          const errors = error.response.data?.errors;
+          setNameError(Array.isArray(errors) ? errors[0] : "Name has already been taken");
+          setNameExists(true);
+        } else {
+          setNameExists(null);
+          setNameError(null);
+        }
+      } finally {
+        setNameValidating(false);
+      }
+    }, 500);
+  };
 
   // Reset redemption document when contest type changes away from Scratch
   // Also adjust offers count based on contest type
   const handleContestTypeChange = (newType: string) => {
     setContestType(newType);
+
+    // Clear usage type when switching away from Random
+    if (newType !== "Random") {
+      setUsageType("");
+    }
+
+    // Clear Spin-only fields when switching away from Spin
+    if (newType !== "Spin") {
+      setUsersCap("");
+      setAttemptsRequired("");
+    }
 
     // Reset redemption text for non-Scratch types
     if (newType !== "Scratch") {
@@ -129,6 +188,35 @@ export const CreateContestPage: React.FC = () => {
   // Documents - now text inputs instead of file uploads
   const [termsText, setTermsText] = useState("");
   const [redemptionText, setRedemptionText] = useState("");
+
+  // Tech Park Modal State
+  const [isTechParkModalOpen, setIsTechParkModalOpen] = useState(false);
+  const [techParks, setTechParks] = useState<any[]>([]);
+  const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
+  const [isLoadingTechParks, setIsLoadingTechParks] = useState(false);
+  const [shareWith, setShareWith] = useState("all");
+
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+
+  const fetchTechParks = async () => {
+    if (techParks.length > 0) return;
+
+    setIsLoadingTechParks(true);
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/sites/allowed_sites.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setTechParks(response.data.sites || []);
+    } catch (error) {
+      console.error("Failed to fetch tech parks", error);
+      sonnerToast.error("Failed to load tech parks");
+    } finally {
+      setIsLoadingTechParks(false);
+    }
+  };
 
   // Initialize Quill editors
   useEffect(() => {
@@ -189,6 +277,12 @@ export const CreateContestPage: React.FC = () => {
     };
   }, [currentStep]); // Re-initialize when step changes to ensure editors are visible
 
+  useEffect(() => {
+    if (isTechParkModalOpen) {
+      fetchTechParks();
+    }
+  }, [isTechParkModalOpen]);
+
   const steps: ContestStep[] = [
     {
       id: 1,
@@ -216,7 +310,41 @@ export const CreateContestPage: React.FC = () => {
     },
   ];
 
-  const contestTypes = ["Spin", "Scratch", "Flip"];
+  const contestTypes = ["Spin", "Random", "Special Discount"];
+
+  // Helper function to calculate base probability for each offer
+  const calculateBaseProbability = (): number => {
+    if (offers.length === 0) return 0;
+    return 100 / offers.length;
+  };
+
+  // Helper function to count coupons in an offer
+  const countCoupons = (couponCode: string): number => {
+    if (!couponCode.trim()) return 1;
+    return couponCode
+      .split(",")
+      .map((code) => code.trim())
+      .filter((code) => code.length > 0).length;
+  };
+
+  // Helper function to calculate probability for a specific coupon/offer
+  const calculateCouponProbability = (offer: OfferData): number => {
+    if (offer.rewardType === "Points") {
+      return calculateBaseProbability();
+    }
+
+    const baseProbability = calculateBaseProbability();
+    const couponCount = countCoupons(offer.couponCode);
+    return baseProbability / couponCount;
+  };
+
+  // Helper function to calculate max available probability for an offer
+  const getMaxAvailableProbability = (offerId: string): number => {
+    const otherOffersTotal = offers
+      .filter((o) => o.id !== offerId)
+      .reduce((sum, o) => sum + (Number(o.winningProbability) || 0), 0);
+    return Math.max(0, 100 - otherOffersTotal);
+  };
 
   const addOffer = () => {
     setOffers([...offers, createDefaultOffer()]);
@@ -246,10 +374,10 @@ export const CreateContestPage: React.FC = () => {
       prev.map((offer) =>
         offer.id === id
           ? {
-              ...offer,
-              bannerImage: file,
-              bannerImageName: file ? file.name : "",
-            }
+            ...offer,
+            bannerImage: file,
+            bannerImageName: file ? file.name : "",
+          }
           : offer
       )
     );
@@ -298,14 +426,13 @@ export const CreateContestPage: React.FC = () => {
 
     const baseUrl = localStorage.getItem("baseUrl") || "";
     const token = localStorage.getItem("token") || "";
-    //     const baseUrl =  "https://uat-hi-society.lockated.com";
-    // const token = "O08MAh4ADTSweyKwK8zwR5CDVlzKYKLcu825jhnvEjI"
     const formData = new FormData();
 
     // Basic contest fields
     formData.append("contest[name]", contestName.trim());
     formData.append("contest[description]", contestDescription.trim());
-    formData.append("contest[content_type]", contestType.toLowerCase());
+    formData.append("contest[content_type]", contestType.toLowerCase().replace(/\s+/g, "_"));
+    if (usageType) formData.append("contest[usage_type]", usageType);
     formData.append("contest[active]", String(isActive));
     formData.append("contest[start_at]", buildISO(startDate, startTime));
     formData.append("contest[end_at]", buildISO(endDate, endTime, true));
@@ -314,67 +441,66 @@ export const CreateContestPage: React.FC = () => {
       formData.append("contest[user_caps]", usersCap);
     }
     if (attemptsRequired) {
-      formData.append("contest[user_attemp_remaining]", attemptsRequired);
+      formData.append("contest[attemp_required]", attemptsRequired);
+    }
+
+    // Add tech parks if sharing with individual
+    if (shareWith === "individual") {
+      formData.append("contest[access_type]", "single_site");
+      selectedTechParks.forEach(id => {
+        formData.append("contest[site_ids][]", id.toString());
+      });
     }
 
     // Add prizes_attributes
-    offers.forEach((offer, index) => {
-      formData.append(
-        `contest[prizes_attributes][${index}][title]`,
-        offer.offerTitle.trim()
-      );
+    // Equal probability per offer: 100 / numberOfOffers
+    // If an offer has multiple coupons, that offer's share is split equally across each coupon
+    const baseProbabilityPerOffer = offers.length > 0 ? 100 / offers.length : 0;
 
-      // Determine reward type based on offer.rewardType
-      const rewardType = offer.rewardType === "Points" ? "points" : "coupon";
-      formData.append(
-        `contest[prizes_attributes][${index}][reward_type]`,
-        rewardType
-      );
-
-      // Add coupon_code only if reward type is "Coupon Code"
+    const expandedOffers: any[] = [];
+    offers.forEach((offer) => {
       if (offer.rewardType === "Coupon Code") {
-        formData.append(
-          `contest[prizes_attributes][${index}][coupon_code]`,
-          offer.couponCode.trim()
-        );
+        const coupons = offer.couponCode
+          .split(",")
+          .map((code) => code.trim())
+          .filter((code) => code.length > 0);
+        const probPerCoupon = coupons.length > 0 ? baseProbabilityPerOffer / coupons.length : baseProbabilityPerOffer;
+        coupons.forEach((coupon) => {
+          expandedOffers.push({ ...offer, couponCode: coupon, _computedProb: probPerCoupon });
+        });
+      } else {
+        expandedOffers.push({ ...offer, _computedProb: baseProbabilityPerOffer });
       }
+    });
 
-      // Add points_value only if reward type is "Points"
+    expandedOffers.forEach((offer, index) => {
+      formData.append(`contest[prizes_attributes][${index}][title]`, offer.offerTitle.trim());
+      formData.append(`contest[prizes_attributes][${index}][display_name]`, offer.displayName.trim());
+
+      const rewardType = offer.rewardType === "Points" ? "points" : "coupon";
+      formData.append(`contest[prizes_attributes][${index}][reward_type]`, rewardType);
+
+      if (offer.rewardType === "Coupon Code") {
+        formData.append(`contest[prizes_attributes][${index}][coupon_code]`, offer.couponCode.trim());
+      }
       if (offer.rewardType === "Points") {
-        formData.append(
-          `contest[prizes_attributes][${index}][points_value]`,
-          offer.pointsValue.trim()
-        );
+        formData.append(`contest[prizes_attributes][${index}][points_value]`, offer.pointsValue.trim());
       }
-
-      // Add partner_name only if provided
       if (offer.partner.trim()) {
-        formData.append(
-          `contest[prizes_attributes][${index}][partner_name]`,
-          offer.partner.trim()
-        );
+        formData.append(`contest[prizes_attributes][${index}][partner_name]`, offer.partner.trim());
       }
 
-      formData.append(
-        `contest[prizes_attributes][${index}][probability_value]`,
-        offer.winningProbability || "0"
-      );
-      formData.append(
-        `contest[prizes_attributes][${index}][probability_out_of]`,
-        offer.probabilityOutOf || "100"
-      );
-      formData.append(
-        `contest[prizes_attributes][${index}][position]`,
-        String(index + 1)
-      );
+      formData.append(`contest[prizes_attributes][${index}][probability_value]`, String(offer._computedProb));
+      formData.append(`contest[prizes_attributes][${index}][probability_out_of]`, "100");
+
+      formData.append(`contest[prizes_attributes][${index}][position]`, String(index + 1));
       formData.append(`contest[prizes_attributes][${index}][active]`, "true");
 
-      // Add banner image if present
       if (offer.bannerImage) {
-        formData.append(
-          `contest[prizes_attributes][${index}][image_attributes][document]`,
-          offer.bannerImage
-        );
+        formData.append(`contest[prizes_attributes][${index}][image_attributes][document]`, offer.bannerImage);
+      }
+      if (offer.validity) {
+        formData.append(`contest[prizes_attributes][${index}][validity]`, offer.validity);
       }
     });
 
@@ -390,25 +516,20 @@ export const CreateContestPage: React.FC = () => {
 
     try {
       // Ensure protocol is present
-      const url = /^https?:\/\//i.test(baseUrl)
-        ? baseUrl
-        : `https://${baseUrl}`;
+      const url = `https://${baseUrl}`;
 
-      const res = await fetch(`${url}/contests.json`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          // Don't set Content-Type - browser will set it with boundary for multipart/form-data
-        },
-        body: formData,
-      });
+      const response = await axios.post(
+        `${url}/contests.json`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            // axios will automatically set Content-Type with multipart/form-data boundary
+          },
+        }
+      );
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`API error: ${res.status} - ${errText}`);
-      }
-
-      const data = await res.json();
+      const data = response.data;
       sonnerToast.success("Contest created successfully!");
 
       // Store the created contest ID for navigation
@@ -419,7 +540,10 @@ export const CreateContestPage: React.FC = () => {
       setShowSuccessModal(true);
     } catch (err: any) {
       console.error(err);
-      sonnerToast.error(err.message || "Failed to create contest");
+      const errorMessage =
+        err.response?.data?.errors?.join(", ") ||
+        "Something went wrong";
+      sonnerToast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -448,46 +572,101 @@ export const CreateContestPage: React.FC = () => {
     }
   };
 
+  const handleShareWithChange = (value: string) => {
+    setShareWith(value);
+    if (value === "individual") {
+      setIsTechParkModalOpen(true);
+    }
+  };
+
   const validateCurrentStep = (): boolean => {
     switch (currentStep) {
       case 1:
         if (!contestName.trim()) {
-          alert("Please enter contest name");
+          sonnerToast.error("Please enter contest name");
+          return false;
+        }
+        if (nameValidating) {
+          sonnerToast.error("Please wait while we validate the contest name");
+          return false;
+        }
+        if (nameExists === true) {
+          sonnerToast.error(nameError || "This contest name already exists. Please choose a different name.");
           return false;
         }
         if (!contestDescription.trim()) {
-          alert("Please enter contest description");
+          sonnerToast.error("Please enter contest description");
           return false;
         }
         if (!contestType) {
-          alert("Please select contest type");
+          sonnerToast.error("Please select contest type");
           return false;
         }
         return true;
 
       case 2:
+        let totalProbability = 0;
         for (const offer of offers) {
           if (!offer.offerTitle.trim()) {
-            alert("Please fill all offer titles");
+            sonnerToast.error("Please fill all offer titles");
             return false;
           }
-          if (offer.rewardType === "Coupon Code" && !offer.couponCode.trim()) {
-            alert("Please enter coupon code for all offers");
-            return false;
+          if (offer.rewardType === "Coupon Code") {
+            const coupons = offer.couponCode
+              .split(",")
+              .map((code) => code.trim())
+              .filter((code) => code.length > 0);
+            if (coupons.length === 0) {
+              sonnerToast.error("Please enter at least one coupon code (comma-separated) for all offers");
+              return false;
+            }
           }
           if (offer.rewardType === "Points" && !offer.pointsValue.trim()) {
-            alert("Please enter points value for all offers");
+            sonnerToast.error("Please enter points value for all offers");
             return false;
           }
+          if (
+            contestType !== "Random" &&
+            contestType !== "Special Discount" &&
+            !offer.bannerImage
+          ) {
+            sonnerToast.error("Please upload a banner image for all offers");
+            return false;
+          }
+
+          const offerProb = Number(offer.winningProbability) || calculateBaseProbability();
+          const maxAvailable = getMaxAvailableProbability(offer.id);
+
+          if (offerProb > maxAvailable) {
+            sonnerToast.error(`Offer "${offer.offerTitle}" has probability ${offerProb.toFixed(2)}% but max available is ${maxAvailable.toFixed(2)}%. Please adjust the probabilities so total equals 100%.`);
+            return false;
+          }
+
+          totalProbability += offerProb;
+        }
+
+        if (Math.abs(totalProbability - 100) > 0.01) {
+          sonnerToast.error(`Total winning probability must equal 100%. Current total: ${totalProbability.toFixed(2)}%`);
+          return false;
         }
         return true;
 
-      case 3:
+      case 3: {
         if (!startDate || !startTime || !endDate || !endTime) {
           sonnerToast.error("Please fill all validity fields");
           return false;
         }
+        const today = new Date().toISOString().split("T")[0];
+        if (startDate < today) {
+          sonnerToast.error("Start date cannot be a past date");
+          return false;
+        }
+        if (endDate < startDate) {
+          sonnerToast.error("End date cannot be before start date");
+          return false;
+        }
         return true;
+      }
 
       case 4:
         // Files are optional for now — change to required if needed
@@ -508,15 +687,15 @@ export const CreateContestPage: React.FC = () => {
 
   const handleSuccessClose = () => {
     setShowSuccessModal(false);
-    navigate("/contests");
+    navigate("/pulse/contests");
   };
 
   const handleViewDetails = () => {
     setShowSuccessModal(false);
     if (createdContestId) {
-      navigate(`/contests/${createdContestId}`);
+      navigate(`/pulse/contests/${createdContestId}`);
     } else {
-      navigate("/contests");
+      navigate("/pulse/contests");
     }
   };
 
@@ -535,78 +714,211 @@ export const CreateContestPage: React.FC = () => {
     switch (currentStep) {
       case 1:
         return (
-          <Card className="shadow-sm w-full">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
-                <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
-                  <Trophy className="w-5 h-5 text-[#C72030]" />
+          <>
+            <Card className="shadow-sm w-full">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
+                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
+                    <Trophy className="w-5 h-5 text-[#C72030]" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-[#1A1A1A]">
+                    Basic Contest Info
+                  </h2>
                 </div>
-                <h2 className="text-lg font-semibold text-[#1A1A1A]">
-                  Basic Contest Info
-                </h2>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextField
-                  fullWidth
-                  label="Contest Name"
-                  placeholder="Enter Title"
-                  value={contestName}
-                  onChange={(e) => setContestName(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  sx={textFieldSx}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <TextField
+                    fullWidth
+                    label={<span>Contest Name<span className="text-red-500">*</span></span>}
+                    placeholder="Enter Title"
+                    value={contestName}
+                    onChange={(e) => handleContestNameChange(e.target.value)}
+                    variant="outlined"
+                    size="small"
+                    error={nameExists === true}
+                    helperText={
+                      nameValidating
+                        ? "Checking availability…"
+                        : nameError
+                          ? `⚠ ${nameError}`
+                          : nameExists === false && contestName.trim()
+                            ? "✓ Name is available"
+                            : ""
+                    }
+                    FormHelperTextProps={{
+                      sx: {
+                        color: nameExists === true ? "#ef4444" : nameExists === false ? "#16a34a" : "#6b7280",
+                        fontWeight: 500,
+                      },
+                    }}
+                    sx={{
+                      ...textFieldSx,
+                      ...(nameExists === true && {
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": { borderColor: "#ef4444" },
+                          "&:hover fieldset": { borderColor: "#ef4444" },
+                          "&.Mui-focused fieldset": { borderColor: "#ef4444" },
+                        },
+                        "& .MuiInputLabel-root": { color: "#ef4444" },
+                        "& .MuiInputLabel-root.Mui-focused": { color: "#ef4444" },
+                      }),
+                      ...(nameExists === false && contestName.trim() && {
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": { borderColor: "#16a34a" },
+                          "&:hover fieldset": { borderColor: "#16a34a" },
+                          "&.Mui-focused fieldset": { borderColor: "#16a34a" },
+                        },
+                        "& .MuiInputLabel-root": { color: "#16a34a" },
+                        "& .MuiInputLabel-root.Mui-focused": { color: "#16a34a" },
+                      }),
+                    }}
+                  />
 
-                <FormControl fullWidth size="small" sx={textFieldSx}>
-                  <InputLabel>Contest Type</InputLabel>
-                  <MuiSelect
-                    value={contestType}
-                    label="Contest Type"
-                    onChange={(e) => handleContestTypeChange(e.target.value)}
-                  >
-                    {contestTypes.map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {type}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div>
+                  <FormControl fullWidth size="small" sx={textFieldSx}>
+                    <InputLabel>Contest Type<span className="text-red-500">*</span></InputLabel>
+                    <MuiSelect
+                      value={contestType}
+                      label="Contest Type"
+                      onChange={(e) => handleContestTypeChange(e.target.value)}
+                    >
+                      {contestTypes.map((type) => (
+                        <MenuItem key={type} value={type}>
+                          {type}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
 
-              <div className="mt-6">
-                <TextField
-                  fullWidth
-                  label="Contest Description"
-                  placeholder="Enter Description"
-                  value={contestDescription}
-                  onChange={(e) => setContestDescription(e.target.value)}
-                  variant="outlined"
-                  multiline
-                  rows={4}
-                  // sx={textFieldSx}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      height: "auto !important",
-                      padding: "2px !important",
-                      display: "flex",
-                    },
-                    "& .MuiInputBase-input[aria-hidden='true']": {
-                      flex: 0,
-                      width: 0,
-                      height: 0,
-                      padding: "0 !important",
-                      margin: 0,
-                      display: "none",
-                    },
-                    "& .MuiInputBase-input": {
-                      resize: "none !important",
-                    },
-                  }}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                  {contestType === "Random" && (
+                    <FormControl fullWidth size="small" sx={textFieldSx}>
+                      <InputLabel>Usage Type</InputLabel>
+                      <MuiSelect
+                        value={usageType}
+                        label="Usage Type"
+                        onChange={(e) => setUsageType(e.target.value)}
+                      >
+                        <MenuItem value="high_usage">High Usage</MenuItem>
+                        <MenuItem value="low_usage">Low Usage</MenuItem>
+                        <MenuItem value="na">NA</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  )}
+
+                </div>
+
+                <div className="mt-6">
+                  <TextField
+                    fullWidth
+                    label={<span>Contest Description<span className="text-red-500">*</span></span>}
+                    placeholder="Enter Description"
+                    value={contestDescription}
+                    onChange={(e) => setContestDescription(e.target.value)}
+                    variant="outlined"
+                    multiline
+                    rows={4}
+                    // sx={textFieldSx}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm w-full mt-6">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
+                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
+                    <Trophy className="w-5 h-5 text-[#C72030]" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-[#1A1A1A]">
+                    Share with Tech Parks
+                  </h2>
+                </div>
+
+                <div className="flex flex-col md:flex-row md:items-center gap-6">
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="shareWith"
+                        value="all"
+                        checked={shareWith === "all"}
+                        onChange={() => handleShareWithChange("all")}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Share with all parks</span>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="shareWith"
+                        value="individual"
+                        checked={shareWith === "individual"}
+                        onChange={() => handleShareWithChange("individual")}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Share with individual parks</span>
+                    </label>
+                  </div>
+                </div>
+
+                {shareWith === "individual" && selectedTechParks.length > 0 && (
+                  <div className="mt-4 p-4 bg-[#FFF5F5] rounded-lg border border-[#C72030]">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-gray-900">
+                          Selected Tech Parks ({selectedTechParks.length})
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setIsTechParkModalOpen(true)}
+                        className="text-[#C72030] hover:text-[#B71C1C] transition-colors"
+                        title="Edit tech parks selection"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      {selectedTechParks.map((parkId) => {
+                        const park = techParks.find((p) => p.id === parkId);
+                        const parkName = park?.site_name || park?.name || park?.title || `Park ${parkId}`;
+                        return (
+                          <div
+                            key={parkId}
+                            className="flex items-center gap-2 px-3 py-2 bg-white rounded-md border-l-4 border-[#C72030]"
+                          >
+                            <span className="w-2 h-2 bg-[#C72030] rounded-full"></span>
+                            <span className="text-sm font-medium text-gray-800">
+                              {parkName}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
         );
 
       case 2:
@@ -663,21 +975,77 @@ export const CreateContestPage: React.FC = () => {
                       >
                         <MenuItem value="Coupon Code">Coupon Code</MenuItem>
                         <MenuItem value="Points">Points</MenuItem>
+                        <MenuItem value="None">None</MenuItem>
                       </MuiSelect>
                     </FormControl>
 
                     {offer.rewardType === "Coupon Code" && (
-                      <TextField
-                        fullWidth
-                        label="Coupon Code"
-                        value={offer.couponCode}
-                        onChange={(e) =>
-                          updateOffer(offer.id, "couponCode", e.target.value)
-                        }
-                        sx={textFieldSx}
-                        size="small"
-                        required
-                      />
+                      <div>
+                        <div
+                          className="flex flex-wrap gap-1.5 min-h-[40px] w-full px-3 py-2 border border-[#e5e7eb] rounded bg-white focus-within:border-[#C72030] focus-within:ring-2 focus-within:ring-[#C72030]/20 hover:border-[#C72030] transition-colors"
+                        >
+                          {offer.couponCode
+                            .split(",")
+                            .map((c) => c.trim())
+                            .filter(Boolean)
+                            .map((code) => (
+                              <span
+                                key={code}
+                                className="inline-flex items-center gap-1 bg-[#C72030]/10 text-[#C72030] text-xs font-semibold px-2 py-0.5 rounded-full border border-[#C72030]/30"
+                              >
+                                {code}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = offer.couponCode
+                                      .split(",")
+                                      .map((c) => c.trim())
+                                      .filter((c) => c && c !== code)
+                                      .join(",");
+                                    updateOffer(offer.id, "couponCode", updated);
+                                  }}
+                                  className="ml-0.5 hover:text-red-600 transition-colors leading-none"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                          <input
+                            type="text"
+                            value={offer.couponCodeInput}
+                            onChange={(e) =>
+                              updateOffer(offer.id, "couponCodeInput", e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === ",") {
+                                e.preventDefault();
+                                const code = offer.couponCodeInput.trim().replace(/,/g, "");
+                                if (!code) return;
+                                const existing = offer.couponCode
+                                  .split(",")
+                                  .map((c) => c.trim())
+                                  .filter(Boolean);
+                                if (!existing.includes(code)) {
+                                  updateOffer(offer.id, "couponCode", [...existing, code].join(","));
+                                }
+                                updateOffer(offer.id, "couponCodeInput", "");
+                              } else if (e.key === "Backspace" && !offer.couponCodeInput) {
+                                const existing = offer.couponCode
+                                  .split(",")
+                                  .map((c) => c.trim())
+                                  .filter(Boolean);
+                                if (existing.length > 0) {
+                                  updateOffer(offer.id, "couponCode", existing.slice(0, -1).join(","));
+                                }
+                              }
+                            }}
+                            placeholder={
+                              offer.couponCode.trim() ? "" : "Enter comma-separated coupon codes"
+                            }
+                            className="flex-1 min-w-[140px] text-sm outline-none bg-transparent placeholder:text-gray-400"
+                          />
+                        </div>
+                      </div>
                     )}
 
                     {offer.rewardType === "Points" && (
@@ -718,38 +1086,54 @@ export const CreateContestPage: React.FC = () => {
                       size="small"
                     />
 
-                    <TextField
-                      fullWidth
-                      label="Winning Probability"
-                      value={offer.winningProbability}
-                      onChange={(e) =>
-                        updateOffer(
-                          offer.id,
-                          "winningProbability",
-                          e.target.value
-                        )
-                      }
-                      sx={textFieldSx}
-                      size="small"
-                      type="number"
-                      inputProps={{ min: 0 }}
-                    />
+
+                    {contestType === "Spin" && (() => {
+                      const maxAvailable = getMaxAvailableProbability(offer.id);
+                      const currentValue = Number(offer.winningProbability) || 0;
+                      const isExceeded = currentValue > maxAvailable;
+                      const suggestedValue = calculateBaseProbability().toFixed(2);
+
+                      return (
+                        <TextField
+                          fullWidth
+                          label="Winning Probability (%)"
+                          value={offer.winningProbability}
+                          placeholder={suggestedValue}
+                          onChange={(e) =>
+                            updateOffer(offer.id, "winningProbability", e.target.value)
+                          }
+                          variant="outlined"
+                          size="small"
+                          type="number"
+                          inputProps={{ min: 0, max: maxAvailable, step: 0.01 }}
+                          error={isExceeded}
+                          sx={{
+                            ...textFieldSx,
+                            ...(isExceeded && {
+                              "& .MuiOutlinedInput-root": {
+                                "& fieldset": { borderColor: "#ef4444" },
+                                "&:hover fieldset": { borderColor: "#ef4444" },
+                                "&.Mui-focused fieldset": { borderColor: "#ef4444" },
+                              },
+                              "& .MuiInputLabel-root": { color: "#ef4444" },
+                              "& .MuiInputLabel-root.Mui-focused": { color: "#ef4444" },
+                            }),
+                          }}
+                        />
+                      );
+                    })()}
 
                     <TextField
                       fullWidth
-                      label="Probability (Out of)"
-                      value={offer.probabilityOutOf}
-                      onChange={(e) =>
-                        updateOffer(
-                          offer.id,
-                          "probabilityOutOf",
-                          e.target.value
-                        )
-                      }
+                      label="Validity"
+                      value={offer.validity}
+                      onChange={(e) => updateOffer(offer.id, "validity", e.target.value)}
                       sx={textFieldSx}
                       size="small"
-                      type="number"
-                      inputProps={{ min: 0 }}
+                      type="date"
+                      inputProps={{ min: new Date().toISOString().split("T")[0] }}
+                      InputLabelProps={{ shrink: true }}
+                      required
                     />
                   </div>
 
@@ -768,14 +1152,36 @@ export const CreateContestPage: React.FC = () => {
                       variant="outlined"
                       multiline
                       rows={3}
-                      sx={textFieldSx}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: "auto !important",
+                          padding: "2px !important",
+                          display: "flex",
+                          "& fieldset": { borderColor: "#e5e7eb" },
+                          "&:hover fieldset": { borderColor: "#C72030" },
+                          "&.Mui-focused fieldset": { borderColor: "#C72030" },
+                        },
+                        "& .MuiInputBase-input[aria-hidden='true']": {
+                          flex: 0,
+                          width: 0,
+                          height: 0,
+                          padding: "0 !important",
+                          margin: 0,
+                          display: "none",
+                        },
+                        "& .MuiInputBase-input": {
+                          resize: "none !important",
+                        },
+                      }}
                     />
                   </div>
 
                   <div className="mt-4">
                     <Typography variant="body2" className="text-gray-700 mb-2">
                       Upload Banner Image
-                      <span className="text-[#C72030]">*</span>
+                      {contestType !== "Random" && contestType !== "Special Discount" && (
+                        <span className="text-[#C72030]">*</span>
+                      )}
                     </Typography>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                       <p className="text-sm text-gray-600 mb-2">
@@ -840,9 +1246,9 @@ export const CreateContestPage: React.FC = () => {
                         color: "#22c55e",
                       },
                       "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                        {
-                          backgroundColor: "#22c55e",
-                        },
+                      {
+                        backgroundColor: "#22c55e",
+                      },
                     }}
                   />
                   <span
@@ -853,56 +1259,63 @@ export const CreateContestPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <TextField
-                  fullWidth
-                  label="Start Date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  type="date"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    endAdornment: (
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                    ),
-                  }}
-                  sx={textFieldSx}
-                />
+              {(() => {
+                const today = new Date().toISOString().split("T")[0];
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <TextField
+                      fullWidth
+                      label="Start Date"
+                      value={startDate}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setStartDate(val);
+                        if (endDate && val && endDate < val) setEndDate("");
+                      }}
+                      variant="outlined"
+                      size="small"
+                      type="date"
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{ min: today }}
+                      InputProps={{
+                        endAdornment: <Calendar className="w-4 h-4 text-gray-400" />,
+                      }}
+                      sx={textFieldSx}
+                    />
 
-                <TextField
-                  fullWidth
-                  label="Start Time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  type="time"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    endAdornment: <Clock className="w-4 h-4 text-gray-400" />,
-                  }}
-                  sx={textFieldSx}
-                />
+                    <TextField
+                      fullWidth
+                      label="Start Time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      type="time"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{
+                        endAdornment: <Clock className="w-4 h-4 text-gray-400" />,
+                      }}
+                      sx={textFieldSx}
+                    />
 
-                <TextField
-                  fullWidth
-                  label="End Date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  type="date"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    endAdornment: (
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                    ),
-                  }}
-                  sx={textFieldSx}
-                />
-              </div>
+                    <TextField
+                      fullWidth
+                      label="End Date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      type="date"
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{ min: startDate || today }}
+                      InputProps={{
+                        endAdornment: <Calendar className="w-4 h-4 text-gray-400" />,
+                      }}
+                      sx={textFieldSx}
+                    />
+                  </div>
+                );
+              })()}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                 <TextField
@@ -920,27 +1333,31 @@ export const CreateContestPage: React.FC = () => {
                   sx={textFieldSx}
                 />
 
-                <TextField
-                  fullWidth
-                  label="Users Cap"
-                  value={usersCap}
-                  onChange={(e) => setUsersCap(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  type="number"
-                  sx={textFieldSx}
-                />
+                {contestType === "Spin" && (
+                  <TextField
+                    fullWidth
+                    label="Users Cap"
+                    value={usersCap}
+                    onChange={(e) => setUsersCap(e.target.value)}
+                    variant="outlined"
+                    size="small"
+                    type="number"
+                    sx={textFieldSx}
+                  />
+                )}
 
-                <TextField
-                  fullWidth
-                  label="Attempts Required"
-                  value={attemptsRequired}
-                  onChange={(e) => setAttemptsRequired(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  type="number"
-                  sx={textFieldSx}
-                />
+                {contestType === "Spin" && (
+                  <TextField
+                    fullWidth
+                    label="Attempts Allowed"
+                    value={attemptsRequired}
+                    onChange={(e) => setAttemptsRequired(e.target.value)}
+                    variant="outlined"
+                    size="small"
+                    type="number"
+                    sx={textFieldSx}
+                  />
+                )}
               </div>
             </CardContent>
           </Card>
@@ -1010,7 +1427,7 @@ export const CreateContestPage: React.FC = () => {
       {/* Header */}
       <div className="mb-4">
         <button
-          onClick={() => navigate("/contests")}
+          onClick={() => navigate("/pulse/contests")}
           className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -1034,18 +1451,20 @@ export const CreateContestPage: React.FC = () => {
             {steps.map((step) => (
               <div
                 key={step.id}
-                className={`flex flex-col items-center ${
-                  step.id <= Math.max(...completedSteps, currentStep)
-                    ? "cursor-pointer"
-                    : "cursor-not-allowed opacity-100"
-                }`}
+                className={`flex flex-col items-center ${step.id <= Math.max(...completedSteps, currentStep)
+                  ? "cursor-pointer"
+                  : "cursor-not-allowed opacity-100"
+                  }`}
                 onClick={() => handleStepClick(step.id)}
               >
                 <div className="py-2 px-3 rounded text-white font-semibold bg-white">
                   <div
                     className={`
-                    px-6 py-3 rounded text-white font-semibold text-xs relative z-5 transition-colors whitespace-nowrap
-                    ${step.active || step.completed || step.id < currentStep ? "bg-[#C72030]" : "bg-gray-400"}
+                    px-6 py-3 rounded border font-semibold text-xs relative z-5 transition-colors whitespace-nowrap
+                    ${step.active || step.completed || step.id < currentStep
+                        ? "bg-[#DA7756] border-[#DA7756] text-white"
+                        : "bg-[#F6EEE9] border-[#E8D5CA] text-[#8A5A45]"
+                      }
                   `}
                   >
                     {step.id}. {step.title}
@@ -1063,17 +1482,17 @@ export const CreateContestPage: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="flex justify-center gap-4 mt-6">
-          <Button
+          {/* <Button
             onClick={handleSaveDraft}
             variant="outline"
             className="bg-[#F6F4EE] text-[#C72030] border-[#C72030] hover:bg-[#EDEAE3]"
           >
             Save to draft
-          </Button>
+          </Button> */}
           {currentStep < 4 ? (
             <Button
               onClick={handleNext}
-              className="bg-[#C72030] text-white hover:bg-[#B71C1C]"
+              className="fm-button-fix fm-button-brand min-w-[160px] disabled:opacity-70"
               disabled={submitting}
             >
               Proceed to next
@@ -1082,7 +1501,7 @@ export const CreateContestPage: React.FC = () => {
             <Button
               onClick={handleSubmit}
               disabled={submitting}
-              className="bg-[#C72030] text-white hover:bg-[#B71C1C]"
+              className="fm-button-fix fm-button-brand min-w-[160px] disabled:opacity-70"
             >
               {submitting ? "Submitting..." : "Submit"}
             </Button>
@@ -1129,6 +1548,94 @@ export const CreateContestPage: React.FC = () => {
               >
                 View details
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tech Park Selection Modal */}
+      {isTechParkModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => {
+            setIsTechParkModalOpen(false);
+            if (selectedTechParks.length === 0) {
+              setShareWith("all");
+            }
+          }}
+        >
+          <div
+            className="bg-white rounded-lg p-6 max-w-md w-full max-h-[70vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Select Tech Park</h2>
+              <button
+                onClick={() => {
+                  setIsTechParkModalOpen(false);
+                  if (selectedTechParks.length === 0) {
+                    setShareWith("all");
+                  }
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {isLoadingTechParks ? (
+                <div className="text-center py-4 text-gray-500">Loading tech parks...</div>
+              ) : techParks.length > 0 ? (
+                techParks.map((park) => (
+                  <label
+                    key={park.id}
+                    className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedTechParks.includes(park.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedTechParks([...selectedTechParks, park.id]);
+                        } else {
+                          setSelectedTechParks(
+                            selectedTechParks.filter((id) => id !== park.id)
+                          );
+                        }
+                      }}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      {park.site_name || park.name}
+                    </span>
+                  </label>
+                ))
+              ) : (
+                <div className="text-center py-4 text-gray-500">No tech parks available</div>
+              )}
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <Button
+                onClick={() => {
+                  setIsTechParkModalOpen(false);
+                }}
+                className="flex-1 bg-[#C72030] text-white hover:bg-[#B71C1C]"
+              >
+                Done
+              </Button>
+              <Button
+                onClick={() => {
+                  setIsTechParkModalOpen(false);
+                  setSelectedTechParks([]);
+                  setShareWith("all");
+                }}
+                variant="outline"
+                className="flex-1 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+              >
+                Cancel
+              </Button>
             </div>
           </div>
         </div>

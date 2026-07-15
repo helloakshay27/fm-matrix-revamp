@@ -1,22 +1,18 @@
 /**
  * Feedback.tsx — Full production version with robust API integration
- *
- * Key improvements over original:
- *  1. Centralized Axios instance with request/response interceptors
- *  2. Token refresh coalescing (single in-flight refresh promise)
- *  3. Exponential backoff with jitter via React Query
- *  4. Zod schema validation for response normalization
- *  5. Classified error types (network / auth / forbidden / server / unknown)
- *  6. React Query for all data fetching (no manual useEffect fetch loops)
- *  7. Global AsyncBoundary (ErrorBoundary + Suspense) wrapping each tab
- *  8. Consistent loading / error / empty states throughout
- *  9. Mutations via React Query useMutation with cache invalidation
- * 10. All original UI preserved pixel-for-pixel
+ * Styled to match the warm, rounded-2xl DISC Personality Assessment theme.
  */
 
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
 import axios, { AxiosError } from "axios";
 import { useSelector } from "react-redux";
+import { toast } from "sonner";
 import {
   useQuery,
   useMutation,
@@ -25,6 +21,7 @@ import {
   QueryClientProvider,
   useQueryErrorResetBoundary,
 } from "@tanstack/react-query";
+
 // Custom ErrorBoundary (replaces react-error-boundary)
 type FallbackProps = { error: Error; resetErrorBoundary: () => void };
 type ErrorBoundaryProps = {
@@ -60,9 +57,9 @@ class ErrorBoundary extends React.Component<
     return this.props.children;
   }
 }
+
 import { z } from "zod";
 import {
-  ArrowUp,
   Calendar as CalendarIcon,
   ChevronDown,
   ChevronRight,
@@ -83,7 +80,6 @@ import {
 } from "lucide-react";
 import { RootState } from "@/store/store";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -100,25 +96,84 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import {
   getEmbeddedOrgId,
   getEmbeddedToken,
   resolveBaseUrlByOrgId,
 } from "@/utils/embeddedMode";
-import apiClient from "@/utils/apiClient";
 import { getUser } from "@/utils/auth";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+// Unified Brand Tokens
+const BRAND = {
+  primary: "#DA7756",
+  secondary: "#BC6B4A",
+  background: "#f6f4ee",
+  panelBg: "#FFF9F6",
+  panelBorder: "rgba(218, 119, 86, 0.18)",
+  softRowBg: "rgba(218, 119, 86, 0.04)",
+  danger: "#C72030",
+} as const;
 
-type SummaryStat = {
-  label: string;
-  value: string | number;
-  icon: React.ElementType;
-  bgClass: string;
-  iconClass: string;
-};
+const FEEDBACK_ANIMATION_STYLES = `
+  @keyframes feedbackModalBackdropIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes feedbackModalCardIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes feedbackTabIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes feedbackCollapseIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+      max-height: 0;
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 560px;
+    }
+  }
+
+  .feedback-modal-backdrop {
+    animation: feedbackModalBackdropIn 180ms ease-out both;
+  }
+
+  .feedback-modal-card {
+    animation: feedbackModalCardIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .feedback-tab-panel[data-state="active"] {
+    animation: feedbackTabIn 220ms ease-out both;
+  }
+
+  .feedback-collapse-panel {
+    animation: feedbackCollapseIn 240ms ease-out both;
+  }
+`;
+
+// ─── Types ─────────────────────────────────────────────────────────────────────
 
 export type FeedbackItem = {
   id: string;
@@ -135,6 +190,23 @@ export type FeedbackItem = {
   constructiveFeedback?: string;
   positiveClosing?: string;
   createdAt?: string;
+  reviewer?: string;
+  reviews?: string;
+  readAt?: string;
+  readComment?: string;
+};
+
+export type FeedbackSummary = {
+  received: number;
+  given: number;
+  unread: number;
+  avgRating: string;
+  feedbackPoints: number;
+};
+
+export type FeedbackListResponse = {
+  summary?: FeedbackSummary;
+  ratings: FeedbackItem[];
 };
 
 type TeamMemberOption = {
@@ -151,13 +223,6 @@ export type AppError = {
 
 // ─── React Query Client ────────────────────────────────────────────────────────
 
-/**
- * QueryClient with global retry strategy:
- * - Never retry 401/403/404 (retrying won't help)
- * - Retry up to 3x for network and 5xx errors
- * - Exponential backoff: min(1000 * 2^attempt + jitter, 15s)
- * - Mutations never auto-retry (avoid duplicate state changes)
- */
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -177,11 +242,6 @@ const queryClient = new QueryClient({
 
 // ─── Token / Auth Service ──────────────────────────────────────────────────────
 
-/**
- * In-memory token store. Credentials are never persisted beyond what
- * the host app already puts in storage for bootstrap.
- * After initial load the token lives only in module-scope memory.
- */
 let _accessToken: string | null = null;
 let _refreshPromise: Promise<string> | null = null;
 
@@ -192,54 +252,32 @@ function getAccessToken(): string {
     _accessToken = embedded;
     return embedded;
   }
-  return getAuthHeader(); // returns "Bearer ..." string from host
-}
-
-function setAccessToken(token: string): void {
-  _accessToken = token;
+  return getAuthHeader();
 }
 
 function clearAccessToken(): void {
   _accessToken = null;
 }
 
-/**
- * Refresh the access token.
- * Multiple concurrent callers coalesce onto a single Promise — only
- * one HTTP request ever goes out, preventing token-refresh races.
- */
 async function refreshAccessToken(): Promise<string> {
   if (_refreshPromise) return _refreshPromise;
-
   _refreshPromise = apiClient
     .post<{ access_token: string }>(
       "/auth/refresh",
       {},
       { headers: { "x-skip-auth-retry": "1" } }
     )
-    .then(({ data }) => {
-      setAccessToken(data.access_token);
-      return data.access_token;
-    })
+    .then(({ data }) => data.access_token)
     .finally(() => {
       _refreshPromise = null;
     });
-
   return _refreshPromise;
 }
 
-// ─── Error Normalization ───────────────────────────────────────────────────────
-
-/**
- * Converts any thrown value into a classified AppError.
- * Used by the Axios interceptor and throughout query/mutation functions.
- */
 function normalizeError(error: unknown): AppError {
-  // Already normalized
   if (error && typeof error === "object" && "kind" in error) {
     return error as AppError;
   }
-
   if (error instanceof AxiosError) {
     const status = error.response?.status;
     const data = error.response?.data as Record<string, unknown> | undefined;
@@ -280,20 +318,14 @@ function normalizeError(error: unknown): AppError {
     }
     return { message: raw || "Unexpected error.", status, kind: "unknown" };
   }
-
   if (error instanceof Error) {
     return { message: error.message, kind: "unknown" };
   }
-
   return { message: "An unexpected error occurred.", kind: "unknown" };
 }
 
 // ─── Axios Instance ────────────────────────────────────────────────────────────
 
-/**
- * Centralized Axios instance. Every request goes through here so auth
- * injection, token refresh, and error normalization are always applied.
- */
 const apiClient = axios.create({
   timeout: 30_000,
   headers: { Accept: "application/json" },
@@ -301,9 +333,7 @@ const apiClient = axios.create({
 
 async function resolveBaseUrl(): Promise<string> {
   const base = API_CONFIG.BASE_URL;
-  if (base) {
-    return base.replace(/\/+$/, "");
-  }
+  if (base) return base.replace(/\/+$/, "");
 
   const embeddedOrgId = getEmbeddedOrgId();
   if (embeddedOrgId) {
@@ -321,24 +351,18 @@ async function resolveBaseUrl(): Promise<string> {
   } as AppError;
 }
 
-// Request interceptor — attach base URL, Authorization header, and access_token query param
 apiClient.interceptors.request.use(async (config) => {
   if (!config.baseURL) {
     config.baseURL = await resolveBaseUrl();
   }
   const token = getAccessToken();
-  // Extract raw token value (strip "Bearer " prefix if present)
   const rawToken = token?.startsWith("Bearer ") ? token.slice(7) : token;
   if (rawToken) {
-    // Set both Authorization header and access_token query param
-    // The lockated API accepts both; some routes require the query param
     config.headers.Authorization = `Bearer ${rawToken}`;
-    config.params = { ...config.params, access_token: rawToken };
   }
   return config;
 });
 
-// Response interceptor — refresh token on 401, normalize all errors
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -347,7 +371,6 @@ apiClient.interceptors.response.use(
       headers: Record<string, string>;
     };
 
-    // Attempt one token refresh on 401, skip refresh endpoint itself
     if (
       error.response?.status === 401 &&
       !original._retried &&
@@ -360,11 +383,9 @@ apiClient.interceptors.response.use(
         return apiClient(original);
       } catch {
         clearAccessToken();
-        // Signal app-level logout (the app can listen for this)
         window.dispatchEvent(new CustomEvent("auth:expired"));
       }
     }
-
     return Promise.reject(normalizeError(error));
   }
 );
@@ -387,32 +408,42 @@ async function fetchFeedbackDetail(
 
 // ─── Zod Schemas ───────────────────────────────────────────────────────────────
 
-/**
- * Runtime schema for a single feedback record.
- * z.coerce handles string/number type mismatches from various API versions.
- * .catch() provides safe fallbacks so partial records don't crash the list.
- */
 const FeedbackSchema = z.object({
   id: z.coerce.string(),
   score: z.number().min(1).max(5).catch(1),
   recipient_name: z.string().optional().catch(undefined),
+  rating_to_name: z.string().optional().catch(undefined),
+  rating_to_id: z.coerce.number().optional().catch(undefined),
   rating_from_name: z.string().optional().catch(undefined),
+  resource_user_id: z.coerce.number().optional().catch(undefined),
+  user_id: z.coerce.number().optional().catch(undefined),
+  recipient_id: z.coerce.number().optional().catch(undefined),
+  rated_user_id: z.coerce.number().optional().catch(undefined),
   recipient: z
     .object({
       name: z.string().optional(),
       full_name: z.string().optional(),
       firstname: z.string().optional(),
       lastname: z.string().optional(),
+      user_id: z.coerce.number().optional(),
       id: z.coerce.number().optional(),
     })
     .optional()
     .catch(undefined),
   user: z
-    .object({ name: z.string().optional(), id: z.coerce.number().optional() })
+    .object({
+      name: z.string().optional(),
+      user_id: z.coerce.number().optional(),
+      id: z.coerce.number().optional(),
+    })
     .optional()
     .catch(undefined),
   resource: z
-    .object({ id: z.coerce.number().optional() })
+    .object({
+      user_id: z.coerce.number().optional(),
+      resource_id: z.coerce.number().optional(),
+      id: z.coerce.number().optional(),
+    })
     .optional()
     .catch(undefined),
   positive_opening: z.string().optional().catch(undefined),
@@ -445,15 +476,25 @@ const FeedbackSchema = z.object({
     })
     .optional()
     .catch(undefined),
+  reviewer: z.string().optional().catch(undefined),
+  reviews: z.string().nullable().optional().catch(undefined),
+  read_at: z.string().optional().catch(undefined),
+  read_comment: z.string().nullable().optional().catch(undefined),
 });
 
 type RawFeedback = z.infer<typeof FeedbackSchema>;
 
-/**
- * Handles all known API response shapes — plain array, { feedbacks: [] },
- * { team_feedbacks: [] }, { data: [] }, etc.
- * Falls back to [] on total parse failure so the UI never hard-crashes.
- */
+const FeedbackSummarySchema = z
+  .object({
+    received: z.coerce.number().optional(),
+    given: z.coerce.number().optional(),
+    unread: z.coerce.number().optional(),
+    avg_rating: z.union([z.string(), z.number()]).optional(),
+    average_rating: z.union([z.string(), z.number()]).optional(),
+    feedback_points: z.coerce.number().optional(),
+  })
+  .passthrough();
+
 const FeedbackListSchema = z
   .union([
     z.array(FeedbackSchema),
@@ -473,8 +514,59 @@ const FeedbackListSchema = z
     z
       .object({ feedback: z.array(FeedbackSchema) })
       .transform((d) => d.feedback),
+    z
+      .object({
+        summary: z
+          .object({
+            received: z.number(),
+            given: z.number(),
+            unread: z.number(),
+            avg_rating: z.string(),
+            feedback_points: z.number(),
+          })
+          .optional(),
+        ratings: z.array(FeedbackSchema),
+      })
+      .transform((d) => d.ratings),
   ])
   .catch([]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function unwrapFeedbackListResponse(data: unknown): {
+  listSource: unknown;
+  summarySource?: unknown;
+} {
+  if (!isRecord(data)) {
+    return { listSource: data };
+  }
+
+  const nestedData = data.data;
+  if (isRecord(nestedData)) {
+    return {
+      listSource: nestedData,
+      summarySource: nestedData.summary ?? data.summary,
+    };
+  }
+
+  return { listSource: data, summarySource: data.summary };
+}
+
+function mapFeedbackSummary(summarySource: unknown): FeedbackSummary | undefined {
+  const parsed = FeedbackSummarySchema.safeParse(summarySource);
+  if (!parsed.success) return undefined;
+
+  const raw = parsed.data;
+  return {
+    received: raw.received ?? 0,
+    given: raw.given ?? 0,
+    unread: raw.unread ?? 0,
+    avgRating: String(raw.avg_rating ?? raw.average_rating ?? "0.0"),
+    feedbackPoints: raw.feedback_points ?? 0,
+  };
+}
 
 const TeamMemberSchema = z.object({
   id: z.coerce.number(),
@@ -505,6 +597,15 @@ const TeamMembersListSchema = z
       .object({ members: z.array(TeamMemberSchema) })
       .transform((d) => d.members),
     z.object({ data: z.array(TeamMemberSchema) }).transform((d) => d.data),
+    z
+      .object({ data: z.object({ users: z.array(TeamMemberSchema) }) })
+      .transform((d) => d.data.users),
+    z
+      .object({ data: z.object({ members: z.array(TeamMemberSchema) }) })
+      .transform((d) => d.data.members),
+    z
+      .object({ data: z.object({ team_members: z.array(TeamMemberSchema) }) })
+      .transform((d) => d.data.team_members),
   ])
   .catch([]);
 
@@ -527,6 +628,7 @@ function mapRawFeedback(raw: RawFeedback): FeedbackItem {
 
   const recipientName =
     raw.recipient_name ||
+    raw.rating_to_name ||
     (recipient && "name" in recipient ? recipient.name : undefined) ||
     (recipient && "full_name" in recipient ? recipient.full_name : undefined) ||
     (recipient && "firstname" in recipient && "lastname" in recipient
@@ -538,6 +640,14 @@ function mapRawFeedback(raw: RawFeedback): FeedbackItem {
 
   const resourceId =
     raw.resource_id ||
+    raw.rating_to_id ||
+    raw.resource_user_id ||
+    raw.recipient_id ||
+    raw.rated_user_id ||
+    (recipient && "user_id" in recipient ? recipient.user_id : undefined) ||
+    (recipient && "resource_id" in recipient
+      ? recipient.resource_id
+      : undefined) ||
     (recipient && "id" in recipient ? recipient.id : undefined) ||
     undefined;
 
@@ -548,12 +658,14 @@ function mapRawFeedback(raw: RawFeedback): FeedbackItem {
     raw.positive_opening || raw.fields?.positive_opening,
     raw.constructive_feedback || raw.fields?.constructive_feedback,
     raw.positive_closing || raw.fields?.positive_closing,
+    raw.reviews,
   ]
     .filter(Boolean)
     .join(" ");
 
   const ratingFromName =
     raw.rating_from_name ||
+    raw.reviewer ||
     ratingFrom?.name ||
     ratingFrom?.full_name ||
     (ratingFrom?.firstname && ratingFrom?.lastname
@@ -566,7 +678,7 @@ function mapRawFeedback(raw: RawFeedback): FeedbackItem {
     ratingFromName: ratingFromName || undefined,
     date: formatApiDate(raw.created_at ?? raw.createdAt ?? raw.date),
     rating: score,
-    status: raw.read ? "read" : "unread",
+    status: raw.read || !!raw.read_at ? "read" : "unread",
     detailPreview: preview || undefined,
     resourceId,
     ratingFromType: raw.rating_from_type ?? ratingFrom?.type ?? "User",
@@ -576,6 +688,10 @@ function mapRawFeedback(raw: RawFeedback): FeedbackItem {
       raw.constructive_feedback || raw.fields?.constructive_feedback,
     positiveClosing: raw.positive_closing || raw.fields?.positive_closing,
     createdAt: raw.created_at ?? raw.createdAt ?? raw.date,
+    reviewer: raw.reviewer,
+    reviews: raw.reviews || undefined,
+    readAt: raw.read_at,
+    readComment: raw.read_comment || undefined,
   };
 }
 
@@ -725,10 +841,38 @@ function getCurrentUserId(): number | null {
 
 // ─── API Constants ─────────────────────────────────────────────────────────────
 
+function getLocalStorageUserId(): number | null {
+  const id = Number(localStorage.getItem("userId") || "0");
+  return Number.isFinite(id) && id > 0 ? id : null;
+}
+
+function canModifyFeedback(item: FeedbackItem): boolean {
+  const localUserId = getLocalStorageUserId();
+  return !!localUserId && item.ratingFromId === localUserId;
+}
+
+function showFeedbackAccessDenied(): void {
+  toast.error("You don't have access");
+}
+
+function isForbiddenFeedbackError(error: AppError): boolean {
+  return (
+    error.kind === "forbidden" ||
+    error.status === 403 ||
+    error.message.toLowerCase() === "forbidden"
+  );
+}
+
 const TEAM_MEMBERS_ENDPOINT = "/pms/users/get_escalate_to_users.json";
-const RATINGS_COLLECTION_ENDPOINTS = ["/ratings.json", "/ratings"];
+const RATINGS_COLLECTION_ENDPOINTS = ["/ratings", "/ratings.json"];
 const LAST_SUCCESSFUL_FEEDBACK: Record<string, FeedbackItem[]> = {};
 const FEEDBACK_CACHE_PREFIX = "feedback-cache-v1";
+
+function normalizeHttpsBaseUrl(baseUrl: string): string {
+  const trimmed = baseUrl.trim().replace(/\/+$/, "");
+  if (!trimmed) return "";
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
 
 function getFeedbackCacheKey(
   direction: "given" | "received",
@@ -773,20 +917,18 @@ function getRatingsDetailEndpoints(feedbackId: string): string[] {
 
 // ─── API Functions ─────────────────────────────────────────────────────────────
 
-/**
- * Tries feedback endpoints in order, returning parsed + mapped items.
- * Stops immediately on auth/permission errors (retrying other endpoints
- * won't help if the token is invalid or the user lacks access).
- */
 async function fetchFeedbackList(
   direction: "given" | "received",
   userId: number | null
-): Promise<FeedbackItem[]> {
+): Promise<{ items: FeedbackItem[]; summary?: FeedbackSummary }> {
   const memoryKey = getFeedbackCacheKey(direction, userId);
-  const params: Record<string, string | number> = { _t: Date.now() };
+  const params: Record<string, string | number> = {};
   if (userId) {
     if (direction === "given") params.rating_from_id = userId;
-    else params.resource_id = userId;
+    else {
+      params.resource_id = userId;
+      params.resource_type = "User";
+    }
   }
 
   let lastError: AppError | null = null;
@@ -795,47 +937,46 @@ async function fetchFeedbackList(
     try {
       const { data } = await apiClient.get(endpoint, {
         params,
-        // Note: Cache-Control header removed to avoid CORS issues with oig-api
-        // The _t timestamp parameter already prevents caching
       });
 
-      const raw = FeedbackListSchema.parse(data);
+      const { listSource, summarySource } = unwrapFeedbackListResponse(data);
+      const summary = mapFeedbackSummary(summarySource);
+
+      const raw = FeedbackListSchema.parse(listSource);
       const mapped = raw.map(mapRawFeedback);
       const filtered = mapped.filter((item) => {
         if (!userId) return true;
         return direction === "given"
           ? item.ratingFromId === userId
-          : item.resourceId === userId;
+          : item.resourceId == null || item.resourceId === userId;
       });
 
-      const visibleItems =
-        userId && mapped.length > 0 && filtered.length === 0
-          ? mapped
-          : filtered;
+      const visibleItems = filtered;
 
       if (visibleItems.length > 0) {
         LAST_SUCCESSFUL_FEEDBACK[memoryKey] = visibleItems;
         writeFeedbackCache(direction, userId, visibleItems);
       }
 
-      if (
-        visibleItems.length === 0 &&
-        (LAST_SUCCESSFUL_FEEDBACK[memoryKey]?.length ?? 0) > 0
-      ) {
-        return LAST_SUCCESSFUL_FEEDBACK[memoryKey];
+      const isLastEndpoint =
+        endpoint === RATINGS_COLLECTION_ENDPOINTS[RATINGS_COLLECTION_ENDPOINTS.length - 1];
+      if (visibleItems.length === 0 && !isLastEndpoint) {
+        continue;
       }
 
-      const cachedItems = readFeedbackCache(direction, userId);
-      if (visibleItems.length === 0 && cachedItems.length > 0) {
-        LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cachedItems;
-        return cachedItems;
+      if (visibleItems.length === 0) {
+        LAST_SUCCESSFUL_FEEDBACK[memoryKey] = [];
+        writeFeedbackCache(direction, userId, []);
       }
 
-      return visibleItems.sort((a, b) => {
-        const at = new Date(a.createdAt || 0).getTime();
-        const bt = new Date(b.createdAt || 0).getTime();
-        return bt - at;
-      });
+      return {
+        items: visibleItems.sort((a, b) => {
+          const at = new Date(a.createdAt || 0).getTime();
+          const bt = new Date(b.createdAt || 0).getTime();
+          return bt - at;
+        }),
+        summary,
+      };
     } catch (err) {
       lastError = normalizeError(err);
       if (lastError.kind === "auth" || lastError.kind === "forbidden") break;
@@ -843,7 +984,7 @@ async function fetchFeedbackList(
       const cachedItems = readFeedbackCache(direction, userId);
       if (cachedItems.length > 0) {
         LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cachedItems;
-        return cachedItems;
+        return { items: cachedItems };
       }
     }
   }
@@ -851,7 +992,7 @@ async function fetchFeedbackList(
   const cachedItems = readFeedbackCache(direction, userId);
   if (cachedItems.length > 0) {
     LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cachedItems;
-    return cachedItems;
+    return { items: cachedItems };
   }
 
   throw (
@@ -863,9 +1004,43 @@ async function fetchFeedbackList(
 }
 
 async function fetchTeamMembers(): Promise<TeamMemberOption[]> {
-  const { data } = await apiClient.get(TEAM_MEMBERS_ENDPOINT, {
-    params: { _t: Date.now() },
+  // localStorage se base URL aur org_id nikalo
+  const baseUrl = normalizeHttpsBaseUrl(
+    localStorage.getItem("baseUrl") ||
+    API_CONFIG.BASE_URL ||
+    ""
+  );
+
+  const orgId = localStorage.getItem("org_id");
+
+  if (!baseUrl) {
+    throw {
+      message: "Base URL not found. Please log in again.",
+      kind: "unknown",
+    } as AppError;
+  }
+
+  if (!orgId) {
+    throw {
+      message: "Organization ID not found. Please log in again.",
+      kind: "unknown",
+    } as AppError;
+  }
+
+  const usersUrl = `${baseUrl}/api/users?organization_id=${encodeURIComponent(
+    String(orgId)
+  )}`;
+
+  const { data } = await axios.get(usersUrl, {
+    headers: {
+      Authorization:
+        (apiClient.defaults.headers.Authorization as string) ||
+        `Bearer ${getAccessToken()?.replace("Bearer ", "")}`,
+      Accept: "application/json",
+    },
+    timeout: 30_000,
   });
+
   const raw = TeamMembersListSchema.parse(data);
   return raw
     .map(mapTeamMember)
@@ -882,6 +1057,7 @@ interface FeedbackPayload {
   positive_closing?: string;
   rating_from_type?: string;
   rating_from_id?: number;
+  reviews?: string;
 }
 
 type FeedbackMutationVariables = {
@@ -907,6 +1083,12 @@ async function createFeedback(payload: FeedbackPayload): Promise<unknown> {
       if (lastError.kind === "auth" || lastError.kind === "forbidden") {
         throw lastError;
       }
+      if (lastError.status === 429) {
+        throw {
+          ...lastError,
+          message: "Too many requests. Please try again later.",
+        } as AppError;
+      }
     }
   }
 
@@ -925,34 +1107,38 @@ async function updateFeedback(
   id: string,
   payload: FeedbackPayload
 ): Promise<unknown> {
-  let lastError: AppError | null = null;
-
-  for (const endpoint of getRatingsDetailEndpoints(id)) {
-    try {
-      const { data } = await apiClient.put(endpoint, payload, {
-        headers: { "Content-Type": "application/json" },
-      });
-      return data;
-    } catch (err) {
-      lastError = normalizeError(err);
-      if (lastError.kind === "auth" || lastError.kind === "forbidden") {
-        throw lastError;
-      }
-      if (lastError.kind === "notFound") {
-        continue;
-      }
-    }
+  const trimmedId = id.trim();
+  if (!trimmedId) {
+    throw { message: "Invalid feedback id.", kind: "unknown" } as AppError;
   }
 
-  if (lastError?.kind === "notFound") {
-    throw {
-      ...lastError,
-      message:
-        "Feedback could not be updated because the ratings API route is not available.",
-    } as AppError;
+  const { data } = await apiClient.put(
+    `/ratings/${encodeURIComponent(trimmedId)}.json`,
+    payload,
+    { headers: { "Content-Type": "application/json" } }
+  );
+  return data;
+}
+
+async function markRatingAsRead(
+  id: string,
+  readComment?: string
+): Promise<unknown> {
+  const trimmedId = id.trim();
+  if (!trimmedId) {
+    throw { message: "Invalid feedback id.", kind: "unknown" } as AppError;
   }
 
-  throw lastError ?? { message: "Failed to update feedback.", kind: "unknown" };
+  const payload = {
+    read_comment: readComment?.trim() ? readComment.trim() : "Reviewed",
+  };
+
+  const { data } = await apiClient.patch(
+    `/ratings/${encodeURIComponent(trimmedId)}/mark_as_read`,
+    payload,
+    { headers: { "Content-Type": "application/json" } }
+  );
+  return data;
 }
 
 async function deleteFeedback(id: string): Promise<void> {
@@ -961,23 +1147,15 @@ async function deleteFeedback(id: string): Promise<void> {
     throw { message: "Invalid feedback id.", kind: "unknown" } as AppError;
   }
 
-  // Try DELETE /ratings/:id.json (standard Rails RESTful destroy)
-  for (const endpoint of getRatingsDetailEndpoints(trimmedId)) {
-    try {
-      await apiClient.delete(endpoint);
-      return; // API confirmed deletion
-    } catch (err) {
-      const error = normalizeError(err);
-      if (error.kind === "auth" || error.kind === "forbidden") {
-        throw error; // Real permission errors should surface
-      }
-      // 404 or other errors — continue to next endpoint
+  try {
+    await apiClient.delete(`/ratings/${encodeURIComponent(trimmedId)}.json`);
+  } catch (err) {
+    const error = normalizeError(err);
+    if (error.kind === "auth" || error.kind === "forbidden") {
+      throw error;
     }
+    throw error;
   }
-
-  // If DELETE is not supported by the backend (404), remove locally.
-  // The useDeleteFeedback hook will strip it from cache and query data.
-  return;
 }
 
 // ─── React Query Hooks ─────────────────────────────────────────────────────────
@@ -998,18 +1176,24 @@ function useFeedbackList(
     LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cached;
   }
 
-  return useQuery<FeedbackItem[], AppError>({
+  return useQuery<
+    { items: FeedbackItem[]; summary?: FeedbackSummary },
+    AppError
+  >({
     queryKey: ["feedback", direction, userId],
     queryFn: () => fetchFeedbackList(direction, userId),
-    placeholderData: cached.length > 0 ? cached : [],
+    placeholderData: cached.length > 0 ? { items: cached } : { items: [] },
   });
 }
 
 function useTeamMembers() {
+  const baseUrl = localStorage.getItem("baseUrl") || "";
+  const orgId = localStorage.getItem("org_id") || "";
+
   return useQuery<TeamMemberOption[], AppError>({
-    queryKey: ["teamMembers"],
+    queryKey: ["teamMembers", baseUrl, orgId],
     queryFn: fetchTeamMembers,
-    staleTime: 5 * 60_000, // 5 min — roster changes infrequently
+    staleTime: 5 * 60_000,
     placeholderData: [],
   });
 }
@@ -1026,13 +1210,19 @@ function useCreateFeedback() {
         variables.recipientName
       );
 
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "given"] },
-        (old) => upsertFeedbackItem(old, item)
+        (old) => {
+          const items = upsertFeedbackItem(old?.items, item);
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "given", currentUserId],
-        (old) => upsertFeedbackItem(old, item)
+        (old) => {
+          const items = upsertFeedbackItem(old?.items, item);
+          return { items, summary: old?.summary };
+        }
       );
       const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
       LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] = upsertFeedbackItem(
@@ -1045,9 +1235,15 @@ function useCreateFeedback() {
         LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey]
       );
 
-      // Sync with canonical server payload (create responses can omit full record fields).
       qc.invalidateQueries({ queryKey: ["feedback", "given"] });
       qc.invalidateQueries({ queryKey: ["feedback", "received"] });
+    },
+    onError: (error) => {
+      if (isForbiddenFeedbackError(error)) {
+        showFeedbackAccessDenied();
+        return;
+      }
+      toast.error(error.message || "Failed to update feedback");
     },
   });
 }
@@ -1065,27 +1261,37 @@ function useUpdateFeedback() {
         variables.id
       );
 
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "given"] },
-        (old) => upsertFeedbackItem(old, item)
+        (old) => {
+          const items = upsertFeedbackItem(old?.items, item);
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "given", currentUserId],
-        (old) => upsertFeedbackItem(old, item)
+        (old) => {
+          const items = upsertFeedbackItem(old?.items, item);
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "received"] },
-        (old) =>
-          old?.some((existing) => existing.id === item.id)
-            ? upsertFeedbackItem(old, item)
-            : (old ?? [])
+        (old) => {
+          const items = old?.items?.some((existing) => existing.id === item.id)
+            ? upsertFeedbackItem(old?.items, item)
+            : (old?.items ?? []);
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "received", currentUserId],
-        (old) =>
-          old?.some((existing) => existing.id === item.id)
-            ? upsertFeedbackItem(old, item)
-            : (old ?? [])
+        (old) => {
+          const items = old?.items?.some((existing) => existing.id === item.id)
+            ? upsertFeedbackItem(old?.items, item)
+            : (old?.items ?? []);
+          return { items, summary: old?.summary };
+        }
       );
       const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
       LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] = upsertFeedbackItem(
@@ -1115,7 +1321,6 @@ function useUpdateFeedback() {
         );
       }
 
-      // Ensure edited feedback rehydrates from source of truth.
       qc.invalidateQueries({ queryKey: ["feedback", "given"] });
       qc.invalidateQueries({ queryKey: ["feedback", "received"] });
     },
@@ -1128,21 +1333,41 @@ function useDeleteFeedback() {
     mutationFn: ({ id }) => deleteFeedback(id),
     onSuccess: (_, variables) => {
       const currentUserId = getCurrentUserId();
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "given"] },
-        (old) => (old ?? []).filter((item) => item.id !== variables.id)
+        (old) => {
+          const items = (old?.items ?? []).filter(
+            (item) => item.id !== variables.id
+          );
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "given", currentUserId],
-        (old) => (old ?? []).filter((item) => item.id !== variables.id)
+        (old) => {
+          const items = (old?.items ?? []).filter(
+            (item) => item.id !== variables.id
+          );
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "received"] },
-        (old) => (old ?? []).filter((item) => item.id !== variables.id)
+        (old) => {
+          const items = (old?.items ?? []).filter(
+            (item) => item.id !== variables.id
+          );
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "received", currentUserId],
-        (old) => (old ?? []).filter((item) => item.id !== variables.id)
+        (old) => {
+          const items = (old?.items ?? []).filter(
+            (item) => item.id !== variables.id
+          );
+          return { items, summary: old?.summary };
+        }
       );
       const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
       const receivedMemoryKey = getFeedbackCacheKey("received", currentUserId);
@@ -1163,8 +1388,393 @@ function useDeleteFeedback() {
         LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]
       );
     },
+    onError: (error) => {
+      if (isForbiddenFeedbackError(error)) {
+        showFeedbackAccessDenied();
+        return;
+      }
+      toast.error(error.message || "Failed to delete feedback");
+    },
   });
 }
+
+function useMarkAsRead() {
+  const qc = useQueryClient();
+  return useMutation<unknown, AppError, { id: string; readComment?: string }>({
+    mutationFn: ({ id, readComment }) => markRatingAsRead(id, readComment),
+    onSuccess: (_, variables) => {
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
+        { queryKey: ["feedback", "received"] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.map((item) =>
+              String(item.id) === String(variables.id)
+                ? { ...item, status: "read" as const }
+                : item
+            ),
+          };
+        }
+      );
+    },
+    onError: (err) => {
+      console.error("Mark as read failed:", err);
+      if (
+        err.kind === "forbidden" ||
+        err.status === 403 ||
+        err.message.toLowerCase() === "forbidden"
+      ) {
+        toast.error("You don't have access to mark as read");
+        return;
+      }
+      toast.error(err.message || "Failed to mark feedback as read");
+    },
+  });
+}
+
+// ─── Searchable User Select (BhagSection style) ────────────────────────────────
+
+const UserSelectFeedback = ({
+  value,
+  onChange,
+  users,
+  placeholder = "Search team member...",
+  disabled = false,
+}: {
+  value: string | undefined;
+  onChange: (val: string) => void;
+  users: TeamMemberOption[];
+  placeholder?: string;
+  disabled?: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedUser = users.find((u) => u.value === value);
+  const displayValue = selectedUser ? selectedUser.label : "";
+
+  const filteredUsers = users.filter((u) =>
+    u.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div style={{ position: "relative", zIndex: open ? 9999 : 1 }} ref={ref}>
+      <input
+        type="text"
+        disabled={disabled}
+        placeholder={disabled ? "Loading members…" : placeholder}
+        value={open ? search : displayValue}
+        onClick={() => {
+          if (!disabled) {
+            setOpen(true);
+            setSearch("");
+          }
+        }}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setOpen(true);
+        }}
+        className="h-[34px] w-full rounded-[10px] border-0 bg-white px-4 text-[12px] text-[#111827] placeholder:text-[#9ca3af] shadow-none outline-none transition-all focus:ring-1 focus:ring-[#DA7756]/20 disabled:cursor-not-allowed disabled:opacity-50"
+        style={{ paddingRight: "40px", fontFamily: "inherit" }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          right: "12px",
+          top: "50%",
+          transform: "translateY(-50%)",
+          color: "#9ca3af",
+          pointerEvents: "none",
+        }}
+      >
+        {disabled ? (
+          <Loader2
+            style={{
+              width: "16px",
+              height: "16px",
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
+        ) : (
+          <svg
+            width="16"
+            height="16"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        )}
+      </div>
+      {open && !disabled && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            right: 0,
+            marginTop: "4px",
+            backgroundColor: "#ffffff",
+            border: "1px solid #e5e7eb",
+            borderRadius: "12px",
+            boxShadow: "0 10px 24px rgba(0,0,0,0.10)",
+            maxHeight: "220px",
+            overflowY: "auto",
+            overflowX: "hidden",
+            zIndex: 9999,
+            fontFamily: "inherit",
+          }}
+        >
+          {value && (
+            <div
+              style={{
+                padding: "10px 14px",
+                fontSize: "13px",
+                cursor: "pointer",
+                borderBottom: "1px solid #f3f4f6",
+                color: "#ef4444",
+                fontWeight: 600,
+              }}
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+                setSearch("");
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#fef2f2")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+            >
+              Clear selection
+            </div>
+          )}
+          {filteredUsers.length === 0 ? (
+            <div
+              style={{
+                padding: "14px",
+                fontSize: "13px",
+                color: "#9ca3af",
+                textAlign: "center",
+              }}
+            >
+              No members found
+            </div>
+          ) : (
+            filteredUsers.map((u) => (
+              <div
+                key={u.value}
+                style={{
+                  padding: "10px 14px",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  borderBottom: "1px solid #f9fafb",
+                  color: "#1a1a1a",
+                  transition: "background 0.1s",
+                }}
+                onClick={() => {
+                  onChange(u.value);
+                  setOpen(false);
+                  setSearch("");
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#fef6f4")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "transparent")
+                }
+              >
+                {u.label}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Searchable User Select for Received Tab ───────────────────────────────────
+
+const UserSelectReceived = ({
+  value,
+  onChange,
+  users,
+  myselfLabel,
+  currentUserId,
+  disabled = false,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  users: TeamMemberOption[];
+  myselfLabel: string;
+  currentUserId: number | null;
+  disabled?: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const allOptions = [
+    { value: "myself", label: myselfLabel },
+    ...users.filter((m) => m.id !== currentUserId),
+  ];
+
+  const selectedOption = allOptions.find((o) => o.value === value);
+  const displayValue = selectedOption ? selectedOption.label : myselfLabel;
+
+  const filteredOptions = allOptions.filter((o) =>
+    o.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div style={{ position: "relative", zIndex: open ? 9999 : 1 }} ref={ref}>
+      <input
+        type="text"
+        disabled={disabled}
+        placeholder={disabled ? "Loading…" : "Search member…"}
+        value={open ? search : displayValue}
+        onClick={() => {
+          if (!disabled) {
+            setOpen(true);
+            setSearch("");
+          }
+        }}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setOpen(true);
+        }}
+        className="h-10 w-full sm:w-[168px] rounded-[10px] border border-[#e7eaf0] bg-white px-4 text-[13px] font-medium text-[#111827] shadow-sm outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{ paddingRight: "36px", fontFamily: "inherit" }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          right: "10px",
+          top: "50%",
+          transform: "translateY(-50%)",
+          color: "#9ca3af",
+          pointerEvents: "none",
+        }}
+      >
+        {disabled ? (
+          <Loader2
+            style={{
+              width: "15px",
+              height: "15px",
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
+        ) : (
+          <svg
+            width="15"
+            height="15"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        )}
+      </div>
+      {open && !disabled && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            right: 0,
+            marginTop: "4px",
+            backgroundColor: "#ffffff",
+            border: "1px solid #e5e7eb",
+            borderRadius: "12px",
+            boxShadow: "0 10px 24px rgba(0,0,0,0.10)",
+            maxHeight: "220px",
+            overflowY: "auto",
+            overflowX: "hidden",
+            zIndex: 9999,
+            fontFamily: "inherit",
+          }}
+        >
+          {filteredOptions.length === 0 ? (
+            <div
+              style={{
+                padding: "12px 14px",
+                fontSize: "13px",
+                color: "#9ca3af",
+                textAlign: "center",
+              }}
+            >
+              No members found
+            </div>
+          ) : (
+            filteredOptions.map((o) => (
+              <div
+                key={o.value}
+                style={{
+                  padding: "10px 14px",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  borderBottom: "1px solid #f9fafb",
+                  color: "#1a1a1a",
+                  fontWeight: o.value === value ? 600 : 400,
+                  transition: "background 0.1s",
+                }}
+                onClick={() => {
+                  onChange(o.value);
+                  setOpen(false);
+                  setSearch("");
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#fef6f4")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "transparent")
+                }
+              >
+                {o.label}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ─── Error Boundary ────────────────────────────────────────────────────────────
 
@@ -1220,7 +1830,10 @@ function AsyncBoundary({ children }: { children: React.ReactNode }) {
       <React.Suspense
         fallback={
           <div className="flex items-center justify-center gap-2 py-16 text-sm text-neutral-500">
-            <Loader2 className="h-5 w-5 animate-spin text-[#DA7756]" />
+            <Loader2
+              className="h-5 w-5 animate-spin"
+              style={{ color: BRAND.primary }}
+            />
             Loading…
           </div>
         }
@@ -1231,7 +1844,7 @@ function AsyncBoundary({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── Inline Error Panel ────────────────────────────────────────────────────────
+// ─── Sub-components ────────────────────────────────────────────────────────────
 
 function InlineError({
   error,
@@ -1269,8 +1882,6 @@ function InlineError({
   );
 }
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
-
 function FeedbackEmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
@@ -1291,17 +1902,17 @@ function FeedbackEmptyState() {
 function StarRatingRow({ value }: { value: number }) {
   return (
     <div
-      className="flex shrink-0 gap-0.5"
+      className="flex shrink-0 gap-[1px]"
       aria-label={`${value} out of 5 stars`}
     >
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
           className={cn(
-            "h-4 w-4 sm:h-[18px] sm:w-[18px]",
+            "h-3.5 w-3.5",
             i <= value
-              ? "fill-amber-400 text-amber-400"
-              : "fill-transparent text-neutral-300"
+              ? "fill-[#ffb000] text-[#ffb000]"
+              : "fill-[#e5e7eb] text-[#e5e7eb]"
           )}
           strokeWidth={i <= value ? 0 : 1.5}
         />
@@ -1325,24 +1936,31 @@ function GivenFeedbackList({
 }) {
   const fetchDirection = direction === "to" ? "given" : "received";
   const {
-    data: queriedItems = [],
+    data: queriedData = { items: [] },
     isLoading,
     isError,
     error,
     refetch,
   } = useFeedbackList(fetchDirection, filterUserId);
+  const queriedItems = queriedData.items;
+  const summary = queriedData.summary;
   const items = itemsOverride ?? queriedItems;
   const deleteMutation = useDeleteFeedback();
-  const currentUserId = getCurrentUserId();
+  const markAsReadMutation = useMarkAsRead();
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [ratingFilter, setRatingFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [detailCache, setDetailCache] = useState<Record<string, FeedbackItem>>(
     {}
   );
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
   const [lastStableItems, setLastStableItems] = useState<FeedbackItem[]>([]);
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [localReadOverrides, setLocalReadOverrides] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     if (!isError && items.length > 0) {
@@ -1362,53 +1980,38 @@ function GivenFeedbackList({
   const handleExpand = async (itemId: string) => {
     const isCollapsing = expandedId === itemId;
     setExpandedId(isCollapsing ? null : itemId);
-    if (isCollapsing || detailCache[itemId]) return;
+    if (isCollapsing) return;
+
+    const existingItem = sourceItems.find((i) => i.id === itemId);
+    if (existingItem && !detailCache[itemId]) {
+      setDetailCache((prev) => ({ ...prev, [itemId]: existingItem }));
+    }
+
+    if (detailCache[itemId]) return;
+
     setLoadingDetailId(itemId);
     try {
       const detail = await fetchFeedbackDetail(itemId);
-      if (detail) setDetailCache((prev) => ({ ...prev, [itemId]: detail }));
+      if (detail) {
+        setDetailCache((prev) => ({
+          ...prev,
+          [itemId]: {
+            ...(existingItem ?? {}),
+            ...detail,
+            positiveOpening:
+              detail.positiveOpening ?? existingItem?.positiveOpening,
+            constructiveFeedback:
+              detail.constructiveFeedback ?? existingItem?.constructiveFeedback,
+            positiveClosing:
+              detail.positiveClosing ?? existingItem?.positiveClosing,
+          } as FeedbackItem,
+        }));
+      }
     } catch {
-      /* ignore — fallback to cached list data */
+      /* ignore */
     } finally {
       setLoadingDetailId(null);
     }
-  };
-
-  const handleDelete = (item: FeedbackItem) => {
-    if (!currentUserId) {
-      window.alert("Unable to verify your account. Please log in again.");
-      return;
-    }
-
-    const hasKnownCreator = item.ratingFromId != null;
-    if (
-      hasKnownCreator &&
-      Number(item.ratingFromId) !== Number(currentUserId)
-    ) {
-      window.alert("You can only delete feedback created by your account.");
-      return;
-    }
-
-    if (!window.confirm("Are you sure you want to delete this feedback?")) {
-      return;
-    }
-
-    deleteMutation.mutate(
-      { id: item.id },
-      {
-        onSuccess: () => {
-          setLastStableItems((prev) => prev.filter((f) => f.id !== item.id));
-          setDetailCache((prev) => {
-            const next = { ...prev };
-            delete next[item.id];
-            return next;
-          });
-        },
-        onError: (error) => {
-          window.alert(error.message || "Failed to delete feedback.");
-        },
-      }
-    );
   };
 
   const filtered = useMemo(
@@ -1425,34 +2028,87 @@ function GivenFeedbackList({
           (item.detailPreview?.toLowerCase().includes(q) ?? false);
         const matchesRating =
           ratingFilter === "all" || String(item.rating) === ratingFilter;
-        return matchesSearch && matchesRating;
+
+        const displayStatus = localReadOverrides[item.id]
+          ? "read"
+          : item.status;
+        const matchesStatus =
+          statusFilter === "all" || displayStatus === statusFilter;
+
+        return matchesSearch && matchesRating && matchesStatus;
       }),
-    [sourceItems, searchQuery, ratingFilter, direction]
+    [
+      sourceItems,
+      searchQuery,
+      ratingFilter,
+      statusFilter,
+      direction,
+      localReadOverrides,
+    ]
   );
 
+  const avgRating =
+    filtered.length > 0
+      ? (filtered.reduce((s, i) => s + i.rating, 0) / filtered.length).toFixed(
+          1
+        )
+      : "0.0";
+  const avgRatingNum = Number(avgRating);
+  const totalFeedback = filtered.length;
+  const points = (() => {
+    let calculatedPoints = 0;
+    filtered.forEach((item) => {
+      if (item.rating === 1) calculatedPoints -= 10;
+      else if (item.rating === 2) calculatedPoints -= 5;
+      else if (item.rating === 4) calculatedPoints += 5;
+      else if (item.rating === 5) calculatedPoints += 10;
+    });
+    return calculatedPoints;
+  })();
+
+  const getAvatarBg = (name: string) => {
+    const gradients = [
+      ["#fb7185", "#f97316"],
+      ["#8b5cf6", "#3b82f6"],
+      ["#10b981", "#06b6d4"],
+      ["#f59e0b", "#ef4444"],
+      ["#ec4899", "#8b5cf6"],
+      ["#14b8a6", "#22c55e"],
+    ];
+    const seed = name
+      .split("")
+      .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    const [from, to] = gradients[seed % gradients.length];
+    return `linear-gradient(135deg, ${from}, ${to})`;
+  };
+
   return (
-    <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
-      {/* Toolbar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch sm:justify-between sm:gap-3">
-        <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
-          <div className="relative min-w-0 flex-1">
+    <div className="flex flex-col gap-4 pb-4">
+      {/* Search and Filter Row */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-1 flex-wrap items-center gap-3">
+          <div className="relative w-full sm:max-w-[238px]">
             <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
+              className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#64748b]"
               aria-hidden
             />
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name or content..."
-              className="h-10 w-full rounded-xl border border-neutral-200 bg-white py-2 pl-10 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#C72030]/25"
+              placeholder={
+                direction === "to"
+                  ? "Search by name or content"
+                  : "Search feedback..."
+              }
+              className="h-10 w-full rounded-[14px] border border-[#e5e8ee] bg-white py-2 pl-8 pr-3 text-[13px] text-[#111827] placeholder:text-[#64748b] outline-none transition-all focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20"
             />
           </div>
           <Select value={ratingFilter} onValueChange={setRatingFilter}>
-            <SelectTrigger className="h-10 w-full rounded-xl border-neutral-200 bg-white sm:w-[160px] sm:shrink-0">
+            <SelectTrigger className="h-10 w-[126px] rounded-[14px] border border-[#e5e8ee] bg-white text-[13px] text-[#64748b] focus:ring-[#DA7756]/20">
               <SelectValue placeholder="All Ratings" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl border border-neutral-200">
               <SelectItem value="all">All Ratings</SelectItem>
               <SelectItem value="5">5 stars</SelectItem>
               <SelectItem value="4">4 stars</SelectItem>
@@ -1461,25 +2117,34 @@ function GivenFeedbackList({
               <SelectItem value="1">1 star</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-10 w-[62px] rounded-[14px] border border-[#e5e8ee] bg-white text-[13px] text-[#64748b] focus:ring-[#DA7756]/20">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border border-neutral-200">
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="unread">Unread</SelectItem>
+              <SelectItem value="read">Read</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <button
-          type="button"
-          onClick={onGiveFeedbackClick}
-          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#DA7756]/85 sm:px-5"
-        >
-          <Send className="h-4 w-4 text-white" strokeWidth={2} />
-          Give Feedback
-        </button>
+
+        <p className="min-w-[90px] text-center text-[12px] font-medium text-[#64748b]">
+          {totalFeedback} {totalFeedback === 1 ? "item" : "items"}
+        </p>
+
       </div>
 
-      {/* List content */}
       <div className="space-y-3">
         {isLoading && filtered.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-neutral-500">
-            <Loader2 className="h-5 w-5 animate-spin text-[#DA7756]" />
+            <Loader2
+              className="h-5 w-5 animate-spin"
+              style={{ color: BRAND.primary }}
+            />
             Loading feedback…
           </div>
-        ) : isError && filtered.length === 0 && direction === "to" ? (
+        ) : isError && filtered.length === 0 ? (
           <InlineError
             error={normalizeError(error)}
             onRetry={() => refetch()}
@@ -1487,165 +2152,483 @@ function GivenFeedbackList({
         ) : filtered.length === 0 ? (
           <FeedbackEmptyState />
         ) : (
-          <>
-            {filtered.map((item) => {
-              const expanded = expandedId === item.id;
-              const detail = detailCache[item.id] ?? item;
-              const isLoadingDetail = loadingDetailId === item.id;
-              const counterpartName =
-                direction === "to" ? item.recipientName : item.recipientName;
-              return (
+          filtered.map((item, index) => {
+            const expanded = expandedId === item.id;
+            const detail = detailCache[item.id] ?? item;
+            const isLoadingDetail = loadingDetailId === item.id;
+
+            const displayStatus = localReadOverrides[item.id]
+              ? "read"
+              : item.status;
+
+            const displayName =
+              direction === "from"
+                ? item.ratingFromName || item.recipientName
+                : item.recipientName;
+            const initial = (displayName || "T")
+              .split(" ")
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((part) => part.charAt(0).toUpperCase())
+              .join("");
+            const avatarBg = getAvatarBg(displayName || "T");
+            const situationText =
+              detail.reviews ||
+              detail.positiveOpening ||
+              detail.detailPreview ||
+              "No situation shared.";
+            const behaviorText =
+              detail.constructiveFeedback ||
+              detail.positiveOpening ||
+              detail.detailPreview ||
+              "No behavior notes shared.";
+            const impactText =
+              detail.positiveClosing ||
+              detail.detailPreview ||
+              "No impact notes shared.";
+            const isLatestFeedback = index === 0;
+
+            return (
+              <div
+                key={item.id}
+                className={cn(
+                  "group overflow-hidden rounded-[18px] border bg-white transition-all duration-300 ease-out",
+                  expanded
+                    ? "border-[#e5e8ee] shadow-[0_10px_28px_rgba(15,23,42,0.04)]"
+                    : "border-[#e5e8ee] hover:border-[#d7dce5]"
+                )}
+              >
                 <div
-                  key={item.id}
                   className={cn(
-                    "rounded-xl border border-neutral-200/90 bg-[#FFFDF0] p-4 shadow-sm",
-                    "transition-shadow hover:shadow-md"
+                    "flex items-center gap-3 px-3 py-3.5 sm:gap-4 sm:px-5",
+                    expanded && "border-b border-[#edf0f4]"
                   )}
                 >
-                  <div className="flex gap-3 sm:gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2E7D32] sm:h-12 sm:w-12">
-                      <Send className="h-5 w-5 text-white" strokeWidth={2} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <button
-                        type="button"
-                        className="w-full text-left"
-                        onClick={() => handleExpand(item.id)}
-                      >
-                        <p className="font-semibold text-neutral-900">
-                          {direction === "to" ? "To" : "From"}:{" "}
-                          {counterpartName}
-                        </p>
-                        <p className="text-sm text-neutral-600">{item.date}</p>
-                        {!expanded && (
-                          <p className="mt-1 text-xs text-neutral-400">
-                            Click to expand feedback details
-                          </p>
-                        )}
-                      </button>
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold text-white"
+                    style={{ background: avatarBg }}
+                  >
+                    {initial}
+                  </div>
 
-                      {expanded &&
-                        (isLoadingDetail ? (
-                          <div className="mt-3 flex items-center gap-2 text-xs text-neutral-400">
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            Loading details...
-                          </div>
-                        ) : (
-                          <div className="mt-3 space-y-2">
-                            {detail.positiveOpening && (
-                              <div className="border-l-2 border-[#2E7D32]/50 pl-3">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#2E7D32]/70">
-                                  Positive Opening
-                                </p>
-                                <p className="text-sm leading-relaxed text-neutral-700">
-                                  {detail.positiveOpening}
-                                </p>
-                              </div>
-                            )}
-                            {detail.constructiveFeedback && (
-                              <div className="border-l-2 border-orange-400/60 pl-3">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-orange-500/80">
-                                  Constructive Feedback
-                                </p>
-                                <p className="text-sm leading-relaxed text-neutral-700">
-                                  {detail.constructiveFeedback}
-                                </p>
-                              </div>
-                            )}
-                            {detail.positiveClosing && (
-                              <div className="border-l-2 border-sky-400/60 pl-3">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-500/80">
-                                  Positive Closing
-                                </p>
-                                <p className="text-sm leading-relaxed text-neutral-700">
-                                  {detail.positiveClosing}
-                                </p>
-                              </div>
-                            )}
-                            {!detail.positiveOpening &&
-                              !detail.constructiveFeedback &&
-                              !detail.positiveClosing &&
-                              detail.detailPreview && (
-                                <p className="border-l-2 border-[#2E7D32]/40 pl-3 text-sm leading-relaxed text-neutral-700">
-                                  {detail.detailPreview}
-                                </p>
-                              )}
-                          </div>
-                        ))}
-                    </div>
-                    <div className="flex shrink-0 flex-col items-end gap-2">
-                      <StarRatingRow value={item.rating} />
-                      <span
-                        className={cn(
-                          "rounded-md px-2 py-0.5 text-xs font-medium",
-                          item.status === "unread"
-                            ? "bg-orange-100 text-orange-800"
-                            : "bg-neutral-200/80 text-neutral-600"
+                  <div className="flex-1 min-w-0">
+                    <button
+                      type="button"
+                      className="w-full text-left focus:outline-none"
+                      onClick={() => handleExpand(item.id)}
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-[14px] font-bold leading-tight text-[#111827]">
+                          {displayName}
+                        </p>
+                        {displayStatus === "unread" && (
+                          <span
+                            className="h-2 w-2 rounded-full bg-[#e77252]"
+                            aria-label="Unread feedback"
+                          />
                         )}
-                      >
-                        {item.status === "unread" ? "Unread" : "Read"}
-                      </span>
-                      {direction === "to" && (
-                        <div className="mt-1 flex flex-wrap justify-end gap-2">
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 shadow-sm hover:bg-neutral-50"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEditFeedback(item);
-                            }}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 shadow-sm hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                            disabled={
-                              deleteMutation.isPending || !currentUserId
-                            }
-                            title={
-                              !currentUserId
-                                ? "Unable to verify current user for delete"
-                                : item.ratingFromId != null &&
-                                  Number(item.ratingFromId) !==
-                                  Number(currentUserId)
-                                  ? "You can only delete feedback created by you"
-                                  : undefined
-                            }
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(item);
-                            }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            {deleteMutation.isPending
-                              ? "Deleting..."
-                              : "Delete"}
-                          </button>
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        className="mt-1 rounded-md p-1 text-neutral-400 hover:bg-black/5 hover:text-neutral-600"
-                        aria-expanded={expanded}
-                        aria-label={expanded ? "Collapse" : "Expand"}
-                        onClick={() => handleExpand(item.id)}
-                      >
-                        <ChevronDown
-                          className={cn(
-                            "h-5 w-5 transition-transform",
-                            expanded && "rotate-180"
-                          )}
-                        />
-                      </button>
-                    </div>
+                        {isLatestFeedback && (
+                          <span className="rounded-full bg-[#fff0eb] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#f06f4f]">
+                            New
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-[#555b66]">
+                        {detail.detailPreview ||
+                          detail.reviews ||
+                          detail.positiveOpening ||
+                          "Feedback details available."}
+                      </p>
+                    </button>
+                  </div>
+
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <StarRatingRow value={item.rating} />
+                    <span className="text-[11px] font-medium text-[#f06f4f]">
+                      {item.date}
+                    </span>
+                    <button
+                      type="button"
+                      className="mt-1 flex h-8 w-8 items-center justify-center rounded-full border border-[#e5e8ee] bg-white text-[#f06f4f] transition-colors hover:bg-[#fff7f4]"
+                      aria-expanded={expanded}
+                      aria-label={expanded ? "Collapse" : "Expand"}
+                      onClick={() => handleExpand(item.id)}
+                    >
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 transition-transform duration-200 ease-out",
+                          expanded && "rotate-180"
+                        )}
+                      />
+                    </button>
                   </div>
                 </div>
-              );
-            })}
-          </>
+
+                {expanded && (
+                  <div className="feedback-collapse-panel overflow-hidden px-3 pb-4 sm:px-5 sm:pb-5">
+                    {isLoadingDetail ? (
+                      <div className="flex items-center gap-2 py-5 text-xs text-neutral-400">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Loading details...
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid gap-3 lg:grid-cols-3">
+                          {[
+                            {
+                              label: "Situation",
+                              dot: "bg-[#3b82f6]",
+                              bg: "bg-[#eef6ff]",
+                              text: situationText,
+                            },
+                            {
+                              label: "Behavior",
+                              dot: "bg-[#eab308]",
+                              bg: "bg-[#fff9e8]",
+                              text: behaviorText,
+                            },
+                            {
+                              label: "Impact",
+                              dot: "bg-[#10b981]",
+                              bg: "bg-[#e9f8f3]",
+                              text: impactText,
+                            },
+                          ].map((panel) => (
+                            <div
+                              key={panel.label}
+                              className={cn(
+                                "rounded-[14px] px-4 py-4 lg:min-h-[184px]",
+                                panel.bg
+                              )}
+                            >
+                              <p className="flex items-center gap-2 text-[11px] font-bold text-[#111827]">
+                                <span
+                                  className={cn(
+                                    "h-1.5 w-1.5 rounded-full",
+                                    panel.dot
+                                  )}
+                                />
+                                {panel.label}
+                              </p>
+                              <p className="mt-3 text-[14px] leading-relaxed text-[#111827]">
+                                {panel.text}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+
+                        {direction === "to" && (
+                          <div className="mt-4 flex items-center justify-end gap-2 border-t border-neutral-100 pt-4">
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!canModifyFeedback(item)) {
+                                  showFeedbackAccessDenied();
+                                  return;
+                                }
+                                onEditFeedback(item);
+                              }}
+                            >
+                              <Pencil className="h-3.5 w-3.5 text-neutral-500" />
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50/50 px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm transition-colors hover:bg-red-100/70 disabled:opacity-50"
+                              disabled={
+                                deleteMutation.isPending &&
+                                deleteMutation.variables?.id === item.id
+                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!canModifyFeedback(item)) {
+                                  showFeedbackAccessDenied();
+                                  return;
+                                }
+                                if (
+                                  window.confirm(
+                                    "Are you sure you want to delete this feedback?"
+                                  )
+                                ) {
+                                  deleteMutation.mutate({ id: item.id });
+                                }
+                              }}
+                            >
+                              {deleteMutation.isPending &&
+                              deleteMutation.variables?.id === item.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                              )}
+                              {deleteMutation.isPending &&
+                              deleteMutation.variables?.id === item.id
+                                ? "Deleting..."
+                                : "Delete"}
+                            </button>
+                          </div>
+                        )}
+
+                        {direction === "from" &&
+                          displayStatus === "unread" && (
+                            <div className="mt-4 space-y-3 border-t border-neutral-100 pt-4">
+                              <div>
+                                <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">
+                                  Your Notes / Action Items{" "}
+                                  <span className="font-normal normal-case text-neutral-400">
+                                    (Optional)
+                                  </span>
+                                </label>
+                                <textarea
+                                  rows={2}
+                                  value={notes[item.id] || ""}
+                                  onChange={(e) =>
+                                    setNotes((prev) => ({
+                                      ...prev,
+                                      [item.id]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Add your notes about how you'll act on this feedback..."
+                                  className="mt-1.5 w-full resize-y rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20"
+                                />
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  markAsReadMutation.mutate(
+                                    {
+                                      id: item.id,
+                                      readComment: notes[item.id]?.trim()
+                                        ? notes[item.id].trim()
+                                        : "Reviewed",
+                                    },
+                                    {
+                                      onSuccess: () => {
+                                        setLocalReadOverrides((prev) => ({
+                                          ...prev,
+                                          [item.id]: true,
+                                        }));
+                                      },
+                                      onError: () => {
+                                        setLocalReadOverrides((prev) => {
+                                          const next = { ...prev };
+                                          delete next[item.id];
+                                          return next;
+                                        });
+                                      },
+                                    }
+                                  );
+                                }}
+                                disabled={markAsReadMutation.isPending}
+                                className="inline-flex h-[34px] items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-4 text-xs font-semibold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50 disabled:opacity-50"
+                              >
+                                <CheckCircle className="h-3.5 w-3.5" />
+                                {markAsReadMutation.isPending
+                                  ? "Marking..."
+                                  : "Mark as Read"}
+                              </button>
+                            </div>
+                          )}
+
+                        {direction === "from" &&
+                          displayStatus === "read" &&
+                          detail.readComment &&
+                          detail.readComment !== "Reviewed" && (
+                            <div className="mt-4 border-t border-neutral-100 pt-4">
+                              <p className="mb-1 text-xs font-bold uppercase tracking-wider text-neutral-500">
+                                Your Saved Notes
+                              </p>
+                              <div className="rounded-xl border border-neutral-100 bg-neutral-50 px-4 py-3">
+                                <p className="text-sm italic leading-relaxed text-neutral-800">
+                                  "{detail.readComment}"
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Edit Feedback Modal ───────────────────────────────────────────────────────
+
+function EditFeedbackModal({
+  isOpen,
+  onClose,
+  feedbackItem,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  feedbackItem: FeedbackItem | null;
+}) {
+  const updateMutation = useUpdateFeedback();
+
+  const [rating, setRating] = useState(0);
+  const [context, setContext] = useState("");
+  const [positiveOpen, setPositiveOpen] = useState("");
+  const [constructive, setConstructive] = useState("");
+  const [positiveClose, setPositiveClose] = useState("");
+
+  useEffect(() => {
+    if (feedbackItem && isOpen) {
+      setRating(feedbackItem.rating || 0);
+      setContext(feedbackItem.reviews || "");
+      setPositiveOpen(feedbackItem.positiveOpening || "");
+      setConstructive(feedbackItem.constructiveFeedback || "");
+      setPositiveClose(feedbackItem.positiveClosing || "");
+    }
+  }, [feedbackItem, isOpen]);
+
+  if (!isOpen || !feedbackItem) return null;
+
+  const handleSubmit = () => {
+    if (!canModifyFeedback(feedbackItem)) {
+      showFeedbackAccessDenied();
+      return;
+    }
+
+    if (rating === 0) {
+      alert("Please select a star rating.");
+      return;
+    }
+
+    const payload: FeedbackPayload = {
+      resource_type: "User",
+      resource_id: feedbackItem.resourceId,
+      score: rating,
+      rating_from_type: feedbackItem.ratingFromType || "User",
+      rating_from_id: feedbackItem.ratingFromId,
+      positive_opening: positiveOpen,
+      constructive_feedback: constructive,
+      positive_closing: positiveClose,
+      reviews: context,
+    };
+
+    updateMutation.mutate(
+      {
+        id: feedbackItem.id,
+        payload,
+        recipientName: feedbackItem.recipientName,
+      },
+      { onSuccess: onClose }
+    );
+  };
+
+  return (
+    <div className="feedback-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm sm:p-6">
+      <div className="feedback-modal-card relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-[18px] bg-white p-4 shadow-xl">
+        <div className="mb-3 flex items-center justify-between px-1">
+          <h2 className="text-[17px] font-bold text-[#111827]">Edit Feedback</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="w-full rounded-[16px] bg-[#f5f2eb] px-5 py-5">
+          <div className="space-y-4">
+            {[
+              {
+                title: "Situation",
+                value: context,
+                onChange: setContext,
+                placeholder: "When and where did this happen?",
+              },
+              {
+                title: "Behavior",
+                value: constructive,
+                onChange: setConstructive,
+                placeholder: "What specifically did they do or say?",
+              },
+              {
+                title: "Impact",
+                value: positiveClose,
+                onChange: setPositiveClose,
+                placeholder: "What was the result or effect?",
+              },
+            ].map(({ title, value, onChange, placeholder }) => (
+              <div key={title} className="space-y-2">
+                <Label className="text-[12px] font-bold text-[#111827]">
+                  {title}
+                </Label>
+                <Textarea
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  placeholder={placeholder}
+                  className="min-h-[58px] resize-none rounded-[12px] border-0 bg-white px-4 py-3 text-[12px] text-[#111827] shadow-none outline-none placeholder:text-[#9ca3af] focus:ring-1 focus:ring-[#DA7756]/20"
+                />
+              </div>
+            ))}
+
+            <div className="space-y-2">
+              <Label className="text-[12px] font-bold text-[#111827]">
+                Rating
+              </Label>
+              <div className="flex gap-0.5" role="group" aria-label="Star rating">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-pressed={rating === n}
+                    aria-label={`${n} star${n === 1 ? "" : "s"}`}
+                    onClick={() => setRating(n)}
+                    className="rounded-md transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#DA7756]/30"
+                  >
+                    <Star
+                      className={cn(
+                        "h-5 w-5 transition-all duration-200",
+                        n <= rating
+                          ? "fill-[#ffb000] text-[#ffb000]"
+                          : "fill-transparent text-[#ffb000]"
+                      )}
+                      strokeWidth={1.5}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={updateMutation.isPending}
+            className="inline-flex h-[34px] items-center justify-center rounded-[7px] border border-neutral-200 bg-white px-5 text-[12px] font-bold text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={updateMutation.isPending}
+            className="inline-flex h-[34px] items-center justify-center gap-2 rounded-[7px] bg-[#e77252] px-8 text-[12px] font-bold text-white shadow-sm transition-all hover:bg-[#d96648] disabled:opacity-60"
+          >
+            {updateMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1670,24 +2653,14 @@ const RATING_SEGMENTS = [
 
 // ─── Give Feedback Form ────────────────────────────────────────────────────────
 
-function GiveFeedbackForm({
-  onSubmitted,
-  initialFeedback,
-  onCancelEdit,
-}: {
-  onSubmitted: () => void;
-  initialFeedback: FeedbackItem | null;
-  onCancelEdit: () => void;
-}) {
+function GiveFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
   const { data: teamMembers = [], isLoading: teamMembersLoading } =
     useTeamMembers();
   const createMutation = useCreateFeedback();
-  const updateMutation = useUpdateFeedback();
 
-  const isEditMode = !!initialFeedback;
-  const isPending = createMutation.isPending || updateMutation.isPending;
-  const mutationError = createMutation.error ?? updateMutation.error;
-  const isSuccess = createMutation.isSuccess || updateMutation.isSuccess;
+  const isPending = createMutation.isPending;
+  const mutationError = createMutation.error;
+  const isSuccess = createMutation.isSuccess;
 
   const [recipient, setRecipient] = useState<string | undefined>(undefined);
   const [feedbackDate, setFeedbackDate] = useState<Date>(() => new Date());
@@ -1698,23 +2671,6 @@ function GiveFeedbackForm({
   const [constructive, setConstructive] = useState("");
   const [positiveClose, setPositiveClose] = useState("");
   const [localError, setLocalError] = useState("");
-
-  // Pre-fill when editing existing feedback
-  useEffect(() => {
-    if (!initialFeedback) return;
-    const recipientOption = initialFeedback.resourceId
-      ? teamMembers.find((m) => m.id === initialFeedback.resourceId)
-      : undefined;
-    setRecipient(recipientOption?.value);
-    setRating(initialFeedback.rating || 0);
-    setPositiveOpen(initialFeedback.positiveOpening || "");
-    setConstructive(initialFeedback.constructiveFeedback || "");
-    setPositiveClose(initialFeedback.positiveClosing || "");
-    setLocalError("");
-    createMutation.reset();
-    updateMutation.reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialFeedback, teamMembers]);
 
   const clearForm = useCallback(() => {
     setRecipient(undefined);
@@ -1727,13 +2683,12 @@ function GiveFeedbackForm({
     setPositiveClose("");
     setLocalError("");
     createMutation.reset();
-    updateMutation.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSubmit = async () => {
     if (!recipient) {
-      setLocalError("Please select a team member to give feedback to.");
+      setLocalError("Please select a team member.");
       return;
     }
     if (rating === 0) {
@@ -1749,59 +2704,44 @@ function GiveFeedbackForm({
     setLocalError("");
     const currentUser = getUser();
     const currentUserId = currentUser?.id || getCurrentUserId();
-    const ratingFromId = initialFeedback?.ratingFromId ?? currentUserId;
+    const ratingFromId = currentUserId;
 
     const payload: FeedbackPayload = {
       resource_type: "User",
       resource_id: selectedMember.id,
       score: rating,
-      rating_from_type: initialFeedback?.ratingFromType ?? "User",
-      rating_from_id: ratingFromId || undefined,
-      positive_opening: positiveOpen || undefined,
-      constructive_feedback: constructive || undefined,
-      positive_closing: positiveClose || undefined,
+      rating_from_type: "User",
+      rating_from_id: ratingFromId,
+      positive_opening: positiveOpen,
+      constructive_feedback: constructive,
+      positive_closing: positiveClose,
+      reviews: context,
     };
 
-    if (!isEditMode) {
-      payload.created_at = feedbackDate.toISOString();
-    }
+    payload.created_at = feedbackDate.toISOString();
 
-    if (isEditMode && initialFeedback?.id) {
-      updateMutation.mutate(
-        {
-          id: initialFeedback.id,
-          payload,
-          recipientName: selectedMember.label,
-        },
-        { onSuccess: onSubmitted }
-      );
-    } else {
-      createMutation.mutate(
-        { payload, recipientName: selectedMember.label },
-        { onSuccess: onSubmitted }
-      );
-    }
+    createMutation.mutate(
+      { payload, recipientName: selectedMember.label },
+      { onSuccess: onSubmitted }
+    );
   };
 
   if (isSuccess) {
     return (
       <div className="flex flex-col items-center justify-center gap-5 px-4 py-20 text-center sm:px-6">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-          <CheckCircle className="h-8 w-8 text-green-600" strokeWidth={2} />
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+          <CheckCircle className="h-8 w-8 text-emerald-600" strokeWidth={2} />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-neutral-900">
-            {isEditMode ? "Feedback Updated!" : "Feedback Sent!"}
-          </h3>
+          <h3 className="text-lg font-bold text-neutral-900">Feedback Sent!</h3>
           <p className="mt-1 text-sm text-neutral-500">
-            Your feedback has been {isEditMode ? "updated" : "submitted"}{" "}
-            successfully.
+            Your feedback has been submitted successfully.
           </p>
         </div>
         <button
           type="button"
           onClick={clearForm}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85"
+          className="mt-2 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-6 text-sm font-bold text-white shadow-sm hover:bg-[#BC6B4A] transition-colors"
         >
           <Pencil className="h-4 w-4" strokeWidth={2} />
           Give More Feedback
@@ -1813,87 +2753,51 @@ function GiveFeedbackForm({
   const displayError = localError || mutationError?.message;
 
   return (
-    <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
-      {isEditMode && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
-          ✏️ You are editing an existing feedback entry.
-        </div>
-      )}
-
-      <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm leading-relaxed text-sky-950">
-        <span className="font-semibold">Sandwich technique: </span>
-        Start with something positive, share constructive feedback in the
-        middle, and close with encouragement —{" "}
-        <span className="font-medium">Positive → Constructive → Positive</span>.
-      </div>
-
+    <div className="w-full rounded-[16px] bg-[#f5f2eb] px-5 py-6">
+      <h2 className="text-[15px] font-bold text-[#111827]">New Feedback</h2>
       {displayError && (
-        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-4 shadow-sm">
           <AlertCircle
             className="mt-0.5 h-5 w-5 shrink-0 text-red-500"
             strokeWidth={2}
           />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-red-800">
-              Submission Failed
-            </p>
-            <p className="mt-0.5 text-sm text-red-700">{displayError}</p>
+            <p className="text-sm font-bold text-red-900">Submission Failed</p>
+            <p className="mt-1 text-sm text-red-700">{displayError}</p>
           </div>
           <button
             type="button"
             onClick={() => {
               setLocalError("");
               createMutation.reset();
-              updateMutation.reset();
             }}
-            className="shrink-0 rounded-md p-1 text-red-500 hover:bg-red-100"
+            className="shrink-0 rounded-lg p-1 text-red-500 hover:bg-red-100 transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="mt-6 space-y-5">
+        {/* ── Searchable recipient dropdown (BhagSection style) ── */}
         <div className="space-y-2">
-          <Label htmlFor="feedback-recipient" className="text-neutral-800">
-            Give Feedback To <span className="text-[#DA7756]">*</span>
+          <Label className="text-[12px] font-bold text-[#111827]">
+            To
           </Label>
-          <Select
+          <UserSelectFeedback
             value={recipient}
-            onValueChange={setRecipient}
+            onChange={setRecipient}
+            users={teamMembers}
             disabled={teamMembersLoading}
-          >
-            <SelectTrigger
-              id="feedback-recipient"
-              className="h-11 rounded-xl border-neutral-200 bg-white"
-            >
-              {teamMembersLoading ? (
-                <span className="flex items-center gap-2 text-neutral-400">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading members…
-                </span>
-              ) : (
-                <SelectValue placeholder="Select team member" />
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              {teamMembers.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-neutral-400">
-                  No members found
-                </div>
-              ) : (
-                teamMembers.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>
-                    {m.label}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
+            placeholder=""
+          />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="feedback-date" className="text-neutral-800">
+        <div className="hidden">
+          <Label
+            htmlFor="feedback-date"
+            className="text-sm font-bold text-neutral-800"
+          >
             Date
           </Label>
           <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
@@ -1901,13 +2805,11 @@ function GiveFeedbackForm({
               <button
                 type="button"
                 id="feedback-date"
-                className={cn(
-                  "flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 text-left text-sm text-neutral-900",
-                  "outline-none ring-offset-2 transition-colors hover:bg-neutral-50/80",
-                  "focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
-                )}
+                className="flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-4 text-left text-sm text-neutral-900 shadow-sm outline-none focus:ring-2 focus:ring-[#DA7756]/20 hover:bg-neutral-50 transition-colors"
               >
-                <span className="tabular-nums">{formatDMY(feedbackDate)}</span>
+                <span className="tabular-nums font-medium">
+                  {formatDMY(feedbackDate)}
+                </span>
                 <CalendarIcon
                   className="h-4 w-4 shrink-0 text-neutral-500"
                   strokeWidth={2}
@@ -1915,7 +2817,10 @@ function GiveFeedbackForm({
                 />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent
+              className="w-auto p-0 rounded-xl border border-neutral-200 shadow-md"
+              align="start"
+            >
               <Calendar
                 mode="single"
                 selected={feedbackDate}
@@ -1926,200 +2831,86 @@ function GiveFeedbackForm({
                   }
                 }}
                 initialFocus
+                className="p-3"
               />
             </PopoverContent>
           </Popover>
         </div>
-      </div>
 
-      <div className="space-y-3">
-        <div>
-          <Label className="text-neutral-800">
-            Star Rating <span className="text-[#DA7756]">*</span>
-          </Label>
-          <p className="mt-0.5 text-sm text-neutral-500">
-            Rate overall performance (1–5 stars)
-          </p>
-        </div>
-        <div className="flex gap-1" role="radiogroup" aria-label="Star rating">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <button
-              key={n}
-              type="button"
-              role="radio"
-              aria-checked={rating === n}
-              onClick={() => setRating(n)}
-              className="rounded-md p-0.5 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C72030]/40"
-            >
-              <Star
-                className={cn(
-                  "h-8 w-8 sm:h-9 sm:w-9",
-                  n <= rating
-                    ? "fill-amber-400 text-amber-400"
-                    : "fill-transparent text-neutral-300"
-                )}
-                strokeWidth={n <= rating ? 0 : 1.5}
-              />
-            </button>
-          ))}
-        </div>
-        <div className="overflow-hidden rounded-xl border border-neutral-200 shadow-sm">
-          <div className="flex">
-            {RATING_SEGMENTS.map((seg) => (
-              <button
-                key={seg.stars}
-                type="button"
-                onClick={() => setRating(seg.stars)}
-                className={cn(
-                  "min-w-0 flex-1 px-0.5 py-2.5 text-center transition-all sm:px-1 sm:py-3",
-                  seg.bg,
-                  seg.text,
-                  rating === seg.stars &&
-                  "relative z-10 ring-2 ring-inset ring-neutral-900/80"
-                )}
-              >
-                <span className="block text-[10px] font-semibold leading-tight sm:text-xs">
-                  {seg.stars}★
-                </span>
-                <span className="mt-0.5 block text-[9px] font-medium opacity-95 sm:text-[11px]">
-                  {seg.pts}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="feedback-context" className="text-neutral-800">
-          Context / Situation{" "}
-          <span className="font-normal text-neutral-400">(Optional)</span>
-        </Label>
-        <input
-          id="feedback-context"
-          type="text"
-          value={context}
-          onChange={(e) => setContext(e.target.value)}
-          placeholder="e.g., Regarding the client presentation last week..."
-          className="h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#C72030]/25"
-        />
-      </div>
-
-      <div className="space-y-6 border-t border-neutral-100 pt-6">
         {[
           {
-            step: 1,
-            color: "bg-[#2E7D32]",
-            title: "Positive opening",
-            desc: "Start with genuine appreciation and what they're doing well.",
-            value: positiveOpen,
-            onChange: setPositiveOpen,
-            placeholder: "Share what is working well…",
+            title: "Situation",
+            value: context,
+            onChange: setContext,
+            placeholder: "When and where did this happen?",
           },
           {
-            step: 2,
-            color: "bg-orange-500",
-            title: "Constructive feedback",
-            desc: "Provide specific, actionable feedback for improvement.",
+            title: "Behavior",
             value: constructive,
             onChange: setConstructive,
-            placeholder: "Be clear and kind…",
+            placeholder: "What specifically did they do or say?",
           },
           {
-            step: 3,
-            color: "bg-sky-600",
-            title: "Positive closing",
-            desc: "End with encouragement and confidence in their abilities.",
+            title: "Impact",
             value: positiveClose,
             onChange: setPositiveClose,
-            placeholder: "Close on a supportive note…",
+            placeholder: "What was the result or effect?",
           },
-        ].map(({ step, color, title, desc, value, onChange, placeholder }) => (
-          <div key={step} className="space-y-3">
-            <div className="flex gap-3">
-              <div
-                className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white",
-                  color
-                )}
-              >
-                {step}
-              </div>
-              <div>
-                <h3 className="font-semibold text-neutral-900">{title}</h3>
-                <p className="text-sm text-neutral-500">{desc}</p>
-              </div>
-            </div>
+        ].map(({ title, value, onChange, placeholder }) => (
+          <div key={title} className="space-y-2">
+            <Label className="text-[12px] font-bold text-[#111827]">
+              {title}
+            </Label>
             <Textarea
               value={value}
               onChange={(e) => onChange(e.target.value)}
               placeholder={placeholder}
-              className="min-h-[100px] resize-y rounded-xl border-neutral-200 bg-white text-sm"
+              className="min-h-[68px] resize-none rounded-[12px] border-0 bg-white px-4 py-3 text-[12px] text-[#111827] placeholder:text-[#9ca3af] shadow-none outline-none focus:ring-1 focus:ring-[#DA7756]/20"
             />
           </div>
         ))}
-      </div>
 
-      <div className="flex flex-col-reverse gap-3 border-t border-neutral-100 pt-6 sm:flex-row sm:justify-end">
-        {isEditMode && (
-          <button
-            type="button"
-            onClick={onCancelEdit}
-            disabled={isPending}
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-6 text-sm font-semibold text-amber-900 shadow-sm hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Cancel edit
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={clearForm}
-          disabled={isPending}
-          className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-300 bg-white px-6 text-sm font-semibold text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Clear form
-        </button>
+        <div className="space-y-2">
+          <Label className="text-[12px] font-bold text-[#111827]">Rating</Label>
+          <div className="flex gap-0.5" role="group" aria-label="Star rating">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                type="button"
+                aria-pressed={rating === n}
+                aria-label={`${n} star${n === 1 ? "" : "s"}`}
+                onClick={() => setRating(n)}
+                className="rounded-md transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#DA7756]/30"
+              >
+                <Star
+                  className={cn(
+                    "h-5 w-5 transition-all duration-200",
+                    n <= rating
+                      ? "fill-[#ffb000] text-[#ffb000]"
+                      : "fill-transparent text-[#ffb000]"
+                  )}
+                  strokeWidth={1.5}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+
         <button
           type="button"
           onClick={handleSubmit}
           disabled={isPending || teamMembersLoading}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex h-[34px] w-full items-center justify-center gap-2 rounded-[7px] bg-[#e77252] px-8 text-[12px] font-bold text-white shadow-sm transition-all hover:bg-[#d96648] disabled:opacity-60"
         >
           {isPending ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
-              {isEditMode ? "Updating…" : "Sending…"}
+              Sending…
             </>
           ) : (
-            <>
-              <Send className="h-4 w-4" strokeWidth={2} />
-              {isEditMode ? "Update feedback" : "Send feedback"}
-            </>
+            "Submit Feedback"
           )}
         </button>
-      </div>
-
-      <div className="rounded-2xl border border-violet-100 bg-violet-50/90 px-4 py-4 sm:px-5">
-        <div className="flex gap-3 sm:gap-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-200/80">
-            <Lightbulb className="h-5 w-5 text-violet-700" strokeWidth={2} />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-violet-950">
-              Feedback tips
-            </p>
-            <ul className="mt-2 list-disc space-y-1.5 pl-4 text-sm leading-relaxed text-violet-900/90">
-              <li>Be specific — reference real situations and outcomes.</li>
-              <li>Focus on behavior and impact, not personality.</li>
-              <li>
-                Make it timely; don&apos;t wait weeks to share important input.
-              </li>
-              <li>
-                Listen openly when they respond; feedback is a conversation.
-              </li>
-            </ul>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -2128,11 +2919,11 @@ function GiveFeedbackForm({
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 function FeedbackPage() {
-  const [bannerVisible, setBannerVisible] = useState(true);
   const [feedbackTab, setFeedbackTab] = useState("received");
   const [editingFeedback, setEditingFeedback] = useState<FeedbackItem | null>(
     null
   );
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [receivedView, setReceivedView] = useState("myself");
   const currentUser = getUser();
   const currentUserId = currentUser?.id || getCurrentUserId();
@@ -2147,18 +2938,18 @@ function FeedbackPage() {
   const selectedReceivedUserId =
     receivedView === "myself" ? currentUserId : Number(receivedView) || null;
 
-  const selectedCompany = useSelector(
-    (state: RootState) => state.project.selectedCompany
-  );
-  const orgLine = selectedCompany?.name?.toUpperCase() ?? "YOUR ORGANIZATION";
-
-  // Both queries are already cached from the list components; no extra requests made
-  const { data: givenFeedback = [] } = useFeedbackList("given", currentUserId);
-  const { data: selectedReceivedFeedback = [] } = useFeedbackList(
-    "received",
+  const { data: givenFeedbackData = { items: [] } } = useFeedbackList(
+    "given",
     selectedReceivedUserId
   );
-  const { data: allReceivedFeedback = [] } = useFeedbackList("received", null);
+  const givenFeedback = givenFeedbackData.items;
+  const givenSummary = givenFeedbackData.summary;
+
+  const { data: selectedReceivedFeedbackData = { items: [] } } =
+    useFeedbackList("received", selectedReceivedUserId);
+  const selectedReceivedFeedback = selectedReceivedFeedbackData.items;
+  const selectedReceivedSummary = selectedReceivedFeedbackData.summary;
+
   const selectedReceivedMember =
     selectedReceivedUserId == null
       ? null
@@ -2166,363 +2957,162 @@ function FeedbackPage() {
   const selectedReceivedName =
     receivedView === "myself" ? currentUserName : selectedReceivedMember?.label;
 
-  const receivedFeedback = useMemo(() => {
-    const merged = mergeFeedbackItems(
-      selectedReceivedFeedback,
-      allReceivedFeedback,
-      givenFeedback
-    );
-    const normalizedSelectedName = selectedReceivedName?.trim().toLowerCase();
+  const receivedFeedback = selectedReceivedFeedback;
 
-    if (selectedReceivedUserId == null && !normalizedSelectedName) {
-      return merged;
-    }
+  // ── Count for badge: use selected user's actual feedback count ──
+  const receivedBadgeCount = selectedReceivedFeedback.length;
 
-    const exactMatches = merged.filter((item) => {
-      if (
-        selectedReceivedUserId != null &&
-        item.resourceId === selectedReceivedUserId
-      ) {
-        return true;
-      }
-
-      return normalizedSelectedName
-        ? item.recipientName.toLowerCase() === normalizedSelectedName
-        : false;
-    });
-
-    if (exactMatches.length > 0) {
-      return exactMatches;
-    }
-
-    return normalizedSelectedName
-      ? merged.filter((item) =>
-        item.recipientName.toLowerCase().includes(normalizedSelectedName)
-      )
-      : merged;
-  }, [
-    selectedReceivedFeedback,
-    allReceivedFeedback,
-    givenFeedback,
-    selectedReceivedUserId,
-    selectedReceivedName,
-  ]);
-
-  const feedbackSummary = useMemo(() => {
-    const all = [...givenFeedback, ...receivedFeedback];
-    const avgRating =
-      all.length > 0
-        ? (all.reduce((sum, i) => sum + i.rating, 0) / all.length).toFixed(1)
-        : "0";
-    const unread = all.filter((f) => f.status === "unread").length;
-    let feedbackPoints = 0;
-    all.forEach((item) => {
-      if (item.rating === 1) feedbackPoints -= 10;
-      else if (item.rating === 2) feedbackPoints -= 5;
-      else if (item.rating === 4) feedbackPoints += 5;
-      else if (item.rating === 5) feedbackPoints += 10;
-    });
-
-    return {
-      received: receivedFeedback.length,
-      given: givenFeedback.length,
-      unread,
-      avg_rating: Number(avgRating),
-      feedback_points: feedbackPoints,
-    };
-  }, [givenFeedback, receivedFeedback]);
-
-  const headerSummaryStats = useMemo((): SummaryStat[] => {
-    const all = [...givenFeedback, ...receivedFeedback];
-    const avgRating =
-      feedbackSummary?.avg_rating ||
-      (all.length > 0
-        ? (all.reduce((sum, i) => sum + i.rating, 0) / all.length).toFixed(1)
-        : "0");
-
-    const feedbackPoints = feedbackSummary?.feedback_points || 0;
-
-    return [
-      {
-        label: "Received",
-        value: feedbackSummary?.received ?? receivedFeedback.length,
-        icon: Inbox,
-        bgClass: "bg-sky-100/90",
-        iconClass: "text-sky-600",
-      },
-      {
-        label: "Given",
-        value: feedbackSummary?.given ?? givenFeedback.length,
-        icon: Send,
-        bgClass: "bg-[#E3F4E8]",
-        iconClass: "text-[#2E7D32]",
-      },
-      {
-        label: "Unread",
-        value: feedbackSummary?.unread ?? 0,
-        icon: MessageSquare,
-        bgClass: "bg-orange-100/90",
-        iconClass: "text-orange-600",
-      },
-      {
-        label: "Avg Rating",
-        value: avgRating,
-        icon: TrendingUp,
-        bgClass: "bg-violet-100/90",
-        iconClass: "text-violet-600",
-      },
-      {
-        label: "Feedback Points",
-        value: feedbackPoints,
-        icon: ArrowUp,
-        bgClass: "bg-teal-100/80",
-        iconClass: "text-teal-600",
-      },
-    ];
-  }, [givenFeedback, receivedFeedback, feedbackSummary]);
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
-      <div className="mx-auto max-w-6xl space-y-6">
-        {bannerVisible && (
-          <div className="flex items-center gap-3 rounded-2xl border border-sky-200/60 bg-sky-50/90 px-4 py-3 pr-2 shadow-sm">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500">
-              <Lightbulb className="h-5 w-5 text-white" strokeWidth={2} />
-            </div>
-            <button
-              type="button"
-              className="min-w-0 flex-1 text-left"
-              onClick={() => { }}
-            >
-              <p className="text-sm font-semibold text-sky-950">
-                Giving & Receiving Feedback
-              </p>
-              <p className="text-xs text-sky-700/90">Click to view tips</p>
-            </button>
-            <div className="flex shrink-0 items-center gap-0.5">
-              <button
-                type="button"
-                className="rounded-md p-2 text-sky-700 hover:bg-sky-100"
-                aria-label="Expand tips"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                className="rounded-md p-2 text-sky-700 hover:bg-sky-100"
-                aria-label="Dismiss banner"
-                onClick={() => setBannerVisible(false)}
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+    <div
+      className="min-h-[calc(100vh-5rem)] bg-white px-4 py-5 sm:px-6 lg:px-8 lg:py-7"
+      style={{ fontFamily: "'Poppins', sans-serif" }}
+    >
+      <style>{FEEDBACK_ANIMATION_STYLES}</style>
+      <div className="w-full max-w-[1020px] space-y-6">
+        <header className="flex items-start gap-3 sm:gap-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-[#f7f7f6]">
+            <MessageSquare
+              className="h-4 w-4 text-[#ef6f4f]"
+              strokeWidth={2}
+            />
           </div>
-        )}
-
-        <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-white shadow-sm">
-            <MessageSquare className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+          <div className="min-w-0">
+            <h1 className="text-[20px] sm:text-[24px] font-extrabold leading-tight tracking-tight text-[#111827]">
               Team Feedback
             </h1>
-            <p className="mt-1 text-sm text-neutral-500 sm:text-base">
+            <p className="mt-1 text-[13px] font-medium text-[#64748b]">
               Give and receive constructive feedback using the Sandwich
-              technique
-            </p>
-            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-neutral-400">
-              {orgLine}
+              <span className="text-[#ef6f4f]"> technique</span>
             </p>
           </div>
         </header>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
-          {headerSummaryStats.map(
-            ({ label, value, icon: Icon, bgClass, iconClass }) => (
-              <Card
-                key={label}
-                className={cn(
-                  "border-0 shadow-md transition-shadow hover:shadow-lg rounded-2xl p-5",
-                  bgClass
-                )}
-              >
-                <div className="flex flex-col items-center text-center">
-                  <Icon className={cn("mb-3 h-7 w-7", iconClass)} />
-                  <p className="text-3xl font-bold tabular-nums text-neutral-900">
-                    {value}
-                  </p>
-                  <p className="mt-1 text-xs font-medium text-neutral-600">
-                    {label}
-                  </p>
-                </div>
-              </Card>
-            )
-          )}
-        </div>
-
-        <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-md">
-          <Tabs
-            value={feedbackTab}
-            onValueChange={setFeedbackTab}
-            className="w-full"
-          >
-            <TabsList
-              className={cn(
-                "h-auto w-full justify-start gap-1 rounded-none border-b border-[#DA7756]/20",
-                "bg-[#DA7756]/10 p-2"
-              )}
-            >
-              <TabsTrigger
-                value="received"
-                className={cn(
-                  "gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-neutral-600 transition-colors",
-                  "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:[&_svg]:text-white",
-                  "hover:bg-[#DA7756]/10"
-                )}
-              >
-                <Inbox className="h-4 w-4" />
-                Received
-                {receivedFeedback.length > 0 && (
-                  <span className="ml-1 rounded-full bg-sky-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                    {receivedFeedback.length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger
-                value="given"
-                className={cn(
-                  "gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-neutral-600 transition-colors",
-                  "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:[&_svg]:text-white",
-                  "hover:bg-[#DA7756]/10"
-                )}
-              >
-                <Send className="h-4 w-4" />
-                Given
-                {givenFeedback.length > 0 && (
-                  <span className="ml-1 rounded-full bg-[#2E7D32] px-1.5 py-0.5 text-[10px] font-bold text-white">
-                    {givenFeedback.length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger
-                value="give"
-                className={cn(
-                  "gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-neutral-600",
-                  "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white",
-                  "data-[state=active]:shadow-sm data-[state=active]:[&_svg]:text-white",
-                  "data-[state=inactive]:bg-transparent"
-                )}
-              >
-                <Pencil className="h-4 w-4" />
-                Give Feedback
-              </TabsTrigger>
-            </TabsList>
-
-            {feedbackTab === "received" && (
-              <div className="border-b border-neutral-100 bg-[#DA7756]/10 px-4 py-3 sm:px-6">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-                  <span className="text-sm text-neutral-600">
-                    View feedback for:
-                  </span>
-                  <Select value={receivedView} onValueChange={setReceivedView}>
-                    <SelectTrigger className="h-10 w-full max-w-[220px] rounded-lg border-neutral-200 bg-white">
-                      <SelectValue placeholder={myselfLabel} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="myself">{myselfLabel}</SelectItem>
-                      {teamMembersLoading ? (
-                        <div className="px-3 py-2 text-sm text-neutral-400">
-                          Loading team members...
-                        </div>
-                      ) : (
-                        teamMembers
-                          .filter((member) => member.id !== currentUserId)
-                          .map((member) => (
-                            <SelectItem key={member.value} value={member.value}>
-                              {member.label}
-                            </SelectItem>
-                          ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
-
-            <TabsContent
+        <Tabs
+          value={feedbackTab}
+          onValueChange={(v) => setFeedbackTab(v as any)}
+          className="w-full"
+        >
+          <TabsList className="flex h-9 w-full max-w-full items-center justify-between gap-0.5 rounded-full border border-[#edf0f4] bg-white p-0.5 shadow-[0_6px_16px_rgba(15,23,42,0.06)] sm:inline-flex sm:h-11 sm:w-auto sm:justify-start sm:gap-1 sm:p-1">
+            <TabsTrigger
               value="received"
-              className="m-0 focus-visible:outline-none"
+              className="inline-flex h-8 flex-1 items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[10px] font-medium text-[#53647d] transition-colors hover:bg-[#fff7f4] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252] sm:h-9 sm:flex-none sm:px-4 sm:text-[13px]"
             >
-              <AsyncBoundary>
-                <GivenFeedbackList
-                  key={`received-${receivedView}`}
-                  onGiveFeedbackClick={() => {
-                    setEditingFeedback(null);
-                    setFeedbackTab("give");
-                  }}
-                  onEditFeedback={(item) => {
-                    setEditingFeedback(item);
-                    setFeedbackTab("give");
-                  }}
-                  direction="from"
-                  filterUserId={null}
-                  itemsOverride={receivedFeedback}
-                />
-              </AsyncBoundary>
-            </TabsContent>
-
-            <TabsContent
+              <Inbox className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
+              Received
+              {receivedBadgeCount > 0 && (
+                <span
+                  className="ml-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white/95 px-1 text-[9px] font-extrabold text-[#e77252] sm:ml-2 sm:text-[10px]"
+                >
+                  {receivedBadgeCount}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
               value="given"
-              className="m-0 focus-visible:outline-none"
+              className="inline-flex h-8 flex-1 items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[10px] font-medium text-[#53647d] transition-colors hover:bg-[#fff7f4] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252] sm:h-9 sm:flex-none sm:px-4 sm:text-[13px]"
             >
-              <AsyncBoundary>
-                <GivenFeedbackList
-                  onGiveFeedbackClick={() => {
-                    setEditingFeedback(null);
-                    setFeedbackTab("give");
-                  }}
-                  onEditFeedback={(item) => {
-                    setEditingFeedback(item);
-                    setFeedbackTab("give");
-                  }}
-                  direction="to"
-                />
-              </AsyncBoundary>
-            </TabsContent>
-
-            <TabsContent
+              <Send className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
+              Given
+              {givenFeedback.length > 0 && (
+                <span
+                  className="ml-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white/95 px-1 text-[9px] font-extrabold text-[#e77252] sm:ml-2 sm:text-[10px]"
+                >
+                  {givenFeedback.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
               value="give"
-              className="m-0 focus-visible:outline-none"
+              className="inline-flex h-8 flex-1 items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[10px] font-medium text-[#53647d] transition-colors hover:bg-[#fff7f4] data-[state=active]:bg-[#e77252] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:hover:bg-[#e77252] sm:h-9 sm:flex-none sm:px-4 sm:text-[13px]"
             >
-              <AsyncBoundary>
-                <GiveFeedbackForm
-                  initialFeedback={editingFeedback}
-                  onCancelEdit={() => {
-                    setEditingFeedback(null);
-                    setFeedbackTab("given");
-                  }}
-                  onSubmitted={() => {
-                    setEditingFeedback(null);
-                    setFeedbackTab("given");
-                  }}
+              <Pencil className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
+              Give Feedback
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent
+            value="received"
+            className="feedback-tab-panel mt-6 space-y-4 focus-visible:outline-none"
+          >
+            <div className="space-y-5">
+              <div className="flex w-full flex-col items-stretch gap-2 rounded-[14px] bg-[#f5f2eb] p-2 sm:inline-flex sm:w-auto sm:flex-row sm:items-center sm:gap-3">
+                <span className="pl-2 text-[13px] font-medium text-[#111827]">
+                  View feedback for:
+                </span>
+                {/* ── Searchable dropdown (BhagSection style) ── */}
+                <UserSelectReceived
+                  value={receivedView}
+                  onChange={setReceivedView}
+                  users={teamMembers}
+                  myselfLabel={myselfLabel}
+                  currentUserId={currentUserId}
+                  disabled={teamMembersLoading}
                 />
-              </AsyncBoundary>
-            </TabsContent>
-          </Tabs>
-        </Card>
+              </div>
+              <div>
+                <AsyncBoundary>
+                  <GivenFeedbackList
+                    key={`received-${receivedView}`}
+                    onGiveFeedbackClick={() => setFeedbackTab("give")}
+                    onEditFeedback={(item) => {
+                      setEditingFeedback(item);
+                      setIsEditModalOpen(true);
+                    }}
+                    direction="from"
+                    filterUserId={null}
+                    itemsOverride={receivedFeedback}
+                  />
+                </AsyncBoundary>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent
+            value="given"
+            className="feedback-tab-panel mt-6 focus-visible:outline-none"
+          >
+            <AsyncBoundary>
+              <GivenFeedbackList
+                key={`given-${receivedView}`}
+                onGiveFeedbackClick={() => setFeedbackTab("give")}
+                onEditFeedback={(item) => {
+                  setEditingFeedback(item);
+                  setIsEditModalOpen(true);
+                }}
+                direction="to"
+                filterUserId={selectedReceivedUserId}
+                itemsOverride={givenFeedback}
+              />
+            </AsyncBoundary>
+          </TabsContent>
+
+          <TabsContent
+            value="give"
+            className="feedback-tab-panel mt-6 focus-visible:outline-none"
+          >
+            <AsyncBoundary>
+              <GiveFeedbackForm onSubmitted={() => setFeedbackTab("given")} />
+            </AsyncBoundary>
+          </TabsContent>
+        </Tabs>
       </div>
+
+      {isEditModalOpen && editingFeedback && (
+        <EditFeedbackModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingFeedback(null);
+          }}
+          feedbackItem={editingFeedback}
+        />
+      )}
     </div>
   );
 }
 
 // ─── Root Export ───────────────────────────────────────────────────────────────
 
-/**
- * Default export wraps the page in QueryClientProvider.
- *
- * If your app root already provides a QueryClient, import and use
- * FeedbackPage directly instead to share the cache.
- */
 const Feedback = () => (
   <QueryClientProvider client={queryClient}>
     <FeedbackPage />

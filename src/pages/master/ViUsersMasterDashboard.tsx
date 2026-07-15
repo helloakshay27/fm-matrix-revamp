@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDispatch } from "react-redux";
 import moment from "moment";
@@ -52,6 +52,7 @@ const columns: ColumnConfig[] = [
 export const ViUsersMasterDashboard = () => {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const { setCurrentSection } = useLayout();
     const [searchTerm, setSearchTerm] = useState<string>("");
@@ -61,11 +62,14 @@ export const ViUsersMasterDashboard = () => {
         (state: RootState) => state.viUsers
     );
 
-    const [localPagination, setLocalPagination] = useState({
-        current_page: 1,
-        total_count: 0,
-        total_pages: 0,
-    });
+   const [localPagination, setLocalPagination] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      current_page: Number(params.get('page')) || 1,
+      total_count: 0,
+      total_pages: 0,
+    };
+  });
 
     useEffect(() => {
         if (pagination) {
@@ -88,10 +92,12 @@ export const ViUsersMasterDashboard = () => {
         [dispatch]
     );
 
-    useEffect(() => {
-        setCurrentSection("Master");
-        fetchUsers(1, "", webEnabledFilter);
-    }, [setCurrentSection, fetchUsers, webEnabledFilter]);
+   useEffect(() => {
+    setCurrentSection("Master");
+    const params = new URLSearchParams(window.location.search);
+    const initialPage = Number(params.get('page')) || 1;
+    fetchUsers(initialPage, "", webEnabledFilter);
+  }, [setCurrentSection, fetchUsers, webEnabledFilter]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const debouncedSearch = useCallback(
@@ -111,13 +117,18 @@ export const ViUsersMasterDashboard = () => {
         fetchUsers(1, searchTerm, checked);
     };
 
-    const handlePageChange = async (page: number) => {
-        setLocalPagination((prev) => ({
-            ...prev,
-            current_page: page,
-        }));
-        fetchUsers(page, searchTerm, webEnabledFilter);
-    };
+    useEffect(() => {
+    navigate(`${location.pathname}?page=${localPagination.current_page}`, { replace: true });
+  }, [localPagination.current_page]);
+
+  const handlePageChange = (page: number) => {
+    setLocalPagination((prev) => ({
+      ...prev,
+      current_page: page,
+    }));
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
+    fetchUsers(page, searchTerm, webEnabledFilter);
+  };
 
     // Status update functionality
     const handleToggleUserStatus = async (userId: number, isActive: boolean) => {

@@ -6,10 +6,11 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { getCustomerList } from "@/store/slices/cusomerSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate ,useLocation} from "react-router-dom";
 import { format } from "date-fns";
 import axios from "axios";
 import { Switch } from "@/components/ui/switch";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 const columns: ColumnConfig[] = [
   {
@@ -141,13 +142,23 @@ const columns: ColumnConfig[] = [
 ];
 
 const CRMCustomersDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [customers, setCustomers] = useState([]);
+  const [currentPage,setCurrentPage] = useState(()=>{
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  })
+
+  useEffect(()=>{
+    navigate(`${location.pathname}?page=${currentPage}`,{replace:true});
+  },[currentPage]);
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -319,17 +330,22 @@ case "enable_sites":
   };
 
   const renderActions = (item: any) => (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => navigate(`/crm/customers/${item.id}`)}
-    >
-      <Eye className="w-4 h-4" />
-    </Button>
+    <>
+      {shouldShow("Customers", "show") && (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate(`/crm/customers/${item.id}`)}
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+      )}
+    </>
   );
 
   const leftActions = (
     <>
+      {shouldShow("Customers", "create") && (
       <Button
         className="bg-[#C72030] hover:bg-[#A01020] text-white"
         onClick={() => navigate("/crm/customers/add")}
@@ -337,8 +353,14 @@ case "enable_sites":
         <Plus className="w-4 h-4 mr-2" />
         Add
       </Button>
+      )}
     </>
   );
+
+const handlePageChange = (page:number)=>{
+  setCurrentPage(page);
+  navigate(`${location.pathname}?page=${page}`);
+}
 
   return (
     <div className="p-6 space-y-6">
@@ -358,6 +380,8 @@ case "enable_sites":
         handleExport={handleExport}
         pagination={true}
         pageSize={10}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
       />
     </div>
   );

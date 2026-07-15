@@ -6,9 +6,11 @@ import axios from "axios";
 import { ArrowUpDown, Bell, ChevronLeft, ChevronRight, Filter, Plus, Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 const BookingCalenderView = () => {
     const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
+
     const baseUrl = localStorage.getItem("baseUrl")
     const token = localStorage.getItem("token")
 
@@ -262,6 +264,7 @@ const BookingCalenderView = () => {
         const currentPath = window.location.pathname;
         if (currentPath.includes("bookings")) navigate("/bookings/add");
         else if (currentPath.includes("club-management")) navigate("/club-management/amenities-booking/add");
+        else if (currentPath.includes("pulse")) navigate("/pulse/amenity/add");
         else navigate("/vas/booking/add");
     };
 
@@ -291,13 +294,14 @@ const BookingCalenderView = () => {
             {/* Header Controls */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
+                    {shouldShow( "Bookings","create")&&(
                     <Button
-                        className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px]"
+                        className="fm-button-fix fm-button-brand px-4 py-2"
                         onClick={handleAddBooking}
                     >
                         <Plus className="w-4 h-4" />
                         Add
-                    </Button>
+                    </Button>)}
 
                     <RadioGroup row value={bookingType} onChange={(e) => setBookingType(e.target.value)}>
                         <FormControlLabel

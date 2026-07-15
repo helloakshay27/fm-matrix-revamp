@@ -586,7 +586,7 @@ export const PatrollingDetailPage: React.FC = () => {
         if (type === "weekdays" && items.length <= 7) {
           const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           const weekdayList = items.map((d) => {
-            const dayNum = parseInt(d);
+            const dayNum = parseInt(d) % 7;
             return dayNames[dayNum] || d;
           });
           return weekdayList.join(", ");
@@ -891,7 +891,7 @@ export const PatrollingDetailPage: React.FC = () => {
             The requested patrolling could not be found.
           </p>
           <Button
-            onClick={() => navigate("/security/patrolling")}
+           onClick={() => navigate(-1)}
             className="mt-4"
           >
             Back to Patrolling List
@@ -906,7 +906,7 @@ export const PatrollingDetailPage: React.FC = () => {
       {/* Header */}
       <div className="mb-6">
         <button
-          onClick={() => navigate("/security/patrolling")}
+        onClick={() => navigate(-1)}
           className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />

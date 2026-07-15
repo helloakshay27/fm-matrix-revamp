@@ -43,6 +43,246 @@ interface CompanyHubNewProps {
   userName?: string;
 }
 
+type EmployeeOfMonthDisplay = {
+  id?: number | string | null;
+  extra_field_id?: number | string | null;
+  full_name?: string | null;
+  name?: string | null;
+  userName?: string | null;
+  role?: string | null;
+  month?: string | null;
+  points?: string[];
+  profile_image?: string | null;
+  profileImage?: string | null;
+  field_description?: string | null;
+};
+
+const readJsonObject = (value: unknown) => {
+  if (!value || typeof value !== "string" || !value.trim().startsWith("{")) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return {};
+  }
+};
+
+const readCachedEmployeeOfMonth = (): EmployeeOfMonthDisplay | null => {
+  try {
+    const cached = localStorage.getItem("company_hub_eom");
+    return cached
+      ? normalizeEmployeeOfMonth(JSON.parse(cached) as EmployeeOfMonthDisplay)
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const isCompanyHubCacheFresh = () =>
+  Date.now() - Number(localStorage.getItem("company_hub_update_time") || 0) <
+  3600000;
+
+const normalizeEmployeeOfMonth = (
+  employee: any
+): EmployeeOfMonthDisplay | null => {
+  if (!employee) return null;
+
+  const parsedFieldValue = readJsonObject(employee.field_value);
+  const merged = { ...employee, ...parsedFieldValue };
+  const fieldDescription =
+    merged.field_description || employee.field_description || null;
+  const fieldDescriptionLooksLikeImage =
+    typeof fieldDescription === "string" &&
+    /^(https?:\/\/|\/|data:image\/)/.test(fieldDescription);
+
+  const fullName =
+    merged.full_name ||
+    merged.userName ||
+    merged.name ||
+    (!fieldDescriptionLooksLikeImage ? fieldDescription : null);
+  const profileImage =
+    merged.profile_image ||
+    merged.profileImage ||
+    (fieldDescriptionLooksLikeImage ? fieldDescription : null);
+
+  return {
+    ...employee,
+    ...parsedFieldValue,
+    id: employee.id || employee.extra_field_id || null,
+    extra_field_id: employee.extra_field_id || employee.id || null,
+    full_name: fullName || null,
+    name: merged.name || fullName || null,
+    userName: merged.userName || fullName || null,
+    role: merged.role || "Employee",
+    month: merged.month || employee.month || employee.field_name || null,
+    points: Array.isArray(merged.points) ? merged.points.filter(Boolean) : [],
+    profile_image: profileImage || null,
+    profileImage: profileImage || null,
+    field_description: fieldDescription,
+  };
+};
+
+const hasEmployeeOfMonthContent = (employee?: EmployeeOfMonthDisplay | null) =>
+  Boolean(
+    employee?.full_name ||
+      employee?.name ||
+      employee?.userName ||
+      employee?.month ||
+      employee?.profile_image ||
+      employee?.profileImage ||
+      (employee?.points && employee.points.length > 0)
+  );
+
+const getCommunityLikeStorageKey = (userId?: number | string) =>
+  `company_hub_local_likes_${userId || "guest"}`;
+
+const readLocalLikedPostIds = (userId?: number | string) => {
+  try {
+    const raw = localStorage.getItem(getCommunityLikeStorageKey(userId));
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeLocalLikedPostIds = (
+  userId: number | string | undefined,
+  likedPostIds: string[]
+) => {
+  localStorage.setItem(
+    getCommunityLikeStorageKey(userId),
+    JSON.stringify(Array.from(new Set(likedPostIds)))
+  );
+};
+
+const getApiBaseUrl = (baseUrl: string | null) => {
+  const cleanBaseUrl = (baseUrl || "fm-uat-api.lockated.com")
+    .replace(/^https?:\/\//, "")
+    .replace(/\/+$/, "");
+  return `https://${cleanBaseUrl}`;
+};
+
+const normalizeId = (value: unknown) => {
+  if (value === null || value === undefined || value === "") return null;
+  return String(value);
+};
+
+type UnknownRecord = Record<string, unknown>;
+
+const toRecord = (value: unknown): UnknownRecord =>
+  value && typeof value === "object" ? (value as UnknownRecord) : {};
+
+const getCompanyHubCommunityIdFromConfig = (source: unknown): string | null => {
+  const sourceRecord = toRecord(source);
+  const rawConfig = sourceRecord.other_config;
+  const config = toRecord(
+    rawConfig && typeof rawConfig === "object" ? rawConfig : source
+  );
+  const companyHub = toRecord(config.company_hub);
+  const companyHubCommunity = toRecord(companyHub.community);
+  const companyHubCamel = toRecord(config.companyHub);
+  const companyHubCamelCommunity = toRecord(companyHubCamel.community);
+  const candidates = [
+    config.company_hub_community_id,
+    config.companyHubCommunityId,
+    companyHub.community_id,
+    companyHub.communityId,
+    companyHubCommunity.id,
+    companyHubCamel.community_id,
+    companyHubCamel.communityId,
+    companyHubCamelCommunity.id,
+    toRecord(config.company_hub_community).id,
+    toRecord(config.companyHubCommunity).id,
+    config.community_id,
+    config.communityId,
+    toRecord(config.community).id,
+    toRecord(config.community).community_id,
+    sourceRecord.community_id,
+    sourceRecord.communityId,
+  ];
+
+  return candidates.map(normalizeId).find(Boolean) || null;
+};
+
+const getCommunitiesFromResponse = (data: unknown): UnknownRecord[] => {
+  const response = toRecord(data);
+  if (Array.isArray(response.communities)) {
+    return response.communities.filter(
+      (community): community is UnknownRecord =>
+        Boolean(community) && typeof community === "object"
+    );
+  }
+  if (Array.isArray(response.data)) {
+    return response.data.filter(
+      (community): community is UnknownRecord =>
+        Boolean(community) && typeof community === "object"
+    );
+  }
+  if (Array.isArray(data)) {
+    return data.filter(
+      (community): community is UnknownRecord =>
+        Boolean(community) && typeof community === "object"
+    );
+  }
+  return [];
+};
+
+const chooseCompanyHubCommunity = (
+  communities: UnknownRecord[],
+  companyName?: string | null,
+  companyId?: string | null
+) => {
+  const activeCommunities = communities.filter(
+    (community) =>
+      community?.active !== false &&
+      community?.status !== false &&
+      community?.active !== "false" &&
+      community?.status !== "false"
+  );
+  const candidates =
+    activeCommunities.length > 0 ? activeCommunities : communities;
+  const companyNameLower = companyName?.toLowerCase().trim();
+  const namedMatch = candidates.find((community) => {
+    const name = String(community?.name || "").toLowerCase();
+    return (
+      name.includes("company hub") ||
+      name.includes("companyhub") ||
+      name.includes("employee hub") ||
+      name.includes("community feed")
+    );
+  });
+
+  if (namedMatch) return namedMatch;
+
+  if (companyId) {
+    const companyIdMatch = candidates.find((community) =>
+      [
+        community?.company_id,
+        community?.organization_id,
+        community?.resource_id,
+        community?.company_setup_id,
+      ]
+        .map(normalizeId)
+        .includes(companyId)
+    );
+    if (companyIdMatch) return companyIdMatch;
+  }
+
+  if (companyNameLower) {
+    const companyMatch = candidates.find((community) =>
+      String(community?.name || "")
+        .toLowerCase()
+        .includes(companyNameLower)
+    );
+    if (companyMatch) return companyMatch;
+  }
+
+  return candidates[0] || null;
+};
+
 const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const navigate = useNavigate();
   const { setCurrentSection } = useLayout();
@@ -61,7 +301,9 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
     current_streak: 0,
     leaderboard_rank: 0,
   });
-  const [activeTab, setActiveTab] = useState<"dashboard" | "business">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "business">(
+    "dashboard"
+  );
 
   const tabs = [
     { key: "dashboard", label: "Dashboard" },
@@ -76,8 +318,8 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
   const dispatch = useDispatch();
   const [openTaskModal, setOpenTaskModal] = useState(false);
-  const [openTodoModal, setOpenTodoModal] = useState(false)
-  const [openTicketModal, setOpenTicketModal] = useState(false)
+  const [openTodoModal, setOpenTodoModal] = useState(false);
+  const [openTicketModal, setOpenTicketModal] = useState(false);
 
   const handleCloseModal = () => {
     setOpenTaskModal(false);
@@ -86,7 +328,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
   const handleCloseTodoModal = () => {
     setOpenTodoModal(false);
-  }
+  };
 
   useEffect(() => {
     setCurrentSection("Company Hub New");
@@ -119,8 +361,10 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   // Community State
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
-  const [, setAnnouncements] = useState<any[]>([]);
-  const [currentEmployee, setCurrentEmployee] = useState<any>(null);
+  const companyHubCommunityIdRef = useRef<string | null>(null);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [currentEmployee, setCurrentEmployee] =
+    useState<EmployeeOfMonthDisplay | null>(null);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     open: boolean;
@@ -140,60 +384,162 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Matrix Modal State
-  const [selectedMatrixQuadrant, setSelectedMatrixQuadrant] = useState<any>(null);
+  const [selectedMatrixQuadrant, setSelectedMatrixQuadrant] =
+    useState<any>(null);
 
   const user = React.useMemo(() => getUser(), []);
-  const userId = JSON.parse(localStorage.getItem("user") || "{}").id
+  const userId = JSON.parse(localStorage.getItem("user") || "{}").id;
   const displayName =
     userName || (user ? `${user.firstname} ${user.lastname}`.trim() : "Guest");
   const companyId = String(user?.lock_role?.company_id || "116");
 
-  // Fetch Logic
-  const fetchPosts = useCallback(async () => {
-    setIsLoadingPosts(true);
-    try {
+  const resolveCompanyHubCommunityId = useCallback(
+    async (sourceCompanyData?: CompanyData | null) => {
+      const effectiveCompanyId = localStorage.getItem("org_id") || companyId;
+      const storageKey = `company_hub_community_id_${effectiveCompanyId}`;
+      const configuredId =
+        getCompanyHubCommunityIdFromConfig(sourceCompanyData);
+
+      if (configuredId) {
+        localStorage.setItem(storageKey, configuredId);
+        companyHubCommunityIdRef.current = configuredId;
+        return configuredId;
+      }
+
+      if (companyHubCommunityIdRef.current) {
+        return companyHubCommunityIdRef.current;
+      }
+
+      const cachedId = localStorage.getItem(storageKey);
+      if (cachedId) {
+        companyHubCommunityIdRef.current = cachedId;
+        return cachedId;
+      }
+
       const token = localStorage.getItem("token");
-      const baseUrl =
-        localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-      const fullUrl = `https://${cleanBaseUrl}/communities/3/posts.json`;
+      if (!token) return null;
 
-      const response = await axios.get(
-        fullUrl,
-        {
-          headers: { Authorization: `Bearer ${token}` },
+      const apiBaseUrl = getApiBaseUrl(localStorage.getItem("baseUrl"));
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const fetchCommunities = async (search?: string) => {
+        const params = new URLSearchParams({
+          page: "1",
+          per_page: "100",
+        });
+        if (search) {
+          params.append("q[name_cont]", search);
         }
-      );
-      const rawPosts =
-        response.data.posts ||
-        response.data.data ||
-        (Array.isArray(response.data) ? response.data : []);
-      const postsData = rawPosts.map((post: any) => {
-        // Calculate total likes if not provided by backend
-        const totalLikes = post.total_likes ?? 
-          (post.likes_with_emoji ? Object.values(post.likes_with_emoji).reduce((a: any, b: any) => a + (Number(b) || 0), 0) : 0);
-        
-        // Identify post type
-        let type: "post" | "event" | "notice" | "document" = "post";
-        if (post.event) type = "event";
-        else if (post.notice) type = "notice";
-        else if (post.resource_type === "Document") type = "document";
 
-        return {
-          ...post,
-          type,
-          total_likes: totalLikes,
-          total_comments: post.total_comments ?? (Array.isArray(post.comments) ? post.comments.length : 0),
-          comments: Array.isArray(post.comments) ? post.comments : [],
-        };
-      });
-      setPosts(postsData);
-    } catch (e) {
-      console.error("❌ Posts fetch failed:", e);
-    } finally {
-      setIsLoadingPosts(false);
-    }
-  }, []);
+        const response = await axios.get(
+          `${apiBaseUrl}/communities.json?${params.toString()}`,
+          { headers }
+        );
+        return getCommunitiesFromResponse(response.data);
+      };
+
+      let communities = await fetchCommunities("Company Hub");
+      if (communities.length === 0) {
+        communities = await fetchCommunities();
+      }
+
+      const selectedCommunity = chooseCompanyHubCommunity(
+        communities,
+        sourceCompanyData?.name,
+        effectiveCompanyId
+      );
+      const selectedId = normalizeId(selectedCommunity?.id);
+
+      if (selectedId) {
+        localStorage.setItem(storageKey, selectedId);
+        companyHubCommunityIdRef.current = selectedId;
+      }
+
+      return selectedId;
+    },
+    [companyId]
+  );
+
+  // Fetch Logic
+  const fetchPosts = useCallback(
+    async (sourceCompanyData?: CompanyData | null) => {
+      setIsLoadingPosts(true);
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setPosts([]);
+          return;
+        }
+
+        const communityId =
+          await resolveCompanyHubCommunityId(sourceCompanyData);
+        if (!communityId) {
+          setPosts([]);
+          return;
+        }
+
+        const apiBaseUrl = getApiBaseUrl(localStorage.getItem("baseUrl"));
+        const fullUrl = `${apiBaseUrl}/communities/${communityId}/posts.json`;
+
+        const response = await axios.get(fullUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const rawPosts =
+          response.data.posts ||
+          response.data.data ||
+          (Array.isArray(response.data) ? response.data : []);
+        const localLikedPostIds = readLocalLikedPostIds(userId);
+        const postsData = rawPosts.map((post: any) => {
+          const isLocallyLiked = localLikedPostIds.includes(String(post.id));
+          const isApiLiked = post.isliked === true || post.isliked === "true";
+          // Calculate total likes if not provided by backend
+          const apiTotalLikes =
+            post.total_likes ??
+            (post.likes_with_emoji
+              ? Object.values(post.likes_with_emoji).reduce(
+                  (a: any, b: any) => a + (Number(b) || 0),
+                  0
+                )
+              : 0);
+          const totalLikes =
+            isLocallyLiked && !isApiLiked
+              ? Number(apiTotalLikes || 0) + 1
+              : Number(apiTotalLikes || 0);
+
+          // Identify post type
+          let type: "post" | "event" | "notice" | "document" = "post";
+          if (post.event) type = "event";
+          else if (post.notice) type = "notice";
+          else if (post.resource_type === "Document") type = "document";
+
+          return {
+            ...post,
+            type,
+            total_likes: totalLikes,
+            isliked: isApiLiked || isLocallyLiked,
+            likes_with_emoji: {
+              ...(post.likes_with_emoji || {}),
+              ...(isLocallyLiked && !isApiLiked
+                ? {
+                    heart: Number(post.likes_with_emoji?.heart || 0) + 1,
+                  }
+                : {}),
+            },
+            total_comments:
+              post.total_comments ??
+              (Array.isArray(post.comments) ? post.comments.length : 0),
+            comments: Array.isArray(post.comments) ? post.comments : [],
+          };
+        });
+        setPosts(postsData);
+      } catch (e) {
+        console.error("❌ Posts fetch failed:", e);
+      } finally {
+        setIsLoadingPosts(false);
+      }
+    },
+    [resolveCompanyHubCommunityId, userId]
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -214,9 +560,27 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
         if (data && typeof data.other_config === "string") {
           try {
             data.other_config = JSON.parse(data.other_config);
-          } catch (e) { }
+          } catch (e) {
+            console.error("Failed to parse company hub config:", e);
+          }
         }
         setCompanyData(data);
+
+        const cachedEom = readCachedEmployeeOfMonth();
+        const shouldPreferCachedEom =
+          isCompanyHubCacheFresh() && hasEmployeeOfMonthContent(cachedEom);
+        if (shouldPreferCachedEom) {
+          setCurrentEmployee(cachedEom);
+        } else {
+          const configEom = normalizeEmployeeOfMonth(
+            data?.other_config?.employee_of_the_month
+          );
+          if (hasEmployeeOfMonthContent(configEom)) {
+            setCurrentEmployee(configEom);
+          } else if (hasEmployeeOfMonthContent(cachedEom)) {
+            setCurrentEmployee(cachedEom);
+          }
+        }
 
         // 2. Announcements & Fallback
         try {
@@ -252,7 +616,9 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                   const p = JSON.parse(desc);
                   desc = p.description || p.content || desc;
                   active = p.isActive !== undefined ? p.isActive : true;
-                } catch (e) { }
+                } catch (e) {
+                  console.error("Failed to parse announcement config:", e);
+                }
               }
               return { ...a, displayDescription: desc, isActive: active };
             })
@@ -264,34 +630,70 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
         // 3. Employee of Month
         try {
-          const eomRes = await axios.get(
-            `${protocol}${baseUrl}/extra_fields/employee_of_the_month`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          const rawEom = eomRes.data?.employee_of_the_month;
-          if (rawEom) {
-            const newest = Array.isArray(rawEom)
-              ? [...rawEom].sort(
-                (a, b) => (b.extra_field_id || 0) - (a.extra_field_id || 0)
-              )[0]
-              : rawEom;
-            if (newest?.extra_field_id) {
-              const detailRes = await axios.get(
-                `${protocol}${baseUrl}/extra_fields/employee_of_the_month?id=${newest.extra_field_id}`,
+          if (!shouldPreferCachedEom) {
+            const eomRes = await axios.get(
+              `${protocol}${baseUrl}/extra_fields/employee_of_the_month?resource_id=${effectiveCompanyId}&resource_type=CompanySetup`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            let rawEom =
+              eomRes.data?.employee_of_the_month ||
+              eomRes.data?.data ||
+              (Array.isArray(eomRes.data) ? eomRes.data : null);
+
+            if (!rawEom || (Array.isArray(rawEom) && rawEom.length === 0)) {
+              const fallbackRes = await axios.get(
+                `${protocol}${baseUrl}/extra_fields?resource_id=${effectiveCompanyId}&resource_type=CompanySetup&group_name=employee_of_the_month`,
                 { headers: { Authorization: `Bearer ${token}` } }
               );
-              const detail = detailRes.data?.employee_of_the_month;
-              const rawRecRes = await axios.get(
-                `${protocol}${baseUrl}/extra_fields/${newest.extra_field_id}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-              );
-              let parsedRec = {};
-              try {
-                parsedRec = JSON.parse(
-                  rawRecRes.data?.data?.field_value || "{}"
-                );
-              } catch (e) { }
-              setCurrentEmployee({ ...newest, ...detail, ...parsedRec });
+              rawEom = Array.isArray(fallbackRes.data)
+                ? fallbackRes.data
+                : Array.isArray(fallbackRes.data?.data)
+                  ? fallbackRes.data.data
+                  : fallbackRes.data?.employee_of_the_month;
+            }
+
+            if (rawEom) {
+              const newest = Array.isArray(rawEom)
+                ? [...rawEom].sort(
+                    (a, b) =>
+                      Number(b.extra_field_id || b.id || 0) -
+                      Number(a.extra_field_id || a.id || 0)
+                  )[0]
+                : rawEom;
+              const newestId = newest?.extra_field_id || newest?.id;
+              let detail = {};
+              let rawRecord = {};
+
+              if (newestId) {
+                try {
+                  const detailRes = await axios.get(
+                    `${protocol}${baseUrl}/extra_fields/employee_of_the_month?id=${newestId}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                  );
+                  detail = detailRes.data?.employee_of_the_month || {};
+                } catch (e) {
+                  console.error("EOM detail error", e);
+                }
+
+                try {
+                  const rawRecRes = await axios.get(
+                    `${protocol}${baseUrl}/extra_fields/${newestId}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                  );
+                  rawRecord = rawRecRes.data?.data || {};
+                } catch (e) {
+                  console.error("EOM raw record error", e);
+                }
+              }
+
+              const normalizedEom = normalizeEmployeeOfMonth({
+                ...newest,
+                ...detail,
+                ...rawRecord,
+              });
+              if (hasEmployeeOfMonthContent(normalizedEom)) {
+                setCurrentEmployee(normalizedEom);
+              }
             }
           }
         } catch (e) {
@@ -300,8 +702,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
         // 4. Stats
         const statsRes = await axios.get(
-          `${protocol}${baseUrl}/todos.json?page=1&q[user_id_eq]=${userId}`
-          ,
+          `${protocol}${baseUrl}/todos.json?page=1&q[user_id_eq]=${userId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setTaskStats(statsRes.data);
@@ -319,13 +720,13 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
           console.error("Life compass error", e);
         }
 
-        fetchPosts();
+        fetchPosts(data);
       } catch (e) {
         console.error("Global fetch failed", e);
       }
     };
     fetchData();
-  }, [companyId, fetchPosts, user?.email]);
+  }, [companyId, fetchPosts, user?.email, userId]);
 
   const confirmDelete = async () => {
     if (!deleteConfirmation.id || !deleteConfirmation.type) return;
@@ -358,10 +759,16 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
       const baseUrl =
         localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
       const protocol = baseUrl.startsWith("https") ? "" : "https://";
+      const communityId = await resolveCompanyHubCommunityId(companyData);
+
+      if (!communityId) {
+        toast.error("Unable to find a community for Company Hub");
+        return;
+      }
 
       const formData = new FormData();
       formData.append("body", postText);
-      formData.append("resource_id", "3");
+      formData.append("resource_id", communityId);
       formData.append("resource_type", "Community");
 
       if (createMode === "poll") {
@@ -409,30 +816,111 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
     }
   };
 
-  const handleLikePost = async (postId: number) => {
+  const handleLikePost = async (postId: number, postData?: Post) => {
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please log in again to like posts");
+        return;
+      }
+
       const baseUrl =
         localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-      const fullUrl = `https://${cleanBaseUrl}/likes.json`;
+      const cleanBaseUrl = baseUrl
+        .replace(/^https?:\/\//, "")
+        .replace(/\/+$/, "");
+      const post = postData || posts.find((item) => item.id === postId);
+      if (!post) {
+        toast.error("Unable to find post details. Refreshing feed...");
+        fetchPosts();
+        return;
+      }
 
-      await axios.post(
-        fullUrl,
-        {
-          like: {
-            thing_id: postId,
-            thing_type: "Post",
-          },
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const applyLocalLikeToggle = () => {
+        const postIdKey = String(postId);
+        const likedPostIds = readLocalLikedPostIds(userId);
+        const shouldLike = !post.isliked;
+        const nextLikedPostIds = shouldLike
+          ? [...likedPostIds, postIdKey]
+          : likedPostIds.filter((id) => id !== postIdKey);
+        writeLocalLikedPostIds(userId, nextLikedPostIds);
+
+        setPosts((prevPosts) =>
+          prevPosts.map((item) => {
+            if (item.id !== postId) return item;
+            const currentTotalLikes = Number(item.total_likes || 0);
+            const nextTotalLikes = shouldLike
+              ? currentTotalLikes + 1
+              : Math.max(currentTotalLikes - 1, 0);
+            const currentHeartCount = Number(item.likes_with_emoji?.heart || 0);
+
+            return {
+              ...item,
+              isliked: shouldLike,
+              total_likes: nextTotalLikes,
+              likes_with_emoji: {
+                ...(item.likes_with_emoji || {}),
+                heart: shouldLike
+                  ? currentHeartCount + 1
+                  : Math.max(currentHeartCount - 1, 0),
+              },
+            };
+          })
+        );
+      };
+
+      if (cleanBaseUrl === "fm-uat-api.lockated.com") {
+        applyLocalLikeToggle();
+        return;
+      }
+
+      const likesUrl = `https://${cleanBaseUrl}/likes.json`;
+      const currentUserLike = post.likes_with_user_names?.find(
+        (like: any) => String(like.user_id) === String(userId)
       );
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      };
+
+      if (post.isliked) {
+        if (!currentUserLike?.id) {
+          toast.error("Unable to find your existing like. Refreshing feed...");
+          fetchPosts();
+          return;
+        }
+
+        await axios.delete(
+          `https://${cleanBaseUrl}/likes/${currentUserLike.id}.json`,
+          { headers }
+        );
+      } else {
+        await axios.post(
+          likesUrl,
+          {
+            like: {
+              thing_id: postId,
+              thing_type: "Post",
+              emoji_name: "heart",
+            },
+          },
+          { headers }
+        );
+      }
       fetchPosts();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Like failed:", error);
-      toast.error("Failed to update like");
+      if (error.response?.status === 404) {
+        toast.error("Likes API is not available for this backend");
+        return;
+      }
+
+      toast.error(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Failed to update like"
+      );
     }
   };
 
@@ -443,7 +931,9 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
       const token = localStorage.getItem("token");
       const baseUrl =
         localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const cleanBaseUrl = baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      const cleanBaseUrl = baseUrl
+        .replace(/^https?:\/\//, "")
+        .replace(/\/+$/, "");
       const fullUrl = `https://${cleanBaseUrl}/comments.json`;
 
       await axios.post(
@@ -543,7 +1033,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
       <div className="pb-10">
         {/* --- TOP NAV TABS --- */}
         <div className="flex justify-center pb-2">
-          <div className="flex gap-1 bg-[rgba(232,229,220,0.2)] border-[1.31px] border-[rgba(211,209,199,1)] rounded-full p-1 shadow-sm">
+          <div className="flex gap-1 bg-[#cccbc9] border-[1.31px] border-[rgba(211,209,199,1)] rounded-full p-1 shadow-sm">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
@@ -554,10 +1044,11 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                   }
                   setActiveTab(tab.key as "dashboard" | "business");
                 }}
-                className={`px-8 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 ${activeTab === tab.key
-                  ? "bg-white shadow-xl shadow-black/5 text-gray-900"
-                  : "text-gray-500 hover:text-gray-700"
-                  }`}
+                className={`px-8 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 ${
+                  activeTab === tab.key
+                    ? "bg-white shadow-xl shadow-black/5 text-gray-900"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
               >
                 {tab.label}
               </button>
@@ -573,6 +1064,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
               visionText={visionText}
               missionText={missionText}
               taskStats={taskStats}
+              announcements={announcements}
               selectedMatrixQuadrant={selectedMatrixQuadrant}
               setSelectedMatrixQuadrant={setSelectedMatrixQuadrant}
               activeTimeView={activeTimeView}
@@ -602,19 +1094,19 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
       {/* Floating Bottom Bar */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
-        <div className="flex items-center gap-1.5 backdrop-blur-sm bg-[rgba(0,0,0,0.1)] border-2 border-[rgba(255,255,255,0.4)] rounded-full p-2 shadow-[0_8px_32px_rgba(0,0,0,0.15)] ring-1 ring-white/10">
+        <div className="flex items-center gap-2 backdrop-blur-md bg-white/50 border-[1px] border-white rounded-full p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
           <button
             onClick={() => setIsQuickActionsOpen(true)}
-            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-[rgba(253,253,253,0.2)] border border-[rgba(255,255,255,0.4)] text-[14px] font-medium text-gray-800 hover:bg-white/40 transition-all shadow-sm"
+            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-white/40 border border-[#DA7756] text-[14px] font-semibold text-gray-800 hover:bg-white/60 transition-all shadow-sm group"
           >
-            <div className="w-5 h-5 flex items-center justify-center">
+            <div className="w-5 h-5 flex items-center justify-center transition-transform group-hover:scale-110">
               <svg
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#DA7756"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
@@ -623,19 +1115,19 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
             </div>
             Quick Actions
           </button>
-          <div className="w-px h-6 bg-gray-400/20" />
+          <div className="w-[1.5px] h-6 bg-[#DA7756]/20" />
           <button
-            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-[rgba(253,253,253,0.2)] border border-[rgba(255,255,255,0.4)] text-[14px] font-medium text-gray-800 hover:bg-white/40 transition-all shadow-sm"
             onClick={() => setIsExploreOpen(true)}
+            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-white/40 border border-[#DA7756] text-[14px] font-semibold text-gray-800 hover:bg-white/60 transition-all shadow-sm group"
           >
-            <div className="w-5 h-5 flex items-center justify-center">
+            <div className="w-5 h-5 flex items-center justify-center transition-transform group-hover:scale-110">
               <svg
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#DA7756"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
@@ -645,19 +1137,19 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
             </div>
             Explore
           </button>
-          <div className="w-px h-6 bg-gray-400/20" />
+          <div className="w-[1.5px] h-6 bg-[#DA7756]/20" />
           <button
-            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-[rgba(253,253,253,0.2)] border border-[rgba(255,255,255,0.4)] text-[14px] font-medium text-gray-800 hover:bg-white/40 transition-all shadow-sm"
+            className="flex items-center gap-3 px-6 py-2.5 rounded-full backdrop-blur-sm bg-white/40 border border-[#DA7756] text-[14px] font-semibold text-gray-800 hover:bg-white/60 transition-all shadow-sm group"
             onClick={() => navigate("/ask-ai")}
           >
-            <div className="w-5 h-5 flex items-center justify-center">
+            <div className="w-5 h-5 flex items-center justify-center transition-transform group-hover:scale-110">
               <svg
                 width="20"
                 height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#DA7756"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >

@@ -25,6 +25,14 @@ import { AdminSidebar } from "./components/AdminSidebar";
 import { AdminLayout } from "./components/AdminLayout";
 import { PWALayoutWrapper } from "./components/PWALayoutWrapper";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+
+//import club vendor pages
+
+const VendorClubDashboard = lazy(() => import("./pages/VendorClubDashboard").then(m => ({ default: m.VendorClubDashboard })));
+// const VendorClubEdit = lazy(() => import("./pages/VendorClubEdit").then(m => ({ default: m.VendorClubEdit })));
+const AddVendorClub = lazy(() => import("./pages/AddVendorClub").then(m => ({ default: m.AddVendorClub })));
+const DetailVendorClub = lazy(() => import("./pages/DetailVendorClub"));
+
 const Dashboard = lazy(() => import("./pages/Dashboard").then(m => ({ default: m.Dashboard })));
 const DashboardConfiguration = lazy(() => import("./pages/DashboardConfiguration"));
 const ParkingBookingListSiteWise = lazy(() => import("./pages/ParkingBookingListSiteWise"));
@@ -44,6 +52,7 @@ const SmsManagementPage = lazy(() => import("./pages/SmsManagementPage").then(m 
 // Import Invoice Approvals page
 const InvoiceApprovalsPage = lazy(() => import("./pages/InvoiceApprovalsPage").then(m => ({ default: m.InvoiceApprovalsPage })));
 const AddInvoiceApprovalsPage = lazy(() => import("./pages/settings/AddInvoiceApprovalsPage").then(m => ({ default: m.AddInvoiceApprovalsPage })));
+const EditInvoiceApprovalsPage = lazy(() => import("./pages/settings/EditInvoiceApprovalsPage").then(m => ({ default: m.EditInvoiceApprovalsPage })));
 
 // Import Asset Groups page
 const AssetGroupsPage = lazy(() => import("./pages/AssetGroupsPage").then(m => ({ default: m.AssetGroupsPage })));
@@ -185,6 +194,9 @@ const VisitingPurposePage = lazy(() => import("./pages/VisitingPurposePage").the
 // Import Carpool pages
 const CarpoolDashboard = lazy(() => import("./pages/pulse/CarpoolDashboard").then(m => ({ default: m.CarpoolDashboard })));
 
+// Import Pulse Analytics Dashboard
+const PulseDashboardPage = lazy(() => import("./pages/pulse/PulseDashboardPage").then(m => ({ default: m.PulseDashboardPage })));
+
 // Import Icons pages
 const IconsDashboard = lazy(() => import("./pages/IconsDashboard").then(m => ({ default: m.IconsDashboard })));
 const AddIconPage = lazy(() => import("./pages/AddIconPage").then(m => ({ default: m.AddIconPage })));
@@ -206,11 +218,14 @@ const EditPermitChecklist = lazy(() => import("./pages/EditPermitCheklist").then
 const CompanySetup = lazy(() => import("./pages/CompanySetup"));
 const EmployeeOfTheMonthSetup = lazy(() => import("./pages/EmployeeOfTheMonthSetup"));
 const AnnouncementsSetup = lazy(() => import("./pages/AnnouncementsSetup"));
+const TeamSetup = lazy(() => import("./pages/settings/company-hub/team-setup"));
+const FaceAuthenticationSetup = lazy(() => import("./pages/settings/company-hub/FaceAuthenticationSetup"));
+const JobsPage = lazy(() => import("./pages/CompanyHub/JobsPage"));
 const EditPermitPage = lazy(() => import("./pages/EditPermitPage").then(m => ({ default: m.EditPermitPage })));
 
 const LeadDashboard = lazy(() => import("./pages/LeadDashboard").then(m => ({ default: m.LeadDashboard })));
 const EnergyDashboard = lazy(() => import("./pages/EnergyDashboard").then(m => ({ default: m.EnergyDashboard })));
-
+const BusinessCardSetupPage = lazy(() => import("./pages/admin/BusinessCardSetupPage"));
 // // Import Inventory pages
 // import { InventoryDashboard } from "./pages/InventoryDashboard";
 // import { InventoryDetailsPage } from "./pages/InventoryDetailsPage";
@@ -364,6 +379,56 @@ const OurGroup = lazy(() => import("./pages/OurGroup"));
 const Products = lazy(() => import("./pages/Products"));
 const ProductDetails = lazy(() => import("./pages/ProductDetails"));
 const DocumentDrive = lazy(() => import("./pages/DocumentDrive"));
+const CustomerAppPage = lazy(() => import("./pages/products/CustomerAppPage.tsx"));
+const CustomerPostPossessionPage = lazy(() => import("./pages/products/CustomerPostPossessionPage"));
+const HiSocietyPage = lazy(() => import("./pages/products/HiSocietyPage"));
+const Snag360Page = lazy(() => import("./pages/products/Snag360Page"));
+const Snag360NewPage = lazy(() => import("./pages/products/snag360-new").then(m => ({ default: m.Snag360NewPage })));
+const QCPage = lazy(() => import("./pages/products/QCPage"));
+const RHBPage = lazy(() => import("./pages/products/RHBPage"));
+const BrokersPage = lazy(() => import("./pages/products/BrokersPage"));
+const FMMatrixPage = lazy(() => import("./pages/products/FMMatrixPage"));
+const GoPhygitalCorporatePage = lazy(() => import("./pages/products/GoPhygitalCorporatePage"));
+const GoPhygitalCoworkingPage = lazy(() => import("./pages/products/GoPhygitalCoworkingPage"));
+const TaskManagerPage = lazy(() => import("./pages/products/TaskManagerPage"));
+const CPManagementPage = lazy(() => import("./pages/products/CPManagementPage"));
+const VendorManagementPage = lazy(() => import("./pages/products/VendorManagementPage"));
+const ProcurementPage = lazy(() => import("./pages/products/ProcurementPage"));
+const LoyaltyEnginePage = lazy(() => import("./pages/products/LoyaltyEnginePage"));
+const MSafePage = lazy(() => import("./pages/products/MSafePage"));
+const IncidentManagementPage = lazy(() => import("./pages/products/IncidentManagementPage"));
+const AppointmentsPage = lazy(() => import("./pages/products/AppointmentsPage"));
+const HSEAppPage = lazy(() => import("./pages/products/HSEAppPage"));
+const ClubManagementPage = lazy(() => import("./pages/products/ClubManagementPage"));
+const GoPhygitalTenantsPage = lazy(() => import("./pages/products/GoPhygitalTenantsPage"));
+const PTWPage = lazy(() => import("./pages/products/PTWPage"));
+const ParkingPage = lazy(() => import("./pages/products/ParkingPage"));
+const FacilityManagementPage = lazy(() => import("./pages/products/FacilityManagementPage"));
+const CustomerAppPreSalesPage = lazy(() => import("./pages/products/CustomerAppPreSalesPage"));
+// OLD: import LeaseManagementPage from './pages/products/LeaseManagementPage';
+// NEW: Isolated Lease Management Page
+const LeaseManagementPage = lazy(() => import("./pages/products/lease-management/LeaseManagementPage"));
+const LifeCompassPage = lazy(() => import("./pages/products/LifeCompassPage"));
+const BusinessCompassPage = lazy(() => import("./pages/products/BusinessCompassPage"));
+const GateManagementPage = lazy(() => import("./pages/products/GateManagementPage"));
+const SurveyManagementPage = lazy(() => import("./pages/products/SurveyManagementPage"));
+const PTWManagementPage = lazy(() => import("./pages/products/PTWManagementPage"));
+const TenantManagementPage = lazy(() => import("./pages/products/TenantManagementPage"));
+const SurveysPage = lazy(() => import("./pages/products/SurveysPage"));
+const LMSSalesCRMPage = lazy(() => import("./pages/products/LMSSalesCRMPage"));
+const SupportCRMPage = lazy(() => import("./pages/products/SupportCRMPage"));
+const RealEstateCRMPage = lazy(() => import("./pages/products/RealEstateCRMPage"));
+const AccountingPage = lazy(() => import("./pages/products/AccountingPage"));
+const MOMPhoneMicPage = lazy(() => import("./pages/products/MOMPhoneMicPage"));
+const HRMSPage = lazy(() => import("./pages/products/HRMSPage"));
+const ESGPage = lazy(() => import("./pages/products/ESGPage"));
+const MailingPage = lazy(() => import("./pages/products/MailingPage"));
+const OfficeAlternativePage = lazy(() => import("./pages/products/OfficeAlternativePage"));
+const BudgetingWBSPage = lazy(() => import("./pages/products/BudgetingWBSPage"));
+const LiquidtextPage = lazy(() => import("./pages/products/LiquidtextPage"));
+const ViMilesPage = lazy(() => import("./pages/products/ViMilesPage"));
+const ProductAccessGate = lazy(() => import("./pages/products/ProductAccessGate"));
+const ProductLandingPage = lazy(() => import("./pages/products/ProductLandingPage"));
 const HRPolicies = lazy(() => import("./pages/HRPolicies"));
 const Directory = lazy(() => import("./pages/Directory"));
 const EmployeeFAQ = lazy(() => import("./pages/EmployeeFAQ"));
@@ -493,6 +558,21 @@ const GDNDetailsPage = lazy(() => import("./pages/GDNDetailsPage").then(m => ({ 
 const GDNPendingApprovalsDashboard = lazy(() => import("./pages/GDNPendingApprovalsDashboard").then(m => ({ default: m.GDNPendingApprovalsDashboard })));
 const GDNPendingApprovalsDetails = lazy(() => import("./pages/GDNPendingApprovalsDetails").then(m => ({ default: m.GDNPendingApprovalsDetails })));
 const InvoiceDashboard = lazy(() => import("./pages/InvoiceDashboard"));
+
+// Import Vendor Pages
+const VendorPOListPage = lazy(() => import("./pages/vendor/VendorPOListPage").then(m => ({ default: m.VendorPOListPage })));
+const VendorGRNListPage = lazy(() => import("./pages/vendor/VendorGRNListPage").then(m => ({ default: m.VendorGRNListPage })));
+const VendorWOListPage = lazy(() => import("./pages/vendor/VendorWOListPage").then(m => ({ default: m.VendorWOListPage })));
+const VendorInvoiceListPage = lazy(() => import("./pages/vendor/VendorInvoiceListPage").then(m => ({ default: m.VendorInvoiceListPage })));
+const SupplierDetails = lazy(() => import("./pages/vendor/SupplierDetails"));
+const VendorOtherBillsPage = lazy(() => import("./pages/vendor/VendorOtherBillsPage").then(m => ({ default: m.VendorOtherBillsPage })));
+const VendorPermitsPage = lazy(() => import("./pages/vendor/VendorPermitsPage").then(m => ({ default: m.VendorPermitsPage })));
+const VendorPODetailPage = lazy(() => import("./pages/vendor/VendorPODetailPage").then(m => ({ default: m.VendorPODetailPage })));
+const VendorGRNDetailPage = lazy(() => import("./pages/vendor/VendorGRNDetailPage").then(m => ({ default: m.VendorGRNDetailPage })));
+const VendorWODetailPage = lazy(() => import("./pages/vendor/VendorWODetailPage").then(m => ({ default: m.VendorWODetailPage })));
+const VendorInvoiceDetailPage = lazy(() => import("./pages/vendor/VendorInvoiceDetailPage").then(m => ({ default: m.VendorInvoiceDetailPage })));
+const VendorOtherBillDetailPage = lazy(() => import("./pages/vendor/VendorOtherBillDetailPage").then(m => ({ default: m.VendorOtherBillDetailPage })));
+const VendorPermitDetailPage = lazy(() => import("./pages/vendor/VendorPermitDetailPage").then(m => ({ default: m.VendorPermitDetailPage })));
 
 // Import WBS page
 const WBSElementDashboard = lazy(() => import("./pages/WBSElementDashboard").then(m => ({ default: m.WBSElementDashboard })));
@@ -683,6 +763,7 @@ const AddBookingSetupPage = lazy(() => import("./pages/AddBookingSetupPage").the
 
 // Import Add Facility Booking page
 const AddFacilityBookingPage = lazy(() => import("./pages/AddFacilityBookingPage").then(m => ({ default: m.AddFacilityBookingPage })));
+const AddPastBookingPage = lazy(() => import("./pages/AddPastBookings.tsx").then(m => ({ default: m.AddPastBookings })));
 const PaymentRedirectPage = lazy(() => import("./pages/PaymentRedirectPage").then(m => ({ default: m.PaymentRedirectPage })));
 const AssetGroupsDashboard = lazy(() => import("./pages/setup/AssetGroupsDashboard").then(m => ({ default: m.AssetGroupsDashboard })));
 
@@ -771,6 +852,7 @@ const AddSacHsn = lazy(() => import("./pages/AddSacHsn"));
 const WOFeedsPage = lazy(() => import("./pages/WOFeedsPage").then(m => ({ default: m.WOFeedsPage })));
 const VendorPage = lazy(() => import("./pages/VendorPage").then(m => ({ default: m.VendorPage })));
 const AddVendorPage = lazy(() => import("./pages/AddVendorPage").then(m => ({ default: m.AddVendorPage })));
+const EditVendorPage = lazy(() => import("./pages/EditVendorPage").then(m => ({ default: m.EditVendorPage })));
 const FinanceMasterPage = lazy(() => import("./pages/FinanceMasterPage").then(m => ({ default: m.FinanceMasterPage })));
 const MsafeReportDownload = lazy(() => import("./pages/MsafeReportDownload"));
 const MsafeDetailReportDownload = lazy(() => import("./pages/MsafeDetailReportDownload"));
@@ -878,6 +960,8 @@ const EditFolderPage = lazy(() => import("./pages/EditFolderPage").then(m => ({ 
 const OnlyOfficeEditorPage = lazy(() => import("./pages/OnlyOfficeEditorPage").then(m => ({ default: m.OnlyOfficeEditorPage })));
 
 const DocumentShareLinkPage = lazy(() => import("./pages/DocumentShareLinkPage").then(m => ({ default: m.DocumentShareLinkPage })));
+const BookingWebviewPage = lazy(() => import("./pages/BookingWebviewPage").then(m => ({ default: m.BookingWebviewPage })));
+const BookingConfirmedPage = lazy(() => import("./pages/BookingConfirmedPage").then(m => ({ default: m.BookingConfirmedPage })));
 const GroupConversation = lazy(() => import("./components/GroupConversation"));
 const ChannelTasksAll = lazy(() => import("./pages/ChannelTasksAll"));
 const ChatTaskDetailsPage = lazy(() => import("./pages/ChatTaskDetailsPage"));
@@ -989,6 +1073,8 @@ const CommunityDocumentDetails = lazy(() => import("./pages/CommunityDocumentDet
 const ContestListPage = lazy(() => import("./pages/ContestListPage").then(m => ({ default: m.ContestListPage })));
 const CreateContestPage = lazy(() => import("./pages/CreateContestPage").then(m => ({ default: m.CreateContestPage })));
 const ContestDetailsPage = lazy(() => import("./pages/ContestDetailsPage").then(m => ({ default: m.ContestDetailsPage })));
+const EditContestPage = lazy(() => import("./pages/EditContestPage").then(m => ({ default: m.EditContestPage })));
+const RunContestPage = lazy(() => import("./pages/RunContestPage").then(m => ({ default: m.RunContestPage })));
 
 const SpinnerContest = lazy(() => import("./components/mobile/SpinnerContest").then(m => ({ default: m.SpinnerContest })));
 const ScratchCard = lazy(() => import("./components/mobile/ScratchCard").then(m => ({ default: m.ScratchCard })));
@@ -1002,6 +1088,10 @@ import { SpeechProvider } from "./contexts/SpeechContext";
 const SupportedServiceDashboard = lazy(() => import("./pages/SupportedServiceDashboard"));
 const SupportedServiceAdd = lazy(() => import("./pages/SupportedServiceAdd").then(m => ({ default: m.SupportedServiceAdd })));
 const SupportedServiceEdit = lazy(() => import("./pages/SupportedServiceEdit").then(m => ({ default: m.SupportedServiceEdit })));
+const SupportContactSetupPage = lazy(() => import("./pages/SupportContactSetupPage"));
+const AddSupportContactPage = lazy(() => import("./pages/AddSupportContactPage").then(m => ({ default: m.AddSupportContactPage })));
+const GreSiteAssignmentSetupPage = lazy(() => import("./pages/GreSiteAssignmentSetupPage"));
+const AddGreSiteAssignmentPage = lazy(() => import("./pages/AddGreSiteAssignmentPage").then(m => ({ default: m.AddGreSiteAssignmentPage })));
 // import RouteLogger from "./components/RouteLogger";
 
 const AddBookingSetupClubPage = lazy(() => import("./pages/ClubManagement/AmenityBookingSetupClubAdd").then(m => ({ default: m.AddBookingSetupClubPage })));
@@ -1012,6 +1102,7 @@ const AddGuestUserPage = lazy(() => import("./pages/ClubManagement/AddGuestUserP
 const AddMembershipPlanPage = lazy(() => import("./pages/AddMembershipPlanPage").then(m => ({ default: m.AddMembershipPlanPage })));
 const AddPaymentPlan = lazy(() => import("./pages/settings/AddPaymentPlan").then(m => ({ default: m.AddPaymentPlan })));
 const AmenityBookingDetailsClubPage = lazy(() => import("./pages/ClubManagement/AmenityBookingDetails").then(m => ({ default: m.AmenityBookingDetailsClubPage })));
+const AmenityBookingEditPage = lazy(() => import("./pages/ClubManagement/AmenityBookingEdit").then(m => ({ default: m.AmenityBookingEditPage })));
 const BillCreatePage = lazy(() => import("./pages/BillCreatePage").then(m => ({ default: m.BillCreatePage })));
 const BillCyclesDetails = lazy(() => import("./pages/ClubManagement/BillCyclesDetails").then(m => ({ default: m.BillCyclesDetails })));
 const BillDetailPage = lazy(() => import("./pages/BillDetailPage").then(m => ({ default: m.BillDetailPage })));
@@ -1043,17 +1134,20 @@ const PaymentPlanSetup = lazy(() => import("./pages/settings/PaymentPlanSetup").
 const PurchaseOrderCreatePage = lazy(() => import("./pages/PurchaseOrderCreatePage").then(m => ({ default: m.PurchaseOrderCreatePage })));
 const PurchaseOrderDetailPage = lazy(() => import("./pages/PurchaseOrderDetailPage").then(m => ({ default: m.PurchaseOrderDetailPage })));
 const PurchaseOrderListPage = lazy(() => import("./pages/PurchaseOrderListPage").then(m => ({ default: m.PurchaseOrderListPage })));
+const PurchaseOrderEditPage = lazy(() => import("./pages/Accounting/PurchaseOrderEdit").then(m => ({ default: m.PurchaseOrderEditPage })));
 const RecurringBillCreatePage = lazy(() => import("./pages/ClubManagement/RecurringBillCreatePage").then(m => ({ default: m.RecurringBillCreatePage })));
 const RecurringBillsDashboard = lazy(() => import("./pages/ClubManagement/RecurringBillsDashboard").then(m => ({ default: m.RecurringBillsDashboard })));
 const NewRecurringExpensePage = lazy(() => import("./pages/New Recurring Expense"));
 const RecurringExpensesListPage = lazy(() => import("./pages/ClubManagement/RecurringExpensesListPage"));
 const RecurringExpenseDetailPage = lazy(() => import("./pages/ClubManagement/RecurringExpenseDetailPage"));
 const RecurringInvoicesCreatePage = lazy(() => import("./pages/ClubManagement/RecurringInvoicesCreatePage").then(m => ({ default: m.RecurringInvoicesCreatePage })));
+const EditRecurringInvoicePage = lazy(() => import("./pages/EditRecurringInvoicePage").then(m => ({ default: m.EditRecurringInvoicePage })));
 const RecurringInvoicesListPage = lazy(() => import("./pages/ClubManagement/RecurringInvoicesListPage").then(m => ({ default: m.RecurringInvoicesListPage })));
 const RecurringBillDetails = lazy(() => import("./pages/ClubManagement/RecurringBillDetails"));
 const RecurringJournalDashboard = lazy(() => import("./pages/ClubManagement/RecurringJournalDashboard").then(m => ({ default: m.RecurringJournalDashboard })));
 const RecurringJournalDetails = lazy(() => import("./pages/ClubManagement/RecurringJournalDetails").then(m => ({ default: m.RecurringJournalDetails })));
 const SalesOrderCreatePage = lazy(() => import("./pages/SalesOrderCreatePage").then(m => ({ default: m.SalesOrderCreatePage })));
+const EditSalesOrderPage = lazy(() => import("./pages/EditSalesOrderPage").then(m => ({ default: m.EditSalesOrderPage })));
 const SalesOrderDetailPage = lazy(() => import("./pages/SalesOrderDetailPage").then(m => ({ default: m.SalesOrderDetailPage })));
 const SalesOrderListPage = lazy(() => import("./pages/SalesOrderListPage").then(m => ({ default: m.SalesOrderListPage })));
 const TransactionsDetails = lazy(() => import("./pages/ClubManagement/TransationsDetails").then(m => ({ default: m.TransactionsDetails })));
@@ -1061,6 +1155,8 @@ const ViewClubOccupantUser = lazy(() => import("./pages/master/ViewClubOccupantU
 const ViewGuestUserPage = lazy(() => import("./pages/ClubManagement/ViewGuestUserPage").then(m => ({ default: m.ViewGuestUserPage })));
 const AddClubMembershipPage = lazy(() => import("./pages/ClubManagement/AddClubMembershipPage"));
 const AddGroupMembershipPage = lazy(() => import("./pages/ClubManagement/AddGroupMembershipPage"));
+const EditGroupMembershipStep1Page = lazy(() => import("./pages/ClubManagement/EditGroupMembershipStep1Page").then(m => ({ default: m.EditGroupMembershipStep1Page })));
+const EditGroupMembershipStep2Page = lazy(() => import("./pages/ClubManagement/EditGroupMembershipStep2Page").then(m => ({ default: m.EditGroupMembershipStep2Page })));
 const AmenityBookingListClub = lazy(() => import("./pages/ClubManagement/AmenityBookingList"));
 const AccountTypeSummaryReport = lazy(() => import("./pages/ClubManagement/AccountTypeSummaryReport"));
 const AccountTypeSummaryDetailReport = lazy(() => import("./pages/ClubManagement/AccountTypeSummaryDetailReport"));
@@ -1093,6 +1189,7 @@ const ClubGroupMembershipDetails = lazy(() => import("./pages/ClubManagement/Clu
 const ClubMembershipDashboard = lazy(() => import("./pages/ClubManagement/ClubMembershipDashboard"));
 const ClubMembershipDetailPage = lazy(() => import("./pages/ClubManagement/ClubMembershipDetailPage"));
 const CustomersAdd = lazy(() => import("./pages/ClubManagement/CustomersAdd"));
+const CustomersEdit = lazy(() => import("./pages/ClubManagement/CustomersEdit"));
 const CustomersDashboard = lazy(() => import("./pages/ClubManagement/CustomersDashboard"));
 const DetailsSaleCustomerReport = lazy(() => import("./pages/ClubManagement/DetailsSaleCustomerReport"));
 const SalesByItemReport = lazy(() => import("./pages/ClubManagement/SalesByItemReport"));
@@ -1110,6 +1207,7 @@ const ManualJournalAdd = lazy(() => import("./pages/ClubManagement/ManualJournal
 const ManualJournalDashboard = lazy(() => import("./pages/ClubManagement/ManualJournalDashboard"));
 const ManualJournalEdit = lazy(() => import("./pages/ClubManagement/ManualJournalEdit"));
 const OpeningBalance = lazy(() => import("./pages/ClubManagement/OpeningBalance"));
+const OpeningBalanceDetail = lazy(() => import("./pages/ClubManagement/OpeningBalanceDetail"));
 const ProfitAndLossReport = lazy(() => import("./pages/ClubManagement/ProfitAndLossReport"));
 const RecurringJournalAdd = lazy(() => import("./pages/ClubManagement/RecurringJournalAdd"));
 const TDSReceivablesSummaryDetails = lazy(() => import("./pages/ClubManagement/TDSReceivablesSummaryDetails"));
@@ -1127,12 +1225,21 @@ const RideDetail = lazy(() => import("./pages/pulse/RideDetail").then(m => ({ de
 import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
 import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 import { LoginPageWrapper } from "./components/LoginPageWrapper";
+import { AddFacilityType } from "./pages/ClubManagement/Settings/AddFacilityType";
+import { VendorDashboard } from "./pages/vendor/VendorDashboard";
+import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoiceDetails.tsx";
+import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
+import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
+import PATMCeoDashboard from "./pages/PATMCeoDashboard/index.tsx";
+import { EditPaymentPage } from "./pages/PaymentMadeEdit.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
+const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
 const InvoiceDashboardAccounting = lazy(() => import("./pages/ClubManagement/InvoiceDashboard").then(m => ({ default: m.InvoiceDashboardAccounting })));
 const InvoiceDashboardDetailsPage = lazy(() => import("./pages/ClubManagement/InvoiceDashboardDetailsPage").then(m => ({ default: m.InvoiceDashboardDetailsPage })));
 const QuotesDashboard = lazy(() => import("./pages/ClubManagement/QuotesDashboard").then(m => ({ default: m.QuotesDashboard })));
 const QuotesAdd = lazy(() => import("./pages/ClubManagement/QuotesAdd").then(m => ({ default: m.QuotesAdd })));
+const QuotesEdit = lazy(() => import("./pages/ClubManagement/QuotesEdit").then(m => ({ default: m.QuotesEdit })).catch(() => import("./pages/ClubManagement/QuotesEdit")));
 const QuotesDetails = lazy(() => import("./pages/ClubManagement/QuotesDetails").then(m => ({ default: m.QuotesDetails })));
 const RideReviews = lazy(() => import("./pages/pulse/RideReviews").then(m => ({ default: m.RideReviews })));
 const UserDetail = lazy(() => import("./pages/pulse/UserDetail").then(m => ({ default: m.UserDetail })));
@@ -1144,6 +1251,7 @@ const DeliveryChallansDashboard = lazy(() => import("./pages/ClubManagement/Deli
 const DeliveryChallansAdd = lazy(() => import("./pages/ClubManagement/DeliveryChallansAdd").then(m => ({ default: m.DeliveryChallansAdd })));
 const PaymentsReceivedListPage = lazy(() => import("./pages/PaymentsReceivedListPage"));
 const RecordPaymentPage = lazy(() => import("./pages/RecordPaymentPage"));
+const EditPaymentReceivedPage = lazy(() => import("./pages/EditPaymentReceivedPage").then(m => ({ default: m.EditPaymentReceivedPage })));
 const PaymentReceivedDetailsPage = lazy(() => import("./pages/PaymentReceivedDetailsPage"));
 const SectionMaster = lazy(() => import("./pages/ClubManagement/SectionMaster"));
 const CreditNoteListPage = lazy(() => import("./pages/ClubManagement/CreditNoteListPage"));
@@ -1168,6 +1276,7 @@ const VendorCreditDetails = lazy(() => import("./pages/ClubManagement/VendorCred
 const MobileTodo = lazy(() => import("./pages/MobileTodo"));
 const BalanceSheetDetails = lazy(() => import("./pages/ClubManagement/BalanceSheetDetails").then(m => ({ default: m.BalanceSheetDetails })));
 const ProfitAndLossDetails = lazy(() => import("./pages/ClubManagement/ProfitAndLossDetails").then(m => ({ default: m.ProfitAndLossDetails })));
+const CashFlowDetails = lazy(() => import("./pages/ClubManagement/CashFlowDetails").then(m => ({ default: m.CashFlowDetails })));
 const GSTPayableDetails = lazy(() => import("./pages/ClubManagement/GSTPayableDetails").then(m => ({ default: m.GSTPayableDetails })));
 const GstReceivableReport = lazy(() => import("./pages/ClubManagement/GSTReceivableReport"));
 const GSTReceivableDetails = lazy(() => import("./pages/ClubManagement/GSTReceivableDetails").then(m => ({ default: m.GSTReceivableDetails })));
@@ -1238,7 +1347,6 @@ const Announcement = lazy(() => import("./pages/BusinessCompass/Announcement"));
 const Leaderboard = lazy(() => import("./pages/BusinessCompass/Leaderboard"));
 const DiscPersonalityAssessment = lazy(() => import("./pages/BusinessCompass/DiscPersonalityAssessment"));
 const HelpCenter = lazy(() => import("./pages/BusinessCompass/HelpCenter"));
-const BugReports = lazy(() => import("./pages/BusinessCompass/BugReports"));
 const WeeklyReports = lazy(() => import("./pages/BusinessCompass/WeeklyReports"));
 const BusinessCompassTasksAndIssues = lazy(() => import("./pages/BusinessCompass/BusinessCompassTasksAndIssues"));
 const DirectoryAndChat = lazy(() => import("./pages/BusinessCompass/DirectoryAndChat"));
@@ -1252,6 +1360,16 @@ const TeamDashboard = lazy(() => import("./pages/AdminCompass/TeamDashboard"));
 const HouseSetupPage = lazy(() => import("./pages/HouseSetupPage"));
 const HSNCodeSetup = lazy(() => import("./pages/HSNCodeSetup"));
 const DashboardUI = lazy(() => import("./pages/DashboardUI"));
+const OrganisationMaster = lazy(() => import("./pages/ClubManagement/OrganisationMaster"));
+const MyInboxPage = lazy(() => import("./features/inbox/MyInboxPage.tsx"));
+const ExpenseEditPage = lazy(() => import("./pages/ExpenseEditPage.tsx").then(m => ({ default: m.ExpenseEditPage })));
+const TaxSetupTabView = lazy(() => import("./pages/ClubManagement/TaxSetupTabView.tsx"));
+const BillEdit = lazy(() => import("./pages/ClubManagement/BillEdit.tsx").then(m => ({ default: m.BillEdit })));
+const RecurringBillEdit = lazy(() => import("./pages/ClubManagement/RecurringBillEdit.tsx").then(m => ({ default: m.RecurringBillEdit })));
+const PulseContests = lazy(() => import("./pages/PulseContests.tsx"));
+const PulseContestRewards = lazy(() => import("./pages/PulseContestRewards.tsx"));
+const PulseContestRewardsDetails = lazy(() => import("./pages/PulseContestRewardsDetails.tsx"));
+const PulseContestRewardCreate = lazy(() => import("./pages/PulseContestRewardCreate.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -1578,6 +1696,14 @@ function App() {
                             path="/documents/editor/:documentId"
                             element={<OnlyOfficePublicEditorPage />}
                           />
+                          <Route
+                            path="/booking/:token"
+                            element={<BookingWebviewPage />}
+                          />
+                          <Route
+                            path="/booking/:token/confirmed"
+                            element={<BookingConfirmedPage />}
+                          />
 
                           {/* Backend Routes */}
                           <Route
@@ -1656,6 +1782,10 @@ function App() {
                             <Route
                               path="admin/disc-report"
                               element={<DiscReport />}
+                            />
+                             <Route
+                              path="admin/business-card-setup"
+                              element={<BusinessCardSetupPage />}
                             />
 
                             <Route
@@ -1841,6 +1971,15 @@ function App() {
                             element={
                               <ProtectedRoute>
                                 <Dashboard />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          <Route
+                            path="/pulse/analytics"
+                            element={
+                              <ProtectedRoute>
+                                <PulseDashboardPage />
                               </ProtectedRoute>
                             }
                           />
@@ -2092,7 +2231,7 @@ function App() {
                                 index
                                 element={
                                   <div
-                                    className={`flex justify-center items-center ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
+                                    className={`flex justify-center items-center text-center px-4 ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-full md:w-[calc(100vw-32rem)]`}
                                   >
                                     Select a Chat/Group to view messages
                                   </div>
@@ -2133,6 +2272,10 @@ function App() {
                               element={<BusinessCompassDailyReport />}
                             />
                             <Route
+                              path="/business-compass/ceo-dashboard"
+                              element={<PATMCeoDashboard />}
+                            />
+                            <Route
                               path="/business-compass/weekly-report"
                               element={<WeeklyReports />}
                             />
@@ -2157,6 +2300,10 @@ function App() {
                               element={<IssueDetailsPage />}
                             />
                             <Route
+                              path="/business-compass/todo"
+                              element={<Todo />}
+                            />
+                            <Route
                               path="/business-compass/channels"
                               element={<ChannelsLayout />}
                             >
@@ -2164,7 +2311,7 @@ function App() {
                                 index
                                 element={
                                   <div
-                                    className={`flex justify-center items-center ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
+                                    className={`flex justify-center items-center text-center px-4 ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-full md:w-[calc(100vw-32rem)]`}
                                   >
                                     Select a Chat/Group to view messages
                                   </div>
@@ -2204,10 +2351,6 @@ function App() {
                               element={<HelpCenter />}
                             />
                             <Route
-                              path="/business-compass/bug-reports"
-                              element={<BugReports />}
-                            />
-                            <Route
                               path="/admin-compass/business-plan-goals"
                               element={<BusinessPlanAndGoles />}
                             />
@@ -2226,6 +2369,10 @@ function App() {
                             <Route
                               path="/admin-compass/systems-sops"
                               element={<SystemAndSOP />}
+                            />
+                            <Route
+                              path="/admin-compass/team-setup"
+                              element={<TeamSetup />}
                             />
                             <Route
                               path="/admin-compass/disc-report"
@@ -2380,13 +2527,21 @@ function App() {
                               path="/accounting/payments-made"
                               element={<PaymentsMadePage />}
                             />
+                            {/* <Route
+                              path="/accounting/payments-made/:id"
+                              element={<PaymentDetailPage/>}
+                            /> */}
                             <Route
                               path="/accounting/payments-made/create"
                               element={<CreatePaymentPage />}
                             />
                             <Route
                               path="/accounting/payments-made/:id"
-                              element={<PaymentDetailPage />}
+                              element={<PaymentMadeDetailsPage />}
+                            />
+                            <Route
+                              path="/accounting/payments-made/edit/:id"
+                              element={<EditPaymentPage />}
                             />
                             -{/* Settings Checklist Setup Routes */}
                             <Route
@@ -2698,7 +2853,11 @@ function App() {
                             />
                             <Route
                               path="/club-management/group-membership/:id/edit"
-                              element={<AddGroupMembershipPage />}
+                              element={<EditGroupMembershipStep1Page />}
+                            />
+                            <Route
+                              path="/club-management/group-membership/:id/edit/members"
+                              element={<EditGroupMembershipStep2Page />}
                             />
                             <Route
                               path="/club-management/membership/group-details/:id"
@@ -2786,8 +2945,16 @@ function App() {
                               element={<OpeningBalance />}
                             />
                             <Route
+                              path="/accounting/opening-balance/:id"
+                              element={<OpeningBalanceDetail />}
+                            />
+                            <Route
                               path="/accounting/tax-setup"
                               element={<TaxSetup />}
+                            />
+                            <Route
+                              path="/accounting/tax-setup-tab"
+                              element={<TaxSetupTabView />}
                             />
                             <Route
                               path="/accounting/charge-setup"
@@ -3177,6 +3344,10 @@ function App() {
                               path="/accounting/reports/profit-and-loss/details/:id"
                               element={<ProfitAndLossDetails />}
                             />
+                            <Route
+                              path="/accounting/reports/cash-flow-statement/details/:id"
+                              element={<CashFlowDetails />}
+                            />
                             {/* <Route */}
                             <Route
                               path="/accounting/reports/tax-summary"
@@ -3289,6 +3460,10 @@ function App() {
                               element={<CustomersAdd />}
                             />
                             <Route
+                              path="/accounting/customers/edit/:id"
+                              element={<CustomersEdit />}
+                            />
+                            <Route
                               path="/accounting/customers/details/:id"
                               element={<CustomersDetails />}
                             />
@@ -3307,7 +3482,7 @@ function App() {
                             />
                             <Route
                               path="/accounting/sales-order/edit/:id"
-                              element={<SalesOrderCreatePage />}
+                              element={<EditSalesOrderPage />}
                             />
                             <Route
                               path="/accounting/invoices/list"
@@ -3316,6 +3491,10 @@ function App() {
                             <Route
                               path="/accounting/invoices/add"
                               element={<InvoiceAdd />}
+                            />
+                            <Route
+                              path="/accounting/invoices/edit/:id"
+                              element={<EditInvoicePage />}
                             />
                             <Route
                               path="/accounting/dashboard/invoices/:id"
@@ -3328,6 +3507,10 @@ function App() {
                             <Route
                               path="/accounting/quotes/add"
                               element={<QuotesAdd />}
+                            />
+                            <Route
+                              path="/accounting/quotes/edit/:id"
+                              element={<QuotesEdit />}
                             />
                             <Route
                               path="/accounting/quotes/details/:id"
@@ -3350,12 +3533,24 @@ function App() {
                               element={<RecurringInvoicesCreatePage />}
                             />
                             <Route
+                              path="/accounting/recurring-invoices/edit/:id"
+                              element={<EditRecurringInvoicePage />}
+                            />
+                            <Route
+                              path="/accounting/recurring-invoices/details/:id"
+                              element={<RecurringInvoiceDetailsPage />}
+                            />
+                            <Route
                               path="/accounting/payments-received"
                               element={<PaymentsReceivedListPage />}
                             />
                             <Route
                               path="/accounting/payments-received/create"
                               element={<RecordPaymentPage />}
+                            />
+                            <Route
+                              path="/accounting/payments-received/edit/:id"
+                              element={<EditPaymentReceivedPage />}
                             />
                             <Route
                               path="/accounting/payments-received/:id"
@@ -3392,7 +3587,7 @@ function App() {
                             />
                             <Route
                               path="/accounting/purchase-order/edit/:id"
-                              element={<PurchaseOrderCreatePage />}
+                              element={<PurchaseOrderEditPage />}
                             />
                             {/* Bills Routes */}
                             <Route
@@ -3415,6 +3610,10 @@ function App() {
                               path="/accounting/bills/:id"
                               element={<BillDetails />}
                             />
+                            <Route
+                              path="/accounting/bills/edit/:id"
+                              element={<BillEdit />}
+                            />
                             {/* Recurring Bills Routes */}
                             <Route
                               path="/accounting/recurring-bills"
@@ -3427,6 +3626,10 @@ function App() {
                             <Route
                               path="/accounting/recurring-bills/details/:id"
                               element={<RecurringBillDetails />}
+                            />
+                            <Route
+                              path="/accounting/recurring-bills/edit/:id"
+                              element={<RecurringBillEdit />}
                             />
                             <Route
                               path="/accounting/recurring-expenses"
@@ -3454,6 +3657,10 @@ function App() {
                               element={<ExpenseDetailPage />}
                             />
                             <Route
+                              path="/accounting/expense/edit/:id"
+                              element={<ExpenseEditPage />}
+                            />
+                            <Route
                               path="/accounting/section"
                               element={<SectionMaster />}
                             />
@@ -3475,11 +3682,15 @@ function App() {
                             />
                             <Route
                               path="/settings/sales-order/edit/:id"
-                              element={<SalesOrderCreatePage />}
+                              element={<EditSalesOrderPage />}
                             />
                             <Route
                               path="/accounting/payment-terms"
                               element={<PaymentTermsMaster />}
+                            />
+                            <Route
+                              path="/accounting/organisation"
+                              element={<OrganisationMaster />}
                             />
                             {/* Club Management - Occupant Users */}
                             <Route
@@ -3561,6 +3772,10 @@ function App() {
                             <Route
                               path="/club-management/amenities-booking-club/:id"
                               element={<AmenityBookingDetailsClubPage />}
+                            />
+                            <Route
+                              path="/club-management/amenities-booking-club/:id/edit"
+                              element={<AmenityBookingEditPage />}
                             />
                             <Route
                               path="/vas/booking-club/list"
@@ -3673,6 +3888,7 @@ function App() {
                               path="/employee/dashboard"
                               element={<EmployeeDashboard />}
                             />
+                            <Route path="/my-inbox" element={<MyInboxPage />} />
                             <Route
                               path="/employee/calendar"
                               element={<EmployeeCalendarPage />}
@@ -4188,6 +4404,33 @@ function App() {
                               path="/finance/service-pr/feeds/:id"
                               element={<ServicePRFeedsPage />}
                             />
+
+                            {/* Vendor Module Routes */}
+                            <Route path="/vendor/dashboard" element={<VendorDashboard />} />
+                            <Route path="/vendor/po" element={<VendorPOListPage />} />
+                            <Route path="/vendor/grn" element={<VendorGRNListPage />} />
+                            <Route path="/vendor/wo" element={<VendorWOListPage />} />
+                            <Route path="/vendor/invoice" element={<VendorInvoiceListPage />} />
+                            <Route path="/vendor/supplier-details/:id" element={<SupplierDetails />} />
+                            <Route path="/vendor/other-bills" element={<VendorOtherBillsPage />} />
+                            <Route path="/vendor/permits" element={<VendorPermitsPage />} />
+                            <Route path="/vendor/po/details/:id" element={<VendorPODetailPage />} />
+                            <Route path="/vendor/grn/details/:id" element={<VendorGRNDetailPage />} />
+                            <Route path="/vendor/wo/details/:id" element={<VendorWODetailPage />} />
+                            <Route path="/vendor/invoice/details/:id" element={<VendorInvoiceDetailPage />} />
+                            <Route path="/vendor/other-bills/details/:id" element={<VendorOtherBillDetailPage />} />
+                            <Route path="/vendor/permits/details/:id" element={<VendorPermitDetailPage />} />
+
+                            
+ <Route path="/vendor/po/details/:id" element={<VendorPODetailPage />} />
+                            <Route path="/vendor/grn/details/:id" element={<VendorGRNDetailPage />} />
+                            <Route path="/vendor/wo/details/:id" element={<VendorWODetailPage />} />
+                            <Route path="/vendor/invoice/details/:id" element={<VendorInvoiceDetailPage />} />
+                            <Route path="/vendor/other-bills/details/:id" element={<VendorOtherBillDetailPage />} />
+                            <Route path="/vendor/permits/details/:id" element={<VendorPermitDetailPage />} />
+
+
+
                             <Route path="/finance/po" element={<PODashboard />} />
                             <Route
                               path="/finance/po/add"
@@ -4550,6 +4793,23 @@ function App() {
                               path="/maintenance/vendor/view/:id"
                               element={<DetailsVendorPage />}
                             />
+                            <Route
+                              path="/accounting/vendor"
+                              element={<VendorClubDashboard />}
+                            />
+                            <Route
+                              path="/accounting/vendor/add"
+                              element={<AddVendorClub />}
+                            />
+                            <Route
+                              path="/accounting/vendor/view/:id"
+                              element={<DetailVendorClub />}
+                            />
+                            <Route
+                              path="/accounting/vendor/edit/:id"
+                              element={<EditVendorPage />}
+                            ></Route>
+
                             <Route
                               path="/vas/projects"
                               element={<ProjectsDashboard />}
@@ -5611,6 +5871,14 @@ function App() {
                               element={<AnnouncementsSetup />}
                             />
                             <Route
+                              path="/settings/company-hub/face-authentication"
+                              element={<FaceAuthenticationSetup />}
+                            />
+                            <Route
+                              path="/settings/company-hub/jobs"
+                              element={<JobsPage />}
+                            />
+                            <Route
                               path="/settings/inventory-management/inventory-type"
                               element={<InventoryTypePage />}
                             />
@@ -5653,6 +5921,191 @@ function App() {
                             <Route
                               path="/product-details/:productId"
                               element={<ProductDetails />}
+                            />
+                            <Route
+                              path="/product/:productSlug/access"
+                              element={<ProductAccessGate />}
+                            />
+                            <Route
+                              path="/product/loyalty"
+                              element={<CustomerAppPage />}
+                            />
+                            <Route
+                              path="/product/customer-app"
+                              element={<CustomerAppPage />}
+                            />
+                            <Route
+                              path="/product/customer-app-post-possession"
+                              element={<CustomerPostPossessionPage />}
+                            />
+                            <Route
+                              path="/product/hi-society"
+                              element={<HiSocietyPage />}
+                            />
+                            <Route
+                              path="/product/snag-360"
+                              element={<Snag360Page />}
+                            />
+                            <Route
+                              path="/product/snag-360-new"
+                              element={<Snag360NewPage />}
+                            />
+                            <Route path="/product/qc" element={<QCPage />} />
+                            <Route path="/product/rhb" element={<RHBPage />} />
+                            <Route
+                              path="/product/brokers"
+                              element={<BrokersPage />}
+                            />
+                            <Route
+                              path="/product/fm-matrix"
+                              element={<FMMatrixPage />}
+                            />
+                            <Route
+                              path="/product/gophygital-corporate"
+                              element={<GoPhygitalCorporatePage />}
+                            />
+                            <Route
+                              path="/product/gophygital-coworking"
+                              element={<GoPhygitalCoworkingPage />}
+                            />
+                            <Route
+                              path="/product/task-manager"
+                              element={<TaskManagerPage />}
+                            />
+                            <Route
+                              path="/product/cp-management"
+                              element={<CPManagementPage />}
+                            />
+                            <Route
+                              path="/product/vendor-management"
+                              element={<VendorManagementPage />}
+                            />
+                            <Route
+                              path="/product/procurement"
+                              element={<ProcurementPage />}
+                            />
+                            <Route
+                              path="/product/loyalty-engine"
+                              element={<LoyaltyEnginePage />}
+                            />
+                            <Route
+                              path="/product/msafe"
+                              element={<MSafePage />}
+                            />
+                            <Route
+                              path="/product/incident-management"
+                              element={<IncidentManagementPage />}
+                            />
+                            <Route
+                              path="/product/appointments"
+                              element={<AppointmentsPage />}
+                            />
+                            <Route
+                              path="/product/hse-app"
+                              element={<HSEAppPage />}
+                            />
+                            <Route
+                              path="/product/club-management"
+                              element={<ClubManagementPage />}
+                            />
+                            {/* <Route
+                            path="/product/gophygital-tenants"
+                            element={<GoPhygitalTenantsPage />}
+                          /> */}
+                            {/* <Route path="/product/ptw" element={<PTWPage />} /> */}
+                            <Route
+                              path="/product/parking"
+                              element={<ParkingPage />}
+                            />
+                            <Route
+                              path="/product/facility-management"
+                              element={<FacilityManagementPage />}
+                            />
+                            <Route
+                              path="/product/customer-app-pre-sales"
+                              element={<CustomerAppPreSalesPage />}
+                            />
+                            <Route
+                              path="/product/customer-app-post-sales"
+                              element={<CustomerAppPage />}
+                            />
+                            <Route
+                              path="/product/lease-management"
+                              element={<LeaseManagementPage />}
+                            />
+                            <Route
+                              path="/product/life-compass"
+                              element={<LifeCompassPage />}
+                            />
+                            <Route
+                              path="/product/business-compass"
+                              element={<BusinessCompassPage />}
+                            />
+                            <Route
+                              path="/product/gate-management"
+                              element={<GateManagementPage />}
+                            />
+                            <Route
+                              path="/product/surveys"
+                              element={<SurveyManagementPage />}
+                            />
+                            <Route
+                              path="/product/ptw"
+                              element={<PTWManagementPage />}
+                            />
+                            <Route
+                              path="/product/gophygital-tenants"
+                              element={<TenantManagementPage />}
+                            />
+                            {/* <Route
+                            path="/product/surveys"
+                            element={<SurveysPage />}
+                          /> */}
+                            <Route
+                              path="/product/lms-sales-crm"
+                              element={<LMSSalesCRMPage />}
+                            />
+                            <Route
+                              path="/product/support-crm"
+                              element={<SupportCRMPage />}
+                            />
+                            <Route
+                              path="/product/real-estate-crm"
+                              element={<RealEstateCRMPage />}
+                            />
+                            <Route
+                              path="/product/accounting"
+                              element={<AccountingPage />}
+                            />
+                            <Route
+                              path="/product/mom-phone-mic"
+                              element={<MOMPhoneMicPage />}
+                            />
+                            <Route path="/product/hrms" element={<HRMSPage />} />
+                            <Route path="/product/esg" element={<ESGPage />} />
+                            <Route
+                              path="/product/mailing"
+                              element={<MailingPage />}
+                            />
+                            <Route
+                              path="/product/office-alternative"
+                              element={<OfficeAlternativePage />}
+                            />
+                            <Route
+                              path="/product/budgeting-wbs"
+                              element={<BudgetingWBSPage />}
+                            />
+                            <Route
+                              path="/product/liquidtext"
+                              element={<LiquidtextPage />}
+                            />
+                            <Route
+                              path="/product/vi-miles"
+                              element={<ViMilesPage />}
+                            />
+                            <Route
+                              path="/product/:productSlug/landing"
+                              element={<ProductLandingPage />}
                             />
                             <Route path="*" element={<NotFound />} />
                           </Route>
@@ -5711,12 +6164,36 @@ function App() {
                             />
 
                             <Route
+                              path="/pulse/contests"
+                              element={<PulseContests />}
+                            />
+                            <Route
                               path="/pulse/contests/create"
                               element={<CreateContestPage />}
                             />
                             <Route
                               path="/pulse/contests/:id"
                               element={<ContestDetailsPage />}
+                            />
+                            <Route
+                              path="/pulse/contests/:id/edit"
+                              element={<EditContestPage />}
+                            />
+                            <Route
+                              path="/pulse/contests/:id/run"
+                              element={<RunContestPage />}
+                            />
+                            <Route
+                              path="/pulse/rewards"
+                              element={<PulseContestRewards />}
+                            />
+                            <Route
+                              path="/pulse/rewards/create"
+                              element={<PulseContestRewardCreate />}
+                            />
+                            <Route
+                              path="/pulse/rewards/:id"
+                              element={<PulseContestRewardsDetails />}
                             />
 
                             <Route
@@ -5861,6 +6338,10 @@ function App() {
                               element={<AddFacilityBookingPage />}
                             />
                             <Route
+                              path="/pulse/amenity/previous-booking/add"
+                              element={<AddPastBookingPage />}
+                            />
+                            <Route
                               path="/pulse/amenity/:id"
                               element={<BookingDetailsPage />}
                             />
@@ -5910,9 +6391,14 @@ function App() {
                               element={<EditCuratedServiceCategoryPage />}
                             />
 
+                            <Route
+                              path="/pulse/ride_settings"
+                              element={<RideSettingsPage />}
+                            />
+
                             {/* Carpool Routes */}
                             <Route
-                              path="/pulse/carpool"
+                              path="/pulse/carpool/rides"
                               element={<CarpoolDashboard />}
                             />
 
@@ -5974,6 +6460,26 @@ function App() {
                               path="/pulse/sos-category-setup"
                               element={<SOSCategorySetupPage />}
                             />
+                            <Route
+                              path="/pulse/support-contact-setup"
+                              element={<SupportContactSetupPage />}
+                            />
+                            <Route
+                              path="/pulse/support-contact-setup/add"
+                              element={<AddSupportContactPage />}
+                            />
+                            <Route
+                              path="/pulse/gre-site-assignment-setup"
+                              element={<GreSiteAssignmentSetupPage />}
+                            />
+                            <Route
+                              path="/pulse/gre-site-assignment-setup/add"
+                              element={<AddGreSiteAssignmentPage />}
+                            />
+                            <Route
+                              path="/pulse/gre-site-assignment-setup/edit/:id"
+                              element={<AddGreSiteAssignmentPage />}
+                            />
                           </Route>
 
                           <Route
@@ -5997,6 +6503,10 @@ function App() {
                             <Route
                               path="/settings/invoice-approvals/add"
                               element={<AddInvoiceApprovalsPage />}
+                            />
+                            <Route
+                              path="/settings/invoice-approvals/edit/:id"
+                              element={<EditInvoiceApprovalsPage />}
                             />
                             <Route
                               path="/settings/design-insights/setup"
@@ -6418,6 +6928,10 @@ function App() {
                           <Route
                             path="/contests/:id"
                             element={<ContestDetailsPage />}
+                          />
+                          <Route
+                            path="/contests/:id/edit"
+                            element={<EditContestPage />}
                           />
                           {/* Contest & Promotion Routes */}
                           <Route

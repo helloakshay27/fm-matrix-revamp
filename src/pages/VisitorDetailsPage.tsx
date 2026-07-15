@@ -126,6 +126,7 @@ interface VisitorData {
   pass_days?: string[];
   pass_valid?: boolean;
   visitor_host_name?: string;
+  visited_to_host_name?: string;
   visitor_host_mobile?: string;
   visitor_host_email?: string;
   building_name?: string;
@@ -677,12 +678,13 @@ export const VisitorDetailsPage = () => {
                       </div>
                     )}
 
-                    {hasData(visitorData.visitor_host_name) && (
+                    {(hasData(visitorData.visitor_host_name) || hasData(visitorData.visited_to_host_name)) && (
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Person To Meet</span>
+                        <span className="text-gray-500 min-w-[140px]">Host Name</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{visitorData.visitor_host_name}</span>
-                        {/* <span className="text-gray-900 font-medium">{visitorData?.person_to_meet_name ?? visitorData?.visited_to_host_name ?? visitorData?.visitor_host_name ?? "-"}</span> */}
+                        <span className="text-gray-900 font-medium">
+                          {visitorData.visitor_host_name || visitorData.visited_to_host_name}
+                        </span>
                       </div>
                     )}
 
@@ -723,26 +725,25 @@ export const VisitorDetailsPage = () => {
                         <span className="text-gray-500 min-w-[140px]">Expected Date</span>
                         <span className="text-gray-500 mx-2">:</span>
                         <span className="text-gray-900 font-medium">
-                          {(() => {
-                            const raw = visitorData.expected_at;
-                            if (!raw) return '-';
-                            // Try DD/MM/YY format first
-                            const parts = raw.split('/');
-                            if (parts.length === 3) {
-                              const [dd, mm, yy] = parts;
-                              const fullYear = parseInt(yy) < 100 ? 2000 + parseInt(yy) : parseInt(yy);
-                              const d = new Date(fullYear, parseInt(mm) - 1, parseInt(dd));
-                              if (!isNaN(d.getTime())) return `${dd}/${mm}/${fullYear}`;
-                            }
-                            // ISO or other parseable format - force DD/MM/YYYY
-                            const d = new Date(raw);
-                            return isNaN(d.getTime()) ? raw : d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                          })()}
+                          {visitorData.expected_at?.split(' ')[0] || '-'}
                         </span>
                       </div>
                     )}
 
                     {hasData(visitorData.expected_at) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Expected Time</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {(() => {
+                            const parts = visitorData.expected_at!.split(' ');
+                            return parts.length >= 3 ? `${parts[1]} ${parts[2]}` : parts[1] || '-';
+                          })()}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* {hasData(visitorData.expected_at) && (
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Expected Time</span>
                         <span className="text-gray-500 mx-2">:</span>
@@ -755,7 +756,7 @@ export const VisitorDetailsPage = () => {
                             : "-"} 
                         </span>
                       </div>
-                    )}
+                    )} */}
 
                     {hasData(visitorData.guest_from) && (
                       <div className="flex items-start">

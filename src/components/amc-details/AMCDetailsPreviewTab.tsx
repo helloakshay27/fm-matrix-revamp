@@ -2,6 +2,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, Download, FileText, FileSpreadsheet, X } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { API_CONFIG } from "@/config/apiConfig";
@@ -27,13 +36,13 @@ const HOUR_VALUES = Array.from({ length: 24 }, (_, idx) => idx);
 const MINUTE_VALUES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 
 const WEEKDAY_CODE_TO_NAME: Record<string, string> = {
-  "1": "Sunday",
-  "2": "Monday",
-  "3": "Tuesday",
-  "4": "Wednesday",
-  "5": "Thursday",
-  "6": "Friday",
-  "7": "Saturday",
+  "0": "Sunday",
+  "1": "Monday",
+  "2": "Tuesday",
+  "3": "Wednesday",
+  "4": "Thursday",
+  "5": "Friday",
+  "6": "Saturday",
 };
 
 type CronConfig = {
@@ -50,7 +59,7 @@ type CronConfig = {
   selectedMinutes: number[];
   betweenMinuteStart: number;
   betweenMinuteEnd: number;
-  };
+};
 
 const parseCronExpression = (cron?: string | null): CronConfig => {
   const defaultConfig: CronConfig = {
@@ -149,7 +158,7 @@ const parseCronExpression = (cron?: string | null): CronConfig => {
       const minIdx = Math.min(startIdx, endIdx);
       const maxIdx = Math.max(startIdx, endIdx);
       config.selectedMonths = MONTHS.slice(minIdx, maxIdx + 1);
-      }
+    }
   } else {
     config.monthMode = "specific";
     config.selectedMonths = monthField
@@ -159,10 +168,10 @@ const parseCronExpression = (cron?: string | null): CronConfig => {
         return MONTHS[idx] || "";
       })
       .filter(Boolean);
-    }
+  }
 
   return config;
-  };
+};
 
 const extractDocuments = (items?: any[]): any[] => {
   if (!Array.isArray(items)) {
@@ -189,7 +198,7 @@ const getServiceGroupInfo = (
   // Prefer the first service entry – in current API samples, group/sub-group
   // are the same across services for a given AMC
   const first = amc_services[0] as any;
-    return {
+  return {
     groupName: first?.group_name || "",
     subGroupName: first?.sub_group_name || "",
   };
@@ -221,6 +230,15 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
   amcId,
 }) => {
   const [showScheduleSection, setShowScheduleSection] = useState(false);
+  const [activePreviewFreqTab, setActivePreviewFreqTab] = useState(0);
+  const [visitPage, setVisitPage] = useState(1);
+  const frequencyGroups: Array<{
+    frequency_config_id: number;
+    frequency: string;
+    description?: string;
+    cron_expression?: string;
+    active?: boolean;
+  }> = Array.isArray((amc as any)?.visit_logs_by_frequency) ? (amc as any).visit_logs_by_frequency : [];
   const cronExpression = amc?.cron_expression || "";
   const cronConfig = useMemo(() => parseCronExpression(cronExpression), [cronExpression]);
   const contractDocuments = useMemo(
@@ -240,11 +258,13 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
   const normalizedAmcType = (amc?.amc_type || "").toString().toLowerCase();
   const normalizedChecklistType = (amc?.checklist_type || "").toString().toLowerCase();
   const normalizedResourceType = (amc?.resource_type || "").toString().toLowerCase();
-  const normalizedCoverageType = normalizedAmcType === "non-comprehensive"
-    ? "Non-Comprehensive"
-    : normalizedAmcType === "comprehensive"
-      ? "Comprehensive"
-      : (amc?.coverage_type || amc?.amc_coverage_type || "").toString();
+  const normalizedCoverageType = (() => {
+    const pmsType = (amc?.pms_amc_type || "").toString();
+    if (pmsType) return pmsType;
+    if (normalizedAmcType === "non-comprehensive") return "Non-Comprehensive";
+    if (normalizedAmcType === "comprehensive") return "Comprehensive";
+    return (amc?.coverage_type || amc?.amc_coverage_type || "").toString();
+  })();
   const isAssetType =
     normalizedAmcType === "asset" ||
     normalizedChecklistType === "asset" ||
@@ -278,7 +298,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
       console.error("[AMCDetailsPreviewTab] Missing attachment_id", doc);
       return null;
     }
-      const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       console.error("[AMCDetailsPreviewTab] Missing auth token");
       return null;
@@ -290,19 +310,19 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
     }
 
     const apiUrl = `${baseUrl}/attachfiles/${doc.attachment_id}?show_file=true`;
-        const response = await fetch(apiUrl, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-        if (!response.ok) {
+    if (!response.ok) {
       throw new Error("Failed to fetch attachment");
-        }
+    }
 
-        const blob = await response.blob();
+    const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     return { url };
   };
@@ -314,8 +334,8 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
       setPreviewDoc({
         url: result.url,
         name: doc.document_name || `document_${doc.attachment_id || doc.id}`,
-        });
-        setIsModalOpen(true);
+      });
+      setIsModalOpen(true);
     } catch (error) {
       console.error("[AMCDetailsPreviewTab] Failed to preview attachment", error);
     }
@@ -326,12 +346,12 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
       const result = await fetchAttachmentBlob(doc);
       if (!result) return;
       const downloadName = doc.document_name || `document_${doc.attachment_id || doc.id}`;
-        const link = document.createElement("a");
+      const link = document.createElement("a");
       link.href = result.url;
       link.download = downloadName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(result.url);
     } catch (error) {
       console.error("[AMCDetailsPreviewTab] Failed to download attachment", error);
@@ -398,44 +418,44 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
         );
       })();
 
-            return (
-              <div
+      return (
+        <div
           key={key}
           className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-white shadow-md"
-              >
-                {isImage ? (
-                  <>
-                    <button
-                      className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                      title="View"
+        >
+          {isImage ? (
+            <>
+              <button
+                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                title="View"
                 onClick={() => handlePreview(doc)}
-                      type="button"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <img
+                type="button"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+              <img
                 src={url}
                 alt={docName}
-                      className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                 onClick={() => handlePreview(doc)}
-                    />
-                  </>
-                ) : (
+              />
+            </>
+          ) : (
             iconElement
-                )}
+          )}
           <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">{docName}</span>
           {isDownloadOnly && (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+            <Button
+              size="icon"
+              variant="ghost"
+              className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
               onClick={() => handleDownload(doc)}
-                  >
-                    <Download className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-            );
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      );
     });
   };
 
@@ -479,6 +499,171 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
   const betweenMonthEndValue = cronConfig.betweenMonthEnd || betweenMonthStartValue;
   const betweenMinuteStartValue = cronConfig.betweenMinuteStart.toString().padStart(2, "0");
   const betweenMinuteEndValue = cronConfig.betweenMinuteEnd.toString().padStart(2, "0");
+
+  const renderCronVisual = (cfg: CronConfig) => {
+    const bMonthStart = cfg.betweenMonthStart || "January";
+    const bMonthEnd = cfg.betweenMonthEnd || bMonthStart;
+    const bMinStart = cfg.betweenMinuteStart.toString().padStart(2, "0");
+    const bMinEnd = cfg.betweenMinuteEnd.toString().padStart(2, "0");
+    const monthChecked = (m: string) => cfg.selectedMonths.includes(m);
+    const weekdayChecked = (d: string) => cfg.dayMode === "all" || (cfg.dayMode === "weekdays" && cfg.selectedWeekdays.includes(d));
+    const dayNumChecked = (d: number) => cfg.dayMode === "all" || (cfg.dayMode === "specific" && cfg.selectedDays.includes(d));
+    const hourChecked = (h: number) => cfg.hourMode === "all" || cfg.selectedHours.includes(h);
+    const minuteChecked = (m: number) => {
+      if (cfg.minuteMode === "all") return true;
+      if (cfg.minuteMode === "specific") return cfg.selectedMinutes.includes(m);
+      const s = cfg.betweenMinuteStart, e = cfg.betweenMinuteEnd;
+      return s <= e ? m >= s && m <= e : m >= e && m <= s;
+    };
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-0">
+        {/* Month */}
+        <div style={{ border: '1px dashed rgba(11,10,10,0.56)', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ background: 'rgba(234,230,221,1)', padding: '12px 16px', borderBottom: '1px dashed rgba(11,10,10,0.56)' }}>
+            <h3 className="text-sm font-semibold text-[#1a1a1a]">Month</h3>
+          </div>
+          <div style={{ padding: '16px', background: 'rgba(246,247,247,1)' }}>
+            <div className="space-y-3">
+              <label className="flex items-center cursor-pointer">
+                <input type="radio" checked={cfg.monthMode !== "between"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                <span className="text-[#1a1a1a] font-medium text-sm">Placeholder</span>
+              </label>
+              <div className="space-y-2 mt-4">
+                <label className="flex items-center text-sm cursor-pointer">
+                  <input type="checkbox" checked={cfg.monthMode === "all"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                  <span className="text-[#1a1a1a] font-medium">Select All</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {MONTHS.map((month) => (
+                    <label key={month} className="flex items-center text-sm cursor-pointer">
+                      <input type="checkbox" checked={monthChecked(month)} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                      <span className="text-[#1a1a1a]">{month.substring(0, 3)}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <label className="flex items-center mt-4 cursor-pointer">
+                <input type="radio" checked={cfg.monthMode === "between"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                <span className="text-[#1a1a1a] font-medium text-sm">Every month between</span>
+              </label>
+              <div className="flex items-center gap-2 mt-3">
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '100px' }} value={bMonthStart} onChange={() => {}}>
+                  {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+                <span className="text-sm text-[#1a1a1a]">and</span>
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '100px' }} value={bMonthEnd} onChange={() => {}}>
+                  {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Day */}
+        <div style={{ border: '1px dashed rgba(11,10,10,0.56)', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ background: 'rgba(234,230,221,1)', padding: '12px 16px', borderBottom: '1px dashed rgba(11,10,10,0.56)' }}>
+            <h3 className="text-sm font-semibold text-[#1a1a1a]">Day</h3>
+          </div>
+          <div style={{ padding: '16px', background: 'rgba(246,247,247,1)' }}>
+            <div className="space-y-3">
+              <label className="flex items-center cursor-pointer">
+                <input type="radio" checked={cfg.dayMode !== "specific"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                <span className="text-[#1a1a1a] font-medium text-sm">Placeholder</span>
+              </label>
+              <div className="space-y-2 mt-4">
+                <label className="flex items-center text-sm cursor-pointer">
+                  <input type="checkbox" checked={cfg.dayMode === "all"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                  <span className="text-[#1a1a1a] font-medium">Select All</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((day) => (
+                    <label key={day} className="flex items-center text-sm cursor-pointer">
+                      <input type="checkbox" checked={weekdayChecked(day)} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                      <span className="text-[#1a1a1a]">{day.substring(0, 3)}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <label className="flex items-center mt-4 cursor-pointer">
+                <input type="radio" checked={cfg.dayMode === "specific"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                <span className="text-[#1a1a1a] font-medium text-sm">Specific date of month</span>
+              </label>
+              <div className="grid grid-cols-6 gap-1 mt-3">
+                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                  <label key={day} className="flex items-center text-xs cursor-pointer">
+                    <input type="checkbox" checked={dayNumChecked(day)} readOnly className="mr-1 w-3 h-3" style={{ accentColor: '#C72030' }} />
+                    <span className="text-[#1a1a1a]">{day.toString().padStart(2, '0')}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Hours */}
+        <div style={{ border: '1px dashed rgba(11,10,10,0.56)', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ background: 'rgba(234,230,221,1)', padding: '12px 16px', borderBottom: '1px dashed rgba(11,10,10,0.56)' }}>
+            <h3 className="text-sm font-semibold text-[#1a1a1a]">Hours</h3>
+          </div>
+          <div style={{ padding: '16px', background: 'rgba(246,247,247,1)' }}>
+            <div className="space-y-3">
+              <label className="flex items-center cursor-pointer">
+                <input type="radio" checked={cfg.hourMode !== "all"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                <span className="text-[#1a1a1a] font-medium text-sm">Choose one or more specific hours</span>
+              </label>
+              <div className="space-y-2 mt-4">
+                <label className="flex items-center text-sm cursor-pointer">
+                  <input type="checkbox" checked={cfg.hourMode === "all"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                  <span className="text-[#1a1a1a] font-medium">Select All</span>
+                </label>
+                <div className="grid grid-cols-7 gap-1">
+                  {Array.from({ length: 25 }, (_, i) => i).map((hour) => (
+                    <label key={hour} className="flex items-center text-xs cursor-pointer">
+                      <input type="checkbox" checked={hourChecked(hour)} readOnly className="mr-1 w-3 h-3" style={{ accentColor: '#C72030' }} />
+                      <span className="text-[#1a1a1a]">{hour.toString().padStart(2, '0')}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Minutes */}
+        <div style={{ border: '1px dashed rgba(11,10,10,0.56)', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ background: 'rgba(234,230,221,1)', padding: '12px 16px', borderBottom: '1px dashed rgba(11,10,10,0.56)' }}>
+            <h3 className="text-sm font-semibold text-[#1a1a1a]">Minutes</h3>
+          </div>
+          <div style={{ padding: '16px', background: 'rgba(246,247,247,1)' }}>
+            <div className="space-y-3">
+              <label className="flex items-center cursor-pointer">
+                <input type="radio" checked={cfg.minuteMode !== "between"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                <span className="text-[#1a1a1a] font-medium text-sm">Specific minutes</span>
+              </label>
+              <div className="grid grid-cols-4 gap-1 mt-4">
+                {[0,5,10,15,20,25,30,35,40,45,50,55].map((minute) => (
+                  <label key={minute} className="flex items-center text-xs cursor-pointer">
+                    <input type="checkbox" checked={minuteChecked(minute)} readOnly className="mr-1 w-3 h-3" style={{ accentColor: '#C72030' }} />
+                    <span className="text-[#1a1a1a]">{minute.toString().padStart(2, '0')} min</span>
+                  </label>
+                ))}
+              </div>
+              <label className="flex items-center mt-4 cursor-pointer">
+                <input type="radio" checked={cfg.minuteMode === "between"} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
+                <span className="text-[#1a1a1a] font-medium text-sm">Every minute between minute</span>
+              </label>
+              <div className="flex items-center gap-2 mt-3">
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '60px' }} value={bMinStart} onChange={() => {}}>
+                  {MINUTE_VALUES.map((m) => <option key={m} value={m.toString().padStart(2,"0")}>{m.toString().padStart(2,"0")}</option>)}
+                </select>
+                <span className="text-sm text-[#1a1a1a]">and minute</span>
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '60px' }} value={bMinEnd} onChange={() => {}}>
+                  {MINUTE_VALUES.map((m) => <option key={m} value={m.toString().padStart(2,"0")}>{m.toString().padStart(2,"0")}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
 
   // Material-UI field styles to match AddAMCPage
@@ -532,151 +717,219 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
         background: '#FFF',
         boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
       }}>
-          <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-             <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-               <div className="w-6 h-6 mr-2 flex items-center justify-center">
-                 <svg
-                   width="24"
-                   height="24"
-                   viewBox="0 0 24 24"
-                   fill="none"
-                   xmlns="http://www.w3.org/2000/svg"
-                 >
-                   <path
-                     d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                     stroke="#C72030"
-                     strokeWidth="1.5"
-                   />
-                   <path
-                     d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                     stroke="#C72030"
-                     strokeWidth="1.5"
-                   />
-                 </svg>
-               </div>
-               AMC CONFIGURATION
-             </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6 p-6" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
-            <div>
-              <label className="block text-sm font-semibold mb-3 text-[#1a1a1a]">Details</label>
-              <div className="flex gap-6">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    name="details"
-                    value="Asset"
-                    checked={isAssetType}
-                    readOnly
-                    className="mr-2 w-4 h-4"
-                    style={{ accentColor: '#C72030' }}
-                  />
-                  <span className="text-[#1a1a1a] font-medium">Asset</span>
-                </label>
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    name="details"
-                    value="Service"
-                    checked={isServiceType}
-                    readOnly
-                    className="mr-2 w-4 h-4"
-                    style={{ accentColor: '#C72030' }}
-                  />
-                  <span className="text-[#1a1a1a] font-medium">Service</span>
-                </label>
-              </div>
+        <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
+          <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
+            <div className="w-6 h-6 mr-2 flex items-center justify-center">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+                  stroke="#C72030"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+                  stroke="#C72030"
+                  strokeWidth="1.5"
+                />
+              </svg>
             </div>
-
-            <div>
-              <label className="block text-sm font-semibold mb-3 text-[#1a1a1a]">AMC Type</label>
-              <div className="flex gap-6">
-                {["Comprehensive", "Non-Comprehensive"].map((option) => (
-                  <label key={option} className="flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      name={`amc-type-${option}`}
-                      value={option}
-                      checked={(normalizedCoverageType || "Comprehensive") === option}
-                      readOnly
-                      className="mr-2 w-4 h-4"
-                      style={{ accentColor: '#C72030' }}
-                    />
-                    <span className="text-[#1a1a1a] font-medium">{option}</span>
-                  </label>
-                ))}
-              </div>
+            AMC CONFIGURATION
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6 p-6" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
+          <div>
+            <label className="block text-sm font-semibold mb-3 text-[#1a1a1a]">Details</label>
+            <div className="flex gap-6">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="details"
+                  value="Asset"
+                  checked={isAssetType}
+                  readOnly
+                  className="mr-2 w-4 h-4"
+                  style={{ accentColor: '#C72030' }}
+                />
+                <span className="text-[#1a1a1a] font-medium">Asset</span>
+              </label>
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="details"
+                  value="Service"
+                  checked={isServiceType}
+                  readOnly
+                  className="mr-2 w-4 h-4"
+                  style={{ accentColor: '#C72030' }}
+                />
+                <span className="text-[#1a1a1a] font-medium">Service</span>
+              </label>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-semibold mb-3 text-[#1a1a1a]">Type</label>
-              <div className="flex gap-6">
-                <label className="flex items-center cursor-pointer">
+          <div>
+            <label className="block text-sm font-semibold mb-3 text-[#1a1a1a]">AMC Type</label>
+            <div className="flex gap-6">
+              {["Comprehensive", "Non-Comprehensive"].map((option) => (
+                <label key={option} className="flex items-center cursor-pointer">
                   <input
                     type="radio"
-                    name="type"
-                    value="Individual"
-                    checked={isIndividualType}
+                    name={`amc-type-${option}`}
+                    value={option}
+                    checked={(normalizedCoverageType || "Comprehensive") === option}
                     readOnly
                     className="mr-2 w-4 h-4"
                     style={{ accentColor: '#C72030' }}
                   />
-                  <span className="text-[#1a1a1a] font-medium">Individual</span>
+                  <span className="text-[#1a1a1a] font-medium">{option}</span>
                 </label>
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="Group"
-                    checked={isGroupType}
-                    readOnly
-                    className="mr-2 w-4 h-4"
-                    style={{ accentColor: '#C72030' }}
-                  />
-                  <span className="text-[#1a1a1a] font-medium">Group</span>
-                </label>
-              </div>
+              ))}
             </div>
+          </div>
 
-            {isIndividualType ? (
-              <>
-                {isAssetType ? (
-                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Assets <span style={{ color: '#C72030' }}>*</span></InputLabel>
-                    <MuiSelect
-                      label="Assets"
-                      displayEmpty
-                      multiple
-                      value={Array.isArray(amc?.amc_assets) ? amc.amc_assets.map((asset: any) => asset.asset_name).filter(Boolean) : []}
-                      disabled
-                    >
-                      <MenuItem value=""><em>Select Assets</em></MenuItem>
-                      {Array.isArray(amc?.amc_assets) && amc.amc_assets.map((asset: any) => (
-                        <MenuItem key={asset.id} value={asset.asset_name}>
-                          {asset.asset_name}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                ) : (
-                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Service <span style={{ color: '#C72030' }}>*</span></InputLabel>
-                    <MuiSelect
-                      label="Service"
-                      displayEmpty
-                      multiple
-                      value={getServiceNames(amc?.amc_services)}
-                      disabled
-                    >
-                      <MenuItem value=""><em>Select Services</em></MenuItem>
-                      {Array.isArray(amc?.amc_services) && amc.amc_services.map((service: any) => (
-                        <MenuItem key={service.id} value={service.service_name}>
-                          {service.service_name}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                )}
+          <div>
+            <label className="block text-sm font-semibold mb-3 text-[#1a1a1a]">Type</label>
+            <div className="flex gap-6">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="type"
+                  value="Individual"
+                  checked={isIndividualType}
+                  readOnly
+                  className="mr-2 w-4 h-4"
+                  style={{ accentColor: '#C72030' }}
+                />
+                <span className="text-[#1a1a1a] font-medium">Individual</span>
+              </label>
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="type"
+                  value="Group"
+                  checked={isGroupType}
+                  readOnly
+                  className="mr-2 w-4 h-4"
+                  style={{ accentColor: '#C72030' }}
+                />
+                <span className="text-[#1a1a1a] font-medium">Group</span>
+              </label>
+            </div>
+          </div>
+
+          {isIndividualType ? (
+            <>
+              {isAssetType ? (
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Assets <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                  <MuiSelect
+                    label="Assets"
+                    displayEmpty
+                    multiple
+                    value={Array.isArray(amc?.amc_assets) ? amc.amc_assets.map((asset: any) => asset.asset_name).filter(Boolean) : []}
+                    disabled
+                  >
+                    <MenuItem value=""><em>Select Assets</em></MenuItem>
+                    {Array.isArray(amc?.amc_assets) && amc.amc_assets.map((asset: any) => (
+                      <MenuItem key={asset.id} value={asset.asset_name}>
+                        {asset.asset_name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+              ) : (
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Service <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                  <MuiSelect
+                    label="Service"
+                    displayEmpty
+                    multiple
+                    value={getServiceNames(amc?.amc_services)}
+                    disabled
+                  >
+                    <MenuItem value=""><em>Select Services</em></MenuItem>
+                    {Array.isArray(amc?.amc_services) && amc.amc_services.map((service: any) => (
+                      <MenuItem key={service.id} value={service.service_name}>
+                        {service.service_name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+              )}
+
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>Supplier <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                <MuiSelect
+                  label="Supplier"
+                  displayEmpty
+                  value={amc?.amc_vendor_name || ''}
+                  disabled
+                >
+                  <MenuItem value=""><em>Select Supplier</em></MenuItem>
+                  <MenuItem value={amc?.amc_vendor_name || ''}>{amc?.amc_vendor_name || 'Supplier Selected'}</MenuItem>
+                </MuiSelect>
+              </FormControl>
+
+              {/* Group & Sub Group derived from amc_services */}
+              {isServiceType && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <TextField
+                    disabled
+                    label="Group"
+                    placeholder="Group"
+                    fullWidth
+                    value={serviceGroupName || ''}
+                    sx={{ mb: 3 }}
+                  />
+                  <TextField
+                    disabled
+                    label="Sub Group"
+                    placeholder="Sub Group"
+                    fullWidth
+                    value={serviceSubGroupName || ''}
+                    sx={{ mb: 3 }}
+                  />
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Group</InputLabel>
+                  <MuiSelect
+                    label="Group"
+                    displayEmpty
+                    value={isAssetType ? getGroupNames(amc?.amc_assets, 'asset') : getGroupNames(amc?.amc_services, 'service')}
+                    disabled
+                  >
+                    <MenuItem value=""><em>Select Group</em></MenuItem>
+                    <MenuItem value={isAssetType ? getGroupNames(amc?.amc_assets, 'asset') : getGroupNames(amc?.amc_services, 'service')}>
+                      {(isAssetType ? getGroupNames(amc?.amc_assets, 'asset') : getGroupNames(amc?.amc_services, 'service')) || 'Group Selected'}
+                    </MenuItem>
+                  </MuiSelect>
+                </FormControl>
+
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>SubGroup</InputLabel>
+                  <MuiSelect
+                    label="SubGroup"
+                    displayEmpty
+                    value={isAssetType ? getSubGroupNames(amc?.amc_assets, 'asset') : getSubGroupNames(amc?.amc_services, 'service')}
+                    disabled
+                  >
+                    <MenuItem value=""><em>Select Sub Group</em></MenuItem>
+                    <MenuItem value={isAssetType ? getSubGroupNames(amc?.amc_assets, 'asset') : getSubGroupNames(amc?.amc_services, 'service')}>
+                      {(isAssetType ? getSubGroupNames(amc?.amc_assets, 'asset') : getSubGroupNames(amc?.amc_services, 'service')) || 'SubGroup Selected'}
+                    </MenuItem>
+                  </MuiSelect>
+                </FormControl>
 
                 <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>Supplier <span style={{ color: '#C72030' }}>*</span></InputLabel>
@@ -690,79 +943,11 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                     <MenuItem value={amc?.amc_vendor_name || ''}>{amc?.amc_vendor_name || 'Supplier Selected'}</MenuItem>
                   </MuiSelect>
                 </FormControl>
-
-                {/* Group & Sub Group derived from amc_services */}
-                {isServiceType && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <TextField
-                      disabled
-                      label="Group"
-                      placeholder="Group"
-                      fullWidth
-                      value={serviceGroupName || ''}
-                      sx={{ mb: 3 }}
-                    />
-                    <TextField
-                      disabled
-                      label="Sub Group"
-                      placeholder="Sub Group"
-                      fullWidth
-                      value={serviceSubGroupName || ''}
-                      sx={{ mb: 3 }}
-                    />
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Group</InputLabel>
-                    <MuiSelect
-                      label="Group"
-                      displayEmpty
-                      value={isAssetType ? getGroupNames(amc?.amc_assets, 'asset') : getGroupNames(amc?.amc_services, 'service')}
-                      disabled
-                    >
-                      <MenuItem value=""><em>Select Group</em></MenuItem>
-                      <MenuItem value={isAssetType ? getGroupNames(amc?.amc_assets, 'asset') : getGroupNames(amc?.amc_services, 'service')}>
-                        {(isAssetType ? getGroupNames(amc?.amc_assets, 'asset') : getGroupNames(amc?.amc_services, 'service')) || 'Group Selected'}
-                      </MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-
-                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>SubGroup</InputLabel>
-                    <MuiSelect
-                      label="SubGroup"
-                      displayEmpty
-                      value={isAssetType ? getSubGroupNames(amc?.amc_assets, 'asset') : getSubGroupNames(amc?.amc_services, 'service')}
-                      disabled
-                    >
-                      <MenuItem value=""><em>Select Sub Group</em></MenuItem>
-                      <MenuItem value={isAssetType ? getSubGroupNames(amc?.amc_assets, 'asset') : getSubGroupNames(amc?.amc_services, 'service')}>
-                        {(isAssetType ? getSubGroupNames(amc?.amc_assets, 'asset') : getSubGroupNames(amc?.amc_services, 'service')) || 'SubGroup Selected'}
-                      </MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-
-                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Supplier <span style={{ color: '#C72030' }}>*</span></InputLabel>
-                    <MuiSelect
-                      label="Supplier"
-                      displayEmpty
-                      value={amc?.amc_vendor_name || ''}
-                      disabled
-                    >
-                      <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                      <MenuItem value={amc?.amc_vendor_name || ''}>{amc?.amc_vendor_name || 'Supplier Selected'}</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* AMC Details Section */}
       <Card className="border-[#D9D9D9] bg-white shadow-sm" style={{
@@ -770,123 +955,140 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
         background: '#FFF',
         boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
       }}>
-          <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-             <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-               <div className="w-6 h-6 mr-2 flex items-center justify-center">
-                 <svg
-                   width="24"
-                   height="24"
-                   viewBox="0 0 24 24"
-                   fill="none"
-                   xmlns="http://www.w3.org/2000/svg"
-                 >
-                   <path
-                     d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                     stroke="#C72030"
-                     strokeWidth="1.5"
-                   />
-                   <path
-                     d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                     stroke="#C72030"
-                     strokeWidth="1.5"
-                   />
-                 </svg>
-               </div>
-               AMC DETAILS
-             </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 p-6" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <TextField
-                disabled
-                label={<span>Contract Name <span style={{ color: 'red' }}>*</span></span>}
-                placeholder="Enter Contract Name"
-                fullWidth
-                value={amc?.contract_name|| ''}
-                sx={{ mb: 3 }}
-              />
-
-              <TextField
-                disabled
-                label={<span>Start Date <span style={{ color: 'red' }}>*</span></span>}
-                type="date"
-                fullWidth
-                value={amc?.amc_start_date || ''}
-                InputLabelProps={{ shrink: true }}
-                sx={{ mb: 3 }}
-              />
-
-              <TextField
-                disabled
-                label={<span>End Date <span style={{ color: 'red' }}>*</span></span>}
-                type="date"
-                fullWidth
-                value={amc?.amc_end_date || ''}
-                InputLabelProps={{ shrink: true }}
-                sx={{ mb: 3 }}
-              />
-
-              <TextField
-                disabled
-                label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
-                type="date"
-                fullWidth
-                value={amc?.amc_first_service || ''}
-                InputLabelProps={{ shrink: true }}
-                sx={{ mb: 3 }}
-              />
-
-              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>Payment Terms <span style={{ color: '#C72030' }}>*</span></InputLabel>
-                <MuiSelect
-                  label="Payment Terms"
-                  displayEmpty
-                  value={amc?.payment_term || ''}
-                  disabled
-                >
-                  <MenuItem value=""><em>Select Payment Terms</em></MenuItem>
-                  <MenuItem value="monthly">Monthly</MenuItem>
-                  <MenuItem value="quarterly">Quarterly</MenuItem>
-                  <MenuItem value="half-yearly">Half Yearly</MenuItem>
-                  <MenuItem value="yearly">Yearly</MenuItem>
-                  <MenuItem value="full_payment">Full Payment</MenuItem>
-                  <MenuItem value="visit_based_payment">Visit Based Payment</MenuItem>
-                </MuiSelect>
-              </FormControl>
-
-              <TextField
-                disabled
-                label={<span>Cost <span style={{ color: 'red' }}>*</span></span>}
-                placeholder="Enter Cost"
-                type="number"
-                fullWidth
-                value={amc?.amc_cost || ''}
-                sx={{ mb: 3 }}
-              />
-
-              <TextField
-                disabled
-                label={<span>No. of Visits <span style={{ color: 'red' }}>*</span></span>}
-                placeholder="Enter No. of Visits"
-                type="number"
-                fullWidth
-                value={amc?.no_of_visits || ''}
-                sx={{ mb: 3 }}
-              />
-
-              <TextField
-                disabled
-                label="Remarks"
-                placeholder="Enter Remarks"
-                fullWidth
-                value={amc?.remarks || ''}
-                sx={{ mb: 3 }}
-              />
-
-              <div></div>
+        <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
+          <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
+            <div className="w-6 h-6 mr-2 flex items-center justify-center">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+                  stroke="#C72030"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+                  stroke="#C72030"
+                  strokeWidth="1.5"
+                />
+              </svg>
             </div>
-          </CardContent>
-        </Card>
+            AMC DETAILS
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 p-6" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <TextField
+              disabled
+              label={<span>Contract Name <span style={{ color: 'red' }}>*</span></span>}
+              placeholder="Enter Contract Name"
+              fullWidth
+              value={amc?.contract_name || ''}
+              sx={{ mb: 3 }}
+            />
+
+            <TextField
+              disabled
+              label={<span>Start Date <span style={{ color: 'red' }}>*</span></span>}
+              type="date"
+              fullWidth
+              value={amc?.amc_start_date || ''}
+              InputLabelProps={{ shrink: true }}
+              sx={{ mb: 3 }}
+            />
+
+            <TextField
+              disabled
+              label={<span>End Date <span style={{ color: 'red' }}>*</span></span>}
+              type="date"
+              fullWidth
+              value={amc?.amc_end_date || ''}
+              InputLabelProps={{ shrink: true }}
+              sx={{ mb: 3 }}
+            />
+
+            <TextField
+              disabled
+              label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
+              type="date"
+              fullWidth
+              value={amc?.amc_first_service || ''}
+              InputLabelProps={{ shrink: true }}
+              sx={{ mb: 3 }}
+            />
+
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+              <InputLabel shrink>Payment Terms <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <MuiSelect
+                label="Payment Terms"
+                displayEmpty
+                value={amc?.payment_term || ''}
+                disabled
+              >
+                <MenuItem value=""><em>Select Payment Terms</em></MenuItem>
+                <MenuItem value="monthly">Monthly</MenuItem>
+                <MenuItem value="quarterly">Quarterly</MenuItem>
+                <MenuItem value="half-yearly">Half Yearly</MenuItem>
+                <MenuItem value="yearly">Yearly</MenuItem>
+                <MenuItem value="full_payment">Full Payment</MenuItem>
+                <MenuItem value="visit_based_payment">Visit Based Payment</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <TextField
+              disabled
+              label={<span>Cost <span style={{ color: 'red' }}>*</span></span>}
+              placeholder="Enter Cost"
+              type="number"
+              fullWidth
+              value={amc?.amc_cost || ''}
+              sx={{ mb: 3 }}
+            />
+
+            <TextField
+              disabled
+              label={<span>No. of Visits <span style={{ color: 'red' }}>*</span></span>}
+              placeholder="Enter No. of Visits"
+              type="number"
+              fullWidth
+              value={amc?.no_of_visits || ''}
+              sx={{ mb: 3 }}
+            />
+
+            <TextField
+              disabled
+              label="Remarks"
+              placeholder="Enter Remarks"
+              fullWidth
+              value={amc?.remarks || ''}
+              sx={{ mb: 3 }}
+            />
+
+            {frequencyGroups.length > 0 && (
+              <div className="md:col-span-3">
+                <div className="text-sm font-medium text-gray-500 mb-2">AMC Frequency</div>
+                <div className="flex flex-wrap gap-2">
+                  {frequencyGroups.map((g) => (
+                    <span
+                      key={g.frequency_config_id}
+                      className="px-3 py-1 text-sm font-medium rounded-full border"
+                      style={{ backgroundColor: '#FFF0F0', color: '#C72030', borderColor: '#C72030' }}
+                    >
+                      {g.frequency.charAt(0).toUpperCase() + g.frequency.slice(1)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div></div>
+          </div>
+        </CardContent>
+      </Card>
 
 
       {/* Schedule Section */}
@@ -923,16 +1125,12 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
             <button
               type="button"
               onClick={() => setShowScheduleSection(!showScheduleSection)}
-              className="px-4 py-2 font-medium text-[#C72030] border border-[#C72030] rounded-md hover:bg-[#C72030] hover:text-white transition-colors"
               style={{
-                backgroundColor: '#F6F4EE',
                 color: '#C72030',
                 border: '1px solid #C72030',
-                borderRadius: '4px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                fontWeight: 500
+                backgroundColor: '#F6F4EE',
               }}
+              className="px-4 py-2 text-sm font-medium rounded hover:opacity-80 transition-opacity"
             >
               Change View
             </button>
@@ -942,393 +1140,175 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
         {/* Step Content - Schedule */}
         {!showScheduleSection ? (
           <CardContent className="p-0" style={{ backgroundColor: 'rgb(246, 247, 247)' }}>
-            <div className="overflow-x-auto" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-              <table className="min-w-full">
-                <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F6F4EE', zIndex: 10 }}>
-                  <tr className="border-b border-gray-200" style={{ backgroundColor: '#F6F4EE' }}>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Schedule Date</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit Date</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit No.</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Attendant Name</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">No. of Assets Covered</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Remarks</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Attachment</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.isArray(amc?.amc_visit_logs) && amc.amc_visit_logs.length > 0 ? (
-                    amc.amc_visit_logs.map((visit: any, index: number) => (
-                      <tr key={visit.id || index} className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.scheduled_date || visit.asset_period || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('en-GB') : '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_number || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.attendant_name || visit.technician?.name || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm text-center">{visit.no_of_assets ?? visit.assets_covered ?? '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.remarks || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.attachment?.document_url || visit.attachment?.document ? '📎 Attached' : '-'}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr className="border-b border-gray-100">
-                      <td colSpan={7} className="py-3 px-4 text-center text-gray-500">
-                        No schedule visits found
-                      </td>
-                    </tr>
+            {(() => {
+              const visitLogs = Array.isArray(amc?.amc_visit_logs) ? amc.amc_visit_logs : [];
+              const VISIT_PER_PAGE = 15;
+              const visitTotalPages = Math.max(1, Math.ceil(visitLogs.length / VISIT_PER_PAGE));
+              const visitPageLogs = visitLogs.slice((visitPage - 1) * VISIT_PER_PAGE, visitPage * VISIT_PER_PAGE);
+
+              const renderVisitPaginationItems = () => {
+                const items: React.ReactNode[] = [];
+                const delta = 1;
+                const left = visitPage - delta;
+                const right = visitPage + delta;
+                let last = 0;
+                for (let i = 1; i <= visitTotalPages; i++) {
+                  if (i === 1 || i === visitTotalPages || (i >= left && i <= right)) {
+                    if (last && i - last > 1) {
+                      items.push(
+                        <PaginationItem key={`ellipsis-${i}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      );
+                    }
+                    items.push(
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          isActive={visitPage === i}
+                          onClick={() => setVisitPage(i)}
+                          className="cursor-pointer"
+                        >
+                          {i}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                    last = i;
+                  }
+                }
+                return items;
+              };
+
+              return (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F6F4EE', zIndex: 10 }}>
+                        <tr className="border-b border-gray-200" style={{ backgroundColor: '#F6F4EE' }}>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Schedule Date</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit Date</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit No.</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Attendant Name</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">No. of Assets Covered</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Remarks</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Attachment</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visitLogs.length > 0 ? (
+                          visitPageLogs.map((visit: any, index: number) => (
+                            <tr key={visit.id || index} className="border-b border-gray-100">
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.scheduled_date || visit.asset_period || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('en-GB') : '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_number || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.attendant_name || visit.technician?.name || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm text-center">{visit.no_of_assets ?? visit.assets_covered ?? '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.remarks || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.attachment?.document_url || visit.attachment?.document ? '📎 Attached' : '-'}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr className="border-b border-gray-100">
+                            <td colSpan={7} className="py-3 px-4 text-center text-gray-500">
+                              No schedule visits found
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {visitLogs.length > 0 && (
+                    <div className="flex justify-center mt-4 mb-4">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => setVisitPage((p) => Math.max(1, p - 1))}
+                              className={visitPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                          {renderVisitPaginationItems()}
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() => setVisitPage((p) => Math.min(visitTotalPages, p + 1))}
+                              className={visitPage === visitTotalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
                   )}
-                </tbody>
-              </table>
-            </div>
-            {Array.isArray(amc?.amc_visit_logs) && amc.amc_visit_logs.length > 0 && (
-              <div style={{ padding: '12px 16px', backgroundColor: '#F6F4EE', borderTop: '1px solid #D9D9D9', fontSize: '12px', color: '#666' }}>
-                Total {amc.amc_visit_logs.length} records. Scroll to view all.
+                </>
+              );
+            })()}
+          </CardContent>
+        ) : (
+          <CardContent className="p-0" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
+            {frequencyGroups.some(g => g.frequency_config_id !== null) ? (
+              /* Multi-frequency tabbed cron view */
+              <div>
+                {/* Frequency tab buttons */}
+                <div className="flex border-b border-gray-200 overflow-x-auto px-2 pt-2">
+                  {frequencyGroups.map((group, idx) => (
+                    <button
+                      key={group.frequency_config_id}
+                      type="button"
+                      onClick={() => setActivePreviewFreqTab(idx)}
+                      className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${
+                        idx === activePreviewFreqTab
+                          ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      }`}
+                    >
+                      {group.frequency.charAt(0).toUpperCase() + group.frequency.slice(1)}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Per-frequency content panels */}
+                {frequencyGroups.map((group, idx) => {
+                  if (idx !== activePreviewFreqTab) return null;
+                  const freqCronConfig = parseCronExpression(group.cron_expression || cronExpression);
+                  return (
+                    <div key={group.frequency_config_id}>
+                      {/* Info row */}
+                      <div className="flex flex-wrap items-center gap-6 px-6 py-3 text-sm text-gray-600 border-b border-gray-100">
+                        {group.description && (
+                          <span>
+                            <span className="font-semibold text-[#1a1a1a]">Description:</span> {group.description}
+                          </span>
+                        )}
+                        <span>
+                          <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{" "}
+                          <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{group.cron_expression || "N/A"}</code>
+                        </span>
+                        {group.active !== undefined && (
+                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${group.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                            {group.active ? "Active" : "Inactive"}
+                          </span>
+                        )}
+                      </div>
+                      {/* Cron visual */}
+                      <div style={{ background: 'rgba(246,247,247,1)', borderRadius: '4px', padding: '0px 0px 20px 0px' }}>
+                        {renderCronVisual(freqCronConfig)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Single cron view fallback */
+              <div>
+                <div className="px-6 py-3 text-sm text-gray-600">
+                  Cron Expression:{" "}
+                  <span className="font-semibold text-[#1a1a1a]">{cronExpression || "N/A"}</span>
+                </div>
+                <div style={{ background: 'rgba(246,247,247,1)', borderRadius: '4px', padding: '0px 0px 20px 0px' }}>
+                  {renderCronVisual(cronConfig)}
+                </div>
               </div>
             )}
           </CardContent>
-        ) : (
-                <CardContent className="p-0" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
-                  <div className="px-6 py-3 text-sm text-gray-600">
-                    Cron Expression:{" "}
-                    <span className="font-semibold text-[#1a1a1a]">
-                      {cronExpression || "N/A"}
-                    </span>
-                </div>
-                  <div style={{
-                    background: 'rgba(246, 247, 247, 1)',
-                    borderRadius: '4px',
-                    padding: '0px 0px 20px 0px'
-                  }}>
-              {/* Four Column Layout */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-0">
-                {/* Month Column */}
-                <div style={{
-                  border: '1px dashed rgba(11, 10, 10, 0.56)',
-                  borderRadius: '4px',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    background: 'rgba(234, 230, 221, 1)',
-                    padding: '12px 16px',
-                    borderBottom: '1px dashed rgba(11, 10, 10, 0.56)'
-                  }}>
-                    <h3 className="text-sm font-semibold text-[#1a1a1a]" style={{ background: 'rgba(234, 230, 221, 1)' }}>Month</h3>
-                  </div>
-                  <div style={{ padding: '16px', background: 'rgba(246, 247, 247, 1)' }}>
-                    <div className="space-y-3">
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          name="monthType"
-                          value="placeholder"
-                          checked={cronConfig.monthMode !== "between"}
-                          readOnly
-                          className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
-                        />
-                        <span className="text-[#1a1a1a] font-medium text-sm">Placeholder</span>
-                      </label>
-                      
-                      <div className="space-y-2 mt-4">
-                        <label className="flex items-center text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={cronConfig.monthMode === "all"}
-                            readOnly
-                            className="mr-2 w-4 h-4"
-                            style={{ accentColor: '#C72030' }}
-                          />
-                          <span className="text-[#1a1a1a] font-medium">Select All</span>
-                        </label>
-                        <div className="grid grid-cols-3 gap-2">
-                          {['January', 'February', 'March', 'April', 'May', 'June', 
-                            'July', 'August', 'September', 'October', 'November', 'December'].map((month) => (
-                            <label key={month} className="flex items-center text-sm cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={isMonthChecked(month)}
-                                readOnly
-                                className="mr-2 w-4 h-4"
-                                style={{ accentColor: '#C72030' }}
-                              />
-                              <span className="text-[#1a1a1a]">{month.substring(0, 3)}</span>
-                            </label>
-              ))}
-            </div>
-                      </div>
-                      
-                      <label className="flex items-center mt-4 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="monthType"
-                          value="between"
-                          checked={cronConfig.monthMode === "between"}
-                          readOnly
-                          className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
-                        />
-                        <span className="text-[#1a1a1a] font-medium text-sm">Every month between</span>
-                      </label>
-                      <div className="flex items-center gap-2 mt-3">
-                        <select
-                          className="px-2 py-1 border border-gray-300 rounded text-sm"
-                          style={{ minWidth: '100px' }}
-                          value={betweenMonthStartValue}
-                          onChange={() => {}}
-                        >
-                          {MONTHS.map((month) => (
-                            <option key={month} value={month}>
-                              {month}
-                            </option>
-                          ))}
-                        </select>
-                        <span className="text-sm text-[#1a1a1a]">and</span>
-                        <select
-                          className="px-2 py-1 border border-gray-300 rounded text-sm"
-                          style={{ minWidth: '100px' }}
-                          value={betweenMonthEndValue}
-                          onChange={() => {}}
-                        >
-                          {MONTHS.map((month) => (
-                            <option key={month} value={month}>
-                              {month}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Day Column */}
-                <div style={{
-                  border: '1px dashed rgba(11, 10, 10, 0.56)',
-                  borderRadius: '4px',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    background: 'rgba(234, 230, 221, 1)',
-                    padding: '12px 16px',
-                    borderBottom: '1px dashed rgba(11, 10, 10, 0.56)'
-                  }}>
-                    <h3 className="text-sm font-semibold text-[#1a1a1a]" style={{ background: 'rgba(234, 230, 221, 1)' }}>Day</h3>
-                  </div>
-                  <div style={{ padding: '16px', background: 'rgba(246, 247, 247, 1)' }}>
-                    <div className="space-y-3">
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          name="dayType"
-                          value="placeholder"
-                          checked={cronConfig.dayMode !== "specific"}
-                          readOnly
-                          className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
-                        />
-                        <span className="text-[#1a1a1a] font-medium text-sm">Placeholder</span>
-                      </label>
-                      
-                      <div className="space-y-2 mt-4">
-                        <label className="flex items-center text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={cronConfig.dayMode === "all"}
-                            readOnly
-                            className="mr-2 w-4 h-4"
-                            style={{ accentColor: '#C72030' }}
-                          />
-                          <span className="text-[#1a1a1a] font-medium">Select All</span>
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-                            <label key={day} className="flex items-center text-sm cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={isWeekdayChecked(day)}
-                                readOnly
-                                className="mr-2 w-4 h-4"
-                                style={{ accentColor: '#C72030' }}
-                              />
-                              <span className="text-[#1a1a1a]">{day.substring(0, 3)}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <label className="flex items-center mt-4 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="dayType"
-                          value="specific"
-                          checked={cronConfig.dayMode === "specific"}
-                          readOnly
-                          className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
-                        />
-                        <span className="text-[#1a1a1a] font-medium text-sm">Specific date of month (choose one or many)</span>
-                      </label>
-                      <div className="grid grid-cols-6 gap-1 mt-3">
-                        {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                          <label key={day} className="flex items-center text-xs cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={isDayNumberChecked(day)}
-                              readOnly
-                              className="mr-1 w-3 h-3"
-                              style={{ accentColor: '#C72030' }}
-                            />
-                            <span className="text-[#1a1a1a]">{day.toString().padStart(2, '0')}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Hours Column */}
-                <div style={{
-                  border: '1px dashed rgba(11, 10, 10, 0.56)',
-                  borderRadius: '4px',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    background: 'rgba(234, 230, 221, 1)',
-                    padding: '12px 16px',
-                    borderBottom: '1px dashed rgba(11, 10, 10, 0.56)'
-                  }}>
-                    <h3 className="text-sm font-semibold text-[#1a1a1a]" style={{ background: 'rgba(234, 230, 221, 1)' }}>Hours</h3>
-                  </div>
-                  <div style={{ padding: '16px', background: 'rgba(246, 247, 247, 1)' }}>
-                    <div className="space-y-3">
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          name="hourType"
-                          value="specific"
-                          checked={cronConfig.hourMode !== "all"}
-                          readOnly
-                          className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
-                        />
-                        <span className="text-[#1a1a1a] font-medium text-sm">Choose one or more specific hours</span>
-                      </label>
-                      
-                      <div className="space-y-2 mt-4">
-                        <label className="flex items-center text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={cronConfig.hourMode === "all"}
-                            readOnly
-                            className="mr-2 w-4 h-4"
-                            style={{ accentColor: '#C72030' }}
-                          />
-                          <span className="text-[#1a1a1a] font-medium">Select All</span>
-                        </label>
-                        <div className="grid grid-cols-7 gap-1">
-                          {Array.from({ length: 25 }, (_, i) => i).map((hour) => (
-                            <label key={hour} className="flex items-center text-xs cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={isHourChecked(hour)}
-                                readOnly
-                                className="mr-1 w-3 h-3"
-                                style={{ accentColor: '#C72030' }}
-                              />
-                              <span className="text-[#1a1a1a]">{hour.toString().padStart(2, '0')}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Minutes Column */}
-                <div style={{
-                  border: '1px dashed rgba(11, 10, 10, 0.56)',
-                  borderRadius: '4px',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    background: 'rgba(234, 230, 221, 1)',
-                    padding: '12px 16px',
-                    borderBottom: '1px dashed rgba(11, 10, 10, 0.56)'
-                  }}>
-                    <h3 className="text-sm font-semibold text-[#1a1a1a]" style={{ background: 'rgba(234, 230, 221, 1)' }}>Minutes</h3>
-                  </div>
-                  <div style={{ padding: '16px', background: 'rgba(246, 247, 247, 1)' }}>
-                    <div className="space-y-3">
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          name="minuteType"
-                          value="specific"
-                          checked={cronConfig.minuteMode !== "between"}
-                          readOnly
-                          className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
-                        />
-                        <span className="text-[#1a1a1a] font-medium text-sm">Specific minutes (choose one or many)</span>
-                      </label>
-                      
-                      <div className="grid grid-cols-4 gap-1 mt-4">
-                        {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minute) => (
-                          <label key={minute} className="flex items-center text-xs cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={isMinuteChecked(minute)}
-                              readOnly
-                              className="mr-1 w-3 h-3"
-                              style={{ accentColor: '#C72030' }}
-                            />
-                            <span className="text-[#1a1a1a]">{minute.toString().padStart(2, '0')} min</span>
-                          </label>
-                        ))}
-                      </div>
-                      
-                      <label className="flex items-center mt-4 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="minuteType"
-                          value="between"
-                          checked={cronConfig.minuteMode === "between"}
-                          readOnly
-                          className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
-                        />
-                        <span className="text-[#1a1a1a] font-medium text-sm">Every minute between minute</span>
-                      </label>
-                      <div className="flex items-center gap-2 mt-3">
-                        <select
-                          className="px-2 py-1 border border-gray-300 rounded text-sm"
-                          style={{ minWidth: '60px' }}
-                          value={betweenMinuteStartValue}
-                          onChange={() => {}}
-                        >
-                          {MINUTE_VALUES.map((minute) => (
-                            <option key={minute} value={minute.toString().padStart(2, "0")}>
-                              {minute.toString().padStart(2, "0")}
-                            </option>
-                          ))}
-                        </select>
-                        <span className="text-sm text-[#1a1a1a]">and minute</span>
-                        <select
-                          className="px-2 py-1 border border-gray-300 rounded text-sm"
-                          style={{ minWidth: '60px' }}
-                          value={betweenMinuteEndValue}
-                          onChange={() => {}}
-                        >
-                          {MINUTE_VALUES.map((minute) => (
-                            <option key={minute} value={minute.toString().padStart(2, "0")}>
-                              {minute.toString().padStart(2, "0")}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-        </CardContent>
         )}
       </Card>
 
@@ -1338,98 +1318,98 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
         background: '#FFF',
         boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
       }}>
-          <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
-             <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-               <div className="w-6 h-6 mr-2 flex items-center justify-center">
-                 <svg
-                   width="24"
-                   height="24"
-                   viewBox="0 0 24 24"
-                   fill="none"
-                   xmlns="http://www.w3.org/2000/svg"
-                 >
-                   <path
-                     d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                     stroke="#C72030"
-                     strokeWidth="1.5"
-                   />
-                   <path
-                     d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                     stroke="#C72030"
-                     strokeWidth="1.5"
-                   />
-                 </svg>
-               </div>
-               ATTACHMENTS
-             </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-[#F6F4EE] rounded-lg p-6">
-                <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">AMC Contracts</h3>
-                <div className="flex flex-wrap gap-4">
-                  {renderAttachmentCards(contractDocuments, "No AMC contract attachments available")}
-            </div>
-              </div>
-
-              <div className="bg-[#F6F4EE] rounded-lg p-6">
-                <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">AMC Invoice</h3>
-                <div className="flex flex-wrap gap-4">
-                  {renderAttachmentCards(invoiceDocuments, "No AMC invoice attachments available")}
-                </div>
-              </div>
-            </div>
-
-            <Dialog
-              open={isModalOpen}
-              onOpenChange={(open) => {
-                if (!open) {
-                  closePreview();
-                } else {
-                  setIsModalOpen(true);
-                }
-              }}
-            >
-          <DialogContent className="w-full max-w-[90vw] sm:max-w-2xl">
-            <button
-              className="absolute top-3 right-3 text-gray-500 hover:text-black"
-              aria-label="Close"
-                  onClick={closePreview}
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <DialogHeader>
-                  <DialogTitle className="text-center">{previewDoc?.name}</DialogTitle>
-            </DialogHeader>
-            <div className="flex flex-col items-center justify-center gap-4">
-                  {previewDoc?.url && (
-                <img
-                      src={previewDoc.url}
-                      alt={previewDoc.name}
-                  className="max-w-full max-h-[400px] rounded-md border"
-                />
-              )}
-                  {previewDoc?.url && (
-              <Button
-                onClick={() => {
-                        if (!previewDoc?.url) return;
-                        const link = document.createElement("a");
-                        link.href = previewDoc.url;
-                        link.download = previewDoc.name || "document";
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }}
+        <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
+          <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
+            <div className="w-6 h-6 mr-2 flex items-center justify-center">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                <Download className="mr-2 w-4 h-4" />
-                Download
-              </Button>
-                  )}
+                <path
+                  d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+                  stroke="#C72030"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+                  stroke="#C72030"
+                  strokeWidth="1.5"
+                />
+              </svg>
             </div>
-          </DialogContent>
-        </Dialog>
-          </CardContent>
-        </Card>
+            ATTACHMENTS
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-[#F6F4EE] rounded-lg p-6">
+              <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">AMC Contracts</h3>
+              <div className="flex flex-wrap gap-4">
+                {renderAttachmentCards(contractDocuments, "No AMC contract attachments available")}
+              </div>
+            </div>
+
+            <div className="bg-[#F6F4EE] rounded-lg p-6">
+              <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">AMC Invoice</h3>
+              <div className="flex flex-wrap gap-4">
+                {renderAttachmentCards(invoiceDocuments, "No AMC invoice attachments available")}
+              </div>
+            </div>
+          </div>
+
+          <Dialog
+            open={isModalOpen}
+            onOpenChange={(open) => {
+              if (!open) {
+                closePreview();
+              } else {
+                setIsModalOpen(true);
+              }
+            }}
+          >
+            <DialogContent className="w-full max-w-[90vw] sm:max-w-2xl">
+              <button
+                className="absolute top-3 right-3 text-gray-500 hover:text-black"
+                aria-label="Close"
+                onClick={closePreview}
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <DialogHeader>
+                <DialogTitle className="text-center">{previewDoc?.name}</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col items-center justify-center gap-4">
+                {previewDoc?.url && (
+                  <img
+                    src={previewDoc.url}
+                    alt={previewDoc.name}
+                    className="max-w-full max-h-[400px] rounded-md border"
+                  />
+                )}
+                {previewDoc?.url && (
+                  <Button
+                    onClick={() => {
+                      if (!previewDoc?.url) return;
+                      const link = document.createElement("a");
+                      link.href = previewDoc.url;
+                      link.download = previewDoc.name || "document";
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                  >
+                    <Download className="mr-2 w-4 h-4" />
+                    Download
+                  </Button>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        </CardContent>
+      </Card>
     </div>
   );
 };

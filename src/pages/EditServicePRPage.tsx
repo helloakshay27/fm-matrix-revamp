@@ -469,26 +469,26 @@ export const EditServicePRPage = () => {
     }
   }, [formData.plantDetail, dispatch, baseUrl, token]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
+ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const selectedFiles = Array.from(e.target.files || []);
 
-    const validFileTypes = ['application/pdf'];
-    const validFiles: File[] = [];
+  const validFileTypes = ['application/pdf'];
+  const validFiles: File[] = [];
 
-    selectedFiles.forEach((file) => {
-      if (validFileTypes.includes(file.type)) {
-        validFiles.push(file);
-      } else {
-        toast.error(
-          `Invalid file type: ${file.name}. Only PDF files are accepted.`
-        );
-      }
-    });
-
-    if (validFiles.length > 0) {
-      setAttachedFiles((prev) => [...prev, ...validFiles]);
+  selectedFiles.forEach((file) => {
+    if (validFileTypes.includes(file.type)) {
+      validFiles.push(file);
+    } else {
+      toast.error(
+        `Invalid file type: ${file.name}. Only PDF files are accepted.`
+      );
     }
-  };
+  });
+
+  if (validFiles.length > 0) {
+    setAttachedFiles((prev) => [...prev, ...validFiles]);
+  }
+};
 
   const removeFile = (index, type) => {
     if (type === "existing") {
@@ -1161,74 +1161,74 @@ export const EditServicePRPage = () => {
                       />
                     )}
                     {!isPanchshilOrg && (
-                      <TextField
-                        label="IGST Amt"
-                        value={detailsData.igstAmt}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ readOnly: true }}
-                        sx={{
-                          mt: 1,
-                          "& .MuiInputBase-input": {
-                            padding: { xs: "8px", sm: "10px", md: "12px" },
-                          },
-                          height: { xs: 28, sm: 36, md: 45 },
-                        }}
-                      />
+                    <TextField
+                      label="IGST Amt"
+                      value={detailsData.igstAmt}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
                     )}
-                    {!isPanchshilOrg && (
-                      <TextField
-                        label="TCS Rate"
-                        value={detailsData.tcsRate}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                            handleDetailsChange(detailsData.id, "tcsRate", value);
-                          }
-                        }}
-                        fullWidth
-                        variant="outlined"
-                        type="text"
-                        InputLabelProps={{ shrink: true }}
-                        sx={fieldStyles}
-                      />
-                    )}
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="TCS Rate"
+                      value={detailsData.tcsRate}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                          handleDetailsChange(detailsData.id, "tcsRate", value);
+                        }
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      type="text"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+                  )}
 
-                    {!isPanchshilOrg && (
+                  {!isPanchshilOrg && (
 
-                      <TextField
-                        label="TCS Amt"
-                        value={detailsData.tcsAmt}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ readOnly: true }}
-                        sx={{
-                          mt: 1,
-                          "& .MuiInputBase-input": {
-                            padding: { xs: "8px", sm: "10px", md: "12px" },
-                          },
-                          height: { xs: 28, sm: 36, md: 45 },
-                        }}
-                      />
+                    <TextField
+                      label="TCS Amt"
+                      value={detailsData.tcsAmt}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
                     )}
-                    {!isPanchshilOrg && (
-                      <TextField
-                        label="Tax Amount"
-                        value={detailsData.taxAmount}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ readOnly: true }}
-                        sx={{
-                          mt: 1,
-                          "& .MuiInputBase-input": {
-                            padding: { xs: "8px", sm: "10px", md: "12px" },
-                          },
-                          height: { xs: 28, sm: 36, md: 45 }
-                        }}
-                      />
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="Tax Amount"
+                      value={detailsData.taxAmount}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 }
+                      }}
+                    />
                     )}
 
                     <TextField

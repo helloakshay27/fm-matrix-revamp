@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Download } from 'lucide-react';
 import { getPeriodLabels } from '@/lib/periodLabel';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Label } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 type Props = {
   data: any;
@@ -52,118 +52,86 @@ const ConsumableInventoryQuarterlyComparisonCard: React.FC<Props> = ({ data, dat
   );
 
   return (
-    <div className="bg-white border rounded-lg shadow p-4">
-      <div className="flex items-center justify-between gap-4 mb-3 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3">
-        <h3
-          className="flex-1"
-          style={{
-            fontFamily: 'Work Sans, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
-            fontWeight: 600,
-            fontSize: '16px',
-            lineHeight: '100%',
-            letterSpacing: '0%'
-          }}
-        >
+    <div className="h-full flex flex-col bg-white rounded-xl shadow-sm">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
           Consumable Inventory Value – {periodUnit}ly Comparison
         </h3>
         {onDownload && (
           <Download
             data-no-drag="true"
-            className="w-5 h-5 flex-shrink-0 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors z-50"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDownload();
-            }}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
+            className="w-4 h-4 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors z-50"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload(); }}
+            onPointerDown={(e) => { e.stopPropagation(); }}
+            onMouseDown={(e) => { e.stopPropagation(); }}
             style={{ pointerEvents: 'auto' }}
           />
         )}
       </div>
-      {rows.length === 0 ? (
-        <div className="text-sm text-gray-500">No consumable comparison data available.</div>
-      ) : (
-        <div style={{ width: '100%', height: 420 }}>
-          <ResponsiveContainer>
-            <BarChart
-              data={rows}
-              margin={{ top: 24, right: 24, left: 84, bottom: 120 }}
-              barCategoryGap={20}
-            >
-              <CartesianGrid stroke="#ddd" strokeDasharray="3 3" />
-              <XAxis
-                dataKey="site"
-                angle={-60}
-                textAnchor="end"
-                interval={0}
-                height={120}
-                tick={{ fontSize: 11 }}
-              />
-              <YAxis
-                domain={[0, consumableMaxRaw || 0]}
-                ticks={consumableTicks}
-                tickFormatter={(v) => formatToK(v)}
-                width={84}
-                tickMargin={8}
-                tick={{ fontSize: 12 }}
-              />
-              <Tooltip formatter={(val: any) => formatToK(val)} cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }} />
-              <Legend 
-                iconType="circle" 
-                wrapperStyle={{ fontSize: '12px', paddingBottom: '16px' }} 
-                verticalAlign="top" 
-                align="right" 
-              />
-              <Bar
-                dataKey="lastQuarter"
-                fill="#D6BBAF"
-                name={lastLabel}
-                barSize={40}
-                label={{
-                  position: 'top',
-                  formatter: (val: any) => {
-                    const num = Number(val || 0);
-                    return num > 0 ? formatToK(val) : '';
-                  },
-                  fill: '#444',
-                  fontSize: 11
-                }}
-              />
-              <Bar
-                dataKey="currentQuarter"
-                fill="#D3D6D4"
-                name={currentLabel}
-                barSize={40}
-                label={{
-                  position: 'top',
-                  formatter: (val: any) => {
-                    const num = Number(val || 0);
-                    return num > 0 ? formatToK(val) : '';
-                  },
-                  fill: '#444',
-                  fontSize: 11
-                }}
-              />
-            </BarChart>
-            
-          </ResponsiveContainer>
-          
-        </div>
-      )}
-      
-      {/* Note section */}
-      {rows.length > 0 && (
-        <div className="p-3 rounded-md">
-          <p className="text-xs text-gray-700">
-            <span className="font-semibold">Note:</span> This graph illustrates total consumable inventory usage with a comparison to the previous quarter, highlighting trends in consumption.
-          </p>
-        </div>
-      )}
+
+      <div className="flex-1 p-5 overflow-auto">
+        {rows.length === 0 ? (
+          <div className="h-full flex items-center justify-center text-gray-400">
+            No data available
+          </div>
+        ) : (
+          <>
+            {/* Legend */}
+            <div className="flex items-center justify-end gap-4 mb-4 text-sm flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: '#DA7756' }} />
+                <span className="text-xs">{lastLabel}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: '#9EC8BA' }} />
+                <span className="text-xs">{currentLabel}</span>
+              </div>
+            </div>
+
+            {/* Chart */}
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                data={rows}
+                margin={{ top: 10, right: 10, left: 0, bottom: 60 }}
+                barSize={28}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                <XAxis
+                  dataKey="site"
+                  angle={-45}
+                  textAnchor="end"
+                  height={65}
+                  tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                  interval={0}
+                />
+                <YAxis
+                  domain={[0, consumableMaxRaw || 0]}
+                  ticks={consumableTicks}
+                  tickFormatter={(v) => formatToK(v)}
+                  tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
+                  formatter={(val: any) => [formatToK(val), '']}
+                />
+                <Bar dataKey="lastQuarter" fill="#DA7756" name={lastLabel} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="currentQuarter" fill="#9EC8BA" name={currentLabel} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+
+            {/* Note section */}
+            <div className="p-3 rounded-md">
+              <p className="text-xs text-gray-700">
+                <span className="font-semibold">Note:</span> This graph illustrates total consumable inventory usage with a comparison to the previous quarter, highlighting trends in consumption.
+              </p>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

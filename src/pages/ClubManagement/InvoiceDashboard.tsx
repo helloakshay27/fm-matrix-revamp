@@ -27,6 +27,17 @@ interface SalesOrder {
     fulfilled: boolean;
 }
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 interface ApiResponse {
     success: boolean;
     data: SalesOrder[];
@@ -120,6 +131,13 @@ const columns: ColumnConfig[] = [
         sortable: true,
         hideable: true,
         draggable: true
+    },
+    {
+        key: 'active',
+        label: 'Active/Inactive',
+        sortable: false,
+        hideable: true,
+        draggable: false
     }
 ];
 
@@ -132,6 +150,8 @@ export const InvoiceDashboardAccounting: React.FC = () => {
     const [appliedFilters, setAppliedFilters] = useState<SalesOrderFilters>({});
     const [salesOrderData, setSalesOrderData] = useState<SalesOrder[]>([]);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const [hasInvoiceApproval, setHasInvoiceApproval] = useState(false);
+    const [errorModal, setErrorModal] = useState<{ show: boolean; errors: { id: string; message: string }[] }>({ show: false, errors: [] });
     const [loading, setLoading] = useState(false);
     const [pagination, setPagination] = useState({
         current_page: 1,
@@ -141,6 +161,9 @@ export const InvoiceDashboardAccounting: React.FC = () => {
         has_next_page: false,
         has_prev_page: false
     });
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [selectedDeleteId, setSelectedDeleteId] = useState<number | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
 
 
@@ -151,7 +174,7 @@ export const InvoiceDashboardAccounting: React.FC = () => {
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
-             const lock_account_id = localStorage.getItem("lock_account_id");
+            const lock_account_id = localStorage.getItem("lock_account_id");
             const params = new URLSearchParams({
                 lock_account_id: lock_account_id,
                 // page: String(page),
@@ -197,6 +220,29 @@ export const InvoiceDashboardAccounting: React.FC = () => {
         fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
     }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
 
+    // Fetch lock account to check if invoice approval is enabled
+    useEffect(() => {
+        const fetchLockAccount = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`https://${baseUrl}/get_lock_account.json`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                const data = await response.json();
+                const invoiceApproval = Array.isArray(data?.approvals) &&
+                    data.approvals.some((a: any) => a.approval_type === 'invoice' && a.active);
+                setHasInvoiceApproval(invoiceApproval);
+            } catch (error) {
+                console.error('Error fetching lock account:', error);
+            }
+        };
+        fetchLockAccount();
+    }, []);
+
     // Handle search
     const handleSearch = (term: string) => {
         setSearchTerm(term);
@@ -230,7 +276,7 @@ export const InvoiceDashboardAccounting: React.FC = () => {
 
         return (
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
-                {status.toUpperCase()}
+                {status.replace(/_/g, " ").toUpperCase()}
             </span>
         );
     };
@@ -243,7 +289,7 @@ export const InvoiceDashboardAccounting: React.FC = () => {
     const renderRow = (order: SalesOrder) => ({
         actions: (
             <div className="flex items-center gap-2">
-                  {order.status !== "sent" && (
+                {/* {order.status !== "sent" && ( */}
                 <input
                     type="checkbox"
                     checked={selectedRows.includes(order.id)}
@@ -256,7 +302,7 @@ export const InvoiceDashboardAccounting: React.FC = () => {
                     }}
                     className="cursor-pointer"
                 />
-                 )}
+                {/* )} */}
                 <button
                     onClick={() => handleView(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
@@ -264,20 +310,23 @@ export const InvoiceDashboardAccounting: React.FC = () => {
                 >
                     <Eye className="w-4 h-4" />
                 </button>
-                {/* <button
+                <button
                     onClick={() => handleEdit(order.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Edit"
                 >
                     <Edit className="w-4 h-4" />
-                </button> */}
-                {/* <button
-                    onClick={() => handleDelete(order.id)}
-                    className="p-1 text-black hover:bg-gray-100 rounded"
+                </button>
+                <button
+                    onClick={() => {
+                        setSelectedDeleteId(order.id);
+                        setDeleteDialogOpen(true);
+                    }}
+                    className="p-1 text-red-600 hover:text-red-700 hover:bg-gray-100 rounded"
                     title="Delete"
                 >
                     <Trash2 className="w-4 h-4" />
-                </button> */}
+                </button>
             </div>
         ),
         invoice_number: (
@@ -353,35 +402,32 @@ export const InvoiceDashboardAccounting: React.FC = () => {
         status: (
             <div className="flex items-center justify-center gap-2">
                 {getStatusBadge(order.status)}
-                {/* <input
-                    type="checkbox"
-                    checked={order.fulfilled}
-                    onChange={async () => {
-                        try {
-                            const baseUrl = localStorage.getItem('baseUrl');
-                            const token = localStorage.getItem('token');
-                            const payload = {
-                                sale_order_ids: [order.id],
-                                fulfilled: !order.fulfilled
-                            };
-                            await fetch(`https://${baseUrl}/sale_orders/update_status.json`, {
-                                method: 'POST',
-                                headers: {
-                                    Authorization: token ? `Bearer ${token}` : undefined,
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify(payload)
-                            });
-                            fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-                        } catch (err) {
-                            toast.error('Failed to update fulfilled status');
-                        }
-                    }}
-                    style={{ accentColor: order.fulfilled ? '#22c55e' : '#d1d5db', width: 18, height: 18 }}
-                    title={order.fulfilled ? 'Fulfilled' : 'Not Fulfilled'}
-                /> */}
             </div>
-        )
+        ),
+        active: (() => {
+            const isActive = !!order.active;
+            return (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleStatus(order)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-red-500" : "bg-gray-300"
+                      }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isActive ? "translate-x-6" : "translate-x-1"
+                        }`}
+                    />
+                  </button>
+        
+                  <span
+                    className={`text-sm font-medium ${isActive ? "text-red-600" : "text-red-600"
+                      }`}
+                  >
+                  </span>
+                </div>
+            );
+        })()
     });
 
     const handleView = (id: number) => {
@@ -389,80 +435,100 @@ export const InvoiceDashboardAccounting: React.FC = () => {
     };
 
     const handleEdit = (id: number) => {
-        navigate(`/accounting/sales-order/edit/${id}`);
+        navigate(`/accounting/invoices/edit/${id}`);
     };
 
-    const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this sales order?')) {
-            toast.success('Sales order deleted successfully!', {
-                duration: 3000,
-            });
-            fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-        }
-    };
-
-    const handleMarkAsConfirmed = async () => {
-        if (selectedRows.length === 0) {
-            toast.error('Select at least one sales order');
-            return;
-        }
+    const handleDelete = async () => {
+        if (!selectedDeleteId) return;
+        setDeleteLoading(true);
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
-            const payload = {
-                sale_order_ids: selectedRows,
-                status: 'confirmed',
-                fulfilled: true
-            };
-            await fetch(`https://${baseUrl}/sale_orders/update_status.json`, {
-                method: 'POST',
-                headers: {
-                    Authorization: token ? `Bearer ${token}` : undefined,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            });
-            toast.success('Status updated successfully');
-            setSelectedRows([]);
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            await axios.delete(
+                `https://${baseUrl}/lock_account_invoices/${selectedDeleteId}.json${lock_account_id ? `?lock_account_id=${lock_account_id}` : ''}`,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    }
+                }
+            );
+            toast.success('Invoice deleted successfully!', { duration: 3000 });
+            setDeleteDialogOpen(false);
+            setSelectedDeleteId(null);
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-        } catch (err) {
-            toast.error('Failed to update status');
+        } catch (error) {
+            console.error("Delete error:", error);
+            toast.error("Failed to delete invoice");
+        } finally {
+            setDeleteLoading(false);
         }
     };
 
-
-    const handleMarkAsSent = async () => {
-        if (selectedRows.length === 0) {
-            toast.error("Select at least one invoice");
-            return;
-        }
-
+    const handleToggleStatus = async (order: SalesOrder) => {
         try {
-            const baseUrl = localStorage.getItem("baseUrl");
-            const token = localStorage.getItem("token");
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const url = `https://${baseUrl}/lock_account_invoices/${order.id}/toggle_active.json`;
 
-            await axios.post(
-                `https://${baseUrl}/lock_account_invoices/update_status.json`,
-                {
-                    invoice_ids: selectedRows,
-                },
+            const response = await axios.patch(
+                url,
+                {},
                 {
                     headers: {
-                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
                     },
                 }
             );
 
-            toast.success("Invoices marked as sent");
+            toast.success(response?.data?.message || "Status updated successfully");
+            fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        } catch (error) {
+            console.error("Toggle status error:", error);
+            toast.error("Failed to update status");
+        }
+    };
 
+    const handleUpdateStatus = async (status: string, successMsg: string, failMsg: string) => {
+        if (selectedRows.length === 0) {
+            toast.error('Select at least one invoice');
+            return;
+        }
+
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+
+            const response = await axios.post(
+                `https://${baseUrl}/lock_account_invoices/update_status.json`,
+                { invoice_ids: selectedRows, status },
+                { headers: { Authorization: token ? `Bearer ${token}` : undefined }, validateStatus: () => true }
+            );
+
+            if (response.status === 422) {
+                const { message, errors } = response.data;
+                if (Array.isArray(errors) && errors.length > 0) {
+                    setErrorModal({ show: true, errors });
+                } else {
+                    setErrorModal({ show: true, errors: [{ id: '-', message: message || failMsg }] });
+                }
+                return;
+            }
+
+            toast.success(successMsg);
             setSelectedRows([]);
-
             fetchSalesOrderData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to mark invoices as sent");
+            toast.error(failMsg);
         }
     };
+
+    const handleMarkAsSent = () => handleUpdateStatus('sent', 'Invoices marked as sent', 'Failed to mark invoices as sent');
+
+    const handleSubmitForApproval = () => handleUpdateStatus('pending_approval', 'Invoices submitted for approval', 'Failed to submit invoices for approval');
     return (
         <div className="p-6 space-y-6">
             <header className="flex items-center justify-between">
@@ -484,7 +550,8 @@ export const InvoiceDashboardAccounting: React.FC = () => {
                 leftActions={(
                     <div className="flex items-center gap-2">
                         <Button
-                            className='bg-primary text-primary-foreground hover:bg-primary/90'
+                            // className='bg-primary text-primary-foreground hover:bg-primary/90'
+                            className='fm-button-fix fm-button-brand px-4 py-2P'
                             onClick={() => navigate('/accounting/invoices/add')}
                         >
                             <Plus className="w-4 h-4 mr-2" /> Add
@@ -499,12 +566,21 @@ export const InvoiceDashboardAccounting: React.FC = () => {
                         )} */}
 
                         {selectedRows.length > 0 && (
-                            <Button
-                                className="bg-blue-600 text-white hover:bg-blue-700"
-                                onClick={handleMarkAsSent}
-                            >
-                                Mark as Sent
-                            </Button>
+                            hasInvoiceApproval ? (
+                                <Button
+                                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                    onClick={handleSubmitForApproval}
+                                >
+                                    Submit for Approval
+                                </Button>
+                            ) : (
+                                <Button
+                                    className="bg-blue-600 text-white hover:bg-blue-700"
+                                    onClick={handleMarkAsSent}
+                                >
+                                    Mark as Sent
+                                </Button>
+                            )
                         )}
                     </div>
                 )}
@@ -521,6 +597,90 @@ export const InvoiceDashboardAccounting: React.FC = () => {
                     onPerPageChange={handlePerPageChange}
                 />
             )}
+
+            {/* Bulk Update Error Modal */}
+            {errorModal.show && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
+                        <div className="flex items-center justify-between px-5 py-4 border-b">
+                            <h2 className="text-base font-semibold text-gray-800">Bulk Update Error Summary</h2>
+                            <button
+                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                onClick={() => setErrorModal({ show: false, errors: [] })}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="px-5 py-4 max-h-80 overflow-y-auto">
+                            <table className="w-full text-sm border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-100">
+                                        <th className="text-left px-3 py-2 border border-gray-200 font-semibold text-gray-700">INVOICE</th>
+                                        <th className="text-left px-3 py-2 border border-gray-200 font-semibold text-gray-700">ERROR DETAILS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {errorModal.errors.map((err, i) => (
+                                        <tr key={i} className="hover:bg-gray-50">
+                                            <td className="px-3 py-2 border border-gray-200 text-gray-800 font-medium">{err.id}</td>
+                                            <td className="px-3 py-2 border border-gray-200 text-black-600">{err.message}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="px-5 py-3 border-t flex justify-end">
+                            <Button
+                                className="bg-[#C72030] text-white hover:bg-[#a81a28] px-6"
+                                onClick={() => setErrorModal({ show: false, errors: [] })}
+                            >
+                                OK
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <AlertDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            Delete Invoice
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete this invoice? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deleteLoading}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                handleDelete();
+                            }}
+                            disabled={deleteLoading}
+                            style={{
+                                backgroundColor: "#dc2626",
+                                color: "#ffffff",
+                                border: "none",
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = "#b91c1c";
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = "#dc2626";
+                            }}
+                        >
+                            {deleteLoading ? "Deleting..." : "OK"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };

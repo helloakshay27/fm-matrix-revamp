@@ -13,6 +13,7 @@ import { useLayout } from '@/contexts/LayoutContext';
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 import { createSupportStaffCategory, fetchSupportStaffCategories, fetchSupportStaffCategoryById, updateSupportStaffCategory, SupportStaffCategory } from '@/services/supportStaffAPI';
 import { API_CONFIG } from '@/config/apiConfig';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // API Icon Response Interface
 interface ApiIconResponse {
@@ -44,6 +45,7 @@ interface SupportStaffData {
 
 export const SupportStaffPage = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const { toast } = useToast();
   const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
@@ -521,13 +523,14 @@ export const SupportStaffPage = () => {
         {/* Action Bar */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
+            {shouldShow("Support Staff","create")&&(
             <Button
               onClick={handleAdd}
               className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add
-            </Button>
+            </Button>)}
             {/* <Button
             onClick={handleRefresh}
             variant="outline"
@@ -595,7 +598,7 @@ export const SupportStaffPage = () => {
                         {startIndex + index + 1}
                       </TableCell>
                     )}
-                    {visibleColumns.actions && (
+                    {visibleColumns.actions && shouldShow("Support Staff","update")&&(
                       <TableCell>
                         <button
                           onClick={() => handleEdit(staff.id.toString())}

@@ -313,9 +313,12 @@ const GroupConversation = () => {
                     toast.success('Real-time chat connected!', { duration: 2000 });
                 },
                 onNewMessage: (message) => {
-                    if (message.project_space_id !== id) {
+                    console.log(message)
+                    if (String(message.project_space_id) !== id) {
                         return;
                     }
+
+                    console.log("In Group converstaion - New message received:", message)
 
                     setMessages((prev) => {
                         const exists = prev.some((msg) => msg.id === message.id);
@@ -347,7 +350,7 @@ const GroupConversation = () => {
 
     return (
         <div
-            className={`flex flex-col ${localStorage.getItem('user_role_name') === 'Employee' ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} ${isSidebarCollapsed ? "w-[calc(100vw-20rem)]" : "w-[calc(100vw-32rem)]"
+            className={`flex flex-col ${localStorage.getItem('user_role_name') === 'Employee' ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-full ${isSidebarCollapsed ? "md:w-[calc(100vw-20rem)]" : "md:w-[calc(100vw-32rem)]"
                 } min-w-0 overflow-hidden`}
         >
             <div className="flex justify-between items-center px-6 py-4 border-b ">
@@ -483,15 +486,15 @@ const GroupConversation = () => {
             )}
 
             <div className="flex-1 overflow-y-auto">
-                {activeTab === "chat" && id && <Chats messages={messages} onReply={handleReply} bottomRef={bottomRef} />}
+                {activeTab === "chat" && id && <Chats messages={messages} onReply={handleReply} bottomRef={bottomRef} fetchMessages={fetchMessages} />}
                 {activeTab === "task" && <ChatTasks />}
                 {activeTab === "attachments" && <ChatAttachments />}
             </div>
 
             {activeTab === "chat" && (
                 <div
-                    className={`w-[calc(100vw-${isSidebarCollapsed ? "20rem" : "32rem"
-                        })] mx-auto px-6 py-4 flex items-center space-x-2`}
+                    className={`w-full md:w-[calc(100vw-${isSidebarCollapsed ? "20rem" : "32rem"
+                        })] mx-auto px-4 sm:px-6 py-4 flex items-center space-x-2`}
                 >
                     <div className="relative flex-1">
                         {showMentionDropdown && filteredUsers.length > 0 && (
@@ -636,7 +639,7 @@ const GroupConversation = () => {
                     <button
                         type="button"
                         onClick={sendMessages}
-                        disabled={input.trim() === ""}
+                        disabled={input.trim() === "" && attachments.length === 0}
                         className="
     text-xl
     text-[#C72030]

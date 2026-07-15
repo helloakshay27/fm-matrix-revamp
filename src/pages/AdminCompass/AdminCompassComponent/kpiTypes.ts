@@ -6,7 +6,7 @@ export interface KPICardData {
   value: string | number;
   unit: string;
   status: "on-target" | "at-risk" | "off-target";
-  frequency: "Monthly" | "Weekly" | "Quarterly";
+  frequency: "Daily" | "Monthly" | "Weekly" | "Quarterly";
   badge: string;
   color: string;
   tags: string[];
@@ -14,7 +14,9 @@ export interface KPICardData {
   // Optional API fields
   departmentId?: number | null;
   assigneeId?: number | null;
+  assigneeIds?: number[];
   description?: string;
+  weight?: number;
   _raw?: any;
 }
 

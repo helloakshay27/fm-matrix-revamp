@@ -344,6 +344,9 @@ const ProjectDetailsPage = () => {
         attachments: [],
         project_team: {
             project_team_members: [],
+            team_lead: {
+                name: ""
+            }
         },
     })
 
@@ -750,7 +753,7 @@ const ProjectDetailsPage = () => {
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
                                     <Link
-                                        to={`/vas/tasks?project_id=${project.id}`}
+                                        to={`/vas/tasks?project=${project.id}`}
                                         className="text-right text-[13px] font-[500] text-[#c72030] hover:text-[#c72030] cursor-pointer"
                                     >
                                         Tasks :
@@ -803,7 +806,7 @@ const ProjectDetailsPage = () => {
                         {tab === "Member" && (
                             <Members
                                 allNames={projectMembers}
-                                projectOwner={project.project_owner_name}
+                                projectOwner={project?.project_team?.team_lead?.name}
                             />
                         )}
                         {tab === "Documents" && (

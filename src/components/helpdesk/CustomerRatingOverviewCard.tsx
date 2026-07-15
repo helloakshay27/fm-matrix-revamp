@@ -34,7 +34,7 @@ export const CustomerRatingOverviewCard: React.FC<Props> = ({ data, onDownload }
 	}, [data]);
 
 	return (
-			<div className="bg-white border border-gray-200 rounded-md p-4 overflow-x-auto">
+			<div className="bg-white border border-gray-200 rounded-md p-4">
 				<div className="flex items-center justify-between mb-6 pb-3 border-b border-gray-200 -mx-4 px-4 pt-3">
 					<h3 className="flex-1"
 						style={{
@@ -64,32 +64,33 @@ export const CustomerRatingOverviewCard: React.FC<Props> = ({ data, onDownload }
 					)}
 				</div>
 
-				<table className="min-w-[600px] w-full text-sm border-collapse text-center">
-					<thead className="bg-[#ded9cd] text-[#b62527] font-semibold">
-						<tr className="border-t border-gray-200 border-b border-gray-200">
-							<th className="border-x border-gray-200 px-2 py-2 text-left w-48 whitespace-nowrap">Site Name</th>
+				<div className="rounded-xl overflow-hidden border border-gray-200">
+				<div className="overflow-x-auto">
+				<table className="min-w-[600px] w-full text-sm">
+					<thead>
+						<tr>
+							<th className="px-3 py-2.5 text-center w-48 whitespace-nowrap text-white font-semibold analytics-header" style={{ backgroundColor: '#D97655' }}>Site Name</th>
 							{table.headers.map((h, i) => (
-								<th key={i} className="border-x border-gray-200 px-2 py-2 text-center whitespace-nowrap">{h}</th>
+								<th key={i} className="px-3 py-2.5 text-center whitespace-nowrap text-white font-semibold analytics-header" style={{ backgroundColor: '#D97655' }}>{h}</th>
 							))}
 						</tr>
 					</thead>
-
 					<tbody>
-								{table.rows.map((r, idx) => {
-									const isTotal = r.label === 'Total %';
-									return (
-										<tr key={idx} className={isTotal ? 'bg-[#DAD6C9]' : ''}>
-											<td className={`border-x border-gray-200 px-2 py-2 font-medium whitespace-nowrap ${isTotal ? '' : 'bg-[#F3F1EB80]'}`}>
-												{r.label}
-											</td>
-											{r.values.map((v, j) => (
-												<td key={j} className="border-x border-gray-200 px-2 py-2 text-center whitespace-nowrap">{v}</td>
-											))}
-										</tr>
-									);
-								})}
+						{table.rows.map((r, idx) => {
+							const isTotal = r.label === 'Total %';
+							return (
+								<tr key={idx} style={{ backgroundColor: isTotal ? '#EFEFFB' : idx % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+									<td className="px-3 py-2.5 font-medium whitespace-nowrap border-b border-gray-100 text-left">{r.label}</td>
+									{r.values.map((v, j) => (
+										<td key={j} className="px-3 py-2.5 text-left whitespace-nowrap border-b border-gray-100">{v}</td>
+									))}
+								</tr>
+							);
+						})}
 					</tbody>
 				</table>
+				</div>
+				</div>
 			</div>
 	);
 };

@@ -25,7 +25,16 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { EditSubCategoryModal } from './modals/EditSubCategoryModal';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
-import { Edit, Trash2, Upload, Plus, X } from 'lucide-react';
+import { Edit, Trash2, Upload, Plus, X, Search } from 'lucide-react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
 import { fetchBuildings } from '@/store/slices/buildingsSlice';
@@ -87,6 +96,8 @@ interface EngineerResponse {
 interface SubCategoriesResponse {
   sub_categories: SubCategoryType[];
   total_count: number;
+  page: number;
+  per_page: number;
   filters: {
     site_id: number | null;
     category_id: number | null;
@@ -142,6 +153,14 @@ export const SubCategoryTab: React.FC = () => {
 
   const [subCategories, setSubCategories] = useState<SubCategoryType[]>([]);
   const [engineers, setEngineers] = useState<Engineer[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [pagination, setPagination] = useState({
+    page: 1,
+    total_count: 0,
+    per_page: 20,
+  });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -155,6 +174,14 @@ export const SubCategoryTab: React.FC = () => {
   const [selectedZones, setSelectedZones] = useState<number[]>([]);
   const [selectedFloors, setSelectedFloors] = useState<number[]>([]);
   const [selectedRooms, setSelectedRooms] = useState<number[]>([]);
+  
+  // Dropdown open/close states
+  const [engineersDropdownOpen, setEngineersDropdownOpen] = useState(false);
+  const [buildingsDropdownOpen, setBuildingsDropdownOpen] = useState(false);
+  const [wingsDropdownOpen, setWingsDropdownOpen] = useState(false);
+  const [floorsDropdownOpen, setFloorsDropdownOpen] = useState(false);
+  const [zonesDropdownOpen, setZonesDropdownOpen] = useState(false);
+  const [roomsDropdownOpen, setRoomsDropdownOpen] = useState(false);
 
   // Get data from Redux state
   const availableCategories = helpdeskCategoriesData?.helpdesk_categories || [];
@@ -182,6 +209,14 @@ export const SubCategoryTab: React.FC = () => {
     },
   });
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   useEffect(() => {
     console.log('SubCategoryTab mounted, fetching data...');
     dispatch(fetchHelpdeskCategories());
@@ -190,11 +225,11 @@ export const SubCategoryTab: React.FC = () => {
     dispatch(fetchFloors());
     dispatch(fetchZones());
     dispatch(fetchRooms());
-    fetchData();
-  }, [dispatch]);
+    fetchData(1, debouncedSearchTerm);
+  }, [dispatch, debouncedSearchTerm]);
 
-  const fetchData = async () => {
-    console.log('Starting fetchData...');
+  const fetchData = async (page: number = 1, search: string = '') => {
+    console.log('Starting fetchData...', { page, search });
     setIsLoading(true);
     try {
       const [
@@ -202,7 +237,7 @@ export const SubCategoryTab: React.FC = () => {
         subCategoriesResponse
       ] = await Promise.all([
         ticketManagementAPI.getEngineers(),
-        ticketManagementAPI.getSubCategories()
+        ticketManagementAPI.getSubCategories(page, 20, search)
       ]);
 
       // Process engineers - extract from users array
@@ -213,7 +248,17 @@ export const SubCategoryTab: React.FC = () => {
       setEngineers(formattedEngineers);
 
       // Process sub-categories
-      setSubCategories(subCategoriesResponse?.sub_categories || []);
+      if (subCategoriesResponse) {
+        console.log('SubCategories API Response:', subCategoriesResponse);
+        setSubCategories(subCategoriesResponse.sub_categories || []);
+        const paginationData = {
+          page: subCategoriesResponse.page || 1,
+          total_count: subCategoriesResponse.total_count || 0,
+          per_page: subCategoriesResponse.per_page || 20,
+        };
+        console.log('Setting pagination data:', paginationData);
+        setPagination(paginationData);
+      }
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -297,7 +342,7 @@ export const SubCategoryTab: React.FC = () => {
       setSelectedFloors([]);
       setSelectedRooms([]);
       setIconFile(null);
-      fetchData();
+      fetchData(currentPage, searchTerm);
     } catch (error) {
       toast.error('Failed to create sub-category');
       console.error('Error creating sub-category:', error);
@@ -415,10 +460,148 @@ export const SubCategoryTab: React.FC = () => {
       await ticketManagementAPI.deleteSubCategory(subCategory.id);
       setSubCategories(subCategories.filter(sub => sub.id !== subCategory.id));
       toast.success('Sub-category deleted successfully!');
+      fetchData(currentPage, searchTerm);
     } catch (error) {
       console.error('Error deleting sub-category:', error);
       toast.error('Failed to delete sub-category');
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    const totalPages = Math.ceil(pagination.total_count / pagination.per_page);
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    fetchData(page, debouncedSearchTerm);
+  };
+
+  // Smart pagination rendering function (similar to ScheduledTaskDashboard)
+  const renderPaginationItems = () => {
+    const items = [];
+    const totalPages = Math.ceil(pagination.total_count / pagination.per_page);
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      // Always show first page
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            className="cursor-pointer"
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      // Show pages 2, 3, 4 if currentPage is 1, 2, or 3
+      if (currentPage <= 3) {
+        for (let i = 2; i <= 4 && i < totalPages; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                className="cursor-pointer"
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        if (totalPages > 5) {
+          items.push(
+            <PaginationItem key="ellipsis1">
+              <PaginationEllipsis />
+            </PaginationItem>
+          );
+        }
+      } else if (currentPage >= totalPages - 2) {
+        // Show ellipsis before last 4 pages
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+        for (let i = totalPages - 3; i < totalPages; i++) {
+          if (i > 1) {
+            items.push(
+              <PaginationItem key={i}>
+                <PaginationLink
+                  className="cursor-pointer"
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      } else {
+        // Show ellipsis, currentPage-1, currentPage, currentPage+1, ellipsis
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                className="cursor-pointer"
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+
+      // Always show last page if more than 1 page
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages}>
+            <PaginationLink
+              className="cursor-pointer"
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      // Show all pages if less than or equal to 7
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              className="cursor-pointer"
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
   };
 
   return (
@@ -534,6 +717,8 @@ export const SubCategoryTab: React.FC = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-2">Engineer Assignment <span className="text-red-500">*</span></h3>
                 <Select
+                  open={engineersDropdownOpen}
+                  onOpenChange={setEngineersDropdownOpen}
                   onValueChange={(value) => {
                     const engineerId = parseInt(value);
                     if (selectedEngineers.includes(engineerId)) {
@@ -541,6 +726,8 @@ export const SubCategoryTab: React.FC = () => {
                     } else {
                       setSelectedEngineers([...selectedEngineers, engineerId]);
                     }
+                    // Close dropdown after selection
+                    setTimeout(() => setEngineersDropdownOpen(false), 200);
                   }}
                 >
                   <SelectTrigger className="w-full relative">
@@ -583,10 +770,10 @@ export const SubCategoryTab: React.FC = () => {
                     {selectedEngineers.map((engineerId) => {
                       const engineer = engineers.find(e => e.id === engineerId);
                       return engineer ? (
-                        <div key={engineerId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
+                        <div key={engineerId} className="flex items-center gap-1 bg-indigo-100 text-indigo-900 px-3 py-1 rounded-full text-sm font-medium">
                           {engineer.full_name}
                           <X
-                            className="h-3 w-3 cursor-pointer"
+                            className="h-3 w-3 cursor-pointer hover:text-indigo-600"
                             onClick={() => setSelectedEngineers(selectedEngineers.filter(id => id !== engineerId))}
                           />
                         </div>
@@ -598,7 +785,44 @@ export const SubCategoryTab: React.FC = () => {
 
               {/* Location Configuration */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Location Configuration</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Location Configuration</h3>
+                  <div className="flex gap-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        form.setValue('building', true);
+                        form.setValue('wing', true);
+                        form.setValue('floor', true);
+                        form.setValue('zone', true);
+                        form.setValue('room', true);
+                      }}
+                    >
+                      Select All
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        form.setValue('building', false);
+                        form.setValue('wing', false);
+                        form.setValue('floor', false);
+                        form.setValue('zone', false);
+                        form.setValue('room', false);
+                        setSelectedBuildings([]);
+                        setSelectedWings([]);
+                        setSelectedFloors([]);
+                        setSelectedZones([]);
+                        setSelectedRooms([]);
+                      }}
+                    >
+                      Clear All
+                    </Button>
+                  </div>
+                </div>
                 
                 {/* Location Enable/Disable Checkboxes */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -703,36 +927,49 @@ export const SubCategoryTab: React.FC = () => {
                 {form.watch('building') && (
                   <div>
                     <label className="block text-sm font-medium mb-2">Buildings</label>
-                    <Select
-                      onValueChange={(value) => {
-                        const buildingId = parseInt(value);
-                        if (selectedBuildings.includes(buildingId)) {
-                          setSelectedBuildings(selectedBuildings.filter(id => id !== buildingId));
-                        } else {
-                          setSelectedBuildings([...selectedBuildings, buildingId]);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder={
-                          selectedBuildings.length === 0 
-                            ? "Select buildings" 
-                            : `${selectedBuildings.length} building(s) selected`
-                        } />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableBuildings.map((building) => (
-                          <SelectItem key={building.id} value={building.id.toString()}>
-                            <div className="flex items-center justify-between w-full">
+                    <div className="border rounded-md bg-white">
+                      <div className="p-2 border-b space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedBuildings(availableBuildings.map(b => b.id))}
+                          className="w-full flex items-center gap-2 px-2 py-2 hover:bg-blue-50 rounded text-sm font-medium text-blue-600"
+                        >
+                          <Checkbox checked={selectedBuildings.length === availableBuildings.length} />
+                          <span>Select All</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedBuildings([])}
+                          className="w-full flex items-center gap-2 px-2 py-2 hover:bg-red-50 rounded text-sm font-medium text-red-600"
+                        >
+                          <Checkbox checked={false} />
+                          <span>Clear All</span>
+                        </button>
+                      </div>
+                      <div className="max-h-[250px] overflow-y-auto p-1">
+                        {availableBuildings.length === 0 ? (
+                          <div className="px-2 py-2 text-sm text-gray-500">No buildings available</div>
+                        ) : (
+                          availableBuildings.map((building) => (
+                            <button
+                              key={building.id}
+                              type="button"
+                              onClick={() => {
+                                if (selectedBuildings.includes(building.id)) {
+                                  setSelectedBuildings(selectedBuildings.filter(id => id !== building.id));
+                                } else {
+                                  setSelectedBuildings([...selectedBuildings, building.id]);
+                                }
+                              }}
+                              className="w-full flex items-center gap-2 px-2 py-2 hover:bg-gray-100 rounded text-sm"
+                            >
+                              <Checkbox checked={selectedBuildings.includes(building.id)} />
                               <span>{building.name}</span>
-                              {selectedBuildings.includes(building.id) && (
-                                <span className="ml-2 text-primary">✓</span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
                     
                     {/* Show selected buildings */}
                     {selectedBuildings.length > 0 && (
@@ -740,10 +977,10 @@ export const SubCategoryTab: React.FC = () => {
                         {selectedBuildings.map((buildingId) => {
                           const building = availableBuildings.find(b => b.id === buildingId);
                           return building ? (
-                            <div key={buildingId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
+                            <div key={buildingId} className="flex items-center gap-1 bg-blue-100 text-blue-900 px-3 py-1 rounded-full text-sm font-medium">
                               {building.name}
                               <X
-                                className="h-3 w-3 cursor-pointer"
+                                className="h-3 w-3 cursor-pointer hover:text-blue-600"
                                 onClick={() => setSelectedBuildings(selectedBuildings.filter(id => id !== buildingId))}
                               />
                             </div>
@@ -758,36 +995,49 @@ export const SubCategoryTab: React.FC = () => {
                 {form.watch('wing') && (
                   <div>
                     <label className="block text-sm font-medium mb-2">Wings</label>
-                    <Select
-                      onValueChange={(value) => {
-                        const wingId = parseInt(value);
-                        if (selectedWings.includes(wingId)) {
-                          setSelectedWings(selectedWings.filter(id => id !== wingId));
-                        } else {
-                          setSelectedWings([...selectedWings, wingId]);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder={
-                          selectedWings.length === 0 
-                            ? "Select wings" 
-                            : `${selectedWings.length} wing(s) selected`
-                        } />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableWings.map((wing) => (
-                          <SelectItem key={wing.id} value={wing.id.toString()}>
-                            <div className="flex items-center justify-between w-full">
+                    <div className="border rounded-md bg-white">
+                      <div className="p-2 border-b space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedWings(availableWings.map(w => w.id))}
+                          className="w-full flex items-center gap-2 px-2 py-2 hover:bg-blue-50 rounded text-sm font-medium text-blue-600"
+                        >
+                          <Checkbox checked={selectedWings.length === availableWings.length} />
+                          <span>Select All</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedWings([])}
+                          className="w-full flex items-center gap-2 px-2 py-2 hover:bg-red-50 rounded text-sm font-medium text-red-600"
+                        >
+                          <Checkbox checked={false} />
+                          <span>Clear All</span>
+                        </button>
+                      </div>
+                      <div className="max-h-[250px] overflow-y-auto p-1">
+                        {availableWings.length === 0 ? (
+                          <div className="px-2 py-2 text-sm text-gray-500">No wings available</div>
+                        ) : (
+                          availableWings.map((wing) => (
+                            <button
+                              key={wing.id}
+                              type="button"
+                              onClick={() => {
+                                if (selectedWings.includes(wing.id)) {
+                                  setSelectedWings(selectedWings.filter(id => id !== wing.id));
+                                } else {
+                                  setSelectedWings([...selectedWings, wing.id]);
+                                }
+                              }}
+                              className="w-full flex items-center gap-2 px-2 py-2 hover:bg-gray-100 rounded text-sm"
+                            >
+                              <Checkbox checked={selectedWings.includes(wing.id)} />
                               <span>{wing.name}</span>
-                              {selectedWings.includes(wing.id) && (
-                                <span className="ml-2 text-primary">✓</span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
                     
                     {/* Show selected wings */}
                     {selectedWings.length > 0 && (
@@ -795,10 +1045,10 @@ export const SubCategoryTab: React.FC = () => {
                         {selectedWings.map((wingId) => {
                           const wing = availableWings.find(w => w.id === wingId);
                           return wing ? (
-                            <div key={wingId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
+                            <div key={wingId} className="flex items-center gap-1 bg-green-100 text-green-900 px-3 py-1 rounded-full text-sm font-medium">
                               {wing.name}
                               <X
-                                className="h-3 w-3 cursor-pointer"
+                                className="h-3 w-3 cursor-pointer hover:text-green-600"
                                 onClick={() => setSelectedWings(selectedWings.filter(id => id !== wingId))}
                               />
                             </div>
@@ -813,36 +1063,49 @@ export const SubCategoryTab: React.FC = () => {
                 {form.watch('floor') && (
                   <div>
                     <label className="block text-sm font-medium mb-2">Floors</label>
-                    <Select
-                      onValueChange={(value) => {
-                        const floorId = parseInt(value);
-                        if (selectedFloors.includes(floorId)) {
-                          setSelectedFloors(selectedFloors.filter(id => id !== floorId));
-                        } else {
-                          setSelectedFloors([...selectedFloors, floorId]);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder={
-                          selectedFloors.length === 0 
-                            ? "Select floors" 
-                            : `${selectedFloors.length} floor(s) selected`
-                        } />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableFloors.map((floor) => (
-                          <SelectItem key={floor.id} value={floor.id.toString()}>
-                            <div className="flex items-center justify-between w-full">
+                    <div className="border rounded-md bg-white">
+                      <div className="p-2 border-b space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedFloors(availableFloors.map(f => f.id))}
+                          className="w-full flex items-center gap-2 px-2 py-2 hover:bg-blue-50 rounded text-sm font-medium text-blue-600"
+                        >
+                          <Checkbox checked={selectedFloors.length === availableFloors.length} />
+                          <span>Select All</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedFloors([])}
+                          className="w-full flex items-center gap-2 px-2 py-2 hover:bg-red-50 rounded text-sm font-medium text-red-600"
+                        >
+                          <Checkbox checked={false} />
+                          <span>Clear All</span>
+                        </button>
+                      </div>
+                      <div className="max-h-[250px] overflow-y-auto p-1">
+                        {availableFloors.length === 0 ? (
+                          <div className="px-2 py-2 text-sm text-gray-500">No floors available</div>
+                        ) : (
+                          availableFloors.map((floor) => (
+                            <button
+                              key={floor.id}
+                              type="button"
+                              onClick={() => {
+                                if (selectedFloors.includes(floor.id)) {
+                                  setSelectedFloors(selectedFloors.filter(id => id !== floor.id));
+                                } else {
+                                  setSelectedFloors([...selectedFloors, floor.id]);
+                                }
+                              }}
+                              className="w-full flex items-center gap-2 px-2 py-2 hover:bg-gray-100 rounded text-sm"
+                            >
+                              <Checkbox checked={selectedFloors.includes(floor.id)} />
                               <span>{floor.name}</span>
-                              {selectedFloors.includes(floor.id) && (
-                                <span className="ml-2 text-primary">✓</span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
                     
                     {/* Show selected floors */}
                     {selectedFloors.length > 0 && (
@@ -850,10 +1113,10 @@ export const SubCategoryTab: React.FC = () => {
                         {selectedFloors.map((floorId) => {
                           const floor = availableFloors.find(f => f.id === floorId);
                           return floor ? (
-                            <div key={floorId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
+                            <div key={floorId} className="flex items-center gap-1 bg-amber-100 text-amber-900 px-3 py-1 rounded-full text-sm font-medium">
                               {floor.name}
                               <X
-                                className="h-3 w-3 cursor-pointer"
+                                className="h-3 w-3 cursor-pointer hover:text-amber-600"
                                 onClick={() => setSelectedFloors(selectedFloors.filter(id => id !== floorId))}
                               />
                             </div>
@@ -868,36 +1131,49 @@ export const SubCategoryTab: React.FC = () => {
                 {form.watch('zone') && (
                   <div>
                     <label className="block text-sm font-medium mb-2">Zones</label>
-                    <Select
-                      onValueChange={(value) => {
-                        const zoneId = parseInt(value);
-                        if (selectedZones.includes(zoneId)) {
-                          setSelectedZones(selectedZones.filter(id => id !== zoneId));
-                        } else {
-                          setSelectedZones([...selectedZones, zoneId]);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder={
-                          selectedZones.length === 0 
-                            ? "Select zones" 
-                            : `${selectedZones.length} zone(s) selected`
-                        } />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableZones.map((zone) => (
-                          <SelectItem key={zone.id} value={zone.id.toString()}>
-                            <div className="flex items-center justify-between w-full">
+                    <div className="border rounded-md bg-white">
+                      <div className="p-2 border-b space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedZones(availableZones.map(z => z.id))}
+                          className="w-full flex items-center gap-2 px-2 py-2 hover:bg-blue-50 rounded text-sm font-medium text-blue-600"
+                        >
+                          <Checkbox checked={selectedZones.length === availableZones.length} />
+                          <span>Select All</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedZones([])}
+                          className="w-full flex items-center gap-2 px-2 py-2 hover:bg-red-50 rounded text-sm font-medium text-red-600"
+                        >
+                          <Checkbox checked={false} />
+                          <span>Clear All</span>
+                        </button>
+                      </div>
+                      <div className="max-h-[250px] overflow-y-auto p-1">
+                        {availableZones.length === 0 ? (
+                          <div className="px-2 py-2 text-sm text-gray-500">No zones available</div>
+                        ) : (
+                          availableZones.map((zone) => (
+                            <button
+                              key={zone.id}
+                              type="button"
+                              onClick={() => {
+                                if (selectedZones.includes(zone.id)) {
+                                  setSelectedZones(selectedZones.filter(id => id !== zone.id));
+                                } else {
+                                  setSelectedZones([...selectedZones, zone.id]);
+                                }
+                              }}
+                              className="w-full flex items-center gap-2 px-2 py-2 hover:bg-gray-100 rounded text-sm"
+                            >
+                              <Checkbox checked={selectedZones.includes(zone.id)} />
                               <span>{zone.name}</span>
-                              {selectedZones.includes(zone.id) && (
-                                <span className="ml-2 text-primary">✓</span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
                     
                     {/* Show selected zones */}
                     {selectedZones.length > 0 && (
@@ -905,10 +1181,10 @@ export const SubCategoryTab: React.FC = () => {
                         {selectedZones.map((zoneId) => {
                           const zone = availableZones.find(z => z.id === zoneId);
                           return zone ? (
-                            <div key={zoneId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
+                            <div key={zoneId} className="flex items-center gap-1 bg-purple-100 text-purple-900 px-3 py-1 rounded-full text-sm font-medium">
                               {zone.name}
                               <X
-                                className="h-3 w-3 cursor-pointer"
+                                className="h-3 w-3 cursor-pointer hover:text-purple-600"
                                 onClick={() => setSelectedZones(selectedZones.filter(id => id !== zoneId))}
                               />
                             </div>
@@ -923,36 +1199,49 @@ export const SubCategoryTab: React.FC = () => {
                 {form.watch('room') && (
                   <div>
                     <label className="block text-sm font-medium mb-2">Rooms</label>
-                    <Select
-                      onValueChange={(value) => {
-                        const roomId = parseInt(value);
-                        if (selectedRooms.includes(roomId)) {
-                          setSelectedRooms(selectedRooms.filter(id => id !== roomId));
-                        } else {
-                          setSelectedRooms([...selectedRooms, roomId]);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder={
-                          selectedRooms.length === 0 
-                            ? "Select rooms" 
-                            : `${selectedRooms.length} room(s) selected`
-                        } />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableRooms.map((room) => (
-                          <SelectItem key={room.id} value={room.id.toString()}>
-                            <div className="flex items-center justify-between w-full">
+                    <div className="border rounded-md bg-white">
+                      <div className="p-2 border-b space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRooms(availableRooms.map(r => r.id))}
+                          className="w-full flex items-center gap-2 px-2 py-2 hover:bg-blue-50 rounded text-sm font-medium text-blue-600"
+                        >
+                          <Checkbox checked={selectedRooms.length === availableRooms.length} />
+                          <span>Select All</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRooms([])}
+                          className="w-full flex items-center gap-2 px-2 py-2 hover:bg-red-50 rounded text-sm font-medium text-red-600"
+                        >
+                          <Checkbox checked={false} />
+                          <span>Clear All</span>
+                        </button>
+                      </div>
+                      <div className="max-h-[250px] overflow-y-auto p-1">
+                        {availableRooms.length === 0 ? (
+                          <div className="px-2 py-2 text-sm text-gray-500">No rooms available</div>
+                        ) : (
+                          availableRooms.map((room) => (
+                            <button
+                              key={room.id}
+                              type="button"
+                              onClick={() => {
+                                if (selectedRooms.includes(room.id)) {
+                                  setSelectedRooms(selectedRooms.filter(id => id !== room.id));
+                                } else {
+                                  setSelectedRooms([...selectedRooms, room.id]);
+                                }
+                              }}
+                              className="w-full flex items-center gap-2 px-2 py-2 hover:bg-gray-100 rounded text-sm"
+                            >
+                              <Checkbox checked={selectedRooms.includes(room.id)} />
                               <span>{room.name}</span>
-                              {selectedRooms.includes(room.id) && (
-                                <span className="ml-2 text-primary">✓</span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
                     
                     {/* Show selected rooms */}
                     {selectedRooms.length > 0 && (
@@ -960,10 +1249,10 @@ export const SubCategoryTab: React.FC = () => {
                         {selectedRooms.map((roomId) => {
                           const room = availableRooms.find(r => r.id === roomId);
                           return room ? (
-                            <div key={roomId} className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
+                            <div key={roomId} className="flex items-center gap-1 bg-pink-100 text-pink-900 px-3 py-1 rounded-full text-sm font-medium">
                               {room.name}
                               <X
-                                className="h-3 w-3 cursor-pointer"
+                                className="h-3 w-3 cursor-pointer hover:text-pink-600"
                                 onClick={() => setSelectedRooms(selectedRooms.filter(id => id !== roomId))}
                               />
                             </div>
@@ -999,13 +1288,55 @@ export const SubCategoryTab: React.FC = () => {
               <div className="text-gray-500">Loading sub-categories...</div>
             </div>
           ) : (
-            <EnhancedTable
-              data={subCategories}
-              columns={columns}
-              renderCell={renderCell}
-              renderActions={renderActions}
-              storageKey="sub-categories-table"
-            />
+            <>
+              <EnhancedTable
+                data={subCategories}
+                columns={columns}
+                renderCell={renderCell}
+                renderActions={renderActions}
+                storageKey="sub-categories-table"
+                pagination={false}
+                enableSearch={true}
+                onSearchChange={handleSearch}
+                searchValue={searchTerm}
+              />
+
+              {/* Pagination - Same pattern as ScheduledTaskDashboard */}
+              {(() => {
+                const totalPages = Math.ceil(pagination.total_count / pagination.per_page);
+                return totalPages > 1 ? (
+                  <div className="flex justify-center mt-6">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                            className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                        {renderPaginationItems()}
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Pagination Info */}
+              {(() => {
+                const totalPages = Math.ceil(pagination.total_count / pagination.per_page);
+                return totalPages > 1 ? (
+                  <div className="text-center mt-2 text-sm text-gray-600">
+                    Showing page {currentPage} of {totalPages} ({pagination.total_count} total records)
+                  </div>
+                ) : null;
+              })()}
+            </>
           )}
         </CardContent>
       </Card>
@@ -1014,7 +1345,7 @@ export const SubCategoryTab: React.FC = () => {
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
         subCategory={editingSubCategory}
-        onUpdate={() => fetchData()}
+        onUpdate={() => fetchData(currentPage, searchTerm)}
       />
     </div>
   );

@@ -243,17 +243,17 @@ const BusinessWeeklyReport = () => {
     };
 
     return (
-        <div className="p-6 space-y-6 max-w-7xl mx-auto">
+        <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
             {/* Header Section */}
-            <div className="flex justify-between items-start">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#1a1a1a]">Weekly Report</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-[#1a1a1a]">Weekly Report</h1>
                     <p className="text-gray-500 mt-1">Track your weekly KPI performance and insights</p>
                 </div>
             </div>
 
             <Tabs defaultValue="submit" className="w-full">
-                <TabsList className="bg-[#F5F5F5] p-1 rounded-[8px] h-auto inline-flex shadow-inner">
+                <TabsList className="bg-[#F5F5F5] p-1 rounded-[8px] h-auto inline-flex flex-wrap shadow-inner max-w-full">
                     <TabsTrigger
                         value="submit"
                         className="rounded-[6px] px-6 py-1.5 data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-sm bg-transparent text-gray-500 transition-all font-medium"
@@ -270,7 +270,7 @@ const BusinessWeeklyReport = () => {
 
                 <TabsContent value="submit" className="space-y-6 mt-4">
                     {/* Date Selection Card */}
-                    <Card className="bg-primary text-[#2C2C2C] p-6 rounded-[12px] border border-border shadow-lg">
+                    <Card className="bg-primary text-[#2C2C2C] p-4 sm:p-6 rounded-[12px] border border-border shadow-lg">
                         <div className="flex items-center gap-2 mb-4">
                             <Calendar className="w-5 h-5 text-[#2C2C2C]" />
                             <span className="text-lg font-semibold">Mar 2026</span>
@@ -280,7 +280,7 @@ const BusinessWeeklyReport = () => {
                             Filling Report for Week #13, Mar 23 - Mar 29
                         </div>
 
-                        <div className="flex gap-3">
+                        <div className="flex flex-col sm:flex-row gap-3">
                             <div className="bg-[hsla(42,25%,69%,0.3)] flex items-center gap-3 px-4 py-2 rounded-[8px] text-[#2C2C2C]">
                                 <span className="text-sm">W12 Mar 16-22</span>
                                 <AlertCircle className="w-4 h-4 text-[#2C2C2C]" />
@@ -294,8 +294,8 @@ const BusinessWeeklyReport = () => {
 
                     {/* KPI Content Card */}
                     <Card className="border-2 border-[#805AD5] rounded-[16px] overflow-hidden bg-white shadow-sm">
-                        <div className="bg-[#EDF2FF] p-4 flex justify-between items-start border-b border-[#805AD5]/20">
-                            <div className="space-y-1">
+                        <div className="bg-[#EDF2FF] p-4 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 border-b border-[#805AD5]/20">
+                            <div className="space-y-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                     <TrendingUp className="w-5 h-5 text-[#805AD5]" />
                                     <h3 className="font-bold text-[#1a1a1a] flex items-center gap-1">
@@ -307,12 +307,12 @@ const BusinessWeeklyReport = () => {
                                     💡 Enter actual values for this week and plan for next week. Track your key metrics.
                                 </p>
                             </div>
-                            <Badge className="bg-[#805AD5] hover:bg-[#805AD5] text-white px-3 py-1 rounded-[6px] text-xs">
+                            <Badge className="bg-[#805AD5] hover:bg-[#805AD5] text-white px-3 py-1 rounded-[6px] text-xs shrink-0">
                                 0/20 pts
                             </Badge>
                         </div>
 
-                        <div className="p-16 flex flex-col items-center justify-center text-center">
+                        <div className="p-8 sm:p-16 flex flex-col items-center justify-center text-center">
                             <p className="text-gray-400 text-lg">No KPIs assigned for this period</p>
                         </div>
                     </Card>
@@ -332,37 +332,37 @@ const BusinessWeeklyReport = () => {
                             </Badge>
                         </div>
 
-                        <div className="p-6 space-y-4">
+                        <div className="p-4 sm:p-6 space-y-4">
                             {wins.map((win, index) => (
-                                <div key={index} className="flex gap-3 items-start p-4 border border-gray-100 rounded-[8px] relative group bg-[#FAFAFA]">
-                                    <Checkbox className="mt-1 border-blue-500 data-[state=checked]:bg-blue-500 rounded-[3px]" defaultChecked />
-                                    <Star className="w-4 h-4 mt-1 text-gray-300 cursor-pointer hover:text-yellow-400" />
+                                <div key={index} className="flex gap-3 items-start p-3 sm:p-4 border border-gray-100 rounded-[8px] relative group bg-[#FAFAFA]">
+                                    <Checkbox className="mt-1 shrink-0 border-blue-500 data-[state=checked]:bg-blue-500 rounded-[3px]" defaultChecked />
+                                    <Star className="w-4 h-4 mt-1 shrink-0 text-gray-300 cursor-pointer hover:text-yellow-400" />
                                     <Textarea
                                         value={win}
                                         onChange={(e) => handleWinChange(index, e.target.value)}
                                         placeholder="Describe your win..."
-                                        className="min-h-[60px] resize-none border-none focus-visible:ring-0 p-0 bg-transparent text-sm text-gray-700 placeholder:text-gray-400"
+                                        className="min-w-0 flex-1 min-h-[60px] resize-none border-none focus-visible:ring-0 p-0 bg-transparent text-sm text-gray-700 placeholder:text-gray-400"
                                     />
                                     <button
                                         onClick={() => handleRemoveWin(index)}
-                                        className="text-red-400 hover:text-red-600 p-1"
+                                        className="text-red-400 hover:text-red-600 p-1 shrink-0"
                                     >
                                         <X className="w-4 h-4" />
                                     </button>
                                 </div>
                             ))}
 
-                            <div className="flex gap-4">
+                            <div className="flex flex-col sm:flex-row gap-4">
                                 <Button
                                     variant="outline"
-                                    className="flex-1 border-dashed border-2 border-[#3182CE] text-[#3182CE] hover:bg-blue-50 h-12 rounded-[8px] font-medium"
+                                    className="flex-1 w-full border-dashed border-2 border-[#3182CE] text-[#3182CE] hover:bg-blue-50 h-12 rounded-[8px] font-medium"
                                 >
                                     <Plus className="w-4 h-4 mr-2" />
                                     Import Daily Wins (last week's)
                                 </Button>
                                 <Button
                                     onClick={handleAddWin}
-                                    className="flex-1 bg-[#10B981] hover:bg-[#059669] text-white h-12 rounded-[8px] font-bold"
+                                    className="flex-1 w-full bg-[#10B981] hover:bg-[#059669] text-white h-12 rounded-[8px] font-bold"
                                 >
                                     <Plus className="w-4 h-4 mr-2" />
                                     Add Win
@@ -375,7 +375,7 @@ const BusinessWeeklyReport = () => {
                                 Carry Forward Uncompleted
                             </Button>
 
-                            <div className="flex items-center justify-between pt-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
                                 <div className="flex items-center gap-2 text-[11px] text-[#059669] font-medium">
                                     <Info className="w-4 h-4" />
                                     <span>Limits: Images 2MB, Others 5MB</span>
@@ -395,44 +395,74 @@ const BusinessWeeklyReport = () => {
                     </Card>
 
                     {/* Tasks & Issues Card */}
-                    <Card className="border-2 border-[#C05621] rounded-[16px] overflow-hidden bg-white shadow-sm">
-                        <div className="bg-[#FFF5F5] p-4 flex justify-between items-start border-b border-[#C05621]/20">
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <AlertTriangle className="w-5 h-5 text-[#C05621]" />
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="font-bold text-[#1a1a1a]">Tasks & Issues</h3>
-                                        <Badge className="bg-[#E65100] hover:bg-[#E65100] text-white px-2 py-0.5 rounded-[6px] text-[10px] font-bold">
-                                            0/10 pts
+                    <Card className="rounded-2xl border border-[#DA7756]/20 overflow-hidden bg-white shadow-sm">
+                        <div className="bg-white p-4 border-b border-[#b91c1c]/10">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-3">
+                                        <CheckSquare className="h-6 w-6 text-[#DA7756]" />
+                                        <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                                            Tasks & Issues
+                                        </h3>
+                                    </div>
+                                    <p className="text-[11px] text-gray-500 font-medium">
+                                        Check the box for completed items to mark them completed.
+                                    </p>
+                                    <div className="flex flex-wrap gap-2 pt-1">
+                                        <Badge variant="outline" className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800">
+                                            Completed: 0
+                                        </Badge>
+                                        <Badge variant="outline" className="border-0 bg-blue-100 px-3 py-1 text-[10px] font-bold text-blue-800">
+                                            Open: 0
+                                        </Badge>
+                                        <Badge variant="outline" className="border-0 bg-rose-100 px-3 py-1 text-[10px] font-bold text-rose-800">
+                                            Overdue: 0
                                         </Badge>
                                     </div>
                                 </div>
-                                <p className="text-xs text-gray-600">
-                                    Check the box for completed items to mark them completed.
-                                </p>
-                                <div className="flex gap-2">
-                                    <Badge variant="outline" className="bg-[#E1F5FE] text-[#0288D1] border-none rounded-[6px] px-3 py-1 font-bold text-[10px] flex items-center gap-1">
-                                        <CheckSquare className="w-3 h-3" /> Closed: 0
+                                <div className="flex items-center gap-4">
+                                    <Badge className="bg-[#DA7756] hover:bg-[#DA7756] text-white px-3 py-1 rounded-[6px] text-xs font-bold">
+                                        0/10 PTS
                                     </Badge>
-                                    <Badge variant="outline" className="bg-[#E3F2FD] text-[#1976D2] border-none rounded-[6px] px-3 py-1 font-bold text-[10px] flex items-center gap-1">
-                                        <Info className="w-3 h-3" /> Open: 0
-                                    </Badge>
-                                    <Badge variant="outline" className="bg-[#FFEBEE] text-[#D32F2F] border-none rounded-[6px] px-3 py-1 font-bold text-[10px] flex items-center gap-1">
-                                        <AlertCircle className="w-3 h-3" /> Overdue: 0
-                                    </Badge>
+                                    <Button className="rounded-[8px] shadow-lg font-semibold text-sm bg-[#DA7756] hover:bg-[#c9673f] text-white">
+                                        <Plus size={14} />
+                                        Add
+                                    </Button>
                                 </div>
                             </div>
-                            <Button
-                                className="bg-[#E65100] hover:bg-[#D84315] text-white rounded-[8px] px-6 font-bold"
-                            >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Add
-                            </Button>
                         </div>
 
-                        <div className="p-16 flex flex-col items-center justify-center text-center space-y-4">
-                            <CheckSquare className="w-12 h-12 text-gray-200" />
-                            <p className="text-gray-400 text-lg">No open tasks or issues</p>
+                        <div className="p-4 sm:p-6 text-left">
+                            <div className="space-y-2 text-left">
+                                {["Weekly Task 1", "Weekly Task 2"].map((title, index) => (
+                                    <div
+                                        key={title}
+                                        className="flex items-center gap-3 p-3 rounded-[10px] border transition-all bg-blue-50/50 border-blue-200/50"
+                                    >
+                                        <Checkbox className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a]" />
+                                        <button
+                                            className="p-1.5 hover:bg-gray-200 rounded-[6px] transition-colors"
+                                            title={`View ${index === 0 ? "task" : "issue"} details`}
+                                        >
+                                            <Info size={16} className="text-[#DA7756]" />
+                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-[#DA7756] text-white uppercase">
+                                                {index === 0 ? "task" : "issue"}
+                                            </span>
+                                            <Info size={16} className="text-blue-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium truncate text-left">
+                                                {title}
+                                            </p>
+                                            <p className="text-xs text-[#DA7756] capitalize text-left">
+                                                Open
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </Card>
 
@@ -446,14 +476,14 @@ const BusinessWeeklyReport = () => {
 
                     {/* Plan for Coming Week */}
                     <Card className="border-2 border-[#3182CE] rounded-[16px] overflow-hidden bg-white shadow-sm">
-                        <div className="bg-[#EBF8FF] p-4 flex justify-between items-center border-b border-[#3182CE]/20">
-                            <div className="flex items-center gap-2">
+                        <div className="bg-[#EBF8FF] p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 border-b border-[#3182CE]/20">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <Target className="w-5 h-5 text-[#3182CE]" />
                                 <h3 className="font-bold text-[#1a1a1a]">Plan for Coming Week</h3>
                                 <Badge className="bg-[#E67E22] text-white px-2 py-0.5 rounded-[6px] text-[10px] font-bold">0/5</Badge>
                                 <Info className="w-4 h-4 text-gray-400 cursor-pointer" />
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-wrap items-center gap-3">
                                 <Badge className="bg-[#5856D6] text-white px-3 py-1 rounded-[6px] text-xs font-bold">0/20 pts</Badge>
                                 <Button variant="outline" className="border-[#3182CE] text-[#3182CE] h-8 text-xs font-bold rounded-[6px] hover:bg-blue-50">
                                     Important & Not Urgent
@@ -491,15 +521,15 @@ const BusinessWeeklyReport = () => {
                                     </div>
 
                                     {dayPlans[day.day]?.map((plan, index) => (
-                                        <div key={index} className="flex gap-3 items-start p-4 border border-gray-100 rounded-[8px] bg-white ml-2">
-                                            <Star className="w-4 h-4 mt-1 text-gray-300 cursor-pointer hover:text-yellow-400" />
+                                        <div key={index} className="flex gap-3 items-start p-3 sm:p-4 border border-gray-100 rounded-[8px] bg-white ml-2">
+                                            <Star className="w-4 h-4 mt-1 shrink-0 text-gray-300 cursor-pointer hover:text-yellow-400" />
                                             <Textarea
                                                 value={plan}
                                                 onChange={(e) => handlePlanChange(day.day, index, e.target.value)}
                                                 placeholder="What's your strategic priority?"
                                                 className="min-h-[60px] resize-none border border-gray-200 focus-visible:ring-1 focus-visible:ring-blue-400 rounded-[6px] p-3 text-sm text-gray-700 placeholder:text-gray-400 flex-1"
                                             />
-                                            <div className="flex flex-col gap-2">
+                                            <div className="flex flex-col gap-2 shrink-0">
                                                 <button onClick={() => handleRemovePlan(day.day, index)} className="text-red-400 hover:text-red-600">
                                                     <X className="w-4 h-4" />
                                                 </button>
@@ -517,7 +547,7 @@ const BusinessWeeklyReport = () => {
                     </Card>
 
                     {/* Remarks Section */}
-                    <Card className="border-2 border-[#3182CE] rounded-[16px] overflow-hidden bg-white shadow-sm p-6 space-y-6">
+                    <Card className="border-2 border-[#3182CE] rounded-[16px] overflow-hidden bg-white shadow-sm p-4 sm:p-6 space-y-6">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                                 <Flag className="w-5 h-5 text-[#E3342F]" />
@@ -527,7 +557,7 @@ const BusinessWeeklyReport = () => {
                         </div>
 
                         <div className="border-2 border-dashed border-gray-200 rounded-[12px] p-4 space-y-4">
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                                 {[
                                     { icon: Activity, label: "Breakthrough" },
                                     { icon: TrendingUp, label: "Breakdown" },
@@ -557,9 +587,9 @@ const BusinessWeeklyReport = () => {
                         {/* Automated Score Card */}
                         <div className="border border-red-200 rounded-[12px] overflow-hidden bg-[#FFF5F5]">
                             <div className="p-4 space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center gap-2">
-                                        <Activity className="w-5 h-5 text-[#E3342F]" />
+                                <div className="flex flex-wrap justify-between items-center gap-2">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <Activity className="w-5 h-5 text-[#E3342F] shrink-0" />
                                         <h4 className="text-sm font-bold text-[#1a1a1a]">Automated Weekly Score <Info className="w-3 h-3 text-gray-400 inline cursor-pointer" /></h4>
                                     </div>
                                     <span className="text-2xl font-black text-[#E3342F]">0/100</span>
@@ -567,7 +597,7 @@ const BusinessWeeklyReport = () => {
                                 <p className="text-[10px] text-gray-500 flex items-center gap-1 italic">
                                     📊 Based on KPIs, achievements, tasks, planning, SOPs, and feedback.
                                 </p>
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                                     {[
                                         { label: "Weekly KPI:", score: "0/20" },
                                         { label: "Daily KPI:", score: "0/10" },

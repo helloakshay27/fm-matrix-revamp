@@ -6,8 +6,8 @@ import {
   Calendar,
   Clock,
   AlertCircle,
-  FolderKanban, // Added for Project Tasks
-  Ticket, // Added for Tickets
+  FolderKanban,
+  Ticket,
   Globe,
   Home,
   Bell,
@@ -16,7 +16,14 @@ import {
   LogOut,
   Settings,
   ChevronDown,
-  Shield
+  Shield,
+  Bot,
+  Megaphone,
+  Car,
+  Activity,
+  Mail,
+  Menu,
+  X,
 } from "lucide-react";
 import recessLogo from "@/assets/recess-logo";
 import { useSelector } from "react-redux";
@@ -43,9 +50,32 @@ interface TopNavigationProps {
   setActiveNavMenu: (menu: string | null) => void;
 }
 
+// Action name mapping for menu items
+const menuItemActionMap: Record<string, string> = {
+  "Create Booking": "employee_create_booking",
+  "Create MOM": "employee_create_mom",
+  "Create Ticket": "employee_create_ticket",
+  "Project and Taks": "employee_projects_overview",
+  Calendar: "employee_calender",
+  "Business Compass": "employee_business_compass",
+  "Admin Compass": "employee_admin_compass",
+  Dasboard: "employee_dashboard",
+  Tickets: "employee_ticket",
+  Contacts: "employee_contacts",
+  "Ask AI": "employee_askai",
+  Announcements: "employee_announcements",
+  Documents: "employee_documents",
+  Activity: "employee_activity",
+  "Seat Booking": "employee_seat_booking",
+  Parkings: "employee_parking",
+  Bookings: "employee_booking",
+  "F&B": "employee_f&B",
+  Visitors: "employee_ticket",
+};
+
 const navMenuOptions: Record<
   string,
-  { title: string; description: string; icon: any; href?: string; }[]
+  { title: string; description: string; icon: any; href?: string }[]
 > = {
   Create: [
     {
@@ -62,12 +92,13 @@ const navMenuOptions: Record<
       title: "Create Booking",
       description: "Make your booking",
       icon: <Calendar className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/vas/booking/add",
     },
     {
       title: "Create MOM",
       description: "Create MOM",
       icon: <Clock className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
-      href: "/vas/add-mom"
+      href: "/vas/add-mom",
     },
     {
       title: "Create Ticket",
@@ -75,15 +106,23 @@ const navMenuOptions: Record<
       icon: (
         <AlertCircle className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />
       ),
-      href: "/maintenance/ticket/employee/add"
+      href: "/maintenance/ticket/employee/add",
     },
   ],
   Work: [
     {
-      title: "Company Hub",
-      description: "",
-      icon: <Globe className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
-      href: "/employee/company-hub",
+      title: "Project and Taks",
+      description: "View and manage your project tasks",
+      icon: (
+        <FolderKanban className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />
+      ),
+      href: "/vas/projects",
+    },
+    {
+      title: "Calendar",
+      description: "Schedule and view events",
+      icon: <Calendar className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/employee/calendar",
     },
     {
       title: "Business Compass",
@@ -104,46 +143,134 @@ const navMenuOptions: Record<
       href: "/employee/dashboard",
     },
     {
-      title: "Project and Taks",
-      description: "View and manage your project tasks",
-      icon: <FolderKanban className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
-      href: "/vas/projects",
-    },
-    {
       title: "Tickets",
       description: "View and manage support tickets",
       icon: <Ticket className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
-      href: "/maintenance/ticket/employee"
+      href: "/maintenance/ticket/employee",
+    },
+  ],
+  Communicate: [
+    {
+      title: "Contacts",
+      description: "Access your contacts",
+      icon: <User className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/directory",
     },
     {
-      title: "Calendar",
-      description: "Schedule and view events",
-      icon: <Calendar className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
-      href: "/employee/calendar",
+      title: "Mail",
+      description: "Access your mail",
+      icon: <Mail className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/my-inbox",
     },
+    {
+      title: "Ask AI",
+      description: "Get help from our AI assistant",
+      icon: <Bot className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/ask-ai",
+    },
+    {
+      title: "Announcements",
+      description: "Stay updated with the latest announcements",
+      icon: <Megaphone className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/business-compass/announcements",
+    },
+  ],
+  Workspace: [
     {
       title: "Documents",
       description: "Access important documents",
       icon: <FileText className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
       href: "/vas/documents",
     },
+  ],
+  Insight: [
     {
-      title: "ID Card",
-      description: "Access your ID card",
+      title: "Activity",
+      description: "View your recent activity",
+      icon: <Activity className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+    },
+  ],
+  Operations: [
+    {
+      title: "Seat Booking",
+      description: "Book your workspace seat",
+      icon: <Calendar className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/employee/space-management/bookings",
+    },
+    {
+      title: "Parkings",
+      description: "View and manage your parking",
+      icon: <Car className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/parking",
+    },
+    {
+      title: "Bookings",
+      description: "View and manage your bookings",
+      icon: <Ticket className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/bookings-overview",
+    },
+    {
+      title: "F&B",
+      description: "View and manage your bookings",
       icon: <FileText className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
-      href: "/business-card",
+      href: "/bookings-overview",
+    },
+    {
+      title: "Visitors",
+      description: "View and manage your visitors",
+      icon: <User className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/security/visitor/employee",
     },
   ],
 };
 
 const TopNavigation: React.FC<TopNavigationProps> = ({
   activeNavMenu,
-  setActiveNavMenu
+  setActiveNavMenu,
 }) => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLNavElement>(null);
   const { userRole } = usePermissions();
+
+  // Build filtered menu options based on user permissions
+  const filteredNavMenuOptions = useMemo(() => {
+    if (!userRole || !userRole.lock_modules) {
+      return navMenuOptions;
+    }
+
+    // Find Employee Sidebar module for menu permissions
+    const sidebarModule = userRole.lock_modules.find(
+      (m: any) => m.module_name === "Employee Sidebar"
+    );
+
+    if (!sidebarModule) {
+      return navMenuOptions;
+    }
+
+    // Get all active function action_names
+    const activeActions = new Set(
+      sidebarModule.lock_functions
+        .filter((func: any) => func.function_active === 1)
+        .map((func: any) => func.action_name)
+    );
+
+    // Filter each menu category
+    const filtered: typeof navMenuOptions = {};
+
+    Object.entries(navMenuOptions).forEach(([category, items]) => {
+      filtered[category] = items.filter((item) => {
+        const actionName = menuItemActionMap[item.title];
+        // If no action mapping exists, show the item (for items without role restriction)
+        if (!actionName) return true;
+        // Otherwise check if user has permission
+        return activeActions.has(actionName);
+      });
+    });
+
+    return filtered;
+  }, [userRole]);
   const {
     notifications,
     notificationCount,
@@ -157,6 +284,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   const [availableBalance, setAvailableBalance] = useState(0);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [userRoleName, setUserRoleName] = useState<string | null>(null);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const baseUrl = localStorage.getItem("baseUrl") || "";
   const token = localStorage.getItem("token") || "";
@@ -204,10 +332,21 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
 
   const handleNotificationClick = async (notification: any) => {
     await handleNotificationClickContext(notification);
+
+    // Navigate based on notification type
     if (notification.ntype === "conversation") {
-      navigate(`/vas/channels/messages/${notification.payload.conversation_id}`);
-    } else if (notification.ntype === "projectspace") {
+      navigate(
+        `/vas/channels/messages/${notification.payload.conversation_id}`
+      );
+    }
+    if (notification.ntype === "projectspace") {
       navigate(`/vas/channels/groups/${notification.payload.project_space_id}`);
+    }
+    if (notification.payload.ntype === "newtaskmanagement") {
+      navigate(`/vas/tasks/${notification.payload.task_management_id}`);
+    }
+    if (notification.payload.ntype === "newissue") {
+      navigate(`/vas/issues/${notification.payload.issue_id}`);
     }
   };
 
@@ -216,22 +355,33 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
     for (const module of userRole.lock_modules) {
       if (
         module.module_name === "Employee Sidebar" ||
-        module.module_name === "Employee Projects Sidebar"
-      ) continue;
+        module.module_name === "Employee Projects Sidebar" ||
+        module.module_name === "Employee Business Compass" ||
+        module.module_name === "Employee Admin Compass"
+      )
+        continue;
       const firstActiveFunction = module.lock_functions.find(
-        (func) => func.function_active === 1 && func.react_link && !func.parent_function
+        (func) =>
+          func.function_active === 1 && func.react_link && !func.parent_function
       );
-      if (firstActiveFunction && firstActiveFunction.react_link) return firstActiveFunction.react_link;
+      if (firstActiveFunction && firstActiveFunction.react_link)
+        return firstActiveFunction.react_link;
     }
     return "/";
   };
 
   const userType = localStorage.getItem("userType");
-  const tempSwitchToAdmin = localStorage.getItem("tempType") === "pms_organization_admin";
+  const tempSwitchToAdmin =
+    localStorage.getItem("tempType") === "pms_organization_admin";
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        navRef.current &&
+        !navRef.current.contains(event.target as Node)
+      ) {
         setActiveNavMenu(null);
       }
     };
@@ -261,8 +411,8 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   return (
     <>
       {/* --- TOP NAV BAR --- */}
-      <div className="flex items-center justify-between px-8 py-4 bg-[#FAF9F6]/80 backdrop-blur-md sticky top-0 z-50 border-b border-[rgba(211,209,199,1)]">
-        <div className="flex items-center gap-12">
+      <div className="flex items-center justify-between px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-[#FAF9F6]/80 backdrop-blur-md fixed top-0 left-0 right-0 z-50 border-b border-[rgba(211,209,199,1)]">
+        <div className="flex items-center gap-3 sm:gap-6 lg:gap-12">
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
             {isOmanSite ? (
               <svg
@@ -273,7 +423,11 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                 viewBox="0 0 325 274"
                 fill="none"
               >
-                <rect width={325} height={274} fill="url(#pattern0_4116_1359)" />
+                <rect
+                  width={325}
+                  height={274}
+                  fill="url(#pattern0_4116_1359)"
+                />
                 <defs>
                   <pattern
                     id="pattern0_4116_1359"
@@ -312,7 +466,12 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                   d="M96.5583 31V25.7151C96.5583 24.8065 96.3752 24.1332 96.0092 23.6953C95.6431 23.2508 95.081 23.0285 94.3227 23.0285C93.9109 23.0285 93.5285 23.1135 93.1755 23.2835C92.8291 23.4469 92.5349 23.6822 92.2931 23.9894C92.1166 24.2248 91.9891 24.4993 91.9107 24.8131C91.8323 25.1268 91.793 25.6432 91.793 26.3622V31H90.3125V25.7151C90.3125 24.8065 90.1295 24.1332 89.7634 23.6953C89.3973 23.2508 88.8352 23.0285 88.0769 23.0285C87.6651 23.0285 87.2795 23.1135 86.92 23.2835C86.567 23.4469 86.2696 23.6822 86.0277 23.9894C85.8577 24.2182 85.7336 24.4829 85.6551 24.7836C85.5832 25.0843 85.5473 25.6105 85.5473 26.3622V31H84.0667V22.0284H85.5669V23.4109C85.9395 22.8357 86.3839 22.4076 86.9003 22.1265C87.4167 21.8454 88.0116 21.7049 88.6849 21.7049C89.4104 21.7049 90.0281 21.8617 90.538 22.1755C91.0479 22.4827 91.4335 22.9338 91.695 23.5286C92.0806 22.9142 92.5349 22.4566 93.0579 22.1559C93.5873 21.8552 94.1985 21.7049 94.8914 21.7049C95.8915 21.7049 96.6727 21.9859 97.2348 22.5481C97.797 23.1103 98.078 23.8914 98.078 24.8915V31H96.5583ZM100.745 35.373L103.177 30.1176L99.6566 22.0284H101.431L104.039 28.4703L106.804 22.0284H108.491L102.471 35.373H100.745Z"
                   fill="#ED323D"
                 />
-                <circle cx="24" cy="24" r="24" fill="url(#pattern0_4074_3337)" />
+                <circle
+                  cx="24"
+                  cy="24"
+                  r="24"
+                  fill="url(#pattern0_4074_3337)"
+                />
                 <defs>
                   <pattern
                     id="pattern0_4074_3337"
@@ -388,34 +547,62 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
               </svg>
             )}
           </div>
-          <nav className="hidden lg:flex items-center gap-8">
+          {/* Mobile hamburger */}
+          <button
+            className="lg:hidden p-2 rounded-lg hover:bg-[#f0ede6] transition-colors"
+            onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+            aria-label="Toggle navigation"
+          >
+            {isMobileNavOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
+          </button>
+
+          <nav ref={navRef} className="hidden lg:flex items-center gap-6">
+            <div
+              onClick={() => {
+                setActiveNavMenu(null);
+                navigate("/employee/company-hub");
+              }}
+              className="flex items-center gap-1.5 cursor-pointer group"
+            >
+              {/* <Globe className="w-3.5 h-3.5 text-[#DA7756]" /> */}
+              <span
+                className={`text-[13px] font-medium tracking-wider transition-colors`}
+              >
+                Company Hub
+              </span>
+            </div>
             {[
               "Create",
               "Work",
               "Communicate",
-              "Documents",
+              "Workspace",
               "Operations",
               "Insight",
             ].map((item) => (
               <div
                 key={item}
-                onClick={() =>
-                  setActiveNavMenu(activeNavMenu === item ? null : item)
-                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveNavMenu(activeNavMenu === item ? null : item);
+                }}
                 className="flex items-center gap-1.5 cursor-pointer group"
               >
                 <span
                   className={`text-[13px] font-medium tracking-wider transition-colors ${activeNavMenu === item
-                    ? "text-[#DA7756]"
-                    : "text-[rgba(16,24,40,1)] group-hover:text-gray-900"
+                      ? "text-[#DA7756]"
+                      : "text-[rgba(16,24,40,1)] group-hover:text-gray-900"
                     }`}
                 >
                   {item}
                 </span>
                 <ChevronRight
                   className={`w-3.5 h-3.5 transition-transform ${activeNavMenu === item
-                    ? "-rotate-90 text-[#DA7756]"
-                    : "rotate-90 text-[rgba(16,24,40,1)]"
+                      ? "-rotate-90 text-[#DA7756]"
+                      : "rotate-90 text-[rgba(16,24,40,1)]"
                     }`}
                 />
               </div>
@@ -429,7 +616,8 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
             className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900"
             onClick={() => navigate("/employee-wallet")}
           >
-            <Wallet className="w-5 h-5 text-[#DA7756]" /> ₹ {availableBalance.toFixed(2)}
+            <Wallet className="w-5 h-5 text-[#DA7756]" /> ₹{" "}
+            {availableBalance?.toFixed(2)}
           </button>
 
           <button
@@ -480,7 +668,9 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
             >
               <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Notifications
+                  </h3>
                   <p className="text-xs text-gray-600 mt-0.5">
                     {notificationCount > 0
                       ? `${notificationCount} unread notification${notificationCount > 1 ? "s" : ""}`
@@ -500,7 +690,9 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                 {notifications.length === 0 ? (
                   <div className="px-4 py-12 text-center">
                     <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-sm font-medium text-gray-500">No notifications yet</p>
+                    <p className="text-sm font-medium text-gray-500">
+                      No notifications yet
+                    </p>
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-100">
@@ -511,15 +703,23 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                         className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""}`}
                       >
                         <div className="flex items-start gap-3">
-                          <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read ? "bg-[#C72030]" : "bg-gray-300"}`} />
+                          <div
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read ? "bg-[#C72030]" : "bg-gray-300"}`}
+                          />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
-                              <p className={`text-sm ${!notification.read ? "font-semibold text-gray-900" : "font-medium text-gray-700"}`}>
+                              <p
+                                className={`text-sm ${!notification.read ? "font-semibold text-gray-900" : "font-medium text-gray-700"}`}
+                              >
                                 {notification.title}
                               </p>
-                              <span className="text-xs text-gray-500 whitespace-nowrap">{notification.time}</span>
+                              <span className="text-xs text-gray-500 whitespace-nowrap">
+                                {notification.time}
+                              </span>
                             </div>
-                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">{notification.message}</p>
+                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                              {notification.message}
+                            </p>
                           </div>
                         </div>
                       </button>
@@ -541,10 +741,15 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72 p-0">
               <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                <p className="text-sm font-semibold text-gray-900">{userFullName}</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {userFullName}
+                </p>
                 <p className="text-xs text-gray-600 mt-0.5">{user.email}</p>
                 <div className="flex items-center gap-2 mt-3">
-                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200 font-medium">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-green-50 text-green-700 border-green-200 font-medium"
+                  >
                     <User className="w-3 h-3 mr-1" />
                     {userRoleName || user?.lock_role?.name || "No Role"}
                   </Badge>
@@ -552,26 +757,41 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
               </div>
               {tempSwitchToAdmin && (
                 <div className="px-3 py-3 bg-gray-50 border-b border-gray-200">
-                  <p className="text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">Switch View</p>
+                  <p className="text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">
+                    Switch View
+                  </p>
                   <button
                     onClick={() => {
-                      localStorage.setItem("userType", "pms_organization_admin");
+                      localStorage.setItem(
+                        "userType",
+                        "pms_organization_admin"
+                      );
                       localStorage.setItem("selectedView", "admin");
                       localStorage.removeItem("tempType");
                       window.location.href = getFirstAdminLink();
                     }}
-                    className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm bg-white hover:bg-[#C72030] text-gray-700 hover:text-white transition-all duration-200 border border-gray-200 hover:border-[#C72030] group shadow-sm"
+                    className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg text-sm font-medium group shadow-sm"
                   >
                     <div className="flex items-center gap-2">
                       <Shield className="w-4 h-4" />
-                      <span className="font-medium">Admin View</span>
+                      <span>Admin View</span>
                     </div>
                     <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 </div>
               )}
               <div className="py-1">
-                <DropdownMenuItem onClick={() => navigate("/profile")} className="mx-2 my-1 rounded-md">
+                <DropdownMenuItem
+                  onClick={() => navigate("/business-card")}
+                  className="mx-2 my-1 rounded-md"
+                >
+                  <FileText className="w-4 h-4 mr-2 text-gray-500" />
+                  <span className="font-medium">ID Card</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => navigate("/business-compass/profile")}
+                  className="mx-2 my-1 rounded-md"
+                >
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
@@ -591,25 +811,68 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
         </div>
       </div>
 
+      {/* --- MOBILE NAV DRAWER --- */}
+      {isMobileNavOpen && (
+        <div className="lg:hidden fixed top-[57px] sm:top-[65px] left-0 right-0 bg-[#FAF9F6] border-b border-[rgba(211,209,199,1)] z-40 shadow-md animate-in slide-in-from-top-2 fade-in duration-200">
+          <div className="flex flex-col px-4 py-3 gap-1">
+            <button
+              onClick={() => {
+                navigate("/employee/company-hub");
+                setIsMobileNavOpen(false);
+              }}
+              className="text-left px-3 py-2.5 text-sm font-medium text-gray-800 hover:bg-[#f0ede6] rounded-lg transition-colors"
+            >
+              Company Hub
+            </button>
+            {[
+              "Create",
+              "Work",
+              "Communicate",
+              "Workspace",
+              "Operations",
+              "Insight",
+            ].map((item) => (
+              <button
+                key={item}
+                onClick={() => {
+                  setActiveNavMenu(activeNavMenu === item ? null : item);
+                  setIsMobileNavOpen(false);
+                }}
+                className={`text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-colors flex items-center justify-between ${activeNavMenu === item
+                    ? "text-[#DA7756] bg-[#f0ede6]"
+                    : "text-gray-800 hover:bg-[#f0ede6]"
+                  }`}
+              >
+                {item}
+                <ChevronRight
+                  className={`w-4 h-4 transition-transform ${activeNavMenu === item ? "rotate-90 text-[#DA7756]" : "text-gray-400"}`}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* --- NAV MENU DROPDOWN --- */}
-      {activeNavMenu && navMenuOptions[activeNavMenu] && (
+      {activeNavMenu && filteredNavMenuOptions[activeNavMenu] && (
         <div
           ref={dropdownRef}
-          className="absolute top-[65px] left-0 w-full bg-white border-b border-gray-200 shadow-md z-50 px-8 py-8 animate-in slide-in-from-top-2 fade-in duration-200"
+          className="fixed top-[57px] sm:top-[65px] left-0 right-0 bg-white border-b border-gray-200 shadow-md z-50 px-4 sm:px-8 py-6 sm:py-8 animate-in slide-in-from-top-2 fade-in duration-200"
         >
           <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6">
             {activeNavMenu}
           </h3>
           <div className="flex items-center gap-4 flex-wrap pb-2">
-            {navMenuOptions[activeNavMenu].map((option, idx) => (
+            {filteredNavMenuOptions[activeNavMenu].map((option, idx) => (
               <div
                 key={idx}
-                onClick={() => navigate(option.href)}
+                onClick={() => {
+                  setActiveNavMenu(null);
+                  navigate(option.href);
+                }}
                 className="flex flex-shrink-0 items-center gap-4 p-4 border border-gray-100 rounded-xl hover:shadow-md hover:border-gray-200 transition-all cursor-pointer bg-white min-w-[220px]"
               >
-                <div className="p-2 bg-orange-50 rounded-lg">
-                  {option.icon}
-                </div>
+                <div className="p-2 bg-orange-50 rounded-lg">{option.icon}</div>
                 <div>
                   <h4 className="text-sm font-bold text-gray-900 mb-0.5">
                     {option.title}

@@ -130,121 +130,114 @@ const AssetAuditFilterModal: React.FC<FilterModalProps> = ({
     if (isOpen) fetchSites();
   }, [isOpen]);
 
-  // Fetch Buildings
-  useEffect(() => {
-    const fetchBuildings = async () => {
-      setLoadingBuildings(true);
-      try {
-        const baseUrl = localStorage.getItem('baseUrl') || '';
-        const token = localStorage.getItem('token') || '';
+  // Fetch Buildings by Site ID
+  const fetchBuildingsBySite = async (siteId: string) => {
+    setLoadingBuildings(true);
+    try {
+      const baseUrl = localStorage.getItem('baseUrl') || '';
+      const token = localStorage.getItem('token') || '';
 
-        const response = await fetch(`https://${baseUrl}/pms/buildings.json`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+      const response = await fetch(`https://${baseUrl}/pms/sites/${siteId}/buildings.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-        if (!response.ok) throw new Error('Failed to fetch buildings');
-        const data = await response.json();
-        setBuildings(Array.isArray(data.pms_buildings) ? data.pms_buildings : Array.isArray(data.buildings) ? data.buildings : Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error('Error fetching buildings:', error);
-        setBuildings([]);
-      } finally {
-        setLoadingBuildings(false);
+      if (!response.ok) throw new Error('Failed to fetch buildings');
+      const data = await response.json();
+      setBuildings(Array.isArray(data.pms_buildings) ? data.pms_buildings : Array.isArray(data.buildings) ? data.buildings : Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching buildings:', error);
+      setBuildings([]);
+    } finally {
+      setLoadingBuildings(false);
+    }
+  };
+
+  // Fetch Wings by Building ID
+  const fetchWingsByBuilding = async (buildingId: string) => {
+    setLoadingWings(true);
+    try {
+      const baseUrl = localStorage.getItem('baseUrl') || '';
+      const token = localStorage.getItem('token') || '';
+
+      const response = await fetch(`https://${baseUrl}/pms/buildings/${buildingId}/wings.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch wings');
+      const data = await response.json();
+
+      // Handle nested structure: API returns [{ wings: {...} }, { wings: {...} }]
+      let wingsArray: any[] = [];
+      if (Array.isArray(data)) {
+        wingsArray = data.map((item: any) => item.wings).filter(Boolean);
+      } else if (Array.isArray(data.wings)) {
+        wingsArray = data.wings;
       }
-    };
 
-    if (isOpen) fetchBuildings();
-  }, [isOpen]);
+      setWings(wingsArray);
+    } catch (error) {
+      console.error('Error fetching wings:', error);
+      setWings([]);
+    } finally {
+      setLoadingWings(false);
+    }
+  };
 
-  // Fetch Wings (independent - not cascading)
-  useEffect(() => {
-    const fetchWings = async () => {
-      setLoadingWings(true);
-      try {
-        const baseUrl = localStorage.getItem('baseUrl') || '';
-        const token = localStorage.getItem('token') || '';
+  // Fetch Areas by Wing ID
+  const fetchAreasByWing = async (wingId: string) => {
+    setLoadingAreas(true);
+    try {
+      const baseUrl = localStorage.getItem('baseUrl') || '';
+      const token = localStorage.getItem('token') || '';
 
-        const response = await fetch(`https://${baseUrl}/pms/wings.json`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+      const response = await fetch(`https://${baseUrl}/pms/wings/${wingId}/areas.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-        if (!response.ok) throw new Error('Failed to fetch wings');
-        const data = await response.json();
-        setWings(Array.isArray(data.wings) ? data.wings : Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error('Error fetching wings:', error);
-        setWings([]);
-      } finally {
-        setLoadingWings(false);
-      }
-    };
+      if (!response.ok) throw new Error('Failed to fetch areas');
+      const data = await response.json();
+      setAreas(Array.isArray(data.areas) ? data.areas : Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching areas:', error);
+      setAreas([]);
+    } finally {
+      setLoadingAreas(false);
+    }
+  };
 
-    if (isOpen) fetchWings();
-  }, [isOpen]);
+  // Fetch Floors by Area ID
+  const fetchFloorsByArea = async (areaId: string) => {
+    setLoadingFloors(true);
+    try {
+      const baseUrl = localStorage.getItem('baseUrl') || '';
+      const token = localStorage.getItem('token') || '';
 
-  // Fetch Areas (independent - not cascading)
-  useEffect(() => {
-    const fetchAreas = async () => {
-      setLoadingAreas(true);
-      try {
-        const baseUrl = localStorage.getItem('baseUrl') || '';
-        const token = localStorage.getItem('token') || '';
+      const response = await fetch(`https://${baseUrl}/pms/areas/${areaId}/floors.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-        const response = await fetch(`https://${baseUrl}/pms/areas.json`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch areas');
-        const data = await response.json();
-        setAreas(Array.isArray(data.areas) ? data.areas : Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error('Error fetching areas:', error);
-        setAreas([]);
-      } finally {
-        setLoadingAreas(false);
-      }
-    };
-
-    if (isOpen) fetchAreas();
-  }, [isOpen]);
-
-  // Fetch Floors (independent - not cascading)
-  useEffect(() => {
-    const fetchFloors = async () => {
-      setLoadingFloors(true);
-      try {
-        const baseUrl = localStorage.getItem('baseUrl') || '';
-        const token = localStorage.getItem('token') || '';
-
-        const response = await fetch(`https://${baseUrl}/pms/floors.json`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch floors');
-        const data = await response.json();
-        setFloors(Array.isArray(data.floors) ? data.floors : Array.isArray(data) ? data : []);
-      } catch (error) {
-        console.error('Error fetching floors:', error);
-        setFloors([]);
-      } finally {
-        setLoadingFloors(false);
-      }
-    };
-
-    if (isOpen) fetchFloors();
-  }, [isOpen]);
+      if (!response.ok) throw new Error('Failed to fetch floors');
+      const data = await response.json();
+      setFloors(Array.isArray(data.floors) ? data.floors : Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching floors:', error);
+      setFloors([]);
+    } finally {
+      setLoadingFloors(false);
+    }
+  };
 
   // Fetch Departments
   useEffect(() => {
@@ -374,6 +367,94 @@ const AssetAuditFilterModal: React.FC<FilterModalProps> = ({
     if (isOpen) fetchUsers();
   }, [isOpen]);
 
+  // ============== CASCADING HANDLERS ==============
+
+  const handleSiteChange = (value: string[]) => {
+    // Update filter with selection
+    setFilters(prev => ({
+      ...prev,
+      site_ids_cont_any: value,
+      // Reset dependent fields
+      building_ids_cont_any: [],
+      wing_ids_cont_any: [],
+      area_ids_cont_any: [],
+      floor_ids_cont_any: [],
+    }));
+
+    // Clear dependent data
+    setBuildings([]);
+    setWings([]);
+    setAreas([]);
+    setFloors([]);
+
+    // Fetch buildings if site selected
+    if (value && value.length > 0) {
+      fetchBuildingsBySite(value[0]);
+    }
+  };
+
+  const handleBuildingChange = (value: string[]) => {
+    // Update filter with selection
+    setFilters(prev => ({
+      ...prev,
+      building_ids_cont_any: value,
+      // Reset dependent fields
+      wing_ids_cont_any: [],
+      area_ids_cont_any: [],
+      floor_ids_cont_any: [],
+    }));
+
+    // Clear dependent data
+    setWings([]);
+    setAreas([]);
+    setFloors([]);
+
+    // Fetch wings if building selected
+    if (value && value.length > 0) {
+      fetchWingsByBuilding(value[0]);
+    }
+  };
+
+  const handleWingChange = (value: string[]) => {
+    // Update filter with selection
+    setFilters(prev => ({
+      ...prev,
+      wing_ids_cont_any: value,
+      // Reset dependent fields
+      area_ids_cont_any: [],
+      floor_ids_cont_any: [],
+    }));
+
+    // Clear dependent data
+    setAreas([]);
+    setFloors([]);
+
+    // Fetch areas if wing selected
+    if (value && value.length > 0) {
+      fetchAreasByWing(value[0]);
+    }
+  };
+
+  const handleAreaChange = (value: string[]) => {
+    // Update filter with selection
+    setFilters(prev => ({
+      ...prev,
+      area_ids_cont_any: value,
+      // Reset dependent fields
+      floor_ids_cont_any: [],
+    }));
+
+    // Clear dependent data
+    setFloors([]);
+
+    // Fetch floors if area selected
+    if (value && value.length > 0) {
+      fetchFloorsByArea(value[0]);
+    }
+  };
+
+  // ============== GENERIC HANDLERS ==============
+
   const handleMultiSelectChange = (field: keyof FilterParams, value: string[]) => {
     setFilters(prev => ({
       ...prev,
@@ -460,7 +541,6 @@ const AssetAuditFilterModal: React.FC<FilterModalProps> = ({
                     MenuProps={menuProps}
                     sx={fieldStyles}
                   >
-                    <MenuItem value=""><em>All</em></MenuItem>
                     {auditTypeOptions.map((option) => (
                       <MenuItem key={option.value} value={option.value}>
                         {option.label}
@@ -481,7 +561,6 @@ const AssetAuditFilterModal: React.FC<FilterModalProps> = ({
                     MenuProps={menuProps}
                     sx={fieldStyles}
                   >
-                    <MenuItem value=""><em>All</em></MenuItem>
                     {statusOptions.map((option) => (
                       <MenuItem key={option.value} value={option.value}>
                         {option.label}
@@ -499,7 +578,7 @@ const AssetAuditFilterModal: React.FC<FilterModalProps> = ({
                     multiple
                     label="Sites"
                     value={filters.site_ids_cont_any || []}
-                    onChange={(e) => handleMultiSelectChange('site_ids_cont_any', e.target.value as string[])}
+                    onChange={(e) => handleSiteChange(e.target.value as string[])}
                     disabled={loadingSites}
                     MenuProps={menuProps}
                     renderValue={(selected) => (
@@ -529,8 +608,8 @@ const AssetAuditFilterModal: React.FC<FilterModalProps> = ({
                     multiple
                     label="Buildings"
                     value={filters.building_ids_cont_any || []}
-                    onChange={(e) => handleMultiSelectChange('building_ids_cont_any', e.target.value as string[])}
-                    disabled={loadingBuildings}
+                    onChange={(e) => handleBuildingChange(e.target.value as string[])}
+                    disabled={loadingBuildings || !filters.site_ids_cont_any || filters.site_ids_cont_any.length === 0}
                     MenuProps={menuProps}
                     renderValue={(selected) => (
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -559,8 +638,8 @@ const AssetAuditFilterModal: React.FC<FilterModalProps> = ({
                     multiple
                     label="Wings"
                     value={filters.wing_ids_cont_any || []}
-                    onChange={(e) => handleMultiSelectChange('wing_ids_cont_any', e.target.value as string[])}
-                    disabled={loadingWings}
+                    onChange={(e) => handleWingChange(e.target.value as string[])}
+                    disabled={loadingWings || !filters.building_ids_cont_any || filters.building_ids_cont_any.length === 0}
                     MenuProps={menuProps}
                     renderValue={(selected) => (
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -589,8 +668,8 @@ const AssetAuditFilterModal: React.FC<FilterModalProps> = ({
                     multiple
                     label="Areas"
                     value={filters.area_ids_cont_any || []}
-                    onChange={(e) => handleMultiSelectChange('area_ids_cont_any', e.target.value as string[])}
-                    disabled={loadingAreas}
+                    onChange={(e) => handleAreaChange(e.target.value as string[])}
+                    disabled={loadingAreas || !filters.wing_ids_cont_any || filters.wing_ids_cont_any.length === 0}
                     MenuProps={menuProps}
                     renderValue={(selected) => (
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -620,7 +699,7 @@ const AssetAuditFilterModal: React.FC<FilterModalProps> = ({
                     label="Floors"
                     value={filters.floor_ids_cont_any || []}
                     onChange={(e) => handleMultiSelectChange('floor_ids_cont_any', e.target.value as string[])}
-                    disabled={loadingFloors}
+                    disabled={loadingFloors || !filters.area_ids_cont_any || filters.area_ids_cont_any.length === 0}
                     MenuProps={menuProps}
                     renderValue={(selected) => (
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>

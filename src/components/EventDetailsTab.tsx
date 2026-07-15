@@ -43,7 +43,7 @@ interface Event {
 }
 
 export const EventDetailsTab = () => {
-    const dispatch = useAppDispatch();
+    const dispatch = useAppDispatch()
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -243,7 +243,7 @@ export const EventDetailsTab = () => {
 
                         <DetailItem
                             label="Event Time"
-                            value={eventData.from_time ? format(new Date(eventData.from_time), "hh:mm a") : "-"}
+                            value={eventData.from_time && eventData.to_time ? `${format(new Date(eventData.from_time), "hh:mm a")} - ${format(new Date(eventData.to_time), "hh:mm a")}` : "-"}
                         />
                         <DetailItem label="Uninterested" value={eventData.uninterested_count ?? 0} />
                         <DetailItem

@@ -50,7 +50,7 @@ interface TodoConvertModalProps {
     }>;
   };
   todoId: number | string;
-  onSuccess?: () => void;
+  onSuccess?: (taskId?: number) => void;
 }
 
 const TodoConvertModal = ({
@@ -239,7 +239,7 @@ const TodoConvertModal = ({
   const handleTaskSuccess = (taskId: number) => {
     toast.success("Task created successfully from todo!");
     if (onSuccess) {
-      onSuccess();
+      onSuccess(taskId);
     }
     closeModal();
   };

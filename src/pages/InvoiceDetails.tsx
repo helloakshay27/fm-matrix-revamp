@@ -3,7 +3,8 @@ import { refreshPendingApprovalsCount } from "@/utils/pendingApprovalsRefresh";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ClipboardList, Contact, Download, Eye, File, FileSpreadsheet, FileText, Images, Printer, Rss, ScrollText, Loader2, Edit2 } from "lucide-react";
+import { ArrowLeft, AlertTriangle, ClipboardList, Contact, Download, Eye, File, FileSpreadsheet, FileText, Images, Printer, Rss, ScrollText, Loader2, Edit2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -60,6 +61,7 @@ interface ApprovalLevel {
     status?: string;
     updated_by?: string;
     status_updated_at?: string;
+    rejection_reason?: string | null;
 }
 
 interface DebitNote {
@@ -346,12 +348,21 @@ export const InvoiceDetails = () => {
             return;
         }
 
+        const payload = {
+            level_id: Number(levelId),
+            user_id: Number(userId),
+            approve: false,
+            rejection_reason: rejectComment.trim(),
+        };
+
         try {
-            toast.success("PO rejected successfully");
+            await dispatch(approveInvoice({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+            toast.success("Invoice rejected successfully");
+            refreshPendingApprovalsCount();
             navigate(`/finance/pending-approvals`);
         } catch (error) {
-            console.error("Error rejecting PO:", error);
-            toast.error(String(error) || "Failed to reject PO");
+            console.error("Error rejecting invoice:", error);
+            toast.error(String(error) || "Failed to reject invoice");
         } finally {
             setOpenRejectDialog(false);
             setRejectComment("");
@@ -442,27 +453,52 @@ export const InvoiceDetails = () => {
                 </div>
             </div>
 
-            <div className='flex items-start gap-4 my-4'>
-                {
-                    invoice?.approval_levels?.map(level => (
-                        <div className='space-y-3'>
-                            <div className={`px-3 py-1 bg-green-100 text-green-800 text-sm rounded-md font-medium w-max ${getStatusColor(
-                                level.status
-                            )}`}>
-                                {`${level?.name?.toUpperCase()} approved : ${level.status}`}
-                            </div>
-                            {
-                                level.updated_by && level.status_updated_at &&
-                                <div className='ms-2 w-[177px]'>
-                                    {
-                                        `${level.updated_by} (${level.status_updated_at})`
-                                    }
+            <TooltipProvider>
+                <div className='flex flex-wrap items-start gap-3 my-4'>
+                    {invoice?.approval_levels?.map((level, idx) => (
+                        <div className='space-y-2' key={idx}>
+                            {level.status?.toLowerCase() === 'rejected' ? (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(level.status)}`}>
+                                            {`${level?.name?.toUpperCase()} : ${level.status}`}
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Rejection Reason: {level.rejection_reason ?? 'No reason provided'}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            ) : (
+                                <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status)}`}>
+                                    {`${level?.name?.toUpperCase()} : ${level.status}`}
                                 </div>
-                            }
+                            )}
+                            {level.updated_by && level.status_updated_at && (
+                                <div className='ms-2 w-[177px] text-sm text-gray-600'>
+                                    {`${level.updated_by} (${level.status_updated_at})`}
+                                </div>
+                            )}
                         </div>
-                    ))
-                }
-            </div>
+                    ))}
+                </div>
+            </TooltipProvider>
+
+            {/* Rejection alert boxes */}
+            {invoice?.approval_levels?.filter(a => a.status?.toLowerCase() === 'rejected').map((a, idx) => (
+                <div key={idx} className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4 mb-2">
+                    <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-red-700">
+                            Rejected by {a.name}
+                            {a.updated_by ? ` — ${a.updated_by}` : ''}
+                            {a.status_updated_at ? ` (${a.status_updated_at})` : ''}
+                        </p>
+                        <p className="text-sm text-red-600 mt-0.5">
+                            Reason: {a.rejection_reason ?? 'No reason provided'}
+                        </p>
+                    </div>
+                </div>
+            ))}
 
             {/* Vendor/Contact Details Section */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">

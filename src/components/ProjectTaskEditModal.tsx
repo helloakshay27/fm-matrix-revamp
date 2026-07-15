@@ -139,6 +139,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
   const [showStartCalender, setShowStartCalender] = useState(false);
   const [calendarTaskHours, setCalendarTaskHours] = useState([]);
   const [originalDateWiseHrs, setOriginalDateWiseHrs] = useState([]);
+  const [parentId, setParentId] = useState("")
 
   const [formData, setFormData] = useState({
     taskTitle: "",
@@ -146,12 +147,18 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     responsiblePerson: "",
     responsiblePersonName: "",
     priority: "",
+    isRecurring: false,
     observer: [],
     tags: [],
   });
 
   const [prevTags, setPrevTags] = useState([]);
   const [prevObservers, setPrevObservers] = useState([]);
+
+  // Responsible Person Change Modal State
+  const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false);
+  const [pendingResponsiblePerson, setPendingResponsiblePerson] = useState<string | null>(null);
+  const [responsiblePersonChangeReason, setResponsiblePersonChangeReason] = useState('');
 
   const { isListening, activeId, transcript, supported, startListening, stopListening } = useSpeechToText();
   const [baseValue, setBaseValue] = useState("");
@@ -239,7 +246,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
   const getTags = useCallback(async () => {
     try {
-      const response = await dispatch(fetchProjectsTags()).unwrap();
+      const response = await dispatch(fetchProjectsTags({ active: true })).unwrap();
       setTags(response);
     } catch (error) {
       console.error(error);
@@ -393,6 +400,8 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         task_tags?: Array<{ company_tag?: { id: string }; id: string }>;
         observers?: Array<{ user_id: string; user_name: string; id: string }>;
         task_allocation_times?: Array<any>;
+        parent_id?: string | null;
+        is_recurring?: boolean;
       };
 
       console.log(taskData);
@@ -441,9 +450,12 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         responsiblePerson: taskData.responsible_person_id || "",
         responsiblePersonName: taskData.responsible_person?.name || "",
         priority: taskData.priority || "",
+        isRecurring: taskData.is_recurring || false,
         observer: mappedObservers,
         tags: mappedTags,
       });
+
+      setParentId(taskData.parent_id || "")
 
       if (taskData.expected_start_date) {
         setStartDate({
@@ -581,19 +593,48 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
   };
 
   const validateForm = () => {
-    if (
-      !formData.taskTitle ||
-      !formData.responsiblePerson ||
-      !formData.priority ||
-      !formData.observer.length ||
-      !formData.tags.length ||
-      !endDate ||
-      !totalWorkingHours
-    ) {
+    if (!formData.taskTitle?.trim()) {
       toast.dismiss();
-      toast.error("Please fill all required fields.");
+      toast.error("Task title is required.");
       return false;
     }
+
+    if (!formData.responsiblePerson) {
+      toast.dismiss();
+      toast.error("Responsible person is required.");
+      return false;
+    }
+
+    if (!formData.priority) {
+      toast.dismiss();
+      toast.error("Priority is required.");
+      return false;
+    }
+
+    if (!formData.observer?.length) {
+      toast.dismiss();
+      toast.error("Please select at least one observer.");
+      return false;
+    }
+
+    if (!formData.tags?.length) {
+      toast.dismiss();
+      toast.error("Please select at least one tag.");
+      return false;
+    }
+
+    if (!formData.isRecurring && !endDate) {
+      toast.dismiss();
+      toast.error("Target date is required.");
+      return false;
+    }
+
+    if (!totalWorkingHours) {
+      toast.dismiss();
+      toast.error("Please enter working hours.");
+      return false;
+    }
+
     return true;
   };
 
@@ -607,28 +648,6 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
     }
 
     setIsSubmitting(true);
-
-    // const formatedEndDate = `${endDate.year}-${String(endDate.month + 1).padStart(2, "0")}-${String(endDate.date).padStart(2, "0")}`;
-    // const formatedStartDate = `${startDate.year}-${String(startDate.month + 1).padStart(2, "0")}-${String(startDate.date).padStart(2, "0")}`;
-    // let taskAllocationTimesAttributes = dateWiseHours;
-
-    // console.log(taskAllocationTimesAttributes)
-
-    // if (Array.isArray(taskAllocationTimesAttributes)) {
-    //     taskAllocationTimesAttributes = originalDateWiseHrs.map((allocation) => {
-    //         const allocationDate = allocation.date; // YYYY-MM-DD
-
-    //         const shouldDestroy =
-    //             allocationDate < formatedStartDate ||
-    //             allocationDate > formatedEndDate;
-
-    //         return {
-    //             ...allocation,
-    //             id: allocation.id || null,
-    //             _destroy: shouldDestroy,
-    //         };
-    //     });
-    // }
 
     const formatedEndDate = `${endDate?.year}-${String(endDate?.month + 1).padStart(2, "0")}-${String(endDate?.date).padStart(2, "0")}`;
     const formatedStartDate = `${startDate?.year}-${String(startDate?.month + 1).padStart(2, "0")}-${String(startDate?.date).padStart(2, "0")}`;
@@ -689,6 +708,37 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
       await dispatch(
         editProjectTask({ baseUrl, token, id: taskId, data: payload })
       ).unwrap();
+
+      // Post comment if responsible person was changed with reason
+      const taskData = task as any;
+      if (responsiblePersonChangeReason && taskData?.responsible_person_id !== formData.responsiblePerson) {
+        const oldResponsibleUser = users.find(u => u.id === taskData?.responsible_person_id);
+        const newResponsibleUser = formData.responsiblePersonName
+        const oldResponsibleName = oldResponsibleUser?.full_name || 'Unknown';
+        const newResponsibleName = newResponsibleUser || `User ${formData.responsiblePerson}`;
+
+        const commentPayload = {
+          comment: {
+            body: `Responsible person changed from ${oldResponsibleName} to ${newResponsibleName} with reason: ${responsiblePersonChangeReason}`,
+            commentable_id: taskId,
+            commentable_type: 'TaskManagement',
+            commentor_id: JSON.parse(localStorage.getItem('user') || '{}')?.id,
+            active: true,
+          },
+        };
+
+        try {
+          await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+        } catch (commentError) {
+          console.error('Failed to post comment:', commentError);
+          // Don't fail the task update if comment fails
+        }
+      }
+
       toast.dismiss();
       toast.success("Task updated successfully.");
       if (onCloseModal) {
@@ -700,6 +750,10 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
       toast.error(error?.response?.data?.error || "Error updating task.");
     } finally {
       setIsSubmitting(false);
+      // Reset the responsible person change reason after submit
+      setResponsiblePersonChangeReason('');
+      setIsResponsibleModalOpen(false);
+      setPendingResponsiblePerson(null);
     }
   };
 
@@ -708,54 +762,58 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
       <div className="max-w-[95%] mx-auto pr-3">
         <div className="p-4 bg-white relative">
           {/* Project and Milestone Dropdowns */}
-          <div className="flex items-center justify-between gap-3 mb-4 mt-4">
-            <div className="w-full">
-              <FormControl fullWidth variant="outlined" size="small" sx={fieldStyles}>
-                <InputLabel id="project-select-label">Project *</InputLabel>
-                <Select
-                  labelId="project-select-label"
-                  id="project-select"
-                  value={selectedProjectId}
-                  onChange={(e) => {
-                    const projectId = e.target.value;
-                    setSelectedProjectId(projectId);
-                    setSelectedMilestoneId("");
-                    setMilestones([]);
-                    if (projectId) {
-                      getMilestones(projectId);
-                    }
-                  }}
-                  label="Project *"
-                >
-                  <MenuItem value="">Select a project</MenuItem>
-                  {projects.map((proj) => (
-                    <MenuItem key={proj.id} value={proj.id}>
-                      {proj.title}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </div>
-            <div className="w-full">
-              <FormControl fullWidth variant="outlined" size="small" sx={fieldStyles} disabled={!selectedProjectId}>
-                <InputLabel id="milestone-select-label">Milestone *</InputLabel>
-                <Select
-                  labelId="milestone-select-label"
-                  id="milestone-select"
-                  value={selectedMilestoneId}
-                  onChange={(e) => setSelectedMilestoneId(e.target.value)}
-                  label="Milestone *"
-                >
-                  <MenuItem value="">Select a milestone</MenuItem>
-                  {milestones.map((ms) => (
-                    <MenuItem key={ms[0]} value={ms[0]}>
-                      {ms[1]}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </div>
-          </div>
+          {
+            !parentId && (
+              <div className="flex items-center justify-between gap-3 mb-4 mt-4">
+                <div className="w-full">
+                  <FormControl fullWidth variant="outlined" size="small" sx={fieldStyles}>
+                    <InputLabel id="project-select-label">Project</InputLabel>
+                    <Select
+                      labelId="project-select-label"
+                      id="project-select"
+                      value={selectedProjectId}
+                      onChange={(e) => {
+                        const projectId = e.target.value;
+                        setSelectedProjectId(projectId);
+                        setSelectedMilestoneId("");
+                        setMilestones([]);
+                        if (projectId) {
+                          getMilestones(projectId);
+                        }
+                      }}
+                      label="Project"
+                    >
+                      <MenuItem value="">Select a project</MenuItem>
+                      {projects.map((proj) => (
+                        <MenuItem key={proj.id} value={proj.id}>
+                          {proj.title}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+                <div className="w-full">
+                  <FormControl fullWidth variant="outlined" size="small" sx={fieldStyles} disabled={!selectedProjectId}>
+                    <InputLabel id="milestone-select-label">Milestone</InputLabel>
+                    <Select
+                      labelId="milestone-select-label"
+                      id="milestone-select"
+                      value={selectedMilestoneId}
+                      onChange={(e) => setSelectedMilestoneId(e.target.value)}
+                      label="Milestone"
+                    >
+                      <MenuItem value="">Select a milestone</MenuItem>
+                      {milestones.map((ms) => (
+                        <MenuItem key={ms[0]} value={ms[0]}>
+                          {ms[1]}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+              </div>
+            )
+          }
 
           {/* Task Title */}
           <div className="mb-1">
@@ -826,16 +884,25 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                       (user: { id?: string | number; full_name?: string }) =>
                         user?.id === value
                     );
-                    setFormData({
-                      ...formData,
-                      responsiblePerson: value,
-                      responsiblePersonName: selectedUser?.full_name || "",
-                    });
-                    if (value) {
-                      dispatch(
-                        fetchUserAvailability({ baseUrl, token, id: value })
-                      );
-                      fetchShifts(value);
+
+                    // Check if responsible person is actually changing
+                    if (value !== formData.responsiblePerson && formData.responsiblePerson) {
+                      // Show modal to ask for reason
+                      setPendingResponsiblePerson(value as any);
+                      setIsResponsibleModalOpen(true);
+                    } else if (value !== formData.responsiblePerson) {
+                      // First time assignment, no modal needed
+                      setFormData({
+                        ...formData,
+                        responsiblePerson: value,
+                        responsiblePersonName: selectedUser?.full_name || "",
+                      });
+                      if (value) {
+                        dispatch(
+                          fetchUserAvailability({ baseUrl, token, id: value })
+                        );
+                        fetchShifts(value);
+                      }
                     }
                   }}
                   displayEmpty
@@ -877,7 +944,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
               <label className="block text-xs text-gray-700 mb-1">
-                Target Date *
+                Target Date{!formData.isRecurring && <span className="text-red-600">*</span>}
               </label>
               <button
                 type="button"
@@ -1162,8 +1229,92 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
           color: #01569E;
         }
       `}</style>
+
+      {/* Responsible Person Change Reason Modal */}
+      <ResponsiblePersonChangeModal
+        isOpen={isResponsibleModalOpen}
+        onClose={() => {
+          setIsResponsibleModalOpen(false);
+          setPendingResponsiblePerson(null);
+        }}
+        onSubmit={(reason) => {
+          setResponsiblePersonChangeReason(reason);
+          const selectedUser = users?.find(
+            (user: { id?: string | number; full_name?: string }) =>
+              user?.id === pendingResponsiblePerson
+          );
+          setFormData({
+            ...formData,
+            responsiblePerson: String(pendingResponsiblePerson) || "",
+            responsiblePersonName: selectedUser?.full_name || "",
+          });
+          if (pendingResponsiblePerson) {
+            dispatch(
+              fetchUserAvailability({ baseUrl, token, id: String(pendingResponsiblePerson) })
+            );
+            fetchShifts(String(pendingResponsiblePerson));
+          }
+          setIsResponsibleModalOpen(false);
+          setPendingResponsiblePerson(null);
+        }}
+      />
     </form>
   );
 };
+
+// Responsible Person Change Modal Component
+const ResponsiblePersonChangeModal = ({ isOpen, onClose, onSubmit }: any) => {
+  const [reason, setReason] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) {
+      setReason('');
+    }
+  }, [isOpen]);
+
+  const handleSubmit = () => {
+    if (!reason.trim()) {
+      toast.error('Please enter a reason for changing the responsible person');
+      return;
+    }
+    onSubmit(reason);
+    setReason('');
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Responsible Person Change</h2>
+
+        <div className="mb-6">
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Enter reason for changing responsible person..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            rows={4}
+          />
+        </div>
+
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Confirm Change
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default ProjectTaskEditModal;

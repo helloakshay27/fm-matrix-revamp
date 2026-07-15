@@ -18,22 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { InputAdornment, TextField } from "@mui/material";
 import {
-  Plus,
-  Eye,
-  Filter,
-  Ticket,
-  Clock,
-  AlertCircle,
-  CheckCircle,
-  BarChart3,
-  TrendingUp,
-  Download,
-  Edit,
   Trash2,
-  Settings,
-  Upload,
-  Flag,
-  Star,
   ArrowLeft,
 } from "lucide-react";
 import {
@@ -126,17 +111,6 @@ const muiTheme = createTheme({
 interface Customer {
   id: string;
   name: string;
-  // email: string;
-  // currency: string;
-  // billingAddress: string;
-  // shippingAddress: string;
-  // customerType: string;
-  // paymentTerms: string;
-  // portalStatus: string;
-  // language: string;
-  // outstandingReceivables: number;
-  // unusedCredits: number;
-  // contactPersons: ContactPerson[];
 }
 
 const ItemsAdd = () => {
@@ -168,6 +142,11 @@ const ItemsAdd = () => {
     intra_state_tax: "",
     inter_state_tax: "",
     exemption_reason: "",
+
+     // ✅ NEW
+  is_inventory: false,
+  current_stock: "",
+
   });
 
   const handleChange = (e: any) => {
@@ -179,7 +158,8 @@ const ItemsAdd = () => {
   };
 
   // Account groups and ledgers for sales/purchase account dropdowns
-  const [accountGroups, setAccountGroups] = React.useState([]);
+  const [salesAccountGroups, setSalesAccountGroups] = React.useState([]);
+  const [purchaseAccountGroups, setPurchaseAccountGroups] = React.useState([]);
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
@@ -189,26 +169,42 @@ const ItemsAdd = () => {
   const [taxSettings, setTaxSettings] = useState<any | null>(null);
 
   React.useEffect(() => {
-    const fetchAccountGroups = async () => {
+    const fetchSalesAccountGroups = async () => {
       try {
-        // Replace with your actual endpoint for groups/ledgers
         const res = await axios.get(
-          `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`,
+          `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat&q[group_type_in][]=sales&q[group_type_in][]=both`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
-        console.log("Account Groups Response:", res.data);
-        setAccountGroups(res.data.data || []);
+        setSalesAccountGroups(res.data.data || []);
       } catch (e) {
-        setAccountGroups([]);
+        setSalesAccountGroups([]);
       }
     };
-    fetchAccountGroups();
-  }, [openSalesAccount, openPurchaseAccount, baseUrl, token]);
-  console.log("Account Groups:", accountGroups);
+    fetchSalesAccountGroups();
+  }, [baseUrl, token, lock_account_id]);
+
+  React.useEffect(() => {
+    const fetchPurchaseAccountGroups = async () => {
+      try {
+        const res = await axios.get(
+          `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat&q[group_type_in][]=purchase&q[group_type_in][]=both`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setPurchaseAccountGroups(res.data.data || []);
+      } catch (e) {
+        setPurchaseAccountGroups([]);
+      }
+    };
+    fetchPurchaseAccountGroups();
+  }, [baseUrl, token, lock_account_id]);
   React.useEffect(() => {
     const fetchExemptions = async () => {
       try {
@@ -324,6 +320,11 @@ const ItemsAdd = () => {
       return;
     }
 
+    if (form.type === "goods" && !form.hsn_code.trim()) {
+      toast.error("HSN Code is required.");
+      return;
+    }
+
     if (!form.tax_preference) {
       toast.error("Please select Tax Preference");
       return;
@@ -425,7 +426,20 @@ const ItemsAdd = () => {
     formData.append("lock_account_item[unit]", form.unit);
     formData.append("lock_account_item[can_be_sold]", form.sellable);
     formData.append("lock_account_item[can_be_purchased]", form.purchasable);
-    formData.append("lock_account_item[track_inventory]", "false");
+    // formData.append("lock_account_item[track_inventory]", "false");
+
+
+    formData.append(
+  "lock_account_item[track_inventory]",
+  form.is_inventory
+);
+
+// if (form.is_inventory) {
+//   formData.append(
+//     "lock_account_item[current_stock]",
+//     form.current_stock
+//   );
+// }
     formData.append("lock_account_item[tax_preference]", form.tax_preference);
     if (form.type === "goods") {
       formData.append("lock_account_item[hsn_code]", form.hsn_code);
@@ -621,14 +635,13 @@ const ItemsAdd = () => {
             {/* HSN / SAC Code */}
             {form.type === "goods" ? (
               <TextField
-                label="HSN Code"
+                label={<span>HSN Code <span style={{ color: 'red' }}>*</span></span>}
                 name="hsn_code"
                 placeholder="Enter HSN Code"
                 value={form.hsn_code}
-                // onChange={handleChange}
+                // required
                 onChange={(e) => {
                   const value = e.target.value;
-
                   // Allow only numbers and max 8 digits
                   if (/^\d{0,8}$/.test(value)) {
                     handleChange(e);
@@ -705,6 +718,71 @@ const ItemsAdd = () => {
               </div>
             )}
             {console.log("exemptions:", exemptions)}
+
+            {/* INVENTORY CHECKBOX */}
+<div className="mt-2">
+  <FormControlLabel
+    control={
+      <Checkbox
+        checked={form.is_inventory}
+        name="is_inventory"
+        onChange={handleChange}
+      />
+    }
+    label="Is Inventory"
+  />
+</div>
+{/* STOCK DETAILS */}
+{/* {form.is_inventory && (
+  <div className="mt-6 border rounded-lg p-4 bg-gray-50">
+    <h2 className="font-semibold mb-4">Inventory Details</h2>
+
+   
+    <TextField
+      fullWidth
+      label="Current Stock"
+      name="current_stock"
+      placeholder="Enter current stock"
+      value={form.current_stock}
+      onChange={(e) => {
+        const value = e.target.value.replace(/[^0-9]/g, "");
+
+        setForm((prev) => ({
+          ...prev,
+          current_stock: value,
+        }));
+      }}
+      InputLabelProps={{ shrink: true }}
+    />
+
+    {/* STOCK TABLE */}
+    {/* <div className="mt-6 overflow-x-auto">
+      <table className="w-full border border-gray-200 text-sm">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="border p-2 text-left">Type</th>
+            <th className="border p-2 text-left">Quantity</th>
+            <th className="border p-2 text-left">Reference</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td className="border p-2">Purchase</td>
+            <td className="border p-2">10</td>
+            <td className="border p-2">PO-1001</td>
+          </tr>
+
+          <tr>
+            <td className="border p-2">Sale</td>
+            <td className="border p-2">4</td>
+            <td className="border p-2">INV-1002</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+)} */} 
           </div>
 
           {/* RIGHT SIDE ATTACHMENT */}
@@ -793,58 +871,7 @@ const ItemsAdd = () => {
             </div>
 
             <div className="grid gap-6">
-              {/* <TextField
-                                disabled={!form.sellable}
-                                label="Selling Price"
-                                name="selling_price"
-                                placeholder="Enter selling price"
-                                type="number"
-                                value={form.selling_price}
-                                onChange={handleChange}
-                            /> */}
-
-              {/* <TextField
-                                placeholder="Enter selling price"
-                                fullWidth
-                                label={
-                                    <>
-                                        Selling Price <span style={{ color: "red" }}>*</span>
-                                    </>
-                                }
-                                name="selling_price"
-                                value={form.selling_price}
-                                onChange={handleChange}
-                                disabled={!form.sellable}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment
-                                            position="start"
-                                            sx={{
-                                                backgroundColor: "#f3f3f3",
-                                                borderRight: "1px solid #dcdcdc",
-                                                height: "44px",
-                                                maxHeight: "44px",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                px: 1.5,
-                                                color: "#555",
-                                                fontWeight: 500,
-                                            }}
-                                        >
-                                            INR
-                                        </InputAdornment>
-                                    ),
-                                }}
-                                sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                        paddingLeft: 0, // removes gap between INR and input
-                                    },
-                                    "& input": {
-                                        paddingLeft: "12px",
-                                    },
-                                }}
-                            /> */}
-
+            
               <TextField
                 placeholder="Enter selling price"
                 fullWidth
@@ -921,16 +948,6 @@ const ItemsAdd = () => {
                 }}
               />
 
-              {/* <TextField
-                                disabled={!form.sellable}
-                                label="MRP"
-                                name="mrp"
-                                type="number"
-                                placeholder="Enter MRP"
-                                value={form.mrp}
-                                onChange={handleChange}
-                            /> */}
-
               <TextField
                 disabled={!form.sellable}
                 label="MRP"
@@ -1006,7 +1023,7 @@ const ItemsAdd = () => {
                   }}
                 >
                   <MenuItem value="">Select Account Ledger</MenuItem>
-                  {accountGroups.map((group) =>
+                  {salesAccountGroups.map((group) =>
                     group.ledgers && group.ledgers.length > 0
                       ? [
                           <ListSubheader key={"group-" + group.id}>
@@ -1022,17 +1039,6 @@ const ItemsAdd = () => {
                   )}
                 </Select>
               </FormControl>
-
-              {/* <TextField
-                                disabled={!form.sellable}
-                                label="Description"
-                                name="sales_description"
-                                placeholder="Enter sales description"
-                                value={form.sales_description}
-                                onChange={handleChange}
-                                multiline
-                                rows={3}
-                            /> */}
 
               <TextField
                 disabled={!form.sellable}
@@ -1100,57 +1106,6 @@ const ItemsAdd = () => {
             </div>
 
             <div className="grid gap-6">
-              {/* <TextField
-                                disabled={!form.purchasable}
-                                label="Cost Price"
-                                name="cost_price"
-                                type="number"
-                                placeholder="Enter cost price"
-                                value={form.cost_price}
-                                onChange={handleChange}
-                            /> */}
-
-              {/* <TextField
-                                placeholder="Enter cost price"
-                                fullWidth
-                                label={
-                                    <>
-                                        Cost Price <span style={{ color: "red" }}>*</span>
-                                    </>
-                                }
-                                name="cost_price"
-                                value={form.cost_price}
-                                onChange={handleChange}
-                                disabled={!form.purchasable}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment
-                                            position="start"
-                                            sx={{
-                                                backgroundColor: "#f3f3f3",
-                                                borderRight: "1px solid #dcdcdc",
-                                                height: "44px",
-                                                maxHeight: "44px",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                px: 1.5,
-                                                color: "#555",
-                                                fontWeight: 500,
-                                            }}
-                                        >
-                                            INR
-                                        </InputAdornment>
-                                    ),
-                                }}
-                                sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                        paddingLeft: 0,
-                                    },
-                                    "& input": {
-                                        paddingLeft: "12px",
-                                    },
-                                }}
-                            /> */}
               <TextField
                 placeholder="Enter cost price"
                 fullWidth
@@ -1260,7 +1215,7 @@ const ItemsAdd = () => {
                   }}
                 >
                   <MenuItem value="">Select Account Ledger</MenuItem>
-                  {accountGroups.map((group) =>
+                  {purchaseAccountGroups.map((group) =>
                     group.ledgers && group.ledgers.length > 0
                       ? [
                           <ListSubheader key={"group-" + group.id}>
@@ -1276,18 +1231,6 @@ const ItemsAdd = () => {
                   )}
                 </Select>
               </FormControl>
-
-              {/* <TextField
-                                disabled={!form.purchasable}
-                                label="Description"
-                                name="purchase_description"
-                                value={form.purchase_description}
-                                placeholder="Enter purchase description"
-                                onChange={handleChange}
-                                multiline
-                                rows={3}
-                            /> */}
-
               <TextField
                 disabled={!form.purchasable}
                 label={<span>Description</span>}

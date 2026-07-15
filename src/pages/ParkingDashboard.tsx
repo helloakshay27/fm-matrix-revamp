@@ -16,17 +16,20 @@ import {
 } from "@/components/ui/pagination";
 import { BulkUploadModal } from "@/components/BulkUploadModal";
 import { ColumnVisibilityDropdown } from "@/components/ColumnVisibilityDropdown";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
 import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
 import { fetchParkingBookings, ParkingBookingClient, ParkingBookingSummary } from '@/services/parkingConfigurationsAPI';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
-
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 const ParkingDashboard = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showActionPanel, setShowActionPanel] = useState(false);
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+
+  const location = useLocation();
   const { isSidebarCollapsed } = useLayout();
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -37,7 +40,10 @@ const ParkingDashboard = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
+ const [currentPage, setCurrentPage] = useState(() => {
+  const params = new URLSearchParams(window.location.search);
+  return Number(params.get('page')) || 1;
+});
   const [itemsPerPage] = useState(10);
 
   // Column visibility state
@@ -50,6 +56,13 @@ const ParkingDashboard = () => {
     { key: 'paidParking', label: 'Paid Parking', visible: true },
     { key: 'availableSlots', label: 'Available Parking Slots', visible: true }
   ]);
+  
+  useEffect(() => {
+  navigate(`${location.pathname}?page=${currentPage}`, {
+    replace: true,
+  });
+}, [currentPage]);
+
 
   // Fetch parking bookings data on component mount
   useEffect(() => {
@@ -73,8 +86,10 @@ const ParkingDashboard = () => {
   }, []);
 
   const handleViewDetails = (clientId: number) => {
-    navigate(`/vas/parking/details/${encodeURIComponent(clientId.toString())}`);
-  };
+  navigate(
+    `/vas/parking/details/${encodeURIComponent(clientId.toString())}?page=${currentPage}`
+  );
+};
 
   // Generate parking stats from summary data
   const parkingStats = useMemo(() => {
@@ -287,6 +302,7 @@ const ParkingDashboard = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         {/* Action Button */}
         <div className="flex gap-2">
+          {shouldShow("Parking","create")&&(
           <Button 
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none border-none shadow-none" 
             onClick={handleActionClick}
@@ -294,7 +310,7 @@ const ParkingDashboard = () => {
              <Plus className="w-4 h-4 mr-2" />
            
             Action
-          </Button>
+          </Button>)}
         </div>
 
         {/* Right Side Controls */}
@@ -346,13 +362,14 @@ const ParkingDashboard = () => {
                 <TableRow key={row.id} className="hover:bg-gray-50">
                   {isColumnVisible('action') && (
                     <TableCell>
+                      {shouldShow("Parking","show")&&(
                       <button 
                         className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded"
                         onClick={() => handleViewDetails(row.id)}
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />
-                      </button>
+                      </button>)}
                     </TableCell>
                   )}
                   {isColumnVisible('clientName') && <TableCell className="font-medium">{row.name}</TableCell>}

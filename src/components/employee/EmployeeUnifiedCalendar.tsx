@@ -18,8 +18,13 @@ import {
   Ticket,
   RefreshCw,
 } from "lucide-react";
+import {
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from "@mui/material";
 import { toast } from "sonner";
-import { API_CONFIG } from "@/config/apiConfig";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +32,29 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getUser } from "@/utils/auth";
+import { getToken, getBaseUrl } from "@/utils/auth";
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)",
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+const selectFieldSx = {
+  height: 36,
+  "& .MuiInputBase-input, & .MuiSelect-select": { padding: "8px 12px" },
+};
 
 interface UnifiedCalendarEvent {
   id: string;
@@ -57,8 +84,13 @@ export const EmployeeUnifiedCalendar: React.FC<
   EmployeeUnifiedCalendarProps
 > = ({ onNavigateToDetails }) => {
   const [view, setView] = useState<
-    "dayGridMonth" | "timeGridWeek" | "timeGridDay" | "listWeek" | "year"
-  >("dayGridMonth");
+    | "dayGridMonth"
+    | "timeGridWeek"
+    | "timeGridDay"
+    | "listWeek"
+    | "year"
+    | "schedule"
+  >("schedule");
   const [date, setDate] = useState(new Date());
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isYearLoading, setIsYearLoading] = useState(false);
@@ -67,23 +99,20 @@ export const EmployeeUnifiedCalendar: React.FC<
   const calendarRef = useRef<FullCalendar>(null);
   const navigate = useNavigate();
 
-  // Helper function to get default date range (today to one week ago)
+  // Default date range = current month
   const getDefaultDateRange = () => {
     const today = new Date();
-    const oneWeekAgo = new Date(today);
-    oneWeekAgo.setDate(today.getDate() - 7);
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-    const formatDate = (date: Date) => {
-      const day = date.getDate().toString().padStart(2, "0");
-      const month = (date.getMonth() + 1).toString().padStart(2, "0");
-      const year = date.getFullYear();
+    const fmt = (d: Date) => {
+      const day = d.getDate().toString().padStart(2, "0");
+      const month = (d.getMonth() + 1).toString().padStart(2, "0");
+      const year = d.getFullYear();
       return `${day}/${month}/${year}`;
     };
 
-    return {
-      dateFrom: formatDate(oneWeekAgo),
-      dateTo: formatDate(today),
-    };
+    return { dateFrom: fmt(firstDay), dateTo: fmt(lastDay) };
   };
 
   // Helper function to get full year range based on today's date (for 52 Week view default)
@@ -146,12 +175,37 @@ export const EmployeeUnifiedCalendar: React.FC<
 
   const userId = localStorage.getItem("userId") || "87989";
 
+  // ── User list for attendees in Create Event modal ───────────────────────
+  const [userList, setUserList] = useState<
+    { id: number; full_name: string; email?: string }[]
+  >([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const token = getToken();
+        const baseUrl = getBaseUrl();
+        if (!token || !baseUrl) return;
+        const res = await fetch(
+          `${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        setUserList(data.users || []);
+      } catch {
+        // silently ignore
+      }
+    };
+    fetchUsers();
+  }, []);
+
   // Fetch calendar data from API
   const fetchCalendarData = async () => {
     setIsLoading(true);
     try {
-      const token = API_CONFIG.TOKEN;
-      const baseUrl = API_CONFIG.BASE_URL;
+      const token = getToken();
+      const baseUrl = getBaseUrl();
+      if (!token || !baseUrl) throw new Error("Not authenticated");
 
       // Build API URL with date filter parameters
       let apiUrl = `${baseUrl}/user_calendars.json?access_token=${token}&id=${userId}`;
@@ -178,58 +232,156 @@ export const EmployeeUnifiedCalendar: React.FC<
 
       const data = await response.json();
 
-      // Map API data to calendar event format
-      const mappedEvents = (data.user_calendars || []).map((item: any) => {
-        // Map calendarable_type to internal event types
-        let eventType = "Todo"; // Default
+      // ── Step 1: classify each item ──────────────────────────────────────────
+      const rawItems = (data.user_calendars || []) as Array<
+        Record<string, unknown>
+      >;
 
-        switch (item.calendarable_type) {
-          case "Todo":
-            eventType = "Todo";
-            break;
-          case "GoogleCalendarEvent":
-            eventType = "Google Calendar";
-            break;
-          case "Meeting":
-            eventType = "Meeting";
-            break;
-          case "FacilityBooking":
-          case "Facility Booking":
-            eventType = "Facility";
-            break;
-          case "TaskManagement":
-          case "Task Management":
-          case "TaskAllocationTime":
-          case "Task":
-            eventType = "Task";
-            break;
-          case "Ticket":
-            eventType = "Ticket";
-            break;
-          case "IssueAllocationTime":
-          case "Issue":
-            eventType = "Issue";
-            break;
-          default:
-            eventType = "Todo";
+      type RawItem = {
+        id: number | string;
+        title?: string;
+        calendarable_type?: string;
+        created_at?: string;
+        start_at?: string;
+        end_at?: string;
+        duration_minutes?: number;
+        status?: string;
+        description?: string;
+        color?: string;
+        location?: string;
+        redirect_url?: string;
+      };
+
+      const classified = rawItems.map(
+        (item): RawItem & { eventType: string } => {
+          const it = item as RawItem;
+          let eventType = "Todo";
+          switch (it.calendarable_type) {
+            case "Todo":
+              eventType = "Todo";
+              break;
+            case "GoogleCalendarEvent":
+              eventType = "Google Calendar";
+              break;
+            case "Meeting":
+              eventType = "Meeting";
+              break;
+            case "FacilityBooking":
+            case "Facility Booking":
+              eventType = "Facility";
+              break;
+            case "TaskManagement":
+            case "Task Management":
+            case "TaskAllocationTime":
+            case "Task":
+              eventType = "Task";
+              break;
+            case "Ticket":
+              eventType = "Ticket";
+              break;
+            case "IssueAllocationTime":
+            case "Issue":
+              eventType = "Issue";
+              break;
+            default:
+              eventType = "Todo";
+          }
+          return { ...it, eventType };
         }
+      );
 
-        return {
-          id: item.id.toString(),
-          title: item.title || "Untitled Event",
-          start: item.start_at,
-          end: item.end_at,
-          type: eventType,
-          status: item.status,
-          description: item.description,
-          color: item.color || getColorForType(eventType),
-          location: item.location,
-          redirectUrl: item.redirect_url,
-        };
+      // ── Step 2: group by calendar DATE (use start_at — the actual calendar day) ──
+      const byDate: Record<string, typeof classified> = {};
+      classified.forEach((it) => {
+        const dateKey = moment(it.start_at || it.created_at).format(
+          "YYYY-MM-DD"
+        );
+        if (!byDate[dateKey]) byDate[dateKey] = [];
+        byDate[dateKey].push(it);
       });
 
+      // ── Step 3: sort within each day by created_at, then assign slots ────
+      // Day schedule starts at 09:00. Each task duration = duration_minutes || 30 min.
+      const mappedEvents: UnifiedCalendarEvent[] = [];
+
+      Object.entries(byDate).forEach(([dateKey, items]) => {
+        // Sort by created_at ascending so oldest appears first
+        const sorted = [...items].sort(
+          (a, b) =>
+            moment(a.created_at || a.start_at).valueOf() -
+            moment(b.created_at || b.start_at).valueOf()
+        );
+
+        // Rolling cursor starting at 09:00 for this date
+        const cursor = moment(`${dateKey}T09:00:00`);
+
+        sorted.forEach((it) => {
+          const durationMin =
+            typeof it.duration_minutes === "number" && it.duration_minutes > 0
+              ? it.duration_minutes
+              : 30;
+
+          const start = cursor.clone().toISOString();
+          const end = cursor.clone().add(durationMin, "minutes").toISOString();
+
+          mappedEvents.push({
+            id: String(it.id),
+            title: it.title || "Untitled Event",
+            start,
+            end,
+            type: it.eventType as UnifiedCalendarEvent["type"],
+            status: it.status,
+            description: it.description,
+            color: it.color || getColorForType(it.eventType),
+            location: it.location,
+            redirectUrl: it.redirect_url,
+          });
+
+          cursor.add(durationMin, "minutes");
+        });
+      });
+
+      // ── Fetch Google Calendar events ────────────────────────────────────
+      try {
+        const gcParams = new URLSearchParams({
+          range_type: "monthly",
+          access_token: token || "",
+        });
+        const gcRes = await fetch(
+          `${baseUrl}/api/google_calendar_events?${gcParams.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+        if (gcRes.ok) {
+          const gcData = await gcRes.json();
+          const gcItems: UnifiedCalendarEvent[] = (
+            gcData.google_calendar_events ||
+            gcData.events ||
+            gcData.data ||
+            []
+          ).map((ev: Record<string, unknown>) => ({
+            id: `gc-${ev.id}`,
+            title: String(ev.title || ev.summary || "Google Event"),
+            start: String(ev.start_time || ev.start || ""),
+            end:
+              ev.end_time || ev.end ? String(ev.end_time || ev.end) : undefined,
+            type: "Google Calendar" as const,
+            color: "#8b5cf6",
+            description: String(ev.description || ""),
+            location: String(ev.location || ""),
+            redirectUrl: String(ev.google_calendar_link || ""),
+          }));
+          mappedEvents.push(...gcItems);
+        }
+      } catch {
+        // Google Calendar fetch failure is non-fatal
+      }
+
       setEvents(mappedEvents);
-      console.log("✅ Fetched events:", mappedEvents.length);
     } catch (error) {
       console.error("Error fetching calendar data:", error);
       toast.error("Failed to load calendar events");
@@ -247,6 +399,153 @@ export const EmployeeUnifiedCalendar: React.FC<
   const [hoveredEvent, setHoveredEvent] = useState<any>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+
+  // Create Google Calendar Event modal state
+  const [createEventModal, setCreateEventModal] = useState(false);
+  const [createEventForm, setCreateEventForm] = useState({
+    title: "",
+    description: "",
+    location: "",
+    start_time: "",
+    end_time: "",
+    all_day: false,
+    attendees: [] as { id: number; name: string; email: string }[],
+    attendeeInput: "",
+    calendar_email: "",
+  });
+  const [createEventLoading, setCreateEventLoading] = useState(false);
+
+  // ── Find a time: availability for attendees ─────────────────────────────
+  const [findTimeOpen, setFindTimeOpen] = useState(false);
+  const [attendeeAvailability, setAttendeeAvailability] = useState<
+    Record<
+      number,
+      { name: string; events: { title: string; start: string; end: string }[] }
+    >
+  >({});
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+
+  const fetchAttendeeAvailability = async (
+    attendees: { id: number; name: string; email: string }[]
+  ) => {
+    if (!attendees.length) return;
+    setAvailabilityLoading(true);
+    const token = getToken();
+    const baseUrl = getBaseUrl();
+    if (!token || !baseUrl) {
+      setAvailabilityLoading(false);
+      return;
+    }
+
+    const results: typeof attendeeAvailability = {};
+
+    await Promise.all(
+      attendees.map(async (attendee) => {
+        try {
+          const params = new URLSearchParams({
+            range_type: "monthly",
+            user_id: String(attendee.id),
+            access_token: token,
+          });
+          const res = await fetch(
+            `${baseUrl}/api/google_calendar_events?${params.toString()}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const data = await res.json();
+          const rawEvs: Record<string, unknown>[] = Array.isArray(data.data)
+            ? data.data
+            : data.google_calendar_events || data.events || [];
+          const evs = rawEvs.map((ev) => ({
+            title: String(ev.title || ev.summary || "Busy"),
+            start: String(ev.start_time || ev.start || ""),
+            end: String(ev.end_time || ev.end || ""),
+          }));
+          results[attendee.id] = { name: attendee.name, events: evs };
+        } catch {
+          results[attendee.id] = { name: attendee.name, events: [] };
+        }
+      })
+    );
+
+    setAttendeeAvailability(results);
+    setAvailabilityLoading(false);
+  };
+
+  const openCreateEventModal = (start: string, end?: string) => {
+    setCreateEventForm({
+      title: "",
+      description: "",
+      location: "",
+      start_time: start,
+      end_time: end || moment(start).add(1, "hour").format("YYYY-MM-DDTHH:mm"),
+      all_day: false,
+      attendees: [],
+      attendeeInput: "",
+      calendar_email: "",
+    });
+    setFindTimeOpen(false);
+    setAttendeeAvailability({});
+    setCreateEventModal(true);
+  };
+
+  const handleCreateEvent = async () => {
+    if (!createEventForm.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    setCreateEventLoading(true);
+    try {
+      const token = getToken();
+      const baseUrl = getBaseUrl();
+      if (!token || !baseUrl) {
+        toast.error("Not authenticated");
+        return;
+      }
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const calendarEmail = user?.email || "";
+      const payload = {
+        google_calendar_event: {
+          title: createEventForm.title,
+          description: createEventForm.description,
+          location: createEventForm.location,
+          start_time: createEventForm.all_day
+            ? moment(createEventForm.start_time).startOf("day").toISOString()
+            : moment(createEventForm.start_time).toISOString(),
+          end_time: createEventForm.all_day
+            ? moment(createEventForm.start_time).endOf("day").toISOString()
+            : moment(createEventForm.end_time).toISOString(),
+          all_day: createEventForm.all_day,
+          attendees: createEventForm.attendees.map((a) => a.email),
+          calendar_email: calendarEmail,
+        },
+      };
+      const res = await fetch(
+        `${baseUrl}/api/google_calendar_events?access_token=${token}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || "Failed to create event");
+      toast.success("Event created on Google Calendar");
+      if (data?.google_calendar_link) {
+        window.open(data.google_calendar_link, "_blank");
+      }
+      setCreateEventModal(false);
+      fetchCalendarData();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to create event"
+      );
+    } finally {
+      setCreateEventLoading(false);
+    }
+  };
 
   // Helper function to parse filter date strings (DD/MM/YYYY format)
   const parseFilterDate = (dateStr: string): Date => {
@@ -313,13 +612,14 @@ export const EmployeeUnifiedCalendar: React.FC<
     });
   }, [events, activeFilters]);
 
-  // Transform events for FullCalendar
+  // Transform events for FullCalendar (always timed, never all-day)
   const calendarEvents = useMemo(() => {
     return filteredEvents.map((event) => ({
       id: event.id,
       title: event.title,
       start: event.start,
-      end: event.end || moment(event.start).add(1, "hour").toISOString(),
+      end: event.end || moment(event.start).add(30, "minutes").toISOString(),
+      allDay: false,
       backgroundColor: event.color,
       borderColor: event.color,
       textColor: "#fff",
@@ -384,7 +684,7 @@ export const EmployeeUnifiedCalendar: React.FC<
     setView(newView);
 
     const calendarApi = calendarRef.current?.getApi();
-    if (calendarApi && newView !== "year") {
+    if (calendarApi && newView !== "year" && newView !== "schedule") {
       calendarApi.changeView(newView);
     }
   };
@@ -520,56 +820,75 @@ export const EmployeeUnifiedCalendar: React.FC<
   ).length;
 
   const CustomToolbar = () => {
+    const titleLabel =
+      view === "timeGridDay"
+        ? moment(date).format("dddd, MMMM D, YYYY")
+        : view === "timeGridWeek"
+          ? `${moment(date).startOf("week").format("MMM D")} – ${moment(date).endOf("week").format("MMM D, YYYY")}`
+          : moment(date).format("MMMM YYYY");
+
     return (
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
+        {/* Left: Today + arrows + title */}
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            onClick={() => {
+              setDate(new Date());
+              const api = calendarRef.current?.getApi();
+              if (api) api.today();
+            }}
+            className="px-3 py-1.5 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Today
+          </button>
+          <button
             onClick={() => handleNavigate("prev")}
-            className="h-8 w-8 p-0"
+            className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
           >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
+            <ChevronLeft className="h-4 w-4 text-gray-600" />
+          </button>
+          <button
             onClick={() => handleNavigate("next")}
-            className="h-8 w-8 p-0"
+            className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
           >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+            <ChevronRight className="h-4 w-4 text-gray-600" />
+          </button>
+          <span className="text-base font-semibold text-gray-800 ml-1">
+            {titleLabel}
+          </span>
         </div>
 
-        <h2 className="text-xl font-semibold">
-          {moment(date).format("MMMM YYYY")}
-        </h2>
-
-        <div className="flex items-center gap-2">
-          {[
-            { key: "dayGridMonth", label: "month" },
-            { key: "timeGridWeek", label: "week" },
-            { key: "timeGridDay", label: "day" },
-            { key: "listWeek", label: "agenda" },
-            { key: "year", label: "52 Week" },
-          ].map(({ key, label }) => (
-            <Button
+        {/* Right: view switcher */}
+        <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-0.5">
+          {(
+            [
+              { key: "schedule", label: "Schedule" },
+              { key: "timeGridDay", label: "Day" },
+              { key: "timeGridWeek", label: "Week" },
+              { key: "dayGridMonth", label: "Month" },
+              { key: "listWeek", label: "Agenda" },
+              { key: "year", label: "52 Week" },
+            ] as const
+          ).map(({ key, label }) => (
+            <button
               key={key}
-              variant={view === key ? "default" : "outline"}
-              size="sm"
               onClick={() => handleViewChange(key)}
-              className="px-3 py-1 h-8 capitalize"
               disabled={isYearLoading && key === "year"}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                view === key
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-800"
+              }`}
             >
               {isYearLoading && key === "year" ? (
-                <div className="flex items-center gap-2">
-                  <div className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
-                  <span>{label}</span>
+                <div className="flex items-center gap-1">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current" />
+                  {label}
                 </div>
               ) : (
                 label
               )}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
@@ -714,72 +1033,44 @@ export const EmployeeUnifiedCalendar: React.FC<
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Sync Google Calendar */}
           <Button
             onClick={async () => {
-              const user = getUser();
-              // Try multiple sources for email
+              const user = JSON.parse(localStorage.getItem("user") || "{}");
               const email =
                 user?.email ||
                 localStorage.getItem("userEmail") ||
                 localStorage.getItem("email");
-
-              console.log("User object:", user);
-              console.log("Email found:", email);
-
-              if (email) {
-                try {
-                  toast.info("Checking Google Calendar connection...");
-                  const baseUrl = "lockated-api.gophygital.work";
-
-                  // Step 1: Check connection status
-                  const statusUrl = `https://${baseUrl}/google_calander/status?email=${encodeURIComponent(email)}`;
-                  console.log("Status URL:", statusUrl);
-
-                  const statusResponse = await fetch(statusUrl, {
-                    method: "GET",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                  });
-
-                  if (!statusResponse.ok) {
-                    throw new Error("Failed to check Google Calendar status");
-                  }
-
-                  const statusData = await statusResponse.json();
-                  console.log("Google Calendar status:", statusData);
-
-                  if (statusData.connected === true) {
-                    // Step 2a: If connected, call sync API
-                    toast.info("Syncing Google Calendar events...");
-                    const syncUrl = `https://${baseUrl}/google_calander/sync?email=${encodeURIComponent(email)}`;
-                    console.log("Sync URL:", syncUrl);
-
-                    const syncResponse = await fetch(syncUrl);
-
-                    if (syncResponse.ok) {
-                      toast.success("Google Calendar synced successfully!");
-                      // Refresh calendar data
-                      fetchCalendarData();
-                    } else {
-                      toast.error("Failed to sync Google Calendar");
-                    }
-                  } else {
-                    // Step 2b: If not connected, open connect URL in new tab
-                    toast.info("Opening Google Calendar connection...");
-                    const connectUrl = `https://${baseUrl}/google_oauth/connect?email=${encodeURIComponent(email)}`;
-                    console.log("Connect URL:", connectUrl);
-
-                    // Open in new tab directly
-                    window.open(connectUrl, "_blank");
-                  }
-                } catch (error) {
-                  console.error("Error with Google Calendar:", error);
-                  toast.error("Failed to process Google Calendar request");
-                }
-              } else {
+              if (!email) {
                 toast.error("User email not found. Please log in again.");
-                console.error("No email found in user object or localStorage");
+                return;
+              }
+              try {
+                toast.info("Checking Google Calendar connection...");
+                const domain = getBaseUrl()?.replace(/^https?:\/\//, "") || "";
+                const statusRes = await fetch(
+                  `https://${domain}/google_calander/status?email=${encodeURIComponent(email)}`
+                );
+                if (!statusRes.ok) throw new Error("Failed to check status");
+                const statusData = await statusRes.json();
+                if (statusData.connected === true) {
+                  toast.info("Syncing Google Calendar events...");
+                  const syncRes = await fetch(
+                    `https://${domain}/google_calander/sync?email=${encodeURIComponent(email)}`
+                  );
+                  if (syncRes.ok) {
+                    toast.success("Google Calendar synced!");
+                    fetchCalendarData();
+                  } else toast.error("Failed to sync");
+                } else {
+                  toast.info("Opening Google Calendar connection...");
+                  window.open(
+                    `https://${domain}/google_oauth/connect?email=${encodeURIComponent(email)}`,
+                    "_blank"
+                  );
+                }
+              } catch {
+                toast.error("Failed to process Google Calendar request");
               }
             }}
             variant="outline"
@@ -828,35 +1119,56 @@ export const EmployeeUnifiedCalendar: React.FC<
 
       {/* Calendar View */}
       <div
-        className="bg-white border rounded-lg p-4 relative"
-        style={{ height: "700px", overflowY: "auto" }}
+        className="bg-white border border-gray-200 rounded-xl relative overflow-hidden"
+        style={{ minHeight: "640px" }}
       >
+        <div className="px-4 pt-4">
+          <CustomToolbar />
+        </div>
+
         {view === "year" ? (
-          <>
-            <CustomToolbar />
-            {isYearLoading ? (
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center">
-                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mb-4"></div>
-                  <p className="text-gray-600 font-medium">
-                    Loading 52-week calendar...
-                  </p>
-                </div>
+          isYearLoading ? (
+            <div className="h-96 flex items-center justify-center">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-red-600 mb-3" />
+                <p className="text-gray-500 text-sm">
+                  Loading 52-week calendar…
+                </p>
               </div>
-            ) : (
-              <div className="h-full overflow-y-auto">
-                <YearlyView
-                  events={calendarEvents.length > 0 ? calendarEvents : []}
-                  onSelectEvent={handleSelectEvent}
-                  startDate={parseFilterDate(activeFilters.dateFrom)}
-                  endDate={parseFilterDate(activeFilters.dateTo)}
-                />
-              </div>
-            )}
-          </>
+            </div>
+          ) : (
+            <div className="p-4 overflow-y-auto" style={{ maxHeight: "600px" }}>
+              <YearlyView
+                events={calendarEvents}
+                onSelectEvent={handleSelectEvent}
+                startDate={parseFilterDate(activeFilters.dateFrom)}
+                endDate={parseFilterDate(activeFilters.dateTo)}
+              />
+            </div>
+          )
+        ) : view === "schedule" ? (
+          <GoogleScheduleView
+            events={filteredEvents}
+            date={date}
+            onEventClick={(ev) =>
+              setSelectedEvent({
+                ...ev,
+                backgroundColor: ev.color,
+                extendedProps: {
+                  type: ev.type,
+                  status: ev.status,
+                  description: ev.description,
+                  location: ev.location,
+                  resource: ev,
+                },
+              })
+            }
+            getColorForType={getColorForType}
+            getEventTypeIcon={getEventTypeIcon}
+            getEventTypeLabel={getEventTypeLabel}
+          />
         ) : (
-          <>
-            <CustomToolbar />
+          <div className="px-2 pb-2" style={{ height: "590px" }}>
             <FullCalendar
               ref={calendarRef}
               plugins={[
@@ -871,49 +1183,76 @@ export const EmployeeUnifiedCalendar: React.FC<
               eventMouseEnter={handleEventMouseEnter}
               eventMouseLeave={handleEventMouseLeave}
               headerToolbar={false}
-              height="calc(100% - 60px)"
+              height="100%"
               eventDisplay="block"
               dayMaxEvents={3}
               moreLinkClick="popover"
               eventTimeFormat={{
-                hour: "2-digit",
+                hour: "numeric",
                 minute: "2-digit",
-                hour12: false,
+                hour12: true,
               }}
               slotLabelFormat={{
-                hour: "2-digit",
+                hour: "numeric",
                 minute: "2-digit",
-                hour12: false,
+                hour12: true,
               }}
               allDaySlot={false}
+              slotMinTime="08:00:00"
+              slotMaxTime="22:00:00"
+              slotDuration="00:30:00"
               nowIndicator={true}
               selectable={true}
               selectMirror={true}
+              dateClick={(info) => {
+                const start = moment(info.dateStr).format("YYYY-MM-DDTHH:mm");
+                const end = moment(info.dateStr)
+                  .add(1, "hour")
+                  .format("YYYY-MM-DDTHH:mm");
+                openCreateEventModal(start, end);
+              }}
+              select={(info) => {
+                const start = moment(info.startStr).format("YYYY-MM-DDTHH:mm");
+                const end = moment(info.endStr).format("YYYY-MM-DDTHH:mm");
+                openCreateEventModal(start, end);
+              }}
               dayHeaderFormat={{ weekday: "short", day: "numeric" }}
-              eventContent={(eventInfo) => (
-                <div className="fc-event-content p-1">
-                  <div className="flex items-center gap-1">
-                    {getEventTypeIcon(eventInfo.event.extendedProps?.type)}
-                    <div className="fc-event-title text-xs font-medium truncate">
-                      {eventInfo.event.title}
+              eventContent={(eventInfo) => {
+                const dur = moment(eventInfo.event.end).diff(
+                  moment(eventInfo.event.start),
+                  "minutes"
+                );
+                const showEnd = dur >= 30;
+                return (
+                  <div className="flex items-start gap-1 px-1.5 py-1 h-full overflow-hidden">
+                    <div
+                      className="w-[3px] rounded-full flex-shrink-0 self-stretch"
+                      style={{ backgroundColor: "rgba(255,255,255,0.8)" }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[11px] font-semibold leading-tight truncate">
+                        {eventInfo.event.title}
+                      </div>
+                      <div className="text-[10px] opacity-80 mt-0.5">
+                        {moment(eventInfo.event.start).format("h:mm a")}
+                        {showEnd &&
+                          ` – ${moment(eventInfo.event.end).format("h:mm a")}`}
+                      </div>
                     </div>
                   </div>
-                  <div className="fc-event-time text-xs opacity-75">
-                    {moment(eventInfo.event.start).format("HH:mm")}
-                  </div>
-                </div>
-              )}
+                );
+              }}
             />
-          </>
+          </div>
         )}
 
         {/* Loading Overlay */}
         {isLoading && (
-          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mb-4"></div>
-              <p className="text-gray-600 font-medium">
-                Loading calendar events...
+              <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-red-600 mb-3" />
+              <p className="text-gray-500 text-sm font-medium">
+                Loading events…
               </p>
             </div>
           </div>
@@ -1108,6 +1447,726 @@ export const EmployeeUnifiedCalendar: React.FC<
         </div>
       )}
 
+      {/* ── Create Google Calendar Event Modal ── */}
+      {createEventModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-900">New Event</h2>
+              <button
+                onClick={() => setCreateEventModal(false)}
+                className="p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Body — 2-column layout */}
+            <div className="flex gap-0 divide-x divide-gray-100">
+              {/* ── Left column: form fields ── */}
+              <div className="flex-1 px-6 py-5 space-y-4 min-w-0">
+                {/* Title */}
+                <input
+                  type="text"
+                  placeholder="Add title"
+                  value={createEventForm.title}
+                  onChange={(e) =>
+                    setCreateEventForm((f) => ({ ...f, title: e.target.value }))
+                  }
+                  className="w-full text-xl font-medium border-0 border-b-2 border-blue-500 focus:outline-none pb-1 placeholder-gray-300"
+                  autoFocus
+                />
+
+                {/* All Day */}
+                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={createEventForm.all_day}
+                    onChange={(e) =>
+                      setCreateEventForm((f) => ({
+                        ...f,
+                        all_day: e.target.checked,
+                      }))
+                    }
+                    className="rounded border-gray-300 text-blue-600"
+                  />
+                  All day
+                </label>
+
+                {/* Date / Time */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">
+                      Start
+                    </label>
+                    <input
+                      type={createEventForm.all_day ? "date" : "datetime-local"}
+                      value={
+                        createEventForm.all_day
+                          ? createEventForm.start_time.slice(0, 10)
+                          : createEventForm.start_time
+                      }
+                      onChange={(e) =>
+                        setCreateEventForm((f) => ({
+                          ...f,
+                          start_time: e.target.value,
+                        }))
+                      }
+                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+                  {!createEventForm.all_day && (
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">
+                        End
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={createEventForm.end_time}
+                        onChange={(e) =>
+                          setCreateEventForm((f) => ({
+                            ...f,
+                            end_time: e.target.value,
+                          }))
+                        }
+                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Location */}
+                <div className="flex items-start gap-2">
+                  <svg
+                    className="w-4 h-4 mt-2 text-gray-400 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Add location"
+                    value={createEventForm.location}
+                    onChange={(e) =>
+                      setCreateEventForm((f) => ({
+                        ...f,
+                        location: e.target.value,
+                      }))
+                    }
+                    className="flex-1 text-sm border-0 border-b border-gray-200 focus:outline-none focus:border-blue-400 py-1"
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="flex items-start gap-2">
+                  <svg
+                    className="w-4 h-4 mt-2 text-gray-400 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h7"
+                    />
+                  </svg>
+                  <textarea
+                    placeholder="Add description"
+                    value={createEventForm.description}
+                    onChange={(e) =>
+                      setCreateEventForm((f) => ({
+                        ...f,
+                        description: e.target.value,
+                      }))
+                    }
+                    rows={3}
+                    className="flex-1 text-sm border-0 border-b border-gray-200 focus:outline-none focus:border-blue-400 py-1 resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* ── Right column: attendees ── */}
+              <div className="w-64 flex-shrink-0 px-5 py-5 space-y-3">
+                {/* Section header */}
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <svg
+                    className="w-4 h-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  Guests
+                </div>
+
+                {/* Guests dropdown — same style as TaskFilterDialog */}
+                <FormControl fullWidth variant="outlined" size="small">
+                  <InputLabel shrink>Add Guest</InputLabel>
+                  <MuiSelect
+                    value=""
+                    label="Add Guest"
+                    displayEmpty
+                    MenuProps={selectMenuProps}
+                    sx={selectFieldSx}
+                    onChange={(e) => {
+                      const uid = Number(e.target.value);
+                      if (!uid) return;
+                      const user = userList.find((u) => u.id === uid);
+                      if (!user) return;
+                      if (createEventForm.attendees.some((a) => a.id === uid))
+                        return;
+                      setCreateEventForm((f) => ({
+                        ...f,
+                        attendees: [
+                          ...f.attendees,
+                          {
+                            id: user.id,
+                            name: user.full_name,
+                            email: user.email || "",
+                          },
+                        ],
+                      }));
+                    }}
+                  >
+                    <MenuItem value="" disabled>
+                      <em>Select guest…</em>
+                    </MenuItem>
+                    {userList
+                      .filter(
+                        (u) =>
+                          !createEventForm.attendees.some((a) => a.id === u.id)
+                      )
+                      .map((u) => (
+                        <MenuItem key={u.id} value={u.id}>
+                          {u.full_name}
+                          {u.email ? ` (${u.email})` : ""}
+                        </MenuItem>
+                      ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Selected attendees */}
+                {createEventForm.attendees.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {createEventForm.attendees.map((att) => (
+                      <span
+                        key={att.id}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2.5 py-1"
+                      >
+                        <span className="w-5 h-5 rounded-full bg-blue-200 text-blue-800 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                          {att.name[0]?.toUpperCase()}
+                        </span>
+                        {att.name}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCreateEventForm((f) => ({
+                              ...f,
+                              attendees: f.attendees.filter(
+                                (a) => a.id !== att.id
+                              ),
+                            }))
+                          }
+                          className="ml-0.5 text-blue-400 hover:text-blue-700 leading-none"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Find a time button */}
+                {createEventForm.attendees.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const opening = !findTimeOpen;
+                      setFindTimeOpen(opening);
+                      if (opening) {
+                        fetchAttendeeAvailability(createEventForm.attendees);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    {findTimeOpen ? "Hide availability" : "Find a time"}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* ── Find a time panel (Google Calendar style) ── */}
+            {findTimeOpen && createEventForm.attendees.length > 0 && (
+              <div className="mx-6 mb-4 border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 text-[#C72030]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span className="text-xs font-semibold text-gray-800">
+                      Scheduling assistant
+                    </span>
+                    {/* Day navigation */}
+                    <div className="flex items-center gap-1 ml-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const prev = moment(
+                            createEventForm.start_time
+                          ).subtract(1, "day");
+                          const startT = moment(
+                            createEventForm.start_time
+                          ).format("HH:mm");
+                          const endT = moment(createEventForm.end_time).format(
+                            "HH:mm"
+                          );
+                          const d = prev.format("YYYY-MM-DD");
+                          setCreateEventForm((f) => ({
+                            ...f,
+                            start_time: `${d}T${startT}`,
+                            end_time: `${d}T${endT}`,
+                          }));
+                        }}
+                        className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 text-gray-500"
+                      >
+                        ‹
+                      </button>
+                      <span className="text-xs font-medium text-gray-700 min-w-[80px] text-center">
+                        {moment(createEventForm.start_time).format(
+                          "ddd, MMM D"
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = moment(createEventForm.start_time).add(
+                            1,
+                            "day"
+                          );
+                          const startT = moment(
+                            createEventForm.start_time
+                          ).format("HH:mm");
+                          const endT = moment(createEventForm.end_time).format(
+                            "HH:mm"
+                          );
+                          const d = next.format("YYYY-MM-DD");
+                          setCreateEventForm((f) => ({
+                            ...f,
+                            start_time: `${d}T${startT}`,
+                            end_time: `${d}T${endT}`,
+                          }));
+                        }}
+                        className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 text-gray-500"
+                      >
+                        ›
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      fetchAttendeeAvailability(createEventForm.attendees)
+                    }
+                    className="text-[10px] text-[#C72030] hover:underline flex items-center gap-1 font-medium"
+                  >
+                    {availabilityLoading ? (
+                      <svg
+                        className="w-3 h-3 animate-spin"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8z"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                      </svg>
+                    )}
+                    Refresh
+                  </button>
+                </div>
+
+                {availabilityLoading ? (
+                  <div className="flex items-center justify-center py-8 text-xs text-gray-400 gap-2">
+                    <svg
+                      className="w-4 h-4 animate-spin text-[#C72030]"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      />
+                    </svg>
+                    Checking availability…
+                  </div>
+                ) : (
+                  (() => {
+                    const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8–20
+                    const dateBase = moment(createEventForm.start_time).format(
+                      "YYYY-MM-DD"
+                    );
+                    const dayStart = moment(`${dateBase}T08:00`);
+                    const dayEnd = moment(`${dateBase}T20:00`);
+                    const totalMin = dayEnd.diff(dayStart, "minutes"); // 720
+
+                    const toLeft = (m: moment.Moment) =>
+                      `${Math.max(0, Math.min(100, (m.diff(dayStart, "minutes") / totalMin) * 100))}%`;
+                    const toWidth = (s: moment.Moment, e: moment.Moment) =>
+                      `${Math.max(0.5, Math.min(100 - parseFloat(toLeft(s)), (e.diff(s, "minutes") / totalMin) * 100))}%`;
+
+                    const evStart = moment(createEventForm.start_time);
+                    const evEnd = moment(
+                      createEventForm.end_time || createEventForm.start_time
+                    ).add(
+                      moment(createEventForm.end_time).isValid() ? 0 : 1,
+                      "hour"
+                    );
+
+                    // Filter each attendee's events to this day
+                    const evsByAttendee: Record<
+                      number,
+                      { title: string; start: string; end: string }[]
+                    > = {};
+                    createEventForm.attendees.forEach((att) => {
+                      const info = attendeeAvailability[att.id];
+                      evsByAttendee[att.id] = (info?.events || []).filter(
+                        (ev) =>
+                          moment(ev.start).format("YYYY-MM-DD") === dateBase
+                      );
+                    });
+
+                    const ROW_H = 32; // px
+
+                    return (
+                      <div className="px-0 pb-0">
+                        {/* Time grid */}
+                        <div className="flex">
+                          {/* Name column */}
+                          <div className="flex-shrink-0 w-[110px] border-r border-gray-100">
+                            {/* spacer for hour header */}
+                            <div style={{ height: 28 }} />
+                            {createEventForm.attendees.map((att) => (
+                              <div
+                                key={att.id}
+                                style={{ height: ROW_H }}
+                                className="flex items-center px-3 border-t border-gray-100"
+                              >
+                                <div className="w-6 h-6 rounded-full bg-[#C72030]/10 flex items-center justify-center text-[10px] font-bold text-[#C72030] flex-shrink-0">
+                                  {att.name[0]?.toUpperCase()}
+                                </div>
+                                <span
+                                  className="ml-1.5 text-[10px] text-gray-700 font-medium truncate"
+                                  title={att.name}
+                                >
+                                  {att.name.split(" ")[0]}
+                                </span>
+                              </div>
+                            ))}
+                            {/* Your event row label */}
+                            <div
+                              style={{ height: ROW_H }}
+                              className="flex items-center px-3 border-t border-gray-100 bg-[#C72030]/5"
+                            >
+                              <div className="w-6 h-6 rounded-full bg-[#C72030] flex items-center justify-center flex-shrink-0">
+                                <svg
+                                  className="w-3 h-3 text-white"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                  />
+                                </svg>
+                              </div>
+                              <span className="ml-1.5 text-[10px] text-[#C72030] font-semibold truncate">
+                                Your event
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Timeline */}
+                          <div className="flex-1 overflow-x-auto">
+                            {/* Hour header */}
+                            <div
+                              className="flex border-b border-gray-200 bg-gray-50"
+                              style={{ height: 28 }}
+                            >
+                              {HOURS.map((h) => (
+                                <div
+                                  key={h}
+                                  className="flex-1 text-center text-[9px] text-gray-400 font-medium flex items-center justify-center border-r border-gray-100 last:border-r-0"
+                                >
+                                  {h === 12
+                                    ? "12 PM"
+                                    : h < 12
+                                      ? `${h} AM`
+                                      : `${h - 12} PM`}
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Attendee rows */}
+                            {createEventForm.attendees.map((att) => {
+                              const hasFetched = att.id in attendeeAvailability;
+                              const dayEvs = evsByAttendee[att.id] || [];
+                              return (
+                                <div
+                                  key={att.id}
+                                  style={{ height: ROW_H }}
+                                  className="relative border-t border-gray-100"
+                                >
+                                  {/* Hour grid lines */}
+                                  <div className="absolute inset-0 flex pointer-events-none">
+                                    {HOURS.map((h) => (
+                                      <div
+                                        key={h}
+                                        className="flex-1 border-r border-gray-50 last:border-r-0"
+                                      />
+                                    ))}
+                                  </div>
+
+                                  {!hasFetched && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <div
+                                        className="h-3 rounded bg-gray-100 animate-pulse"
+                                        style={{ width: "60%" }}
+                                      />
+                                    </div>
+                                  )}
+                                  {hasFetched && dayEvs.length === 0 && (
+                                    <div className="absolute inset-0 flex items-center pl-2">
+                                      <span className="text-[9px] text-emerald-600 font-medium">
+                                        Free
+                                      </span>
+                                    </div>
+                                  )}
+                                  {dayEvs.map((ev, i) => {
+                                    const evS = moment(ev.start);
+                                    const evE = moment(ev.end);
+                                    if (!evS.isValid() || !evE.isValid())
+                                      return null;
+                                    return (
+                                      <div
+                                        key={i}
+                                        title={`${ev.title}\n${evS.format("h:mma")} – ${evE.format("h:mma")}`}
+                                        className="absolute top-1 bottom-1 rounded flex items-center overflow-hidden"
+                                        style={{
+                                          left: toLeft(evS),
+                                          width: toWidth(evS, evE),
+                                          backgroundColor: "#C72030",
+                                          opacity: 0.75,
+                                        }}
+                                      >
+                                        <span className="text-white text-[8px] font-medium px-1 truncate leading-none">
+                                          {ev.title}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })}
+
+                            {/* Your event row */}
+                            <div
+                              style={{ height: ROW_H }}
+                              className="relative border-t border-gray-200 bg-[#C72030]/5"
+                            >
+                              <div className="absolute inset-0 flex pointer-events-none">
+                                {HOURS.map((h) => (
+                                  <div
+                                    key={h}
+                                    className="flex-1 border-r border-[#C72030]/10 last:border-r-0"
+                                  />
+                                ))}
+                              </div>
+                              {evStart.format("YYYY-MM-DD") === dateBase && (
+                                <div
+                                  className="absolute top-1 bottom-1 rounded flex items-center overflow-hidden"
+                                  style={{
+                                    left: toLeft(evStart),
+                                    width: toWidth(evStart, evEnd),
+                                    backgroundColor: "#C72030",
+                                  }}
+                                >
+                                  <span className="text-white text-[8px] font-semibold px-1 truncate leading-none">
+                                    {createEventForm.title || "New Event"}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Footer legend */}
+                        <div className="flex items-center gap-4 px-4 py-2 border-t border-gray-100 bg-gray-50 text-[9px] text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <div
+                              className="w-3 h-2.5 rounded-sm"
+                              style={{
+                                backgroundColor: "#C72030",
+                                opacity: 0.75,
+                              }}
+                            />
+                            Busy
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-2.5 rounded-sm bg-emerald-100 border border-emerald-300" />
+                            Free
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div
+                              className="w-3 h-2.5 rounded-sm"
+                              style={{ backgroundColor: "#C72030" }}
+                            />
+                            Your event
+                          </div>
+                          <span className="ml-auto text-gray-400">
+                            Use ‹ › to navigate days
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()
+                )}
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-3 border-t border-gray-100 bg-gray-50">
+              <button
+                onClick={() => setCreateEventModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateEvent}
+                disabled={createEventLoading}
+                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-lg transition-colors flex items-center gap-2"
+              >
+                {createEventLoading && (
+                  <svg
+                    className="w-4 h-4 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    />
+                  </svg>
+                )}
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Advanced Filter Modal */}
       <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
         <DialogContent className="sm:max-w-[500px]">
@@ -1261,6 +2320,171 @@ export const EmployeeUnifiedCalendar: React.FC<
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+};
+
+// ── Google Calendar-style Schedule View ────────────────────────────────────
+interface ScheduleViewProps {
+  events: UnifiedCalendarEvent[];
+  date: Date;
+  onEventClick: (event: UnifiedCalendarEvent) => void;
+  getColorForType: (type: string) => string;
+  getEventTypeIcon: (type: string) => React.ReactNode;
+  getEventTypeLabel: (type: string) => string;
+}
+
+const GoogleScheduleView: React.FC<ScheduleViewProps> = ({
+  events,
+  date,
+  onEventClick,
+  getColorForType,
+  getEventTypeIcon,
+  getEventTypeLabel,
+}) => {
+  // Schedule: today at top, descending into the past (up to 90 days back)
+  const windowStart = moment().subtract(90, "days").startOf("day");
+  const windowEnd = moment().endOf("day");
+
+  // Group events by date key (YYYY-MM-DD from their start time)
+  const byDate = useMemo(() => {
+    const map: Record<string, UnifiedCalendarEvent[]> = {};
+    events.forEach((ev) => {
+      const key = moment(ev.start).format("YYYY-MM-DD");
+      if (!map[key]) map[key] = [];
+      map[key].push(ev);
+    });
+    return map;
+  }, [events]);
+
+  // Build descending list: today first → oldest last; always include today
+  const days = useMemo(() => {
+    const set = new Set<string>(Object.keys(byDate));
+    set.add(moment().format("YYYY-MM-DD")); // always show today
+    return Array.from(set)
+      .filter((k) => {
+        const m = moment(k);
+        return (
+          m.isSameOrAfter(windowStart, "day") &&
+          m.isSameOrBefore(windowEnd, "day")
+        );
+      })
+      .sort((a, b) => (a < b ? 1 : -1)); // descending: today → past
+  }, [byDate, windowStart, windowEnd]);
+
+  const formatTime = (ev: UnifiedCalendarEvent) => {
+    const s = moment(ev.start);
+    const e = ev.end ? moment(ev.end) : null;
+    if (!e) return s.format("h:mm a");
+    return `${s.format("h:mm")} – ${e.format("h:mm a")}`;
+  };
+
+  if (days.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+        <Calendar className="w-12 h-12 mb-3 opacity-30" />
+        <p className="text-sm font-medium">No events this month</p>
+        <p className="text-xs mt-1">Try adjusting the date range in Filters</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-y-auto" style={{ maxHeight: "570px" }}>
+      {days.map((dateKey) => {
+        const isToday = dateKey === moment().format("YYYY-MM-DD");
+        const dayEvents = (byDate[dateKey] || [])
+          .slice()
+          .sort(
+            (a, b) => moment(a.start).valueOf() - moment(b.start).valueOf()
+          );
+
+        return (
+          <div
+            key={dateKey}
+            className={`flex border-b border-gray-100 last:border-0 ${isToday ? "bg-blue-50/30" : ""}`}
+          >
+            {/* Date column */}
+            <div className="flex-shrink-0 w-24 px-3 py-4 flex flex-col items-center gap-0.5">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                  isToday ? "bg-blue-600 text-white" : "text-gray-700"
+                }`}
+              >
+                {moment(dateKey).format("D")}
+              </div>
+              <div
+                className={`text-[11px] font-semibold uppercase tracking-wide ${isToday ? "text-blue-600" : "text-gray-400"}`}
+              >
+                {moment(dateKey).format("ddd")}
+              </div>
+              <div className="text-[10px] text-gray-400">
+                {moment(dateKey).format("MMM")}
+              </div>
+            </div>
+
+            {/* Events column */}
+            <div className="flex-1 py-2 pr-4 min-w-0 space-y-1.5">
+              {dayEvents.length === 0 ? (
+                <div className="py-3 text-xs text-gray-400 italic">
+                  No events
+                </div>
+              ) : (
+                dayEvents.map((ev) => {
+                  const color = ev.color || getColorForType(ev.type);
+                  const durMin = ev.end
+                    ? moment(ev.end).diff(moment(ev.start), "minutes")
+                    : 30;
+                  return (
+                    <div
+                      key={ev.id}
+                      onClick={() => onEventClick(ev)}
+                      className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-white hover:shadow-sm transition-all group"
+                    >
+                      {/* Color bar */}
+                      <div
+                        className="w-1 rounded-full flex-shrink-0 mt-0.5"
+                        style={{ backgroundColor: color, minHeight: "36px" }}
+                      />
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-700 transition-colors">
+                            {ev.title}
+                          </span>
+                          <span
+                            className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full text-white leading-none"
+                            style={{ backgroundColor: color }}
+                          >
+                            {getEventTypeLabel(ev.type)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            {getEventTypeIcon(ev.type)}
+                            {formatTime(ev)}
+                          </span>
+                          <span className="text-gray-300">·</span>
+                          <span>{durMin} min</span>
+                          {ev.status && (
+                            <>
+                              <span className="text-gray-300">·</span>
+                              <span className="capitalize bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">
+                                {ev.status}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };

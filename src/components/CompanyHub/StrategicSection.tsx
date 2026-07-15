@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Autoplay } from "swiper/modules";
 import GlassCard from "./GlassCard";
+import { fetchGoals, fetchKRAs, Goal, KRAEvaluation } from "../../services/goalsService";
+import { Loader2 } from "lucide-react";
 
 interface StrategicSectionProps {
   welcomeText: string;
@@ -14,6 +16,34 @@ const StrategicSection: React.FC<StrategicSectionProps> = ({
   visionText,
   missionText,
 }) => {
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [kras, setKras] = useState<KRAEvaluation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadStrategicData = async () => {
+      try {
+        setIsLoading(true);
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const email = user?.email || "dhananjay.bhoyar@lockated.com";
+
+        const [goalsData, krasData] = await Promise.all([
+          fetchGoals().catch(() => ({ dashboard: null, goals: [] })),
+          fetchKRAs(email).catch(() => [])
+        ]);
+
+        setGoals(goalsData?.goals || []);
+        setKras(krasData || []);
+      } catch (error) {
+        console.error("Failed to load strategic data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadStrategicData();
+  }, []);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[140px]">
       <GlassCard className="col-span-1 lg:col-span-6 h-full overflow-hidden !bg-white shadow-sm !border-none flex flex-col transition-all duration-500 group">
@@ -71,8 +101,8 @@ const StrategicSection: React.FC<StrategicSectionProps> = ({
         `}</style>
       </GlassCard>
 
-      <GlassCard className="col-span-1 lg:col-span-3 p-5 !bg-white shadow-sm !border-none h-full flex flex-col transition-all duration-500">
-        <div className="flex items-center justify-between mb-3 px-1">
+      <GlassCard className="col-span-1 lg:col-span-3 p-5 !bg-white shadow-sm !border-none h-[140px] flex flex-col transition-all duration-500 overflow-hidden">
+        <div className="flex items-center justify-between mb-3 flex-shrink-0 px-1">
           <h3 className="text-[12px] font-bold text-gray-700 tracking-tight">
             Goals
           </h3>
@@ -80,25 +110,31 @@ const StrategicSection: React.FC<StrategicSectionProps> = ({
             View All
           </button>
         </div>
-        <ul className="space-y-2 flex-1 px-1">
-          {[
-            "Increase revenue by 40% through strategic partnerships",
-            "Launch three innovative product lines by Q4",
-            "Achieve 95% customer satisfaction rate",
-          ].map((goal, i) => (
-            <li
-              key={i}
-              className="flex items-start gap-2.5 text-[10px] font-bold text-gray-500 leading-tight"
-            >
-              <span className="mt-1.5 w-1 h-1 rounded-full bg-gray-300 flex-shrink-0" />
-              {goal}
-            </li>
-          ))}
-        </ul>
+        <div className="flex-1 overflow-y-auto scrollbar-none px-1 pb-1">
+          {isLoading ? (
+            <div className="flex w-full h-full items-center justify-center">
+              <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
+            </div>
+          ) : goals.length === 0 ? (
+            <p className="text-[10px] text-gray-400 font-medium">No active goals</p>
+          ) : (
+            <ul className="space-y-3">
+              {goals.slice(0, 3).map((goal, i) => (
+                <li
+                  key={goal.id || i}
+                  className="flex items-start gap-2.5 text-[10px] font-bold text-gray-500 leading-tight"
+                >
+                  <span className="mt-1.5 w-1 h-1 rounded-full bg-gray-300 flex-shrink-0" />
+                  {goal.title || "Untitled Goal"}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </GlassCard>
 
-      <GlassCard className="col-span-1 lg:col-span-3 p-5 !bg-white shadow-sm !border-none h-full flex flex-col transition-all duration-500">
-        <div className="flex items-center justify-between mb-3 px-1">
+      <GlassCard className="col-span-1 lg:col-span-3 p-5 !bg-white shadow-sm !border-none h-[140px] flex flex-col transition-all duration-500 overflow-hidden">
+        <div className="flex items-center justify-between mb-3 flex-shrink-0 px-1">
           <h3 className="text-[12px] font-bold text-gray-700 tracking-tight">
             KRAs
           </h3>
@@ -106,21 +142,27 @@ const StrategicSection: React.FC<StrategicSectionProps> = ({
             View All
           </button>
         </div>
-        <ul className="space-y-2 flex-1 px-1">
-          {[
-            "Maintain operational efficiency above 90% across all departments",
-            "Maintain operational efficiency above 80% across all departments",
-            "Maintain operational efficiency above 80% across all departments",
-          ].map((kra, i) => (
-            <li
-              key={i}
-              className="flex items-start gap-2.5 text-[10px] font-bold text-gray-500 leading-tight"
-            >
-              <span className="mt-1.5 w-1 h-1 rounded-full bg-gray-300 flex-shrink-0" />
-              {kra}
-            </li>
-          ))}
-        </ul>
+        <div className="flex-1 overflow-y-auto scrollbar-none px-1 pb-1">
+          {isLoading ? (
+            <div className="flex w-full h-full items-center justify-center">
+              <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
+            </div>
+          ) : kras.length === 0 ? (
+            <p className="text-[10px] text-gray-400 font-medium">No active KRAs</p>
+          ) : (
+            <ul className="space-y-3">
+              {kras.slice(0, 3).map((kra, i) => (
+                <li
+                  key={kra.id || i}
+                  className="flex items-start gap-2.5 text-[10px] font-bold text-gray-500 leading-tight"
+                >
+                  <span className="mt-1.5 w-1 h-1 rounded-full bg-gray-300 flex-shrink-0" />
+                  KRA Evaluation: {kra.total_score || 0}% ({kra.category || "N/A"})
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </GlassCard>
     </div>
   );

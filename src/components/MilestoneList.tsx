@@ -383,7 +383,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
     const handleSampleDownload = async () => {
         try {
             const response = await axios.get(
-                `https://${baseUrl}/assets/milestone_import.xlsx`,
+                `https://${baseUrl}/milestone_import.xlsx`,
                 {
                     responseType: 'blob',
                     headers: {
@@ -451,7 +451,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                             className={`absolute top-0 left-0 h-6 ${color} rounded-full transition-all duration-300`}
                             style={{ width: `${progress}%` }}
                         ></div>
-                        <span className="relative z-10 text-xs font-semibold text-gray-800">
+                        <span className="relative text-xs font-semibold text-gray-800">
                             {Math.round(progress)}%
                         </span>
                     </div>
@@ -534,7 +534,7 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                             className={`absolute top-0 left-0 h-6 bg-[#b4e7ff] rounded-full transition-all duration-300`}
                             style={{ width: `${item.completion_percent}%` }}
                         ></div>
-                        <span className="relative z-10 text-xs font-semibold text-gray-800">
+                        <span className="relative text-xs font-semibold text-gray-800">
                             {Math.round(item.completion_percent)}%
                         </span>
                     </div>
@@ -742,6 +742,8 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 }}
                 renderEditableCell={renderEditableCell}
                 newRowPlaceholder="Click to add new milestone"
+            // enableFreeze={true}
+            // freezeColumnsCount={3}
             />
 
             {/* Infinite Scroll Loader - Show at table bottom while fetching next page */}

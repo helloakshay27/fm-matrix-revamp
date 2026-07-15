@@ -16,7 +16,149 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { InputAdornment, TextField } from "@mui/material";
 import axios from "axios";
-import { Loader2 } from "lucide-react";
+import { Loader2, TrendingUp, Target, Users, DollarSign, BarChart3, Globe } from "lucide-react";
+
+// MARKET ANALYSIS TAB COMPONENT
+const MarketAnalysisTab = ({ productData }) => {
+    return (
+        <div className="space-y-10">
+            <div className="bg-gray-200 text-gray-800 p-4 rounded-t-xl mb-0 flex justify-between items-center">
+                <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
+                    {productData?.name || 'Product'} - Market Analysis
+                </h2>
+            </div>
+            {productData?.extendedContent?.detailedMarketAnalysis ? (
+                <div className="space-y-8">
+                    <div className="space-y-4">
+                        <div className="bg-gray-200 text-gray-800 px-4 py-2 font-semibold font-poppins text-sm uppercase italic">
+                            MARKET ANALYSIS OVERVIEW
+                        </div>
+                        <div className="overflow-x-auto border border-[#C4B89D] rounded-xl shadow-lg">
+                            <table className="w-full border-collapse text-[10px] bg-white text-left font-poppins">
+                                <thead>
+                                    <tr className="bg-gray-200 text-gray-800 font-semibold uppercase">
+                                        <th className="border border-[#C4B89D] p-2 w-[15%]">
+                                            Category
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[20%]">
+                                            Key Insights
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[30%]">
+                                            Data Points & Metrics
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[20%]">
+                                            Strategic Implications
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[15%]">
+                                            Priority Level
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {productData.extendedContent.detailedMarketAnalysis.map(
+                                        (analysis, i) => (
+                                            <tr
+                                                key={i}
+                                                className={`${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/50"} hover:bg-[#F6F4EE] transition-colors align-top`}
+                                            >
+                                                <td className="border border-[#C4B89D] p-2 font-semibold text-gray-700 break-words">
+                                                    {analysis.category}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/80 font-medium leading-relaxed whitespace-pre-line break-words">
+                                                    {analysis.keyInsights}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C] leading-relaxed whitespace-pre-line break-words">
+                                                    {analysis.dataPoints}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/70 font-medium italic whitespace-pre-line break-words">
+                                                    {analysis.strategicImplications}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/60 font-bold text-center">
+                                                    {analysis.priorityLevel}
+                                                </td>
+                                            </tr>
+                                        )
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="bg-gray-200 text-gray-800 px-4 py-2 font-semibold font-poppins text-sm uppercase italic">
+                            MARKET POSITION SUMMARY
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <TrendingUp className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Market Share
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    {productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.marketShare || 0), 0)}%
+                                </div>
+                                <p className="text-xs text-gray-500">Current position</p>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <Target className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Growth Potential
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    {productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.growthPotential || 0), 0)}%
+                                </div>
+                                <p className="text-xs text-gray-500">Projected growth</p>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <Users className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Target Segments
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    {productData.extendedContent.detailedMarketAnalysis.length}
+                                </div>
+                                <p className="text-xs text-gray-500">Identified segments</p>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <DollarSign className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Revenue Opportunity
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    ${productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.revenueOpportunity || 0), 0)}M
+                                </div>
+                                <p className="text-xs text-gray-500">Potential value</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <div className="p-20 text-center text-[#D3D1C7] font-semibold uppercase text-xl border-4 border-dashed border-[#D3D1C7] rounded-[3rem]">
+                    Market Analysis Data Coming Soon
+                </div>
+            )}
+        </div>
+    );
+};
 
 
 const muiTheme = createTheme({
@@ -57,9 +199,9 @@ const muiTheme = createTheme({
         MuiCheckbox: {
             styleOverrides: {
                 root: {
-                    color: "#bf213e",
+                    color: "#DA7756",
                     "&.Mui-checked": {
-                        color: "#bf213e",
+                        color: "#DA7756",
                     },
                 },
             },
@@ -69,9 +211,9 @@ const muiTheme = createTheme({
         MuiRadio: {
             styleOverrides: {
                 root: {
-                    color: "#bf213e",
+                    color: "#DA7756",
                     "&.Mui-checked": {
-                        color: "#bf213e",
+                        color: "#DA7756",
                     },
                 },
             },
@@ -109,10 +251,12 @@ const muiTheme = createTheme({
 
 const TABS = [
     { key: "other", label: "Other Details" },
+    { key: "opening-balance", label: "Opening Balance" },
     { key: "address", label: "Address" },
     { key: "contact", label: "Contact Persons" },
     { key: "custom", label: "Custom Fields" },
     { key: "reporting", label: "Reporting Tags" },
+    { key: "market", label: "Market Analysis" },
     { key: "remarks", label: "Remarks" },
 ];
 
@@ -299,7 +443,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                 const groups = res.data.data || [];
                 const allLedgers = groups.flatMap((g: any) => g.ledgers || []).filter((l: any) => l.name === 'Accounts Receivable');
                 setLedgers(allLedgers);
-            } catch (err) {}
+            } catch (err) { }
         };
         fetchLedgers();
     }, []);
@@ -342,10 +486,10 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
             name: term.name,
             no_of_days: term.days || 0
         }));
-        console.log("Saving Payment Terms Payload:", paymentTermsPayload);
+        // console.log("Saving Payment Terms Payload:", paymentTermsPayload);
         const payload = {
             payment_terms: paymentTermsPayload,
-            lock_account_id:lock_account_id
+            lock_account_id: lock_account_id
         };
 
         await axios.post(
@@ -408,7 +552,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                     }
                 );
 
-                console.log("Customer Tax Exemptions:", res.data);
+                // console.log("Customer Tax Exemptions:", res.data);
                 setCustomerExemptions(res.data || []); // update state
             } catch (err) {
                 console.error("Failed to fetch customer exemptions", err);
@@ -423,7 +567,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
 
             <TextField
                 select
-                label={<span>GST Treatment <span className="text-red-600">*</span></span>}
+                label={<span>GST Treatment <span className="text-[#DA7756]">*</span></span>}
                 name="gst_treatment"
                 value={form.gst_treatment}
                 onChange={handleChange}
@@ -441,10 +585,6 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                 <MenuItem value="sez_developer">SEZ Developer</MenuItem>
                 <MenuItem value="isd">Input Service Distributor (ISD)</MenuItem>
             </TextField>
-
-
-
-
 
             {/* <div className="col-span-2">
                 <FormControlLabel
@@ -474,7 +614,13 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                             value={form.gstin}
                             onChange={handleChange}
                             fullWidth
-                            inputProps={{ maxLength: 15 }}
+                            error={!!form.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(form.gstin)}
+                            helperText={
+                                form.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(form.gstin)
+                                    ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5'
+                                    : ''
+                            }
+                            inputProps={{ maxLength: 15, style: { textTransform: 'uppercase' } }}
                             placeholder="Enter 15 digit GSTIN"
                         />
 
@@ -485,7 +631,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
         variant="outline"
         onClick={() => {
           // Call GST lookup API here
-          console.log("Fetch GST details for:", form.gstin);
+          // console.log("Fetch GST details for:", form.gstin);
         }}
       >
         Get Taxpayer Details
@@ -529,7 +675,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
             )}
             {/* <TextField label="PAN" fullWidth /> */}
             <TextField
-                label="PAN"
+                label="PAN NO"
                 name="pan"
                 value={form.pan}
                 onChange={handleChange}
@@ -548,7 +694,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                     <MenuItem value="INR">INR - Indian Rupee</MenuItem>
                 </TextField> */}
 
-                
+
             <div className="col-span-2 mt-4">
                 <div className="font-medium mb-2">Tax Preference</div>
 
@@ -631,15 +777,6 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
             </TextField>
 
 
-            <TextField
-                label="Opening Balance"
-                name="opening_balance"
-                value={form.opening_balance}
-                onChange={handleChange}
-                fullWidth
-                placeholder="Enter opening balance"
-            />
-
             {/* Payment Terms dropdown with search and configure */}
             <FormControl fullWidth>
                 <InputLabel>Payment Terms</InputLabel>
@@ -704,7 +841,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                                             />
                                         </td>
                                         <td className="border p-2">
-                                            <button className="text-red-600 text-xs" onClick={async () => {
+                                            <button className="text-[#DA7756] text-xs" onClick={async () => {
                                                 if (row.id) {
                                                     await handleRemovePaymentTerm(row.id, idx);
                                                 } else {
@@ -726,7 +863,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                         </div>
                         <div className="flex gap-2">
                             <button
-                                className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                                className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                                 onClick={handleSaveTerms}
                             >
                                 Save
@@ -809,9 +946,109 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
     );
 };
 
-//
+const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
 
-//
+    const handleChange = (index, field, value) => {
+        const updated = [...openingBalances];
+        updated[index][field] = value;
+        setOpeningBalances(updated);
+    };
+
+    const addRow = () => {
+        setOpeningBalances([
+            ...openingBalances,
+            { bill_no: "", date: new Date().toISOString().split('T')[0], due_date: "", account_type: "Invoice", amount: "" }
+        ]);
+    };
+
+    const removeRow = (index) => {
+        const updated = openingBalances.filter((_, i) => i !== index);
+        setOpeningBalances(updated);
+    };
+
+    return (
+        <div>
+            {openingBalances?.map((row, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-10">
+
+                    <TextField
+                        label="Bill No"
+                        value={row.bill_no}
+                        placeholder="Enter bill number"
+                        onChange={(e) => handleChange(index, "bill_no", e.target.value)}
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                    />
+
+                    <TextField
+                        label="Bill Date"
+                        type="date"
+                        value={row.date}
+                        onChange={(e) => handleChange(index, "date", e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        fullWidth
+                    />
+
+                    <TextField
+                        label="Due Date"
+                        type="date"
+                        value={row.due_date}
+                        onChange={(e) => handleChange(index, "due_date", e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        fullWidth
+                        inputProps={{ min: new Date().toISOString().split('T')[0] }}
+                    />
+
+                    <TextField
+                        select
+                        label="Type"
+                        value={row.account_type || "Invoice"}
+                        onChange={(e) => handleChange(index, "account_type", e.target.value)}
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                    >
+                        <MenuItem value="Invoice">Invoice</MenuItem>
+                        <MenuItem value="Credit note">Credit Note</MenuItem>
+                    </TextField>
+
+                    <TextField
+                        label="Amount"
+                        placeholder="Enter amount"
+                        value={row.amount}
+                        onChange={(e) => {
+                            const raw = e.target.value.replace(/^-/, "");
+                            handleChange(index, "amount", raw);
+                        }}
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{
+                            startAdornment: row.account_type === "Credit note" && row.amount !== ""
+                                ? <span style={{ marginRight: 2 }}>-</span>
+                                : null,
+                        }}
+                    />
+
+                    <div className="flex items-center gap-2">
+                        <Button onClick={addRow} className="bg-[#DA7756] hover:bg-[#C45F40] text-white">
+                            +
+                        </Button>
+
+                        {openingBalances.length > 1 && (
+                            <Button
+                                onClick={() => removeRow(index)}
+                                variant="outline"
+                                className="border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756]/10"
+                            >
+                                -
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
 // TAB 3 → CONTACT PERSONS
 //
 const ContactPersonsTab = ({ rows, setRows }) => {
@@ -971,7 +1208,7 @@ const ContactPersonsTab = ({ rows, setRows }) => {
                             <td className="border p-2 text-center">
                                 <button
                                     type="button"
-                                    className="text-red-500 text-lg px-2"
+                                    className="text-[#DA7756] text-lg px-2"
                                     onClick={() => handleDeleteRow(idx)}
                                     title="Delete Row"
                                     disabled={rows.length === 1}
@@ -1009,7 +1246,7 @@ const RemarksTab = ({ remarks, setRemarks }) => (
     <div className="flex flex-col">
         <label className="text-sm text-gray-600 mb-1">Remarks</label>
         <textarea
-            className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+            className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
             rows={5}
             placeholder="Enter remarks (max 500 characters)"
             value={remarks}
@@ -1075,6 +1312,9 @@ const CustomersAdd = () => {
         currency: "INR",
         pan: "",
         opening_balance: "",
+        opening_balance_bill_no: "",
+        opening_balance_bill_date: "",
+        opening_balance_due_date: "",
         enable_portal: false,
         remarks: "",
 
@@ -1092,13 +1332,13 @@ const CustomersAdd = () => {
 
 
 
-       
-  gst_preference: "",
-  tax_exemption_id: "",
-  gst_tds_enabled: false,
-  lock_account_ledger_id: "",
-//   department: "",
-//   designation: "",
+
+        gst_preference: "",
+        tax_exemption_id: "",
+        gst_tds_enabled: false,
+        lock_account_ledger_id: "",
+        //   department: "",
+        //   designation: "",
 
     });
 
@@ -1114,6 +1354,8 @@ const CustomersAdd = () => {
         phone: "",
         fax: "",
     });
+
+
 
     const [shipping, setShipping] = useState({
         attention: "",
@@ -1134,6 +1376,16 @@ const CustomersAdd = () => {
         { salutation: "", firstName: "", lastName: "", email: "", workPhone: "", mobile: "" }
     ]);
 
+    const [openingBalances, setOpeningBalances] = useState([
+        {
+            bill_no: "",
+            date: new Date().toISOString().split('T')[0],
+            due_date: "",
+            account_type: "Invoice",
+            amount: ""
+        }
+    ]);
+
     // REMARKS
     const [remarks, setRemarks] = useState("");
 
@@ -1152,10 +1404,12 @@ const CustomersAdd = () => {
     const alphabetsOnly = (v: string) => /^[a-zA-Z\s]*$/.test(v);
     const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
     const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/;
     const phoneClean = (v: string) => v.replace(/[^0-9+]/g, '');
 
-    const handleChange = (e: any) => {
-        let { name, value } = e.target;
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { name: string; value: string } }) => {
+        const { name, value: rawValue } = e.target;
+        let value = rawValue;
 
         // ── First Name / Last Name: block non-alphabets ──
         if (name === 'first_name' || name === 'last_name') {
@@ -1174,6 +1428,17 @@ const CustomersAdd = () => {
             value = value.toUpperCase();
             // Allow max 10 chars
             if (value.length > 10) return;
+        }
+
+        // ── GSTIN: auto-uppercase + auto-extract PAN ──
+        if (name === 'gstin') {
+            value = value.toUpperCase();
+            if (value.length > 15) return;
+            // Auto-extract PAN from GSTIN (characters 3–12, i.e. index 2–11)
+            // e.g. GSTIN 27ABCDE1234F1Z5 → PAN ABCDE1234F
+            const extractedPan = value.length >= 12 ? value.substring(2, 12) : '';
+            setForm((p) => ({ ...p, gstin: value, pan: extractedPan }));
+            return;
         }
 
         // ── Opening Balance: numeric only, allow up to 2 decimal places ──
@@ -1261,6 +1526,9 @@ const CustomersAdd = () => {
         if (form.pan && !panRegex.test(form.pan)) {
             submitErrors.pan = 'PAN must follow format: ABCDE1234F (5 letters + 4 digits + 1 letter)';
         }
+        if (form.gstin && !gstinRegex.test(form.gstin)) {
+            submitErrors.gstin = 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5';
+        }
 
         if (Object.keys(submitErrors).length > 0) {
             setFieldErrors(submitErrors);
@@ -1269,7 +1537,7 @@ const CustomersAdd = () => {
             return;
         }
 
-        if (form.gst_preference === "regular" || form.gst_preference === "composition") {
+        if (form.gst_treatment === "registered_regular" || form.gst_treatment === "registered_composition") {
             if (!form.gstin) {
                 toast.error("GSTIN is required for Regular/Composition customers");
                 return;
@@ -1306,6 +1574,8 @@ const CustomersAdd = () => {
             contact_person: billing.attention || ''
         };
 
+
+
         const shippingPayload = {
             attention: shipping.attention || '',
             address: shipping.street1 || '',
@@ -1332,6 +1602,20 @@ const CustomersAdd = () => {
             work_phone: row.workPhone
         }));
 
+        const openingBalancePayload = openingBalances
+            .filter(row => row.bill_no || row.amount) // skip empty rows
+            .map(row => {
+                const absAmount = row.amount ? Math.abs(Number(row.amount)) : 0;
+                const signedAmount = row.account_type === "Credit note" ? -absAmount : absAmount;
+                return {
+                    bill_no: row.bill_no || null,
+                    date: row.date || null,
+                    due_date: row.due_date || null,
+                    account_type: row.account_type || "Invoice",
+                    amount: signedAmount,
+                };
+            });
+
         // Use lifted remarks state
         const remarksPayload = remarks || '';
 
@@ -1351,31 +1635,35 @@ const CustomersAdd = () => {
                 language_code: 'en',
                 currency_code: 'INR',
                 opening_balance: form.opening_balance || 0,
+                // opening_balance_bill_no: form.opening_balance_bill_no || null,
+                // opening_balance_bill_date: form.opening_balance_bill_date || null,
+                // opening_balance_due_date: form.opening_balance_due_date || null,
+
+                opening_balance_details_attributes: openingBalancePayload,
                 payment_term_id,
                 enable_portal: form.enable_portal || false,
                 lock_account_ledger_id: form.lock_account_ledger_id || null,
 
-                gstin: form.gstin || null,
-                gst_preference: form.gst_preference || null,
+                // gstin: form.gstin || null,
+                gst_preference: form.gst_treatment || null,
                 tax_preference: form.tax_preference || null,
-                place_of_supply:
-                    form.gst_preference === "overseas" ? null : form.place_of_supply || null,
+
                 tax_exemption_id:
                     form.tax_preference === "non_taxable"
                         ? form.tax_exemption_id || null
                         : null,
 
-                business_legal_name:
-                    form.gst_preference === "regular" ||
-                        form.gst_preference === "composition"
-                        ? form.business_legal_name || null
-                        : null,
+                // business_legal_name:
+                //     form.gst_preference === "regular" ||
+                //         form.gst_preference === "composition"
+                //         ? form.business_legal_name || null
+                //         : null,
 
-                business_trade_name:
-                    form.gst_preference === "regular" ||
-                        form.gst_preference === "composition"
-                        ? form.business_trade_name || null
-                        : null,
+                // business_trade_name:
+                //     form.gst_preference === "regular" ||
+                //         form.gst_preference === "composition"
+                //         ? form.business_trade_name || null
+                //         : null,
 
                 gst_tds_enabled:
                     form.tax_preference === "taxable"
@@ -1383,12 +1671,31 @@ const CustomersAdd = () => {
                         : false,
 
                 remarks: remarksPayload,
-                billing_address_attributes: billingPayload,
-                shipping_address_attributes: shippingPayload,
-                contact_persons_attributes: contactPersonsPayload
+                default_billing_address_attributes: billingPayload,
+                default_shipping_address_attributes: shippingPayload,
+                contact_persons_attributes: contactPersonsPayload,
+
+                primary_gst_detail_attributes: {
+                    gstin: form.gstin || null,
+
+                    business_legal_name:
+                        form.gst_treatment === "registered_regular" ||
+                            form.gst_treatment === "registered_composition"
+                            ? form.business_legal_name || null
+                            : null,
+
+                    place_of_supply:
+                        form.gst_treatment === "overseas" ? null : form.place_of_supply || null,
+
+                    business_trade_name:
+                        form.gst_treatment === "registered_regular" ||
+                            form.gst_treatment === "registered_composition"
+                            ? form.business_trade_name || null
+                            : null,
+                }
             }
         };
-        console.log("Submitting Customer Payload:", payload);
+        // console.log("Submitting Customer Payload:", payload);
         setLoading(true);
         axios.post(
             `https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`,
@@ -1488,7 +1795,7 @@ const CustomersAdd = () => {
 
                 {/* DISPLAY NAME */}
                 <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-4">
-                    <div className="text-red-600">Display Name *</div>
+                    <div className="text-[#DA7756]">Display Name *</div>
                     <TextField
                         name="display_name"
                         placeholder="Enter display name"
@@ -1558,17 +1865,33 @@ const CustomersAdd = () => {
                 {/* <div className="p-4"> */}
                 {/* Tabs Header */}
                 <div className="bg-white rounded-lg border p-6 mb-6">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 border-b mb-6">
+                    {/* <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 border-b mb-6"> */}
+                    <div className="flex flex-wrap md:flex-nowrap overflow-x-auto border-b mb-6">
                         {TABS.map((tab) => (
+                            //                 <button
+                            //                     key={tab.key}
+                            //                     type="button"
+                            //                     onClick={() => setActiveTab(tab.key)}
+                            //                     className={`px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors
+                            //     ${activeTab === tab.key
+                            //                             ? "text-[#C72030] border-b-2 border-[#C72030] bg-[#f9f7f2]/50"
+                            //                             : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}
+                            //   `}
+                            //                 >
+                            //                     {tab.label}
+                            //                 </button>
+
+
                             <button
                                 key={tab.key}
                                 type="button"
                                 onClick={() => setActiveTab(tab.key)}
-                                className={`px-4 py-3 text-sm font-semibold transition-colors
-                ${activeTab === tab.key
-                                        ? "text-[#C72030] border-b-2 border-[#C72030] bg-[#f9f7f2]/50"
-                                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}
-              `}
+                                className={`flex-1 text-center px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors
+    ${activeTab === tab.key
+                                        ? "text-[#DA7756] border-b-2 border-[#DA7756] bg-[#f9f7f2]/50"
+                                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                    }
+  `}
                             >
                                 {tab.label}
                             </button>
@@ -1601,6 +1924,16 @@ const CustomersAdd = () => {
                         />
                     )}
 
+                    {/* {activeTab === "opening-balance" && (
+                        <OpeningBalanceTab form={form} handleChange={handleChange} />
+                    )} */}
+                    {activeTab === "opening-balance" && (
+                        <OpeningBalanceTab
+                            openingBalances={openingBalances}
+                            setOpeningBalances={setOpeningBalances}
+                        />
+                    )}
+
                     {activeTab === "address" && (
                         <AddressTab
                             billing={billing}
@@ -1620,17 +1953,26 @@ const CustomersAdd = () => {
                     {activeTab === "custom" && <CustomFieldsTab />}
                     {activeTab === "reporting" && <ReportingTagsTab />}
 
+                    {activeTab === "market" && (
+                        <MarketAnalysisTab productData={{
+                            name: form.display_name || form.company_name || 'Customer',
+                            extendedContent: {
+                                detailedMarketAnalysis: []
+                            }
+                        }} />
+                    )}
+
                     {activeTab === "remarks" && (
                         <RemarksTab remarks={remarks} setRemarks={setRemarks} />
                     )}
                 </div>
 
                 {/* BUTTONS */}
-                <div className="flex gap-3 justify-center">
+                <div className="flex gap-3 justify-center mb-10">
                     <Button
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[100px]"
+                        className="fm-button-fix fm-button-brand min-w-[100px]"
                     >
                         {loading ? (
                             <>

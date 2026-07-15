@@ -125,7 +125,7 @@ export const MSafeUserDetail = () => {
     return (
       <div className="p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-6">
-          <button onClick={() => navigate('/safety/m-safe')} className="flex items-center gap-1 hover:text-gray-800 text-base">
+         <button onClick={() => navigate(-1)} className="flex items-center gap-1 hover:text-gray-800 text-base">
             <ArrowLeft className="w-4 h-4" />
             Back
           </button>
@@ -162,7 +162,7 @@ export const MSafeUserDetail = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
           <button
-            onClick={() => navigate('/safety/m-safe')}
+            onClick={() => navigate(-1)}
             className="flex items-center gap-1 hover:text-gray-800 mb-4 text-base"
           >
             <ArrowLeft className="w-4 h-4" />

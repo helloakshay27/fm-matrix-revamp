@@ -202,7 +202,7 @@ export const UtilityRequestDetailsPage = () => {
   }
 
   const handleBack = () => {
-    navigate('/utility/utility-request');
+    navigate(-1);
   };
 
   const getStatusColor = (status: string) => {

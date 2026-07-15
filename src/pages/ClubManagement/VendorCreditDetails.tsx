@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +31,10 @@ import {
   Copy,
   Share2,
   ShoppingCart,
+  CirclePlus,
+  ClipboardList,
+  Eye,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -46,6 +52,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import axios from "axios";
+import PurchaseDocumentPdf from "./purchasepdftamplate";
 // Types
 interface SalesOrderItem {
   id: number;
@@ -169,6 +176,10 @@ export const VendorCreditDetails = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("order-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showApprovalLog, setShowApprovalLog] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+  const vendorCreditPdfRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const fetchSalesOrder = async () => {
       setLoading(true);
@@ -248,6 +259,13 @@ export const VendorCreditDetails = () => {
     return colors[status] || colors.draft;
   };
 
+  const getApprovalStatusBadge = (status: any) => {
+    const s = String(status || "").toLowerCase();
+    if (s === "approved") return "bg-green-100 text-green-800";
+    if (s === "rejected") return "bg-red-100 text-red-800";
+    return "bg-yellow-100 text-yellow-800";
+  };
+
   const handleEdit = () => {
     navigate(`/accounting/sales-order/edit/${id}`);
   };
@@ -263,20 +281,55 @@ export const VendorCreditDetails = () => {
   };
 
   const handlePrint = () => {
-    window.print();
+    setActiveTab("pdf");
+    setTimeout(() => window.print(), 0);
   };
 
-  const handleDownload = () => {
-    sonnerToast.success("Downloading sales order PDF...");
-  };
+  const handleDownload = async () => {
+    try {
+      setPdfGenerating(true);
+      setRenderDownloadPdf(true);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
 
-  const handleSendEmail = () => {
-    sonnerToast.success("Email sent successfully");
-  };
+      if (!vendorCreditPdfRef.current) {
+        throw new Error("PDF preview is not ready yet");
+      }
 
-  const handleClone = () => {
-    sonnerToast.success("Sales order cloned successfully");
-    navigate("/accounting/sales-order/create");
+      const canvas = await html2canvas(vendorCreditPdfRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`VendorCredit-${salesOrder?.credit_note_number || id || "download"}.pdf`);
+      sonnerToast.success("Vendor credit PDF downloaded successfully");
+    } catch (error) {
+      console.error("Error generating vendor credit PDF:", error);
+      sonnerToast.error("Failed to download vendor credit PDF");
+    } finally {
+      setPdfGenerating(false);
+      setRenderDownloadPdf(false);
+    }
   };
 
   const handleDownloadFile = async (file: { document_file_name: string; attachment_url: string }) => {
@@ -311,9 +364,27 @@ export const VendorCreditDetails = () => {
     );
   }
 
-  const taxBreakdown: Record<string, { rate: number; amount: number }> = {};
+  // const taxBreakdown: Record<string, { rate: number; amount: number }> = {};
+  // salesOrder?.item_details?.forEach((item) => {
+  //   if (item.tax_type === "tax_group" && item.tax_group?.tax_rates) {
+  //     item.tax_group.tax_rates.forEach((tax) => {
+  //       const taxAmount = (item.total_amount * tax.rate) / 100;
+  //       if (!taxBreakdown[tax.name]) {
+  //         taxBreakdown[tax.name] = { rate: tax.rate, amount: 0 };
+  //       }
+  //       taxBreakdown[tax.name].amount += taxAmount;
+  //     });
+  //   }
+  // });
+  // const taxRows = Object.entries(taxBreakdown);
+
+
+
+
+   const taxBreakdown: Record<string, { rate: number; amount: number }> = {};
   salesOrder?.item_details?.forEach((item) => {
     if (item.tax_type === "tax_group" && item.tax_group?.tax_rates) {
+      // Maharashtra: tax_group has multiple tax_rates
       item.tax_group.tax_rates.forEach((tax) => {
         const taxAmount = (item.total_amount * tax.rate) / 100;
         if (!taxBreakdown[tax.name]) {
@@ -321,9 +392,90 @@ export const VendorCreditDetails = () => {
         }
         taxBreakdown[tax.name].amount += taxAmount;
       });
+    } else if (item.tax_type === "tax_rate" && item.tax_group) {
+      // Non-Maharashtra: tax_group is actually a single tax rate object
+      const rate = item.tax_group.rate ?? 0;
+      const name = item.tax_group.name ?? "Tax";
+      const taxAmount = (item.total_amount * rate) / 100;
+      if (!taxBreakdown[name]) {
+        taxBreakdown[name] = { rate, amount: 0 };
+      }
+      taxBreakdown[name].amount += taxAmount;
     }
   });
   const taxRows = Object.entries(taxBreakdown);
+
+ 
+
+
+  const reverseChargeData: any[] = [];
+
+salesOrder?.item_details?.forEach((item: any) => {
+
+  // ✅ Case 1: Maharashtra → tax_group with multiple tax_rates
+  if (item.tax_type === "tax_group" && item.tax_group?.tax_rates) {
+    item.tax_group.tax_rates.forEach((tax: any) => {
+      const taxAmount = (item.total_amount * tax.rate) / 100;
+
+      reverseChargeData.push({
+        name: tax.name,
+        rate: tax.rate,
+        amount: taxAmount,
+      });
+    });
+  }
+
+  // ✅ Case 2: Inter-state → single tax rate (IGST)
+  else if (item.tax_type === "tax_rate" && item.tax_group) {
+    const rate = item.tax_group.rate || 0;
+    const name = item.tax_group.name || "Tax";
+
+    const taxAmount = (item.total_amount * rate) / 100;
+
+    reverseChargeData.push({
+      name,
+      rate,
+      amount: taxAmount,
+    });
+  }
+});
+
+ 
+
+  const groupedReverseTax: any[] = [];
+
+reverseChargeData.forEach((tax) => {
+  const existing = groupedReverseTax.find(t => t.name === tax.name);
+
+  if (existing) {
+    existing.amount += tax.amount;
+  } else {
+    groupedReverseTax.push({ ...tax });
+  }
+});
+
+// ✅ ADD THIS HERE
+const totalReverseTax = groupedReverseTax.reduce(
+  (sum, t) => sum + t.amount,
+  0
+);
+  const formatDate = (date?: string | null) => {
+    if (!date || date === "null" || date === "0000-00-00") return "N/A";
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) return "N/A";
+    return parsedDate.toLocaleDateString("en-IN");
+  };
+
+  const formatCurrency = (amount?: number | string | null) =>
+    `Rs. ${Number(amount || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
+  const vendorCreditPdfTaxRows =
+    salesOrder?.reverse_charge === true || salesOrder?.reverse_charge === "true"
+      ? []
+      : taxRows;
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -353,8 +505,38 @@ export const VendorCreditDetails = () => {
 
           <div className="flex items-center gap-2">
             <Badge className={`${getStatusColor(salesOrder.status)} border`}>
-              {/* {salesOrder.status.toUpperCase()} */}
+              {salesOrder.status?.replace(/_/g, " ").toUpperCase()}
             </Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setActiveTab("pdf")}
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              PDF
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDownload}
+              disabled={pdfGenerating}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {pdfGenerating ? "Downloading..." : "Download PDF"}
+            </Button>
+            {(salesOrder as any)?.approval_status?.approval_levels?.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowApprovalLog(true)}
+                className="gap-2"
+              >
+                <ClipboardList className="h-4 w-4" />
+                Approval Log
+              </Button>
+            )}
           </div>
         </div>
 
@@ -427,8 +609,10 @@ export const VendorCreditDetails = () => {
             >
               {[
                 { label: "Credit Note Details", value: "order-details" },
-                { label: "Customer Info", value: "customer-info" },
+                { label: "Vendor Info", value: "customer-info" },
                 { label: "History", value: "history" },
+                { label: "Activity Logs", value: "activity-logs" },
+                { label: "PDF", value: "pdf" },
               ].map((tab) => (
                 <TabsTrigger
                   key={tab.value}
@@ -458,6 +642,44 @@ export const VendorCreditDetails = () => {
               ))}
             </TabsList>
 
+
+{salesOrder?.reverse_charge && groupedReverseTax.length > 0 && (
+                <div className="mt-6 border rounded-md overflow-hidden">
+
+                  <div className="bg-gray-100 px-4 py-2 font-semibold">
+                    Reverse Charge Summary
+                  </div>
+
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-600">
+                      <tr>
+                        <th className="text-left px-4 py-2">Reverse Charge Rate</th>
+                        <th className="text-right px-4 py-2">Tax Amount</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {groupedReverseTax.map((tax, index) => (
+                        <tr key={index} className="border-t">
+                          <td className="px-4 py-2">
+                            {tax.name} ({tax.rate}%)
+                          </td>
+                          <td className="px-4 py-2 text-right">
+                            ₹{tax.amount.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+
+                      <tr className="border-t font-semibold bg-gray-50">
+                        <td className="px-4 py-2">Total</td>
+                        <td className="px-4 py-2 text-right">
+                          ₹{totalReverseTax.toFixed(2)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
             {/* Order Details Tab */}
             <TabsContent
               value="order-details"
@@ -536,6 +758,21 @@ export const VendorCreditDetails = () => {
                       <p className="text-base font-semibold mt-1 break-words whitespace-normal max-w-full">
                         {salesOrder?.subject || "-"}
                       </p>
+                    </div>
+
+                      <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={
+                          salesOrder?.reverse_charge === true ||
+                          salesOrder?.reverse_charge === "true"
+                        }
+                        readOnly
+                        className="h-4 w-4 accent-[#bf213e] cursor-not-allowed"
+                      />
+                      <span className="text-sm font-medium text-muted-foreground">
+                        This transaction is applicable for reverse charge
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -621,10 +858,11 @@ export const VendorCreditDetails = () => {
                           Discount ({salesOrder?.discount_per}%)
                         </span>
                         <span className="font-semibold text-base text-red-600">
-                          -₹{salesOrder?.discount_amount?.toFixed(2)}
+                          -₹{salesOrder?.discount_amount?.toFixed(2) || 0}
+                          
                         </span>
                       </div>
-                      {taxRows.map(([name, tax], index) => (
+                      {/* {taxRows.map(([name, tax], index) => (
                         <div
                           key={index}
                           className="flex justify-between items-center py-2"
@@ -637,6 +875,27 @@ export const VendorCreditDetails = () => {
                           </span>
                         </div>
                       ))}
+                       */}
+
+
+                      {!(
+                        salesOrder?.reverse_charge === true ||
+                        salesOrder?.reverse_charge === "true"
+                      ) &&
+                        taxRows.map(([name, tax], index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between items-center py-2"
+                          >
+                            <span className="text-sm font-medium text-muted-foreground">
+                              {name} ({tax.rate}%)
+                            </span>
+                            <span className="font-semibold text-base">
+                              ₹{tax.amount.toFixed(2)}
+                            </span>
+                          </div>
+                        ))
+                      }
                       <div className="flex justify-between items-center py-2">
                         <span className="text-sm font-medium text-muted-foreground">
                           {salesOrder?.tax_type?.toUpperCase()}
@@ -661,6 +920,8 @@ export const VendorCreditDetails = () => {
                       </div>
                     </div>
                   </div>
+
+                 
                 </CardContent>
               </Card>
 
@@ -870,9 +1131,200 @@ export const VendorCreditDetails = () => {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent
+              value="activity-logs"
+              className="p-3 sm:p-6 space-y-6"
+              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Activity Logs
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {Array.isArray((salesOrder as any)?.activity_logs) &&
+                  (salesOrder as any).activity_logs.length > 0 ? (
+                    <div className="divide-y">
+                      {(salesOrder as any).activity_logs.map((log: any, idx: number) => {
+                        const key = `${log?.date || ""}-${log?.time || ""}-${idx}`;
+                        const hint = `${log?.action || ""} ${log?.message || ""}`.toLowerCase();
+                        const isConverted = hint.includes("convert");
+                        const isCreated = hint.includes("create");
+                        const isAccepted = hint.includes("accept");
+                        const isSent = hint.includes("sent");
+                        const Icon = isConverted || isCreated ? CirclePlus : (isAccepted || isSent ? Eye : FileText);
+                        const iconWrapClass =
+                          isConverted || isCreated
+                            ? "bg-green-50 text-green-600 border-green-100"
+                            : isAccepted || isSent
+                              ? "bg-sky-50 text-sky-600 border-sky-100"
+                              : "bg-gray-50 text-gray-500 border-gray-100";
+
+                        return (
+                          <div key={key} className="flex gap-6 py-5">
+                            <div className="min-w-[170px] text-sm text-muted-foreground">
+                              <div>{log?.date || "—"} {log?.time || ""}</div>
+                            </div>
+
+                            <div className={`w-9 h-9 rounded-full border flex items-center justify-center ${iconWrapClass}`}>
+                              <Icon className="h-5 w-5" />
+                            </div>
+
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-foreground">
+                                {log?.message || "—"}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                by <span className="font-medium text-foreground">{log?.user || "—"}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No activity logs found.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent
+              value="pdf"
+              className="p-3 sm:p-6 space-y-6"
+              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-primary" />
+                      Vendor Credit PDF
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={handlePrint}>
+                        <Printer className="h-4 w-4 mr-2" />
+                        Print
+                      </Button>
+                      <Button size="sm" onClick={handleDownload} disabled={pdfGenerating}>
+                        <Download className="h-4 w-4 mr-2" />
+                        {pdfGenerating ? "Downloading..." : "Download PDF"}
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-auto rounded-lg border bg-muted/30 p-4">
+                    <div className="mx-auto bg-white" ref={activeTab === "pdf" ? vendorCreditPdfRef : null}>
+                      <PurchaseDocumentPdf
+                        documentTitle="VENDOR CREDIT"
+                        documentNumber={salesOrder.credit_note_number}
+                        documentDate={salesOrder.date}
+                        status={salesOrder.status}
+                        vendorName={salesOrder.supplier_name}
+                        partyLabel="Vendor"
+                        items={salesOrder.item_details || []}
+                        data={{
+                          ...salesOrder,
+                          bill_number: salesOrder.credit_note_number,
+                          total_amount: salesOrder.total_amount,
+                        }}
+                        taxRows={vendorCreditPdfTaxRows}
+                        formatDate={formatDate}
+                        formatCurrency={formatCurrency}
+                        secondaryDateLabel="Credit Date"
+                        secondaryDate={salesOrder.date}
+                        referenceNumber={salesOrder.order_number}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      {renderDownloadPdf && activeTab !== "pdf" && (
+        <div className="fixed left-[-10000px] top-0">
+          <div ref={vendorCreditPdfRef}>
+            <PurchaseDocumentPdf
+              documentTitle="VENDOR CREDIT"
+              documentNumber={salesOrder.credit_note_number}
+              documentDate={salesOrder.date}
+              status={salesOrder.status}
+              vendorName={salesOrder.supplier_name}
+              partyLabel="Vendor"
+              items={salesOrder.item_details || []}
+              data={{
+                ...salesOrder,
+                bill_number: salesOrder.credit_note_number,
+                total_amount: salesOrder.total_amount,
+              }}
+              taxRows={vendorCreditPdfTaxRows}
+              formatDate={formatDate}
+              formatCurrency={formatCurrency}
+              secondaryDateLabel="Credit Date"
+              secondaryDate={salesOrder.date}
+              referenceNumber={salesOrder.order_number}
+            />
+          </div>
+        </div>
+      )}
+
+      <Dialog open={showApprovalLog} onOpenChange={setShowApprovalLog}>
+        <DialogContent className="max-w-4xl">
+          <div className="flex items-center justify-between">
+            <DialogHeader>
+              <DialogTitle className="text-[#C72030]">Approval Log</DialogTitle>
+            </DialogHeader>
+            <button
+              type="button"
+              onClick={() => setShowApprovalLog(false)}
+              className="p-2 rounded hover:bg-muted"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="rounded-lg border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
+                  <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">Sr.No.</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Approval Level</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Approved By</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Date</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Status</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Remark</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Users</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {((salesOrder as any)?.approval_status?.approval_levels || []).map((lvl: any, index: number) => (
+                  <TableRow key={lvl?.id ?? index}>
+                    <TableCell className="font-medium">{index + 1}</TableCell>
+                    <TableCell className="font-medium">{lvl?.name || "—"}</TableCell>
+                    <TableCell className="font-medium">{lvl?.approved_by || "—"}</TableCell>
+                    <TableCell className="font-medium">{lvl?.approved_at || "—"}</TableCell>
+                    <TableCell>
+                      <span className={`px-3 py-1 rounded text-xs font-semibold ${getApprovalStatusBadge(lvl?.status)}`}>
+                        {String(lvl?.status || "pending").toUpperCase()}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{lvl?.rejection_reason || "—"}</TableCell>
+                    <TableCell className="text-sm">{Array.isArray(lvl?.users) ? lvl.users.map((u: any) => u?.name || u).filter(Boolean).join(", ") : "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

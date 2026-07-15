@@ -39,6 +39,37 @@ export const vendorService = {
     }
   },
 
+  updateVendor: async (id: string, formData: FormData) => {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/suppliers/${id}.json`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': getAuthHeader(),
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 422) {
+          const error = new Error('Validation failed');
+          (error as any).status = 422;
+          (error as any).validationErrors = errorData;
+          throw error;
+        }
+        throw new Error(errorData.message || 'Failed to update vendor');
+      }
+
+      return await response.json();
+    } catch (error: any) {
+      console.error('Error updating vendor:', error);
+      if (error.status !== 422) {
+        toast.error(error.message || 'An unknown error occurred');
+      }
+      throw error;
+    }
+  },
+
   getVendors: async (page = 1, searchQuery = '') => {
     try {
       const params = new URLSearchParams();

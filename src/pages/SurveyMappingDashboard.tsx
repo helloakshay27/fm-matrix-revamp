@@ -420,18 +420,17 @@ export const SurveyMappingDashboard = () => {
         prev.map((mapping) =>
           mapping.survey_id === item.survey_id
             ? {
-                ...mapping,
-                survey_active: newStatus ? 1 : 0,
-                active: newStatus,
-              }
+              ...mapping,
+              survey_active: newStatus ? 1 : 0,
+              active: newStatus,
+            }
             : mapping
         )
       );
 
       // Sonner toast
       sonnerToast.success(
-        `Survey mapping status ${
-          isCurrentlyActive ? "deactivated" : "activated"
+        `Survey mapping status ${isCurrentlyActive ? "deactivated" : "activated"
         }`
       );
     } catch (error: unknown) {
@@ -616,7 +615,7 @@ export const SurveyMappingDashboard = () => {
   const handleDownloadSample = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
-    const downloadUrl = `https://${baseUrl}/assets/survey_mapping_sample.xlsx?token=${token}`;
+    const downloadUrl = `https://${baseUrl}/survey_mapping_sample.xlsx?token=${token}`;
     // Directly open the file link for download
     window.open(downloadUrl, "_blank");
   };
@@ -831,7 +830,7 @@ export const SurveyMappingDashboard = () => {
       case "actions":
         return (
           <div className="flex justify-center items-center gap-2">
-            {shouldShow("survey_mapping", "view") && (
+            {shouldShow("Survey Mapping", "show") && (
               <button
                 onClick={() => handleViewClick(item)}
                 className="p-1 text-black-600 hover:text-black-800 transition-colors"
@@ -840,7 +839,7 @@ export const SurveyMappingDashboard = () => {
                 <Eye className="w-4 h-4" />
               </button>
             )}
-            {shouldShow("survey_mapping", "edit") && (
+            {shouldShow("Survey Mapping", "update") && (
               <button
                 onClick={() => handleEditClick(item)}
                 className="p-1 text-black-600 hover:text-black-800 transition-colors"
@@ -941,14 +940,12 @@ export const SurveyMappingDashboard = () => {
           <div className="flex items-center justify-center">
             <button
               onClick={() => handleStatusToggle(item)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                isActive ? "bg-green-500" : "bg-gray-300"
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-green-500" : "bg-gray-300"
+                }`}
             >
               <div
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  isActive ? "translate-x-6" : "translate-x-1"
-                }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isActive ? "translate-x-6" : "translate-x-1"
+                  }`}
               />
             </button>
           </div>
@@ -1051,10 +1048,11 @@ export const SurveyMappingDashboard = () => {
           loading={loading}
           leftActions={
             <div className="flex flex-wrap items-center gap-2 md:gap-4">
-              {shouldShow("survey_mapping", "add") && (
+              {shouldShow("Survey Mapping", "create") && (
                 <Button
                   onClick={() => setShowActionPanel(!showActionPanel)}
-                  className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80"
+                  className="fm-button-fix fm-button-brand px-4 py-2"
+                  variant="ghost"
                 >
                   <Plus className="w-4 h-4" />
                   Action

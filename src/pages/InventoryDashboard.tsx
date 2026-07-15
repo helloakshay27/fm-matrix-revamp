@@ -78,7 +78,7 @@ import { toast } from "sonner";
 import { StatsCard } from "@/components/StatsCard";
 import { AIAssistantWidget } from "@/components/AIAssistantWidget";
 import { DashboardAIAssistant } from "@/components/DashboardAIAssistant";
-
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 // Map API field names to display field names for backward compatibility
 const mapInventoryData = (apiData: any[]) => {
   if (!apiData || !Array.isArray(apiData)) {
@@ -157,6 +157,8 @@ const SortableChartItem = ({
 
 export const InventoryDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+
   const dispatch = useDispatch<AppDispatch>();
 
   // Redux state
@@ -394,7 +396,7 @@ export const InventoryDashboard = () => {
   useEffect(() => {
     try {
       // first try explicit org_id stored separately (common pattern)
-      const storedOrg = localStorage.getItem('org_id');
+      const storedOrg = localStorage.getItem("org_id");
       if (storedOrg) {
         const num = Number(storedOrg);
         if (!Number.isNaN(num)) {
@@ -404,7 +406,7 @@ export const InventoryDashboard = () => {
       }
 
       // fallback to user object which may contain org_id/company_id
-      const userStr = localStorage.getItem('user');
+      const userStr = localStorage.getItem("user");
       if (userStr) {
         const user = JSON.parse(userStr);
         if (user.org_id) {
@@ -414,7 +416,7 @@ export const InventoryDashboard = () => {
         }
       }
     } catch (error) {
-      console.error('Failed to load org_id:', error);
+      console.error("Failed to load org_id:", error);
     }
   }, []);
 
@@ -760,24 +762,28 @@ export const InventoryDashboard = () => {
           className="flex items-center justify-center w-full gap-2"
           onClick={(e) => e.stopPropagation()}
         >
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 flex items-center justify-center"
-            onClick={() => handleViewItem(itemId)}
-            title="View"
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 flex items-center justify-center"
-            onClick={() => navigate(`/maintenance/inventory/edit/${itemId}`)}
-            title="Edit"
-          >
-            <Pencil className="w-4 h-4" />
-          </Button>
+          {shouldShow("Inventory Master", "show") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 flex items-center justify-center"
+              onClick={() => handleViewItem(itemId)}
+              title="View"
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+          )}
+          {shouldShow("Inventory Master", "update") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 flex items-center justify-center"
+              onClick={() => navigate(`/maintenance/inventory/edit/${itemId}`)}
+              title="Edit"
+            >
+              <Pencil className="w-4 h-4" />
+            </Button>
+          )}
           {item.greenProduct && (
             <img
               src={bio}
@@ -829,13 +835,15 @@ export const InventoryDashboard = () => {
           onClick={(e) => e.stopPropagation()}
         >
           <div
-            className={`relative inline-flex items-center h-6 w-12 rounded-full cursor-pointer transition-colors ${item.active === "Active" ? "bg-green-500" : "bg-gray-300"
-              }`}
+            className={`relative inline-flex items-center h-6 w-12 rounded-full cursor-pointer transition-colors ${
+              item.active === "Active" ? "bg-green-500" : "bg-gray-300"
+            }`}
             onClick={() => handleStatusToggle(item.id)}
           >
             <span
-              className={`inline-block w-5 h-5 transform bg-white rounded-full shadow transition-transform ${item.active === "Active" ? "translate-x-6" : "translate-x-1"
-                }`}
+              className={`inline-block w-5 h-5 transform bg-white rounded-full shadow transition-transform ${
+                item.active === "Active" ? "translate-x-6" : "translate-x-1"
+              }`}
             />
           </div>
         </div>
@@ -957,30 +965,39 @@ export const InventoryDashboard = () => {
     }
     return (
       <div className="flex flex-wrap gap-3 items-center">
-        <Button
-          onClick={handleActionClick}
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
-          variant="default"
-        >
-          <Plus className="w-4 h-4" /> Action
-        </Button>
+        {shouldShow("Inventory", "create") && (
+          <Button
+            onClick={handleActionClick}
+            className="fm-button-fix fm-button-brand px-4 py-2"
+            variant="ghost"
+          >
+            <Plus className="w-4 h-4" /> Action
+          </Button>
+        )}
       </div>
     );
   };
 
-  const waitForExportReady = async (fileName: string, baseUrl: string): Promise<Response> => {
+  const waitForExportReady = async (
+    fileName: string,
+    baseUrl: string
+  ): Promise<Response> => {
     while (true) {
       const res = await fetch(
         `https://${baseUrl}/pms/inventories/export_status?key=${encodeURIComponent(fileName)}`,
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
 
       // Check if the response is the actual file (Excel)
       const contentType = res.headers.get("content-type");
 
-      if (contentType?.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
+      if (
+        contentType?.includes(
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+      ) {
         return res; // ✅ Excel file is ready
       }
 
@@ -1003,7 +1020,8 @@ export const InventoryDashboard = () => {
     try {
       if (!baseUrl || !token || !siteId) {
         toast.error("Configuration Error", {
-          description: "Missing base URL, token, or site ID. Please log in again.",
+          description:
+            "Missing base URL, token, or site ID. Please log in again.",
         });
         return;
       }
@@ -1263,13 +1281,13 @@ export const InventoryDashboard = () => {
   // Group data from API - with safety check
   const groupChartData =
     analyticsData.categoryData?.category_counts &&
-      Array.isArray(analyticsData.categoryData.category_counts)
+    Array.isArray(analyticsData.categoryData.category_counts)
       ? analyticsData.categoryData.category_counts.map(
-        ({ group_name, item_count }) => ({
-          name: group_name,
-          value: item_count,
-        })
-      )
+          ({ group_name, item_count }) => ({
+            name: group_name,
+            value: item_count,
+          })
+        )
       : [];
 
   const resetFilters = () => {
@@ -1419,7 +1437,7 @@ export const InventoryDashboard = () => {
                           >
                             <SortableChartItem id={id}>
                               {id === "inventory_cost_over_month" &&
-                                !card.data ? (
+                              !card.data ? (
                                 <div className="p-4 border border-gray-200 rounded mb-4 animate-pulse bg-white h-[420px] flex flex-col">
                                   <div className="h-5 w-48 bg-gray-200 rounded mb-4" />
                                   <div className="flex-1 bg-gray-100 rounded" />

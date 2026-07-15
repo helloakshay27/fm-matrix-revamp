@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import axios from 'axios';
-import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard, FileText } from 'lucide-react';
+import { Eye, Plus, Download, Upload, Filter, QrCode, Edit, Trash2, Users, CreditCard, FileText, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -32,16 +32,28 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ItemData {
   id: number;
+  sr_no?: number;
   name: string;
   purchase_description: string;
   purchase_rate: number;
   description: string;
   rate: number;
   usage_unit: string;
+  current_stock?: number | null;
+  active?: boolean;
   icon?: {
     document_file_name: string | null;
     attachment_url: string;
@@ -52,13 +64,9 @@ interface ItemData {
 export const ItemsDashboard = () => {
   const navigate = useNavigate();
   const loginState = useSelector((state: RootState) => state.login);
-const baseUrl = localStorage.getItem("baseUrl");
-const token = localStorage.getItem("token");
-const lock_account_id = localStorage.getItem("lock_account_id");
-  // State management
-  // const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
-  // const [journals, setJournals] = useState([]);
-  // const [journals, setJournals] = useState<ManualJournalTransaction[]>([]);
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+  const lock_account_id = localStorage.getItem("lock_account_id");
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -79,60 +87,186 @@ const lock_account_id = localStorage.getItem("lock_account_id");
     endDate: ''
   });
   const [items, setItems] = useState<ItemData[]>([]);
-  const perPage = 20;
+  const perPage = 10;
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedDeleteItem, setSelectedDeleteItem] = useState<ItemData | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
+  const [bulkUploadFile, setBulkUploadFile] = useState<File | null>(null);
+  const [bulkUploadDragActive, setBulkUploadDragActive] = useState(false);
+  const [bulkUploadStatus, setBulkUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'warning' | 'error'>('idle');
+  const [bulkUploadMessage, setBulkUploadMessage] = useState('');
+  const [bulkUploadResults, setBulkUploadResults] = useState<Array<{ row: number; status: string; message: string }>>([]);
+  const bulkUploadInputRef = useRef<HTMLInputElement>(null);
+  const validateBulkFile = (file: File) => {
+    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!['.xlsx', '.xls'].includes(ext)) {
+      toast.error('Only Excel files (.xlsx, .xls) are allowed.');
+      return false;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size exceeds 10MB limit');
+      return false;
+    }
+    return true;
+  };
+
+  const handleBulkDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBulkUploadDragActive(e.type === 'dragenter' || e.type === 'dragover');
+  };
+
+  const handleBulkDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBulkUploadDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && validateBulkFile(file)) setBulkUploadFile(file);
+  };
+
+  const handleBulkFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && validateBulkFile(file)) setBulkUploadFile(file);
+  };
+
+  const handleBulkUpload = async () => {
+    if (!bulkUploadFile) return toast.error('Please select a file to upload');
+
+    setBulkUploadStatus('uploading');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', bulkUploadFile);
+
+      const response = await fetch(
+        `https://${baseUrl}/lock_account_items/bulk_upload.json?lock_account_id=${lock_account_id}`,
+        {
+          method: 'POST',
+          headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          body: formData,
+        }
+      );
+
+      const contentType = response.headers.get('content-type') || '';
+
+      if (response.status === 422) {
+        const errData = contentType.includes('application/json')
+          ? await response.json().catch(() => ({}))
+          : {};
+        const results: Array<{ row: number; status: string; message: string }> = errData.results || [];
+        setBulkUploadStatus('warning');
+        setBulkUploadMessage(errData.message || errData.error || 'Upload completed with issues.');
+        setBulkUploadResults(results);
+        const toastMessage = errData.message || errData.error || 'Upload completed with issues.';
+        const detail = results.map(r => `Row ${r.row}: ${r.message}`).join('\n');
+        toast.warning(toastMessage, {
+          description: detail || undefined,
+          duration: 6000,
+        });
+        closeBulkUploadDialog();
+        return;
+      }
+
+      if (!response.ok) {
+        const errData = contentType.includes('application/json')
+          ? await response.json().catch(() => ({}))
+          : {};
+        throw new Error(errData.message || `Upload failed with status ${response.status}`);
+      }
+
+      if (
+        contentType.includes('application/vnd.openxmlformats-officedocument') ||
+        contentType.includes('application/vnd.ms-excel') ||
+        contentType.includes('application/octet-stream')
+      ) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const cd = response.headers.get('content-disposition');
+        const match = cd?.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        link.download = match?.[1]?.replace(/['"]/g, '') || 'items_upload_result.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        closeBulkUploadDialog();
+        toast.success('File processed. Result file downloaded.');
+        return;
+      }
+
+      const data = await response.json();
+      closeBulkUploadDialog();
+      toast.success(data.message || 'Items uploaded successfully!');
+      await fetchItems();
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Upload failed';
+      setBulkUploadStatus('error');
+      setBulkUploadMessage(msg);
+      toast.error(msg);
+    }
+  };
+
+  const closeBulkUploadDialog = () => {
+    setBulkUploadOpen(false);
+    setBulkUploadFile(null);
+    setBulkUploadStatus('idle');
+    setBulkUploadMessage('');
+    setBulkUploadResults([]);
+    if (bulkUploadInputRef.current) bulkUploadInputRef.current.value = '';
+  };
 
   // Fetch items from API
+  const fetchItems = async () => {
+    setLoading(true);
+    try {
+      // const baseUrl = API_CONFIG.BASE_URL || "https://club-uat-api.lockated.com";
+      // const token = API_CONFIG.TOKEN;
+      const url = `https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`;
+      const response = await axios.get(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+         params: {
+        // lock_account_id,
+      
+         page: currentPage,
+  per_page: perPage,
+  search: filters.search || "",
+      },
+      });
+      // The API is expected to return an array of items
+      const fetchedItems: ItemData[] = (response.data?.data || []).map((item: ItemData, index: number) => ({
+        ...item,
+        // sr_no: index + 1,
+        sr_no: (currentPage - 1) * perPage + index + 1,
+      }));
+
+
+       // PAGINATION STATES
+    setCurrentPage(response.data?.meta?.current_page || 1);
+    setTotalPages(response.data?.meta?.total_pages || 1);
+    setTotalMembers(response.data?.meta?.total_count || 0);
+
+      console.log('API response:', response.data)
+      setItems(fetchedItems);
+      console.log('Fetched items:', fetchedItems);
+    } catch (error) {
+      console.error('Error fetching items:', error);
+      toast.error('Failed to fetch items');
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchItems = async () => {
-      setLoading(true);
-      try {
-        // const baseUrl = API_CONFIG.BASE_URL || "https://club-uat-api.lockated.com";
-        // const token = API_CONFIG.TOKEN;
-        const url = `https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`;
-        const response = await axios.get(url, {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
-        // The API is expected to return an array of items
-        setItems(response.data|| []);
-        console.log('Fetched items:', response.data);
-      } catch (error) {
-        console.error('Error fetching items:', error);
-        toast.error('Failed to fetch items');
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+
     fetchItems();
-  }, []);
-
-
-  // Fetch journal entries
-  // const fetchJournals = useCallback(async () => {
-  //   setLoading(true);
-  //   try {
-  //     const baseUrl = API_CONFIG.BASE_URL;
-  //     const token = API_CONFIG.TOKEN;
-  //     const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
-  //     const response = await axios.get(url, {
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  //       },
-  //     });
-  //     setJournals(response.data.lock_account_transactions || []);
-  //     setMembershipType(response.data.lock_account_transactions || [])
-  //   } catch (error) {
-  //     console.error('Error fetching journal entries:', error);
-  //     toast.error('Failed to fetch journal entries');
-  //     setJournals([]);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, []);
+  }, [currentPage, filters.search]);
 
   // Handle search input change
   const handleSearch = useCallback((query: string) => {
@@ -264,6 +398,46 @@ const lock_account_id = localStorage.getItem("lock_account_id");
     }
   };
 
+  const handleDownloadSample = async () => {
+    const loadingToast = toast.loading('Downloading sample format...');
+
+    try {
+      const response = await fetch(
+        `https://${baseUrl}/lock_account_items/bulk_upload_sample.xlsx`,
+        {
+          method: 'GET',
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Failed to download sample: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get('content-disposition');
+      const fileNameMatch = contentDisposition?.match(/filename="?([^"]+)"?/i);
+      const fileName = fileNameMatch?.[1] || 'sample-item-upload.xlsx';
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.href = downloadUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+
+      toast.success('Sample format downloaded successfully', { id: loadingToast });
+    } catch (error) {
+      console.error('Error downloading sample format:', error);
+      toast.error('Failed to download sample format', { id: loadingToast });
+    }
+  };
+
   // Handle filter apply
   const handleFilterApply = (newFilters: ClubMembershipFilters) => {
     console.log('Applying filters:', newFilters);
@@ -273,12 +447,25 @@ const lock_account_id = localStorage.getItem("lock_account_id");
   };
 
   // Handle page change
+  // const handlePageChange = (page: number) => {
+  //   if (page < 1 || page > totalPages || page === currentPage || loading) {
+  //     return;
+  //   }
+  //   setCurrentPage(page);
+  // };
+
   const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages || page === currentPage || loading) {
-      return;
-    }
-    setCurrentPage(page);
-  };
+  if (
+    page < 1 ||
+    page > totalPages ||
+    page === currentPage ||
+    loading
+  ) {
+    return;
+  }
+
+  setCurrentPage(page);
+};
 
   // Render pagination items
   const renderPaginationItems = () => {
@@ -421,8 +608,8 @@ const lock_account_id = localStorage.getItem("lock_account_id");
   // Handle select all
   const handleSelectAll = (isSelected: boolean) => {
     if (isSelected) {
-      const allMemberIds = memberships.map(m => m.id);
-      setSelectedMembers(allMemberIds);
+      const allItemIds = items.map(item => item.id);
+      setSelectedMembers(allItemIds);
     } else {
       setSelectedMembers([]);
     }
@@ -474,68 +661,191 @@ const lock_account_id = localStorage.getItem("lock_account_id");
     );
   };
 
+
+  const handleDeleteItem = async () => {
+    if (!selectedDeleteItem) return;
+
+    setDeleteLoading(true);
+
+    try {
+      const url = `https://${baseUrl}/lock_account_items/${selectedDeleteItem.id}.json`;
+
+      await axios.delete(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      // Remove deleted item from table instantly
+      setItems((prev) =>
+        prev.filter((item) => item.id !== selectedDeleteItem.id)
+      );
+
+      toast.success("Item deleted successfully");
+
+      setDeleteDialogOpen(false);
+      setSelectedDeleteItem(null);
+      // Reload latest items list
+      await fetchItems();
+
+
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete item");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+  const handleToggleStatus = async (item: ItemData) => {
+    try {
+      const url = `https://${baseUrl}/lock_account_items/${item.id}/toggle_active.json`;
+
+      const response = await axios.patch(
+        url,
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      toast.success(
+        response?.data?.message || "Status updated successfully"
+      );
+
+      // Reload latest items
+      await fetchItems();
+
+    } catch (error) {
+      console.error("Toggle status error:", error);
+      toast.error("Failed to update status");
+    }
+  };
+
   // Define columns for EnhancedTable
-const columns = [
-  { key: 'actions', label: 'Actions', sortable: false },
-  { key: 'name', label: 'Name', sortable: true },
-  { key: 'sku', label: 'SKU', sortable: true },
-  { key: 'purchase_description', label: 'Purchase Description', sortable: true },
-  { key: 'purchase_rate', label: 'Purchase Rate', sortable: true },
-  { key: 'sale_description', label: 'Description', sortable: false },
-  { key: 'sale_rate', label: 'Rate', sortable: true },
-  { key: 'unit', label: 'Usage Unit', sortable: true },
-];
+  const columns = [
+    { key: 'actions', label: 'Actions', sortable: false },
+    { key: 'sr_no', label: 'Sr. No', sortable: false },
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'sku', label: 'SKU', sortable: true },
+    { key: 'purchase_description', label: 'Purchase Description', sortable: true },
+    { key: 'purchase_rate', label: 'Purchase Rate', sortable: true },
+    { key: 'sale_description', label: 'Description', sortable: false },
+    { key: 'sale_rate', label: 'Rate', sortable: true },
+    { key: 'current_stock', label: 'Current Stock', sortable: true },
+    { key: 'active', label: 'Status', sortable: false },
+    { key: 'unit', label: 'Usage Unit', sortable: true },
+  ];
 
 
   // Render cell content
 
-  const renderCell = (item: ItemData, columnKey: string) => {
-  if (columnKey === "actions") {
-    return (
-      <div className="flex gap-2">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(`/accounting/items/details/${item.id}`)}
-          title="View"
-          className="p-0"
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
+  const renderCell = (item: ItemData, columnKey: string): React.ReactNode => {
+    if (columnKey === "actions") {
+      return (
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(`/accounting/items/details/${item.id}`)}
+            title="View"
+            className="p-0"
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
 
-        <Button
-          variant="ghost"
-          onClick={() => navigate(`/accounting/items/edit/${item.id}`)}
-          title="Edit"
-          className="p-0"
-        >
-          <Edit className="w-4 h-4" />
-        </Button>
-      </div>
-    );
-  }
+          <Button
+            variant="ghost"
+            onClick={() => navigate(`/accounting/items/edit/${item.id}`)}
+            title="Edit"
+            className="p-0"
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            title="Delete"
+            className="p-0 text-red-600 hover:text-red-700"
+            onClick={() => {
+              setSelectedDeleteItem(item);
+              setDeleteDialogOpen(true);
+            }}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      );
+    }
 
-  if (columnKey === "name") {
-    const hasIcon = item.icon?.document_file_name;
-    return (
-      <div className="flex items-center gap-2">
-        {hasIcon ? (
-          <img
-            src={item.icon!.attachment_url}
-            alt={item.name}
-            className="w-7 h-7 rounded object-cover border border-gray-200 flex-shrink-0"
-          />
-        ) : (
-          <div className="w-7 h-7 rounded border border-gray-200 bg-gray-100 flex-shrink-0" />
-        )}
-        <span>{item.name}</span>
-      </div>
-    );
-  }
+    if (columnKey === "sr_no") {
+      return item.sr_no ?? "--";
+    }
 
-  return item[columnKey as keyof ItemData] ?? "--";
-};
+    if (columnKey === "name") {
+      const hasIcon = item.icon?.document_file_name;
+      return (
+        <div className="flex items-center gap-2">
+          {hasIcon ? (
+            <img
+              src={item.icon!.attachment_url}
+              alt={item.name}
+              className="w-7 h-7 rounded object-cover border border-gray-200 flex-shrink-0"
+            />
+          ) : (
+            <div className="w-7 h-7 rounded border border-gray-200 bg-gray-100 flex-shrink-0" />
+          )}
+          <span>{item.name}</span>
+        </div>
+      );
+    }
+    if (columnKey === "sale_description") {
+      return item.sale_description ?? "--";
+    }
+    if (columnKey === "sale_rate") {
+      return item.sale_rate ?? "--";
+    }
+    if (columnKey === "unit") {
+      return item.usage_unit || item.unit || "--";
+    }
+    if (columnKey === "current_stock") {
+      return item.current_stock ?? "--";
+    }
 
-  
+    if (columnKey === "active") {
+      return (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => handleToggleStatus(item)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.active ? "bg-red-500" : "bg-gray-300"
+              }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${item.active ? "translate-x-6" : "translate-x-1"
+                }`}
+            />
+          </button>
+
+          <span
+            className={`text-sm font-medium ${item.active ? "text-red-600" : "text-red-600"
+              }`}
+          >
+            {/* {item.active ? "Active" : "Inactive"} */}
+          </span>
+        </div>
+      );
+    }
+
+    const cellValue = item[columnKey as keyof ItemData];
+    if (typeof cellValue === 'object') {
+      return cellValue ? JSON.stringify(cellValue) : "--";
+    }
+    return cellValue ?? "--";
+  };
+
+
   // Custom left actions
   const renderCustomActions = () => (
     <div className="flex gap-3">
@@ -564,7 +874,7 @@ const columns = [
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-         <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Items</h1>
       </div>
       {/* Memberships Table */}
@@ -586,20 +896,57 @@ const columns = [
           exportFileName="club-group-memberships"
           handleExport={handleExport}
           storageKey="club-group-memberships-table"
+          // leftActions={
+          //   <div className="flex gap-3">
+          //     {renderCustomActions()}
+          //   </div>
+          // }
           leftActions={
-            <div className="flex gap-3">
-              {renderCustomActions()}
+            <div className="flex flex-wrap items-center gap-3">
+
+              {/* ADD BUTTON */}
+              <Button
+                className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                onClick={handleAddMembership}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add
+              </Button>
+            
             </div>
           }
           // onFilterClick={() => setIsFilterOpen(true)}
-          rightActions={renderRightActions()}
+          rightActions={
+            <div>
+            {/* renderRightActions() */}
+               <Button
+                variant="outline"
+                className="border-[#1D4ED8] text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white"
+                onClick={handleDownloadSample}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Sample
+              </Button>
+
+              {/* BULK UPLOAD BUTTON */}
+              <Button
+                variant="outline"
+                // className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                className="border-[#1D4ED8] text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white ms-2"
+                onClick={() => { setBulkUploadOpen(true); setBulkUploadStatus('idle'); setBulkUploadMessage(''); }}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Bulk Upload
+              </Button>
+              </div>
+          }
           searchPlaceholder="Search "
           onSearchChange={handleSearch}
           hideTableExport={true}
           hideColumnsButton={false}
           className="transition-all duration-500 ease-in-out"
           loading={loading}
-          loadingMessage="Loading group memberships..."
+          loadingMessage="Loading ..."
         />
 
         {/* Pagination Section */}
@@ -625,7 +972,8 @@ const columns = [
 
             {/* Page Info */}
             <div className="text-sm text-gray-600">
-              Page {currentPage} of {totalPages} | Showing {memberships.length} of {totalMembers} members
+              {/* Page {currentPage} of {totalPages} | Showing {items.length} items */}
+              {/* Page {currentPage} of {totalPages} | Showing {items.length} of {totalMembers} items */}
             </div>
           </div>
         )}
@@ -661,6 +1009,190 @@ const columns = [
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Upload Dialog */}
+      <Dialog open={bulkUploadOpen} onOpenChange={closeBulkUploadDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Bulk Upload Items</DialogTitle>
+            <DialogDescription>Upload an Excel file to import items in bulk</DialogDescription>
+          </DialogHeader>
+
+          {/* Drop Zone */}
+          <div
+            className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer ${
+              bulkUploadDragActive
+                ? 'border-[#C72030] bg-red-50'
+                : 'border-gray-300 hover:border-[#C72030] hover:bg-gray-50'
+            }`}
+            onDragEnter={handleBulkDrag}
+            onDragLeave={handleBulkDrag}
+            onDragOver={handleBulkDrag}
+            onDrop={handleBulkDrop}
+            onClick={() => bulkUploadInputRef.current?.click()}
+          >
+            <input
+              ref={bulkUploadInputRef}
+              type="file"
+              className="hidden"
+              accept=".xlsx,.xls"
+              onChange={handleBulkFileChange}
+            />
+            {!bulkUploadFile ? (
+              <div className="space-y-3">
+                <div className="flex justify-center">
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-gray-400" />
+                  </div>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  Drag & Drop or <span className="text-[#C72030] font-semibold">browse</span>
+                </p>
+                <p className="text-xs text-gray-400">Excel (.xlsx, .xls) — Max 10MB</p>
+              </div>
+            ) : (
+              <div
+                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <FileText className="w-8 h-8 text-[#C72030] flex-shrink-0" />
+                <div className="text-left flex-1 min-w-0">
+                  <p className="font-medium text-gray-900 text-sm truncate">{bulkUploadFile.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {(bulkUploadFile.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="p-1 hover:bg-gray-200 rounded-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setBulkUploadFile(null);
+                    setBulkUploadStatus('idle');
+                    if (bulkUploadInputRef.current) bulkUploadInputRef.current.value = '';
+                  }}
+                >
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Status */}
+          {bulkUploadStatus !== 'idle' && (
+            <div className="space-y-2">
+              <div
+                className={`p-3 rounded-lg flex items-center gap-2 text-sm ${
+                  bulkUploadStatus === 'uploading'
+                    ? 'bg-blue-50 text-blue-700'
+                    : bulkUploadStatus === 'success'
+                      ? 'bg-green-50 text-green-700'
+                      : bulkUploadStatus === 'warning'
+                        ? 'bg-yellow-50 text-yellow-800'
+                        : 'bg-red-50 text-red-700'
+                }`}
+              >
+                {bulkUploadStatus === 'uploading' && <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />}
+                {bulkUploadStatus === 'success' && <CheckCircle className="w-4 h-4 flex-shrink-0" />}
+                {bulkUploadStatus === 'warning' && <AlertCircle className="w-4 h-4 flex-shrink-0" />}
+                {bulkUploadStatus === 'error' && <AlertCircle className="w-4 h-4 flex-shrink-0" />}
+                <span>{bulkUploadStatus === 'uploading' ? 'Uploading...' : bulkUploadMessage}</span>
+              </div>
+              {bulkUploadResults.length > 0 && (
+                <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
+                  <table className="w-full text-xs">
+                    <thead className="bg-gray-50 sticky top-0">
+                      <tr>
+                        <th className="text-left px-3 py-2 font-medium text-gray-600">Row</th>
+                        <th className="text-left px-3 py-2 font-medium text-gray-600">Status</th>
+                        <th className="text-left px-3 py-2 font-medium text-gray-600">Message</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {bulkUploadResults.map((result, idx) => (
+                        <tr key={idx}>
+                          <td className="px-3 py-2 text-gray-700">{result.row}</td>
+                          <td className="px-3 py-2">
+                            <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${
+                              result.status === 'success' ? 'bg-green-100 text-green-700' :
+                              result.status === 'skipped' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {result.status}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-gray-700">{result.message}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={closeBulkUploadDialog}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleBulkUpload}
+              disabled={!bulkUploadFile || bulkUploadStatus === 'uploading'}
+              className="bg-[#C72030] hover:bg-[#a51b28] text-white disabled:opacity-50"
+            >
+              {bulkUploadStatus === 'uploading' ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading...</>
+              ) : (
+                <><Upload className="w-4 h-4 mr-2" />Upload</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete Item
+            </AlertDialogTitle>
+
+            <AlertDialogDescription>
+              Once you delete these items, you won't be able to retrieve them later.
+              Are you sure you want to delete them?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteItem();
+              }}
+              disabled={deleteLoading}
+              style={{
+                backgroundColor: "#dc2626",
+                color: "#ffffff",
+                border: "none",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#b91c1c";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#dc2626";
+              }}
+            >
+              {deleteLoading ? "Deleting..." : "OK"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

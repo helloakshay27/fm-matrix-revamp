@@ -12,6 +12,8 @@ import {
   LayoutGrid,
   List,
   Loader2,
+  ChevronsUpDown,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -19,6 +21,19 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { C, kpiClass } from "./Shared";
 import type { KPICardData } from "./kpiTypes";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 type FilterUser = {
   id: number;
@@ -55,18 +70,20 @@ export interface KPIManagementTabProps {
   onDeleteKpi?: (id: string | number) => Promise<void>;
   onEditKpi?: (kpi: KPICardData) => void;
   onArchiveSelected?: (ids: string[]) => void;
+  onManageUsersSave?: (kpiIds: string[], assigneeIds: number[]) => Promise<void>;
   users?: FilterUser[];
   departments?: FilterDepartment[];
 }
 
 const KPICardView: React.FC<{
   kpi: KPICardData;
+  assignedUsersText: string;
   selected: boolean;
   onToggleSelect: () => void;
   onDelete: (id: string) => Promise<void>;
   onEdit: (kpi: KPICardData) => void;
   onManage: (kpi: KPICardData) => void;
-}> = ({ kpi, selected, onToggleSelect, onDelete, onEdit, onManage }) => {
+}> = ({ kpi, assignedUsersText, selected, onToggleSelect, onDelete, onEdit, onManage }) => {
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -113,7 +130,7 @@ const KPICardView: React.FC<{
       <h3 className="text-[15px] font-bold leading-snug text-[#1a1a1a]">
         {kpi.name}
       </h3>
-      <p className="mt-1 text-xs text-neutral-500">Owner: {kpi.owner}</p>
+      <p className="mt-1 text-xs text-neutral-500">Assigned: {assignedUsersText}</p>
 
       <div className="mt-4 flex items-start justify-between gap-3 border-t border-[rgba(218,119,86,0.12)] pt-3">
         <span
@@ -178,12 +195,13 @@ const KPICardView: React.FC<{
 
 const KPIListView: React.FC<{
   kpis: KPICardData[];
+  getAssignedUsersText: (kpi: KPICardData) => string;
   selectedIds: Set<string>;
   toggleOne: (id: string) => void;
   onDelete: (id: string) => Promise<void>;
   onEdit: (kpi: KPICardData) => void;
   onManage: (kpi: KPICardData) => void;
-}> = ({ kpis, selectedIds, toggleOne, onDelete, onEdit, onManage }) => {
+}> = ({ kpis, getAssignedUsersText, selectedIds, toggleOne, onDelete, onEdit, onManage }) => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
@@ -209,7 +227,7 @@ const KPIListView: React.FC<{
           <tr className="border-b border-[rgba(218,119,86,0.12)] bg-[#faf9f6] text-xs font-semibold uppercase tracking-wide text-neutral-600">
             <th className="w-10 px-3 py-3" />
             <th className="px-3 py-3">KPI</th>
-            <th className="px-3 py-3">Owner</th>
+            <th className="px-3 py-3">Assigned Users</th>
             <th className="px-3 py-3">Target</th>
             <th className="px-3 py-3">Frequency</th>
             <th className="px-3 py-3">Priority</th>
@@ -233,7 +251,7 @@ const KPIListView: React.FC<{
               <td className="px-3 py-3 font-semibold text-[#1a1a1a]">
                 {kpi.name}
               </td>
-              <td className="px-3 py-3 text-neutral-600">{kpi.owner}</td>
+              <td className="px-3 py-3 text-neutral-600">{getAssignedUsersText(kpi)}</td>
               <td className="px-3 py-3 font-semibold text-[#1a1a1a]">
                 {kpi.target}
               </td>
@@ -304,6 +322,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
   onDeleteKpi,
   onEditKpi,
   onArchiveSelected,
+  onManageUsersSave,
   users = [],
   departments = [],
 }) => {
@@ -318,19 +337,27 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
   const [selectedManageUsers, setSelectedManageUsers] = useState<Set<number>>(
     new Set()
   );
+  const [manageUserSearch, setManageUserSearch] = useState("");
+  const [isSavingManageUsers, setIsSavingManageUsers] = useState(false);
+  const [deptFilterOpen, setDeptFilterOpen] = useState(false);
+  const [deptQuickOpen, setDeptQuickOpen] = useState(false);
+  const [userFilterOpen, setUserFilterOpen] = useState(false);
 
   const manageUsers = useMemo(() => {
     if (!manageKpi) return [] as FilterUser[];
-
-    const byDepartment = users.filter(
-      (u) =>
-        manageKpi.departmentId != null &&
-        u.departmentId != null &&
-        Number(u.departmentId) === Number(manageKpi.departmentId)
-    );
-
-    return byDepartment.length > 0 ? byDepartment : users;
+    return users;
   }, [users, manageKpi]);
+
+  const filteredManageUsers = useMemo(() => {
+    const query = manageUserSearch.trim().toLowerCase();
+    if (!query) return manageUsers;
+
+    return manageUsers.filter((user) => {
+      const userName = (user.name ?? "").toLowerCase();
+      const userEmail = (user.email ?? "").toLowerCase();
+      return userName.includes(query) || userEmail.includes(query);
+    });
+  }, [manageUserSearch, manageUsers]);
 
   const frequencyOptions = useMemo(() => {
     const values = new Set(
@@ -356,6 +383,8 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
       const matchesUser =
         selectedUser === "all" ||
         String(k.assigneeId ?? "") === selectedUser ||
+        (Array.isArray(k.assigneeIds) &&
+          k.assigneeIds.some((id) => String(id) === selectedUser)) ||
         k.owner.toLowerCase() ===
           (users.find((u) => String(u.id) === selectedUser)?.name.toLowerCase() ?? "");
 
@@ -371,6 +400,32 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
       );
     });
   }, [kpis, search, selectedDepartment, selectedUser, selectedFrequency, users]);
+
+  const getAssignedUsersText = (kpi: KPICardData): string => {
+    const idSet = new Set<number>();
+
+    if (Array.isArray(kpi.assigneeIds)) {
+      kpi.assigneeIds.forEach((id) => {
+        const parsed = Number(id);
+        if (Number.isFinite(parsed)) idSet.add(parsed);
+      });
+    }
+
+    if (kpi.assigneeId != null) {
+      const parsed = Number(kpi.assigneeId);
+      if (Number.isFinite(parsed)) idSet.add(parsed);
+    }
+
+    const assignedNames = Array.from(idSet)
+      .map((id) => users.find((u) => u.id === id)?.name)
+      .filter((name): name is string => typeof name === "string" && name.trim().length > 0);
+
+    if (assignedNames.length > 0) {
+      return assignedNames.join(", ");
+    }
+
+    return kpi.owner?.trim() || "Unassigned";
+  };
 
   const allFilteredSelected =
     filtered.length > 0 && filtered.every((k) => selectedIds.has(k.id));
@@ -424,8 +479,15 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
   const handleOpenManage = (kpi: KPICardData) => {
     setBulkManageIds(null);
     setManageKpi(kpi);
+    setManageUserSearch("");
     setSelectedManageUsers(() => {
       const next = new Set<number>();
+      if (Array.isArray(kpi.assigneeIds)) {
+        kpi.assigneeIds.forEach((id) => {
+          const parsed = Number(id);
+          if (Number.isFinite(parsed)) next.add(parsed);
+        });
+      }
       if (kpi.assigneeId != null) {
         next.add(Number(kpi.assigneeId));
       }
@@ -446,6 +508,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
     setManageKpi(null);
     setBulkManageIds(null);
     setSelectedManageUsers(new Set());
+    setManageUserSearch("");
   };
 
   const selectedCount = selectedIds.size;
@@ -458,8 +521,15 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
 
     setBulkManageIds(new Set(selectedIds));
     setManageKpi(firstSelected);
+    setManageUserSearch("");
     setSelectedManageUsers(() => {
       const next = new Set<number>();
+      if (Array.isArray(firstSelected.assigneeIds)) {
+        firstSelected.assigneeIds.forEach((id) => {
+          const parsed = Number(id);
+          if (Number.isFinite(parsed)) next.add(parsed);
+        });
+      }
       if (firstSelected.assigneeId != null) {
         next.add(Number(firstSelected.assigneeId));
       }
@@ -477,6 +547,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
               ...item,
               owner: "Unassigned",
               assigneeId: null,
+              assigneeIds: [],
             }
           : item
       )
@@ -500,7 +571,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
     setSelectedIds(new Set());
   };
 
-  const handleSaveManageUsers = () => {
+  const handleSaveManageUsers = async () => {
     if (!manageKpi) return;
 
     const selectedUserList = users.filter((u) => selectedManageUsers.has(u.id));
@@ -508,29 +579,44 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
       selectedUserList.length > 0
         ? selectedUserList.map((u) => u.name).join(", ")
         : "Unassigned";
+    const assigneeIds = selectedUserList.map((u) => Number(u.id));
     const primaryAssigneeId = selectedUserList[0]?.id ?? null;
 
     const targetIds = bulkManageIds ?? new Set([manageKpi.id]);
 
-    setKpis((prev) =>
-      prev.map((item) =>
-        targetIds.has(item.id)
-          ? {
-              ...item,
-              owner: ownerText,
-              assigneeId: primaryAssigneeId,
-            }
-          : item
-      )
-    );
+    try {
+      setIsSavingManageUsers(true);
 
-    toast.success(
-      bulkManageIds
-        ? `User assignments updated for ${targetIds.size} KPI(s)`
-        : "KPI user assignments updated"
-    );
-    setSelectedIds(new Set());
-    handleCloseManage();
+      if (onManageUsersSave) {
+        await onManageUsersSave(Array.from(targetIds), assigneeIds);
+      }
+
+      setKpis((prev) =>
+        prev.map((item) =>
+          targetIds.has(item.id)
+            ? {
+                ...item,
+                owner: ownerText,
+                assigneeId: primaryAssigneeId,
+                assigneeIds,
+              }
+            : item
+        )
+      );
+
+      toast.success(
+        bulkManageIds
+          ? `User assignments updated for ${targetIds.size} KPI(s)`
+          : "KPI user assignments updated"
+      );
+      setSelectedIds(new Set());
+      handleCloseManage();
+    } catch (error) {
+      console.error("Manage users save error:", error);
+      toast.error("Failed to save user assignments");
+    } finally {
+      setIsSavingManageUsers(false);
+    }
   };
 
   const filterSelectClass = cn(
@@ -549,15 +635,15 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
 
   return (
     <div className="space-y-5">
-      <div className="inline-flex rounded-lg border border-[rgba(218,119,86,0.2)] bg-[#eceae4] p-1">
+      <div className="inline-flex items-center gap-1 rounded-[14px] border border-[rgba(218,119,86,0.22)] bg-white p-[5px] shadow-[0_1px_4px_rgba(0,0,0,0.05)]">
         <button
           type="button"
           onClick={() => setView("cards")}
           className={cn(
-            "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-all",
+            "inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-xl px-4 text-[13px] font-semibold transition-all",
             view === "cards"
               ? "bg-[#DA7756] text-white shadow-sm"
-              : "text-neutral-600 hover:bg-[#fef6f4]/70 hover:text-[#1a1a1a]"
+              : "text-neutral-500 hover:bg-[rgba(218,119,86,0.06)] hover:text-[#DA7756]"
           )}
         >
           <LayoutGrid className="h-4 w-4" />
@@ -567,10 +653,10 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
           type="button"
           onClick={() => setView("list")}
           className={cn(
-            "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-all",
+            "inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-xl px-4 text-[13px] font-semibold transition-all",
             view === "list"
               ? "bg-[#DA7756] text-white shadow-sm"
-              : "text-neutral-600 hover:bg-[#fef6f4]/70 hover:text-[#1a1a1a]"
+              : "text-neutral-500 hover:bg-[rgba(218,119,86,0.06)] hover:text-[#DA7756]"
           )}
         >
           <List className="h-4 w-4" />
@@ -580,7 +666,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
 
       <div
         className="flex flex-col gap-4 rounded-xl border border-[rgba(218,119,86,0.22)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
-        style={{ backgroundColor: C.primaryBg }}
+        style={{ backgroundColor: "rgba(218,119,86,0.06)" }}
       >
         <div>
           <h3 className="text-sm font-bold text-[#1a1a1a]">
@@ -591,18 +677,50 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
             thresholds.
           </p>
         </div>
-        <select
-          className={cn(filterSelectClass, "min-w-[200px] shrink-0")}
-          value={selectedDepartment}
-          onChange={(e) => setSelectedDepartment(e.target.value)}
-        >
-          <option value="all">All Departments</option>
-          {departments.map((dept) => (
-            <option key={dept.id} value={String(dept.id)}>
-              {dept.name}
-            </option>
-          ))}
-        </select>
+        <Popover open={deptQuickOpen} onOpenChange={setDeptQuickOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              role="combobox"
+              aria-expanded={deptQuickOpen}
+              className={cn(
+                filterSelectClass,
+                "inline-flex min-w-[200px] shrink-0 items-center justify-between gap-2"
+              )}
+            >
+              <span>
+                {selectedDepartment === "all"
+                  ? "All Departments"
+                  : departments.find((d) => String(d.id) === selectedDepartment)?.name ?? "All Departments"}
+              </span>
+              <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="p-0 w-[220px]" align="start">
+            <Command>
+              <CommandInput placeholder="Search department..." />
+              <CommandList>
+                <CommandEmpty>No department found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem value="all" onSelect={() => { setSelectedDepartment("all"); setDeptQuickOpen(false); }}>
+                    <Check className={cn("mr-2 h-4 w-4", selectedDepartment === "all" ? "opacity-100 text-[#DA7756]" : "opacity-0")} />
+                    All Departments
+                  </CommandItem>
+                  {departments.map((dept) => (
+                    <CommandItem
+                      key={dept.id}
+                      value={dept.name}
+                      onSelect={() => { setSelectedDepartment(String(dept.id)); setDeptQuickOpen(false); }}
+                    >
+                      <Check className={cn("mr-2 h-4 w-4", selectedDepartment === String(dept.id) ? "opacity-100 text-[#DA7756]" : "opacity-0")} />
+                      {dept.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="-mx-1 flex flex-nowrap items-center gap-2 overflow-x-auto px-1 pb-0.5 [scrollbar-width:thin]">
@@ -633,30 +751,94 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
             )}
           />
         </div>
-        <select
-          className={filterSelectCompactClass}
-          value={selectedDepartment}
-          onChange={(e) => setSelectedDepartment(e.target.value)}
-        >
-          <option value="all">All Departments</option>
-          {departments.map((dept) => (
-            <option key={dept.id} value={String(dept.id)}>
-              {dept.name}
-            </option>
-          ))}
-        </select>
-        <select
-          className={filterSelectCompactClass}
-          value={selectedUser}
-          onChange={(e) => setSelectedUser(e.target.value)}
-        >
-          <option value="all">All Users</option>
-          {users.map((u) => (
-            <option key={u.id} value={String(u.id)}>
-              {u.name}
-            </option>
-          ))}
-        </select>
+        <Popover open={deptFilterOpen} onOpenChange={setDeptFilterOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              role="combobox"
+              aria-expanded={deptFilterOpen}
+              className={cn(
+                filterSelectCompactClass,
+                "inline-flex items-center justify-between gap-1.5"
+              )}
+            >
+              <span className="truncate">
+                {selectedDepartment === "all"
+                  ? "All Departments"
+                  : departments.find((d) => String(d.id) === selectedDepartment)?.name ?? "All Departments"}
+              </span>
+              <ChevronsUpDown className="h-3 w-3 shrink-0 text-neutral-400" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="p-0 w-[200px]" align="start">
+            <Command>
+              <CommandInput placeholder="Search department..." />
+              <CommandList>
+                <CommandEmpty>No department found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem value="all" onSelect={() => { setSelectedDepartment("all"); setDeptFilterOpen(false); }}>
+                    <Check className={cn("mr-2 h-4 w-4", selectedDepartment === "all" ? "opacity-100 text-[#DA7756]" : "opacity-0")} />
+                    All Departments
+                  </CommandItem>
+                  {departments.map((dept) => (
+                    <CommandItem
+                      key={dept.id}
+                      value={dept.name}
+                      onSelect={() => { setSelectedDepartment(String(dept.id)); setDeptFilterOpen(false); }}
+                    >
+                      <Check className={cn("mr-2 h-4 w-4", selectedDepartment === String(dept.id) ? "opacity-100 text-[#DA7756]" : "opacity-0")} />
+                      {dept.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        <Popover open={userFilterOpen} onOpenChange={setUserFilterOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              role="combobox"
+              aria-expanded={userFilterOpen}
+              className={cn(
+                filterSelectCompactClass,
+                "inline-flex items-center justify-between gap-1.5"
+              )}
+            >
+              <span className="truncate">
+                {selectedUser === "all"
+                  ? "All Users"
+                  : users.find((u) => String(u.id) === selectedUser)?.name ?? "All Users"}
+              </span>
+              <ChevronsUpDown className="h-3 w-3 shrink-0 text-neutral-400" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="p-0 w-[200px]" align="start">
+            <Command>
+              <CommandInput placeholder="Search user..." />
+              <CommandList>
+                <CommandEmpty>No user found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem value="all" onSelect={() => { setSelectedUser("all"); setUserFilterOpen(false); }}>
+                    <Check className={cn("mr-2 h-4 w-4", selectedUser === "all" ? "opacity-100 text-[#DA7756]" : "opacity-0")} />
+                    All Users
+                  </CommandItem>
+                  {users.map((u) => (
+                    <CommandItem
+                      key={u.id}
+                      value={u.name}
+                      onSelect={() => { setSelectedUser(String(u.id)); setUserFilterOpen(false); }}
+                    >
+                      <Check className={cn("mr-2 h-4 w-4", selectedUser === String(u.id) ? "opacity-100 text-[#DA7756]" : "opacity-0")} />
+                      {u.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
         <select
           className={filterSelectCompactClass}
           value={selectedFrequency}
@@ -730,6 +912,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
             <KPICardView
               key={kpi.id}
               kpi={kpi}
+              assignedUsersText={getAssignedUsersText(kpi)}
               selected={selectedIds.has(kpi.id)}
               onToggleSelect={() => toggleOne(kpi.id)}
               onDelete={handleDeleteKpi}
@@ -741,6 +924,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
       ) : (
         <KPIListView
           kpis={filtered}
+          getAssignedUsersText={getAssignedUsersText}
           selectedIds={selectedIds}
           toggleOne={toggleOne}
           onDelete={handleDeleteKpi}
@@ -750,7 +934,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
       )}
 
       <Dialog open={!!manageKpi} onOpenChange={(open) => !open && handleCloseManage()}>
-        <DialogContent className="!gap-0 !p-0 h-[min(88vh,720px)] w-[min(calc(100vw-2rem),920px)] overflow-hidden !rounded-[22px] border border-[rgba(218,119,86,0.24)] bg-[#fef6f4] shadow-[0_24px_64px_rgba(26,26,26,0.2)]">
+        <DialogContent className="!gap-0 !p-0 h-[min(94vh,780px)] w-[min(calc(100vw-2rem),760px)] !max-w-[760px] overflow-hidden !rounded-[22px] border border-[rgba(218,119,86,0.24)] bg-[#fef6f4] shadow-[0_24px_64px_rgba(26,26,26,0.2)]">
           {manageKpi && (
             <div className="flex h-full flex-col overflow-hidden rounded-[inherit]">
               <div className="shrink-0 flex items-center justify-between border-b border-neutral-100 px-6 pb-4 pt-6 sm:px-8">
@@ -775,14 +959,36 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
 
                 <p className="text-sm font-semibold text-neutral-700">Users from department:</p>
 
-                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                  <input
+                    type="search"
+                    value={manageUserSearch}
+                    onChange={(e) => setManageUserSearch(e.target.value)}
+                    placeholder="Search user by name or email"
+                    className={cn(
+                      "h-11 w-full rounded-xl py-2 pl-9 pr-3 text-sm text-[#1a1a1a] shadow-sm placeholder:text-neutral-400",
+                      kpiClass.border,
+                      kpiClass.surfaceInput,
+                      kpiClass.focusRing
+                    )}
+                  />
+                </div>
+
+                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overflow-x-hidden pr-2">
                   {manageUsers.length === 0 ? (
                     <div className="rounded-xl border border-neutral-200 bg-white px-4 py-5 text-sm text-neutral-500">
                       No users found for this department.
                     </div>
+                  ) : filteredManageUsers.length === 0 ? (
+                    <div className="rounded-xl border border-neutral-200 bg-white px-4 py-5 text-sm text-neutral-500">
+                      No users match your search.
+                    </div>
                   ) : (
-                    manageUsers.map((u) => {
+                    filteredManageUsers.map((u) => {
                       const checked = selectedManageUsers.has(u.id);
+                      const displayName = u.name?.trim() || u.email?.trim() || `User ${u.id}`;
+                      const displayEmail = u.email?.trim() || "No email available";
                       return (
                         <label
                           key={u.id}
@@ -796,10 +1002,10 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
                           />
                           <span>
                             <span className="block text-base font-semibold leading-tight text-neutral-900">
-                              {u.name}
+                              {displayName}
                             </span>
                             <span className="mt-0.5 block text-sm text-neutral-500">
-                              {u.email ?? "No email available"}
+                              {displayEmail}
                             </span>
                           </span>
                         </label>
@@ -816,6 +1022,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
                   <button
                     type="button"
                     onClick={handleCloseManage}
+                    disabled={isSavingManageUsers}
                     className="inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50"
                   >
                     Cancel
@@ -823,9 +1030,17 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
                   <button
                     type="button"
                     onClick={handleSaveManageUsers}
+                    disabled={isSavingManageUsers}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#c9674a]"
                   >
-                    Save Changes
+                    {isSavingManageUsers ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
                   </button>
                 </div>
               </div>

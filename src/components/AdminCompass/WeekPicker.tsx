@@ -1,80 +1,59 @@
-import React, { useState } from "react";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { getWeek, format, startOfWeek, endOfWeek } from "date-fns";
+import React, { useRef } from 'react';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { format, getWeek } from 'date-fns';
 
 interface WeekPickerProps {
-  currentWeek: Date;
-  onWeekChange: (date: Date) => void;
+    currentWeek: Date;
+    onWeekChange: (date: Date) => void;
 }
 
+const toDateInputValue = (date: Date) => format(date, 'yyyy-MM-dd');
+
+const fromDateInputValue = (value: string) => {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day);
+};
+
 export const WeekPicker = ({ currentWeek, onWeekChange }: WeekPickerProps) => {
-  const [popoverOpen, setPopoverOpen] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleDateSelect = (selectedDate: Date | undefined) => {
-    if (selectedDate) {
-      onWeekChange(selectedDate);
-      setPopoverOpen(false);
-    }
-  };
+    const openNativePicker = () => {
+        const input = inputRef.current;
+        if (!input) return;
 
-  const weekRange = currentWeek
-    ? {
-        from: startOfWeek(currentWeek, { weekStartsOn: 0 }), // Sunday
-        to: endOfWeek(currentWeek, { weekStartsOn: 0 }),
-      }
-    : undefined;
+        if (typeof input.showPicker === 'function') {
+            input.showPicker();
+        } else {
+            input.focus();
+            input.click();
+        }
+    };
 
-  return (
-    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className="px-4 !bg-white !border-gray-200 !rounded-[8px] !text-gray-700 gap-2"
+    return (
+        <button
+            type="button"
+            className="relative inline-flex h-9 min-w-[168px] items-center rounded-[8px] border border-gray-200 bg-white px-3 text-left text-gray-700 shadow-sm hover:bg-white"
+            onClick={openNativePicker}
         >
-          <CalendarIcon className="w-4 h-4 !text-gray-500" />
-          {currentWeek
-            ? `Week ${getWeek(currentWeek)}, ${format(currentWeek, "yyyy")}`
-            : "Select Week"}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0">
-        <Calendar
-          mode="range"
-          selected={weekRange}
-          onDayClick={handleDateSelect}
-          defaultMonth={currentWeek}
-          showWeekNumber
-          classNames={{
-            day_range_start: "bg-primary text-primary-foreground rounded-l-md",
-            day_range_end: "bg-primary text-primary-foreground rounded-r-md",
-            day_range_middle: "bg-primary/90 text-primary-foreground",
-            weeknumber: "text-sm text-gray-400 pt-2 pr-2 border-r",
-            head_cell: "text-sm text-gray-500 font-medium w-9 h-9",
-            cell: "w-9 h-9",
-            day: "w-9 h-9",
-          }}
-        />
-        <div className="flex justify-between p-2 border-t border-gray-100">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-primary font-bold"
-            onClick={() => {
-              onWeekChange(new Date());
-              setPopoverOpen(false);
-            }}
-          >
-            This week
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
+            <span className="mr-2 flex shrink-0 items-center text-gray-500">
+                <CalendarIcon className="h-4 w-4" />
+            </span>
+            <span className="flex-1 text-sm font-semibold leading-none">
+                {currentWeek ? `Week ${getWeek(currentWeek)}, ${format(currentWeek, 'yyyy')}` : 'Select Week'}
+            </span>
+            <input
+                ref={inputRef}
+                type="date"
+                value={currentWeek ? toDateInputValue(currentWeek) : ''}
+                onChange={(event) => {
+                    if (event.target.value) {
+                        onWeekChange(fromDateInputValue(event.target.value));
+                    }
+                }}
+                className="pointer-events-none absolute bottom-0 left-1 h-px w-px opacity-0"
+                aria-label="Select week date"
+                tabIndex={-1}
+            />
+        </button>
+    );
 };

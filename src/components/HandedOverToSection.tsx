@@ -166,8 +166,8 @@ export const HandedOverToSection: React.FC<HandedOverToSectionProps> = ({
   }, [handedOverTo]);
 
   return (
-    <>
-      {/* Handed Over To */}
+    <div className="space-y-8">
+      {/* Handed Over To Selection */}
       <div className="space-y-4">
         <Label className="text-sm font-medium text-gray-700">
           Handed Over To
@@ -175,71 +175,75 @@ export const HandedOverToSection: React.FC<HandedOverToSectionProps> = ({
         <RadioGroup
           value={handedOverTo}
           onValueChange={onHandedOverToChange}
-          className="flex gap-6"
+          className="flex gap-8"
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="vendor" id="vendor" />
-            <Label htmlFor="vendor" className="text-sm">Vendor</Label>
+            <Label htmlFor="vendor" className="text-sm cursor-pointer">Vendor</Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="user" id="user" />
-            <Label htmlFor="user" className="text-sm">User</Label>
+            <Label htmlFor="user" className="text-sm cursor-pointer">User</Label>
           </div>
         </RadioGroup>
       </div>
 
-      {/* Vendor Dropdown */}
-      {handedOverTo === 'vendor' && (
-        <div className="space-y-2 md:col-span-3">
-          <FormControl className="w-full">
-            <InputLabel shrink>Vendor *</InputLabel>
-            <Select
-              value={vendor}
-              onChange={(e) => onVendorChange(e.target.value)}
-              displayEmpty
-              label="Vendor *"
-              fullWidth
-            >
-              <MenuItem value="" disabled>Select Vendor</MenuItem>
-              {suppliers.map((s) => (
-                <MenuItem key={s.id} value={s.name}>
-                  {s.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+      {/* Conditional Content based on Selection */}
+      <div className="space-y-8">
+        {handedOverTo === 'vendor' && (
+          <div className="space-y-8">
+            <div className="max-w-xl">
+              <FormControl fullWidth size="small">
+                <InputLabel shrink>Vendor *</InputLabel>
+                <Select
+                  value={vendor}
+                  onChange={(e) => onVendorChange(e.target.value)}
+                  displayEmpty
+                  label="Vendor *"
+                  className="bg-white"
+                >
+                  <MenuItem value="" disabled>Select Vendor</MenuItem>
+                  {suppliers.map((s) => (
+                    <MenuItem key={s.id} value={s.name}>
+                      {s.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
 
-          {/* Vendor Bidding Section */}
-          <VendorBiddingSection
-            vendorBids={vendorBids}
-            onVendorBidsChange={onVendorBidsChange}
-          />
-        </div>
-      )}
+            {/* Vendor Bidding Section */}
+            <div className="pt-2 border-t border-gray-100">
+              <VendorBiddingSection
+                vendorBids={vendorBids}
+                onVendorBidsChange={onVendorBidsChange}
+              />
+            </div>
+          </div>
+        )}
 
-      {/* User Dropdown */}
-      {handedOverTo === 'user' && (
-        <div className="space-y-2 md:col-span-3">
-         <FormControl className="w-full">
-  <InputLabel shrink>User *</InputLabel>
-  <Select
-    value={vendor}
-    onChange={(e) => onVendorChange(e.target.value)} // consider renaming for clarity
-    displayEmpty
-    label="User *"
-    fullWidth
-  >
-    <MenuItem value="" disabled>Select User</MenuItem>
-    {users.map((u) => (
-      <MenuItem key={u.id} value={u.full_name}>
-        {u.full_name}
-      </MenuItem>
-    ))}
-  </Select>
-</FormControl>
-
-        </div>
-      )}
-    </>
+        {handedOverTo === 'user' && (
+          <div className="max-w-xl">
+            <FormControl fullWidth size="small">
+              <InputLabel shrink>User *</InputLabel>
+              <Select
+                value={vendor}
+                onChange={(e) => onVendorChange(e.target.value)}
+                displayEmpty
+                label="User *"
+                className="bg-white"
+              >
+                <MenuItem value="" disabled>Select User</MenuItem>
+                {users.map((u) => (
+                  <MenuItem key={u.id} value={u.full_name}>
+                    {u.full_name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };

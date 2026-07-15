@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag, Download } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
 import { VisitorFilterDialog, VisitorFilters } from '@/components/VisitorFilterDialog';
@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/pagination';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions, getAuthHeader, ENDPOINTS } from '@/config/apiConfig';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Get current site ID dynamically from localStorage
 const getCurrentSiteId = (): number => {
@@ -202,6 +203,7 @@ const getVisitorsOut = async (siteId: number, page: number = 1, perPage: number 
 };
 
 export const VisitorsDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const [selectedPerson, setSelectedPerson] = useState('');
   const [isNewVisitorDialogOpen, setIsNewVisitorDialogOpen] = useState(false);
   const [isUpdateNumberDialogOpen, setIsUpdateNumberDialogOpen] = useState(false);
@@ -216,6 +218,7 @@ export const VisitorsDashboard = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // API State
   const [unexpectedVisitors, setUnexpectedVisitors] = useState<any[]>([]);
@@ -248,11 +251,14 @@ export const VisitorsDashboard = () => {
     totalEntries: 0,
     perPage: 20
   });
-  const [historyPagination, setHistoryPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    totalEntries: 0,
-    perPage: 20
+ const [historyPagination, setHistoryPagination] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      currentPage: Number(params.get('page')) || 1,
+      totalPages: 1,
+      totalEntries: 0,
+      perPage: 20
+    };
   });
 
   // Column visibility state for visitor history table
@@ -414,13 +420,13 @@ export const VisitorsDashboard = () => {
       console.log('🔍 Using site ID for visitor history:', siteId);
       console.log('🔍 SearchTerm being passed to visitor history:', searchTerm);
       const data = await getVisitorHistory(siteId, page, 20, searchTerm);
-      setVisitorHistoryData(data.visitors || []);
-      setHistoryPagination({
-        currentPage: data.pagination?.current_page || 1,
+     setVisitorHistoryData(data.visitors || []);
+      setHistoryPagination(prev => ({
+        ...prev,
         totalPages: data.pagination?.total_pages || 1,
         totalEntries: data.pagination?.total_entries || data.visitors?.length || 0,
         perPage: data.pagination?.per_page || 20
-      });
+      }));
     } catch (error) {
       console.error('Error fetching visitor history:', error);
     } finally {
@@ -610,14 +616,18 @@ export const VisitorsDashboard = () => {
         return visitor.sNo;
       case 'actions':
         return (
-          <button
-            className="w-4 h-4 text-black hover:text-gray-700"
-            onClick={() => handleEditClick(visitor.guest_number)}
-          >
-            <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
-            </svg>
-          </button>
+          <div className="flex gap-2">
+            {shouldShow("Visitor", "update") && (
+              <button
+                className="w-4 h-4 text-black hover:text-gray-700"
+                onClick={() => handleEditClick(visitor.guest_number)}
+              >
+                <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                </svg>
+              </button>
+            )}
+          </div>
         );
       case 'id':
         return visitor.id;
@@ -757,13 +767,15 @@ export const VisitorsDashboard = () => {
       case 'tableActions':
         return (
           <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleViewVisitor(visitor.id)}
-            >
-              View
-            </Button>
+            {shouldShow("Visitor", "show") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleViewVisitor(visitor.id)}
+              >
+                View
+              </Button>
+            )}
             {visitor.check_in_available && (
               <Button
                 size="sm"
@@ -916,15 +928,17 @@ export const VisitorsDashboard = () => {
       case 'action':
         return (
           <div className="flex items-center justify-center gap-2">
-            <div title="View visitor details" className="p-1 hover:bg-gray-100 rounded transition-colors">
-              <Eye
-                className="w-4 h-4 cursor-pointer text-gray-600 hover:text-[#C72030] hover:scale-110 transition-all duration-200"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleVisitorDetails(visitor.id);
-                }}
-              />
-            </div>
+            {shouldShow("visitor", "show") && (
+              <div title="View visitor details" className="p-1 hover:bg-gray-100 rounded transition-colors">
+                <Eye
+                  className="w-4 h-4 cursor-pointer text-gray-600 hover:text-[#C72030] hover:scale-110 transition-all duration-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleVisitorDetails(visitor.id);
+                  }}
+                />
+              </div>
+            )}
             <div title={`${visitor.is_flagged ? 'Unflag' : 'Flag'} visitor`} className="p-1 hover:bg-gray-100 rounded transition-colors">
               <Flag
                 className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:text-[#C72030] hover:scale-110 ${visitor.is_flagged
@@ -1632,8 +1646,13 @@ export const VisitorsDashboard = () => {
 
     return items;
   };
+  useEffect(() => {
+    navigate(`${location.pathname}?page=${historyPagination.currentPage}`, { replace: true });
+  }, [historyPagination.currentPage]);
 
-  const handlePageChange = (page: number) => {
+const handlePageChange = (page: number) => {
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
+    setHistoryPagination(prev => ({ ...prev, currentPage: page }));
     if (mainTab === 'visitor') {
       if (visitorSubTab === 'history') {
         fetchVisitorHistory(page, searchTerm);
@@ -1878,13 +1897,15 @@ export const VisitorsDashboard = () => {
               onFilterClick={handleFilterOpen}
               leftActions={
                 <div className="flex gap-3">
-                  <Button
-                    onClick={() => setIsActionPanelOpen(true)}
-                    className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Action
-                  </Button>
+                  {shouldShow("visitor", "create") && (
+                    <Button
+                      onClick={() => setIsActionPanelOpen(true)}
+                      className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Action
+                    </Button>
+                  )}
                 </div>
               }
               rightActions={

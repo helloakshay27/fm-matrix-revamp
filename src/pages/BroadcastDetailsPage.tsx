@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, Printer, Star, FileText, Share2, File, Pencil } from 'lucide-react';
+import { ArrowLeft, Loader2, Printer, Star, FileText, Share2, File, Pencil, FileVideo, FileSpreadsheet, Download } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChangeStatusDialog } from '@/components/ChangeStatusDialog';
 import { toast } from 'sonner';
@@ -133,6 +133,133 @@ export const BroadcastDetailsPage = () => {
       else if (field === 'show_on_home_screen') setShowOnHomeScreen(!value);
       else if (field === 'visible_after_expire') setVisibleAfterExpire(!value);
     }
+  };
+
+  const handleDownloadAttachment = async (attachment: any) => {
+    const attachmentId = attachment.id || attachment.attachment_id;
+    const fileName = attachment.document_name || attachment.document_file_name || 'document';
+    const downloadUrl = attachment.url || attachment.document_url || attachment.document || attachment.file_url;
+
+    if (attachmentId) {
+      try {
+        const response = await axios.get(
+          `https://${baseUrl}/attachfiles/${attachmentId}?show_file=true`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            responseType: 'blob',
+          }
+        );
+        const contentType = response.headers['content-type'] || 'application/octet-stream';
+        const blob = new Blob([response.data], { type: contentType });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        toast.success('File downloaded successfully');
+      } catch (error) {
+        console.error('API download failed:', error);
+        if (downloadUrl) {
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = fileName;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          toast.success('File download initiated');
+        } else {
+          toast.error('Failed to download file');
+        }
+      }
+    } else if (downloadUrl) {
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('File download initiated');
+    } else {
+      toast.error('No download URL available');
+    }
+  };
+
+  const getFileType = (url: string, name?: string): string => {
+    const source = (url || name || '').toLowerCase();
+    const ext = source.split('.').pop() || '';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return 'image';
+    if (['mp4', 'mov', 'avi', 'webm', 'mkv', 'm4v'].includes(ext)) return 'video';
+    if (ext === 'pdf') return 'pdf';
+    if (['xls', 'xlsx', 'csv'].includes(ext)) return 'sheet';
+    if (['doc', 'docx', 'txt', 'rtf'].includes(ext)) return 'doc';
+    return 'file';
+  };
+
+  const renderAttachmentPreview = (attachment: any) => {
+    const type = getFileType(attachment.url || '', attachment.document_name);
+
+    if (type === 'image') {
+      return (
+        <img
+          src={attachment.url}
+          alt={attachment.document_name || 'Image'}
+          className="w-16 h-16 object-contain rounded"
+        />
+      );
+    }
+    if (type === 'video') {
+      return (
+        <video
+          src={attachment.url}
+          className="w-16 h-16 object-contain rounded"
+          muted
+          preload="metadata"
+        />
+      );
+    }
+    if (type === 'pdf') {
+      return (
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-16 bg-red-500 rounded-sm flex items-center justify-center mb-1">
+            <span className="text-white text-xs font-bold">PDF</span>
+          </div>
+          <div className="w-12 h-1 bg-gray-300 rounded" />
+        </div>
+      );
+    }
+    if (type === 'sheet') {
+      return (
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-16 bg-green-600 rounded-sm flex items-center justify-center mb-1">
+            <FileSpreadsheet className="text-white w-6 h-6" />
+          </div>
+          <div className="w-12 h-1 bg-gray-300 rounded" />
+        </div>
+      );
+    }
+    if (type === 'doc') {
+      return (
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-16 bg-blue-600 rounded-sm flex items-center justify-center mb-1">
+            <FileText className="text-white w-6 h-6" />
+          </div>
+          <div className="w-12 h-1 bg-gray-300 rounded" />
+        </div>
+      );
+    }
+    return (
+      <div className="flex flex-col items-center">
+        <div className="w-12 h-16 bg-gray-400 rounded-sm flex items-center justify-center mb-1">
+          <File className="text-white w-6 h-6" />
+        </div>
+        <div className="w-12 h-1 bg-gray-300 rounded" />
+      </div>
+    );
   };
 
   return (
@@ -317,50 +444,71 @@ export const BroadcastDetailsPage = () => {
         </div>
         <div className="p-6 bg-white">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-            {/* Upload Document */}
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-4">Upload Document</h4>
-              {broadcastDetails?.attachments && broadcastDetails.attachments.length > 0 ? (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex flex-col items-center justify-center bg-white">
-                  <span className="text-xs text-gray-600 mb-2 text-center truncate max-w-full px-2">
-                    {broadcastDetails.attachments[0]?.document_name || "Document"}
-                  </span>
-                  <div className="flex flex-col items-center">
-                    {broadcastDetails.attachments[0]?.url?.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                      <img
-                        src={broadcastDetails.attachments[0].url}
-                        alt="Document"
-                        className="w-16 h-16 object-contain"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center">
-                        <div className="w-12 h-16 bg-red-500 rounded-sm flex items-center justify-center mb-1">
-                          <span className="text-white text-xs font-bold">PDF</span>
-                        </div>
-                        <div className="w-12 h-1 bg-gray-300 rounded"></div>
-                      </div>
-                    )}
+            {/* Attachments */}
+            {broadcastDetails?.attachments && broadcastDetails.attachments.length > 0 ? (
+              broadcastDetails.attachments.map((attachment: any, index: number) => (
+                <div key={index}>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-4">
+                    {index === 0 ? 'Attachments' : ''}
+                  </h4>
+                  <div className="relative flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 w-full max-w-[200px] h-40 bg-white hover:border-gray-400 transition-colors cursor-pointer"
+                    onClick={() => attachment.url && window.open(attachment.url, '_blank')}
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownloadAttachment(attachment);
+                      }}
+                      className="absolute top-2 right-2 p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors"
+                      title="Download"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                    <span className="text-xs text-gray-600 mb-3 text-center truncate max-w-full px-1">
+                      {attachment.document_name || `Attachment ${index + 1}`}
+                    </span>
+                    {renderAttachmentPreview(attachment)}
                   </div>
                 </div>
-              ) : (
+              ))
+            ) : (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-4">Attachments</h4>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex items-center justify-center bg-gray-50">
-                  <span className="text-sm text-gray-400">No document</span>
+                  <span className="text-sm text-gray-400">No attachments</span>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* Upload Cover Image */}
+            {/* Cover Image */}
             <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-4">Upload Cover Image</h4>
+              <h4 className="text-sm font-semibold text-gray-900 mb-4">Cover Image</h4>
               {broadcastDetails?.cover_image ? (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex flex-col items-center justify-center bg-white">
-                  <span className="text-xs text-gray-600 mb-2 text-center truncate max-w-full px-2">
-                    {broadcastDetails.cover_image?.name || "Name.jpg"}
+                <div
+                  onClick={() => broadcastDetails.cover_image?.url && window.open(broadcastDetails.cover_image.url, '_blank')}
+                  className="relative flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 w-full max-w-[200px] h-40 bg-white hover:border-gray-400 transition-colors cursor-pointer"
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownloadAttachment({
+                        id: broadcastDetails.cover_image?.id,
+                        document_name: broadcastDetails.cover_image?.name || "Cover Image",
+                        url: broadcastDetails.cover_image?.url
+                      });
+                    }}
+                    className="absolute top-2 right-2 p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors"
+                    title="Download"
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
+                  <span className="text-xs text-gray-600 mb-3 text-center truncate max-w-full px-1">
+                    {broadcastDetails.cover_image?.name || "Cover Image"}
                   </span>
                   <img
-                    src={broadcastDetails.cover_image?.url || "https://via.placeholder.com/80"}
+                    src={broadcastDetails.cover_image?.url}
                     alt="Cover"
-                    className="w-16 h-16 object-contain"
+                    className="w-16 h-16 object-contain rounded"
                   />
                 </div>
               ) : (

@@ -207,7 +207,7 @@ const CommunityAdd = () => {
                                                 }}
                                             />
                                         }
-                                        label={<span className="text-[12px] text-gray-900">Panasche</span>}
+                                        label={<span className="text-[12px] text-gray-900">Panache</span>}
                                     />
                                     <FormControlLabel
                                         value="persuit"
@@ -220,7 +220,7 @@ const CommunityAdd = () => {
                                                 }}
                                             />
                                         }
-                                        label={<span className="text-[12px] text-gray-900">Persuit</span>}
+                                        label={<span className="text-[12px] text-gray-900">Pursuit</span>}
                                     />
                                 </RadioGroup>
                             </div>

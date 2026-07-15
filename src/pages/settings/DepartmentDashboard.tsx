@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
+// import { Switch } from '@/components/ui/switch';
 import { Edit, Plus } from 'lucide-react';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Department } from '@/services/departmentService';
@@ -16,6 +16,8 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchDepartmentData, addDepartment, updateDepartment } from '@/store/slices/departmentSlice';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { Switch } from '@mui/material';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface LocalDepartment extends Department {
   id: number;
@@ -25,6 +27,8 @@ interface LocalDepartment extends Department {
 
 export const DepartmentDashboard = () => {
   const dispatch = useAppDispatch();
+  const { shouldShow } = useDynamicPermissions();
+
   const { data: departmentData, loading, error } = useAppSelector((state) => state.department);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -130,10 +134,29 @@ export const DepartmentDashboard = () => {
     switch (columnKey) {
       case 'status':
         return (
+          // <Switch
+          //   checked={item.status}
+          //   onCheckedChange={() => toggleStatus(item.id)}
+          //   className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+          // />
           <Switch
             checked={item.status}
-            onCheckedChange={() => toggleStatus(item.id)}
-            className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+            onChange={() => toggleStatus(item.id)}
+            size='small'
+            sx={{
+              '& .MuiSwitch-switchBase.Mui-checked': {
+                color: '#04A231',
+              },
+              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                backgroundColor: '#04A231',
+              },
+              '& .MuiSwitch-switchBase:not(.Mui-checked)': {
+                color: '#C72030',
+              },
+              '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                backgroundColor: 'rgba(199, 32, 48, 0.5)',
+              },
+            }}
           />
         );
       default:
@@ -143,6 +166,7 @@ export const DepartmentDashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex gap-2 w-20 justify-center">
+      {shouldShow("Department","update")&&(
       <Button
         size="sm"
         variant="ghost"
@@ -153,16 +177,18 @@ export const DepartmentDashboard = () => {
         }}
       >
         <Edit className="w-4 h-4" />
-      </Button>
+      </Button>)}
     </div>
   );
 
   const leftActions = (
     <>
+    {shouldShow("Department","create")&&(
       <Button className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto" onClick={() => setIsDialogOpen(true)}>
         <Plus className="w-4 h-4 mr-2" />
         Add Department
       </Button>
+      )}
     </>
   );
 

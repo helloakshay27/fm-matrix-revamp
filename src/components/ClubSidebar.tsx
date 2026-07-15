@@ -51,6 +51,7 @@ type SidebarItem = {
   subItems?: SidebarItem[];
   color?: string;
   blank?: boolean;
+  additionalRoutes?: string[];
 };
 
 const modulesByPackage = {
@@ -59,6 +60,7 @@ const modulesByPackage = {
       name: "Memberships",
       icon: Star,
       href: "/club-management/membership/groups",
+      additionalRoutes: ["/club-management/group-membership"],
     },
     {
       name: "User Management",
@@ -93,14 +95,14 @@ const modulesByPackage = {
       href: "/club-management/amenities-booking-club",
     },
     {
-      name: "Broadcast",
+      name: "Notices",
       icon: Bell,
-      href: "/club-management/broadcast",
+      href: "/pulse/notices",
     },
     {
-      name: "Event",
+      name: "Events",
       icon: Calendar,
-      href: "/club-management/events",
+      href: "/pulse/events",
     },
     {
       name: "Payments",
@@ -113,10 +115,15 @@ const modulesByPackage = {
       href: "/maintenance/vendor",
     },
     {
-      name: "Invoices",
-      icon: FileText,
-      href: "/accounting/invoices/list",
+      name: "Community",
+      icon: Users,
+      href: "/pulse/community",
     },
+    // {
+    //   name: "Invoices",
+    //   icon: FileText,
+    //   href: "/accounting/invoices/list",
+    // },
     // {
     //     name: "Accounting",
     //     icon: Calculator,
@@ -142,21 +149,38 @@ const modulesByPackage = {
       name: "Amenities Setup",
       icon: Gem,
       href: "/settings/vas/booking-club/setup",
+      additionalRoutes: [
+        "/settings/vas/booking-club/setup/add",
+        "/settings/vas/booking-club/setup/details",
+        "/settings/vas/booking-club/setup/edit",
+      ],
     },
     {
       name: "Membership Plan Setup",
       icon: ClipboardList,
       href: "/settings/vas/membership-plan/setup",
+      additionalRoutes: [
+        "/settings/vas/membership-plan/setup/add",
+        "/settings/vas/membership-plan/setup/edit",
+        "/settings/vas/membership-plan/setup/details",
+      ],
     },
     {
       name: "Accessories Setup",
       icon: Boxes,
       href: "/settings/accessories",
+      additionalRoutes: ["/settings/accessories"],
     },
     {
       name: "Payment Plan Setup",
       icon: CreditCard,
       href: "/settings/payment-plan/setup",
+      additionalRoutes: [
+        "/settings/payment-plan/add",
+        "/settings/payment-plan/edit",
+        "/settings/payment-plan/details",
+        "/settings/payment-management",
+      ],
     },
     {
       name: "Templates",
@@ -276,7 +300,7 @@ const modulesByPackage = {
         // { name: "Delivery Challans", href: "/accounting/delivery-challans" },
         // { name: "Payment Links", href: "/accounting/payment-links" },
         { name: "Payments Received", href: "/accounting/payments-received" },
-        { name: "Credit Note", href: "/accounting/credit-note" }
+        { name: "Credit Note", href: "/accounting/credit-note" },
       ],
     },
 
@@ -284,7 +308,7 @@ const modulesByPackage = {
       name: "Purchases",
       icon: Truck,
       subItems: [
-        { name: "Vendor", href: "/maintenance/vendor" },
+        { name: "Vendor", href: "/accounting/vendor" },
         { name: "Expense", href: "/accounting/expense" },
         { name: "Recurring Expenses", href: "/accounting/recurring-expenses" },
         { name: "Purchase Order", href: "/accounting/purchase-order" },
@@ -310,7 +334,7 @@ const modulesByPackage = {
         { name: "Chart Of Accounts", href: "/accounting/chart-journal" },
         { name: "Opening Balance", href: "/accounting/opening-balance" },
         // { name: "Budget", href: "/accounting/budget" },
-        { name: "Tax Setup", href: "/accounting/tax-setup" },
+        { name: "Tax Setup", href: "/accounting/tax-setup-tab" },
       ],
     },
 
@@ -326,22 +350,30 @@ const modulesByPackage = {
           name: "Payment Terms",
           href: "/accounting/payment-terms",
         },
-        {
-          name: "Tax Sections",
-          href: "/accounting/section",
-        },
+        // {
+        //   name: "Tax Sections",
+        //   href: "/accounting/section",
+        // },
 
-        {
-          name: "Direct Taxes",
-          href: "/accounting/tax-setup-master",
-        },
-        {
-          name: "Tax Rates Setup",
-          href: "/accounting/tax-rates-setup",
-        },
+        // {
+        //   name: "Direct Taxes",
+        //   href: "/accounting/tax-setup-master",
+        // },
+        // {
+        //   name: "Tax Rates Setup",
+        //   href: "/accounting/tax-rates-setup",
+        // },
         {
           name: "Default Tax Preferences",
           href: "/accounting/default-tax-preferences",
+        },
+        {
+          name: " Approval Matrix",
+          href: "/settings/asset-setup/approval-matrix",
+        },
+        {
+          name: "Organization",
+          href: "/accounting/organisation",
         },
         // { name: "Charges ", href: "/accounting/charge-setup" },
         // { name: "Bill Cycles ", href: "/accounting/bill-cycles" },
@@ -353,6 +385,82 @@ const modulesByPackage = {
       icon: BarChart3,
       subItems: [
         {
+          name: "Business Overview",
+          // icon: TrendingUp,
+          subItems: [
+            {
+              name: "Profit and Loss",
+              href: "/accounting/reports/profit-and-loss",
+            },
+            // {
+            //   name: "Profit and Loss (Schedule III)",
+            //   href: "/accounting/reports/profit-and-loss-details",
+            // },
+            // {
+            //   name: "Horizontal Profit and Loss",
+            //   href: "/accounting/reports/profit-and-loss",
+            // },
+            {
+              name: "Cash Flow Statement",
+              href: "/accounting/reports/cash-flow-statement",
+            },
+            {
+              name: "Balance Sheet",
+              href: "/accounting/reports/balance-sheet",
+            },
+            // {
+            //   name: "Horizontal Balance Sheet",
+            //   href: "/accounting/reports/balance-sheet",
+            // },
+            // {
+            //   name: "Balance Sheet (Schedule III)",
+            //   href: "/accounting/reports/balance-sheet-details",
+            // },
+            // {
+            //   name: "Business Performance Ratios",
+            //   href: "/accounting/reports/business-performance",
+            // },
+            // {
+            //   name: "Cash Flow Forecasting",
+            //   href: "/accounting/reports/cash-flow-statement",
+            // },
+            // {
+            //   name: "Movement of Equity",
+            //   href: "/accounting/reports/balance-sheet",
+            // },
+          ],
+        },
+        {
+          name: "Account",
+          subItems: [
+            // {
+            //   name: "Account Transactions",
+            //   href: "/accounting/reports/account-transactions",
+            // },
+            // {
+            //   name: "Day Book",
+            //   href: "/accounting/reports/day-book",
+            // },
+            // {
+            //   name: "Journal Report",
+            //   href: "/accounting/reports/journal-report",
+            // },
+            // {
+            //   name: "General Ledger",
+            //   href: "/accounting/reports/general-ledger",
+            // },
+            // {
+            //   name: "Detailed General Ledger",
+            //   href: "/accounting/reports/detailed-general-ledger",
+            // },
+            {
+              name: "Trial Balance",
+              href: "/accounting/reports/trial-balance",
+            },
+          ],
+        },
+
+        {
           name: "Sales Reports",
           subItems: [
             {
@@ -363,10 +471,10 @@ const modulesByPackage = {
               name: "Sales by Item",
               href: "/accounting/reports/sales-by-item",
             },
-            // {
-            //   name: "Sales by Sales Person",
-            //   href: "/accounting/reports/sales-by-sales-person",
-            // },
+            {
+              name: "Sales by Sales Person",
+              href: "/accounting/reports/sales-by-sales-person",
+            },
             {
               name: "Sales Summary",
               href: "/accounting/reports/sales-summary",
@@ -377,56 +485,6 @@ const modulesByPackage = {
           name: "Debtors & Creditors ",
           href: "/accounting/reports/debtors-creditors",
         },
-
-        {
-          name: "Business Overview",
-          icon: TrendingUp,
-          subItems: [
-            {
-              name: "Profit and Loss",
-              href: "/accounting/reports/profit-and-loss",
-            },
-            {
-              name: "Profit and Loss (Schedule III)",
-              href: "/accounting/reports/profit-and-loss-details",
-            },
-            {
-              name: "Horizontal Profit and Loss",
-              href: "/accounting/reports/profit-and-loss",
-            },
-            {
-              name: "Cash Flow Statement",
-              href: "/accounting/reports/cash-flow-statement",
-            },
-            {
-              name: "Balance Sheet",
-              href: "/accounting/reports/balance-sheet",
-            },
-            {
-              name: "Horizontal Balance Sheet",
-              href: "/accounting/reports/balance-sheet",
-            },
-            {
-              name: "Balance Sheet (Schedule III)",
-              href: "/accounting/reports/balance-sheet-details",
-            },
-            {
-              name: "Business Performance Ratios",
-              href: "/accounting/reports/business-performance",
-            },
-            {
-              name: "Cash Flow Forecasting",
-              href: "/accounting/reports/cash-flow-statement",
-            },
-            {
-              name: "Movement of Equity",
-              href: "/accounting/reports/balance-sheet",
-            },
-          ],
-        },
-
-
-
 
         // {
         //   name: "Account Type Summary",
@@ -481,7 +539,6 @@ const modulesByPackage = {
         //   href: "/accounting/reports/receivable-details",
         // },
 
-
         {
           name: "Receivables",
           subItems: [
@@ -505,10 +562,10 @@ const modulesByPackage = {
               name: "Sales Order Details",
               href: "/accounting/reports/sales-order-details",
             },
-            {
-              name: "Delivery Challan Details",
-              href: "/accounting/reports/delivery-challan-details",
-            },
+            // {
+            //   name: "Delivery Challan Details",
+            //   href: "/accounting/reports/delivery-challan-details",
+            // },
             {
               name: "Quote Details",
               href: "/accounting/reports/quote-details",
@@ -543,11 +600,10 @@ const modulesByPackage = {
               name: "Credit Note Details",
               href: "/accounting/reports/credit-note-details",
             },
-            {
-              name: "Refund History",
-              href: "/accounting/reports/refund-history",
-            },
-
+            // {
+            //   name: "Refund History",
+            //   href: "/accounting/reports/refund-history",
+            // },
           ],
         },
 
@@ -570,44 +626,28 @@ const modulesByPackage = {
               href: "/accounting/reports/vendor-balance-summary",
             },
             {
-              name: "Payments Made",
-              href: "/accounting/reports/payments-made",
-            },
-            {
-              name: "Payable Details",
-              href: "/accounting/reports/payable-details",
+              name: "AP Aging Summary",
+              href: "/accounting/reports/ap-aging-summary",
             },
             {
               name: "AP Aging Details",
               href: "/accounting/reports/ap-aging-details",
             },
             {
-              name: "Refund History",
-              href: "/accounting/reports/payable-refund-history",
+              name: "Bill Details",
+              href: "/accounting/reports/bill-details",
+            },
+            {
+              name: "Vendor Credits Details",
+              href: "/accounting/reports/vendor-credits-details",
+            },
+            {
+              name: "Payments Made",
+              href: "/accounting/reports/payments-made",
             },
             {
               name: "Purchase Order Details",
               href: "/accounting/reports/purchase-order-details",
-            },
-            {
-              name: "Expense Details",
-              href: "/accounting/reports/expense-details",
-            },
-            {
-              name: "Expense Summary by Category",
-              href: "/accounting/reports/expense-summary-by-category",
-            },
-            {
-              name: "Expenses by Project",
-              href: "/accounting/reports/expenses-by-project",
-            },
-            {
-              name: "Expenses by Employee",
-              href: "/accounting/reports/expenses-by-employee",
-            },
-            {
-              name: "Billable Expense Details",
-              href: "/accounting/reports/billable-expense-details",
             },
             {
               name: "Purchases by Vendor",
@@ -618,17 +658,35 @@ const modulesByPackage = {
               href: "/accounting/reports/payable-summary",
             },
             {
-              name: "AP Aging Summary",
-              href: "/accounting/reports/ap-aging-summary",
+              name: "Payable Details",
+              href: "/accounting/reports/payable-details",
             },
-            {
-              name: "Bill Details",
-              href: "/accounting/reports/bill-details",
-            },
-            {
-              name: "Vendor Credits Details",
-              href: "/accounting/reports/vendor-credits-details",
-            },
+
+            // {
+            //   name: "Refund History",
+            //   href: "/accounting/reports/payable-refund-history",
+            // },
+
+            // {
+            //   name: "Expense Details",
+            //   href: "/accounting/reports/expense-details",
+            // },
+            // {
+            //   name: "Expense Summary by Category",
+            //   href: "/accounting/reports/expense-summary-by-category",
+            // },
+            // {
+            //   name: "Expenses by Project",
+            //   href: "/accounting/reports/expenses-by-project",
+            // },
+            // {
+            //   name: "Expenses by Employee",
+            //   href: "/accounting/reports/expenses-by-employee",
+            // },
+            // {
+            //   name: "Billable Expense Details",
+            //   href: "/accounting/reports/billable-expense-details",
+            // },
           ],
         },
 
@@ -636,9 +694,14 @@ const modulesByPackage = {
           name: "Purchases and Expenses",
           subItems: [
             {
-              name: "Purchase Order Details",
-              href: "/accounting/purchases-and-expenses/purchase-order-details",
+              name: "Purchases by Vendor",
+              href: "/accounting/purchases-and-expenses/purchases-by-vendor",
             },
+            {
+              name: "Purchases by Item",
+              href: "/accounting/purchases-and-expenses/purchases-by-item",
+            },
+
             {
               name: "Expense Details",
               href: "/accounting/purchases-and-expenses/expense-details",
@@ -651,22 +714,15 @@ const modulesByPackage = {
               name: "Expenses by Customer",
               href: "/accounting/purchases-and-expenses/expenses-by-customer",
             },
-            {
-              name: "Expenses by Project",
-              href: "/accounting/purchases-and-expenses/expenses-by-project",
-            },
-            {
-              name: "Expenses by Employee",
-              href: "/accounting/purchases-and-expenses/expenses-by-employee",
-            },
-            {
-              name: "Purchases by Vendor",
-              href: "/accounting/purchases-and-expenses/purchases-by-vendor",
-            },
-            {
-              name: "Purchases by Item",
-              href: "/accounting/purchases-and-expenses/purchases-by-item",
-            },
+            // {
+            //   name: "Expenses by Project",
+            //   href: "/accounting/purchases-and-expenses/expenses-by-project",
+            // },
+            // {
+            //   name: "Expenses by Employee",
+            //   href: "/accounting/purchases-and-expenses/expenses-by-employee",
+            // },
+
             {
               name: "Billable Expense Details",
               href: "/accounting/purchases-and-expenses/billable-expense-details",
@@ -682,38 +738,6 @@ const modulesByPackage = {
               href: "/accounting/reports/tax-summary",
             },
             {
-              name: "GSTR-7",
-              href: "/accounting/reports/gstr-7",
-            },
-            {
-              name: "GSTR-3B Summary",
-              href: "/accounting/reports/gstr-3b-summary",
-            },
-            {
-              name: "Summary of Inward Supplies",
-              href: "/accounting/reports/summary-of-inward-supplies",
-            },
-            {
-              name: "PMT-06 (Self Assessment Basis)",
-              href: "/accounting/reports/pmt-06-self-assessment-basis",
-            },
-            {
-              name: "Summary of Outward Supplies (GSTR-1)",
-              href: "/accounting/reports/summary-of-outward-supplies-gstr-1",
-            },
-            {
-              name: "Invoice Furnishing Facility (IFF)",
-              href: "/accounting/reports/invoice-furnishing-facility-iff",
-            },
-            {
-              name: "Self-invoice Summary",
-              href: "/accounting/reports/self-invoice-summary",
-            },
-            {
-              name: "TCS Summary (Form No. 27EQ)",
-              href: "/accounting/reports/tcs-summary-form-27eq",
-            },
-            {
               name: "TDS Summary",
               href: "/accounting/reports/tds-summary",
             },
@@ -721,116 +745,117 @@ const modulesByPackage = {
               name: "TDS Receivables Summary",
               href: "/accounting/reports/tds-receivables-summary",
             },
+            {
+              name: "GSTR-7",
+              href: "/accounting/reports/gstr-7",
+            },
+            {
+              name: "GSTR-3B Summary",
+              href: "/accounting/reports/gstr-3b-summary",
+            },
+            // {
+            //   name: "Summary of Inward Supplies",
+            //   href: "/accounting/reports/summary-of-inward-supplies",
+            // },
+            // {
+            //   name: "PMT-06 (Self Assessment Basis)",
+            //   href: "/accounting/reports/pmt-06-self-assessment-basis",
+            // },
+            // {
+            //   name: "Summary of Outward Supplies (GSTR-1)",
+            //   href: "/accounting/reports/summary-of-outward-supplies-gstr-1",
+            // },
+            // {
+            //   name: "Invoice Furnishing Facility (IFF)",
+            //   href: "/accounting/reports/invoice-furnishing-facility-iff",
+            // },
+            // {
+            //   name: "Self-invoice Summary",
+            //   href: "/accounting/reports/self-invoice-summary",
+            // },
+            // {
+            //   name: "TCS Summary (Form No. 27EQ)",
+            //   href: "/accounting/reports/tcs-summary-form-27eq",
+            // },
           ],
         },
 
-        {
-          name: "Activity",
-          subItems: [
-            {
-              name: "System Mails",
-              href: "/accounting/reports/system-mails",
-            },
-            {
-              name: "Activity Logs & Audit Trail",
-              href: "/accounting/reports/activity-logs-audit-trail",
-            },
-            {
-              name: "Exception Report",
-              href: "/accounting/reports/exception-report",
-            },
-            {
-              name: "Portal Activities",
-              href: "/accounting/reports/portal-activities",
-            },
-            {
-              name: "Customer Reviews",
-              href: "/accounting/reports/customer-reviews",
-            },
-            {
-              name: "API Usage",
-              href: "/accounting/reports/api-usage",
-            },
-          ],
-        },
+        // {
+        //   name: "Activity",
+        //   subItems: [
+        //     {
+        //       name: "System Mails",
+        //       href: "/accounting/reports/system-mails",
+        //     },
+        //     {
+        //       name: "Activity Logs & Audit Trail",
+        //       href: "/accounting/reports/activity-logs-audit-trail",
+        //     },
+        //     {
+        //       name: "Exception Report",
+        //       href: "/accounting/reports/exception-report",
+        //     },
+        //     {
+        //       name: "Portal Activities",
+        //       href: "/accounting/reports/portal-activities",
+        //     },
+        //     {
+        //       name: "Customer Reviews",
+        //       href: "/accounting/reports/customer-reviews",
+        //     },
+        //     {
+        //       name: "API Usage",
+        //       href: "/accounting/reports/api-usage",
+        //     },
+        //   ],
+        // },
 
-        {
-          name: "Account",
-          subItems: [
-            {
-              name: "Account Transactions",
-              href: "/accounting/reports/account-transactions",
-            },
-            {
-              name: "Day Book",
-              href: "/accounting/reports/day-book",
-            },
-            {
-              name: "Journal Report",
-              href: "/accounting/reports/journal-report",
-            },
-            {
-              name: "General Ledger",
-              href: "/accounting/reports/general-ledger",
-            },
-            {
-              name: "Detailed General Ledger",
-              href: "/accounting/reports/detailed-general-ledger",
-            },
-            {
-              name: "Trial Balance",
-              href: "/accounting/reports/trial-balance",
-            },
-          ],
-        },
-
-        {
-          name: "Fixed Asset",
-          subItems: [
-            {
-              name: "Fixed Asset Register",
-              href: "/accounting/reports/fixed-asset-register",
-            },
-          ],
-        },
-        {
-          name: "Project",
-          subItems: [
-            {
-              name: "Name of Project",
-              href: "/accounting/reports/name-of-project",
-            },
-            {
-              name: "Timesheet Details",
-              href: "/accounting/reports/timesheet-details",
-            },
-            {
-              name: "Timesheet Profitability Summary",
-              href: "/accounting/reports/timesheet-profitability-summary",
-            },
-            {
-              name: "Project Summary",
-              href: "/accounting/reports/project-summary",
-            },
-            {
-              name: "Project Details",
-              href: "/accounting/reports/project-details",
-            },
-            {
-              name: "Projects Cost Summary",
-              href: "/accounting/reports/projects-cost-summary",
-            },
-            {
-              name: "Projects Revenue Summary",
-              href: "/accounting/reports/projects-revenue-summary",
-            },
-            {
-              name: "Projects Performance Summary",
-              href: "/accounting/reports/projects-performance-summary",
-            },
-          ],
-        },
-
+        // {
+        //   name: "Fixed Asset",
+        //   subItems: [
+        //     {
+        //       name: "Fixed Asset Register",
+        //       href: "/accounting/reports/fixed-asset-register",
+        //     },
+        //   ],
+        // },
+        // {
+        //   name: "Project",
+        //   subItems: [
+        //     {
+        //       name: "Name of Project",
+        //       href: "/accounting/reports/name-of-project",
+        //     },
+        //     {
+        //       name: "Timesheet Details",
+        //       href: "/accounting/reports/timesheet-details",
+        //     },
+        //     {
+        //       name: "Timesheet Profitability Summary",
+        //       href: "/accounting/reports/timesheet-profitability-summary",
+        //     },
+        //     {
+        //       name: "Project Summary",
+        //       href: "/accounting/reports/project-summary",
+        //     },
+        //     {
+        //       name: "Project Details",
+        //       href: "/accounting/reports/project-details",
+        //     },
+        //     {
+        //       name: "Projects Cost Summary",
+        //       href: "/accounting/reports/projects-cost-summary",
+        //     },
+        //     {
+        //       name: "Projects Revenue Summary",
+        //       href: "/accounting/reports/projects-revenue-summary",
+        //     },
+        //     {
+        //       name: "Projects Performance Summary",
+        //       href: "/accounting/reports/projects-performance-summary",
+        //     },
+        //   ],
+        // },
       ],
     },
   ],
@@ -839,7 +864,6 @@ const modulesByPackage = {
     {
       name: "Location Master",
       icon: MapPin,
-      href: "/master/location",
       subItems: [
         {
           name: "Account",
@@ -963,8 +987,44 @@ export const ClubSidebar: React.FC = () => {
     setIsSidebarCollapsed,
     currentSection,
     setCurrentSection,
+    isMobileSidebarOpen,
   } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const lastNavigatedSection = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    // Collect every href defined in the given module list (recursive)
+    const collectHrefs = (items: SidebarItem[]): string[] =>
+      items.flatMap((item) => [
+        ...(item.href ? [item.href] : []),
+        ...(item.additionalRoutes ?? []),
+        ...(item.subItems ? collectHrefs(item.subItems) : []),
+      ]);
+
+    const sectionModules =
+      modulesByPackage[currentSection as keyof typeof modulesByPackage] || [];
+    const sectionHrefs = collectHrefs(sectionModules);
+
+    const currentPath = location.pathname;
+    const belongsToSection = sectionHrefs.some(
+      (href) => currentPath === href || currentPath.startsWith(href + "/")
+    );
+
+    // Only navigate if we're on a route that doesn't belong to the new section
+    // and we haven't already navigated for this section switch (prevents loops)
+    if (!belongsToSection && lastNavigatedSection.current !== currentSection) {
+      const defaultHref = sectionModules.find((item) => item.href)?.href;
+      if (defaultHref) {
+        lastNavigatedSection.current = currentSection;
+        setExpandedItems([]);
+        navigate(defaultHref);
+      }
+    }
+
+    if (belongsToSection) {
+      lastNavigatedSection.current = null;
+    }
+  }, [currentSection, location.pathname, navigate]);
 
   const toggleExpand = (name: string) => {
     setExpandedItems((prev) =>
@@ -1075,7 +1135,10 @@ export const ClubSidebar: React.FC = () => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isStaticItem = !hasSubItems && !item.href;
     const isExpanded = expandedItems.includes(key);
-    const isActive = item.href ? isActiveRoute(item.href, "prefix") : false;
+    const isActive = item.href
+      ? isActiveRoute(item.href, "prefix") ||
+        (item.additionalRoutes ?? []).some((r) => isActiveRoute(r, "prefix"))
+      : false;
 
     if (hasSubItems) {
       return (
@@ -1134,11 +1197,20 @@ export const ClubSidebar: React.FC = () => {
     );
   };
 
-  const CollapsedMenuItem = ({ item, level = 0 }: { item: SidebarItem; level?: number }) => {
+  const CollapsedMenuItem = ({
+    item,
+    level = 0,
+  }: {
+    item: SidebarItem;
+    level?: number;
+  }) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isStaticItem = !hasSubItems && !item.href;
     const isExpanded = expandedItems.includes(item.name);
-    const active = item.href ? isActiveRoute(item.href, "prefix") : false;
+    const active = item.href
+      ? isActiveRoute(item.href, "prefix") ||
+        (item.additionalRoutes ?? []).some((r) => isActiveRoute(r, "prefix"))
+      : false;
 
     if (isStaticItem) {
       return (
@@ -1200,7 +1272,8 @@ export const ClubSidebar: React.FC = () => {
   return (
     <div
       className={`${isSidebarCollapsed ? "w-16" : "w-64"
-        } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+        } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300 z-40 ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0`}
       style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -1245,7 +1318,7 @@ export const ClubSidebar: React.FC = () => {
 
         <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
           <h3
-            className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
+            className={`text-sm font-medium text-[#C72030] uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"}`}
           >
             {isSidebarCollapsed ? "" : currentSection || "Club Management"}
           </h3>

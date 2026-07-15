@@ -232,7 +232,7 @@ const fetchInitialData = async () => {
       fetch(`https://club-uat-api.lockated.com/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
         headers: { Authorization: `Bearer ${API_CONFIG.TOKEN}` },
       }),
-      fetch(`https://club-uat-api.lockated.com/lock_accounts/${lock_account_id}/tax_rates.json`, {
+      fetch(`https://club-uat-api.lockated.com/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
         headers: { Authorization: `Bearer ${API_CONFIG.TOKEN}` },
       }),
       fetch(`https://club-uat-api.lockated.com/lock_accounts/${lock_account_id}/tax_settings.json`, {

@@ -51,7 +51,7 @@ export const ImportOccupantUsers = ({
       const token = localStorage.getItem("token");
 
       const response = await axios.get(
-        `https://${baseUrl}/assets/sample_occupant.xlsx`,
+        `https://${baseUrl}/sample_occupant.xlsx`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -105,7 +105,7 @@ export const ImportOccupantUsers = ({
       toast.success("Occupant users imported successfully");
       setSelectedFile(null);
       onClose();
-      
+
       // Refresh the data if callback provided
       if (onRefresh) {
         onRefresh();
@@ -154,11 +154,10 @@ export const ImportOccupantUsers = ({
         <div className="space-y-4">
           {/* File Upload Area */}
           <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              dragOver
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragOver
                 ? 'border-[#C72030] bg-red-50'
                 : 'border-[#C72030] bg-[#ffff]'
-            }`}
+              }`}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}

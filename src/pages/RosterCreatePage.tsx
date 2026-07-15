@@ -76,6 +76,7 @@ interface RosterFormData {
   departments: number[];
   shift: number | null;
   selectedEmployees: number[];
+  approverIds: number[];
   rosterType: "Permanent";
 }
 
@@ -100,6 +101,7 @@ export const RosterCreatePage: React.FC = () => {
     departments: [],
     shift: null,
     selectedEmployees: [],
+    approverIds: [],
     rosterType: "Permanent",
   });
 
@@ -124,6 +126,8 @@ export const RosterCreatePage: React.FC = () => {
   // Filtered FM Users based on department selection
   const [filteredFMUsers, setFilteredFMUsers] = useState<FMUser[]>([]);
   const [loadingFilteredFMUsers, setLoadingFilteredFMUsers] = useState(false);
+  const [approverUsers, setApproverUsers] = useState<FMUser[]>([]);
+  const [loadingApproverUsers, setLoadingApproverUsers] = useState(false);
 
   // Error states
   const [errors, setErrors] = useState({
@@ -173,6 +177,8 @@ export const RosterCreatePage: React.FC = () => {
     fetchDepartments();
     fetchShifts();
     fetchCurrentLocation();
+    fetchApproverUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update location when selectedSite changes
@@ -271,6 +277,37 @@ export const RosterCreatePage: React.FC = () => {
       setFilteredFMUsers([]);
     } finally {
       setLoadingFilteredFMUsers(false);
+    }
+  };
+
+  const fetchApproverUsers = async () => {
+    const siteId = selectedSite?.id || localStorage.getItem("selectedSiteId");
+    if (!siteId) return;
+    setLoadingApproverUsers(true);
+    try {
+      const apiUrl = `${API_CONFIG.BASE_URL}/pms/admin/user_roasters/approver_users?site_id=${siteId}`;
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+      });
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      const users = Array.isArray(data) ? data : data.users || data.fm_users || [];
+      setApproverUsers(
+        users.map((user: { id: number; name?: string; email?: string }) => ({
+          id: user.id,
+          name: user.name || "",
+          email: user.email || "",
+        }))
+      );
+    } catch (error) {
+      console.error("Error fetching approver users:", error);
+    } finally {
+      setLoadingApproverUsers(false);
     }
   };
 
@@ -518,10 +555,11 @@ export const RosterCreatePage: React.FC = () => {
     // If department selection changes, fetch filtered employees
     if (field === "departments") {
       fetchFilteredFMUsers(value as number[]);
-      // Clear selected employees when departments change
+      // Clear selected employees and approvers when departments change
       setFormData((prev) => ({
         ...prev,
         selectedEmployees: [],
+        approverIds: [],
       }));
       // Clear employee selection error
       setErrors((prev) => ({ ...prev, selectedEmployees: false }));
@@ -619,6 +657,7 @@ export const RosterCreatePage: React.FC = () => {
         user_roaster: {
           ...baseUserRoaster,
           ...commonDateFields,
+          approver_ids: formData.approverIds.join(","),
         },
         department_id: formData.departments.map(String),
         no_of_days: "",
@@ -1359,6 +1398,93 @@ export const RosterCreatePage: React.FC = () => {
                 </p>
               </div>
             )}
+
+            {/* Approvers Dropdown */}
+            <div className="relative lg:col-span-2">
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ "& .MuiInputBase-root": fieldStyles }}
+              >
+                <InputLabel shrink>Approvers</InputLabel>
+                <MuiSelect
+                  multiple
+                  value={formData.approverIds}
+                  onChange={(e) =>
+                    handleInputChange(
+                      "approverIds",
+                      e.target.value as number[]
+                    )
+                  }
+                  input={<OutlinedInput notched label="Approvers" />}
+                  renderValue={(selected) => {
+                    const selectedArray = selected as number[];
+                    if (selectedArray.length === 0) return "";
+                    if (selectedArray.length === 1) {
+                      const user = approverUsers.find(
+                        (u) => u.id === selectedArray[0]
+                      );
+                      return user?.name || `User ${selectedArray[0]}`;
+                    }
+                    if (selectedArray.length <= 3) {
+                      return selectedArray
+                        .map((value) => {
+                          const user = approverUsers.find(
+                            (u) => u.id === value
+                          );
+                          return user?.name || `User ${value}`;
+                        })
+                        .join(", ");
+                    }
+                    return `${selectedArray.length} approvers selected`;
+                  }}
+                  displayEmpty
+                  disabled={loadingApproverUsers || isSubmitting}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                        overflow: "auto",
+                      },
+                    },
+                  }}
+                >
+                  {approverUsers.length > 0 ? (
+                    approverUsers.map((user) => (
+                      <MenuItem key={user.id} value={user.id}>
+                        <Checkbox
+                          checked={
+                            formData.approverIds.indexOf(user.id) > -1
+                          }
+                          sx={{
+                            color: "#D5DbDB",
+                            "&.Mui-checked": {
+                              color: "#C72030",
+                            },
+                          }}
+                        />
+                        <ListItemText
+                          primary={user.name || "No name available"}
+                          // secondary={user.email}
+                        />
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled>
+                      <ListItemText
+                        primary="No approvers available"
+                        sx={{ fontStyle: "italic", color: "#9ca3af" }}
+                      />
+                    </MenuItem>
+                  )}
+                </MuiSelect>
+                {loadingApproverUsers && (
+                  <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+                    <CircularProgress size={16} />
+                  </div>
+                )}
+              </FormControl>
+            </div>
           </div>
         </Section>
 

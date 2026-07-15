@@ -28,7 +28,7 @@ export const LockSubFunctionView = () => {
         setLoading(false);
       }
     };
-
+    
     fetchLockSubFunction();
   }, [id]);
 
@@ -52,17 +52,17 @@ export const LockSubFunctionView = () => {
   };
 
   const handleBack = () => {
-    navigate('/settings/account/lock-sub-function');
+    navigate(-1);
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
-      </div>
+    </div>
     );
-  }
-
+   }  
+  
   if (!lockSubFunction) {
     return (
       <div className="p-6">

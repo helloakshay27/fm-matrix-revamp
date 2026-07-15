@@ -1,7 +1,5 @@
 import React, { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   BarChart,
   Bar,
@@ -9,9 +7,11 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
+
+const COLOR_LAST = '#DA7756';
+const COLOR_CURRENT = '#9EC8BA';
 
 interface HelpdeskAnalyticsCardProps {
   title: string;
@@ -62,28 +62,6 @@ const getPeriodLabels = (startDate: Date, endDate: Date) => {
   }
 };
 
-// Custom Tooltip component
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
-        <p className="font-semibold text-gray-800 mb-2">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center gap-2">
-            <div 
-              className="w-3 h-3 rounded-full" 
-              style={{ backgroundColor: entry.color }}
-            />
-            <p style={{ color: entry.color }}>
-              {entry.name}: <span className="font-semibold">{entry.value}%</span>
-            </p>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
 
 export const HelpdeskAnalyticsCard: React.FC<HelpdeskAnalyticsCardProps> = ({
   title,
@@ -208,32 +186,24 @@ export const HelpdeskAnalyticsCard: React.FC<HelpdeskAnalyticsCardProps> = ({
   }, [type]);
 
   return (
-    <Card className="h-full flex flex-col border-analytics-border bg-white">
-      <CardHeader className="flex flex-row items-center justify-between pb-2 border-b border-analytics-border">
-        <CardTitle className="text-lg font-semibold text-analytics-text">
+    <div className="h-full flex flex-col bg-white rounded-xl shadow-sm">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
           {chartTitle}
-        </CardTitle>
+        </h3>
         {onDownload && (
           <Download
             data-no-drag="true"
-            className="w-5 h-5 cursor-pointer text-[#000000] hover:text-[#333333] transition-colors z-50"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDownload();
-            }}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
+            className="w-4 h-4 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors z-50"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload(); }}
+            onPointerDown={(e) => { e.stopPropagation(); }}
+            onMouseDown={(e) => { e.stopPropagation(); }}
             style={{ pointerEvents: 'auto' }}
           />
         )}
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex-1 pt-4">
+      <div className="flex-1 p-5 overflow-auto">
         {!data || chartData.length === 0 ? (
           <div className="h-full flex items-center justify-center text-analytics-muted">
             No data available
@@ -241,15 +211,15 @@ export const HelpdeskAnalyticsCard: React.FC<HelpdeskAnalyticsCardProps> = ({
         ) : (
           <>
             {/* Legend */}
-            <div className="flex items-center justify-end gap-4 mb-6 text-sm flex-wrap">
+            <div className="flex items-center justify-end gap-4 mb-4 text-sm flex-wrap">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full border border-[#8B6D4F] bg-[repeating-linear-gradient(-45deg,#fff,#fff_2px,#8B6D4F_2px,#8B6D4F_4px)]" />
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: COLOR_LAST }} />
                 <span className="text-xs" title={lastLabel}>
                   {lastLabel.length > 50 ? "Previous Period" : lastLabel}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-[#C4AD98]" />
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: COLOR_CURRENT }} />
                 <span className="text-xs" title={currentLabel}>
                   {currentLabel.length > 50 ? "Current Period" : currentLabel}
                 </span>
@@ -257,61 +227,37 @@ export const HelpdeskAnalyticsCard: React.FC<HelpdeskAnalyticsCardProps> = ({
             </div>
 
             {/* Chart */}
-            <ResponsiveContainer width="100%" height={400}>
+            <ResponsiveContainer width="100%" height={300}>
               <BarChart
                 data={chartData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                margin={{ top: 10, right: 10, left: 0, bottom: 60 }}
+                barSize={28}
               >
-                {/* Pattern definitions for striped fill */}
-                <defs>
-                  <pattern
-                    id={`stripedPattern_${type}`}
-                    patternUnits="userSpaceOnUse"
-                    width="6"
-                    height="6"
-                    patternTransform="rotate(45)"
-                  >
-                    <line x1="0" y="0" x2="0" y2="6" stroke="#8B6D4F" strokeWidth="2" />
-                  </pattern>
-                </defs>
-
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-
-                {/* X Axis with site names */}
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                 <XAxis
                   dataKey="site"
                   angle={-45}
                   textAnchor="end"
-                  tick={{ fontSize: 10 }}
-                  height={80}
+                  height={65}
+                  tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
                   interval={0}
                 />
-
-                {/* Y Axis with percentages */}
                 <YAxis
                   domain={[0, 100]}
-                  ticks={[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]}
+                  ticks={[0, 20, 40, 60, 80, 100]}
                   tickFormatter={(tick) => `${tick}%`}
-                  tick={{ fontSize: 12 }}
+                  tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
                 />
-
-                <Tooltip content={(props) => <CustomTooltip {...props} />} />
-
-                {/* Last period with striped pattern */}
-                <Bar
-                  dataKey="last"
-                  fill={`url(#stripedPattern_${type})`}
-                  name={lastLabel}
-                  barSize={30}
+                <Tooltip
+                  contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
+                  formatter={(v: number, name: string) => [`${v}%`, name]}
                 />
-
-                {/* Current period with solid fill */}
-                <Bar
-                  dataKey="current"
-                  fill="#C4AE9D"
-                  name={currentLabel}
-                  barSize={30}
-                />
+                <Bar dataKey="last" fill={COLOR_LAST} name={lastLabel} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="current" fill={COLOR_CURRENT} name={currentLabel} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
 
@@ -325,7 +271,7 @@ export const HelpdeskAnalyticsCard: React.FC<HelpdeskAnalyticsCardProps> = ({
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

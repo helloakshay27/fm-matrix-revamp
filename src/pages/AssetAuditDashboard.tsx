@@ -1,6 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, Clock, Settings, CheckCircle, AlertTriangle, XCircle, Trash2, Eye } from 'lucide-react';
+import { Plus, Download, Clock, Settings, CheckCircle, AlertTriangle, XCircle, Trash2, Eye, ClipboardList } from 'lucide-react';
+import {
+
+  Timer,
+  BadgeCheck,
+  Hourglass,
+  Lock
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -16,6 +23,17 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from '@/components/ui/pagination';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { BulkUploadDialog } from '@/components/BulkUploadDialog';
+
+// Debounce utility
+const debounce = (func: (...args: any[]) => void, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
 
 interface AuditRecord {
   id: number;
@@ -58,7 +76,8 @@ const normalizeStatus = (status: string): string => {
     'in_progress': 'In Progress',
     'completed': 'Completed',
     'overdue': 'Overdue',
-    'closed': 'Closed'
+    'closed': 'Closed',
+    'paused': 'Paused'
   };
   return statusMap[status.toLowerCase()] || status;
 };
@@ -70,7 +89,8 @@ const convertStatusToApi = (status: string): string => {
     'in progress': 'in_progress',
     'completed': 'completed',
     'overdue': 'overdue',
-    'closed': 'closed'
+    'closed': 'closed',
+    'paused': 'paused',
   };
   return statusMap[status.toLowerCase()] || status.toLowerCase().replace(/\s+/g, '_');
 };
@@ -87,7 +107,8 @@ export const AssetAuditDashboard = () => {
     inProgress: 0,
     completed: 0,
     overdue: 0,
-    closed: 0
+    closed: 0,
+    paused_count: 0,
   });
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -98,9 +119,13 @@ export const AssetAuditDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<FilterParams>({});
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
   // Fetch data from API
-  const fetchAudits = async (page: number = 1, filters: FilterParams = {}, statusFilter: string = '') => {
+  const fetchAudits = async (page: number = 1, filters: FilterParams = {}, statusFilter: string = '', search: string = '') => {
     try {
       setLoading(true);
       const baseUrl = localStorage.getItem('baseUrl') || '';
@@ -109,6 +134,11 @@ export const AssetAuditDashboard = () => {
       // Build query parameters
       const queryParams = new URLSearchParams();
       queryParams.append('page', String(page));
+
+      // Add search parameter using q[name_cont] for audit name search
+      if (search && search.trim()) {
+        queryParams.append('q[name_cont]', search.trim());
+      }
 
       // Add status filter if provided
       if (statusFilter) {
@@ -152,7 +182,7 @@ export const AssetAuditDashboard = () => {
         startDate: formatDate(audit.start_date),
         endDate: formatDate(audit.end_date),
         status: normalizeStatus(audit.status),
-        conductedBy: audit.conducted_by || '',
+        conductedBy: audit.assigned_to || '-',
         report: true // Assuming all audits have reports
       }));
 
@@ -171,7 +201,8 @@ export const AssetAuditDashboard = () => {
         inProgress: data.in_progress_count || 0,
         completed: data.completed_count || 0,
         overdue: data.overdue_count || 0,
-        closed: data.closed_count || 0
+        closed: data.closed_count || 0,
+        paused_count: data.paused_count || 0,
       });
 
       // Set pagination from API response
@@ -191,8 +222,8 @@ export const AssetAuditDashboard = () => {
   };
 
   useEffect(() => {
-    fetchAudits(currentPage, appliedFilters, selectedStatusFilter);
-  }, [currentPage, appliedFilters, selectedStatusFilter]);
+    fetchAudits(currentPage, appliedFilters, selectedStatusFilter, debouncedSearch);
+  }, [currentPage, appliedFilters, selectedStatusFilter, searchQuery, debouncedSearch]);
 
   const handleStatusUpdate = async (newStatus: string, auditId: number) => {
     // Store previous status for rollback
@@ -269,6 +300,32 @@ export const AssetAuditDashboard = () => {
     setCurrentPage(1); // Reset to first page when applying filters
   };
 
+  // const debouncedFetchData = useCallback(
+  //   debounce((query: string) => {
+  //     fetchAudits(1, appliedFilters, selectedStatusFilter, query);
+  //   }, 500),
+  //   [appliedFilters, selectedStatusFilter]
+  // );
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // const handleSearchChange = (query: string) => {
+  //   setSearchQuery(query);
+  //   setPagination((prev) => ({ ...prev, current_page: 1 })); // Reset to first page on search
+  //   setCurrentPage(1);
+  //   debouncedFetchData(query);
+  // };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
   const handleCardClick = (status: string) => {
     // If clicking the same status, clear the filter
     if (selectedStatusFilter === status) {
@@ -320,6 +377,158 @@ export const AssetAuditDashboard = () => {
     }
   };
 
+  const pollExportStatus = async (
+    exportKey: string,
+    baseUrl: string,
+    token: string,
+    toastId: string | number
+  ): Promise<void> => {
+    const maxAttempts = 15;
+    let attempts = 0;
+
+    return new Promise<void>((resolve, reject) => {
+      const interval = setInterval(async () => {
+        try {
+          attempts++;
+
+          const response = await fetch(
+            `https://${baseUrl}/pms/asset_audits/export_status?key=${exportKey}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error('Failed to check export status');
+          }
+
+          const contentType = response.headers.get('content-type');
+
+          // Case 1: FILE returned (xlsx/zip)
+          if (contentType && !contentType.includes('application/json')) {
+            const blob = await response.blob();
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'asset_audits_export.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            window.URL.revokeObjectURL(url);
+
+            clearInterval(interval);
+            toast.dismiss(toastId);
+            toast.success('Export downloaded successfully!');
+
+            resolve();
+            return;
+          }
+
+          // Case 2: JSON response
+          const data = await response.json();
+
+          if (data.status === 'completed' && data.file_url) {
+            clearInterval(interval);
+            toast.dismiss(toastId);
+
+            const link = document.createElement('a');
+            link.href = data.file_url;
+            link.setAttribute('download', 'asset_audits_export.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            toast.success('Export downloaded successfully!');
+            resolve();
+            return;
+          }
+
+          // Case 3: Timeout
+          if (attempts >= maxAttempts) {
+            clearInterval(interval);
+            toast.dismiss(toastId);
+            toast.error('Export timeout. Please try again.');
+            reject(new Error('Export timeout'));
+          }
+        } catch (error) {
+          clearInterval(interval);
+          console.error('Error checking export status:', error);
+          toast.dismiss(toastId);
+          toast.error('Error checking export status');
+          reject(error);
+        }
+      }, 3000); // Poll every 3 seconds
+    });
+  };
+
+  const handleExport = async () => {
+    const baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+
+    if (!baseUrl || !token) {
+      toast.error('Missing baseUrl or token');
+      return;
+    }
+
+    const toastId = toast.loading('Initiating export...');
+
+    try {
+      const response = await fetch(`https://${baseUrl}/pms/asset_audits/export.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to initiate export');
+      }
+
+      const contentType = response.headers.get('content-type');
+
+      // Case 1: Direct file returned
+      if (contentType && !contentType.includes('application/json')) {
+        const blob = await response.blob();
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'asset_audits_export.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        window.URL.revokeObjectURL(url);
+
+        toast.dismiss(toastId);
+        toast.success('Export downloaded successfully!');
+        return;
+      }
+
+      // Case 2: JSON response → polling
+      const data = await response.json();
+      const exportKey = data.key || data.export_key;
+
+      if (!exportKey) {
+        throw new Error('No export key received from server');
+      }
+
+      toast.loading('Processing export...', { id: toastId });
+
+      await pollExportStatus(exportKey, baseUrl, token, toastId);
+    } catch (error) {
+      console.error('Error initiating export:', error);
+      toast.dismiss(toastId);
+      toast.error(error instanceof Error ? error.message : 'Failed to initiate export');
+    }
+  };
+
   // const getStatusColor = (status: string) => {
   //   switch (status) {
   //     case 'Scheduled': return 'bg-blue-500';
@@ -336,6 +545,7 @@ export const AssetAuditDashboard = () => {
     { value: 'completed', label: 'Completed', color: '#AAB9C5' },
     { value: 'overdue', label: 'Overdue', color: '#E4626F' },
     { value: 'closed', label: 'Closed', color: '#bbf7d0' },
+    { value: 'paused', label: 'Paused', color: '#93C5FD' },
   ];
 
   const getStatusStyle = (status: string): React.CSSProperties => {
@@ -346,6 +556,8 @@ export const AssetAuditDashboard = () => {
       'completed': '#AAB9C5',
       'overdue': '#E4626F',
       'closed': '#bbf7d0',
+      'paused': '#93C5FD',
+
     };
     const color = statusMap[normalizedStatus];
     return {
@@ -480,7 +692,7 @@ export const AssetAuditDashboard = () => {
     try {
       setPagination((prev) => ({ ...prev, current_page: page }));
       setCurrentPage(page);
-      await fetchAudits(page, appliedFilters, selectedStatusFilter);
+      await fetchAudits(page, appliedFilters, selectedStatusFilter, searchQuery);
     } catch (error) {
       console.error('Error changing page:', error);
       toast.error('Failed to load page data. Please try again.');
@@ -623,6 +835,13 @@ export const AssetAuditDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
 
+        {/* Breadcrumb */}
+        <div className="mb-4 flex items-center">
+          <span className="text-gray-500 text-sm">Audit</span>
+          <span className="text-gray-500 text-sm mx-2">&gt;</span>
+          <span className="text-sm font-medium text-gray-900">Audit List</span>
+        </div>
+
         <h1 className="text-2xl font-bold text-gray-900 mb-6">AUDIT LIST</h1>
 
         {/* Statistics Cards */}
@@ -634,13 +853,13 @@ export const AssetAuditDashboard = () => {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
               <div
-                className={`bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'scheduled' ? 'ring-2 ring-[#D92818] ring-offset-2' : ''
+                className={`bg-[#F2F0EB] text-[#da7756] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'scheduled' ? 'ring-2 ring-[#da7756] ring-offset-2' : ''
                   }`}
                 onClick={() => handleCardClick('scheduled')}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-lg flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-[#D92818]" />
+                    <ClipboardList className="w-6 h-6 text-[#da7756]" />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-2xl font-bold">{stats.scheduled}</span>
@@ -650,13 +869,13 @@ export const AssetAuditDashboard = () => {
               </div>
 
               <div
-                className={`bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'in_progress' ? 'ring-2 ring-[#D92818] ring-offset-2' : ''
+                className={`bg-[#F2F0EB] text-[#da7756] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'in_progress' ? 'ring-2 ring-[#da7756] ring-offset-2' : ''
                   }`}
                 onClick={() => handleCardClick('in_progress')}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-lg flex items-center justify-center">
-                    <Settings className="w-6 h-6 text-[#D92818]" />
+                    <Timer className="w-6 h-6 text-[#da7756]" />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-2xl font-bold">{stats.inProgress}</span>
@@ -666,13 +885,13 @@ export const AssetAuditDashboard = () => {
               </div>
 
               <div
-                className={`bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'completed' ? 'ring-2 ring-[#D92818] ring-offset-2' : ''
+                className={`bg-[#F2F0EB] text-[#da7756] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'completed' ? 'ring-2 ring-[#da7756] ring-offset-2' : ''
                   }`}
                 onClick={() => handleCardClick('completed')}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-[#D92818]" />
+                    <CheckCircle className="w-6 h-6 text-[#da7756]" />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-2xl font-bold">{stats.completed}</span>
@@ -682,13 +901,13 @@ export const AssetAuditDashboard = () => {
               </div>
 
               <div
-                className={`bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'overdue' ? 'ring-2 ring-[#D92818] ring-offset-2' : ''
+                className={`bg-[#F2F0EB] text-[#da7756] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'overdue' ? 'ring-2 ring-[#da7756] ring-offset-2' : ''
                   }`}
                 onClick={() => handleCardClick('overdue')}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-lg flex items-center justify-center">
-                    <AlertTriangle className="w-6 h-6 text-[#D92818]" />
+                    <Hourglass className="w-6 h-6 text-[#da7756]" />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-2xl font-bold">{stats.overdue}</span>
@@ -698,13 +917,30 @@ export const AssetAuditDashboard = () => {
               </div>
 
               <div
-                className={`bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'closed' ? 'ring-2 ring-[#D92818] ring-offset-2' : ''
+                className={`bg-[#F2F0EB] text-[#da7756] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'paused' ? 'ring-2 ring-[#da7756] ring-offset-2' : ''
+                  }`}
+                onClick={() => handleCardClick('paused')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center">
+                    <Hourglass className="w-6 h-6 text-[#da7756]" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-2xl font-bold">{stats.paused_count}</span>
+                    <span className="font-medium text-sm text-black">Paused</span>
+                  </div>
+                </div>
+              </div>
+
+
+              <div
+                className={`bg-[#F2F0EB] text-[#da7756] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'closed' ? 'ring-2 ring-[#da7756] ring-offset-2' : ''
                   }`}
                 onClick={() => handleCardClick('closed')}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-lg flex items-center justify-center">
-                    <XCircle className="w-6 h-6 text-[#D92818]" />
+                    <Lock className="w-6 h-6 text-[#da7756]" />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-2xl font-bold">{stats.closed}</span>
@@ -719,25 +955,34 @@ export const AssetAuditDashboard = () => {
               data={audits}
               columns={columns}
               renderCell={renderCell}
-
-
               storageKey="asset-audit-dashboard-table"
-              emptyMessage="No audit records found"
-              searchPlaceholder="Search audits..."
+              emptyMessage={searchQuery ? "No audits found matching your search" : "No audit records found"}
               enableExport={true}
               exportFileName="audit-records"
+              onExport={handleExport}
               bulkActions={bulkActions}
               showBulkActions={true}
-              pagination={true}
-              pageSize={10}
+              pagination={false}
               onFilterClick={handleFilterClick}
+              searchTerm={searchQuery}
+              onSearchChange={handleSearchChange}
+              enableSearch={true}
+              searchPlaceholder="Search by audit name..."
+              // leftActions={
+              //   <Button
+              //     onClick={handleAddClick}
+              //     className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
+              //   >
+              //     <Plus className="w-4 h-4 mr-2" />
+              //     Action Audit
+              //   </Button>
+              // }
               leftActions={
                 <Button
-                  onClick={handleAddClick}
+                  onClick={() => setShowActionPanel(prev => !prev)}
                   className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Action Audit
+                  + Action
                 </Button>
               }
             />
@@ -773,6 +1018,26 @@ export const AssetAuditDashboard = () => {
           currentFilters={appliedFilters}
         />
       </div>
+      {showActionPanel && (
+        <SelectionPanel
+          onAdd={() => {
+            setShowActionPanel(false);
+            handleAddClick();
+          }}
+          onImport={() => {
+            setShowActionPanel(false);
+            setShowImportDialog(true);
+          }}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+
+      )}
+      <BulkUploadDialog
+        open={showImportDialog}
+        onOpenChange={setShowImportDialog}
+        title="Import Assets"
+        context="assets"
+      />
     </div>
   );
 };

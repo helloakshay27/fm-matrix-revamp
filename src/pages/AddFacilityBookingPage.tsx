@@ -256,7 +256,7 @@ export const AddFacilityBookingPage = () => {
         }
       })
 
-      
+
       setUsers(reseponse.data.users)
     } catch (error) {
       console.log(error)
@@ -748,9 +748,10 @@ export const AddFacilityBookingPage = () => {
         const token = localStorage.getItem('token');
 
         if (bookingId && token) {
-          toast.success('Booking created successfully! Redirecting to payment gateway...');
-          // Navigate to payment gateway redirection page with booking ID and token
-          navigate(`/payment-redirect?bookingId=${bookingId}&token=${token}&amount=${costSummary.amountFull}`);
+          toast.success('Booking created successfully!');
+          navigate(-1);
+          // toast.success('Booking created successfully! Redirecting to payment gateway...');
+          // navigate(`/payment-redirect?bookingId=${bookingId}&token=${token}&amount=${costSummary.amountFull}`);
         } else {
           toast.error('Booking created but payment redirection failed. Please contact support.');
           navigate(-1);

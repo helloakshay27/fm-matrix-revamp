@@ -1,74 +1,74 @@
 import React from 'react';
 import { Download } from 'lucide-react';
 
-interface Props { 
+interface Props {
   data: any;
   onDownload?: () => void;
 }
 
-// Center Wise – Assets And Downtime Metrics
 const CenterAssetsDowntimeMetricsCard: React.FC<Props> = ({ data, onDownload }) => {
   const root = data?.data ?? data ?? {};
   const rows: any[] = Array.isArray(root.center_metrics) ? root.center_metrics : [];
 
+  const thCls = 'px-3 py-3 text-white font-semibold text-xs whitespace-nowrap analytics-header text-center';
+  const tdCls = 'px-3 py-2.5 text-sm border-b border-gray-100';
+  const tdLeft = `${tdCls} text-left font-medium text-gray-800`;
+
   return (
-    <div className="bg-white border border-gray-200 rounded-md p-4 overflow-x-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-base flex-1">Site Wise – Assets And Downtime Metrics</h3>
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+          Site Wise – Assets And Downtime Metrics
+        </h3>
         {onDownload && (
           <Download
             data-no-drag="true"
-            className="w-5 h-5 cursor-pointer text-[#000000] hover:text-[#333333] transition-colors z-50 flex-shrink-0"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDownload();
-            }}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
+            className="w-4 h-4 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors z-50 flex-shrink-0"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload(); }}
+            onPointerDown={(e) => { e.stopPropagation(); }}
+            onMouseDown={(e) => { e.stopPropagation(); }}
             style={{ pointerEvents: 'auto' }}
           />
         )}
       </div>
-      <table className="min-w-[800px] w-full text-sm border">
-  <thead className="bg-[#DAD6C9] text-[#C72030] text-xs">
-          <tr>
-            <th rowSpan={2} className="border px-2 py-2 text-left">Site Name</th>
-            <th rowSpan={2} className="border px-2 py-2">Total No. of Assets</th>
-            <th colSpan={2} className="border px-2 py-2">Critical</th>
-            <th colSpan={2} className="border px-2 py-2">Non-Critical</th>
-          </tr>
-          <tr>
-            <th className="border px-2 py-2">Total No. of Breakdown</th>
-            <th className="border px-2 py-2">Average day</th>
-            <th className="border px-2 py-2">Total No. of Breakdown</th>
-            <th className="border px-2 py-2">Average day</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length ? rows.map((r, i) => (
-            <tr key={i}>
-              <td className="border px-2 py-2 bg-[#F3F1EB80] text-left">{r.site_name ?? '-'}</td>
-              <td className="border px-2 py-2">{r.total_assets ?? 0}</td>
-              <td className="border px-2 py-2">{r.critical?.breakdown ?? 0}</td>
-              <td className="border px-2 py-2">{r.critical?.average_day ?? 0}</td>
-              <td className="border px-2 py-2">{r.non_critical?.breakdown ?? 0}</td>
-              <td className="border px-2 py-2">{r.non_critical?.average_day ?? 0}</td>
-            </tr>
-          )) : (
+      <div className="px-4 pb-4">
+        <div className="rounded-xl overflow-hidden border border-gray-200">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm border-collapse">
+          <thead>
             <tr>
-              <td className="border px-2 py-4 text-center" colSpan={6}>No data available</td>
+              <th rowSpan={2} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Site Name</th>
+              <th rowSpan={2} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Total Assets</th>
+              <th colSpan={2} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Critical</th>
+              <th colSpan={2} className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Non-Critical</th>
             </tr>
-          )}
-        </tbody>
-      </table>
-      <p className="text-xs text-gray-600 mt-2">
-        Note: Center-wise asset count with breakdowns and average downtime for critical/non-critical.
-      </p>
+            <tr style={{ borderTop: '1px solid rgba(255,255,255,0.4)' }}>
+              <th className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Breakdowns</th>
+              <th className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Avg Days</th>
+              <th className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Breakdowns</th>
+              <th className={thCls} style={{ backgroundColor: '#D97655', color: '#ffffff' }}>Avg Days</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length ? rows.map((r, i) => (
+              <tr key={i} style={{ backgroundColor: i % 2 === 0 ? '#ffffff' : '#F6F4EE' }}>
+                <td className={tdLeft}>{r.site_name ?? '-'}</td>
+                <td className={`${tdCls} font-semibold text-gray-900`}>{r.total_assets ?? 0}</td>
+                <td className={`${tdCls} text-[#D97655] font-semibold`}>{r.critical?.breakdown ?? 0}</td>
+                <td className={tdCls}>{r.critical?.average_day ?? 0}</td>
+                <td className={`${tdCls} text-[#2E7D6B] font-semibold`}>{r.non_critical?.breakdown ?? 0}</td>
+                <td className={tdCls}>{r.non_critical?.average_day ?? 0}</td>
+              </tr>
+            )) : (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-400 text-sm">No data available</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+        </div>
+        </div>
+      </div>
     </div>
   );
 };

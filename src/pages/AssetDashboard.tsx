@@ -81,6 +81,9 @@ import AssetStatisticsSelector from '@/components/AssetStatisticsSelector';
 import { AssetAnalyticsSelector } from '@/components/AssetAnalyticsSelector';
 import type { Asset as TableAsset } from '@/hooks/useAssets';
 import { DataArray } from '@mui/icons-material';
+import { buildReturnToPath } from '@/utils/listBackNavigation';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -138,6 +141,8 @@ const SortableChartItem = ({
 
 export const AssetDashboard = () => {
   const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
+  
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
   const user = getUser();
@@ -690,7 +695,7 @@ export const AssetDashboard = () => {
     }));
 
   const handleAddAsset = () => {
-    navigate('/maintenance/asset/add');
+    navigate('/maintenance/asset/add');    
   };
 
   const handleAddSchedule = () => {
@@ -708,7 +713,9 @@ export const AssetDashboard = () => {
   };
 
   const handleViewAsset = (assetId: string) => {
-    navigate(`/maintenance/asset/details/${assetId}`);
+    navigate(`/maintenance/asset/details/${assetId}`, {
+      state: { returnTo: buildReturnToPath(location.pathname, location.search, location.hash) },
+    });
   };
 
   const handleColumnChange = (columns: typeof visibleColumns) => {

@@ -48,6 +48,7 @@ interface InventoryItem {
   id: string;
   item_id: string;
   inventoryType: string;
+  itemNo: string;
   expectedQuantity: string;
   receivedQuantity: string;
   approvedQuantity: string;
@@ -122,6 +123,7 @@ export const EditGRNDashboard = () => {
       id: "",
       item_id: "",
       inventoryType: "",
+      itemNo: "",
       expectedQuantity: "",
       receivedQuantity: "",
       approvedQuantity: "",
@@ -198,7 +200,7 @@ export const EditGRNDashboard = () => {
         const grn = response.grn;
         setGrnDetails({
           purchaseOrder: grn.purchase_order_id,
-          supplier: grn.supplier?.id,
+          supplier: String(grn.supplier?.id || ""),
           invoiceNumber: grn.invoice_no,
           relatedTo: grn.related_to,
           invoiceAmount: grn.invoice_amount,
@@ -216,6 +218,7 @@ export const EditGRNDashboard = () => {
             id: index + 1,
             item_id: item.id,
             inventoryType: item.inventory_id,
+            itemNo: item.item_no || "",
             expectedQuantity: item.expected_quantity,
             receivedQuantity: item.received_quantity,
             approvedQuantity: item.approved_qty,
@@ -250,6 +253,17 @@ export const EditGRNDashboard = () => {
             document_file_name: att.filename,
           })) || []
         );
+
+        if (grn.purchase_order_id) {
+          try {
+            const supplierResponse = await dispatch(
+              fetchSupplierDetails({ baseUrl, token, id: grn.purchase_order_id })
+            ).unwrap();
+            setSuppliers([{ id: String(supplierResponse.id), name: supplierResponse.company_name }]);
+          } catch (_) {
+            // fall back to full suppliers list already loaded
+          }
+        }
       } catch (error) {
         console.log(error);
         toast.error("Failed to fetch GRN details.");
@@ -269,9 +283,10 @@ export const EditGRNDashboard = () => {
         })
       ).unwrap();
 
+      setSuppliers([{ id: String(response.id), name: response.company_name }]);
       setGrnDetails((prev) => ({
         ...prev,
-        supplier: response.id,
+        supplier: String(response.id),
       }));
     } catch (error: any) {
       toast.dismiss();
@@ -597,6 +612,7 @@ export const EditGRNDashboard = () => {
         pms_grn_inventories_attributes: inventoryDetails.map((item) => ({
           id: item.item_id,
           pms_inventory_id: item.inventoryType,
+          item_no: item.itemNo,
           quantity: item.expectedQuantity,
           unit: item.receivedQuantity,
           approved_qty: item.approvedQuantity,
@@ -926,6 +942,20 @@ export const EditGRNDashboard = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {item.itemNo && (
+                  <TextField
+                    label="Item No."
+                    value={item.itemNo}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{
+                      sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                      readOnly: true,
+                    }}
+                    sx={{ mt: 1 }}
+                  />
+                )}
                 <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                   <InputLabel shrink>Inventory Type</InputLabel>
                   <MuiSelect
@@ -957,17 +987,19 @@ export const EditGRNDashboard = () => {
                   type="number"
                   placeholder="Expected Quantity"
                   value={item.expectedQuantity}
-                  onChange={(e) =>
-                    handleInventoryChange(
-                      index,
-                      "expectedQuantity",
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => {
+                    if (!grnDetails.purchaseOrder) {
+                      handleInventoryChange(index, "expectedQuantity", e.target.value);
+                    }
+                  }}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  InputProps={{
+                    sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                    readOnly: grnDetails.purchaseOrder > 0,
+                  }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -987,6 +1019,7 @@ export const EditGRNDashboard = () => {
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1006,6 +1039,7 @@ export const EditGRNDashboard = () => {
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1025,6 +1059,7 @@ export const EditGRNDashboard = () => {
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1035,15 +1070,17 @@ export const EditGRNDashboard = () => {
                   value={item.rate}
                   onChange={(e) => {
                     const value = e.target.value;
-
-                    if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                    if (!grnDetails.purchaseOrder && (value === "" || /^\d*\.?\d{0,2}$/.test(value))) {
                       handleInventoryChange(index, "rate", value);
                     }
                   }}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  InputProps={{
+                    sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                    readOnly: grnDetails.purchaseOrder > 0,
+                  }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1054,15 +1091,17 @@ export const EditGRNDashboard = () => {
                   value={item.cgstRate}
                   onChange={(e) => {
                     const value = e.target.value;
-
-                    if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                    if (!grnDetails.purchaseOrder && (value === "" || /^\d*\.?\d{0,2}$/.test(value))) {
                       handleInventoryChange(index, "cgstRate", value);
                     }
                   }}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  InputProps={{
+                    sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                    readOnly: grnDetails.purchaseOrder > 0,
+                  }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1078,6 +1117,7 @@ export const EditGRNDashboard = () => {
                     sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                     readOnly: true,
                   }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1088,15 +1128,17 @@ export const EditGRNDashboard = () => {
                   value={item.sgstRate}
                   onChange={(e) => {
                     const value = e.target.value;
-
-                    if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                    if (!grnDetails.purchaseOrder && (value === "" || /^\d*\.?\d{0,2}$/.test(value))) {
                       handleInventoryChange(index, "sgstRate", value);
                     }
                   }}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  InputProps={{
+                    sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                    readOnly: grnDetails.purchaseOrder > 0,
+                  }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1112,6 +1154,7 @@ export const EditGRNDashboard = () => {
                     sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                     readOnly: true,
                   }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1122,15 +1165,17 @@ export const EditGRNDashboard = () => {
                   value={item.igstRate}
                   onChange={(e) => {
                     const value = e.target.value;
-
-                    if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                    if (!grnDetails.purchaseOrder && (value === "" || /^\d*\.?\d{0,2}$/.test(value))) {
                       handleInventoryChange(index, "igstRate", value);
                     }
                   }}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  InputProps={{
+                    sx: grnDetails.purchaseOrder > 0 ? { ...fieldStyles, backgroundColor: "#f5f5f5" } : fieldStyles,
+                    readOnly: grnDetails.purchaseOrder > 0,
+                  }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1146,6 +1191,7 @@ export const EditGRNDashboard = () => {
                     sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                     readOnly: true,
                   }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1180,6 +1226,7 @@ export const EditGRNDashboard = () => {
                     sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                     readOnly: true,
                   }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1195,6 +1242,7 @@ export const EditGRNDashboard = () => {
                     sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                     readOnly: true,
                   }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1210,6 +1258,7 @@ export const EditGRNDashboard = () => {
                     sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                     readOnly: true,
                   }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
 
@@ -1225,6 +1274,7 @@ export const EditGRNDashboard = () => {
                     sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                     readOnly: true,
                   }}
+                  slotProps={{ htmlInput: { onWheel: (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur() } }}
                   sx={{ mt: 1 }}
                 />
               </div>

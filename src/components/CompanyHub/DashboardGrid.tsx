@@ -173,7 +173,7 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
                     onClick={() => handleQuadrantClick(item)}
                     className={`rounded-[20px] p-6 border cursor-pointer transition-all flex flex-col items-center justify-center relative overflow-hidden ${
                       item.focus
-                        ? "bg-[radial-gradient(235.58%_575.5%_at_50%_50%,_#F6F4EE_0%,_#2C2C2A_100%)] border-[#D9D1BD]"
+                        ? "bg-[radial-gradient(circle_at_center,_#ffffff_0%,_#fcedeb_100%)] border-[#E67E5F]"
                         : "bg-[#FDFCFB] border-[#F2F0EA]"
                     } ${isLoadingTasks ? "pointer-events-none opacity-80" : ""}`}
                   >
@@ -183,7 +183,7 @@ const DashboardGrid: React.FC<DashboardGridProps> = ({
                       </div>
                     )}
                     {item.focus && (
-                      <span className="absolute top-4 right-4 text-[9px] font-black bg-[#C6C0F3] text-[#5D56C1] px-2 py-0.5 rounded-full z-10 uppercase tracking-widest shadow-sm">
+                      <span className="absolute top-4 right-4 text-[12px] font-medium bg-white text-gray-900 px-3 py-1 rounded-full z-10 shadow-sm">
                         Focus
                       </span>
                     )}

@@ -3,16 +3,34 @@ import {
   BarChart3,
   BookOpen,
   Brain,
+  Briefcase,
+  Calendar,
+  CheckCircle2,
+  ClipboardList,
   Diamond,
   Eye,
   FileVideo,
   Filter,
+  Layers,
   Search,
   Square,
   TrendingUp,
   User,
   Users,
+  UsersRound,
+  Star,
+  Mail,
+  X,
 } from "lucide-react";
+import {
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,14 +43,33 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DiscAssessmentResultsModal,
-  buildDiscProfileFromTableRow,
-} from "@/components/DiscAssessmentResultsModal";
-import type { DiscProfileResult } from "@/components/DiscAssessmentResultsModal";
-import apiClient from "@/utils/apiClient";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
+// ─── Design Tokens (matches BusinessPlanAndGoles) ────────────────────────────
+const BP = {
+  primary: "#DA7756",
+  primaryHov: "#c9673f",
+  primaryBg: "#fdf9f7",
+  primaryTint: "rgba(218,119,86,0.06)",
+  primaryBord: "#e8e3de",
+  primaryBordStrong: "#d4cdc6",
+  pageBg: "#f6f4ee",
+  cardBg: "#ffffff",
+  tealBg: "#9EC8BA",
+  textMain: "#1a1a1a",
+  textMuted: "#6b7280",
+  borderLgt: "#ebebeb",
+  font: "'Poppins', sans-serif",
+};
+
+// ─── Types & Interfaces ──────────────────────────────────────────────────────
 
 type DiscTab = "dashboard" | "teams" | "learn";
+type DiscLetter = "D" | "I" | "S" | "C";
 
 type DiscTypeDistribution = {
   type: string;
@@ -52,7 +89,9 @@ type DiscProfileData = {
   style_code: string;
   profile_name: string;
   score_string: string;
+  scores: Record<DiscLetter, number>;
   date: string;
+  email?: string;
 };
 type ApiDashboardData = {
   summary: {
@@ -69,8 +108,9 @@ type RowTone = "d" | "i" | "s" | "c";
 type DiscProfileRow = {
   id: string;
   name: string;
+  email: string;
   department: string;
-  discScore: string;
+  scores: Record<DiscLetter, number>;
   style: string;
   styleTone: RowTone;
   profileName: string;
@@ -79,11 +119,377 @@ type DiscProfileRow = {
   styleTextClass: string;
 };
 
+type DiscProfileResult = {
+  counts: Record<DiscLetter, number>;
+  scores: Record<DiscLetter, number>;
+  totalAnswers: number;
+  primary: DiscLetter;
+  secondary: DiscLetter;
+  patternName: string;
+  blendLabel: string;
+  completedAt: string;
+  attemptId?: string | number;
+};
+
+// ─── Constants & Copy ────────────────────────────────────────────────────────
+
+const DISC_ORDER: DiscLetter[] = ["D", "I", "S", "C"];
+
+const DISC_STYLE = {
+  D: {
+    label: "Dominance",
+    short: "D",
+    fill: "bg-[#e11d48]",
+    text: "text-[#e11d48]",
+    border: "border-[#e11d48]",
+    chart: "#e11d48",
+    badge: "bg-[#e11d48]",
+    lightBg: "bg-[#e11d48]/5",
+  },
+  I: {
+    label: "Influence",
+    short: "I",
+    fill: "bg-[#f59e0b]",
+    text: "text-[#f59e0b]",
+    border: "border-[#f59e0b]",
+    chart: "#f59e0b",
+    badge: "bg-[#f59e0b]",
+    lightBg: "bg-[#f59e0b]/5",
+  },
+  S: {
+    label: "Steadiness",
+    short: "S",
+    fill: "bg-[#10b981]",
+    text: "text-[#10b981]",
+    border: "border-[#10b981]",
+    chart: "#10b981",
+    badge: "bg-[#10b981]",
+    lightBg: "bg-[#10b981]/5",
+  },
+  C: {
+    label: "Conscientiousness",
+    short: "C",
+    fill: "bg-[#3b82f6]",
+    text: "text-[#3b82f6]",
+    border: "border-[#3b82f6]",
+    chart: "#3b82f6",
+    badge: "border border-[#3b82f6] text-[#3b82f6] bg-white",
+    lightBg: "bg-[#3b82f6]/5",
+  },
+} as const;
+
+const PROFILE_COPY_DEFAULTS: Record<
+  DiscLetter,
+  {
+    archetype: string;
+    understanding: string;
+    patternNote: string;
+    superpowers: { title: string; desc: string }[];
+    growth: { title: string; desc: string }[];
+    roles: { title: string; desc: string }[];
+    toolkit: { title: string; desc: string }[];
+    withOthers: { withType: string; tip: string; label: string }[];
+  }
+> = {
+  D: {
+    archetype: "The Result-Driver",
+    understanding:
+      "In the fast-paced business landscape, you are the engine that drives growth and hits aggressive targets. You are highly valued for your ability to make quick decisions and take charge during a crisis. While you are exceptionally goal-oriented and efficient, you might sometimes overlook collaborative nuances. You perform at your best when you have autonomy and a clear focus on the bottom line—for you, it is all about the win.",
+    patternNote:
+      "As a D-style, you possess a unique blend of decisiveness and drive. You don't just find problems; you charge through them. Your ability to cut through ambiguity and push toward results is a massive asset in any organisation. Your growth challenge is dealing with criticism and maintaining patience with slower-paced processes. Developing active listening and learning to present your decisions as collaborative wins will help you get buy-in faster.",
+    superpowers: [
+      {
+        title: "Unflinching Execution",
+        desc: "You cut through red tape and bureaucracy to get things done. When a milestone needs to be hit, you are the engine.",
+      },
+      {
+        title: "Crisis Leadership",
+        desc: "When things go wrong, you don't panic. You naturally step up, take control, and make the tough calls to stabilise the situation.",
+      },
+      {
+        title: "Fearless Boundary-Pushing",
+        desc: "You aren't afraid to challenge the status quo, demand better results, and drive aggressive growth.",
+      },
+    ],
+    growth: [
+      {
+        title: "Patience with Process",
+        desc: "Slowing down to ensure others are aligned before charging forward.",
+      },
+      {
+        title: "Active Listening",
+        desc: "Hearing out the 'why' from teammates instead of just demanding the 'what'.",
+      },
+    ],
+    roles: [
+      {
+        title: "Project Turnarounds",
+        desc: "Taking over failing projects and driving them to completion.",
+      },
+      {
+        title: "Sales Leadership",
+        desc: "Driving revenue targets and managing high-performance teams.",
+      },
+    ],
+    toolkit: [
+      {
+        title: "Direct Alignment",
+        desc: "Set clear goals without micromanaging the process.",
+      },
+      {
+        title: "Results Framing",
+        desc: "Present ideas in terms of outcomes and ROI, not process.",
+      },
+    ],
+    withOthers: [
+      {
+        label: "Dominance (D)",
+        withType: "Dominance",
+        tip: "Be brief and direct. Focus on 'winning' together. Agree on boundaries immediately to avoid clashing egos.",
+      },
+      {
+        label: "Influence (I)",
+        withType: "Influence",
+        tip: "Allow space for small talk and rapport-building before diving into demands. Acknowledge their creativity before expecting the deliverable.",
+      },
+      {
+        label: "Steadiness (S)",
+        withType: "Steadiness",
+        tip: "Slow down. Don't just order—ask for their support. Explain how the change benefits the team to get their buy-in.",
+      },
+      {
+        label: "Conscientiousness (C)",
+        withType: "Conscientiousness",
+        tip: "Bring the data. They don't care about your gut feeling. Give them the 'Why' and 'How' in writing, then give them space to work.",
+      },
+    ],
+  },
+  I: {
+    archetype: "The People Energiser",
+    understanding:
+      "You are the spark that ignites enthusiasm in any room. You connect through stories, energy, and genuine warmth. Your ability to rally people around a vision makes you a natural in roles that require persuasion and relationship-building. You thrive in dynamic environments where creativity and collaboration are valued.",
+    patternNote:
+      "As an I-style, your superpower is your ability to make people feel seen and heard. You bring optimism and energy that elevate team morale. Your growth challenge is maintaining follow-through once the initial excitement fades. Building systems for accountability and documentation will help turn your big ideas into lasting results.",
+    superpowers: [
+      {
+        title: "Building Buy-In",
+        desc: "You naturally create enthusiasm and alignment across different roles and personalities.",
+      },
+      {
+        title: "Storytelling",
+        desc: "You communicate ideas in ways that are memorable, engaging, and inspiring.",
+      },
+      {
+        title: "Network Building",
+        desc: "You form genuine connections quickly and maintain relationships effortlessly.",
+      },
+    ],
+    growth: [
+      {
+        title: "Follow-Through",
+        desc: "Documenting decisions and seeing projects through to completion.",
+      },
+      {
+        title: "Detail Orientation",
+        desc: "Slowing down to check the fine print before moving forward.",
+      },
+    ],
+    roles: [
+      {
+        title: "Client Success",
+        desc: "Managing relationships and ensuring client satisfaction.",
+      },
+      {
+        title: "Marketing & Partnerships",
+        desc: "Building brand presence and forming strategic alliances.",
+      },
+    ],
+    toolkit: [
+      {
+        title: "Energy Matching",
+        desc: "Keep morale visible and celebrate small wins publicly.",
+      },
+      {
+        title: "Visual Communication",
+        desc: "Use stories, visuals, and demos over reports and spreadsheets.",
+      },
+    ],
+    withOthers: [
+      {
+        label: "Dominance (D)",
+        withType: "Dominance",
+        tip: "Match their pace in meetings; send a one-page recap after so they have the summary.",
+      },
+      {
+        label: "Influence (I)",
+        withType: "Influence",
+        tip: "Brainstorm together with energy, then assign clear owners and deadlines before ending the conversation.",
+      },
+      {
+        label: "Steadiness (S)",
+        withType: "Steadiness",
+        tip: "Reassure them on process and avoid surprise pivots—they need predictability to feel secure.",
+      },
+      {
+        label: "Conscientiousness (C)",
+        withType: "Conscientiousness",
+        tip: "Lead with the bottom line first, then offer the detail if they want it.",
+      },
+    ],
+  },
+  S: {
+    archetype: "The Reliable Anchor",
+    understanding:
+      "You are the steady force that keeps teams grounded and functioning through change. You value consistency, loyalty, and genuine collaboration. Your patience and empathy make you someone others naturally turn to for support and guidance. You thrive in environments where you can build deep trust over time.",
+    patternNote:
+      "As an S-style, your greatest strength is creating psychological safety for your team. People feel comfortable being honest around you. Your growth challenge is asserting your own needs and speaking up before reaching capacity. Learning to set boundaries early and advocate for your ideas will amplify your already significant impact.",
+    superpowers: [
+      {
+        title: "Psychological Safety",
+        desc: "Creating a calm, trusting environment where people feel safe to share and take risks.",
+      },
+      {
+        title: "Consistent Delivery",
+        desc: "You show up reliably and follow through on commitments without needing external pressure.",
+      },
+      {
+        title: "Deep Listening",
+        desc: "You hear not just what people say, but what they mean—making you an exceptional collaborator.",
+      },
+    ],
+    growth: [
+      {
+        title: "Asserting Needs",
+        desc: "Speaking up about workload and boundaries before reaching overwhelm.",
+      },
+      {
+        title: "Embracing Change",
+        desc: "Building comfort with uncertainty and rapid pivots.",
+      },
+    ],
+    roles: [
+      {
+        title: "HR & People Partner",
+        desc: "Supporting employee wellbeing and team culture.",
+      },
+      {
+        title: "Customer Care",
+        desc: "Building long-term client relationships through trust and consistency.",
+      },
+    ],
+    toolkit: [
+      {
+        title: "Steady Pacing",
+        desc: "Check in with teammates privately to surface issues before they escalate.",
+      },
+      {
+        title: "Process Documentation",
+        desc: "Build reliable systems that others can follow consistently.",
+      },
+    ],
+    withOthers: [
+      {
+        label: "Dominance (D)",
+        withType: "Dominance",
+        tip: "Prepare a concise recommendation and invite their decision—they respect clarity and brevity.",
+      },
+      {
+        label: "Influence (I)",
+        withType: "Influence",
+        tip: "Affirm their ideas warmly, then help steer to one shared plan with clear next steps.",
+      },
+      {
+        label: "Steadiness (S)",
+        withType: "Steadiness",
+        tip: "Check workload quietly and offer to swap tasks if someone is overwhelmed.",
+      },
+      {
+        label: "Conscientiousness (C)",
+        withType: "Conscientiousness",
+        tip: "Share timelines and quality expectations upfront so there are no surprises.",
+      },
+    ],
+  },
+  C: {
+    archetype: "The Quality Guardian",
+    understanding:
+      "You are the person who catches what everyone else misses. You prioritise accuracy, structure, and sound reasoning in everything you do. Your ability to think systematically and identify risks before they become problems makes you invaluable in any technical or analytical role. You thrive when given space to work independently with clear standards.",
+    patternNote:
+      "As a C-style, your greatest strength is your commitment to getting it right. You bring rigour and precision that elevates the quality of everything your team produces. Your growth challenge is time-boxing your analysis to avoid perfectionism paralysis. Learning to communicate your findings as stories—not just data—will help your insights land with decision-makers.",
+    superpowers: [
+      {
+        title: "Spotting Flaws Early",
+        desc: "You catch issues before they become incidents, saving time, money, and reputation.",
+      },
+      {
+        title: "Systematic Thinking",
+        desc: "You build processes and frameworks that stand up to scrutiny and scale.",
+      },
+      {
+        title: "Research Depth",
+        desc: "You go further than anyone else to ensure the analysis is thorough and defensible.",
+      },
+    ],
+    growth: [
+      {
+        title: "Time-Boxing",
+        desc: "Setting a hard stop on analysis to prevent perfectionism from blocking progress.",
+      },
+      {
+        title: "Communicating Uncertainty",
+        desc: "Sharing findings even when the picture isn't fully complete.",
+      },
+    ],
+    roles: [
+      {
+        title: "Engineering & Architecture",
+        desc: "Designing systems that are robust, scalable, and well-documented.",
+      },
+      {
+        title: "QA & Compliance",
+        desc: "Ensuring standards are met and risks are identified proactively.",
+      },
+    ],
+    toolkit: [
+      {
+        title: "Data-Driven Arguments",
+        desc: "Always bring evidence. Quantify the risk and the recommended action.",
+      },
+      {
+        title: "Written Clarity",
+        desc: "Document decisions and rationale so the team can reference and learn.",
+      },
+    ],
+    withOthers: [
+      {
+        label: "Dominance (D)",
+        withType: "Dominance",
+        tip: "Offer a clear binary choice with your risk view attached—they want the conclusion, not the full analysis.",
+      },
+      {
+        label: "Influence (I)",
+        withType: "Influence",
+        tip: "Capture their creative vision in measurable requirements so it can actually be built.",
+      },
+      {
+        label: "Steadiness (S)",
+        withType: "Steadiness",
+        tip: "Give predictable rhythms and avoid surprise rework—they plan carefully and need stability.",
+      },
+      {
+        label: "Conscientiousness (C)",
+        withType: "Conscientiousness",
+        tip: "Agree on sources of truth and version control early to avoid duplicate or conflicting work.",
+      },
+    ],
+  },
+};
+
 const DISC_SUMMARY = [
   {
     key: "d",
     label: "Dominance",
-    count: 1,
+    count: 0,
     bg: "bg-[#fef2f2]",
     border: "border-[#ef4444]/80",
     text: "text-[#ef4444]",
@@ -99,7 +505,7 @@ const DISC_SUMMARY = [
   {
     key: "s",
     label: "Steadiness",
-    count: 1,
+    count: 0,
     bg: "bg-[#f0fdf4]",
     border: "border-[#22c55e]/80",
     text: "text-[#22c55e]",
@@ -107,81 +513,14 @@ const DISC_SUMMARY = [
   {
     key: "c",
     label: "Conscientiousness",
-    count: 1,
+    count: 0,
     bg: "bg-[#eff6ff]",
     border: "border-[#3b82f6]/80",
     text: "text-[#3b82f6]",
   },
 ] as const;
 
-const PROFILE_CHIPS = [
-  { name: "Objective Thinker", count: 1 },
-  { name: "Specialist", count: 1 },
-  { name: "Creative", count: 1 },
-] as const;
-
-const MOCK_ROWS: DiscProfileRow[] = [
-  {
-    id: "1",
-    name: "Alex Morgan",
-    department: "Engineering",
-    discScore: "2117",
-    style: "C/D",
-    styleTone: "c",
-    profileName: "Objective Thinker",
-    date: "Mar 12, 2024",
-    rowBgClass: "bg-[#eff6ff]/90",
-    styleTextClass: "text-[#3b82f6] font-semibold",
-  },
-  {
-    id: "2",
-    name: "Jordan Lee",
-    department: "Human Resources",
-    discScore: "4274",
-    style: "S/D",
-    styleTone: "s",
-    profileName: "Specialist",
-    date: "Mar 10, 2024",
-    rowBgClass: "bg-[#f0fdf4]/90",
-    styleTextClass: "text-[#22c55e] font-semibold",
-  },
-  {
-    id: "3",
-    name: "Sam Rivera",
-    department: "Marketing",
-    discScore: "7415",
-    style: "D/C",
-    styleTone: "d",
-    profileName: "Creative",
-    date: "Mar 8, 2024",
-    rowBgClass: "bg-[#fef2f2]/90",
-    styleTextClass: "text-[#ef4444] font-semibold",
-  },
-  {
-    id: "4",
-    name: "Taylor Chen",
-    department: "Sales",
-    discScore: "3652",
-    style: "I/S",
-    styleTone: "i",
-    profileName: "Influencer",
-    date: "Mar 5, 2024",
-    rowBgClass: "bg-[#fffbeb]/90",
-    styleTextClass: "text-[#f59e0b] font-semibold",
-  },
-  {
-    id: "5",
-    name: "Riley Patel",
-    department: "QA",
-    discScore: "1528",
-    style: "C/S",
-    styleTone: "c",
-    profileName: "Perfectionist",
-    date: "Mar 1, 2024",
-    rowBgClass: "bg-[#eff6ff]/90",
-    styleTextClass: "text-[#3b82f6] font-semibold",
-  },
-];
+const PROFILE_CHIPS = [] as const;
 
 const DIGIT_COLORS = [
   "text-[#ef4444]",
@@ -190,24 +529,802 @@ const DIGIT_COLORS = [
   "text-[#3b82f6]",
 ];
 
-function DiscScoreDigits({ score }: { score: string }) {
-  const digits = score.replace(/\D/g, "").slice(0, 4).padStart(4, "0");
+const DiscThemeStyle = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+    .disc-wrap, .disc-wrap * { font-family: 'Poppins', sans-serif !important; }
+    .disc-panel {
+      border-radius: 20px;
+      border: 1px solid #e8e3de;
+      background: #ffffff;
+      box-shadow: 0 10px 24px rgba(26,26,26,0.05);
+    }
+    .disc-card-lift { transition: box-shadow .2s, transform .2s, border-color .2s; }
+    .disc-card-lift:hover {
+      border-color: rgba(218,119,86,0.35);
+      box-shadow: 0 16px 36px rgba(26,26,26,0.08), 0 4px 14px rgba(218,119,86,0.10);
+      transform: translateY(-2px);
+    }
+    .disc-input {
+      width: 100%;
+      border: 1px solid #e8e3de;
+      border-radius: 12px;
+      background: #fffaf8;
+      color: #1a1a1a;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .disc-input:focus {
+      border-color: #DA7756;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(218,119,86,0.15);
+    }
+    .disc-input::placeholder { color: #a3a3a3; font-weight: 500; }
+    .disc-table-row { transition: background .15s, box-shadow .15s; }
+    .disc-table-row:hover { background: #fffaf8 !important; }
+    .disc-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+    .disc-scroll::-webkit-scrollbar-track { background: transparent; }
+    .disc-scroll::-webkit-scrollbar-thumb { background: #C4B89D; border-radius: 10px; }
+    .disc-scroll::-webkit-scrollbar-thumb:hover { background: #DA7756; }
+  `}</style>
+);
+
+// ─── Helpers & Small Components ──────────────────────────────────────────────
+
+function DiscScoreDigits({ scores }: { scores: Record<DiscLetter, number> }) {
+  const d = scores?.D ?? 0;
+  const i = scores?.I ?? 0;
+  const s = scores?.S ?? 0;
+  const c = scores?.C ?? 0;
+
   return (
-    <span className="inline-flex font-mono text-sm font-semibold tabular-nums">
-      {digits.split("").map((d, i) => (
-        <span key={i} className={DIGIT_COLORS[i] ?? "text-neutral-800"}>
-          {d}
-        </span>
-      ))}
+    <span className="inline-flex font-mono text-sm font-semibold tabular-nums gap-1">
+      <span className={DIGIT_COLORS[0]}>{d}</span>
+      <span className="text-neutral-300">-</span>
+      <span className={DIGIT_COLORS[1]}>{i}</span>
+      <span className="text-neutral-300">-</span>
+      <span className={DIGIT_COLORS[2]}>{s}</span>
+      <span className="text-neutral-300">-</span>
+      <span className={DIGIT_COLORS[3]}>{c}</span>
     </span>
   );
 }
 
-/** YouTube embed — replace ID if you need a different video/thumbnail */
+function scoreToPercent(score: number, totalAnswers: number = 15): number {
+  if (!totalAnswers || totalAnswers === 0) return 0;
+  return Math.round((score / totalAnswers) * 100);
+}
+
+function DiscDonut({
+  score,
+  totalAnswers = 15,
+  color,
+  label,
+}: {
+  score: number;
+  totalAnswers?: number;
+  color: string;
+  label: string;
+}) {
+  const r = 38;
+  const c = 2 * Math.PI * r;
+  const safeTotal = totalAnswers || 1;
+  const pct = Math.min(100, Math.max(0, (score / safeTotal) * 100));
+  const dash = (pct / 100) * c;
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div className="relative h-[7.5rem] w-[7.5rem]">
+        <svg
+          className="h-full w-full -rotate-90"
+          viewBox="0 0 100 100"
+          aria-hidden
+        >
+          <circle
+            cx={50}
+            cy={50}
+            r={r}
+            fill="none"
+            className="stroke-neutral-100"
+            strokeWidth={10}
+          />
+          <circle
+            cx={50}
+            cy={50}
+            r={r}
+            fill="none"
+            stroke={color}
+            strokeWidth={10}
+            strokeLinecap="round"
+            strokeDasharray={`${dash} ${c}`}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-3xl font-bold tabular-nums text-neutral-800">
+            {score}
+          </span>
+        </div>
+      </div>
+      <span className="text-xs font-bold uppercase tracking-widest text-neutral-600">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function MemberHeaderBanner({
+  displayName,
+  patternName,
+  primaryType,
+}: {
+  displayName: string;
+  patternName: string;
+  primaryType: DiscLetter;
+}) {
+  const initial = displayName.trim().charAt(0).toUpperCase() || "?";
+  const discColor = DISC_STYLE[primaryType].chart;
+  return (
+    <div
+      style={{
+        width: "100%",
+        borderRadius: 16,
+        overflow: "hidden",
+        background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+        border: "1px solid rgba(218,119,86,0.18)",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 20,
+          padding: "24px 28px",
+        }}
+      >
+        <div
+          style={{
+            background: discColor,
+            width: 72,
+            height: 72,
+            minWidth: 72,
+            borderRadius: 18,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 32,
+            fontWeight: 800,
+            color: "#ffffff",
+            border: "3px solid rgba(255,255,255,0.3)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            lineHeight: "72px",
+            textAlign: "center" as const,
+          }}
+        >
+          {initial}
+        </div>
+        <div
+          style={{ display: "flex", flexDirection: "column" as const, gap: 8 }}
+        >
+          <span
+            style={{
+              fontSize: 26,
+              fontWeight: 800,
+              color: "#ffffff",
+              lineHeight: 1.2,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {displayName}
+          </span>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              background: "#9333ea",
+              borderRadius: 999,
+              padding: "6px 14px",
+              width: "fit-content",
+            }}
+          >
+            <Star
+              style={{ width: 14, height: 14, color: "rgba(255,255,255,0.8)" }}
+              strokeWidth={2}
+            />
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#ffffff" }}>
+              {patternName}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Detailed Report UI Component ────────────────────────────────────────────
+
+function DiscProfileReport({
+  result,
+  displayName,
+  emailHint,
+}: {
+  result: DiscProfileResult;
+  displayName: string;
+  emailHint: string;
+}) {
+  const copy = PROFILE_COPY_DEFAULTS[result.primary];
+  const completed = new Date(result.completedAt);
+  const dateStr = completed.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+  const chartData = DISC_ORDER.map((L) => ({
+    axis: L,
+    score: result.scores[L],
+  }));
+  const [expandedAccordion, setExpandedAccordion] = useState<
+    string | undefined
+  >(undefined);
+  const toggleAll = () =>
+    setExpandedAccordion(expandedAccordion ? undefined : "p1");
+
+  const card =
+    "rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white shadow-sm overflow-hidden";
+  const cardHeader =
+    "flex items-center gap-3 border-b border-[rgba(218,119,86,0.10)] p-5 bg-[#FFFAF8]";
+  const iconBox = (bg: string) =>
+    `flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${bg}`;
+
+  return (
+    <div
+      className="mx-auto max-w-5xl space-y-5"
+      style={{ fontFamily: BP.font }}
+    >
+      <MemberHeaderBanner
+        displayName={displayName}
+        patternName={result.patternName}
+        primaryType={result.primary}
+      />
+
+      {/* 1. DISC Scores */}
+      <div className={card}>
+        <div className="flex flex-col gap-4 px-6 pt-5 pb-3 sm:flex-row sm:items-center sm:justify-between border-b border-[rgba(218,119,86,0.10)] bg-[#FFFAF8]">
+          <div className="flex items-center gap-3">
+            <div className={iconBox("bg-[#FFF0E8] border border-[#F6E1D7]")}>
+              <Brain className="h-5 w-5 text-[#CE8261]" strokeWidth={2} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest">
+                DISC Profile
+              </p>
+              <p className="text-sm font-semibold text-neutral-800">
+                {result.blendLabel} — {result.patternName}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1 text-[12px] text-neutral-400">
+            {emailHint && (
+              <div className="flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5" />
+                {emailHint}
+              </div>
+            )}
+            <div className="flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5" />
+              Assessed: {dateStr}
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4 p-5 lg:grid-cols-4">
+          {DISC_ORDER.map((L) => {
+            const s = DISC_STYLE[L];
+            const sc = result.scores[L];
+            const isPrimary = L === result.primary;
+            const isSecondary =
+              L === result.secondary && result.primary !== result.secondary;
+            return (
+              <div
+                key={L}
+                className={cn(
+                  "relative flex flex-col items-center rounded-2xl border-2 p-4 shadow-sm transition-all",
+                  s.border,
+                  isPrimary ? "ring-2 ring-offset-2 ring-[#DA7756]/30" : ""
+                )}
+              >
+                {isPrimary && (
+                  <div className="absolute -top-[10px] left-1/2 -translate-x-1/2 rounded-full bg-[#DA7756] px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                    Primary
+                  </div>
+                )}
+                {isSecondary && (
+                  <div className="absolute -top-[10px] left-1/2 -translate-x-1/2 rounded-full border border-[#3b82f6] bg-white px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#3b82f6]">
+                    Secondary
+                  </div>
+                )}
+                <span className={cn("text-sm font-semibold", s.text)}>
+                  {s.label}
+                </span>
+                <div
+                  className={cn(
+                    "mt-3 flex w-full flex-col items-center justify-center rounded-xl py-5 text-white shadow-sm",
+                    s.fill
+                  )}
+                >
+                  <span className="text-5xl font-bold leading-none">{sc}</span>
+                </div>
+                <div className="mt-3 w-full space-y-1.5">
+                  <div className="h-2 w-full rounded-full bg-neutral-100 overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-500",
+                        s.fill
+                      )}
+                      style={{
+                        width: `${scoreToPercent(sc, result.totalAnswers)}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-center text-xs font-semibold text-neutral-500">
+                    {scoreToPercent(sc, result.totalAnswers)}%
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 2. Understanding Your Personality */}
+      <div className={cn(card, "relative")}>
+        <div
+          className={cn(
+            "absolute bottom-0 left-0 top-0 w-1.5 rounded-l-2xl",
+            DISC_STYLE[result.primary].fill
+          )}
+        />
+        <div className="ml-2 p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white shadow-sm",
+                DISC_STYLE[result.primary].fill
+              )}
+            >
+              {result.primary}
+            </div>
+            <h3 className="text-xl font-bold text-neutral-800">
+              {DISC_STYLE[result.primary].label} — {copy.archetype}
+            </h3>
+          </div>
+          <div>
+            <h4
+              className={cn(
+                "text-[14px] font-semibold mb-2",
+                DISC_STYLE[result.primary].text
+              )}
+            >
+              Understanding The Personality Type
+            </h4>
+            <p className="text-[14px] leading-relaxed text-neutral-600">
+              {copy.understanding}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Score Distribution */}
+      <div className={card}>
+        <div className={cardHeader}>
+          <div className={iconBox("bg-[#FFF0E8] border border-[#F6E1D7]")}>
+            <TrendingUp className="h-5 w-5 text-[#CE8261]" strokeWidth={2} />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-neutral-800">
+              DISC Score Distribution
+            </h3>
+            <p className="text-xs text-neutral-400">
+              Behavioural dimension scores (out of {result.totalAnswers || 15})
+            </p>
+          </div>
+        </div>
+        <div className="p-6 flex flex-wrap justify-center gap-10 sm:justify-between sm:px-10">
+          {DISC_ORDER.map((L) => (
+            <DiscDonut
+              key={L}
+              score={result.scores[L]}
+              totalAnswers={result.totalAnswers}
+              color={DISC_STYLE[L].chart}
+              label={DISC_STYLE[L].label}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* 4. Pattern Line Chart */}
+      <div className={card}>
+        <div className={cardHeader}>
+          <div className={iconBox("bg-purple-100")}>
+            <ClipboardList
+              className="h-5 w-5 text-purple-600"
+              strokeWidth={2}
+            />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-neutral-800">
+              {result.patternName}
+            </h3>
+            <p className="text-xs text-neutral-400">Exact DISC Pattern</p>
+          </div>
+        </div>
+        <div className="p-6">
+          <div className="h-64 w-full max-w-3xl mx-auto">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={chartData}
+                margin={{ top: 10, right: 30, left: -10, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#f0ebe8"
+                />
+                <XAxis
+                  dataKey="axis"
+                  tick={{ fontSize: 14, fontWeight: 600, fill: "#1f2937" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  domain={[0, result.totalAnswers || 15]}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: "#6b7280" }}
+                />
+                <Tooltip
+                  formatter={(v: number) => [`${v}`, "Score"]}
+                  labelFormatter={(l) =>
+                    `${l} — ${DISC_STYLE[l as DiscLetter]?.label ?? l}`
+                  }
+                  contentStyle={{
+                    borderRadius: 12,
+                    border: "1px solid #f0ebe8",
+                    fontFamily: BP.font,
+                  }}
+                />
+                <Line
+                  type="linear"
+                  dataKey="score"
+                  stroke="#DA7756"
+                  strokeWidth={2.5}
+                  dot={{ r: 6, fill: "#DA7756", strokeWidth: 0 }}
+                  activeDot={{ r: 8 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="mt-3 text-center text-xs font-semibold text-neutral-400">
+            DISC Profile Visualisation
+          </p>
+          <div className="mt-6 border-l-4 border-[#DA7756]/60 bg-[#FFF9F6] p-5 rounded-r-xl">
+            <p className="text-[14px] leading-relaxed text-neutral-700">
+              {copy.patternNote}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Action Plan */}
+      <div className={card}>
+        <div className={cn(cardHeader, "justify-between")}>
+          <div className="flex items-center gap-3">
+            <div className={iconBox("bg-[#FFF0E8] border border-[#F6E1D7]")}>
+              <ClipboardList
+                className="h-5 w-5 text-[#CE8261]"
+                strokeWidth={2}
+              />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-neutral-800">
+                Personalised Action Plan
+              </h3>
+              <p className="text-xs text-neutral-400">{copy.archetype}</p>
+            </div>
+          </div>
+          <button
+            onClick={toggleAll}
+            className="text-xs font-semibold text-[#CE8261] hover:text-[#BC6B4A] border border-[rgba(218,119,86,0.30)] bg-white px-3 py-1.5 rounded-xl transition-colors"
+          >
+            {expandedAccordion ? "Collapse All" : "Expand All"}
+          </button>
+        </div>
+        <div className="p-5">
+          <Accordion
+            type="single"
+            collapsible
+            className="space-y-3"
+            value={expandedAccordion}
+            onValueChange={setExpandedAccordion}
+          >
+            {[
+              {
+                id: "p1",
+                title: "Part 1: Superpowers (Top Strengths)",
+                icon: CheckCircle2,
+                iconClass: "text-[#10b981]",
+                items: copy.superpowers,
+              },
+              {
+                id: "p2",
+                title: "Part 2: Growth Zones (Focus Areas)",
+                icon: TrendingUp,
+                iconClass: "text-[#f59e0b]",
+                items: copy.growth,
+              },
+              {
+                id: "p3",
+                title: "Part 3: Where They Thrive (Best Roles)",
+                icon: Briefcase,
+                iconClass: "text-[#DA7756]",
+                items: copy.roles,
+              },
+              {
+                id: "p4",
+                title: "Part 4: Interpersonal Toolkit (Working With Others)",
+                icon: UsersRound,
+                iconClass: "text-[#9333ea]",
+                items: copy.toolkit,
+              },
+            ].map((section) => (
+              <AccordionItem
+                key={section.id}
+                value={section.id}
+                className="rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white px-2 shadow-sm data-[state=open]:border-[rgba(218,119,86,0.35)]"
+              >
+                <AccordionTrigger className="px-4 py-3.5 text-left hover:no-underline [&>svg]:text-neutral-400">
+                  <span className="flex items-center gap-3">
+                    <section.icon
+                      className={cn("h-5 w-5", section.iconClass)}
+                      strokeWidth={2}
+                    />
+                    <span className="text-[14px] font-semibold text-neutral-700">
+                      {section.title}
+                    </span>
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-5 pt-1">
+                  <div className="space-y-3 pl-8">
+                    {section.items.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-start gap-3 rounded-xl bg-[#FFF9F6] p-4 border border-[rgba(218,119,86,0.14)]"
+                      >
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#DA7756] text-xs font-bold text-white shadow-sm mt-0.5">
+                          {idx + 1}
+                        </div>
+                        <div>
+                          <h5 className="font-bold text-neutral-800">
+                            {item.title}
+                          </h5>
+                          <p className="mt-1 text-sm text-neutral-600 leading-relaxed">
+                            {item.desc}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </div>
+
+      {/* 6. How They Work With Others */}
+      <div className={card}>
+        <div className={cardHeader}>
+          <div className={iconBox("bg-pink-100")}>
+            <Users className="h-5 w-5 text-pink-600" strokeWidth={2} />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-neutral-800">
+              How They Work With Others
+            </h3>
+            <p className="text-xs text-neutral-400">
+              Tips for collaborating across DISC styles
+            </p>
+          </div>
+        </div>
+        <div className="p-5">
+          <div className="overflow-hidden rounded-2xl border border-[rgba(218,119,86,0.18)]">
+            <table className="w-full text-left text-[14px]">
+              <thead>
+                <tr className="bg-[#FFF9F6]">
+                  <th className="px-5 py-3.5 font-semibold text-neutral-700 w-1/3 text-sm">
+                    When working with...
+                  </th>
+                  <th className="px-5 py-3.5 font-semibold text-neutral-700 text-sm">
+                    Tips for the {result.primary}-Style
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[rgba(218,119,86,0.10)]">
+                {copy.withOthers.map((row) => {
+                  const sType = row.withType.charAt(0) as DiscLetter;
+                  const circleBg: Record<DiscLetter, string> = {
+                    D: "#e11d48",
+                    I: "#f59e0b",
+                    S: "#10b981",
+                    C: "#3b82f6",
+                  };
+                  return (
+                    <tr
+                      key={row.withType}
+                      className="bg-white hover:bg-[#FFF9F6] transition-colors"
+                    >
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3 font-semibold text-neutral-800">
+                          {/* 🔥 The Ultimate Centering Fix Using Grid */}
+                          <svg
+                            width="40"
+                            height="40"
+                            viewBox="0 0 40 40"
+                            style={{ display: "block", margin: 0, padding: 0 }}
+                          >
+                            <circle
+                              cx="20"
+                              cy="20"
+                              r="20"
+                              fill={circleBg[sType]}
+                            />
+                            <text
+                              x="20"
+                              y="20"
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              fill="#ffffff"
+                              fontSize="18"
+                              fontWeight="900"
+                              fontFamily="inherit"
+                            >
+                              {sType}
+                            </text>
+                          </svg>
+                          <span>{row.label}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-neutral-600 leading-relaxed text-sm">
+                        {row.tip}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Modal Wrapper for the Profile ───────────────────────────────────────────
+
+function DetailedProfileModal({
+  row,
+  onClose,
+}: {
+  row: DiscProfileRow;
+  onClose: () => void;
+}) {
+  const d = row.scores?.D || 0;
+  const i = row.scores?.I || 0;
+  const s = row.scores?.S || 0;
+  const c = row.scores?.C || 0;
+  const computedTotal = d + i + s + c;
+  const totalAnswers = computedTotal || 15;
+
+  const parts = row.style.split("/");
+  const primary = (parts[0] || "D") as DiscLetter;
+  const secondary = (parts[1] || parts[0] || "D") as DiscLetter;
+
+  const profileResult: DiscProfileResult = {
+    counts: { D: d, I: i, S: s, C: c },
+    scores: { D: d, I: i, S: s, C: c },
+    totalAnswers,
+    primary,
+    secondary,
+    patternName: row.profileName,
+    blendLabel: row.style,
+    completedAt: row.date || new Date().toISOString(),
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm transition-opacity"
+      style={{ background: "rgba(0,0,0,0.50)" }}
+    >
+      <div
+        className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden shadow-2xl"
+        style={{
+          borderRadius: 20,
+          background: "#f6f4ee",
+          border: "1px solid rgba(218,119,86,0.20)",
+        }}
+      >
+        {/* Modal Header — matches BusinessPlan modal style */}
+        <div
+          className="flex shrink-0 items-center justify-between px-6 py-5 z-10"
+          style={{
+            background: BP.cardBg,
+            borderBottom: `1px solid ${BP.primaryBord}`,
+            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: BP.primary,
+                flexShrink: 0,
+                display: "inline-block",
+              }}
+            />
+            <h2
+              className="font-black text-[17px] m-0"
+              style={{ color: BP.textMain, fontFamily: BP.font }}
+            >
+              Detailed Profile: {row.name}
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border shadow-sm transition-all active:scale-[0.95]"
+            style={{
+              background: BP.cardBg,
+              borderColor: BP.primaryBord,
+              color: BP.textMuted,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = BP.primaryBg;
+              e.currentTarget.style.color = BP.primary;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = BP.cardBg;
+              e.currentTarget.style.color = BP.textMuted;
+            }}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div
+          className="flex-1 overflow-y-auto p-4 sm:p-6"
+          style={{
+            background: BP.pageBg,
+            scrollbarWidth: "thin",
+            scrollbarColor: "#C4B89D transparent",
+          }}
+        >
+          <DiscProfileReport
+            result={profileResult}
+            displayName={row.name}
+            emailHint={row.email || ""}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Learn & Teams Content ───────────────────────────────────────────────────
+
 const LEARN_DISC_VIDEO_ID = "YlvUztwXFuE";
 
 type LearnDiscKey = "d" | "i" | "s" | "c";
-
 type LearnSubTab =
   | "traits"
   | "communication"
@@ -247,7 +1364,6 @@ const LEARN_DISC_TABS: {
   },
 ];
 
-/** Profile icon + selected D/I/S/C tab — same palette per type */
 const LEARN_PROFILE_ICON_BY_DISC: Record<
   LearnDiscKey,
   { container: string; icon: string; tabSelected: string }
@@ -255,26 +1371,22 @@ const LEARN_PROFILE_ICON_BY_DISC: Record<
   d: {
     container: "border-[#fecaca] bg-[#fef2f2]",
     icon: "text-[#dc2626]",
-    tabSelected:
-      "border-[#fecaca] bg-[#fef2f2] text-[#dc2626] shadow-sm",
+    tabSelected: "border-[#fecaca] bg-[#fef2f2] text-[#dc2626] shadow-sm",
   },
   i: {
     container: "border-amber-200 bg-[#fffbeb]",
     icon: "text-[#d97706]",
-    tabSelected:
-      "border-amber-200 bg-[#fffbeb] text-[#d97706] shadow-sm",
+    tabSelected: "border-amber-200 bg-[#fffbeb] text-[#d97706] shadow-sm",
   },
   s: {
     container: "border-emerald-200 bg-[#f0fdf4]",
     icon: "text-[#16a34a]",
-    tabSelected:
-      "border-emerald-200 bg-[#f0fdf4] text-[#16a34a] shadow-sm",
+    tabSelected: "border-emerald-200 bg-[#f0fdf4] text-[#16a34a] shadow-sm",
   },
   c: {
     container: "border-[#93c5fd] bg-[#eff6ff]",
     icon: "text-[#3b82f6]",
-    tabSelected:
-      "border-[#93c5fd] bg-[#eff6ff] text-[#2563eb] shadow-sm",
+    tabSelected: "border-[#93c5fd] bg-[#eff6ff] text-[#2563eb] shadow-sm",
   },
 };
 
@@ -321,16 +1433,13 @@ const LEARN_TRAITS_BY_TYPE: Record<LearnDiscKey, string[]> = {
   ],
 };
 
-const LEARN_SUB_CONTENT: Record<
-  LearnDiscKey,
-  Record<LearnSubTab, string[]>
-> = {
+const LEARN_SUB_CONTENT: Record<LearnDiscKey, Record<LearnSubTab, string[]>> = {
   d: {
     traits: [],
     communication: [
       "Prefer clear, concise updates; avoid fluff.",
       "State the goal first, then supporting facts.",
-      "Be direct when giving feedback; don’t take silence as disagreement.",
+      "Be direct when giving feedback; don't take silence as disagreement.",
     ],
     strengths: [
       "Drives clarity and momentum on tough projects.",
@@ -364,16 +1473,14 @@ const LEARN_SUB_CONTENT: Record<
       "Listen for detail-oriented concerns from C-styles.",
       "Balance optimism with realistic planning.",
     ],
-    roles: [
-      "Sales, marketing, client-facing, and culture-building roles.",
-    ],
+    roles: ["Sales, marketing, client-facing, and culture-building roles."],
   },
   s: {
     traits: [],
     communication: [
       "Prefer warm, steady tone; avoid abrupt changes.",
       "Give context before asking for big shifts.",
-      "Allow time to process; don’t force instant decisions.",
+      "Allow time to process; don't force instant decisions.",
     ],
     strengths: [
       "Creates stability and trust on teams.",
@@ -385,9 +1492,7 @@ const LEARN_SUB_CONTENT: Record<
       "Practice concise updates in fast forums.",
       "Set boundaries on scope to avoid overload.",
     ],
-    roles: [
-      "Support, HR, coaching, and service delivery roles.",
-    ],
+    roles: ["Support, HR, coaching, and service delivery roles."],
   },
   c: {
     traits: [],
@@ -406,9 +1511,7 @@ const LEARN_SUB_CONTENT: Record<
       "Balance analysis with timely decisions.",
       "Acknowledge people impact, not only process.",
     ],
-    roles: [
-      "Finance, QA, compliance, engineering, and systems roles.",
-    ],
+    roles: ["Finance, QA, compliance, engineering, and systems roles."],
   },
 };
 
@@ -425,7 +1528,7 @@ const LEARN_INTERACTIONS = [
   },
   {
     title: "I & S (People-first)",
-    body: "People-oriented motivation and harmony. I energizes relationships; S sustains trust and care. Great for culture—pair with clear structure so execution doesn’t slip.",
+    body: "People-oriented motivation and harmony. I energizes relationships; S sustains trust and care. Great for culture—pair with clear structure so execution doesn't slip.",
     boxClass: "border-sky-200 bg-[#eff6ff] text-neutral-800",
   },
   {
@@ -446,7 +1549,7 @@ function LearnTabContent() {
 
   return (
     <div className="space-y-6">
-      <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
+      <Card className="disc-panel overflow-hidden">
         <div className="border-b border-[#DA7756]/20 p-4 sm:p-6">
           <div className="flex flex-wrap items-start gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#DA7756]/10">
@@ -462,7 +1565,7 @@ function LearnTabContent() {
             </div>
           </div>
         </div>
-        <div className="bg-[#DA7756]/5 p-3 sm:p-4">
+        <div className="p-3 sm:p-4" style={{ background: BP.primaryBg }}>
           <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-[#DA7756]/25 bg-black shadow-inner">
             <iframe
               title="How to Use DISC Test in HR — What is DISC?"
@@ -475,7 +1578,7 @@ function LearnTabContent() {
         </div>
       </Card>
 
-      <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+      <Card className="disc-panel p-4 sm:p-6">
         <div className="mb-4 flex flex-wrap items-start gap-3 sm:gap-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-[#DA7756]/10 shadow-sm">
             <BookOpen className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
@@ -523,7 +1626,7 @@ function LearnTabContent() {
         </div>
       </Card>
 
-      <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+      <Card className="disc-panel p-4 sm:p-6">
         <div className="mb-4 flex flex-wrap items-start gap-3 sm:gap-4">
           <div
             className={cn(
@@ -552,7 +1655,10 @@ function LearnTabContent() {
           </div>
         </div>
 
-        <div className="mb-5 flex flex-wrap gap-1 rounded-xl border border-[#DA7756]/15 bg-[#DA7756]/10 p-1.5">
+        <div
+          className="mb-5 flex flex-wrap gap-1 rounded-xl border p-1.5"
+          style={{ borderColor: BP.primaryBord, background: BP.primaryBg }}
+        >
           {LEARN_SUB_TABS.map((st) => (
             <button
               key={st.key}
@@ -611,7 +1717,7 @@ function LearnTabContent() {
         )}
       </Card>
 
-      <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+      <Card className="disc-panel p-4 sm:p-6">
         <h3 className="text-lg font-bold text-neutral-900">
           How DISC Types Interact
         </h3>
@@ -623,7 +1729,7 @@ function LearnTabContent() {
             <div
               key={box.title}
               className={cn(
-                "rounded-xl border p-4 text-sm leading-relaxed shadow-sm",
+                "disc-card-lift rounded-xl border p-4 text-sm leading-relaxed shadow-sm",
                 box.boxClass
               )}
             >
@@ -641,82 +1747,16 @@ type DepartmentTeam = {
   id: string;
   name: string;
   assessmentsCompleted: number;
-  /** Counts used for bar fill (0–10 scale for display) */
   discDistribution: { d: number; i: number; s: number; c: number };
   averageScores: { d: number; i: number; s: number; c: number };
   departmentHead?: string;
 };
 
-const MOCK_DEPARTMENTS: DepartmentTeam[] = [
-  {
-    id: "d1",
-    name: "Human Resources",
-    assessmentsCompleted: 0,
-    discDistribution: { d: 0, i: 0, s: 0, c: 0 },
-    averageScores: { d: 0, i: 0, s: 0, c: 0 },
-    departmentHead: "Paloma Tushirwala",
-  },
-  {
-    id: "d2",
-    name: "Front End",
-    assessmentsCompleted: 0,
-    discDistribution: { d: 0, i: 0, s: 0, c: 0 },
-    averageScores: { d: 0, i: 0, s: 0, c: 0 },
-    departmentHead: "Akshay Shinde",
-  },
-  {
-    id: "d3",
-    name: "Design",
-    assessmentsCompleted: 0,
-    discDistribution: { d: 0, i: 0, s: 0, c: 0 },
-    averageScores: { d: 0, i: 0, s: 0, c: 0 },
-  },
-  {
-    id: "d4",
-    name: "Engineering",
-    assessmentsCompleted: 12,
-    discDistribution: { d: 4, i: 3, s: 2, c: 3 },
-    averageScores: { d: 72, i: 65, s: 58, c: 70 },
-    departmentHead: "Mahendra Lungare",
-  },
-  {
-    id: "d5",
-    name: "Client Servicing",
-    assessmentsCompleted: 5,
-    discDistribution: { d: 1, i: 2, s: 1, c: 1 },
-    averageScores: { d: 45, i: 62, s: 55, c: 48 },
-    departmentHead: "Priya Sharma",
-  },
-  {
-    id: "d6",
-    name: "Accounts",
-    assessmentsCompleted: 3,
-    discDistribution: { d: 0, i: 1, s: 1, c: 1 },
-    averageScores: { d: 38, i: 52, s: 61, c: 68 },
-  },
-];
-
 const DISC_BAR_META = [
-  {
-    key: "d" as const,
-    label: "D",
-    fill: "bg-[#ef4444]",
-  },
-  {
-    key: "i" as const,
-    label: "I",
-    fill: "bg-[#f59e0b]",
-  },
-  {
-    key: "s" as const,
-    label: "S",
-    fill: "bg-[#22c55e]",
-  },
-  {
-    key: "c" as const,
-    label: "C",
-    fill: "bg-[#3b82f6]",
-  },
+  { key: "d" as const, label: "D", fill: "bg-[#ef4444]" },
+  { key: "i" as const, label: "I", fill: "bg-[#f59e0b]" },
+  { key: "s" as const, label: "S", fill: "bg-[#22c55e]" },
+  { key: "c" as const, label: "C", fill: "bg-[#3b82f6]" },
 ];
 
 const AVG_DOT = [
@@ -735,9 +1775,9 @@ function DepartmentTeamCard({ dept }: { dept: DepartmentTeam }) {
   return (
     <div
       className={cn(
-        "w-full rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 text-left shadow-sm transition-all sm:p-5",
-        "hover:border-[#DA7756]/35 hover:shadow-md"
+        "disc-card-lift w-full rounded-2xl border p-4 text-left shadow-sm sm:p-5"
       )}
+      style={{ borderColor: BP.primaryBord, background: BP.cardBg }}
     >
       <div className="flex items-start gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-[#DA7756]/10 shadow-sm">
@@ -748,15 +1788,16 @@ function DepartmentTeamCard({ dept }: { dept: DepartmentTeam }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#DA7756]/20 bg-[#DA7756]/10 px-3 py-2.5 text-sm text-neutral-800">
+      <div
+        className="mt-4 flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm text-neutral-800"
+        style={{ borderColor: BP.primaryBord, background: BP.primaryBg }}
+      >
         <User className="h-4 w-4 shrink-0 text-[#DA7756]" strokeWidth={2} />
         <span>
           <span className="font-semibold tabular-nums">
             {dept.assessmentsCompleted}
           </span>{" "}
-          {dept.assessmentsCompleted === 1
-            ? "assessment"
-            : "assessments"}{" "}
+          {dept.assessmentsCompleted === 1 ? "assessment" : "assessments"}{" "}
           completed
         </span>
       </div>
@@ -797,7 +1838,10 @@ function DepartmentTeamCard({ dept }: { dept: DepartmentTeam }) {
           {AVG_DOT.map((dot) => (
             <span key={dot.key} className="inline-flex items-center gap-1.5">
               <span
-                className={cn("h-2.5 w-2.5 shrink-0 rounded-full", dot.className)}
+                className={cn(
+                  "h-2.5 w-2.5 shrink-0 rounded-full",
+                  dot.className
+                )}
                 aria-hidden
               />
               <span className="font-medium uppercase">{dot.key}:</span>
@@ -809,7 +1853,10 @@ function DepartmentTeamCard({ dept }: { dept: DepartmentTeam }) {
         </div>
       </div>
 
-      <div className="mt-4 rounded-xl border border-[#DA7756]/20 bg-[#f6f4ee]/80 px-3 py-2.5">
+      <div
+        className="mt-4 rounded-xl border px-3 py-2.5"
+        style={{ borderColor: BP.primaryBord, background: BP.primaryTint }}
+      >
         <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
           Department Head
         </p>
@@ -823,46 +1870,87 @@ function DepartmentTeamCard({ dept }: { dept: DepartmentTeam }) {
 
 function TeamsTabContent() {
   const [deptSearch, setDeptSearch] = useState("");
-  const [apiDepts, setApiDepts] = useState<DepartmentTeam[] | null>(null);
+  const [apiDepts, setApiDepts] = useState<DepartmentTeam[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchDepartments = async () => {
       setLoading(true);
       try {
-        const response = await apiClient.get("/disc_assessments/department_dashboard");
-        if (response.data?.success) {
-          const rawDepts = response.data.data.departments || [];
-          
-          const parseDisc = (data: Record<string, unknown> | Array<Record<string, unknown>> | undefined, valKey: 'count' | 'score') => {
-             if (Array.isArray(data)) {
-                 const m = { d: 0, i: 0, s: 0, c: 0 };
-                 data.forEach((x: Record<string, unknown>) => {
-                    const t = String(x.type || "").toLowerCase();
-                    if (t === "d") m.d = Number(x[valKey]) || 0;
-                    if (t === "i") m.i = Number(x[valKey]) || 0;
-                    if (t === "s") m.s = Number(x[valKey]) || 0;
-                    if (t === "c") m.c = Number(x[valKey]) || 0;
-                 });
-                 return m;
-             }
-             const obj = data as Record<string, unknown> | undefined;
-             return {
-                 d: Number(obj?.d ?? obj?.D) || 0,
-                 i: Number(obj?.i ?? obj?.I) || 0,
-                 s: Number(obj?.s ?? obj?.S) || 0,
-                 c: Number(obj?.c ?? obj?.C) || 0,
-             };
+        let baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        if (!baseUrl || !token) {
+          setLoading(false);
+          return;
+        }
+        if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://"))
+          baseUrl = "https://" + baseUrl;
+        const response = await fetch(
+          `${baseUrl}/disc_assessments/department_dashboard`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        const data = await response.json();
+        if (data?.success) {
+          const rawDepts = data.data.departments || [];
+          const parseDisc = (
+            data:
+              | Record<string, unknown>
+              | Array<Record<string, unknown>>
+              | undefined,
+            valKey: "count" | "score"
+          ) => {
+            if (Array.isArray(data)) {
+              const m = { d: 0, i: 0, s: 0, c: 0 };
+              data.forEach((x: Record<string, unknown>) => {
+                const t = String(x.type || "").toLowerCase();
+                if (t === "d") m.d = Number(x[valKey]) || 0;
+                if (t === "i") m.i = Number(x[valKey]) || 0;
+                if (t === "s") m.s = Number(x[valKey]) || 0;
+                if (t === "c") m.c = Number(x[valKey]) || 0;
+              });
+              return m;
+            }
+            const obj = data as Record<string, unknown> | undefined;
+            return {
+              d: Number(obj?.d ?? obj?.D) || 0,
+              i: Number(obj?.i ?? obj?.I) || 0,
+              s: Number(obj?.s ?? obj?.S) || 0,
+              c: Number(obj?.c ?? obj?.C) || 0,
+            };
           };
-
-          const mapped: DepartmentTeam[] = rawDepts.map((d: Record<string, unknown>) => ({
-            id: String(d.id || d.department_id || Math.random()),
-            name: String(d.name || d.department_name || "Unknown"),
-            assessmentsCompleted: Number(d.assessments_completed ?? d.assessmentsCompleted ?? 0),
-            discDistribution: parseDisc((d.disc_distribution ?? d.discDistribution) as Record<string, unknown> | Array<Record<string, unknown>> | undefined, 'count'),
-            averageScores: parseDisc((d.average_scores ?? d.averageScores) as Record<string, unknown> | Array<Record<string, unknown>> | undefined, 'score'),
-            departmentHead: d.department_head ?? d.departmentHead ? String(d.department_head ?? d.departmentHead) : undefined
-          }));
+          const mapped: DepartmentTeam[] = rawDepts.map(
+            (d: Record<string, unknown>) => ({
+              id: String(d.id || d.department_id || Math.random()),
+              name: String(d.name || d.department_name || "Unknown"),
+              assessmentsCompleted: Number(
+                d.assessments_completed ?? d.assessmentsCompleted ?? 0
+              ),
+              discDistribution: parseDisc(
+                (d.disc_distribution ?? d.discDistribution) as
+                  | Record<string, unknown>
+                  | Array<Record<string, unknown>>
+                  | undefined,
+                "count"
+              ),
+              averageScores: parseDisc(
+                (d.average_scores ?? d.averageScores) as
+                  | Record<string, unknown>
+                  | Array<Record<string, unknown>>
+                  | undefined,
+                "score"
+              ),
+              departmentHead:
+                (d.department_head ?? d.departmentHead)
+                  ? String(d.department_head ?? d.departmentHead)
+                  : undefined,
+            })
+          );
           setApiDepts(mapped);
         }
       } catch (err) {
@@ -875,16 +1963,13 @@ function TeamsTabContent() {
   }, []);
 
   const filtered = useMemo(() => {
-    const deptsToSearch = apiDepts || MOCK_DEPARTMENTS;
     const q = deptSearch.trim().toLowerCase();
-    if (!q) return deptsToSearch;
-    return deptsToSearch.filter((d) =>
-      d.name.toLowerCase().includes(q)
-    );
+    if (!q) return apiDepts;
+    return apiDepts.filter((d) => d.name.toLowerCase().includes(q));
   }, [deptSearch, apiDepts]);
 
   return (
-    <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+    <Card className="disc-panel p-4 sm:p-6">
       <div className="mb-4 flex flex-wrap items-start gap-2">
         <Users
           className="mt-0.5 h-5 w-5 shrink-0 text-[#DA7756]"
@@ -897,7 +1982,6 @@ function TeamsTabContent() {
           </p>
         </div>
       </div>
-
       <div className="mb-6">
         <div className="relative min-w-0 w-full">
           <Search
@@ -909,15 +1993,18 @@ function TeamsTabContent() {
             value={deptSearch}
             onChange={(e) => setDeptSearch(e.target.value)}
             placeholder="Search departments..."
-            className="h-10 w-full rounded-xl border border-neutral-200 bg-white py-2 pl-10 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
+            className="disc-input h-10 py-2 pl-10 pr-3 text-sm font-medium"
           />
         </div>
       </div>
-
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="rounded-xl border border-dashed border-[#DA7756]/30 bg-[#DA7756]/10 py-10 text-center">
+          <p className="text-sm text-neutral-500">Loading departments...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-[#DA7756]/30 bg-[#DA7756]/10 py-10 text-center">
           <p className="text-sm text-neutral-500">
-            No departments match your search.
+            No departments match your search or no data available.
           </p>
         </div>
       ) : (
@@ -931,6 +2018,8 @@ function TeamsTabContent() {
   );
 }
 
+// ─── Main Dashboard Component ────────────────────────────────────────────────
+
 const DiscReport = () => {
   const [tab, setTab] = useState<DiscTab>("dashboard");
   const [profileFilter, setProfileFilter] = useState<string | null>(null);
@@ -942,10 +2031,15 @@ const DiscReport = () => {
     "name" | "department" | "score" | "style" | "profile" | "date"
   >("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-  const [profilePreview, setProfilePreview] = useState<DiscProfileResult | null>(
-    null
+
+  // ── Single group mode: ungrouped | department ──
+  const [groupMode, setGroupMode] = useState<"ungrouped" | "department">(
+    "ungrouped"
   );
 
+  const [profilePreview, setProfilePreview] = useState<DiscProfileRow | null>(
+    null
+  );
   const [apiData, setApiData] = useState<ApiDashboardData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -953,10 +2047,23 @@ const DiscReport = () => {
     const fetchDashboard = async () => {
       setLoading(true);
       try {
-        const response = await apiClient.get("/disc_assessments/dashboard");
-        if (response.data?.success) {
-          setApiData(response.data.data);
+        let baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        if (!baseUrl || !token) {
+          setLoading(false);
+          return;
         }
+        if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://"))
+          baseUrl = "https://" + baseUrl;
+        const response = await fetch(`${baseUrl}/disc_assessments/dashboard`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+        if (data?.success) setApiData(data.data);
       } catch (err) {
         console.error("Error fetching dashboard:", err);
       } finally {
@@ -968,12 +2075,11 @@ const DiscReport = () => {
 
   const computedDiscSummary = useMemo(() => {
     if (!apiData?.disc_type_distribution) return DISC_SUMMARY;
-    return DISC_SUMMARY.map(item => {
-      const match = apiData.disc_type_distribution.find((d) => d.type.toLowerCase() === item.key);
-      return {
-        ...item,
-        count: match ? match.count : 0
-      };
+    return DISC_SUMMARY.map((item) => {
+      const match = apiData.disc_type_distribution.find(
+        (d) => d.type.toLowerCase() === item.key
+      );
+      return { ...item, count: match ? match.count : 0 };
     });
   }, [apiData]);
 
@@ -981,7 +2087,7 @@ const DiscReport = () => {
     if (!apiData?.profile_name_distribution) return PROFILE_CHIPS;
     return apiData.profile_name_distribution.map((p) => ({
       name: p.profile_name,
-      count: p.count
+      count: p.count,
     }));
   }, [apiData]);
 
@@ -989,43 +2095,56 @@ const DiscReport = () => {
     const t = (tone || "d").toLowerCase();
     switch (t) {
       case "i":
-        return { rowBgClass: "bg-[#fffbeb]/90", styleTextClass: "text-[#f59e0b] font-semibold", tone: "i" as RowTone };
+        return {
+          rowBgClass: "bg-[#fffbeb]/90",
+          styleTextClass: "text-[#f59e0b] font-semibold",
+          tone: "i" as RowTone,
+        };
       case "s":
-        return { rowBgClass: "bg-[#f0fdf4]/90", styleTextClass: "text-[#22c55e] font-semibold", tone: "s" as RowTone };
+        return {
+          rowBgClass: "bg-[#f0fdf4]/90",
+          styleTextClass: "text-[#22c55e] font-semibold",
+          tone: "s" as RowTone,
+        };
       case "c":
-        return { rowBgClass: "bg-[#eff6ff]/90", styleTextClass: "text-[#3b82f6] font-semibold", tone: "c" as RowTone };
+        return {
+          rowBgClass: "bg-[#eff6ff]/90",
+          styleTextClass: "text-[#3b82f6] font-semibold",
+          tone: "c" as RowTone,
+        };
       case "d":
       default:
-        return { rowBgClass: "bg-[#fef2f2]/90", styleTextClass: "text-[#ef4444] font-semibold", tone: "d" as RowTone };
+        return {
+          rowBgClass: "bg-[#fef2f2]/90",
+          styleTextClass: "text-[#ef4444] font-semibold",
+          tone: "d" as RowTone,
+        };
     }
   };
 
   const apiRows: DiscProfileRow[] = useMemo(() => {
-    if (!apiData?.disc_profiles) return MOCK_ROWS; // Use MOCK_ROWS as temporary fallback when testing without API, or initial state
-    
+    if (!apiData?.disc_profiles) return [];
     return apiData.disc_profiles.map((p) => {
       const toneData = mapToneToClasses(p.primary_type);
       return {
         id: p.encrypted_attempt_id || String(p.attempt_id),
         name: p.name || "",
+        email: p.email || "",
         department: p.department || "N/A",
-        discScore: p.score_string || "",
+        scores: p.scores || { D: 0, I: 0, S: 0, C: 0 },
         style: p.style_code || "",
         styleTone: toneData.tone,
         profileName: p.profile_name || "",
         date: p.date || "",
         rowBgClass: toneData.rowBgClass,
-        styleTextClass: toneData.styleTextClass
+        styleTextClass: toneData.styleTextClass,
       };
     });
   }, [apiData]);
 
-  const toggleSort = (
-    key: typeof sortKey
-  ) => {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
       setSortKey(key);
       setSortDir("asc");
     }
@@ -1034,20 +2153,17 @@ const DiscReport = () => {
   const filteredRows = useMemo(() => {
     let rows = [...apiRows];
     const q = search.trim().toLowerCase();
-    if (q) {
+    if (q)
       rows = rows.filter(
         (r) =>
           r.name.toLowerCase().includes(q) ||
           r.department.toLowerCase().includes(q) ||
           r.profileName.toLowerCase().includes(q)
       );
-    }
-    if (profileFilter) {
+    if (profileFilter)
       rows = rows.filter((r) => r.profileName === profileFilter);
-    }
-    if (typeFilter !== "all") {
+    if (typeFilter !== "all")
       rows = rows.filter((r) => r.styleTone === typeFilter);
-    }
     rows.sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
@@ -1058,7 +2174,7 @@ const DiscReport = () => {
           cmp = a.department.localeCompare(b.department);
           break;
         case "score":
-          cmp = Number(a.discScore) - Number(b.discScore);
+          cmp = Number(a.scores?.D || 0) - Number(b.scores?.D || 0); // basic sorting fallback
           break;
         case "style":
           cmp = a.style.localeCompare(b.style);
@@ -1069,8 +2185,6 @@ const DiscReport = () => {
         case "date":
           cmp = new Date(a.date).getTime() - new Date(b.date).getTime();
           break;
-        default:
-          break;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -1078,10 +2192,8 @@ const DiscReport = () => {
   }, [search, profileFilter, typeFilter, sortKey, sortDir, apiRows]);
 
   const visibleRows = showAllRows ? filteredRows : filteredRows.slice(0, 3);
-  const totalVisible = filteredRows.length;
   const allSelected =
-    visibleRows.length > 0 &&
-    visibleRows.every((r) => selected[r.id]);
+    visibleRows.length > 0 && visibleRows.every((r) => selected[r.id]);
 
   const toggleSelectAll = () => {
     if (allSelected) {
@@ -1099,13 +2211,23 @@ const DiscReport = () => {
     }
   };
 
-  const SortHeader = ({
-    label,
-    k,
-  }: {
-    label: string;
-    k: typeof sortKey;
-  }) => (
+  // ── groupedRows only groups by department ──
+  const groupedRows = useMemo(() => {
+    if (groupMode === "ungrouped") return null;
+    const groups: Record<string, DiscProfileRow[]> = {};
+    visibleRows.forEach((row) => {
+      const key = row.department || "—";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(row);
+    });
+    return Object.entries(groups).sort((a, b) => {
+      if (a[0] === "—") return 1;
+      if (b[0] === "—") return -1;
+      return a[0].localeCompare(b[0]);
+    });
+  }, [visibleRows, groupMode]);
+
+  const SortHeader = ({ label, k }: { label: string; k: typeof sortKey }) => (
     <button
       type="button"
       onClick={() => toggleSort(k)}
@@ -1113,9 +2235,7 @@ const DiscReport = () => {
     >
       {label}
       {sortKey === k && (
-        <span className="text-xs text-neutral-400"
-          aria-hidden
-        >
+        <span className="text-xs text-neutral-400" aria-hidden>
           {sortDir === "asc" ? "↑" : "↓"}
         </span>
       )}
@@ -1123,101 +2243,120 @@ const DiscReport = () => {
   );
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div
+      className="min-h-[calc(100vh-5rem)] px-4 py-6 sm:px-6"
+      style={{ background: BP.pageBg, fontFamily: BP.font }}
+    >
+      <DiscThemeStyle />
+
+      <div className="disc-wrap mx-auto max-w-[1600px] space-y-5">
+        {/* ── Page Header — matches BusinessPlan ── */}
+        <div
+          className="overflow-hidden rounded-2xl border shadow-sm p-8 flex flex-col md:flex-row md:items-center justify-between gap-6"
+          style={{
+            background: BP.cardBg,
+            borderColor: BP.primaryBord,
+          }}
+        >
           <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-[#DA7756]/10 shadow-sm">
-              <Brain className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border shadow-sm"
+              style={{
+                borderColor: BP.primaryBord,
+                background: BP.primaryBg,
+              }}
+            >
+              <Brain
+                className="h-6 w-6"
+                style={{ color: BP.primary }}
+                strokeWidth={2}
+              />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+              <p
+                className="text-[10px] font-black uppercase tracking-[0.18em] mb-1"
+                style={{ color: BP.textMuted }}
+              >
+                Behavioural insights across your organisation
+              </p>
+              <h1
+                className="text-2xl font-black tracking-tight"
+                style={{ color: "#111" }}
+              >
                 DISC Assessment Management
               </h1>
-              <p className="mt-1 max-w-2xl text-sm text-neutral-500 sm:text-base">
-                Manage DISC profiles, team analytics, and behavioral insights
-                across your organization.
+              <p
+                className="text-sm font-semibold mt-1"
+                style={{ color: BP.textMuted }}
+              >
+                Manage DISC profiles, team analytics, and behavioral insights.
               </p>
             </div>
           </div>
-        </header>
+        </div>
 
-        <Tabs
-          value={tab}
-          onValueChange={(v) => setTab(v as DiscTab)}
-          className="w-full"
+        {/* ── Tab Bar — matches BusinessPlan pill style ── */}
+        <div
+          className="bg-white flex w-fit max-w-full rounded-full p-1.5 gap-1 overflow-x-auto shadow-sm border"
+          style={{ borderColor: "#f3f4f6" }}
         >
-          <TabsList
-            className={cn(
-              "grid h-auto w-full grid-cols-1 gap-1 rounded-xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-2 sm:grid-cols-3"
-            )}
-            aria-label="DISC sections"
-          >
-            <TabsTrigger
-              value="dashboard"
-              className={cn(
-                "gap-2 rounded-lg py-3 text-sm font-medium text-neutral-600 sm:py-3.5",
-                "data-[state=active]:bg-[#DA7756]/10 data-[state=active]:text-neutral-900",
-                "data-[state=active]:shadow-sm data-[state=active]:font-semibold",
-                "data-[state=inactive]:transition-colors data-[state=inactive]:hover:bg-[#DA7756]/15 data-[state=inactive]:hover:text-neutral-900"
-              )}
-            >
-              <Brain
-                className="h-[18px] w-[18px] shrink-0 sm:h-5 sm:w-5"
-                strokeWidth={2}
-              />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger
-              value="teams"
-              className={cn(
-                "gap-2 rounded-lg py-3 text-sm font-medium text-neutral-600 sm:py-3.5",
-                "data-[state=active]:bg-[#DA7756]/10 data-[state=active]:text-neutral-900",
-                "data-[state=active]:shadow-sm data-[state=active]:font-semibold",
-                "data-[state=inactive]:transition-colors data-[state=inactive]:hover:bg-[#DA7756]/15 data-[state=inactive]:hover:text-neutral-900"
-              )}
-            >
-              <BarChart3
-                className="h-[18px] w-[18px] shrink-0 sm:h-5 sm:w-5"
-                strokeWidth={2}
-              />
-              Teams
-            </TabsTrigger>
-            <TabsTrigger
-              value="learn"
-              className={cn(
-                "gap-2 rounded-lg py-3 text-sm font-medium text-neutral-600 sm:py-3.5",
-                "data-[state=active]:bg-[#DA7756]/10 data-[state=active]:text-neutral-900",
-                "data-[state=active]:shadow-sm data-[state=active]:font-semibold",
-                "data-[state=inactive]:transition-colors data-[state=inactive]:hover:bg-[#DA7756]/15 data-[state=inactive]:hover:text-neutral-900"
-              )}
-            >
-              <BookOpen
-                className="h-[18px] w-[18px] shrink-0 sm:h-5 sm:w-5"
-                strokeWidth={2}
-              />
-              Learn
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+          {(["dashboard", "teams", "learn"] as DiscTab[]).map((t) => {
+            const Icon =
+              t === "dashboard" ? Brain : t === "teams" ? BarChart3 : BookOpen;
+            const labels: Record<DiscTab, string> = {
+              dashboard: "Dashboard",
+              teams: "Teams",
+              learn: "Learn",
+            };
+            const isActive = tab === t;
+            return (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className="flex items-center gap-2 py-2 px-8 rounded-full text-[13px] font-bold transition-all duration-150 whitespace-nowrap"
+                style={{
+                  background: isActive ? BP.primary : "transparent",
+                  color: isActive ? "#fff" : "#7b8393",
+                }}
+              >
+                <Icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+                {labels[t]}
+              </button>
+            );
+          })}
+        </div>
 
         {tab === "teams" && <TeamsTabContent />}
         {tab === "learn" && <LearnTabContent />}
 
         {tab === "dashboard" && (
           <>
-            <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+            {/* DISC Type Distribution */}
+            <Card
+              className="disc-panel p-4 sm:p-6"
+              style={{
+                borderColor: BP.primaryBord,
+                background: BP.cardBg,
+              }}
+            >
               <div className="mb-4 flex flex-wrap items-start gap-2">
                 <TrendingUp
-                  className="mt-0.5 h-5 w-5 shrink-0 text-[#DA7756]"
+                  className="mt-0.5 h-5 w-5 shrink-0"
+                  style={{ color: BP.primary }}
                   strokeWidth={2}
                 />
                 <div>
-                  <h2 className="text-lg font-bold text-neutral-900">
+                  <h2
+                    className="text-lg font-black"
+                    style={{ color: BP.textMain }}
+                  >
                     DISC Type Distribution
                   </h2>
-                  <p className="text-sm text-neutral-500">
-                    Primary types across latest assessments (one per person)
+                  <p
+                    className="text-sm font-semibold"
+                    style={{ color: BP.textMuted }}
+                  >
+                    Primary types across latest assessments
                   </p>
                 </div>
               </div>
@@ -1226,20 +2365,20 @@ const DiscReport = () => {
                   <div
                     key={d.key}
                     className={cn(
-                      "flex flex-col items-center justify-center rounded-xl border-2 px-3 py-5 text-center",
+                      "disc-card-lift flex flex-col items-center justify-center rounded-2xl border px-3 py-5 text-center shadow-sm",
                       d.bg,
                       d.border
                     )}
                   >
                     <span
                       className={cn(
-                        "text-4xl font-bold tabular-nums leading-none",
+                        "text-4xl font-black tabular-nums leading-none",
                         d.text
                       )}
                     >
                       {d.count}
                     </span>
-                    <span className="mt-2 text-sm font-semibold text-neutral-800">
+                    <span className="mt-2 text-sm font-bold text-neutral-800">
                       {d.label}
                     </span>
                   </div>
@@ -1247,17 +2386,31 @@ const DiscReport = () => {
               </div>
             </Card>
 
-            <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+            {/* Profile Name Distribution */}
+            <Card
+              className="disc-panel p-4 sm:p-6"
+              style={{
+                borderColor: BP.primaryBord,
+                background: BP.cardBg,
+              }}
+            >
               <div className="mb-4 flex flex-wrap items-start gap-2">
                 <Users
-                  className="mt-0.5 h-5 w-5 shrink-0 text-[#DA7756]"
+                  className="mt-0.5 h-5 w-5 shrink-0"
+                  style={{ color: BP.primary }}
                   strokeWidth={2}
                 />
                 <div>
-                  <h2 className="text-lg font-bold text-neutral-900">
+                  <h2
+                    className="text-lg font-black"
+                    style={{ color: BP.textMain }}
+                  >
                     Profile Name Distribution
                   </h2>
-                  <p className="text-sm text-neutral-500">
+                  <p
+                    className="text-sm font-semibold"
+                    style={{ color: BP.textMuted }}
+                  >
                     Click a profile to filter the table below
                   </p>
                 </div>
@@ -1266,12 +2419,16 @@ const DiscReport = () => {
                 <button
                   type="button"
                   onClick={() => setProfileFilter(null)}
-                  className={cn(
-                    "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-                    profileFilter === null
-                      ? "border-[#DA7756] bg-[#DA7756]/10 text-[#C72030]"
-                      : "border-[#DA7756]/25 bg-[#f6f4ee]/90 text-neutral-700 hover:bg-[#f6f4ee]"
-                  )}
+                  className="rounded-xl border px-4 py-2 text-sm font-bold shadow-sm transition-all active:scale-[0.97]"
+                  style={{
+                    borderColor:
+                      profileFilter === null ? BP.primary : BP.primaryBord,
+                    background:
+                      profileFilter === null
+                        ? "rgba(218,119,86,0.10)"
+                        : BP.cardBg,
+                    color: profileFilter === null ? BP.primary : BP.textMain,
+                  }}
                 >
                   All
                 </button>
@@ -1284,61 +2441,155 @@ const DiscReport = () => {
                         prev === p.name ? null : p.name
                       )
                     }
-                    className={cn(
-                      "rounded-lg border px-3 py-2 text-sm transition-colors",
-                      profileFilter === p.name
-                        ? "border-[#DA7756] bg-[#DA7756]/10 font-semibold text-[#C72030]"
-                        : "border-[#DA7756]/25 bg-[#f6f4ee]/90 text-neutral-800 hover:bg-[#f6f4ee]"
-                    )}
+                    className="rounded-xl border px-4 py-2 text-sm font-bold shadow-sm transition-all active:scale-[0.97]"
+                    style={{
+                      borderColor:
+                        profileFilter === p.name ? BP.primary : BP.primaryBord,
+                      background:
+                        profileFilter === p.name
+                          ? "rgba(218,119,86,0.10)"
+                          : BP.cardBg,
+                      color:
+                        profileFilter === p.name ? BP.primary : BP.textMain,
+                    }}
                   >
                     {p.name}{" "}
-                    <span className="font-bold tabular-nums">{p.count}</span>
+                    <span className="font-black tabular-nums">{p.count}</span>
                   </button>
                 ))}
+                {computedProfileChips.length === 0 && (
+                  <span
+                    className="text-sm font-semibold mt-2"
+                    style={{ color: BP.textMuted }}
+                  >
+                    No profile data available.
+                  </span>
+                )}
               </div>
             </Card>
 
-            <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
-              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            {/* DISC Profiles Table */}
+            <Card
+              className="disc-panel p-4 sm:p-6"
+              style={{
+                borderColor: BP.primaryBord,
+                background: BP.cardBg,
+              }}
+            >
+              <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex flex-wrap items-start gap-2">
                   <Users
-                    className="mt-0.5 h-5 w-5 shrink-0 text-[#DA7756]"
+                    className="mt-0.5 h-5 w-5 shrink-0"
+                    style={{ color: BP.primary }}
                     strokeWidth={2}
                   />
                   <div>
-                    <h2 className="text-lg font-bold text-neutral-900">
+                    <h2
+                      className="text-lg font-black"
+                      style={{ color: BP.textMain }}
+                    >
                       DISC Profiles
                     </h2>
-                    <p className="text-sm text-neutral-500">
+                    <p
+                      className="text-sm font-semibold"
+                      style={{ color: BP.textMuted }}
+                    >
                       Latest per person
                       {filteredRows.length > visibleRows.length
                         ? ` (${visibleRows.length} of ${filteredRows.length} shown)`
-                        : ` (${filteredRows.length} profile${
-                            filteredRows.length !== 1 ? "s" : ""
-                          })`}
+                        : ` (${filteredRows.length} profile${filteredRows.length !== 1 ? "s" : ""})`}
                     </p>
                   </div>
                 </div>
+
                 <div className="flex flex-wrap items-center gap-2">
+                  {/* Select All */}
                   <button
-                    type="button"
                     onClick={toggleSelectAll}
-                    className="rounded-lg border border-[#DA7756]/25 bg-[#f6f4ee]/90 px-3 py-2 text-sm font-medium text-neutral-800 shadow-sm hover:bg-[#DA7756]/10"
+                    className="rounded-xl border px-4 py-2 text-sm font-bold shadow-sm transition-all active:scale-[0.97]"
+                    style={{
+                      borderColor: BP.primaryBord,
+                      background: BP.cardBg,
+                      color: BP.textMuted,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = BP.primaryBg;
+                      e.currentTarget.style.borderColor = BP.primaryBordStrong;
+                      e.currentTarget.style.color = BP.primary;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = BP.cardBg;
+                      e.currentTarget.style.borderColor = BP.primaryBord;
+                      e.currentTarget.style.color = BP.textMuted;
+                    }}
                   >
                     Select All
                   </button>
+
+                  {/* ── Single "Group by Dept" toggle button ── */}
                   <button
-                    type="button"
-                    onClick={() => setShowAllRows((s) => !s)}
-                    className="rounded-lg border border-[#DA7756]/25 bg-[#f6f4ee]/90 px-3 py-2 text-sm font-medium text-neutral-800 shadow-sm hover:bg-[#DA7756]/10"
+                    onClick={() =>
+                      setGroupMode(
+                        groupMode === "department" ? "ungrouped" : "department"
+                      )
+                    }
+                    className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold shadow-sm transition-all active:scale-[0.97] border"
+                    style={{
+                      background:
+                        groupMode === "department" ? BP.primary : BP.cardBg,
+                      color: groupMode === "department" ? "#fff" : BP.primary,
+                      borderColor:
+                        groupMode === "department"
+                          ? BP.primary
+                          : BP.primaryBord,
+                      fontFamily: BP.font,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (groupMode !== "department") {
+                        e.currentTarget.style.background = BP.primaryBg;
+                        e.currentTarget.style.borderColor =
+                          BP.primaryBordStrong;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (groupMode !== "department") {
+                        e.currentTarget.style.background = BP.cardBg;
+                        e.currentTarget.style.borderColor = BP.primaryBord;
+                      }
+                    }}
                   >
-                    {showAllRows
-                      ? "Show less"
-                      : `Show All (${apiRows.length})`}
+                    <Briefcase className="h-4 w-4" />
+                    {groupMode === "department"
+                      ? "Grouped by Dept"
+                      : "Group by Dept"}
+                  </button>
+
+                  {/* Show All */}
+                  <button
+                    onClick={() => setShowAllRows((s) => !s)}
+                    className="rounded-xl border px-4 py-2 text-sm font-bold shadow-sm transition-all active:scale-[0.97]"
+                    style={{
+                      borderColor: BP.primaryBord,
+                      background: BP.cardBg,
+                      color: BP.textMuted,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = BP.primaryBg;
+                      e.currentTarget.style.borderColor = BP.primaryBordStrong;
+                      e.currentTarget.style.color = BP.primary;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = BP.cardBg;
+                      e.currentTarget.style.borderColor = BP.primaryBord;
+                      e.currentTarget.style.color = BP.textMuted;
+                    }}
+                  >
+                    {showAllRows ? "Show less" : `Show All (${apiRows.length})`}
                   </button>
                 </div>
               </div>
 
+              {/* Search + Filter */}
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="relative min-w-0 flex-1">
                   <Search
@@ -1350,11 +2601,18 @@ const DiscReport = () => {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search by name, department, email..."
-                    className="h-10 w-full rounded-xl border border-neutral-200 bg-white py-2 pl-10 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
+                    className="disc-input h-10 py-2 pl-10 pr-3 text-sm font-medium"
                   />
                 </div>
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="h-10 w-full rounded-xl border-neutral-200 bg-white sm:w-[180px]">
+                  <SelectTrigger
+                    className="h-10 w-full rounded-xl sm:w-[180px]"
+                    style={{
+                      borderColor: BP.primaryBord,
+                      background: "#fffaf8",
+                      fontFamily: BP.font,
+                    }}
+                  >
                     <div className="flex items-center gap-2">
                       <Filter className="h-4 w-4 text-neutral-500" />
                       <SelectValue placeholder="All Types" />
@@ -1370,117 +2628,314 @@ const DiscReport = () => {
                 </Select>
               </div>
 
-              <div className="overflow-x-auto rounded-xl border border-[#DA7756]/20">
-                <table className="w-full min-w-[880px] border-collapse text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-[#DA7756]/20 bg-[#DA7756]/10">
-                      <th className="w-10 px-3 py-3">
-                        <Checkbox
-                          checked={allSelected}
-                          onCheckedChange={() => toggleSelectAll()}
-                          aria-label="Select all visible"
-                        />
-                      </th>
-                      <th className="px-3 py-3">
-                        <SortHeader label="Name" k="name" />
-                      </th>
-                      <th className="px-3 py-3">
-                        <SortHeader label="Department" k="department" />
-                      </th>
-                      <th className="px-3 py-3">
-                        <SortHeader label="DISC Score" k="score" />
-                      </th>
-                      <th className="px-3 py-3">
-                        <SortHeader label="Style" k="style" />
-                      </th>
-                      <th className="px-3 py-3">
-                        <SortHeader label="Profile Name" k="profile" />
-                      </th>
-                      <th className="px-3 py-3">
-                        <SortHeader label="Date" k="date" />
-                      </th>
-                      <th className="px-3 py-3 text-center">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleRows.map((row) => (
+              {/* ── Ungrouped Table ── */}
+              {groupMode === "ungrouped" ? (
+                <div
+                  className="disc-scroll overflow-x-auto rounded-2xl border shadow-sm"
+                  style={{ borderColor: BP.primaryBord, background: BP.cardBg }}
+                >
+                  <table className="w-full min-w-[880px] border-collapse text-left text-sm">
+                    <thead>
                       <tr
-                        key={row.id}
-                        className={cn(
-                          "border-b border-neutral-100/80",
-                          row.rowBgClass
-                        )}
+                        className="border-b"
+                        style={{
+                          borderColor: BP.primaryBord,
+                          background: "rgba(218,119,86,0.08)",
+                        }}
                       >
-                        <td className="px-3 py-3 align-middle">
+                        <th className="w-10 px-3 py-3">
                           <Checkbox
-                            checked={!!selected[row.id]}
-                            onCheckedChange={(c) =>
-                              setSelected((s) => ({
-                                ...s,
-                                [row.id]: c === true,
-                              }))
-                            }
+                            checked={allSelected}
+                            onCheckedChange={() => toggleSelectAll()}
+                            aria-label="Select all visible"
                           />
-                        </td>
-                        <td className="px-3 py-3 font-medium text-neutral-900">
-                          {row.name}
-                        </td>
-                        <td className="px-3 py-3 text-neutral-700">
-                          {row.department}
-                        </td>
-                        <td className="px-3 py-3">
-                          <DiscScoreDigits score={row.discScore} />
-                        </td>
-                        <td className={cn("px-3 py-3", row.styleTextClass)}>
-                          {row.style}
-                        </td>
-                        <td className="px-3 py-3 text-neutral-800">
-                          {row.profileName}
-                        </td>
-                        <td className="px-3 py-3 text-neutral-600">
-                          {row.date}
-                        </td>
-                        <td className="px-3 py-3 text-center">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setProfilePreview(
-                                buildDiscProfileFromTableRow(
-                                  row.discScore,
-                                  row.profileName,
-                                  row.style
-                                )
-                              )
-                            }
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#DA7756]/25 bg-[#f6f4ee]/90 text-neutral-600 shadow-sm hover:bg-[#DA7756]/10"
-                            aria-label={`View ${row.name}`}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                        </td>
+                        </th>
+                        <th className="px-3 py-3">
+                          <SortHeader label="Name" k="name" />
+                        </th>
+                        <th className="px-3 py-3">
+                          <SortHeader label="Department" k="department" />
+                        </th>
+                        <th className="px-3 py-3">
+                          <SortHeader label="DISC Score" k="score" />
+                        </th>
+                        <th className="px-3 py-3">
+                          <SortHeader label="Style" k="style" />
+                        </th>
+                        <th className="px-3 py-3">
+                          <SortHeader label="Profile Name" k="profile" />
+                        </th>
+                        <th className="px-3 py-3">
+                          <SortHeader label="Date" k="date" />
+                        </th>
+                        <th className="px-3 py-3 text-center font-semibold text-neutral-800">
+                          Actions
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {visibleRows.length === 0 && (
-                  <p className="text-center py-8 text-sm text-neutral-500">
-                    No profiles match your filters.
-                  </p>
-                )}
-              </div>
+                    </thead>
+                    <tbody>
+                      {visibleRows.map((row) => (
+                        <tr
+                          key={row.id}
+                          className={cn(
+                            "disc-table-row border-b border-neutral-100/80",
+                            row.rowBgClass
+                          )}
+                        >
+                          <td className="px-3 py-3 align-middle">
+                            <Checkbox
+                              checked={!!selected[row.id]}
+                              onCheckedChange={(c) =>
+                                setSelected((s) => ({
+                                  ...s,
+                                  [row.id]: c === true,
+                                }))
+                              }
+                            />
+                          </td>
+                          <td className="px-3 py-3 font-bold text-neutral-900">
+                            {row.name}
+                          </td>
+                          <td className="px-3 py-3 text-neutral-700">
+                            {row.department}
+                          </td>
+                          <td className="px-3 py-3">
+                            <DiscScoreDigits scores={row.scores} />
+                          </td>
+                          <td
+                            className={cn(
+                              "px-3 py-3 font-bold",
+                              row.styleTextClass
+                            )}
+                          >
+                            {row.style}
+                          </td>
+                          <td className="px-3 py-3 text-neutral-800">
+                            {row.profileName}
+                          </td>
+                          <td className="px-3 py-3 text-neutral-600">
+                            {row.date}
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            <button
+                              type="button"
+                              onClick={() => setProfilePreview(row)}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border shadow-sm transition-all active:scale-[0.95]"
+                              style={{
+                                borderColor: BP.primaryBord,
+                                background: BP.cardBg,
+                                color: BP.textMuted,
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = BP.primaryBg;
+                                e.currentTarget.style.color = BP.primary;
+                                e.currentTarget.style.borderColor =
+                                  BP.primaryBordStrong;
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = BP.cardBg;
+                                e.currentTarget.style.color = BP.textMuted;
+                                e.currentTarget.style.borderColor =
+                                  BP.primaryBord;
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {visibleRows.length === 0 && (
+                    <p
+                      className="text-center py-8 text-sm font-semibold"
+                      style={{ color: BP.textMuted }}
+                    >
+                      No profiles match your filters or no data available.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                /* ── Grouped by Department ── */
+                <div className="flex flex-col gap-4">
+                  {groupedRows?.map(([groupName, rows]) => (
+                    <div
+                      key={groupName}
+                      className="disc-card-lift overflow-hidden shadow-sm"
+                      style={{
+                        borderRadius: 16,
+                        border: `1px solid ${BP.primaryBord}`,
+                        background: BP.cardBg,
+                      }}
+                    >
+                      {/* Group Header — matches BusinessPlan teal section style */}
+                      <div
+                        className="flex items-center justify-between px-5 py-3.5 border-l-4"
+                        style={{
+                          background: "rgba(218,119,86,0.10)",
+                          borderLeftColor: BP.primary,
+                          borderBottomColor: BP.primaryBord,
+                          borderBottomWidth: 1,
+                          borderBottomStyle: "solid",
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Briefcase
+                            className="h-4 w-4"
+                            style={{ color: BP.primary }}
+                            strokeWidth={2}
+                          />
+                          <h3
+                            className="text-sm font-black"
+                            style={{ color: BP.primary, fontFamily: BP.font }}
+                          >
+                            {groupName}
+                          </h3>
+                        </div>
+                        <span
+                          className="rounded-full px-3 py-0.5 text-[11px] font-black text-white tabular-nums"
+                          style={{ background: BP.primary }}
+                        >
+                          {rows.length} profile{rows.length !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+
+                      {/* Grouped Table */}
+                      <div className="disc-scroll overflow-x-auto">
+                        <table className="w-full min-w-[780px] border-collapse text-left text-sm">
+                          <thead>
+                            <tr
+                              className="border-b"
+                              style={{
+                                borderColor: BP.primaryBord,
+                                background: "rgba(218,119,86,0.04)",
+                              }}
+                            >
+                              <th className="w-10 px-5 py-3"></th>
+                              <th className="px-3 py-3 font-semibold text-neutral-600">
+                                Name
+                              </th>
+                              <th className="px-3 py-3 font-semibold text-neutral-600">
+                                DISC Score
+                              </th>
+                              <th className="px-3 py-3 font-semibold text-neutral-600">
+                                Style
+                              </th>
+                              <th className="px-3 py-3 font-semibold text-neutral-600">
+                                Profile Name
+                              </th>
+                              <th className="px-3 py-3 font-semibold text-neutral-600">
+                                Date
+                              </th>
+                              <th className="px-3 py-3 text-center font-semibold text-neutral-600">
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map((row) => (
+                              <tr
+                                key={row.id}
+                                className={cn(
+                                  "disc-table-row border-b border-neutral-100/80",
+                                  row.rowBgClass
+                                )}
+                              >
+                                <td className="px-5 py-3 align-middle">
+                                  <Checkbox
+                                    checked={!!selected[row.id]}
+                                    onCheckedChange={(c) =>
+                                      setSelected((s) => ({
+                                        ...s,
+                                        [row.id]: c === true,
+                                      }))
+                                    }
+                                  />
+                                </td>
+                                <td className="px-3 py-3 font-bold text-neutral-900">
+                                  {row.name}
+                                </td>
+                                <td className="px-3 py-3">
+                                  <DiscScoreDigits scores={row.scores} />
+                                </td>
+                                <td
+                                  className={cn(
+                                    "px-3 py-3 font-bold",
+                                    row.styleTextClass
+                                  )}
+                                >
+                                  {row.style}
+                                </td>
+                                <td className="px-3 py-3 text-neutral-800">
+                                  {row.profileName}
+                                </td>
+                                <td className="px-3 py-3 text-neutral-500">
+                                  {row.date}
+                                </td>
+                                <td className="px-3 py-3 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => setProfilePreview(row)}
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl border shadow-sm transition-all active:scale-[0.95]"
+                                    style={{
+                                      borderColor: BP.primaryBord,
+                                      background: BP.cardBg,
+                                      color: BP.textMuted,
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.background =
+                                        BP.primaryBg;
+                                      e.currentTarget.style.color = BP.primary;
+                                      e.currentTarget.style.borderColor =
+                                        BP.primaryBordStrong;
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.background =
+                                        BP.cardBg;
+                                      e.currentTarget.style.color =
+                                        BP.textMuted;
+                                      e.currentTarget.style.borderColor =
+                                        BP.primaryBord;
+                                    }}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                  {(!groupedRows || groupedRows.length === 0) && (
+                    <div
+                      className="rounded-2xl border py-10 text-center"
+                      style={{
+                        borderColor: BP.primaryBord,
+                        background: BP.cardBg,
+                      }}
+                    >
+                      <p
+                        className="text-sm font-semibold"
+                        style={{ color: BP.textMuted }}
+                      >
+                        No profiles match your filters or no data available.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </Card>
           </>
         )}
       </div>
 
+      {/* ── Detailed Profile Modal ── */}
       {profilePreview && (
-        <DiscAssessmentResultsModal
-          result={profilePreview}
+        <DetailedProfileModal
+          row={profilePreview}
           onClose={() => setProfilePreview(null)}
-          onViewProfile={() => {
-            setProfilePreview(null);
-            setTab("learn");
-          }}
         />
       )}
     </div>

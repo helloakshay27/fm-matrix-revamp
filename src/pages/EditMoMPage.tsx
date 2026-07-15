@@ -134,7 +134,7 @@ const EditMoMPage = () => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
     if (token && baseUrl) {
-      dispatch(fetchProjectsTags());
+      dispatch(fetchProjectsTags({ active: true }));
     }
 
     // Fetch MoM detail

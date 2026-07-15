@@ -46,10 +46,13 @@ export const EditEventPage = () => {
   const [formData, setFormData] = useState({
     eventName: "",
     eventType: "",
+    payAt: "",
+    externalLink: "",
     amountPerPerson: "",
     fromDate: "",
     toDate: "",
-    eventTime: "",
+    eventStartTime: "",
+    eventEndTime: "",
     eventLocation: "",
     memberCapacity: "",
     perMemberLimit: "",
@@ -93,7 +96,8 @@ export const EditEventPage = () => {
           amountPerPerson: localStorage.getItem('amountPerPerson') || prev.amountPerPerson,
           fromDate: localStorage.getItem('fromDate') || prev.fromDate,
           toDate: localStorage.getItem('toDate') || prev.toDate,
-          eventTime: localStorage.getItem('eventTime') || prev.eventTime,
+          eventStartTime: localStorage.getItem('eventStartTime') || prev.eventStartTime,
+          eventEndTime: localStorage.getItem('eventEndTime') || prev.eventEndTime,
           eventLocation: localStorage.getItem('eventLocation') || prev.eventLocation,
           memberCapacity: localStorage.getItem('memberCapacity') || prev.memberCapacity,
           perMemberLimit: localStorage.getItem('perMemberLimit') || prev.perMemberLimit,
@@ -103,6 +107,8 @@ export const EditEventPage = () => {
           approvalRequired: localStorage.getItem('approvalRequired') || prev.approvalRequired,
           eventDescription: localStorage.getItem('eventDescription') || prev.eventDescription,
           shareWith: localStorage.getItem('shareWith') || prev.shareWith,
+          payAt: localStorage.getItem('payAt') || prev.payAt,
+          externalLink: localStorage.getItem('externalLink') || prev.externalLink,
         }));
 
         // Restore selected tech parks
@@ -118,7 +124,7 @@ export const EditEventPage = () => {
         // Cleanup localStorage
         [
           'eventName', 'eventType', 'amountPerPerson', 'fromDate', 'toDate',
-          'eventTime', 'eventLocation', 'memberCapacity', 'perMemberLimit',
+          'eventStartTime', 'eventEndTime', 'eventLocation', 'memberCapacity', 'perMemberLimit',
           'pulseCategory', 'rsvp', 'showOnHomeScreen', 'approvalRequired', 'eventDescription', 'shareWith',
           'selectedTechParks'
         ].forEach(key => localStorage.removeItem(key));
@@ -139,7 +145,7 @@ export const EditEventPage = () => {
           const event = await dispatch(fetchEventById({ id, baseUrl, token })).unwrap();
           setIsActive(event.active);
           if (event.documents && event.documents.length > 0) {
-            setExistingAttachments([event.documents[event.documents.length - 1]]);
+            setExistingAttachments(event.documents);
           } else {
             setExistingAttachments([]);
           }
@@ -162,7 +168,8 @@ export const EditEventPage = () => {
             eventDescription: event.description || "",
             fromDate: fromTime ? format(fromTime, "yyyy-MM-dd") : "",
             toDate: toTime ? format(toTime, "yyyy-MM-dd") : "",
-            eventTime: fromTime ? format(fromTime, "HH:mm") : "",
+            eventStartTime: fromTime ? format(fromTime, "HH:mm") : "",
+            eventEndTime: toTime ? format(toTime, "HH:mm") : "",
             memberCapacity: event.capacity?.toString() || "",
             rsvp: event.rsvp_action === "1" ? "yes" : "no",
             amountPerPerson: event.amount_per_member || "",
@@ -173,6 +180,8 @@ export const EditEventPage = () => {
             approvalRequired: event.approval_required === true ? "yes" : "no",
             shareWith: event.share_with || "all",
             shareWithCommunities: (event.community_events && event.community_events.length > 0) ? "yes" : "no",
+            payAt: event.pay_at || "",
+            externalLink: event.payment_link || "",
           }));
 
           if (event.shared_sites) {
@@ -186,7 +195,7 @@ export const EditEventPage = () => {
           }
 
           if (event.documents && event.documents.length > 0) {
-            setExistingAttachments([event.documents[event.documents.length - 1]]);
+            setExistingAttachments(event.documents);
           } else {
             setExistingAttachments([]);
           }
@@ -296,7 +305,8 @@ export const EditEventPage = () => {
       localStorage.setItem('amountPerPerson', formData.amountPerPerson);
       localStorage.setItem('fromDate', formData.fromDate);
       localStorage.setItem('toDate', formData.toDate);
-      localStorage.setItem('eventTime', formData.eventTime);
+      localStorage.setItem('eventStartTime', formData.eventStartTime);
+      localStorage.setItem('eventEndTime', formData.eventEndTime);
       localStorage.setItem('eventLocation', formData.eventLocation);
       localStorage.setItem('memberCapacity', formData.memberCapacity);
       localStorage.setItem('perMemberLimit', formData.perMemberLimit);
@@ -307,6 +317,8 @@ export const EditEventPage = () => {
       localStorage.setItem('eventDescription', formData.eventDescription);
       localStorage.setItem('shareWith', formData.shareWith);
       localStorage.setItem('selectedTechParks', JSON.stringify(selectedTechParks));
+      localStorage.setItem('payAt', formData.payAt);
+      localStorage.setItem('externalLink', formData.externalLink);
       navigate(`/pulse/community?mode=selection&from=edit-event&id=${id}`);
     }
   };
@@ -375,8 +387,12 @@ export const EditEventPage = () => {
       toast.error("To Date is required");
       return false;
     }
-    if (!formData.eventTime) {
-      toast.error("Event Time is required");
+    if (!formData.eventStartTime) {
+      toast.error("Event Start Time is required");
+      return false;
+    }
+    if (!formData.eventEndTime) {
+      toast.error("Event End Time is required");
       return false;
     }
     if (!formData.eventLocation.trim()) {
@@ -406,8 +422,8 @@ export const EditEventPage = () => {
 
       formDataToSend.append('event[event_name]', formData.eventName);
       formDataToSend.append("event[amount_per_member]", formData.amountPerPerson);
-      formDataToSend.append("event[from_time]", `${formData.fromDate}T${formData.eventTime}`);
-      formDataToSend.append("event[to_time]", `${formData.toDate}T${formData.eventTime}`);
+      formDataToSend.append("event[from_time]", `${formData.fromDate}T${formData.eventStartTime}`);
+      formDataToSend.append("event[to_time]", `${formData.toDate}T${formData.eventEndTime}`);
       formDataToSend.append("event[event_at]", formData.eventLocation);
       formDataToSend.append("event[capacity]", formData.memberCapacity);
       formDataToSend.append("event[per_member_limit]", formData.perMemberLimit);
@@ -421,6 +437,8 @@ export const EditEventPage = () => {
       formDataToSend.append('event[of_atype]', 'Pms::Site');
       formDataToSend.append('event[of_atype_id]', localStorage.getItem("selectedSiteId") || "");
       formDataToSend.append("event[share_with]", formData.shareWith);
+      formDataToSend.append("event[pay_at]", formData.payAt);
+      formDataToSend.append("event[payment_link]", formData.externalLink);
 
       if (formData.shareWith === 'individual') {
         selectedTechParks.forEach(id => {
@@ -446,7 +464,7 @@ export const EditEventPage = () => {
       // Clean up localStorage after successful submission
       [
         'eventName', 'eventType', 'amountPerPerson', 'fromDate', 'toDate',
-        'eventTime', 'eventLocation', 'memberCapacity', 'perMemberLimit',
+        'eventStartTime', 'eventEndTime', 'eventLocation', 'memberCapacity', 'perMemberLimit',
         'pulseCategory', 'rsvp', 'showOnHomeScreen', 'approvalRequired', 'eventDescription', 'shareWith',
         'selectedTechParks', 'selectedCommunityIds'
       ].forEach(key => localStorage.removeItem(key));
@@ -554,6 +572,33 @@ export const EditEventPage = () => {
                 </FormControl>
               </div>
 
+              {
+                formData.eventType === "1" && (
+                  <div className="flex flex-col gap-1.5">
+                    <FormControl fullWidth size="small">
+                      <InputLabel shrink>Pay at<span className="text-[#C72030]">*</span></InputLabel>
+                      <MuiSelect
+                        name="payAt"
+                        value={formData.payAt}
+                        onChange={(e) => handleSelectChange("payAt", e.target.value)}
+                        label="Pay at*"
+                        displayEmpty
+                        sx={{
+                          backgroundColor: '#FAFAFA',
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#C72030',
+                          },
+                        }}
+                      >
+                        <MenuItem value="" disabled>Select pay at...</MenuItem>
+                        <MenuItem value="internal">Internal</MenuItem>
+                        <MenuItem value="external">External</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                )
+              }
+
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Event Amount Per Person</>}
@@ -583,10 +628,6 @@ export const EditEventPage = () => {
                 />
               </div>
 
-
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>From Date<span className="text-[#C72030]">*</span></>}
@@ -638,11 +679,11 @@ export const EditEventPage = () => {
 
               <div className="flex flex-col gap-1.5">
                 <TextField
-                  label={<>Event Time<span className="text-[#C72030]">*</span></>}
-                  id="eventTime"
-                  name="eventTime"
+                  label={<>Event Start Time<span className="text-[#C72030]">*</span></>}
+                  id="eventStartTime"
+                  name="eventStartTime"
                   type="time"
-                  value={formData.eventTime}
+                  value={formData.eventStartTime}
                   onChange={handleInputChange}
                   placeholder="hh:mm"
                   fullWidth
@@ -658,9 +699,30 @@ export const EditEventPage = () => {
                   }}
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+              <div className="flex flex-col gap-1.5">
+                <TextField
+                  label={<>Event End Time<span className="text-[#C72030]">*</span></>}
+                  id="eventEndTime"
+                  name="eventEndTime"
+                  type="time"
+                  value={formData.eventEndTime}
+                  onChange={handleInputChange}
+                  placeholder="hh:mm"
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: '#FAFAFA',
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                  }}
+                />
+              </div>
+
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Event Location<span className="text-[#C72030]">*</span></>}
@@ -712,7 +774,7 @@ export const EditEventPage = () => {
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              {/* <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Per Member Limit<span className="text-[#C72030]">*</span></>}
                   id="perMemberLimit"
@@ -739,7 +801,7 @@ export const EditEventPage = () => {
                     },
                   }}
                 />
-              </div>
+              </div> */}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 mb-4">
@@ -765,12 +827,12 @@ export const EditEventPage = () => {
                   <FormControlLabel
                     value="panasche"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-[12px] text-gray-600">Panasche</span>}
+                    label={<span className="text-[12px] text-gray-600">Panache</span>}
                   />
                   <FormControlLabel
                     value="persuit"
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
-                    label={<span className="text-[12px] text-gray-600">Persuit</span>}
+                    label={<span className="text-[12px] text-gray-600">Pursuit</span>}
                   />
                 </RadioGroup>
               </div>
@@ -863,6 +925,31 @@ export const EditEventPage = () => {
                 />
               </div>
             </div>
+
+            {
+              formData.payAt === "external" && (
+                <TextField
+                  label={<>External Link<span className="text-[#C72030]">*</span></>}
+                  id="externalLink"
+                  name="externalLink"
+                  value={formData.externalLink}
+                  onChange={handleInputChange}
+                  placeholder="Enter external link..."
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: '#FAFAFA',
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                    marginTop: 2,
+                  }}
+                />
+              )
+            }
           </div>
         </div>
 
@@ -959,7 +1046,8 @@ export const EditEventPage = () => {
                     localStorage.setItem('amountPerPerson', formData.amountPerPerson);
                     localStorage.setItem('fromDate', formData.fromDate);
                     localStorage.setItem('toDate', formData.toDate);
-                    localStorage.setItem('eventTime', formData.eventTime);
+                    localStorage.setItem('eventStartTime', formData.eventStartTime);
+                    localStorage.setItem('eventEndTime', formData.eventEndTime);
                     localStorage.setItem('eventLocation', formData.eventLocation);
                     localStorage.setItem('memberCapacity', formData.memberCapacity);
                     localStorage.setItem('perMemberLimit', formData.perMemberLimit);
@@ -1087,20 +1175,20 @@ export const EditEventPage = () => {
           </div>
         </div>
 
-        <div className="flex justify-center gap-4 mt-8 pb-8">
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="disabled:!bg-[#DF808B] !bg-[#C72030] hover:bg-[#d0606e] !text-white min-w-[150px] h-10"
-          >
-            {isSubmitting ? "Updating..." : "Update Event"}
-          </Button>
+        <div className="flex justify-end gap-4 mt-8 pb-8">
           <Button
             onClick={() => navigate(`/pulse/events`)}
             variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white min-w-[150px] h-10"
+            className="bg-[#fdf5f2] border border-[#DA7756] text-[#DA7756] hover:bg-[#f8e7df] min-w-[150px] h-10"
           >
             Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="fm-button-fix fm-button-brand min-w-[150px] h-10 disabled:opacity-70"
+          >
+            {isSubmitting ? "Updating..." : "Update Event"}
           </Button>
         </div>
       </div>
@@ -1155,4 +1243,3 @@ export const EditEventPage = () => {
     </div>
   );
 };
-

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Camera, ShieldAlert, Lock, RefreshCw } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { SecurityState } from "./useProductSecurity";

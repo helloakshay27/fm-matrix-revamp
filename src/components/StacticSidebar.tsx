@@ -102,10 +102,6 @@ const navigationStructure = {
             href: "/settings/company-hub/announcements",
           },
           {
-            name: "Team Setup",
-            href: "/settings/company-hub/team-setup",
-          },
-          {
             name: "Face Authentication",
             href: "/settings/company-hub/face-authentication",
           },
@@ -883,7 +879,7 @@ const modulesByPackage = {
     //     },
     //   ],
     // },
-    // { name: "WBS", icon: BarChart3, href: "/finance/wbs" },
+    { name: "WBS", icon: BarChart3, href: "/finance/wbs" },
   ],
   CRM: [
     { name: "Lead", icon: Target, href: "/crm/lead" },
@@ -1557,10 +1553,6 @@ const modulesByPackage = {
         {
           name: "Announcements Setup",
           href: "/settings/company-hub/announcements",
-        },
-        {
-          name: "Team Setup",
-          href: "/settings/company-hub/team-setup",
         },
         {
           name: "Face Authentication",

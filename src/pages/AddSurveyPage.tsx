@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  ArrowLeft,
   Plus,
   X,
   Star,
@@ -267,7 +268,7 @@ export const AddSurveyPage = () => {
           const updatedQuestion = { ...q, [field]: value };
           if (
             field === "answerType" &&
-            ["multiple-choice", "rating", "emojis"].includes(value as string) &&
+            ["multiple-choice", "rating", "emojis", "checkbox"].includes(value as string) &&
             !updatedQuestion.answerOptions
           ) {
             updatedQuestion.answerOptions = [
@@ -276,7 +277,7 @@ export const AddSurveyPage = () => {
             ];
           } else if (
             field === "answerType" &&
-            !["multiple-choice", "rating", "emojis"].includes(value as string)
+            !["multiple-choice", "rating", "emojis", "checkbox"].includes(value as string)
           ) {
             updatedQuestion.answerOptions = undefined;
           }
@@ -411,7 +412,7 @@ export const AddSurveyPage = () => {
         return;
       }
     }
-    // For multiple-choice, no limit is applied
+    // For multiple-choice and checkbox, no limit is applied
 
     // Always start with empty text to allow user input for both ratings and emojis
     const newOptionText = "";
@@ -535,7 +536,7 @@ export const AddSurveyPage = () => {
 
       // Check if multiple-choice, rating, or emojis have at least one option with text
       if (
-        ["multiple-choice", "rating", "emojis"].includes(question.answerType)
+        ["multiple-choice", "rating", "emojis", "checkbox"].includes(question.answerType)
       ) {
         if (!question.answerOptions || question.answerOptions.length === 0) {
           toast.error("Validation Error", {
@@ -626,13 +627,17 @@ export const AddSurveyPage = () => {
         const qtype =
           question.answerType === "multiple-choice"
             ? "multiple"
-            : question.answerType === "rating"
-              ? "rating"
-              : question.answerType === "emojis"
-                ? "emoji"
-                : question.answerType === "input-box"
-                  ? "input_box"
-                  : "description";
+            : question.answerType === "checkbox"
+              ? "checkbox"
+              : question.answerType === "date"
+                ? "date"
+                : question.answerType === "rating"
+                  ? "rating"
+                  : question.answerType === "emojis"
+                    ? "emoji"
+                    : question.answerType === "input-box"
+                      ? "input_box"
+                      : "description";
 
         formData.append(`question[][qtype]`, qtype);
         formData.append(
@@ -650,9 +655,9 @@ export const AddSurveyPage = () => {
           fileCounter++;
         }
 
-        // Add options for multiple-choice, rating, and emojis
+        // Add options for multiple-choice, checkbox, rating, and emojis
         if (
-          ["multiple-choice", "rating", "emojis"].includes(
+          ["multiple-choice", "rating", "emojis", "checkbox"].includes(
             question.answerType
           ) &&
           question.answerOptions
@@ -722,7 +727,7 @@ export const AddSurveyPage = () => {
         console.log(`   Question ${qIndex + 1}:`);
         console.log(`   question[][descr]: "${question.text}"`);
         console.log(
-          `   question[][qtype]: ${question.answerType === "multiple-choice" ? "multiple" : question.answerType === "rating" ? "rating" : question.answerType === "emojis" ? "emoji" : question.answerType === "input-box" ? "input_box" : "description"}`
+           `   question[][qtype]: ${question.answerType === "multiple-choice" ? "multiple" : question.answerType === "checkbox" ? "checkbox" : question.answerType === "date" ? "date" : question.answerType === "rating" ? "rating" : question.answerType === "emojis" ? "emoji" : question.answerType === "input-box" ? "input_box" : "description"}`
         );
         console.log(`   question[][quest_mandatory]: ${question.mandatory}`);
 
@@ -884,6 +889,15 @@ export const AddSurveyPage = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Back Button */}
+      <button
+        onClick={() => navigate("/master/survey/list")}
+        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="text-sm font-medium">Back to list</span>
+      </button>
+
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Add Question</h1>
@@ -942,6 +956,7 @@ export const AddSurveyPage = () => {
                   </MenuItem>
                   <MenuItem value="patrolling">Patrolling</MenuItem>
                   <MenuItem value="survey">Survey</MenuItem>
+                  <MenuItem value="f_and_b">F&B</MenuItem>
                 </MuiSelect>
               </FormControl>
 
@@ -1212,10 +1227,12 @@ export const AddSurveyPage = () => {
                       <MenuItem value="rating">Rating</MenuItem>
                       <MenuItem value="emojis">Emojis</MenuItem>
                       <MenuItem value="input-box">Input Box</MenuItem>
+                      <MenuItem value="checkbox">Checkbox</MenuItem>
+                      <MenuItem value="date">Date</MenuItem>
                     </MuiSelect>
                   </FormControl>
 
-                  {["multiple-choice", "rating", "emojis"].includes(
+                  {["multiple-choice", "rating", "emojis", "checkbox"].includes(
                     question.answerType
                   ) && (
                     <div className="space-y-3 pt-2">
@@ -1240,9 +1257,7 @@ export const AddSurveyPage = () => {
                             </div>
                           ) : (
                             <div className="w-12 h-12 flex items-center justify-center text-gray-400">
-                              {question.answerType === "multiple-choice"
-                                ? index + 1
-                                : "⭐"}
+                              {index + 1}
                             </div>
                           )}
                           <TextField

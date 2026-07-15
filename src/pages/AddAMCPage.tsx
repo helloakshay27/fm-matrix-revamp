@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, File, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Avatar, Dialog as MuiDialog, DialogTitle, DialogContent, DialogActions, Typography } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Avatar, Dialog as MuiDialog, DialogTitle, DialogContent, DialogActions, Typography, Switch } from '@mui/material';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
@@ -23,6 +23,41 @@ interface Service {
   id: string | number;
   service_name: string;
 }
+
+interface FrequencyConfig {
+  frequency: string;
+  description: string;
+  active: boolean;
+  timeSetupData: {
+    hourMode: string;
+    minuteMode: string;
+    dayMode: string;
+    monthMode: string;
+    selectedHours: string[];
+    selectedMinutes: string[];
+    selectedWeekdays: string[];
+    selectedDays: string[];
+    selectedMonths: string[];
+    betweenMinuteStart: string;
+    betweenMinuteEnd: string;
+    betweenMonthStart: string;
+    betweenMonthEnd: string;
+  };
+}
+
+const FREQUENCY_OPTIONS = [
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'quarterly', label: 'Quarterly' },
+  { value: 'half-yearly', label: 'Half Yearly' },
+  { value: 'yearly', label: 'Yearly' },
+];
+
+const FREQUENCY_LABELS: Record<string, string> = {
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  'half-yearly': 'Half Yearly',
+  yearly: 'Yearly',
+};
 
 const MAX_ATTACHMENT_SIZE_MB = 20;
 const MAX_ATTACHMENT_SIZE_BYTES = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024;
@@ -72,6 +107,8 @@ export const AddAMCPage = () => {
   const [assetOptions, setAssetOptions] = useState<any[]>([]);
   const [assetQuery, setAssetQuery] = useState('');
   const [assetSearchLoading, setAssetSearchLoading] = useState(false);
+  const [indivGroupFilter, setIndivGroupFilter] = useState('');
+  const [indivSubGroupFilter, setIndivSubGroupFilter] = useState('');
   const [assetMenuId] = useState(() => `asset-menu-${Math.random().toString(36).slice(2)}`);
   const [supplierDisplayLabel, setSupplierDisplayLabel] = useState('');
   // Technician state
@@ -97,6 +134,7 @@ export const AddAMCPage = () => {
     paymentTerms: '',
     firstService: '',
     noOfVisits: '',
+    assetsPerDay: '',
     remarks: ''
   });
 
@@ -130,6 +168,12 @@ export const AddAMCPage = () => {
     invoices: [] as File[]
   });
 
+  // Stores file metadata from a restored draft (name/type/size only — no File object)
+  const [draftAttachmentMeta, setDraftAttachmentMeta] = useState<{
+    contracts: { name: string; size: number; type: string }[];
+    invoices: { name: string; size: number; type: string }[];
+  }>({ contracts: [], invoices: [] });
+
   const initialTimeSetupState = {
     hourMode: 'specific',
     minuteMode: 'specific',
@@ -147,11 +191,30 @@ export const AddAMCPage = () => {
   };
   const [timeSetupData, setTimeSetupData] = useState(initialTimeSetupState);
 
+  const [selectedFrequencies, setSelectedFrequencies] = useState<string[]>([]);
+  const [frequencyConfigs, setFrequencyConfigs] = useState<FrequencyConfig[]>([]);
+  const [activeFrequencyTab, setActiveFrequencyTab] = useState(0);
+
   const [assetGroups, setAssetGroups] = useState<Array<{ id: number, name: string, sub_groups: Array<{ id: number, name: string }> }>>([]);
   const [subGroups, setSubGroups] = useState<Array<{ id: number, name: string }>>([]);
   const { assets, loading: AssetsLoading } = inventoryAssetsState as unknown as { assets: Array<{ id: number; name: string }> | null, loading: boolean };
 
   const [loading, setLoading] = useState(false);
+
+  // Create Checklist state
+  const [createChecklist, setCreateChecklist] = useState(false);
+  const [checklistTemplates, setChecklistTemplates] = useState<Array<{ id: number; name: string }>>([]);
+  const [checklistTemplatesLoading, setChecklistTemplatesLoading] = useState(false);
+  const [checklistFields, setChecklistFields] = useState({
+    templateId: '',
+    graceTimeType: '',
+    graceTimeValue: '',
+  });
+  const [checklistErrors, setChecklistErrors] = useState({
+    templateId: '',
+    graceTimeType: '',
+    graceTimeValue: '',
+  });
 
   const suppliers: any[] = []; // not used now; kept for group type select reuse logic below
 
@@ -341,6 +404,28 @@ export const AddAMCPage = () => {
     fetchTechnicians();
   }, [dispatch]);
 
+  // Fetch checklist templates when toggle turns ON or checklist_type changes
+  useEffect(() => {
+    if (!createChecklist) return;
+    setChecklistTemplatesLoading(true);
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) { setChecklistTemplatesLoading(false); return; }
+    fetch(`https://${baseUrl}/pms/custom_forms/get_templates.json`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.json())
+      .then(data => {
+        const templates = Array.isArray(data) ? data
+          : Array.isArray(data?.templates) ? data.templates
+            : Array.isArray(data?.custom_forms) ? data.custom_forms
+              : [];
+        setChecklistTemplates(templates);
+      })
+      .catch(() => toast.error('Failed to fetch checklist templates'))
+      .finally(() => setChecklistTemplatesLoading(false));
+  }, [createChecklist, formData.details]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const storedDraft = localStorage.getItem(AMC_DRAFT_STORAGE_KEY);
@@ -520,6 +605,22 @@ export const AddAMCPage = () => {
         newErrors.firstService = 'Please select a first service date.';
         isValid = false;
       }
+
+      if (formData.firstService) {
+        const firstServiceDate = new Date(formData.firstService);
+        const startDate = new Date(formData.startDate);
+        const endDate = new Date(formData.endDate);
+
+        if (firstServiceDate < startDate) {
+          newErrors.firstService =
+            'First Service Date cannot be before Start Date.';
+          isValid = false;
+        } else if (firstServiceDate > endDate) {
+          newErrors.firstService =
+            'First Service Date cannot be after End Date.';
+          isValid = false;
+        }
+      }
       if (!formData.cost) {
         newErrors.cost = 'Please enter the cost.';
         isValid = false;
@@ -556,12 +657,6 @@ export const AddAMCPage = () => {
       if (!attachments.contracts || attachments.contracts.length === 0) {
         isValid = false;
         toast.error("Please upload at least one AMC Contract.");
-      } else if (
-        !attachments.invoices ||
-        attachments.invoices.length === 0
-      ) {
-        isValid = false;
-        toast.error("Please upload at least one AMC Invoice.");
       }
     }
 
@@ -649,6 +744,25 @@ export const AddAMCPage = () => {
     }
 
     setErrors(newErrors);
+
+    // Checklist validation
+    if (createChecklist) {
+      const newChecklistErrors = { templateId: '', graceTimeType: '', graceTimeValue: '' };
+      if (!checklistFields.templateId) {
+        newChecklistErrors.templateId = 'Please select a checklist template.';
+        isValid = false;
+      }
+      if (!checklistFields.graceTimeType) {
+        newChecklistErrors.graceTimeType = 'Please select grace time type.';
+        isValid = false;
+      }
+      if (!checklistFields.graceTimeValue) {
+        newChecklistErrors.graceTimeValue = 'Please enter grace time value.';
+        isValid = false;
+      }
+      setChecklistErrors(newChecklistErrors);
+    }
+
     return isValid;
   };
 
@@ -776,7 +890,11 @@ export const AddAMCPage = () => {
       completedSteps: updatedCompletedSteps,
       showPreviousSections: true,
       isPreviewMode: currentStep === totalSteps - 1 ? isPreviewMode : false,
-      savedAt: new Date().toISOString()
+      savedAt: new Date().toISOString(),
+      attachmentMeta: {
+        contracts: attachments.contracts.map(f => ({ name: f.name, size: f.size, type: f.type })),
+        invoices: attachments.invoices.map(f => ({ name: f.name, size: f.size, type: f.type }))
+      }
     };
 
     saveDraftToStorage(draftData);
@@ -810,6 +928,12 @@ export const AddAMCPage = () => {
     if (draft.timeSetupData) {
       setTimeSetupData(draft.timeSetupData);
     }
+    if (draft.attachmentMeta) {
+      setDraftAttachmentMeta({
+        contracts: draft.attachmentMeta.contracts || [],
+        invoices: draft.attachmentMeta.invoices || []
+      });
+    }
     setShowPreviousSections(!!draft.showPreviousSections);
     setIsPreviewMode(!!draft.isPreviewMode);
     setShowDraftModal(false);
@@ -829,6 +953,7 @@ export const AddAMCPage = () => {
     clearDraftFromStorage();
     setShowDraftModal(false);
     setHasSavedDraft(false);
+    setDraftAttachmentMeta({ contracts: [], invoices: [] });
     toast.info("Starting fresh! Previous draft has been cleared.", {
       position: 'top-right',
       duration: 3000,
@@ -960,9 +1085,23 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
     sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
     sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
+    sendData.append('pms_asset_amc[assets_per_day]', formData.assetsPerDay);
     sendData.append('pms_asset_amc[remarks]', formData.remarks);
     sendData.append('pms_asset_amc[checklist_type]', formData.details === 'Asset' ? "Asset" : "Service");
     sendData.append('pms_asset_amc[time_expression]', buildCronExpression());
+
+    // Primary frequency (first selected)
+    if (selectedFrequencies.length > 0) {
+      sendData.append('pms_asset_amc[amc_frequency]', selectedFrequencies[0]);
+    }
+
+    // Per-frequency cron configurations
+    frequencyConfigs.forEach((cfg, idx) => {
+      sendData.append(`frequency_configs[${idx}][frequency]`, cfg.frequency);
+      sendData.append(`frequency_configs[${idx}][description]`, cfg.description);
+      sendData.append(`frequency_configs[${idx}][active]`, String(cfg.active));
+      sendData.append(`frequency_configs[${idx}][cron_expression]`, buildCronFromTimeData(cfg.timeSetupData as typeof initialTimeSetupState));
+    });
 
     sendData.append('pms_asset_amc[amc_details_type]', formData.type.toLowerCase()); // Add amc_details_type parameter
 
@@ -1002,6 +1141,14 @@ export const AddAMCPage = () => {
       sendData.append('technician_id', String(formData.technician));
     }
 
+    // Checklist fields
+    sendData.append('pms_asset_amc[create_checklist]', String(createChecklist));
+    if (createChecklist) {
+      sendData.append('pms_asset_amc[tmp_custom_form_id]', checklistFields.templateId);
+      sendData.append('pms_asset_amc[grace_time_type]', checklistFields.graceTimeType);
+      sendData.append('pms_asset_amc[grace_time_value]', checklistFields.graceTimeValue);
+    }
+
     attachments.contracts.forEach((file) => {
       sendData.append('amc_contracts[content][]', file);
     });
@@ -1016,7 +1163,7 @@ export const AddAMCPage = () => {
       if (action === 'show') {
         const amcId = result?.id;
         if (amcId) {
-          navigate(`/maintenance/amc/details/${amcId}`);
+          navigate(`/maintenance/amc`);
         } else {
           const errorMessage =
             result?.message || result?.error || "AMC created, but no ID returned for redirection.";
@@ -1050,6 +1197,7 @@ export const AddAMCPage = () => {
           paymentTerms: '',
           firstService: '',
           noOfVisits: '',
+          assetsPerDay: '',
           remarks: ''
         });
         setAttachments({
@@ -1071,7 +1219,7 @@ export const AddAMCPage = () => {
         });
         setTimeSetupData(initialTimeSetupState);
         toast.success("AMC has been successfully created and scheduled.");
-        navigate(`/maintenance/amc/details/${amcId}`);
+        navigate(`/maintenance/amc`);
         return;
       }
     } catch (error: any) {
@@ -1145,10 +1293,11 @@ export const AddAMCPage = () => {
   const errorStyles = "text-red-500 text-sm mt-1";
 
   const fetchAsset = async () => {
-    const CACHE_KEY = 'amc_cache_assets';
+    const CACHE_KEY = 'amc_cache_assets_v2';
     const cached = getDropdownCache(CACHE_KEY);
     if (cached) {
-      setAssetList(cached as unknown[]);
+      const arr = Array.isArray(cached) ? cached : (Array.isArray((cached as any)?.assets) ? (cached as any).assets : []);
+      setAssetList(arr as unknown[]);
       return;
     }
     const baseUrl = localStorage.getItem('baseUrl');
@@ -1166,11 +1315,12 @@ export const AddAMCPage = () => {
       }
 
       const data = await response.json();
-      setAssetList(data);
-      setDropdownCache(CACHE_KEY, data);
-      return data;
+      const arr = Array.isArray(data) ? data : (Array.isArray(data?.assets) ? data.assets : []);
+      setAssetList(arr);
+      setDropdownCache(CACHE_KEY, arr);
+      return arr;
     } catch (error) {
-      console.error('Error fetching SAC:', error);
+      console.error('Error fetching assets:', error);
     }
   };
 
@@ -1178,82 +1328,125 @@ export const AddAMCPage = () => {
     fetchAsset();
   }, []);
 
+  // Keep frequencyConfigs in sync when selectedFrequencies changes
+  useEffect(() => {
+    setFrequencyConfigs(prev => {
+      return selectedFrequencies.map(freq => {
+        const existing = prev.find(c => c.frequency === freq);
+        return existing || {
+          frequency: freq,
+          description: '',
+          active: true,
+          timeSetupData: { ...initialTimeSetupState },
+        };
+      });
+    });
+    setActiveFrequencyTab(0);
+  }, [selectedFrequencies]);
+
   console.log(assetList)
 
   const buildCronExpression = () => {
+    const MONTH_MAP: Record<string, number> = {
+      January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+      July: 7, August: 8, September: 9, October: 10, November: 11, December: 12,
+    };
+    // Standard cron weekday: 0=Sunday, 1=Monday … 6=Saturday
+    const WEEKDAY_MAP: Record<string, string> = {
+      Sunday: '0', Monday: '1', Tuesday: '2', Wednesday: '3',
+      Thursday: '4', Friday: '5', Saturday: '6',
+    };
+
     let minute = '*';
     let hour = '*';
-    let dayOfMonth = '?';
+    let dayOfMonth = '*';
     let month = '*';
-    let dayOfWeek = '?';
+    let dayOfWeek = '*';
 
+    // Minutes
     if (timeSetupData.minuteMode === 'specific' && timeSetupData.selectedMinutes.length > 0) {
       minute = timeSetupData.selectedMinutes.join(',');
     } else if (timeSetupData.minuteMode === 'between') {
-      const start = parseInt(timeSetupData.betweenMinuteStart, 10);
-      const end = parseInt(timeSetupData.betweenMinuteEnd, 10);
-      if (!Number.isNaN(start) && !Number.isNaN(end)) {
-        minute = `${start}-${end}`;
-      }
+      const s = parseInt(timeSetupData.betweenMinuteStart, 10);
+      const e = parseInt(timeSetupData.betweenMinuteEnd, 10);
+      if (!Number.isNaN(s) && !Number.isNaN(e)) minute = `${s}-${e}`;
     }
 
+    // Hours — keep leading zeros as stored ("09", "12")
     if (timeSetupData.hourMode === 'specific' && timeSetupData.selectedHours.length > 0) {
       hour = timeSetupData.selectedHours.join(',');
     }
 
+    // Day
     if (timeSetupData.dayMode === 'weekdays' && timeSetupData.selectedWeekdays.length > 0) {
-      const weekdayMap: Record<string, string> = {
-        'Sunday': '1',
-        'Monday': '2',
-        'Tuesday': '3',
-        'Wednesday': '4',
-        'Thursday': '5',
-        'Friday': '6',
-        'Saturday': '7'
-      };
-      dayOfWeek = timeSetupData.selectedWeekdays.map(day => weekdayMap[day]).join(',');
-      dayOfMonth = '?';
+      dayOfWeek = timeSetupData.selectedWeekdays.map(d => WEEKDAY_MAP[d]).join(',');
+      // dayOfMonth stays '*'
     } else if (timeSetupData.dayMode === 'specific' && timeSetupData.selectedDays.length > 0) {
-      dayOfMonth = timeSetupData.selectedDays.join(',');
-      dayOfWeek = '?';
+      // Strip leading zeros: "01" → "1", "15" → "15"
+      dayOfMonth = timeSetupData.selectedDays.map(d => parseInt(d, 10).toString()).join(',');
+      // dayOfWeek stays '*'
     }
 
+    // Month
     if (timeSetupData.monthMode === 'specific' && timeSetupData.selectedMonths.length > 0) {
-      const monthMap: Record<string, string> = {
-        'January': '1',
-        'February': '2',
-        'March': '3',
-        'April': '4',
-        'May': '5',
-        'June': '6',
-        'July': '7',
-        'August': '8',
-        'September': '9',
-        'October': '10',
-        'November': '11',
-        'December': '12'
-      };
-      month = timeSetupData.selectedMonths.map(m => monthMap[m]).join(',');
+      month = timeSetupData.selectedMonths.map(m => MONTH_MAP[m].toString()).join(',');
     } else if (timeSetupData.monthMode === 'between') {
-      const monthMap: Record<string, number> = {
-        'January': 1,
-        'February': 2,
-        'March': 3,
-        'April': 4,
-        'May': 5,
-        'June': 6,
-        'July': 7,
-        'August': 8,
-        'September': 9,
-        'October': 10,
-        'November': 11,
-        'December': 12
-      };
-      const startMonth = monthMap[timeSetupData.betweenMonthStart];
-      const endMonth = monthMap[timeSetupData.betweenMonthEnd];
-      if (startMonth && endMonth) {
-        month = `${startMonth}-${endMonth}`;
-      }
+      const s = MONTH_MAP[timeSetupData.betweenMonthStart];
+      const e = MONTH_MAP[timeSetupData.betweenMonthEnd];
+      if (s && e) month = `${s}-${e}`;
+    }
+
+    return `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`;
+  };
+
+  const buildCronFromTimeData = (data: typeof initialTimeSetupState): string => {
+    const MONTH_MAP: Record<string, number> = {
+      January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
+      July: 7, August: 8, September: 9, October: 10, November: 11, December: 12,
+    };
+    // Standard cron weekday: 0=Sunday, 1=Monday … 6=Saturday
+    const WEEKDAY_MAP: Record<string, string> = {
+      Sunday: '0', Monday: '1', Tuesday: '2', Wednesday: '3',
+      Thursday: '4', Friday: '5', Saturday: '6',
+    };
+
+    let minute = '*';
+    let hour = '*';
+    let dayOfMonth = '*';
+    let month = '*';
+    let dayOfWeek = '*';
+
+    // Minutes
+    if (data.minuteMode === 'specific' && data.selectedMinutes.length > 0) {
+      minute = data.selectedMinutes.join(',');
+    } else if (data.minuteMode === 'between') {
+      const s = parseInt(data.betweenMinuteStart, 10);
+      const e = parseInt(data.betweenMinuteEnd, 10);
+      if (!Number.isNaN(s) && !Number.isNaN(e)) minute = `${s}-${e}`;
+    }
+
+    // Hours — keep leading zeros as stored ("09", "12")
+    if (data.hourMode === 'specific' && data.selectedHours.length > 0) {
+      hour = data.selectedHours.join(',');
+    }
+
+    // Day
+    if (data.dayMode === 'weekdays' && data.selectedWeekdays.length > 0) {
+      dayOfWeek = data.selectedWeekdays.map(d => WEEKDAY_MAP[d]).join(',');
+      // dayOfMonth stays '*'
+    } else if (data.dayMode === 'specific' && data.selectedDays.length > 0) {
+      // Strip leading zeros: "01" → "1", "15" → "15"
+      dayOfMonth = data.selectedDays.map(d => parseInt(d, 10).toString()).join(',');
+      // dayOfWeek stays '*'
+    }
+
+    // Month
+    if (data.monthMode === 'specific' && data.selectedMonths.length > 0) {
+      month = data.selectedMonths.map(m => MONTH_MAP[m].toString()).join(',');
+    } else if (data.monthMode === 'between') {
+      const s = MONTH_MAP[data.betweenMonthStart];
+      const e = MONTH_MAP[data.betweenMonthEnd];
+      if (s && e) month = `${s}-${e}`;
     }
 
     return `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`;
@@ -1440,7 +1633,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="details"
+                            name={`details-completed-${stepIndex}`}
                             value="Asset"
                             checked={formData.details === 'Asset'}
                             readOnly
@@ -1453,7 +1646,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="details"
+                            name={`details-completed-${stepIndex}`}
                             value="Service"
                             checked={formData.details === 'Service'}
                             readOnly
@@ -1472,7 +1665,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="amcType"
+                            name={`amcType-completed-${stepIndex}`}
                             value="Comprehensive"
                             checked={formData.amcType === 'Comprehensive'}
                             readOnly
@@ -1485,7 +1678,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="amcType"
+                            name={`amcType-completed-${stepIndex}`}
                             value="Non-Comprehensive"
                             checked={formData.amcType === 'Non-Comprehensive'}
                             readOnly
@@ -1504,7 +1697,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="type"
+                            name={`type-completed-${stepIndex}`}
                             value="Individual"
                             checked={formData.type === 'Individual'}
                             readOnly
@@ -1517,7 +1710,7 @@ export const AddAMCPage = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="radio"
-                            name="type"
+                            name={`type-completed-${stepIndex}`}
                             value="Group"
                             checked={formData.type === 'Group'}
                             readOnly
@@ -1746,7 +1939,7 @@ export const AddAMCPage = () => {
                         sx={{ mb: 3 }}
                       />
 
-                      <TextField
+                      {/* <TextField
                         disabled
                         label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
                         type="date"
@@ -1754,6 +1947,25 @@ export const AddAMCPage = () => {
                         value={formData.firstService || ''}
                         InputLabelProps={{ shrink: true }}
                         sx={{ mb: 3 }}
+                      /> */}
+
+                      <TextField
+                        label={
+                          <span>
+                            First Service Date <span style={{ color: 'red' }}>*</span>
+                          </span>
+                        }
+                        type="date"
+                        fullWidth
+                        value={formData.firstService}
+                        onChange={(e) => handleInputChange('firstService', e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{
+                          min: formData.startDate || undefined,
+                          max: formData.endDate || undefined,
+                        }}
+                        error={!!errors.firstService}
+                        helperText={errors.firstService}
                       />
 
                       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
@@ -1782,6 +1994,7 @@ export const AddAMCPage = () => {
                         fullWidth
                         value={formData.cost}
                         sx={{ mb: 3 }}
+
                       />
 
                       <TextField
@@ -1941,7 +2154,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="details"
+                          name="details-preview"
                           value="Asset"
                           checked={formData.details === 'Asset'}
                           readOnly
@@ -1954,7 +2167,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="details"
+                          name="details-preview"
                           value="Service"
                           checked={formData.details === 'Service'}
                           readOnly
@@ -1973,7 +2186,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="amcType"
+                          name="amcType-preview"
                           value="Comprehensive"
                           checked={formData.amcType === 'Comprehensive'}
                           readOnly
@@ -1986,7 +2199,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="amcType"
+                          name="amcType-preview"
                           value="Non-Comprehensive"
                           checked={formData.amcType === 'Non-Comprehensive'}
                           readOnly
@@ -2005,7 +2218,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="type"
+                          name="type-preview"
                           value="Individual"
                           checked={formData.type === 'Individual'}
                           readOnly
@@ -2018,7 +2231,7 @@ export const AddAMCPage = () => {
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
-                          name="type"
+                          name="type-preview"
                           value="Group"
                           checked={formData.type === 'Group'}
                           readOnly
@@ -2312,14 +2525,22 @@ export const AddAMCPage = () => {
 
                     <TextField
                       disabled
+                      label="Assets Per Day"
+                      placeholder="Enter Assets Per Day"
+                      type="number"
+                      fullWidth
+                      value={formData.assetsPerDay}
+                      sx={{ mb: 3 }}
+                    />
+
+                    <TextField
+                      disabled
                       label="Remarks"
                       placeholder="Enter Remarks"
                       fullWidth
                       value={formData.remarks}
                       sx={{ mb: 3 }}
                     />
-
-                    <div></div>
                   </div>
                 </CardContent>
               </Card>
@@ -2346,14 +2567,49 @@ export const AddAMCPage = () => {
                 background: '#FFF',
                 boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
               }}>
-                {/* <CardHeader className="bg-[#F6F4EE] ">
-                    <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">3</span>
-                      SCHEDULE
-                    </CardTitle>
-                  </CardHeader> */}
-                <CardContent className="p-4">
-                  <TimeSetupStep data={timeSetupData} hideTitle disabled showEditButton={false} />
+                <CardContent className="p-0">
+                  {frequencyConfigs.length > 0 ? (
+                    <>
+                      {/* Frequency tabs */}
+                      <div className="flex border-b border-gray-200 overflow-x-auto">
+                        {frequencyConfigs.map((cfg, idx) => (
+                          <button
+                            key={cfg.frequency}
+                            type="button"
+                            onClick={() => setActiveFrequencyTab(idx)}
+                            className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                              activeFrequencyTab === idx
+                                ? 'border-b-2 border-[#C72030] text-[#C72030] bg-white'
+                                : 'text-gray-500 hover:text-[#C72030] bg-[#F6F4EE]'
+                            }`}
+                          >
+                            {FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}
+                          </button>
+                        ))}
+                      </div>
+                      {frequencyConfigs.map((cfg, idx) => idx !== activeFrequencyTab ? null : (
+                        <div key={cfg.frequency} className="p-4">
+                          <div className="flex items-center gap-3 mb-3">
+                            {cfg.description && (
+                              <span className="text-sm text-gray-600">{cfg.description}</span>
+                            )}
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cfg.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                              {cfg.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
+                          <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
+                            <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
+                            <span className="font-mono text-[#C72030]">{buildCronFromTimeData(cfg.timeSetupData as typeof initialTimeSetupState)}</span>
+                          </div>
+                          <TimeSetupStep data={cfg.timeSetupData as typeof initialTimeSetupState} hideTitle disabled showEditButton={false} />
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <div className="p-4">
+                      <TimeSetupStep data={timeSetupData} hideTitle disabled showEditButton={false} />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -2446,7 +2702,7 @@ export const AddAMCPage = () => {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoices <span style={{ color: 'red' }}>*</span></label>
+                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoices </label>
                       <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 min-h-[200px]">
                         {attachments.invoices.length > 0 ? (
                           <div className="flex flex-wrap gap-3">
@@ -2695,368 +2951,519 @@ export const AddAMCPage = () => {
                 {formData.type === 'Individual' ? (
                   <>
                     {formData.details === 'Asset' ? (
-                    
+                      <div>
+                        {/* Header row */}
+                        <div className="flex items-center justify-between mb-2">
+                          <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#444' }}>
+                            Assets <span style={{ color: '#C72030' }}>*</span>
+                          </Typography>
+                          {formData.asset_ids.length > 0 && (
+                            <span className="text-xs text-[#C72030] font-medium">{formData.asset_ids.length} selected</span>
+                          )}
+                        </div>
 
+                        {/* Group / SubGroup filters */}
+                        {(() => {
+                          const uniqueGroups = Array.from(new Set(assetOptions.map((a: any) => a.asset_group).filter(Boolean))) as string[];
+                          const uniqueSubGroups = Array.from(new Set(
+                            assetOptions
+                              .filter((a: any) => !indivGroupFilter || a.asset_group === indivGroupFilter)
+                              .map((a: any) => a.asset_sub_group)
+                              .filter(Boolean)
+                          )) as string[];
+                          return (
+                            <div className="grid grid-cols-2 gap-3 mb-3">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Group</label>
+                                <select
+                                  value={indivGroupFilter}
+                                  onChange={e => { setIndivGroupFilter(e.target.value); setIndivSubGroupFilter(''); }}
+                                  disabled={isSubmitting}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030]"
+                                >
+                                  <option value="">All Groups</option>
+                                  {uniqueGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Sub Group</label>
+                                <select
+                                  value={indivSubGroupFilter}
+                                  onChange={e => setIndivSubGroupFilter(e.target.value)}
+                                  disabled={isSubmitting || !indivGroupFilter}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030] disabled:bg-gray-50 disabled:text-gray-400"
+                                >
+                                  <option value="">All Sub Groups</option>
+                                  {uniqueSubGroups.map(sg => <option key={sg} value={sg}>{sg}</option>)}
+                                </select>
+                              </div>
+                            </div>
+                          );
+                        })()}
 
+                        {/* Search */}
+                        <div className="relative mb-3">
+                          <input
+                            type="text"
+                            placeholder="Search assets by name (min 3 chars)..."
+                            value={assetQuery}
+                            onChange={e => setAssetQuery(e.target.value)}
+                            disabled={isSubmitting}
+                            className="w-full px-3 py-2 pl-9 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030]"
+                          />
+                          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                          </svg>
+                          {assetSearchLoading && (
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Loading…</span>
+                          )}
+                        </div>
 
+                        {/* Table */}
+                        <div className={`border rounded overflow-auto max-h-64 ${errors.asset_ids ? 'border-red-400' : 'border-gray-200'}`}>
+                          <table className="w-full text-sm border-collapse min-w-[600px]">
+                            <thead className="bg-[#F6F4EE] sticky top-0 z-10">
+                              <tr>
+                                <th className="px-3 py-2 w-10">
+                                  <input
+                                    type="checkbox"
+                                    style={{ accentColor: '#C72030' }}
+                                    disabled={isSubmitting || assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).length === 0}
+                                    checked={assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).length > 0 && assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).every((a: any) => formData.asset_ids.includes(Number(a.id)))}
+                                    onChange={e => {
+                                      const filteredIds = assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).map((a: any) => Number(a.id));
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        asset_ids: e.target.checked
+                                          ? [...new Set([...prev.asset_ids, ...filteredIds])]
+                                          : prev.asset_ids.filter(id => !filteredIds.includes(id)),
+                                      }));
+                                      setErrors(prev => ({ ...prev, asset_ids: '' }));
+                                    }}
+                                  />
+                                </th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Name</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Manufacturer</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Equipment ID</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Group</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Sub Group</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Building</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Wing</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Area</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Floor</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Room</th>
+                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Criticality</th>
 
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(() => {
+                                const displayAssets = assetOptions.filter((a: any) =>
+                                  (!indivGroupFilter || a.asset_group === indivGroupFilter) &&
+                                  (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)
+                                );
+                                if (displayAssets.length === 0) return (
+                                  <tr>
+                                    <td colSpan={12} className="px-3 py-8 text-center text-gray-400 text-sm">
+                                      {assetSearchLoading
+                                        ? 'Searching…'
+                                        : assetQuery.length > 0 && assetQuery.length < 3
+                                          ? 'Type at least 3 characters to search'
+                                          : 'No assets found'}
+                                    </td>
+                                  </tr>
+                                );
+                                return displayAssets.map((asset: any) => {
+                                  const isChecked = formData.asset_ids.includes(Number(asset.id));
+                                  return (
+                                    <tr
+                                      key={asset.id}
+                                      className={`border-t border-gray-100 cursor-pointer transition-colors ${isChecked ? 'bg-red-50' : 'hover:bg-gray-50'}`}
+                                      onClick={() => {
+                                        if (isSubmitting) return;
+                                        const id = Number(asset.id);
+                                        setFormData(prev => ({
+                                          ...prev,
+                                          asset_ids: isChecked
+                                            ? prev.asset_ids.filter(x => x !== id)
+                                            : [...prev.asset_ids, id],
+                                        }));
+                                        setErrors(prev => ({ ...prev, asset_ids: '' }));
+                                      }}
+                                    >
+                                      <td className="px-3 py-2 text-center">
+                                        <input
+                                          type="checkbox"
+                                          style={{ accentColor: '#C72030' }}
+                                          checked={isChecked}
+                                          onChange={() => { }}
+                                          disabled={isSubmitting}
+                                        />
+                                      </td>
+                                      <td className="px-3 py-2 font-medium text-[#1a1a1a]">{asset.name || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.manufacturer || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.ext_reference_id || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.asset_group || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.asset_sub_group || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.location?.building || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.location?.wing || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.location?.area || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.location?.floor || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.location?.room || '-'}</td>
+                                      <td className="px-3 py-2 text-gray-600">{asset.criticality || '-'}</td>
+                                    </tr>
+                                  );
+                                });
+                              })()}
+                            </tbody>
+                          </table>
+                        </div>
+                        {errors.asset_ids && (
+                          <p className="text-xs text-red-600 mt-1">{errors.asset_ids}</p>
+                        )}
 
+                        {/* Selected Assets Order Panel */}
+                        {formData.asset_ids.length > 0 && (
+                          <div className="mt-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#444' }}>
+                                Selected Assets — Submission Order
+                              </Typography>
+                              <span className="text-xs text-gray-400">Use arrows to reorder</span>
+                            </div>
+                            <div className="border border-gray-200 rounded overflow-hidden">
+                              {formData.asset_ids.map((id, idx) => {
+                                const allAssets = [...(assetList || []), ...(assetOptions || [])];
+                                const asset = allAssets.find((a: any) => Number(a.id) === id);
+                                const total = formData.asset_ids.length;
+                                return (
+                                  <div
+                                    key={id}
+                                    className="flex items-center gap-3 px-3 py-2 bg-white border-b border-gray-100 last:border-b-0"
+                                  >
+                                    {/* Editable position — type a number to jump/swap */}
+                                    <div className="flex flex-col items-center shrink-0" title="Type a position number to move here">
+                                      <input
+                                        type="number"
+                                        min={1}
+                                        max={total}
+                                        disabled={isSubmitting}
+                                        value={idx + 1}
+                                        onChange={e => {
+                                          const target = Number(e.target.value) - 1;
+                                          if (isNaN(target) || target < 0 || target >= total || target === idx) return;
+                                          setFormData(prev => {
+                                            const arr = [...prev.asset_ids];
+                                            // Remove from current position, insert at target
+                                            arr.splice(idx, 1);
+                                            arr.splice(target, 0, id);
+                                            return { ...prev, asset_ids: arr };
+                                          });
+                                        }}
+                                        className="w-9 h-7 text-center text-xs font-bold text-white rounded-full border-none outline-none bg-[#C72030] disabled:opacity-60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                      />
+                                      <span className="text-[9px] text-gray-400 mt-0.5 leading-none">pos</span>
+                                    </div>
 
-<FormControl fullWidth error={!!errors.asset_ids}>
-  <Typography
-    sx={{
-      fontSize: "14px",
-      mb: 1,
-      fontWeight: 500,
-      color: "#444",
-    }}
-  >
-    Assets <span style={{ color: "#C72030" }}>*</span>
-  </Typography>
+                                    {/* Asset info */}
+                                    <span className="flex-1 text-sm font-medium text-[#1a1a1a] truncate">
+                                      {asset?.name || `Asset #${id}`}
+                                    </span>
+                                    {asset?.location?.building && (
+                                      <span className="text-xs text-gray-400 shrink-0">
+                                        {[asset.location.building, asset.location.floor, asset.location.room]
+                                          .filter(Boolean).join(' › ')}
+                                      </span>
+                                    )}
 
-  <Select
-    isMulti
-    options={(assetOptions || []).map((item) => ({
-      value: item.id,
-      label: item.name,
-    }))}
-    value={(assetOptions || [])
-      .filter((item) =>
-        formData.asset_ids.includes(item.id)
-      )
-      .map((item) => ({
-        value: item.id,
-        label: item.name,
-      }))}
-    onChange={(selected: any) => {
-      setFormData((prev) => ({
-        ...prev,
-        asset_ids: selected
-          ? selected.map((item: any) => item.value)
-          : [],
-      }));
+                                    {/* Up / Down buttons */}
+                                    <div className="flex flex-col gap-0.5 shrink-0">
+                                      <button
+                                        type="button"
+                                        disabled={idx === 0 || isSubmitting}
+                                        className="w-6 h-5 flex items-center justify-center rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                                        onClick={() => setFormData(prev => {
+                                          const arr = [...prev.asset_ids];
+                                          [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+                                          return { ...prev, asset_ids: arr };
+                                        })}
+                                        title="Move up"
+                                      >
+                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M14.77 12.79a.75.75 0 01-1.06-.02L10 8.832l-3.71 3.938a.75.75 0 01-1.08-1.04l4.25-4.5a.75.75 0 011.08 0l4.25 4.5a.75.75 0 01-.02 1.06z" clipRule="evenodd" /></svg>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={idx === total - 1 || isSubmitting}
+                                        className="w-6 h-5 flex items-center justify-center rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                                        onClick={() => setFormData(prev => {
+                                          const arr = [...prev.asset_ids];
+                                          [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
+                                          return { ...prev, asset_ids: arr };
+                                        })}
+                                        title="Move down"
+                                      >
+                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" /></svg>
+                                      </button>
+                                    </div>
 
-      setErrors((prev: any) => ({
-        ...prev,
-        asset_ids: "",
-      }));
-    }}
-    isClearable
-    closeMenuOnSelect={false}
-    hideSelectedOptions={false}
-    placeholder="Search Assets"
-    styles={{
-      control: (base, state) => ({
-        ...base,
-        minHeight: "56px",
-        borderRadius: "4px",
-        borderColor: errors.asset_ids
-          ? "#d32f2f"
-          : state.isFocused
-          ? "#C72030"
-          : "#c4c4c4",
-        boxShadow: "none",
-        "&:hover": {
-          borderColor: "#C72030",
-        },
-      }),
-
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-      }),
-
-      // option: (base, state) => ({
-      //   ...base,
-      //   backgroundColor: state.isFocused
-      //     ? "rgba(199,32,48,0.08)"
-      //     : "#fff",
-      //   color: "#000",
-      //   cursor: "pointer",
-      // }),
-
-      option: (base, state) => ({
-  ...base,
-  backgroundColor: state.isFocused
-    ? "#eff6ff" // faint blue on hover
-    : "#fff",
-  color: "#000",
-  cursor: "pointer",
-}),
-
-      placeholder: (base) => ({
-        ...base,
-        color: "#999",
-      }),
-
-      multiValue: (base) => ({
-        ...base,
-        backgroundColor: "rgba(199,32,48,0.08)",
-      }),
-
-      multiValueLabel: (base) => ({
-        ...base,
-        color: "#C72030",
-        fontWeight: 500,
-      }),
-
-      multiValueRemove: (base) => ({
-        ...base,
-        color: "#C72030",
-        ":hover": {
-          backgroundColor: "#C72030",
-          color: "#fff",
-        },
-      }),
-    }}
-    
-  />
-
-  {errors.asset_ids && (
-    <FormHelperText>
-      {errors.asset_ids}
-    </FormHelperText>
-  )}
-</FormControl>
-
+                                    {/* Remove */}
+                                    <button
+                                      type="button"
+                                      disabled={isSubmitting}
+                                      className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30"
+                                      onClick={() => setFormData(prev => ({
+                                        ...prev,
+                                        asset_ids: prev.asset_ids.filter(x => x !== id),
+                                      }))}
+                                      title="Remove"
+                                    >
+                                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ) : (
 
 
 
 
-<FormControl fullWidth error={!!errors.service_ids}>
-  <Typography
-    sx={{
-      fontSize: "14px",
-      mb: 1,
-      fontWeight: 500,
-      color: "#444",
-    }}
-  >
-    Services <span style={{ color: "#C72030" }}>*</span>
-  </Typography>
+                      <FormControl fullWidth error={!!errors.service_ids}>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          Services <span style={{ color: "#C72030" }}>*</span>
+                        </Typography>
 
-  <Select
-    isMulti
-    options={(services || []).map((item) => ({
-      value: item.id,
-      label: item.service_name,
-    }))}
-    value={(services || [])
-      .filter((item) =>
-        formData.service_ids.includes(item.id)
-      )
-      .map((item) => ({
-        value: item.id,
-        label: item.service_name,
-      }))}
-    onChange={(selected: any) => {
-      setFormData((prev) => ({
-        ...prev,
-        service_ids: selected
-          ? selected.map((item: any) => item.value)
-          : [],
-      }));
+                        <Select
+                          isMulti
+                          options={(services || []).map((item) => ({
+                            value: item.id,
+                            label: item.service_name,
+                          }))}
+                          value={(services || [])
+                            .filter((item) =>
+                              formData.service_ids.includes(item.id)
+                            )
+                            .map((item) => ({
+                              value: item.id,
+                              label: item.service_name,
+                            }))}
+                          onChange={(selected: any) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              service_ids: selected
+                                ? selected.map((item: any) => item.value)
+                                : [],
+                            }));
 
-      setErrors((prev: any) => ({
-        ...prev,
-        service_ids: "",
-      }));
-    }}
-    isClearable
-    closeMenuOnSelect={false}
-    hideSelectedOptions={false}
-    placeholder="Search Services"
-    styles={{
-      control: (base, state) => ({
-        ...base,
-        minHeight: "56px",
-        borderRadius: "4px",
-        borderColor: errors.service_ids
-          ? "#d32f2f"
-          : state.isFocused
-          ? "#C72030"
-          : "#c4c4c4",
-        boxShadow: "none",
-        "&:hover": {
-          borderColor: "#C72030",
-        },
-      }),
+                            setErrors((prev: any) => ({
+                              ...prev,
+                              service_ids: "",
+                            }));
+                          }}
+                          isClearable
+                          closeMenuOnSelect={false}
+                          hideSelectedOptions={false}
+                          placeholder="Search Services"
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: errors.service_ids
+                                ? "#d32f2f"
+                                : state.isFocused
+                                  ? "#C72030"
+                                  : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-      }),
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
 
-      // option: (base, state) => ({
-      //   ...base,
-      //   backgroundColor: state.isFocused
-      //     ? "rgba(199,32,48,0.08)"
-      //     : "#fff",
-      //   color: "#000",
-      //   cursor: "pointer",
-      // }),
-      option: (base, state) => ({
-  ...base,
-  backgroundColor: state.isFocused
-    ? "#eff6ff" // faint blue on hover
-    : "#fff",
-  color: "#000",
-  cursor: "pointer",
-}),
+                            // option: (base, state) => ({
+                            //   ...base,
+                            //   backgroundColor: state.isFocused
+                            //     ? "rgba(199,32,48,0.08)"
+                            //     : "#fff",
+                            //   color: "#000",
+                            //   cursor: "pointer",
+                            // }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff" // faint blue on hover
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-      placeholder: (base) => ({
-        ...base,
-        color: "#999",
-      }),
+                            placeholder: (base) => ({
+                              ...base,
+                              color: "#999",
+                            }),
 
-      multiValue: (base) => ({
-        ...base,
-        backgroundColor: "rgba(199,32,48,0.08)",
-      }),
+                            multiValue: (base) => ({
+                              ...base,
+                              backgroundColor: "rgba(199,32,48,0.08)",
+                            }),
 
-      multiValueLabel: (base) => ({
-        ...base,
-        color: "#C72030",
-        fontWeight: 500,
-      }),
+                            multiValueLabel: (base) => ({
+                              ...base,
+                              color: "#C72030",
+                              fontWeight: 500,
+                            }),
 
-      multiValueRemove: (base) => ({
-        ...base,
-        color: "#C72030",
-        ":hover": {
-          backgroundColor: "#C72030",
-          color: "#fff",
-        },
-      }),
-    }}
-  />
+                            multiValueRemove: (base) => ({
+                              ...base,
+                              color: "#C72030",
+                              ":hover": {
+                                backgroundColor: "#C72030",
+                                color: "#fff",
+                              },
+                            }),
+                          }}
+                        />
 
-  {errors.service_ids && (
-    <FormHelperText>
-      {errors.service_ids}
-    </FormHelperText>
-  )}
-</FormControl>
+                        {errors.service_ids && (
+                          <FormHelperText>
+                            {errors.service_ids}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
                     )}
 
 
 
 
 
-{supplierField}
+                    {supplierField}
 
 
 
 
 
 
-                  
 
 
-<FormControl fullWidth error={!!errors.technician}>
-  <Typography
-    sx={{
-      fontSize: "14px",
-      mb: 1,
-      fontWeight: 500,
-      color: "#444",
-    }}
-  >
-    Technician
-  </Typography>
 
-  <Select
-    options={(technicianOptions || []).map((item) => ({
-      value: item.id,
-      label: item.full_name || item.name,
-    }))}
-    value={
-      (technicianOptions || [])
-        .filter(
-          (item) =>
-            String(item.id) ===
-            String(formData.technician)
-        )
-        .map((item) => ({
-          value: item.id,
-          label: item.full_name || item.name,
-        }))[0] || null
-    }
-    onChange={(selected: any) => {
-      handleInputChange(
-        "technician",
-        selected ? String(selected.value) : ""
-      );
+                    <FormControl fullWidth error={!!errors.technician}>
+                      <Typography
+                        sx={{
+                          fontSize: "14px",
+                          mb: 1,
+                          fontWeight: 500,
+                          color: "#444",
+                        }}
+                      >
+                        Technician
+                      </Typography>
 
-      setErrors((prev: any) => ({
-        ...prev,
-        technician: "",
-      }));
-    }}
-    isDisabled={
-      loading || techniciansLoading || isSubmitting
-    }
-    isClearable
-    placeholder="Search Technician"
-    styles={{
-      control: (base, state) => ({
-        ...base,
-        minHeight: "56px",
-        borderRadius: "4px",
-        borderColor: errors.technician
-          ? "#d32f2f"
-          : state.isFocused
-          ? "#C72030"
-          : "#c4c4c4",
-        boxShadow: "none",
-        "&:hover": {
-          borderColor: "#C72030",
-        },
-      }),
+                      <Select
+                        options={(technicianOptions || []).map((item) => ({
+                          value: item.id,
+                          label: item.full_name || item.name,
+                        }))}
+                        value={
+                          (technicianOptions || [])
+                            .filter(
+                              (item) =>
+                                String(item.id) ===
+                                String(formData.technician)
+                            )
+                            .map((item) => ({
+                              value: item.id,
+                              label: item.full_name || item.name,
+                            }))[0] || null
+                        }
+                        onChange={(selected: any) => {
+                          handleInputChange(
+                            "technician",
+                            selected ? String(selected.value) : ""
+                          );
 
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-      }),
+                          setErrors((prev: any) => ({
+                            ...prev,
+                            technician: "",
+                          }));
+                        }}
+                        isDisabled={
+                          loading || techniciansLoading || isSubmitting
+                        }
+                        isClearable
+                        placeholder="Search Technician"
+                        styles={{
+                          control: (base, state) => ({
+                            ...base,
+                            minHeight: "56px",
+                            borderRadius: "4px",
+                            borderColor: errors.technician
+                              ? "#d32f2f"
+                              : state.isFocused
+                                ? "#C72030"
+                                : "#c4c4c4",
+                            boxShadow: "none",
+                            "&:hover": {
+                              borderColor: "#C72030",
+                            },
+                          }),
 
-      // option: (base, state) => ({
-      //   ...base,
-      //   backgroundColor: state.isFocused
-      //     ? "rgba(199,32,48,0.08)"
-      //     : "#fff",
-      //   color: "#000",
-      //   cursor: "pointer",
-      // }),
+                          menu: (base) => ({
+                            ...base,
+                            zIndex: 9999,
+                          }),
+
+                          // option: (base, state) => ({
+                          //   ...base,
+                          //   backgroundColor: state.isFocused
+                          //     ? "rgba(199,32,48,0.08)"
+                          //     : "#fff",
+                          //   color: "#000",
+                          //   cursor: "pointer",
+                          // }),
 
 
-      option: (base, state) => ({
-  ...base,
-  backgroundColor: state.isFocused
-    ? "#eff6ff" // faint blue on hover
-    : "#fff",
-  color: "#000",
-  cursor: "pointer",
-}),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor: state.isFocused
+                              ? "#eff6ff" // faint blue on hover
+                              : "#fff",
+                            color: "#000",
+                            cursor: "pointer",
+                          }),
 
-      placeholder: (base) => ({
-        ...base,
-        color: "#999",
-      }),
+                          placeholder: (base) => ({
+                            ...base,
+                            color: "#999",
+                          }),
 
-      singleValue: (base) => ({
-        ...base,
-        color: "#000",
-      }),
-    }}
-  />
+                          singleValue: (base) => ({
+                            ...base,
+                            color: "#000",
+                          }),
+                        }}
+                      />
 
-  {errors.technician && (
-    <FormHelperText>
-      {errors.technician}
-    </FormHelperText>
-  )}
-</FormControl>
+                      {errors.technician && (
+                        <FormHelperText>
+                          {errors.technician}
+                        </FormHelperText>
+                      )}
+                    </FormControl>
                   </>
                 ) : (
                   // <>
@@ -3138,237 +3545,237 @@ export const AddAMCPage = () => {
                   // </>
 
 
-<>
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-    {/* Group */}
-    <FormControl fullWidth error={!!errors.group}>
-      <Typography
-        sx={{
-          fontSize: "14px",
-          mb: 1,
-          fontWeight: 500,
-          color: "#444",
-        }}
-      >
-        Group
-      </Typography>
+                      {/* Group */}
+                      <FormControl fullWidth error={!!errors.group}>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          Group
+                        </Typography>
 
-      <Select
-        options={(assetGroups || []).map((group) => ({
-          value: group.id,
-          label: group.name,
-        }))}
-        value={
-          (assetGroups || [])
-            .filter(
-              (group) =>
-                String(group.id) === String(formData.group)
-            )
-            .map((group) => ({
-              value: group.id,
-              label: group.name,
-            }))[0] || null
-        }
-        onChange={(selected: any) => {
-          handleGroupChange(
-            selected ? String(selected.value) : ""
-          );
-        }}
-        isDisabled={loading || isSubmitting}
-        placeholder="Search Group"
-        isClearable
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            minHeight: "56px",
-            borderRadius: "4px",
-            borderColor: errors.group
-              ? "#d32f2f"
-              : state.isFocused
-              ? "#C72030"
-              : "#c4c4c4",
-            boxShadow: "none",
-            "&:hover": {
-              borderColor: "#C72030",
-            },
-          }),
+                        <Select
+                          options={(assetGroups || []).map((group) => ({
+                            value: group.id,
+                            label: group.name,
+                          }))}
+                          value={
+                            (assetGroups || [])
+                              .filter(
+                                (group) =>
+                                  String(group.id) === String(formData.group)
+                              )
+                              .map((group) => ({
+                                value: group.id,
+                                label: group.name,
+                              }))[0] || null
+                          }
+                          onChange={(selected: any) => {
+                            handleGroupChange(
+                              selected ? String(selected.value) : ""
+                            );
+                          }}
+                          isDisabled={loading || isSubmitting}
+                          placeholder="Search Group"
+                          isClearable
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: errors.group
+                                ? "#d32f2f"
+                                : state.isFocused
+                                  ? "#C72030"
+                                  : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isFocused
-              ? "#eff6ff"
-              : "#fff",
-            color: "#000",
-            cursor: "pointer",
-          }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff"
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-          menu: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-        }}
-      />
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                          }}
+                        />
 
-      {errors.group && (
-        <FormHelperText>
-          {errors.group}
-        </FormHelperText>
-      )}
-    </FormControl>
+                        {errors.group && (
+                          <FormHelperText>
+                            {errors.group}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
 
-    {/* SubGroup */}
-    <FormControl fullWidth>
-      <Typography
-        sx={{
-          fontSize: "14px",
-          mb: 1,
-          fontWeight: 500,
-          color: "#444",
-        }}
-      >
-        SubGroup
-      </Typography>
+                      {/* SubGroup */}
+                      <FormControl fullWidth>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          SubGroup
+                        </Typography>
 
-      <Select
-        options={(subGroups || []).map((subGroup) => ({
-          value: subGroup.id,
-          label: subGroup.name,
-        }))}
-        value={
-          (subGroups || [])
-            .filter(
-              (subGroup) =>
-                String(subGroup.id) === String(formData.subgroup)
-            )
-            .map((subGroup) => ({
-              value: subGroup.id,
-              label: subGroup.name,
-            }))[0] || null
-        }
-        onChange={(selected: any) => {
-          handleInputChange(
-            "subgroup",
-            selected ? String(selected.value) : ""
-          );
-        }}
-        isDisabled={
-          !formData.group || loading || isSubmitting
-        }
-        isClearable
-        placeholder="Search SubGroup"
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            minHeight: "56px",
-            borderRadius: "4px",
-            borderColor: state.isFocused
-              ? "#C72030"
-              : "#c4c4c4",
-            boxShadow: "none",
-            "&:hover": {
-              borderColor: "#C72030",
-            },
-          }),
+                        <Select
+                          options={(subGroups || []).map((subGroup) => ({
+                            value: subGroup.id,
+                            label: subGroup.name,
+                          }))}
+                          value={
+                            (subGroups || [])
+                              .filter(
+                                (subGroup) =>
+                                  String(subGroup.id) === String(formData.subgroup)
+                              )
+                              .map((subGroup) => ({
+                                value: subGroup.id,
+                                label: subGroup.name,
+                              }))[0] || null
+                          }
+                          onChange={(selected: any) => {
+                            handleInputChange(
+                              "subgroup",
+                              selected ? String(selected.value) : ""
+                            );
+                          }}
+                          isDisabled={
+                            !formData.group || loading || isSubmitting
+                          }
+                          isClearable
+                          placeholder="Search SubGroup"
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: state.isFocused
+                                ? "#C72030"
+                                : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isFocused
-              ? "#eff6ff"
-              : "#fff",
-            color: "#000",
-            cursor: "pointer",
-          }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff"
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-          menu: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-        }}
-      />
-    </FormControl>
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                          }}
+                        />
+                      </FormControl>
 
-    {supplierField}
+                      {supplierField}
 
-    {/* Technician */}
-    <FormControl fullWidth error={!!errors.technician}>
-      <Typography
-        sx={{
-          fontSize: "14px",
-          mb: 1,
-          fontWeight: 500,
-          color: "#444",
-        }}
-      >
-        Technician
-      </Typography>
+                      {/* Technician */}
+                      <FormControl fullWidth error={!!errors.technician}>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          Technician
+                        </Typography>
 
-      <Select
-        options={(technicianOptions || []).map((item) => ({
-          value: item.id,
-          label: item.full_name || item.name,
-        }))}
-        value={
-          (technicianOptions || [])
-            .filter(
-              (item) =>
-                String(item.id) === String(formData.technician)
-            )
-            .map((item) => ({
-              value: item.id,
-              label: item.full_name || item.name,
-            }))[0] || null
-        }
-        onChange={(selected: any) => {
-          handleInputChange(
-            "technician",
-            selected ? String(selected.value) : ""
-          );
-        }}
-        isDisabled={
-          loading || techniciansLoading || isSubmitting
-        }
-        isClearable
-        placeholder="Search Technician"
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            minHeight: "56px",
-            borderRadius: "4px",
-            borderColor: state.isFocused
-              ? "#C72030"
-              : "#c4c4c4",
-            boxShadow: "none",
-            "&:hover": {
-              borderColor: "#C72030",
-            },
-          }),
+                        <Select
+                          options={(technicianOptions || []).map((item) => ({
+                            value: item.id,
+                            label: item.full_name || item.name,
+                          }))}
+                          value={
+                            (technicianOptions || [])
+                              .filter(
+                                (item) =>
+                                  String(item.id) === String(formData.technician)
+                              )
+                              .map((item) => ({
+                                value: item.id,
+                                label: item.full_name || item.name,
+                              }))[0] || null
+                          }
+                          onChange={(selected: any) => {
+                            handleInputChange(
+                              "technician",
+                              selected ? String(selected.value) : ""
+                            );
+                          }}
+                          isDisabled={
+                            loading || techniciansLoading || isSubmitting
+                          }
+                          isClearable
+                          placeholder="Search Technician"
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: state.isFocused
+                                ? "#C72030"
+                                : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#C72030",
+                              },
+                            }),
 
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isFocused
-              ? "#eff6ff"
-              : "#fff",
-            color: "#000",
-            cursor: "pointer",
-          }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff"
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
 
-          menu: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-        }}
-      />
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                          }}
+                        />
 
-      {errors.technician && (
-        <FormHelperText>
-          {errors.technician}
-        </FormHelperText>
-      )}
-    </FormControl>
+                        {errors.technician && (
+                          <FormHelperText>
+                            {errors.technician}
+                          </FormHelperText>
+                        )}
+                      </FormControl>
 
-  </div>
-</>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -3491,6 +3898,11 @@ export const AddAMCPage = () => {
                     fullWidth
                     value={formData.cost}
                     onChange={e => handleInputChange('cost', e.target.value)}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '+', '-'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     error={!!errors.cost}
                     helperText={errors.cost}
                     sx={{ mb: 3 }}
@@ -3510,8 +3922,34 @@ export const AddAMCPage = () => {
                         handleInputChange('noOfVisits', value);
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     error={!!errors.noOfVisits}
                     helperText={errors.noOfVisits}
+                    sx={{ mb: 3 }}
+                  />
+
+                  <TextField
+                    disabled={isSubmitting}
+                    label="Assets Per Day"
+                    placeholder="Enter Assets Per Day"
+                    type="number"
+                    fullWidth
+                    value={formData.assetsPerDay}
+                    onChange={e => {
+                      const value = e.target.value;
+                      if (/^\d*$/.test(value)) {
+                        handleInputChange('assetsPerDay', value);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     sx={{ mb: 3 }}
                   />
 
@@ -3525,8 +3963,51 @@ export const AddAMCPage = () => {
                     sx={{ mb: 3 }}
                   />
 
-                  {/* Empty column to match the 3-column layout */}
-                  <div></div>
+                  {/* AMC Frequency multi-select */}
+                  <div className="md:col-span-3">
+                    <FormControl fullWidth>
+                      <Typography sx={{ fontSize: '14px', mb: 1, fontWeight: 500, color: '#444' }}>
+                        AMC Frequency
+                      </Typography>
+                      <Select
+                        isMulti
+                        options={FREQUENCY_OPTIONS}
+                        value={FREQUENCY_OPTIONS.filter(o => selectedFrequencies.includes(o.value))}
+                        onChange={(selected: any) => {
+                          setSelectedFrequencies(selected ? selected.map((s: any) => s.value) : []);
+                        }}
+                        isClearable
+                        closeMenuOnSelect={false}
+                        hideSelectedOptions={false}
+                        placeholder="Select Frequencies (optional)"
+                        isDisabled={isSubmitting}
+                        styles={{
+                          control: (base, state) => ({
+                            ...base,
+                            minHeight: '40px',
+                            borderRadius: '4px',
+                            borderColor: state.isFocused ? '#C72030' : '#c4c4c4',
+                            boxShadow: 'none',
+                            '&:hover': { borderColor: '#C72030' },
+                          }),
+                          menu: (base) => ({ ...base, zIndex: 9999 }),
+                          option: (base, state) => ({
+                            ...base,
+                            backgroundColor: state.isFocused ? '#eff6ff' : '#fff',
+                            color: '#000',
+                            cursor: 'pointer',
+                          }),
+                          multiValue: (base) => ({ ...base, backgroundColor: 'rgba(199,32,48,0.08)' }),
+                          multiValueLabel: (base) => ({ ...base, color: '#C72030', fontWeight: 500 }),
+                          multiValueRemove: (base) => ({
+                            ...base, color: '#C72030',
+                            ':hover': { backgroundColor: '#C72030', color: '#fff' },
+                          }),
+                        }}
+                      />
+                    </FormControl>
+                  </div>
+
                 </div>
               </CardContent>
             </Card>
@@ -3557,48 +4038,187 @@ export const AddAMCPage = () => {
                 Schedule
               </h2>
             </div>
-            <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-              borderRadius: '4px',
-              background: '#FFF',
-              boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-            }}>
-              <CardContent className="p-4">
-                {/* Selected time summary */}
-                {(() => {
-                  const joinOrAll = (arr: string[], map?: Record<string, string>) => {
-                    if (!arr || arr.length === 0) return 'All';
-                    const vals = map ? arr.map(v => map[v] ?? v) : arr;
-                    return vals.join(', ');
-                  };
-                  const weekdayMap: Record<string, string> = {
-                    'Monday': 'Mon', 'Tuesday': 'Tue', 'Wednesday': 'Wed', 'Thursday': 'Thu', 'Friday': 'Fri', 'Saturday': 'Sat', 'Sunday': 'Sun'
-                  };
-                  const monthMap: Record<string, string> = {
-                    'January': 'Jan', 'February': 'Feb', 'March': 'Mar', 'April': 'Apr', 'May': 'May', 'June': 'Jun', 'July': 'Jul', 'August': 'Aug', 'September': 'Sep', 'October': 'Oct', 'November': 'Nov', 'December': 'Dec'
-                  };
-                  const hours = timeSetupData.hourMode === 'specific' ? joinOrAll(timeSetupData.selectedHours) : 'All';
-                  const minutes = timeSetupData.minuteMode === 'specific' ? joinOrAll(timeSetupData.selectedMinutes) : `${timeSetupData.betweenMinuteStart}-${timeSetupData.betweenMinuteEnd}`;
-                  const days = timeSetupData.dayMode === 'weekdays' ? joinOrAll(timeSetupData.selectedWeekdays, weekdayMap)
-                    : (timeSetupData.dayMode === 'specific' ? joinOrAll(timeSetupData.selectedDays) : 'All');
-                  const months = timeSetupData.monthMode === 'specific' ? joinOrAll(timeSetupData.selectedMonths, monthMap)
-                    : (timeSetupData.monthMode === 'between' ? `${monthMap[timeSetupData.betweenMonthStart]}-${monthMap[timeSetupData.betweenMonthEnd]}` : 'All');
-                  return (
-                    <div className="mb-3 text-sm text-[#1a1a1a]">
-                      <div><span className="font-semibold">Hours:</span> {hours}</div>
-                      <div><span className="font-semibold">Minutes:</span> {minutes}</div>
-                      <div><span className="font-semibold">Days:</span> {days}</div>
-                      <div><span className="font-semibold">Months:</span> {months}</div>
-                      <div className="mt-1"><span className="font-semibold">Cron:</span> {buildCronExpression()}</div>
+            {/* If frequencies are selected, show one tab per frequency; otherwise show the default single setup */}
+            {frequencyConfigs.length > 0 ? (
+              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', background: '#FFF', boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)' }}>
+                <CardContent className="p-0">
+                  {/* Frequency tabs */}
+                  <div className="flex border-b border-gray-200 overflow-x-auto">
+                    {frequencyConfigs.map((cfg, idx) => (
+                      <button
+                        key={cfg.frequency}
+                        type="button"
+                        onClick={() => setActiveFrequencyTab(idx)}
+                        className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                          activeFrequencyTab === idx
+                            ? 'border-b-2 border-[#C72030] text-[#C72030] bg-white'
+                            : 'text-gray-500 hover:text-[#C72030] bg-[#F6F4EE]'
+                        }`}
+                      >
+                        {FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}
+                      </button>
+                    ))}
+                  </div>
+
+                  {frequencyConfigs.map((cfg, idx) => (
+                    <div key={cfg.frequency} className={idx === activeFrequencyTab ? 'block p-4' : 'hidden'}>
+                      {/* Description + Active toggle row */}
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="flex-1">
+                          <TextField
+                            label="Description"
+                            placeholder={`Description for ${FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}`}
+                            fullWidth
+                            size="small"
+                            value={cfg.description}
+                            disabled={isSubmitting}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setFrequencyConfigs(prev => prev.map((c, i) => i === idx ? { ...c, description: val } : c));
+                            }}
+                          />
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer shrink-0">
+                          <span className="text-sm font-medium text-[#1a1a1a]">Active</span>
+                          <div className="relative">
+                            <input
+                              type="checkbox"
+                              className="sr-only peer"
+                              checked={cfg.active}
+                              onChange={e => {
+                                const val = e.target.checked;
+                                setFrequencyConfigs(prev => prev.map((c, i) => i === idx ? { ...c, active: val } : c));
+                              }}
+                            />
+                            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C72030]"></div>
+                          </div>
+                        </label>
+                      </div>
+
+                      {/* Cron preview */}
+                      <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
+                        <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
+                        <span className="font-mono text-[#C72030]">{buildCronFromTimeData(cfg.timeSetupData as typeof initialTimeSetupState)}</span>
+                      </div>
+
+                      <TimeSetupStep
+                        data={cfg.timeSetupData as typeof initialTimeSetupState}
+                        onChange={(field, value) => {
+                          setFrequencyConfigs(prev => prev.map((c, i) =>
+                            i === idx ? { ...c, timeSetupData: { ...c.timeSetupData, [field]: value } } : c
+                          ));
+                        }}
+                        hideTitle
+                      />
                     </div>
-                  );
-                })()}
-                <TimeSetupStep
-                  data={timeSetupData}
-                  onChange={(field, value) => {
-                    setTimeSetupData(prev => ({ ...prev, [field]: value }));
-                  }}
-                  hideTitle
-                />
+                  ))}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
+                borderRadius: '4px', background: '#FFF', boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
+              }}>
+                <CardContent className="p-4">
+                  <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
+                    <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
+                    <span className="font-mono text-[#C72030]">{buildCronExpression()}</span>
+                  </div>
+                  <TimeSetupStep
+                    data={timeSetupData}
+                    onChange={(field, value) => {
+                      setTimeSetupData(prev => ({ ...prev, [field]: value }));
+                    }}
+                    hideTitle
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Create Checklist */}
+            <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', boxShadow: '0 4px 14.2px 0 rgba(0,0,0,0.10)' }}>
+              <CardContent className="p-4">
+                {/* Toggle */}
+                <div className="flex items-center gap-3 mb-4">
+                  <Switch
+                    checked={createChecklist}
+                    onChange={(e) => {
+                      setCreateChecklist(e.target.checked);
+                      if (!e.target.checked) {
+                        setChecklistErrors({ templateId: '', graceTimeType: '', graceTimeValue: '' });
+                      }
+                    }}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: '#C72030',
+                      },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: '#C72030',
+                      },
+                    }}
+                  />
+                  <span className="text-sm font-semibold text-[#1a1a1a]">Create Checklist</span>
+                </div>
+
+                {createChecklist && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Checklist Template */}
+                    <FormControl fullWidth variant="outlined" error={!!checklistErrors.templateId}>
+                      <InputLabel shrink>Checklist Template *</InputLabel>
+                      <MuiSelect
+                        label="Checklist Template *"
+                        value={checklistFields.templateId}
+                        onChange={e => {
+                          setChecklistFields(prev => ({ ...prev, templateId: String(e.target.value) }));
+                          setChecklistErrors(prev => ({ ...prev, templateId: '' }));
+                        }}
+                        displayEmpty
+                        disabled={checklistTemplatesLoading}
+                      >
+                        <MenuItem value=""><em>{checklistTemplatesLoading ? 'Loading...' : 'Select Template'}</em></MenuItem>
+                        {checklistTemplates.map(t => (
+                          <MenuItem key={t.id} value={String(t.id)}>{t.form_name}</MenuItem>
+                        ))}
+                      </MuiSelect>
+                      {checklistErrors.templateId && <FormHelperText>{checklistErrors.templateId}</FormHelperText>}
+                    </FormControl>
+
+                    {/* Grace Time Type */}
+                    <FormControl fullWidth variant="outlined" error={!!checklistErrors.graceTimeType}>
+                      <InputLabel shrink>Grace Time Type *</InputLabel>
+                      <MuiSelect
+                        label="Grace Time Type *"
+                        value={checklistFields.graceTimeType}
+                        onChange={e => {
+                          setChecklistFields(prev => ({ ...prev, graceTimeType: String(e.target.value) }));
+                          setChecklistErrors(prev => ({ ...prev, graceTimeType: '' }));
+                        }}
+                        displayEmpty
+                      >
+                        <MenuItem value=""><em>Select Type</em></MenuItem>
+                        <MenuItem value="hour">Hours</MenuItem>
+                        <MenuItem value="day">Days</MenuItem>
+                      </MuiSelect>
+                      {checklistErrors.graceTimeType && <FormHelperText>{checklistErrors.graceTimeType}</FormHelperText>}
+                    </FormControl>
+
+                    {/* Grace Time Value */}
+                    <TextField
+                      label="Grace Time Value *"
+                      type="number"
+                      variant="outlined"
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                      value={checklistFields.graceTimeValue}
+                      onChange={e => {
+                        setChecklistFields(prev => ({ ...prev, graceTimeValue: e.target.value }));
+                        setChecklistErrors(prev => ({ ...prev, graceTimeValue: '' }));
+                      }}
+                      error={!!checklistErrors.graceTimeValue}
+                      helperText={checklistErrors.graceTimeValue}
+                      inputProps={{ min: 0 }}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </>
@@ -3718,10 +4338,55 @@ export const AddAMCPage = () => {
                         })}
                       </div>
                     )}
+
+                    {/* Draft-restored contract attachments (metadata only — re-upload needed) */}
+                    {draftAttachmentMeta.contracts.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs text-amber-600 font-medium mb-2">From saved draft — please re-upload to include in submission:</p>
+                        <div className="flex flex-wrap gap-3">
+                          {draftAttachmentMeta.contracts.map((meta, index) => {
+                            const isPdf = meta.type === 'application/pdf';
+                            const isExcel = meta.name.endsWith('.xlsx') || meta.name.endsWith('.xls') || meta.name.endsWith('.csv');
+                            return (
+                              <div
+                                key={`draft-contract-${index}`}
+                                className="flex relative flex-col items-center border border-dashed border-amber-400 rounded-md pt-6 px-2 pb-3 w-[130px] bg-amber-50 shadow-sm"
+                              >
+                                {isPdf ? (
+                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-red-400 bg-white mb-1">
+                                    <FileText className="w-4 h-4" />
+                                  </div>
+                                ) : isExcel ? (
+                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-green-400 bg-white mb-1">
+                                    <FileSpreadsheet className="w-4 h-4" />
+                                  </div>
+                                ) : (
+                                  <div className="w-[40px] h-[40px] flex items-center justify-center bg-gray-100 border rounded text-gray-400 mb-1">
+                                    <FileText className="w-4 h-4" />
+                                  </div>
+                                )}
+                                <span className="text-[10px] text-center truncate max-w-[100px] mb-1 text-amber-700">{meta.name}</span>
+                                <span className="text-[9px] text-amber-500">re-upload needed</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-400"
+                                  onClick={() => setDraftAttachmentMeta(prev => ({ ...prev, contracts: prev.contracts.filter((_, i) => i !== index) }))}
+                                  disabled={isSubmitting}
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoice <span style={{ color: 'red' }}>*</span></label>
+                    <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoice </label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center flex flex-col items-center justify-center bg-white">
                       <input
                         type="file"
@@ -3797,6 +4462,51 @@ export const AddAMCPage = () => {
                             </div>
                           );
                         })}
+                      </div>
+                    )}
+
+                    {/* Draft-restored invoice attachments (metadata only — re-upload needed) */}
+                    {draftAttachmentMeta.invoices.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs text-amber-600 font-medium mb-2">From saved draft — please re-upload to include in submission:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {draftAttachmentMeta.invoices.map((meta, index) => {
+                            const isPdf = meta.type === 'application/pdf';
+                            const isExcel = meta.name.endsWith('.xlsx') || meta.name.endsWith('.xls') || meta.name.endsWith('.csv');
+                            return (
+                              <div
+                                key={`draft-invoice-${index}`}
+                                className="flex relative flex-col items-center border border-dashed border-amber-400 rounded pt-6 p-3 w-[120px] bg-amber-50 shadow-sm"
+                              >
+                                {isPdf ? (
+                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-red-400 bg-white mb-1">
+                                    <FileText className="w-4 h-4" />
+                                  </div>
+                                ) : isExcel ? (
+                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-green-400 bg-white mb-1">
+                                    <FileSpreadsheet className="w-4 h-4" />
+                                  </div>
+                                ) : (
+                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-400 bg-white mb-1">
+                                    <File className="w-4 h-4" />
+                                  </div>
+                                )}
+                                <span className="text-[10px] text-center truncate max-w-[90px] mb-1 text-amber-700">{meta.name}</span>
+                                <span className="text-[9px] text-amber-500">re-upload needed</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-400"
+                                  onClick={() => setDraftAttachmentMeta(prev => ({ ...prev, invoices: prev.invoices.filter((_, i) => i !== index) }))}
+                                  disabled={isSubmitting}
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>

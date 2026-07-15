@@ -21,8 +21,12 @@ import {
   UserCalendarItem,
   getHourlyTaskCounts,
   getDailyTaskCounts,
+  assignSequentialSlots,
 } from "./hooks/useUserCalendars";
 import TodoConvertModal from "../TodoConvertModal";
+import TodoDetailsModal from "../TodoDetailsModal";
+import { useToggleTodo } from "@/hooks/useTodos";
+import { toast } from "sonner";
 
 interface UserCalendarWidgetProps {
   activeTimeView: "hourly" | "weekly" | "monthly";
@@ -44,10 +48,8 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
   const [selectedFilterDate, setSelectedFilterDate] = useState<Date>(
     new Date()
   );
-  // Selected hour for hourly view filtering
-  const [selectedHour, setSelectedHour] = useState<number | null>(
-    new Date().getHours()
-  );
+  // Selected hour — default to 9 AM (where sequential slots start)
+  const [selectedHour, setSelectedHour] = useState<number | null>(9);
 
   // Convert Todo Modal State
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
@@ -59,6 +61,10 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
   const [convertTodoId, setConvertTodoId] = useState<number | string | null>(
     null
   );
+  const [toggleLoading, setToggleLoading] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedTodo, setSelectedTodo] = useState<any>(null);
+  const toggleMutation = useToggleTodo();
 
   const { calendars, tasks, todos, issues, isLoading, refetch } =
     useUserCalendars({
@@ -66,8 +72,11 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
       selectedDate,
     });
 
-  // Combine tasks and issues for display
-  const allTasks = useMemo(() => [...tasks, ...issues], [tasks, issues]);
+  // Combine tasks and issues, then assign sequential 9am slots
+  const allTasks = useMemo(
+    () => assignSequentialSlots([...tasks, ...issues]),
+    [tasks, issues]
+  );
 
   // Get current month/year for monthly view
   const currentMonth = format(selectedDate, "MMMM yyyy");
@@ -82,14 +91,14 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
     [calendars]
   );
 
-  // Generate hourly slots
+  // Generate hourly slots — always 9 AM to 6 PM (matches sequential slot window)
   const hourlySlots = useMemo(() => {
     const slots = [];
     const currentHour = new Date().getHours();
-    const startHour = Math.max(0, currentHour - 2);
+    const START_HOUR = 9; // sequential slots begin at 9 AM
 
     for (let i = 0; i < 10; i++) {
-      const hour = (startHour + i) % 24;
+      const hour = START_HOUR + i; // 9, 10, 11 … 18 (6 PM)
       const count = hourlyTaskCounts[hour] || 0;
       slots.push({
         hour,
@@ -172,24 +181,80 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
     return days;
   }, [selectedDate, dailyTaskCounts, selectedFilterDate]);
 
-  // Get events for selected date (for monthly view sidebar)
+  // Get events for selected date with sequential slots applied — exclude completed
+  const DONE_STATUSES = new Set([
+    "completed",
+    "closed",
+    "cancelled",
+    "done",
+    "resolved",
+    "rejected",
+  ]);
   const selectedDateEvents = useMemo(() => {
     const selectedDateStr = format(selectedFilterDate, "yyyy-MM-dd");
-    return calendars
-      .filter(
-        (c) => format(new Date(c.start_at), "yyyy-MM-dd") === selectedDateStr
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.start_at).getTime() - new Date(b.start_at).getTime()
-      );
+    const filtered = calendars.filter(
+      (c) =>
+        format(new Date(c.created_at), "yyyy-MM-dd") === selectedDateStr &&
+        !DONE_STATUSES.has((c.status ?? "").toLowerCase())
+    );
+    return assignSequentialSlots(filtered);
   }, [calendars, selectedFilterDate]);
 
   const handleItemClick = (item: UserCalendarItem) => {
-    if (item.redirect_url) {
+    // For todos, open the details modal
+    if (item.calendarable_type === "Todo") {
+      // Transform UserCalendarItem to TodoDetailsModal format
+      const formattedTodo = {
+        id: item.calendarable_id,
+        title: item.title,
+        description: item.description || "",
+        status: item.status || "open",
+        priority: "P1", // Default priority since not available in UserCalendarItem
+        target_date: item.start_at
+          ? new Date(item.start_at).toLocaleDateString()
+          : "",
+        user: item.user?.name || "Unknown",
+        user_id: item.user_id,
+        created_by: item.user?.name || "Unknown",
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        task_management_id: null,
+        start_at: item.start_at,
+        all_day: item.all_day,
+      };
+      setSelectedTodo(formattedTodo);
+      setIsDetailsModalOpen(true);
+    } else if (item.redirect_url) {
       const url = new URL(item.redirect_url);
       const path = url.pathname;
       window.location.href = path;
+    }
+  };
+
+  const handleToggleTodo = async (
+    e: React.MouseEvent,
+    todo: UserCalendarItem
+  ) => {
+    console.log(todo);
+    e.stopPropagation();
+    setToggleLoading(true);
+    try {
+      const isCompleted = todo.status === "open" || todo.status === null;
+      await toggleMutation.mutateAsync({
+        id: todo.calendarable_id,
+        completed: isCompleted,
+      });
+      toast.success(
+        isCompleted
+          ? "Task completed successfully"
+          : "Task reopened successfully"
+      );
+      refetch();
+    } catch (error: any) {
+      toast.error("Failed to update task status");
+      console.error(error);
+    } finally {
+      setToggleLoading(false);
     }
   };
 
@@ -244,7 +309,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
               ? currentMonth
               : getSelectedDateLabel()}
           </h3>
-          <div className="flex items-center gap-0.5 bg-[#F3F0E8] h-8 rounded-[8px] px-1 border border-[#E5DFD0]">
+          <div className="flex items-center gap-0.5 bg-[#cccbc9] h-8 rounded-full px-1 border border-[#E5DFD0]">
             {["Hourly", "Weekly", "Monthly"].map((v) => (
               <button
                 key={v}
@@ -253,11 +318,9 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                     v.toLowerCase() as "hourly" | "weekly" | "monthly"
                   );
                   setSelectedFilterDate(new Date());
-                  setSelectedHour(
-                    v.toLowerCase() === "hourly" ? new Date().getHours() : null
-                  );
+                  setSelectedHour(v.toLowerCase() === "hourly" ? 9 : null);
                 }}
-                className={`px-2.5 h-6 text-[11px] font-semibold rounded-[6px] transition-all ${
+                className={`px-2.5 h-6 text-[11px] font-semibold rounded-full transition-all ${
                   activeTimeView === v.toLowerCase()
                     ? "bg-white shadow-sm text-gray-900 border border-[#E5DFD0]"
                     : "text-gray-500 hover:text-gray-700"
@@ -277,7 +340,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
 
         {!isLoading && activeTimeView === "monthly" && (
           <div className="flex gap-4 flex-1 mt-4 overflow-hidden">
-            <div className="flex-1 rounded-xl p-1 h-full overflow-hidden">
+            <div className="flex-1 rounded-xl p-3 h-full overflow-hidden bg-[#FFF8F0] border border-[#E8D5C4]">
               <div className="grid grid-cols-7 gap-1 text-center mb-3">
                 {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map((d) => (
                   <span
@@ -295,17 +358,17 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                   }
 
                   let statusClass =
-                    "bg-[#FAF9F6]/80 border-[#E8E4D9] text-gray-500 hover:border-[#DA7756]";
+                    "bg-[#FFF8F0] border-[#E8D5C4] text-gray-600 hover:border-[#FF8A65]";
 
                   if (item.isSelected) {
                     statusClass =
-                      "bg-[#DA7756] border-[#DA7756] text-white shadow-md";
+                      "bg-[#FF8A65] border-[#FF8A65] text-white shadow-md";
                   } else if (item.isToday) {
                     statusClass =
-                      "bg-red-50/50 border-red-500 text-red-500 shadow-sm";
+                      "bg-[#FFB5BA] border-[#FF6B6B] text-[#D63031] shadow-sm";
                   } else if (item.count > 0) {
                     statusClass =
-                      "bg-blue-50/50 border-blue-400 text-blue-500 shadow-sm hover:border-[#DA7756]";
+                      "bg-[#E3F2FD] border-[#90CAF9] text-[#1976D2] shadow-sm hover:border-[#FF8A65]";
                   }
 
                   return (
@@ -326,7 +389,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
               </div>
             </div>
 
-            <div className="w-[260px] bg-[#F9F7F2]/60 rounded-xl p-3 flex flex-col gap-2.5 border border-[#E8E4D9]/40 overflow-y-auto scrollbar-none">
+            <div className="w-[260px] bg-[#FFFFFF] rounded-xl p-3 flex flex-col gap-2.5 border border-[#E8D5C4] overflow-y-auto scrollbar-none">
               <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
                 {format(selectedFilterDate, "EEEE, MMMM d")}
               </div>
@@ -360,7 +423,13 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                         </h4>
                       </div>
                       <p className="text-[9px] font-bold text-gray-400 italic pl-3.5 uppercase tracking-tight">
-                        {format(new Date(ev.start_at), "h:mm a")}
+                        {format(
+                          new Date(ev._assigned_start || ev.start_at),
+                          "h:mm a"
+                        )}
+                        {ev._assigned_end
+                          ? ` – ${format(new Date(ev._assigned_end), "h:mm a")}`
+                          : ""}
                       </p>
                     </div>
                   );
@@ -385,13 +454,11 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                 </p>
                 <div
                   className={`w-[50px] h-[60px] rounded-[10px] border flex items-center justify-center text-[10px] font-semibold transition-all p-1 text-center leading-tight overflow-hidden ${
-                    item.isSelected
-                      ? "bg-[#DA7756] border-[#DA7756] text-white shadow-md"
-                      : item.isActive
-                        ? "bg-[#FFF8F5] border-[#E67E5F] text-[#E67E5F] shadow-sm"
-                        : item.count > 0
-                          ? "bg-[#F0F9FF] border-blue-300 text-blue-500 hover:border-[#DA7756]"
-                          : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-400 hover:border-[#DA7756]"
+                    item.isSelected || item.isActive
+                      ? "bg-[radial-gradient(circle_at_center,_#ffffff_0%,_#fcedeb_100%)] border-[#C97B6B] text-gray-800 shadow-sm"
+                      : item.count > 0
+                        ? "bg-[#F0F9FF] border-blue-300 text-blue-500 hover:border-[#C97B6B]"
+                        : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-400 hover:border-[#C97B6B]"
                   }`}
                 >
                   {item.count > 0
@@ -412,21 +479,23 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                 className="flex flex-col items-center gap-1.5 group cursor-pointer min-w-0"
               >
                 <p
-                  className={`text-[10px] font-semibold tracking-tight transition-colors truncate w-full text-center ${item.isSelected ? "text-[#DA7756]" : item.isToday ? "text-red-500" : item.isWeekend ? "text-[#E67E5F]" : "text-gray-400"}`}
+                  className={`text-[10px] font-semibold tracking-tight transition-colors truncate w-full text-center ${
+                    item.isSelected || item.isToday
+                      ? "text-[#C97B6B]"
+                      : item.isWeekend
+                        ? "text-gray-600"
+                        : "text-gray-600"
+                  }`}
                 >
                   {item.label}
                 </p>
                 <div
-                  className={`w-[50px] h-[60px] rounded-[10px] border flex items-center justify-center text-[10px] font-semibold transition-all p-1 text-center leading-tight overflow-hidden ${
-                    item.isSelected
-                      ? "bg-[#DA7756] border-[#DA7756] text-white shadow-md"
-                      : item.isToday
-                        ? "bg-red-50/50 border-red-400 text-red-500 shadow-sm"
-                        : item.isWeekend
-                          ? "bg-orange-50/50 border-orange-200 text-[#E67E5F]"
-                          : item.count > 0
-                            ? "bg-[#F0F9FF] border-blue-300 text-blue-500 hover:border-[#DA7756]"
-                            : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-400 hover:border-[#DA7756]"
+                  className={`w-[50px] h-[60px] rounded-[10px] border flex items-center justify-center text-[10px] transition-all p-1 text-center leading-tight overflow-hidden ${
+                    item.isSelected || item.isToday
+                      ? "bg-[radial-gradient(circle_at_center,_#ffffff_0%,_#fcedeb_100%)] border-[#C97B6B] text-[#C97B6B] shadow-sm font-bold"
+                      : item.isWeekend
+                        ? "bg-white/50 border-[#E8CC9F] text-[#E8CC9F] font-medium"
+                        : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-500 font-medium hover:border-[#C97B6B]"
                   }`}
                 >
                   {item.isWeekend
@@ -455,7 +524,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                 onClick={() => setOpenTaskModal(true)}
                 className="bg-[#DA7756] text-white px-4 h-8 rounded-[8px] text-[12px] font-semibold transition-all hover:bg-[#c96a44] active:scale-95 whitespace-nowrap"
               >
-                + Create Task
+                + Task
               </button>
             </div>
             <div className="flex-1 overflow-y-auto scrollbar-none pr-1 space-y-2">
@@ -469,8 +538,13 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                 </div>
               ) : (
                 allTasks.slice(0, 5).map((task) => {
-                  const taskTime = new Date(task.start_at);
-                  const timeStr = format(taskTime, "h:mm a");
+                  // Use assigned sequential slot time
+                  const startTime = task._assigned_start || task.start_at;
+                  const endTime = task._assigned_end || null;
+                  const timeStr = format(new Date(startTime), "h:mm a");
+                  const endStr = endTime
+                    ? format(new Date(endTime), "h:mm a")
+                    : null;
 
                   return (
                     <div
@@ -482,7 +556,8 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                         {getTruncatedTitle(task.title, 45)}
                       </p>
                       <p className="text-[9px] text-gray-400 mt-0.5">
-                        {timeStr} - {task.all_day ? "All day" : "1h"}
+                        {timeStr}
+                        {endStr ? ` – ${endStr}` : ""}
                       </p>
                     </div>
                   );
@@ -503,7 +578,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                 onClick={() => setOpenTodoModal(true)}
                 className="bg-[#DA7756] text-white px-4 h-8 rounded-[8px] text-[12px] font-semibold transition-all hover:bg-[#c96a44] active:scale-95 whitespace-nowrap"
               >
-                + Create To-do
+                + To-do
               </button>
             </div>
             <div className="space-y-1.5 flex-1 overflow-y-auto scrollbar-none pr-1">
@@ -525,7 +600,7 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                       className="flex items-center gap-2 bg-white border border-[#ECE6DA] px-3 h-[34px] rounded-[8px] shadow-sm transition-all group cursor-pointer hover:shadow-md"
                     >
                       <div
-                        onClick={() => handleItemClick(todo)}
+                        onClick={(e) => handleToggleTodo(e, todo)}
                         className={`w-4 h-4 rounded-[3px] border flex items-center justify-center flex-shrink-0 transition-all ${isCompleted ? "bg-[#FFF6F2] border-[#DA7756]" : "border-gray-300 group-hover:border-[#DA7756]"}`}
                       >
                         {isCompleted ? (
@@ -578,6 +653,14 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
             setConvertTodoId(null);
             refetch();
           }}
+        />
+      )}
+
+      {isDetailsModalOpen && selectedTodo && (
+        <TodoDetailsModal
+          isModalOpen={isDetailsModalOpen}
+          setIsModalOpen={setIsDetailsModalOpen}
+          todo={selectedTodo}
         />
       )}
     </div>

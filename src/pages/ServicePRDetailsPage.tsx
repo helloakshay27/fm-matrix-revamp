@@ -53,6 +53,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { fetchWBS } from "@/store/slices/materialPRSlice";
 import { approveDeletionRequest } from "@/store/slices/pendingApprovalSlice";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Interfaces
 interface Company {
@@ -170,6 +171,13 @@ interface ServicePR {
 const serviceColumns: ColumnConfig[] = [
   { key: "sno", label: "S.No", sortable: true, draggable: true },
   { key: "boq_details", label: "BOQ Details", sortable: true, draggable: true },
+  { key: "rate", label: "Rate", sortable: true, draggable: true },
+  {
+    key: "total_amount",
+    label: "Total Amount",
+    sortable: true,
+    draggable: true,
+  },
   { key: "gl_account", label: "GL Account", sortable: true, draggable: true },
   { key: "tax_code", label: "Tax Code", sortable: true, draggable: true },
   { key: "general_storage", label: "General Storage", sortable: true, draggable: true },
@@ -188,7 +196,6 @@ const serviceColumns: ColumnConfig[] = [
     sortable: true,
     draggable: true,
   },
-  { key: "rate", label: "Rate", sortable: true, draggable: true },
   { key: "wbs_code", label: "Wbs Code", sortable: true, draggable: true },
   { key: "cgst_rate", label: "CGST Rate(%)", sortable: true, draggable: true },
   { key: "cgst_amount", label: "CGST Amount", sortable: true, draggable: true },
@@ -198,12 +205,6 @@ const serviceColumns: ColumnConfig[] = [
   { key: "igst_amount", label: "IGST Amount", sortable: true, draggable: true },
   { key: "tcs_amount", label: "TCS Amount", sortable: true, draggable: true },
   { key: "tax_amount", label: "Tax Amount", sortable: true, draggable: true },
-  {
-    key: "total_amount",
-    label: "Total Amount",
-    sortable: true,
-    draggable: true,
-  },
 ];
 
 const formatIndian = (val: string | number | null | undefined): string => {
@@ -217,6 +218,7 @@ export const ServicePRDetailsPage = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+  const { shouldShow } = useDynamicPermissions()
 
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -700,9 +702,9 @@ export const ServicePRDetailsPage = () => {
       };
 
       try {
-       const response = await dispatch(
-  approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
-).unwrap();
+        const response = await dispatch(
+          approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+        ).unwrap();
         // toast.success("Service PR rejected successfully");
         toast.success(response?.message || "Service PR rejected successfully");
         refreshPendingApprovalsCount();
@@ -869,7 +871,7 @@ export const ServicePRDetailsPage = () => {
                 </Button>
               )}
 
-              { buttonCondition.canEditAll && (
+              {shouldShow("Service PR", "update") && buttonCondition.canEditAll && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -883,6 +885,8 @@ export const ServicePRDetailsPage = () => {
 
               {!shouldShowButtons && (
                 <>
+                  {/* {
+                    shouldShow("Service PR", "create") && ( */}
                   <Button
                     size="sm"
                     variant="outline"
@@ -892,6 +896,8 @@ export const ServicePRDetailsPage = () => {
                     <Copy className="w-4 h-4 mr-1" />
                     Clone
                   </Button>
+                  {/* )
+                  } */}
 
                   <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
                     {
@@ -990,6 +996,24 @@ export const ServicePRDetailsPage = () => {
           ))}
         </div>
       </TooltipProvider>
+
+      {servicePR.approvals?.filter((a) => a.status.toLowerCase() === "rejected").map((a, idx) => (
+        <div key={idx} className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-4 mb-2">
+          <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-red-700">
+              Rejected by {a.level}
+              {a.updated_by ? ` — ${a.updated_by}` : ""}
+              {a.updated_at
+                ? ` (${format(new Date(a.updated_at), "dd MMM yyyy")})`
+                : ""}
+            </p>
+            <p className="text-sm text-red-600 mt-0.5">
+              Reason: {a.rejection_reason ?? "No reason provided"}
+            </p>
+          </div>
+        </div>
+      ))}
 
       <div className="space-y-6">
         <Card className="shadow-sm border border-border">

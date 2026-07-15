@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,8 +35,11 @@ import {
   BarChart3,
   Settings,
   Plus,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
 } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AddVisitModal } from "@/components/AddVisitModal";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchAMCDetails } from "@/store/slices/amcDetailsSlice";
@@ -41,6 +53,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye } from "lucide-react";
 import { AMCAnalyticsTab } from "@/components/amc-details/AMCAnalyticsTab";
 import { AMCDetailsPreviewTab } from "@/components/amc-details/AMCDetailsPreviewTab";
+import { getReturnToFromState } from "@/utils/listBackNavigation";
+import { toast } from "sonner";
 
 interface AMCDetailsData {
   id: number;
@@ -89,6 +103,15 @@ interface Technician {
   email: string;
 }
 
+interface VisitAttachment {
+  id?: number;
+  document?: string;
+  document_url?: string;
+  filename?: string;
+  document_file_name?: string;
+  [key: string]: any;
+}
+
 interface AmcVisitLog {
   id: number;
   visit_number: number;
@@ -98,19 +121,42 @@ interface AmcVisitLog {
   updated_at: string;
   asset_period: string;
   technician: Technician | null;
-  // Added optional attachment to align with runtime usage (visit.attachment?.document / id)
-  attachment?: {
-    id?: number;
-    document?: string; // image URL or file URL
-    document_url?: string; // sometimes APIs use document_url
-    [key: string]: any; // allow extra backend-provided fields
-  } | null;
+  attachment?: VisitAttachment | null;
+  attachments?: VisitAttachment[];
+}
+
+interface VisitLogEntry {
+  id?: number;
+  visit_number: number;
+  scheduled_date?: string;
+  scheduled_time?: string;
+  actual_visit_date?: string | null;
+  status?: string;
+  remarks?: string | null;
+  assets_covered?: string[] | null;
+  technician?: Technician | null;
+  attachment?: VisitAttachment | null;
+  attachments?: VisitAttachment[];
+}
+
+interface FrequencyVisitGroup {
+  frequency_config_id: number;
+  frequency: string;
+  description?: string;
+  cron_expression?: string;
+  no_of_visits?: number;
+  total?: number;
+  completed?: number;
+  pending?: number;
+  missed?: number;
+  visits: VisitLogEntry[];
 }
 
 interface AMCDetailsDataWithVisits extends AMCDetailsData {
   amc_visit_logs: AmcVisitLog[];
   amc_contracts?: any[];
   amc_invoices?: any[];
+  visit_logs_by_frequency?: FrequencyVisitGroup[];
 }
 
 interface TicketRecord {
@@ -125,6 +171,7 @@ interface TicketRecord {
 
 export const AMCDetailsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const {
@@ -172,6 +219,8 @@ export const AMCDetailsPage = () => {
   const [occurrenceSearch, setOccurrenceSearch] = useState("");
   const [occurrencePage, setOccurrencePage] = useState(1);
   const [occurrenceTotalCount, setOccurrenceTotalCount] = useState(0);
+  const [occurrenceTotalPages, setOccurrenceTotalPages] = useState(1);
+  const [occurrenceCounts, setOccurrenceCounts] = useState({ scheduled: 0, open: 0, in_progress: 0, closed: 0, overdue: 0 });
   // AMC Visits History state
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
   const [showVisitEditModal, setShowVisitEditModal] = useState(false);
@@ -181,11 +230,17 @@ export const AMCDetailsPage = () => {
   const [visitEditTechnicianId, setVisitEditTechnicianId] = useState("");
   const [visitEditRemarks, setVisitEditRemarks] = useState("");
   const [visitEditStatus, setVisitEditStatus] = useState("");
-  const [visitEditDocument, setVisitEditDocument] = useState<File | null>(null);
+  const [visitEditOriginalStatus, setVisitEditOriginalStatus] = useState("");
+  const [visitEditDocuments, setVisitEditDocuments] = useState<File[]>([]);
   const [visitEditSelectedAssetIds, setVisitEditSelectedAssetIds] = useState<number[]>([]);
   const [visitTechnicians, setVisitTechnicians] = useState<Technician[]>([]);
   const [visitTechniciansLoading, setVisitTechniciansLoading] = useState(false);
   const [visitUpdateLoading, setVisitUpdateLoading] = useState(false);
+  const [activeVisitFreqTab, setActiveVisitFreqTab] = useState(0);
+  const [visitFreqPage, setVisitFreqPage] = useState(1);
+  const [visitFlatPage, setVisitFlatPage] = useState(1);
+
+  const visitLogsByFrequency = (amcData as any)?.visit_logs_by_frequency as FrequencyVisitGroup[] | undefined;
 
   const fetchTicketsForAssets = async (assetIds: number[]) => {
     if (!assetIds.length) return;
@@ -250,16 +305,25 @@ export const AMCDetailsPage = () => {
     setOccurrencesLoading(true);
     try {
       const idsQs = assetIds.map((aid: number) => `ids[]=${aid}`).join("&");
-      const url = `https://${baseUrl}/pms/asset_amcs/occurrences.json?${idsQs}&access_token=${token}&page=${page}&per_page=20`;
+      const url = `https://${baseUrl}/pms/asset_amcs/occurrences.json?${idsQs}&access_token=${token}&page=${page}&per_page=15`;
       const res = await fetch(url, { headers: { Accept: "application/json" } });
       if (!res.ok) throw new Error(`Occurrences fetch failed: ${res.status}`);
       const data = await res.json();
       const items = Array.isArray(data)
         ? data
         : data.occurrences ?? data.data ?? [];
-      const total = data.total_count ?? data.total ?? items.length;
+      const pagination = data.pagination ?? {};
+      const counts = data.counts ?? {};
       setOccurrences(items);
-      setOccurrenceTotalCount(total);
+      setOccurrenceTotalCount(pagination.total_count ?? items.length);
+      setOccurrenceTotalPages(pagination.total_pages ?? 1);
+      setOccurrenceCounts({
+        scheduled: counts.total_scheduled ?? 0,
+        open: counts.total_open ?? 0,
+        in_progress: counts.in_progress ?? 0,
+        closed: counts.closed ?? 0,
+        overdue: counts.overdue ?? 0,
+      });
     } catch (e: any) {
       console.error("Occurrences Error:", e);
     } finally {
@@ -312,7 +376,8 @@ export const AMCDetailsPage = () => {
     setVisitEditTechnicianId(visit.technician ? String(visit.technician.id) : "");
     setVisitEditRemarks(visit.remarks || "");
     setVisitEditStatus((visit as any).status || "");
-    setVisitEditDocument(null);
+    setVisitEditOriginalStatus((visit as any).status || "");
+    setVisitEditDocuments([]);
     const assetIds: number[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
     setVisitEditSelectedAssetIds(assetIds);
     fetchVisitTechnicians();
@@ -321,6 +386,10 @@ export const AMCDetailsPage = () => {
 
   const handleVisitUpdate = async () => {
     if (!selectedVisitId) return;
+    if (visitEditStatus === visitEditOriginalStatus) {
+      toast.error("Please change the status before submitting.");
+      return;
+    }
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     if (!baseUrl || !token) return;
@@ -337,9 +406,9 @@ export const AMCDetailsPage = () => {
       visitEditSelectedAssetIds.forEach((assetId) =>
         formData.append("amc_history[asset_ids][]", String(assetId))
       );
-      if (visitEditDocument) {
-        formData.append("amc_history[document]", visitEditDocument);
-      }
+      visitEditDocuments.forEach((file) => {
+        formData.append("amc_history[documents][]", file);
+      });
       const res = await fetch(
         `https://${baseUrl}/pms/asset_amcs/amc_history_update.json?access_token=${token}`,
         { method: "POST", body: formData }
@@ -369,6 +438,7 @@ export const AMCDetailsPage = () => {
   useEffect(() => {
     if (id) {
       dispatch(fetchAMCDetails(id));
+      setActiveVisitFreqTab(0);
     }
   }, [dispatch, id]);
 
@@ -430,8 +500,13 @@ export const AMCDetailsPage = () => {
     );
   }
 
-  const hanldeClose = () => {
+  const handleClose = () => {
     setShowAddVisitModal(false);
+  };
+
+  const handleBackToList = () => {
+    const returnTo = getReturnToFromState(location.state);
+    navigate(returnTo ?? "/maintenance/amc");
   };
 
   return (
@@ -446,7 +521,7 @@ export const AMCDetailsPage = () => {
           Back to AMC List
         </Button> */}
         <button
-          onClick={() => navigate("/maintenance/amc")}
+          onClick={handleBackToList}
           className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -678,20 +753,22 @@ export const AMCDetailsPage = () => {
                     </div>
                     SUPPLIER INFORMATION
                   </CardTitle>
-                  <Button
-                    className="px-4 py-2 font-medium text-[#C72030] border border-[#C72030] rounded-md hover:bg-[#C72030] hover:text-white transition-colors"
+                  {/* <Button
+                    className="px-4 py-2 font-medium t border rounded-md hover:bg-[#C72030] hover:text-white transition-colors"
                     style={{
                       backgroundColor: "#F6F4EE",
-                      color: "#C72030",
+                      color: '#C72030',
                       border: "1px solid #C72030",
                       borderRadius: "4px",
                       padding: "8px 16px",
                       fontSize: "14px",
                       fontWeight: 500,
                     }}
+
+
                   >
                     View Supplier
-                  </Button>
+                  </Button> */}
                 </div>
               </CardHeader>
               <CardContent
@@ -1191,11 +1268,11 @@ export const AMCDetailsPage = () => {
               >
                 {(() => {
                   const statusCards = [
-                    { label: "Scheduled", color: "#6366F1" },
-                    { label: "Open", color: "#EF4444" },
-                    { label: "In Progress", color: "#F59E0B" },
-                    { label: "Closed", color: "#10B981" },
-                    { label: "Overdue", color: "#C72030" },
+                    { label: "Scheduled", color: "#6366F1", count: occurrenceCounts.scheduled },
+                    { label: "Open", color: "#EF4444", count: occurrenceCounts.open },
+                    { label: "In Progress", color: "#F59E0B", count: occurrenceCounts.in_progress },
+                    { label: "Closed", color: "#10B981", count: occurrenceCounts.closed },
+                    { label: "Overdue", color: "#C72030", count: occurrenceCounts.overdue },
                   ];
 
                   const filtered = occurrences.filter(
@@ -1207,20 +1284,18 @@ export const AMCDetailsPage = () => {
                       )
                   );
 
-                  const totalPages = Math.max(1, Math.ceil(occurrenceTotalCount / 20));
+                  const totalPages = occurrenceTotalPages;
 
                   return (
                     <div className="space-y-6">
                       {/* Status Cards */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                         {statusCards.map((card) => {
-                          const count = occurrences.filter((o) => o.task_status === card.label).length;
                           return (
                             <div
                               key={card.label}
-                              className={`p-4 rounded-lg cursor-pointer ${
-                                occurrenceStatusFilter === card.label ? "ring-2 ring-[#C72030]" : ""
-                              }`}
+                              className={`p-4 rounded-lg cursor-pointer ${occurrenceStatusFilter === card.label ? "ring-2 ring-[#C72030]" : ""
+                                }`}
                               style={{ backgroundColor: "#F6F4EE" }}
                               onClick={() => {
                                 setOccurrenceStatusFilter(card.label);
@@ -1233,7 +1308,7 @@ export const AMCDetailsPage = () => {
                                 </div>
                                 <div>
                                   <div className="text-2xl font-bold text-black">
-                                    {count.toString().padStart(2, "0")}
+                                    {card.count.toString().padStart(2, "0")}
                                   </div>
                                   <div className="text-sm font-medium text-black">{card.label}</div>
                                 </div>
@@ -1306,26 +1381,52 @@ export const AMCDetailsPage = () => {
 
                       {/* Pagination */}
                       {totalPages > 1 && (
-                        <div className="flex justify-end items-center gap-3 pt-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={occurrencePage <= 1 || occurrencesLoading}
-                            onClick={() => setOccurrencePage((p) => p - 1)}
-                          >
-                            Previous
-                          </Button>
-                          <span className="text-sm text-gray-600">
-                            Page {occurrencePage} of {totalPages}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={occurrencePage >= totalPages || occurrencesLoading}
-                            onClick={() => setOccurrencePage((p) => p + 1)}
-                          >
-                            Next
-                          </Button>
+                        <div className="flex justify-center mt-4">
+                          <Pagination>
+                            <PaginationContent>
+                              <PaginationItem>
+                                <PaginationPrevious
+                                  onClick={() => setOccurrencePage((p) => Math.max(1, p - 1))}
+                                  className={occurrencePage === 1 || occurrencesLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                />
+                              </PaginationItem>
+                              {(() => {
+                                const items: React.ReactNode[] = [];
+                                const delta = 1;
+                                let last = 0;
+                                for (let i = 1; i <= totalPages; i++) {
+                                  if (i === 1 || i === totalPages || (i >= occurrencePage - delta && i <= occurrencePage + delta)) {
+                                    if (last && i - last > 1) {
+                                      items.push(
+                                        <PaginationItem key={`e-${i}`}>
+                                          <PaginationEllipsis />
+                                        </PaginationItem>
+                                      );
+                                    }
+                                    items.push(
+                                      <PaginationItem key={i}>
+                                        <PaginationLink
+                                          isActive={occurrencePage === i}
+                                          onClick={() => setOccurrencePage(i)}
+                                          className="cursor-pointer"
+                                        >
+                                          {i}
+                                        </PaginationLink>
+                                      </PaginationItem>
+                                    );
+                                    last = i;
+                                  }
+                                }
+                                return items;
+                              })()}
+                              <PaginationItem>
+                                <PaginationNext
+                                  onClick={() => setOccurrencePage((p) => Math.min(totalPages, p + 1))}
+                                  className={occurrencePage === totalPages || occurrencesLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                />
+                              </PaginationItem>
+                            </PaginationContent>
+                          </Pagination>
                         </div>
                       )}
                     </div>
@@ -1438,13 +1539,12 @@ export const AMCDetailsPage = () => {
                             <TableCell>
                               {t.status ? (
                                 <span
-                                  className={`px-2 py-1 text-xs rounded ${
-                                    t.status.toLowerCase() === "open"
-                                      ? "bg-gray-200 text-gray-900"
-                                      : t.status.toLowerCase() === "pending"
-                                        ? "bg-[#C72030] text-white"
-                                        : "bg-gray-100 text-gray-800"
-                                  }`}
+                                  className={`px-2 py-1 text-xs rounded ${t.status.toLowerCase() === "open"
+                                    ? "bg-gray-200 text-gray-900"
+                                    : t.status.toLowerCase() === "pending"
+                                      ? "bg-[#C72030] text-white"
+                                      : "bg-gray-100 text-gray-800"
+                                    }`}
                                 >
                                   {t.status}
                                 </span>
@@ -1458,8 +1558,8 @@ export const AMCDetailsPage = () => {
                             <TableCell className="text-gray-900">
                               {t.created_at
                                 ? new Date(t.created_at).toLocaleDateString(
-                                    "en-GB"
-                                  )
+                                  "en-GB"
+                                )
                                 : "—"}
                             </TableCell>
                           </TableRow>
@@ -1497,130 +1597,389 @@ export const AMCDetailsPage = () => {
                 className="p-6"
                 style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
               >
-                {/* Visits Table */}
-                <div className="bg-white rounded-lg border overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-[#EDEAE3]">
-                        <TableHead className="w-10" />
-                        <TableHead className="font-semibold text-[#1a1a1a]">Visit #</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Visit Date</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
-                        {/* <TableHead className="font-semibold text-[#1a1a1a]">Asset Period</TableHead> */}
-                        <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody className="bg-white">
-                      {amcVisitData.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={10} className="text-center py-6 text-gray-500">
-                            No visit history found.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        amcVisitData.map((visit) => {
-                          const isSelected = selectedVisitId === visit.id;
+                {visitLogsByFrequency && visitLogsByFrequency.length > 0 ? (
+                  <div className="space-y-4">
+                    {/* Frequency Tab Buttons */}
+                    <div className="flex border-b border-gray-200 overflow-x-auto">
+                      {visitLogsByFrequency.map((group, idx) => (
+                        <button
+                          key={group.frequency_config_id}
+                          type="button"
+                          onClick={() => { setActiveVisitFreqTab(idx); setVisitFreqPage(1); }}
+                          className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${idx === activeVisitFreqTab
+                            ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                            }`}
+                        >
+                          {group.frequency.charAt(0).toUpperCase() + group.frequency.slice(1)}
+                          {/* <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"> */}
+                          {/* {group.no_of_visits ?? group.visits.length} */}
+                          {/* </span> */}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Active Frequency Panel */}
+                    {visitLogsByFrequency.map((group, idx) => idx !== activeVisitFreqTab ? null : (
+                      <div key={group.frequency_config_id}>
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                          {[
+                            { label: "Total", value: group.total ?? 0, icon: BarChart3 },
+                            { label: "Completed", value: group.completed ?? 0, icon: CheckCircle2 },
+                            { label: "Pending", value: group.pending ?? 0, icon: Clock },
+                            { label: "Missed", value: group.missed ?? 0, icon: AlertCircle },
+                          ].map((card) => (
+                            <div key={card.label} className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+                              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center flex-shrink-0">
+                                <card.icon className="w-6 h-6 text-[#C72030]" />
+                              </div>
+                              <div>
+                                <div className="text-2xl font-semibold text-[#1A1A1A]">{String(card.value).padStart(2, "0")}</div>
+                                <div className="text-sm font-medium text-[#1A1A1A]">{card.label}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Cron info row */}
+                        {group.cron_expression && (
+                          <div className="flex flex-wrap gap-4 mb-4 text-sm text-gray-600">
+                            {group.description && (
+                              <span><span className="font-medium text-gray-800">Description:</span> {group.description}</span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Visits Table with pagination */}
+                        {(() => {
+                          const VFPG = 15;
+                          const vfTotal = Math.max(1, Math.ceil(group.visits.length / VFPG));
+                          const vfPage = Math.min(visitFreqPage, vfTotal);
+                          const vfSlice = group.visits.slice((vfPage - 1) * VFPG, vfPage * VFPG);
+                          const renderVFPages = () => {
+                            const items: React.ReactNode[] = [];
+                            let last = 0;
+                            for (let i = 1; i <= vfTotal; i++) {
+                              if (i === 1 || i === vfTotal || (i >= vfPage - 1 && i <= vfPage + 1)) {
+                                if (last && i - last > 1) items.push(<PaginationItem key={`e${i}`}><PaginationEllipsis /></PaginationItem>);
+                                items.push(
+                                  <PaginationItem key={i}>
+                                    <PaginationLink isActive={vfPage === i} onClick={() => setVisitFreqPage(i)} className="cursor-pointer">{i}</PaginationLink>
+                                  </PaginationItem>
+                                );
+                                last = i;
+                              }
+                            }
+                            return items;
+                          };
                           return (
-                            <TableRow
-                              key={visit.id}
-                              className={`border-b border-gray-200 transition-colors ${
-                                isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"
-                              }`}
-                            >
-                              <TableCell className="w-10">
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={() =>
-                                    setSelectedVisitId(isSelected ? null : visit.id)
-                                  }
-                                  className="w-4 h-4 rounded border-gray-300 accent-[#C72030] cursor-pointer"
-                                />
-                              </TableCell>
-                              <TableCell className="font-medium text-gray-900">
-                                {visit.visit_number ?? "—"}
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {visit.visit_date
-                                  ? new Date(visit.visit_date).toLocaleDateString("en-GB")
-                                  : "—"}
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {(visit as any).actual_visit_date
-                                  ? (() => {
+                            <>
+                              <div className="bg-white rounded-lg border overflow-x-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow className="bg-[#EDEAE3]">
+                                      <TableHead className="w-10" />
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Visit #</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Scheduled Date</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Scheduled Time</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
+                                      <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody className="bg-white">
+                                    {group.visits.length === 0 ? (
+                                      <TableRow>
+                                        <TableCell colSpan={10} className="text-center py-6 text-gray-500">
+                                          No visits found.
+                                        </TableCell>
+                                      </TableRow>
+                                    ) : (
+                                      vfSlice.map((visit) => {
+                                        const isSelected = selectedVisitId === visit.id;
+                                        return (
+                                          <TableRow
+                                            key={visit.id ?? visit.visit_number}
+                                            className={`border-b border-gray-200 transition-colors ${isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"}`}
+                                          >
+                                            <TableCell className="w-10">
+                                              {visit.id && (
+                                                <input
+                                                  type="checkbox"
+                                                  checked={isSelected}
+                                                  onChange={() => setSelectedVisitId(isSelected ? null : visit.id!)}
+                                                  className="w-4 h-4 rounded border-gray-300 accent-[#C72030] cursor-pointer"
+                                                />
+                                              )}
+                                            </TableCell>
+                                            <TableCell className="font-medium text-gray-900">{visit.visit_number}</TableCell>
+                                            <TableCell className="text-gray-900">{visit.scheduled_date || "—"}</TableCell>
+                                            <TableCell className="text-gray-900">{visit.scheduled_time || "—"}</TableCell>
+                                            <TableCell className="text-gray-900">{visit.actual_visit_date || "—"}</TableCell>
+                                            <TableCell className="text-gray-900 text-center">
+                                              {Array.isArray(visit.assets_covered) && visit.assets_covered.length > 0 ? (
+                                                <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                  {visit.assets_covered.length}
+                                                </span>
+                                              ) : "—"}
+                                            </TableCell>
+                                            <TableCell className="text-gray-900">{visit.technician?.name || "—"}</TableCell>
+                                            <TableCell className="text-gray-900 max-w-[200px] whitespace-normal break-words">{visit.remarks || "—"}</TableCell>
+                                            <TableCell>
+                                              {visit.status ? (
+                                                <span className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${visit.status.toLowerCase() === "completed" ? "bg-green-100 text-green-800" : visit.status.toLowerCase() === "missed" ? "bg-red-100 text-red-800" : visit.status.toLowerCase() === "pending" ? "bg-amber-100 text-amber-800" : "bg-gray-100 text-gray-700"}`}>
+                                                  {visit.status.toUpperCase()}
+                                                </span>
+                                              ) : <span className="text-gray-400 text-sm">—</span>}
+                                            </TableCell>
+                                            <TableCell>
+                                              {(() => {
+                                                const list: VisitAttachment[] = [
+                                                  ...(visit.attachments || []),
+                                                  ...(visit.attachment ? [visit.attachment] : []),
+                                                ].filter((a) => a?.document || a?.document_url);
+                                                if (!list.length) return <span className="text-gray-400 text-sm">—</span>;
+                                                return (
+                                                  <div className="flex flex-col gap-1">
+                                                    {list.map((a, ai) => {
+                                                      const url  = a.document || a.document_url || '';
+                                                      const name = a.filename || a.document_file_name || `File ${ai + 1}`;
+                                                      return (
+                                                        <div key={a.id ?? ai} className="flex items-center gap-2">
+                                                          <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[#C72030] hover:underline text-sm">
+                                                            <FileText className="w-3.5 h-3.5" />{name}
+                                                          </a>
+                                                          <button
+                                                            title="Download"
+                                                            className="text-gray-500 hover:text-[#C72030]"
+                                                            onClick={async () => {
+                                                              try {
+                                                                const token = localStorage.getItem('token');
+                                                                const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                                                                const blob = await res.blob();
+                                                                const blobUrl = URL.createObjectURL(new Blob([blob], { type: 'application/octet-stream' }));
+                                                                const el = document.createElement('a'); el.href = blobUrl; el.download = name;
+                                                                document.body.appendChild(el); el.click(); el.remove();
+                                                                URL.revokeObjectURL(blobUrl);
+                                                              } catch { window.open(url, '_blank'); }
+                                                            }}
+                                                          >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                                          </button>
+                                                        </div>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                );
+                                              })()}
+                                            </TableCell>
+                                          </TableRow>
+                                        );
+                                      })
+                                    )}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                              {vfTotal > 1 && (
+                                <div className="flex justify-center mt-4">
+                                  <Pagination>
+                                    <PaginationContent>
+                                      <PaginationItem>
+                                        <PaginationPrevious onClick={() => setVisitFreqPage((p) => Math.max(1, p - 1))} className={vfPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                                      </PaginationItem>
+                                      {renderVFPages()}
+                                      <PaginationItem>
+                                        <PaginationNext onClick={() => setVisitFreqPage((p) => Math.min(vfTotal, p + 1))} className={vfPage === vfTotal ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                                      </PaginationItem>
+                                    </PaginationContent>
+                                  </Pagination>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  /* Fallback: flat visit table when no frequency groups */
+                  (() => {
+                    const VFLATPG = 15;
+                    const vflatTotal = Math.max(1, Math.ceil(amcVisitData.length / VFLATPG));
+                    const vflatSlice = amcVisitData.slice((visitFlatPage - 1) * VFLATPG, visitFlatPage * VFLATPG);
+                    const renderFlatPages = () => {
+                      const items: React.ReactNode[] = [];
+                      let last = 0;
+                      for (let i = 1; i <= vflatTotal; i++) {
+                        if (i === 1 || i === vflatTotal || (i >= visitFlatPage - 1 && i <= visitFlatPage + 1)) {
+                          if (last && i - last > 1) items.push(<PaginationItem key={`e${i}`}><PaginationEllipsis /></PaginationItem>);
+                          items.push(
+                            <PaginationItem key={i}>
+                              <PaginationLink isActive={visitFlatPage === i} onClick={() => setVisitFlatPage(i)} className="cursor-pointer">{i}</PaginationLink>
+                            </PaginationItem>
+                          );
+                          last = i;
+                        }
+                      }
+                      return items;
+                    };
+                    return (
+                      <>
+                  <div className="bg-white rounded-lg border overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-[#EDEAE3]">
+                          <TableHead className="w-10" />
+                          <TableHead className="font-semibold text-[#1a1a1a]">Visit</TableHead>
+                          <TableHead className="font-semibold text-[#1a1a1a]">Visit Date</TableHead>
+                          <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
+                          <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
+                          <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
+                          <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
+                          <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
+                          <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody className="bg-white">
+                        {amcVisitData.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={9} className="text-center py-6 text-gray-500">
+                              No visit history found.
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          vflatSlice.map((visit) => {
+                            const isSelected = selectedVisitId === visit.id;
+                            return (
+                              <TableRow
+                                key={visit.id}
+                                className={`border-b border-gray-200 transition-colors ${isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"}`}
+                              >
+                                <TableCell className="w-10">
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => setSelectedVisitId(isSelected ? null : visit.id)}
+                                    className="w-4 h-4 rounded border-gray-300 accent-[#C72030] cursor-pointer"
+                                  />
+                                </TableCell>
+                                <TableCell className="font-medium text-gray-900">{visit.visit_number ?? "—"}</TableCell>
+                                <TableCell className="text-gray-900">
+                                  {visit.visit_date ? new Date(visit.visit_date).toLocaleDateString("en-GB") : "—"}
+                                </TableCell>
+                                <TableCell className="text-gray-900">
+                                  {(visit as any).actual_visit_date
+                                    ? (() => {
                                       const raw = (visit as any).actual_visit_date as string;
                                       if (raw.includes("/")) return raw;
                                       const d = new Date(raw);
                                       return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
                                     })()
-                                  : "—"}
-                              </TableCell>
-                              {/* <TableCell className="text-gray-900">
-                                {visit.asset_period || "—"}
-                              </TableCell> */}
-                              <TableCell className="text-gray-900">
-                                {visit.technician?.name || "—"}
-                              </TableCell>
-                              <TableCell className="text-gray-900 max-w-[200px] whitespace-normal break-words">
-                                {visit.remarks || "—"}
-                              </TableCell>
-                              <TableCell>
-                                {(visit as any).status ? (
-                                  <span
-                                    className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
-                                      (visit as any).status.toLowerCase() === "completed"
+                                    : "—"}
+                                </TableCell>
+                                <TableCell className="text-gray-900">{visit.technician?.name || "—"}</TableCell>
+                                <TableCell className="text-gray-900 max-w-[200px] whitespace-normal break-words">{visit.remarks || "—"}</TableCell>
+                                <TableCell>
+                                  {(visit as any).status ? (
+                                    <span
+                                      className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${(visit as any).status.toLowerCase() === "completed"
                                         ? "bg-green-100 text-green-800"
                                         : (visit as any).status.toLowerCase() === "cancelled"
                                           ? "bg-red-100 text-red-800"
                                           : "bg-gray-100 text-gray-700"
-                                    }`}
-                                  >
-                                    {((visit as any).status as string).toUpperCase()}
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-400 text-sm">—</span>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {(() => {
-                                  const ids: any[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
-                                  const total = amcDetails?.amc_assets?.length ?? 0;
-                                  const covered = ids.length;
-                                  return covered > 0 ? (
-                                    <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFF0F0] text-[#C72030]">
-                                      {covered}{total > 0 ? ` / ${total}` : ""}
+                                        }`}
+                                    >
+                                      {((visit as any).status as string).toUpperCase()}
                                     </span>
                                   ) : (
                                     <span className="text-gray-400 text-sm">—</span>
-                                  );
-                                })()}
-                              </TableCell>
-                              <TableCell>
-                                {visit.attachment?.document || visit.attachment?.document_url ? (
-                                  <a
-                                    href={visit.attachment.document || visit.attachment.document_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center gap-1 text-[#C72030] hover:underline text-sm"
-                                  >
-                                    <FileText className="w-4 h-4" />
-                                    View
-                                  </a>
-                                ) : (
-                                  <span className="text-gray-400 text-sm">—</span>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {(() => {
+                                    const ids: any[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
+                                    const total = amcDetails?.amc_assets?.length ?? 0;
+                                    const covered = ids.length;
+                                    return covered > 0 ? (
+                                      <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFF0F0] text-[#C72030]">
+                                        {covered}{total > 0 ? ` / ${total}` : ""}
+                                      </span>
+                                    ) : (
+                                      <span className="text-gray-400 text-sm">—</span>
+                                    );
+                                  })()}
+                                </TableCell>
+                                <TableCell>
+                                  {(() => {
+                                    const list: VisitAttachment[] = [
+                                      ...(visit.attachments || []),
+                                      ...(visit.attachment ? [visit.attachment] : []),
+                                    ].filter((a) => a?.document || a?.document_url);
+                                    if (!list.length) return <span className="text-gray-400 text-sm">—</span>;
+                                    return (
+                                      <div className="flex flex-col gap-1">
+                                        {list.map((a, ai) => {
+                                          const url  = a.document || a.document_url || '';
+                                          const name = a.filename || a.document_file_name || `File ${ai + 1}`;
+                                          return (
+                                            <div key={a.id ?? ai} className="flex items-center gap-2">
+                                              <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[#C72030] hover:underline text-sm">
+                                                <FileText className="w-3.5 h-3.5" />{name}
+                                              </a>
+                                              <button
+                                                title="Download"
+                                                className="text-gray-500 hover:text-[#C72030]"
+                                                onClick={async () => {
+                                                  try {
+                                                    const token = localStorage.getItem('token');
+                                                    const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                                                    const blob = await res.blob();
+                                                    const blobUrl = URL.createObjectURL(new Blob([blob], { type: 'application/octet-stream' }));
+                                                    const el = document.createElement('a'); el.href = blobUrl; el.download = name;
+                                                    document.body.appendChild(el); el.click(); el.remove();
+                                                    URL.revokeObjectURL(blobUrl);
+                                                  } catch { window.open(url, '_blank'); }
+                                                }}
+                                              >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                              </button>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    );
+                                  })()}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {vflatTotal > 1 && (
+                    <div className="flex justify-center mt-4">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious onClick={() => setVisitFlatPage((p) => Math.max(1, p - 1))} className={visitFlatPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                          </PaginationItem>
+                          {renderFlatPages()}
+                          <PaginationItem>
+                            <PaginationNext onClick={() => setVisitFlatPage((p) => Math.min(vflatTotal, p + 1))} className={visitFlatPage === vflatTotal ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
+                      </>
+                    );
+                  })()
+                )}
               </CardContent>
             </Card>
 
@@ -1652,6 +2011,7 @@ export const AMCDetailsPage = () => {
                       <label className="text-sm font-medium text-gray-700">Visit Date</label>
                       <input
                         type="date"
+                        disabled={visitEditVisitDate}
                         value={visitEditVisitDate}
                         onChange={(e) => setVisitEditVisitDate(e.target.value)}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
@@ -1665,6 +2025,7 @@ export const AMCDetailsPage = () => {
                       <label className="text-sm font-medium text-gray-700">Actual Visit Date</label>
                       <input
                         type="date"
+
                         value={visitEditActualVisitDate}
                         onChange={(e) => setVisitEditActualVisitDate(e.target.value)}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
@@ -1718,30 +2079,44 @@ export const AMCDetailsPage = () => {
                       </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-gray-700">Attachment</label>
+                      <label className="text-sm font-medium text-gray-700">Attachments</label>
                       <div
                         className="flex items-center gap-2 border border-dashed border-gray-300 rounded-md px-3 py-2 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => document.getElementById("visit-doc-input")?.click()}
                       >
                         <Paperclip className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span className="text-sm text-gray-500 truncate flex-1">
-                          {visitEditDocument ? visitEditDocument.name : "Choose File"}
+                        <span className="text-sm text-gray-500 flex-1">
+                          {visitEditDocuments.length === 0 ? "Choose Files" : `${visitEditDocuments.length} file(s) selected`}
                         </span>
-                        {visitEditDocument && (
-                          <button
-                            className="text-xs text-red-500 hover:underline flex-shrink-0"
-                            onClick={(e) => { e.stopPropagation(); setVisitEditDocument(null); }}
-                          >
-                            Remove
-                          </button>
-                        )}
                         <input
                           id="visit-doc-input"
                           type="file"
+                          multiple
                           className="hidden"
-                          onChange={(e) => setVisitEditDocument(e.target.files?.[0] || null)}
+                          onChange={(e) => {
+                            const newFiles = Array.from(e.target.files || []);
+                            setVisitEditDocuments((prev) => [...prev, ...newFiles]);
+                            e.target.value = "";
+                          }}
                         />
                       </div>
+                      {visitEditDocuments.length > 0 && (
+                        <ul className="space-y-1 mt-1">
+                          {visitEditDocuments.map((file, i) => (
+                            <li key={i} className="flex items-center gap-2 text-sm text-gray-700 bg-white border border-gray-200 rounded px-3 py-1.5">
+                              <Paperclip className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                              <span className="truncate flex-1">{file.name}</span>
+                              <button
+                                type="button"
+                                className="text-xs text-red-500 hover:underline flex-shrink-0"
+                                onClick={() => setVisitEditDocuments((prev) => prev.filter((_, idx) => idx !== i))}
+                              >
+                                Remove
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   </div>
 
@@ -1975,11 +2350,10 @@ export const AMCDetailsPage = () => {
                               </TableCell>{" "}
                               <TableCell>
                                 <span
-                                  className={`px-2 py-1 text-xs rounded ${
-                                    asset.asset_status === "active"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-gray-100 text-gray-800"
-                                  }`}
+                                  className={`px-2 py-1 text-xs rounded ${asset.asset_status === "active"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                                    }`}
                                 >
                                   {asset.asset_status?.replace("_", " ") || "—"}
                                 </span>
@@ -2150,18 +2524,20 @@ export const AMCDetailsPage = () => {
                             <TableHead className="font-semibold text-[#1a1a1a]">
                               Model No.
                             </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Group & Sub Group
-                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Group</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Sub Group</TableHead>
                             <TableHead className="font-semibold text-[#1a1a1a]">
                               Status
                             </TableHead>
                             <TableHead className="font-semibold text-[#1a1a1a]">
                               Criticality
                             </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Location
-                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Site</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Building</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Wing</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Area</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Floor</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">Room</TableHead>
                           </>
                         )}
                       </TableRow>
@@ -2196,11 +2572,10 @@ export const AMCDetailsPage = () => {
                               </TableCell>
                               <TableCell>
                                 <span
-                                  className={`px-2 py-1 text-xs rounded ${
-                                    (service as any).status === "Active"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-gray-100 text-gray-800"
-                                  }`}
+                                  className={`px-2 py-1 text-xs rounded ${(service as any).status === "Active"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                                    }`}
                                 >
                                   {(service as any).status || "—"}
                                 </span>
@@ -2219,21 +2594,13 @@ export const AMCDetailsPage = () => {
                         )
                       ) : amcDetails.amc_assets?.length > 0 ? (
                         amcDetails.amc_assets.map((asset: any) => {
-                          const locationParts = [
-                            asset.building_name || asset.building,
-                            asset.wing_name || asset.wing,
-                            asset.area_name || asset.area,
-                            asset.floor_name || asset.floor,
-                            asset.room_name || asset.room,
-                          ].filter(Boolean);
-                          const location =
-                            locationParts.length > 0
-                              ? locationParts.join(", ")
-                              : "—";
-                          const groupSubGroup =
-                            [asset.group_name, asset.sub_group_name]
-                              .filter(Boolean)
-                              .join(" / ") || "—";
+                          const loc = asset.location ?? {};
+                          const site = loc.site || asset.site_name || "—";
+                          const building = loc.building || asset.building_name || asset.building || "—";
+                          const wing = loc.wing || asset.wing_name || asset.wing || "—";
+                          const area = loc.area || asset.area_name || asset.area || "—";
+                          const floor = loc.floor || asset.floor_name || asset.floor || "—";
+                          const room = loc.room || asset.room_name || asset.room || "—";
                           return (
                             <TableRow
                               key={asset.id}
@@ -2260,16 +2627,14 @@ export const AMCDetailsPage = () => {
                               <TableCell className="text-gray-900">
                                 {asset.model_no || asset.model_number || "—"}
                               </TableCell>
-                              <TableCell className="text-gray-900">
-                                {groupSubGroup}
-                              </TableCell>
+                              <TableCell className="text-gray-900">{asset.group_name || "—"}</TableCell>
+                              <TableCell className="text-gray-900">{asset.sub_group_name || "—"}</TableCell>
                               <TableCell>
                                 <span
-                                  className={`px-2 py-1 text-xs rounded ${
-                                    asset.asset_status === "active"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-gray-100 text-gray-800"
-                                  }`}
+                                  className={`px-2 py-1 text-xs rounded ${asset.asset_status === "active"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                                    }`}
                                 >
                                   {asset.asset_status?.replace("_", " ") || "—"}
                                 </span>
@@ -2277,16 +2642,19 @@ export const AMCDetailsPage = () => {
                               <TableCell className="text-gray-900">
                                 {asset.criticality || "—"}
                               </TableCell>
-                              <TableCell className="text-gray-900 text-sm">
-                                {location}
-                              </TableCell>
+                              <TableCell className="text-gray-900 text-sm">{site}</TableCell>
+                              <TableCell className="text-gray-900 text-sm">{building}</TableCell>
+                              <TableCell className="text-gray-900 text-sm">{wing}</TableCell>
+                              <TableCell className="text-gray-900 text-sm">{area}</TableCell>
+                              <TableCell className="text-gray-900 text-sm">{floor}</TableCell>
+                              <TableCell className="text-gray-900 text-sm">{room}</TableCell>
                             </TableRow>
                           );
                         })
                       ) : (
                         <TableRow className="border-b border-gray-200">
                           <TableCell
-                            colSpan={8}
+                            colSpan={14}
                             className="text-center text-sm text-gray-500"
                           >
                             No assets found
@@ -2320,6 +2688,9 @@ export const AMCDetailsPage = () => {
                 </span>
                 <span className="text-[12px] font-medium text-[#6B7280] leading-tight">
                   {(() => {
+                    // Check frequency groups first, then fall back to flat list
+                    const freqVisit = visitLogsByFrequency?.flatMap((g) => g.visits).find((v) => v.id === selectedVisitId);
+                    if (freqVisit) return `Visit #${freqVisit.visit_number} — ${freqVisit.scheduled_date || ""}`;
                     const v = amcVisitData.find((x) => x.id === selectedVisitId);
                     return v
                       ? `Visit #${v.visit_number} — ${v.visit_date ? new Date(v.visit_date).toLocaleDateString("en-GB") : ""}`
@@ -2361,7 +2732,7 @@ export const AMCDetailsPage = () => {
 
       <AddVisitModal
         isOpen={showAddVisitModal}
-        onClose={hanldeClose}
+        onClose={handleClose}
         amcId={amcDetails?.id?.toString() || id || ""}
       />
     </div>

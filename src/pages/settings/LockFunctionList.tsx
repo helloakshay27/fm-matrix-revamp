@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -9,6 +9,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { CreateLockFunctionDialog } from './CreateLockFunctionDialog';
 import { CreateFunctionDialog } from './CreateFunctionDialog';
 import { lockFunctionService, LockFunction as ApiLockFunctionItem } from '@/services/lockFunctionService';
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Type definitions for the lock function data
 interface LockFunctionItem {
@@ -152,8 +153,13 @@ const transformLockFunctionData = (apiData: ApiLockFunctionItem[]): LockFunction
 
 export const LockFunctionList = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+  const location = useLocation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
   const itemsPerPage = 15; // Same as ShiftDashboard
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
@@ -188,14 +194,13 @@ export const LockFunctionList = () => {
     fetchLockFunctionData();
   }, []);
 
-  // Reset pagination when data changes
+ // Reset to page 1 only when search changes
+  const prevSearchRef = useRef('');
   useEffect(() => {
-    setCurrentPage(1);
-  }, [allLockFunctionData.length]);
-
-  // Reset pagination when search changes
-  useEffect(() => {
-    setCurrentPage(1);
+    if (debouncedSearchQuery !== prevSearchRef.current) {
+      prevSearchRef.current = debouncedSearchQuery;
+      setCurrentPage(1);
+    }
   }, [debouncedSearchQuery]);
 
   // Filter and paginate data
@@ -223,20 +228,29 @@ export const LockFunctionList = () => {
   const endIndex = startIndex + itemsPerPage;
   const currentLockFunctionData = filteredLockFunctionData.slice(startIndex, endIndex);
 
+  useEffect(() => {
+    navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
+  }, [currentPage]);
+
   // Pagination functions
   const goToPage = (page: number) => {
     setCurrentPage(page);
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
   };
 
   const goToPrevious = () => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      const newPage = currentPage - 1;
+      setCurrentPage(newPage);
+      navigate(`${location.pathname}?page=${newPage}`, { replace: true });
     }
   };
 
   const goToNext = () => {
     if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+      const newPage = currentPage + 1;
+      setCurrentPage(newPage);
+      navigate(`${location.pathname}?page=${newPage}`, { replace: true });
     }
   };
 
@@ -249,27 +263,30 @@ export const LockFunctionList = () => {
   const renderRow = (lockFunction: LockFunctionItem) => ({
     actions: (
       <div className="flex items-center gap-2">
+        {shouldShow("Lock Function","update")&&(
         <button 
           onClick={() => handleEdit(lockFunction.id)} 
           className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
           title="Edit"
         >
           <Edit className="w-4 h-4" />
-        </button>
+        </button>)}
+        {shouldShow("Lock Function","show")&&(
         <button 
           onClick={() => handleView(lockFunction.id)} 
           className="p-1 text-green-600 hover:bg-green-50 rounded" 
           title="View"
         >
           <Eye className="w-4 h-4" />
-        </button>
+        </button>)}
+        {shouldShow("Lock Function","destroy")&&(
         <button 
           onClick={() => handleDelete(lockFunction.id)} 
           className="p-1 text-red-600 hover:bg-red-50 rounded" 
           title="Delete"
         >
           <Trash2 className="w-4 h-4" />
-        </button>
+        </button>)}
       </div>
     ),
     functionName: (
@@ -459,16 +476,17 @@ export const LockFunctionList = () => {
             exportFileName="lock-function-data"
             leftActions={
               <div className="flex items-center gap-2">
+                {shouldShow("Lock Function","create")&&(
                 <Button 
                   onClick={handleAdd} 
                   className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                 >
                   <Plus className="w-4 h-4" />
                   Add
-                </Button>
+                </Button>)}
                 <Button
                   onClick={handleImportClick}
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white"
+                  className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                   disabled={importing}
                 >
                   {importing ? (

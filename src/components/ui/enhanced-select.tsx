@@ -65,6 +65,9 @@ interface SearchableSelectProps extends BaseEnhancedSelectProps {
   // Autocomplete specific props
   freeSolo?: boolean;
   multiple?: boolean;
+  /** `outlined` = floating label on border (matches MUI outlined fields) */
+  labelVariant?: "stacked" | "outlined";
+  isLoading?: boolean;
 }
 
 type EnhancedSelectUnionProps = EnhancedSelectProps | SearchableSelectProps;
@@ -138,37 +141,51 @@ export const SearchableSelect: React.FC<
   error = false,
   helperText,
   fullWidth = true,
+  labelVariant = "stacked",
+  isLoading = false,
   sx,
 }) => {
   const [open, setOpen] = useState(false);
+  const isOutlined = labelVariant === "outlined";
+  const isDisabled = disabled || isLoading;
   const selectedOption = options.find(
     (opt) => opt.value === value || opt.value.toString() === value?.toString()
   );
+  const displayPlaceholder = isLoading ? "Loading..." : placeholder;
 
   return (
-    <div className={`flex flex-col w-full`} style={sx as React.CSSProperties}>
-      {label && (
+    <div
+      className={`flex flex-col ${fullWidth ? "w-full" : ""}`}
+      style={sx as React.CSSProperties}
+    >
+      {label && !isOutlined && (
         <div className="mb-2 text-sm font-semibold text-slate-700">{label}</div>
       )}
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            disabled={disabled}
-            className={`flex min-h-[45px] w-full items-center justify-between rounded-md border bg-white px-3 py-2 text-[15px] shadow-sm ring-offset-background transition-colors focus:outline-none focus:ring-1 focus:ring-[#3b82f6] disabled:cursor-not-allowed disabled:opacity-50
-              ${error ? "border-red-500" : "border-slate-200 hover:border-[#3b82f6]"}
-            `}
-          >
-            <span
-              className={`block text-left ${
-                selectedOption ? "text-slate-900" : "text-slate-500 text-[14px]"
-              }`}
+      <div className="relative w-full">
+        {label && isOutlined && (
+          <div className="absolute -top-[9px] left-[10px] z-10 bg-white px-1 text-sm text-[rgba(0,0,0,0.6)] pointer-events-none leading-none">
+            {label}
+          </div>
+        )}
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              disabled={isDisabled}
+              className={`flex h-[45px] w-full items-center justify-between rounded border bg-white px-3.5 text-[14px] transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50
+                ${error ? "border-red-500 focus:border-red-500" : "border-[#999] hover:border-[#1976d2] focus:border-[#1976d2]"}
+              `}
             >
-              {selectedOption ? selectedOption.label : placeholder}
-            </span>
-            <ChevronDown className="h-4 w-4 shrink-0 opacity-50 ml-2" />
-          </button>
-        </PopoverTrigger>
+              <span
+                className={`block truncate text-left ${
+                  selectedOption ? "text-gray-900" : "text-[#999]"
+                }`}
+              >
+                {selectedOption ? selectedOption.label : displayPlaceholder}
+              </span>
+              <ChevronDown className="h-4 w-4 shrink-0 opacity-50 ml-2" />
+            </button>
+          </PopoverTrigger>
         <PopoverContent
           className="w-[var(--radix-popover-trigger-width)] p-0 shadow-lg border-slate-200 rounded-lg bg-white pointer-events-auto z-[99999]"
           align="start"
@@ -210,7 +227,8 @@ export const SearchableSelect: React.FC<
             </CommandList>
           </Command>
         </PopoverContent>
-      </Popover>
+        </Popover>
+      </div>
       {helperText && (
         <span
           className={`text-[12px] mt-1 ${error ? "text-[#d32f2f]" : "text-[#666]"}`}

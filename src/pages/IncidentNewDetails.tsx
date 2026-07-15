@@ -1130,7 +1130,11 @@ export const IncidentNewDetails = () => {
                     osr_staff_id: investigators[0]?.id ? parseInt(investigators[0].id) : null,
                     corrective_fields,
                     preventive_fields,
-                    assigned_to: investigators[0]?.id ? parseInt(investigators[0].id) : null
+                    next_review_date: nextReviewDate || null,
+                    next_review_responsible_person_id: nextReviewResponsible ? parseInt(nextReviewResponsible) : null,
+                    assigned_to: nextReviewResponsible
+                        ? parseInt(nextReviewResponsible)
+                        : (investigators[0]?.id ? parseInt(investigators[0].id) : null)
                 };
 
                 console.log('Sending provisional closure payload:', JSON.stringify(payload, null, 2));

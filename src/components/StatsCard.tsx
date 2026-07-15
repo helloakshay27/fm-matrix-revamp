@@ -20,7 +20,7 @@
 //   );
 // };
 
-import React, { useState } from "react";
+import React from "react";
 
 interface StatsCardProps {
   title: string;
@@ -29,6 +29,9 @@ interface StatsCardProps {
   onClick?: (status: string) => void;
   className?: string;
   selected?: boolean; // <-- add prop for selection
+  valueClassName?: string;
+  titleClassName?: string;
+  iconWrapperClassName?: string;
 }
 
 export const StatsCard: React.FC<StatsCardProps> = ({
@@ -38,6 +41,9 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   onClick,
   className,
   selected = false,
+  valueClassName,
+  titleClassName,
+  iconWrapperClassName,
 }) => {
   return (
     <div
@@ -45,12 +51,12 @@ export const StatsCard: React.FC<StatsCardProps> = ({
       ${selected ? "bg-[rgb(230_226_218_/_1)]" : "bg-[#f6f4ee]"} ${className}`}
       onClick={() => onClick?.(title)}
     >
-      <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-[#C4B89D54] flex items-center justify-center flex-shrink-0">
+      <div className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-[#C4B89D54] flex items-center justify-center flex-shrink-0 ${iconWrapperClassName || ""}`}>
         {icon}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-lg sm:text-xl lg:text-2xl font-semibold text-[#1A1A1A] truncate">{value}</p>
-        <p className="text-xs sm:text-sm font-medium text-[#1A1A1A] truncate">{title}</p>
+        <p className={`text-lg sm:text-xl lg:text-2xl font-semibold text-[#1A1A1A] truncate ${valueClassName || ""}`}>{value}</p>
+        <p className={`text-xs sm:text-sm font-medium text-[#1A1A1A] truncate ${titleClassName || ""}`}>{title}</p>
       </div>
     </div>
   );

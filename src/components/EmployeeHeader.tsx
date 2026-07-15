@@ -72,8 +72,16 @@ const headerIconMap: Record<string, any> = {
 // Fallback static employeeModules for backward compatibility
 const staticEmployeeModules = [
   { name: "Company Hub", icon: Globe, action_name: "employee_company_hub" },
-  { name: "Company Hub New", icon: Globe, action_name: "employee_company_hub_new" },
-  { name: "Business Compass", icon: Compass, action_name: "employee_business_compass" },
+  {
+    name: "Company Hub New",
+    icon: Globe,
+    action_name: "employee_company_hub_new",
+  },
+  {
+    name: "Business Compass",
+    icon: Compass,
+    action_name: "employee_business_compass",
+  },
   { name: "Dashboard", icon: Home, action_name: "employee_dashboard" },
   {
     name: "Project Task",
@@ -113,7 +121,9 @@ export const EmployeeHeader: React.FC = () => {
       // Skip Employee Sidebar and Employee Projects Sidebar modules
       if (
         module.module_name === "Employee Sidebar" ||
-        module.module_name === "Employee Projects Sidebar"
+        module.module_name === "Employee Projects Sidebar" ||
+        module.module_name === "Employee Business Compass" ||
+        module.module_name === "Employee Admin Compass"
       ) {
         continue;
       }
@@ -306,7 +316,7 @@ export const EmployeeHeader: React.FC = () => {
   };
 
   const handleProfileClick = () => {
-    navigate("/profile");
+    navigate("/business-compass/profile");
   };
 
   const handleSettingsClick = () => {
@@ -324,12 +334,13 @@ export const EmployeeHeader: React.FC = () => {
       );
     }
     if (notification.ntype === "projectspace") {
-      navigate(
-        `/vas/channels/groups/${notification.payload.project_space_id}`
-      );
+      navigate(`/vas/channels/groups/${notification.payload.project_space_id}`);
     }
     if (notification.payload.ntype === "newtaskmanagement") {
       navigate(`/vas/tasks/${notification.payload.task_management_id}`);
+    }
+    if (notification.payload.ntype === "newissue") {
+      navigate(`/vas/issues/${notification.payload.issue_id}`);
     }
   };
 
@@ -651,8 +662,8 @@ export const EmployeeHeader: React.FC = () => {
                         onDragOver={handleModuleDragOver}
                         onClick={() => handleModuleClick(module)}
                         className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${isActive
-                          ? "bg-white text-[#C72030] shadow-sm"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                            ? "bg-white text-[#C72030] shadow-sm"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
                           }`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
@@ -715,8 +726,8 @@ export const EmployeeHeader: React.FC = () => {
                               }
                               onClick={() => handleModuleClick(module)}
                               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${isActive
-                                ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                                : "hover:bg-[#f6f4ee] text-gray-700"
+                                  ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                                  : "hover:bg-[#f6f4ee] text-gray-700"
                                 }`}
                             >
                               <Icon className="w-5 h-5 flex-shrink-0" />
@@ -750,7 +761,7 @@ export const EmployeeHeader: React.FC = () => {
             className="flex items-center gap-2"
             onClick={() => navigate("/employee-wallet")}
           >
-            <Wallet /> ₹ {availableBalance.toFixed(2)}
+            <Wallet /> ₹ {availableBalance?.toFixed(2)}
           </button>
           <button
             className="p-1.5 sm:p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -843,8 +854,8 @@ export const EmployeeHeader: React.FC = () => {
                         <div className="flex items-start gap-3">
                           <div
                             className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
-                              ? "bg-[#C72030]"
-                              : "bg-gray-300"
+                                ? "bg-[#C72030]"
+                                : "bg-gray-300"
                               }`}
                           />
                           <div className="flex-1 min-w-0">
@@ -961,11 +972,11 @@ export const EmployeeHeader: React.FC = () => {
                         const adminLink = getFirstAdminLink();
                         window.location.href = adminLink;
                       }}
-                      className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm bg-white hover:bg-[#C72030] text-gray-700 hover:text-white transition-all duration-200 border border-gray-200 hover:border-[#C72030] group shadow-sm"
+                      className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg text-sm font-medium group shadow-sm"
                     >
                       <div className="flex items-center gap-2">
                         <Shield className="w-4 h-4" />
-                        <span className="font-medium">Admin View</span>
+                        <span>Admin View</span>
                       </div>
                       <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
                     </button>

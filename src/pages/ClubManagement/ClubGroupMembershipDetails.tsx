@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, Download, User, Mail, Phone, Calendar, CreditCard, Building2, FileText, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Edit, Download, User, Mail, Phone, Calendar, CreditCard, Building2, FileText, Loader } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_CONFIG } from '@/config/apiConfig';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import CloseIcon from '@mui/icons-material/Close';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import ImageIcon from '@mui/icons-material/Image';
+import DescriptionIcon from '@mui/icons-material/Description';
+import AudioFileIcon from '@mui/icons-material/AudioFile';
+import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 import axios from 'axios';
 
 interface Attachment {
@@ -61,6 +69,11 @@ interface ClubMember {
   current_age?: number | null;
   gender?: string | null;
   snag_answers?: any[];
+  raised_bill_to_user?: boolean;
+  bill_to?: string | null;
+  billing_company_name?: string;
+  billing_gstin?: string;
+  billing_address?: string;
   user: {
     id: number;
     email: string;
@@ -87,6 +100,7 @@ interface GroupMembershipDetail {
   preferred_start_date?: string | null;
   referred_by?: string;
   club_members: ClubMember[];
+  status: string;
   allocation_payment_detail?: {
     id: number;
     club_member_allocation_id: number;
@@ -195,9 +209,10 @@ const QUESTION_SECTIONS: { [key: string]: { title: string; questionIds: string[]
   },
   'occupation': {
     title: 'Occupation & Demographics',
-    questionIds: ['11', '12', '13']
+    questionIds: ['11', '12']
   }
 };
+
 
 export const ClubGroupMembershipDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -215,12 +230,121 @@ export const ClubGroupMembershipDetails = () => {
   const [selectedBill, setSelectedBill] = useState<BillDetail | null>(null);
   const [loadingBill, setLoadingBill] = useState(false);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
+  const [sendingInvoice, setSendingInvoice] = useState(false);
+  const [sendingBillId, setSendingBillId] = useState<number | null>(null);
+  const [generatingInvoice, setGeneratingInvoice] = useState(false);
 
   // Payment modal state
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const [paymentMode, setPaymentMode] = useState('online');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [transactionId, setTransactionId] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [isDragActive, setIsDragActive] = useState(false);
+
+  // File input ref
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragDropRef = useRef<HTMLDivElement>(null);
+
+  // Helper function to get file type icon and color
+  const getFileTypeInfo = useCallback((fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+
+    if (['pdf'].includes(ext)) {
+      return { icon: PictureAsPdfIcon, color: '#DC2626', bgColor: '#FEE2E2', type: 'PDF' };
+    }
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+      return { icon: ImageIcon, color: '#2563EB', bgColor: '#DBEAFE', type: 'Image' };
+    }
+    if (['mp3', 'wav', 'aac', 'flac', 'm4a'].includes(ext)) {
+      return { icon: AudioFileIcon, color: '#9333EA', bgColor: '#F3E8FF', type: 'Audio' };
+    }
+    if (['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext)) {
+      return { icon: VideoLibraryIcon, color: '#EA580C', bgColor: '#FFEDD5', type: 'Video' };
+    }
+    if (['doc', 'docx', 'txt', 'rtf', 'xlsx', 'xls', 'csv', 'ppt', 'pptx'].includes(ext)) {
+      return { icon: DescriptionIcon, color: '#16A34A', bgColor: '#DCFCE7', type: 'Document' };
+    }
+    return { icon: AttachFileIcon, color: '#6B7280', bgColor: '#F3F4F6', type: 'File' };
+  }, []);
+
+  // Helper function to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  // Validate file sizes - max 10MB per file
+  const validateAndAddFiles = (filesToAdd: File[]) => {
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+    const validFiles: File[] = [];
+    const invalidFiles: string[] = [];
+
+    filesToAdd.forEach((file) => {
+      if (file.size > MAX_FILE_SIZE) {
+        invalidFiles.push(`${file.name} (${formatFileSize(file.size)})`);
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    // Show error for oversized files
+    if (invalidFiles.length > 0) {
+      toast.dismiss();
+      invalidFiles.forEach((fileName) => {
+        toast.error(`${fileName} exceeds 10MB limit`);
+      });
+    }
+
+    // Add valid files
+    if (validFiles.length > 0) {
+      setAttachments([...attachments, ...validFiles]);
+      toast.dismiss();
+      toast.success(`${validFiles.length} file(s) added successfully`);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDrag = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setIsDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setIsDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+
+    const files = Array.from(e.dataTransfer.files || []) as File[];
+    if (files.length > 0) {
+      validateAndAddFiles(files);
+    }
+  };
+
+  // Handle attachment file selection
+  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []) as File[];
+    if (files.length > 0) {
+      validateAndAddFiles(files);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Remove attachment
+  const removeAttachment = (index: number) => {
+    setAttachments(attachments.filter((_, i) => i !== index));
+  };
 
   // Payment API handler
   const handlePayment = async () => {
@@ -230,25 +354,31 @@ export const ClubGroupMembershipDetails = () => {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
 
+      // Create FormData payload
+      const formData = new FormData();
+      formData.append('bill_id', selectedBill.id.toString());
+      formData.append('payment[payment_mode]', paymentMode);
+      formData.append('payment[payment_method]', paymentMethod);
+      formData.append('payment[pg_transaction_id]', transactionId);
+
+      // Append attachments
+      attachments.forEach((file) => {
+        formData.append('attachments[]', file);
+      });
+
       const response = await axios.post(
         `${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_member_allocations/${id}/payment.json`,
-        {
-          bill_id: selectedBill.id,
-          payment: {
-            payment_mode: paymentMode,
-            pg_transaction_id: transactionId
-          }
-        },
+        formData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            'Content-Type': 'multipart/form-data',
           },
         }
       );
       toast.success('Payment request sent successfully!');
       setOpenPaymentModal(false);
-      // Refresh bill details
+      setAttachments([]);
       if (id) {
         fetchBillDetails(Number(id));
       }
@@ -388,7 +518,47 @@ export const ClubGroupMembershipDetails = () => {
   };
 
   const handleEdit = () => {
+    navigate(`/club-management/group-membership/${id}/edit/members`);
+  };
+
+  const handleEditMembershipPlan = () => {
     navigate(`/club-management/group-membership/${id}/edit`);
+  };
+
+  const handleSendInvoice = async () => {
+    setSendingInvoice(true);
+    try {
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+      const url = `https://${baseUrl}/club_member_allocations/${id}/send_invoice_mail.json`;
+      await axios.post(url, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Invoice sent successfully');
+    } catch (error: any) {
+      const msg = error?.response?.data?.error || error?.response?.data?.message || 'Failed to send invoice';
+      toast.error(msg);
+    } finally {
+      setSendingInvoice(false);
+    }
+  };
+
+  const handleSendInvoiceBill = async (billId: number) => {
+    setSendingBillId(billId);
+    try {
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+      const url = `https://${baseUrl}/club_member_allocations/${id}/send_invoice_mail.json`;
+      await axios.post(url, { bill_id: billId }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Invoice sent successfully');
+    } catch (error: any) {
+      const msg = error?.response?.data?.error || error?.response?.data?.message || 'Failed to send invoice';
+      toast.error(msg);
+    } finally {
+      setSendingBillId(null);
+    }
   };
 
   const formatDate = (dateString: string | null) => {
@@ -606,6 +776,18 @@ export const ClubGroupMembershipDetails = () => {
           </div>
 
           <div className="flex gap-3">
+            {
+              membershipData.status === 'pending' && (
+                <Button
+                  onClick={handleEditMembershipPlan}
+                  variant="outline"
+                  className="border-[#C72030] text-[#C72030]"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Change Membership Plan
+                </Button>
+              )
+            }
             <Button
               onClick={handleEdit}
               variant="outline"
@@ -755,7 +937,7 @@ export const ClubGroupMembershipDetails = () => {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2 items-end">
-                      <Badge 
+                      <Badge
                         variant={member.club_member_enabled ? "default" : "secondary"}
                         className={member.club_member_enabled ? "bg-green-100 text-green-800 hover:bg-green-100/90" : "bg-gray-100 text-gray-600 hover:bg-gray-100/90"}
                       >
@@ -855,6 +1037,58 @@ export const ClubGroupMembershipDetails = () => {
                   <span className="text-gray-900 font-medium">{membershipData.allocation_payment_detail?.payment_plan?.duration_in_months}</span>
                 </div> */}
               </div>
+
+              {/* Billing Info */}
+              {(() => {
+                const billing = membershipData.club_members?.[0];
+                if (!billing) return null;
+                const isCompany = billing.bill_to === 'company';
+                return (
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <h3 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-[#C72030]" />
+                      Billing Info
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Bill Raised To User</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <Badge className={billing.raised_bill_to_user ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-600'}>
+                          {billing.raised_bill_to_user ? 'Yes' : 'No'}
+                        </Badge>
+                      </div>
+                      {billing.bill_to && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Bill To</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium capitalize">{billing.bill_to}</span>
+                        </div>
+                      )}
+                      {isCompany && billing.billing_company_name && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Company Name</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{billing.billing_company_name}</span>
+                        </div>
+                      )}
+                      {isCompany && billing.billing_gstin && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">GSTIN No.</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{billing.billing_gstin}</span>
+                        </div>
+                      )}
+                      {isCompany && billing.billing_address && (
+                        <div className="flex items-start md:col-span-2">
+                          <span className="text-gray-500 min-w-[140px]">Billing Address</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{billing.billing_address}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </TabsContent>
           )}
 
@@ -901,6 +1135,26 @@ export const ClubGroupMembershipDetails = () => {
                         </>
                       )}
                     </Button>
+                    {selectedBill.status?.toLowerCase() === 'paid' && (
+                      <Button
+                        onClick={() => handleSendInvoiceBill(selectedBill.id)}
+                        disabled={sendingBillId === selectedBill.id}
+                        className="bg-[#C72030] hover:bg-[#A01828] text-white"
+                      >
+                        {sendingBillId === selectedBill.id ? (
+                          <>
+                            <Loader className="w-4 h-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-4 h-4 mr-2" />
+                            Send Invoice
+                          </>
+                        )}
+                      </Button>
+                    )}
+
                   </div>
                 </div>
 
@@ -1091,11 +1345,10 @@ export const ClubGroupMembershipDetails = () => {
                   {billDetails.map((bill) => (
                     <div
                       key={bill.id}
-                      onClick={() => setSelectedBill(bill)} // Set the selected bill
-                      className="border border-gray-200 rounded-lg p-4 hover:border-[#C72030] transition-colors cursor-pointer"
+                      className="border border-gray-200 rounded-lg p-4 hover:border-[#C72030] transition-colors"
                     >
-                      <div className="flex items-start justify-between">
-                        <div>
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="cursor-pointer flex-1" onClick={() => setSelectedBill(bill)}>
                           <h3 className="font-semibold text-gray-900">Bill #{bill.bill_number || bill.id}</h3>
                           <p className="text-sm text-gray-500">Due: {formatDate(bill.due_date)}</p>
                         </div>
@@ -1180,6 +1433,12 @@ export const ClubGroupMembershipDetails = () => {
                     >
                       System Info
                     </TabsTrigger>
+                    <TabsTrigger
+                      value="attachments"
+                      className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-2 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                    >
+                      Attachments
+                    </TabsTrigger>
                   </TabsList>
 
                   {/* Personal Information Tab */}
@@ -1217,7 +1476,7 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Face Added</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge 
+                        <Badge
                           variant={selectedMember.face_added ? "default" : "secondary"}
                           className={selectedMember.face_added ? "bg-green-100 text-green-800 " : "bg-red-100 text-red-800"}
                         >
@@ -1247,7 +1506,7 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Club Member</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge 
+                        <Badge
                           variant={selectedMember.club_member_enabled ? "default" : "secondary"}
                           className={selectedMember.club_member_enabled ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
                         >
@@ -1257,7 +1516,7 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Access Card</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge 
+                        <Badge
                           variant={selectedMember.access_card_enabled ? "default" : "secondary"}
                           className={selectedMember.access_card_enabled ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
                         >
@@ -1282,7 +1541,7 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">House</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{selectedMember.flat_no || '-'}</span>
+                        <span className="text-gray-900 font-medium">{selectedMember?.house?.name || '-'}</span>
                       </div>
                     </div>
                   </TabsContent>
@@ -1415,12 +1674,131 @@ export const ClubGroupMembershipDetails = () => {
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Active</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <Badge 
+                        <Badge
                           variant={selectedMember.active ? "default" : "secondary"}
                           className={selectedMember.active ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}
                         >
                           {selectedMember.active ? 'Yes' : 'No'}
                         </Badge>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="attachments" className="mt-0">
+                    <h3 className="text-lg font-semibold text-[#1a1a1a] mb-4 flex items-center gap-3">
+                      <ImageIcon className="w-5 h-5 text-[#C72030]" />
+                      Attachments & Documents
+                    </h3>
+                    <div className="space-y-6">
+                      {/* Identification Image */}
+                      <div className="border border-gray-200 rounded-lg p-4">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                          <ImageIcon className="w-4 h-4 text-[#C72030]" />
+                          Identification Image
+                        </h4>
+                        {selectedMember.identification_image ? (
+                          <div className="flex items-center gap-4">
+                            <img
+                              src={selectedMember.identification_image}
+                              alt="Identification"
+                              className="h-24 w-24 object-cover rounded-lg border border-gray-200 cursor-pointer hover:border-[#C72030] transition-colors"
+                              onClick={() => setSelectedImage(selectedMember.identification_image)}
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm text-gray-600">Identification Document</p>
+                              <a
+                                href={selectedMember.identification_image}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[#C72030] hover:text-[#A01828] text-sm font-medium mt-1 inline-block"
+                              >
+                                View Full Size →
+                              </a>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 text-sm">No identification image available</p>
+                        )}
+                      </div>
+
+                      {/* Avatar */}
+                      <div className="border border-gray-200 rounded-lg p-4">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                          <ImageIcon className="w-4 h-4 text-[#C72030]" />
+                          Avatar / Profile Image
+                        </h4>
+                        {selectedMember.avatar ? (
+                          <div className="flex items-center gap-4">
+                            <img
+                              src={getAvatarUrl(selectedMember.avatar) || selectedMember.avatar}
+                              alt="Avatar"
+                              className="h-24 w-24 object-cover rounded-lg border border-gray-200 cursor-pointer hover:border-[#C72030] transition-colors"
+                              onClick={() => setSelectedImage(getAvatarUrl(selectedMember.avatar) || selectedMember.avatar)}
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm text-gray-600">Profile Avatar</p>
+                              <a
+                                href={getAvatarUrl(selectedMember.avatar) || selectedMember.avatar}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[#C72030] hover:text-[#A01828] text-sm font-medium mt-1 inline-block"
+                              >
+                                View Full Size →
+                              </a>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 text-sm">No avatar available</p>
+                        )}
+                      </div>
+
+                      {/* General Attachments */}
+                      <div className="border border-gray-200 rounded-lg p-4">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-[#C72030]" />
+                          General Attachments
+                        </h4>
+                        {selectedMember.attachments && selectedMember.attachments.length > 0 ? (
+                          <div className="space-y-4">
+                            {selectedMember.attachments.map((attachment, idx) => {
+                              const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(attachment.document);
+                              return (
+                                <div key={attachment.id || idx} className="border border-gray-200 rounded-lg p-3 bg-white">
+                                  <div className="flex items-start gap-3">
+                                    {isImage ? (
+                                      <img
+                                        src={attachment.document}
+                                        alt={attachment.relation || 'Attachment'}
+                                        className="h-20 w-20 object-cover rounded border border-gray-200 cursor-pointer hover:border-[#C72030] transition-colors flex-shrink-0"
+                                        onClick={() => setSelectedImage(attachment.document)}
+                                      />
+                                    ) : (
+                                      <div className="h-20 w-20 bg-gray-100 rounded border border-gray-200 flex items-center justify-center flex-shrink-0">
+                                        <FileText className="w-8 h-8 text-gray-400" />
+                                      </div>
+                                    )}
+                                    <div className="flex-1">
+                                      <p className="text-sm text-gray-900 font-medium">
+                                        {attachment.relation || 'Document'}
+                                      </p>
+                                      <p className="text-xs text-gray-500 truncate">{attachment.document}</p>
+                                      <a
+                                        href={attachment.document}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-[#C72030] hover:text-[#A01828] text-xs font-medium mt-2 inline-block"
+                                      >
+                                        View Full Size →
+                                      </a>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 text-sm">No attachments available</p>
+                        )}
                       </div>
                     </div>
                   </TabsContent>
@@ -1454,13 +1832,20 @@ export const ClubGroupMembershipDetails = () => {
       )}
 
       {/* Payment Modal */}
-      <Dialog open={openPaymentModal} onOpenChange={setOpenPaymentModal}>
-        <DialogContent className="sm:max-w-[400px] bg-white">
+      <Dialog open={openPaymentModal} onOpenChange={(open) => {
+        setOpenPaymentModal(open);
+        if (!open) {
+          setPaymentMethod('upi');
+          setTransactionId('');
+          setAttachments([]);
+        }
+      }}>
+        <DialogContent className="sm:max-w-[600px] w-[95vw] bg-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Make Payment</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
+          <div className="space-y-4 w-full overflow-hidden px-1">
+            <div className="w-full">
               <Label htmlFor="payment_mode">Payment Mode</Label>
               <Select
                 value={paymentMode}
@@ -1476,16 +1861,180 @@ export const ClubGroupMembershipDetails = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="w-full">
+              <Label htmlFor="payment_method">Payment Method</Label>
+              <Select
+                value={paymentMethod}
+                onValueChange={setPaymentMethod}
+                disabled={paymentLoading}
+              >
+                <SelectTrigger className="w-full mt-1" id="payment_method">
+                  <SelectValue placeholder="Select Payment Method" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  {
+                    paymentMode === "online" ? (
+                      <>
+                        <SelectItem value="upi">UPI</SelectItem>
+                        <SelectItem value="card">Card</SelectItem>
+                        <SelectItem value="cash">Cash</SelectItem>
+                        <SelectItem value="netbanking">Net Banking</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="offline">Offline</SelectItem>
+                      </>
+                    )
+                  }
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-full">
               <Label htmlFor="transaction_id">Transaction ID</Label>
               <Input
                 id="transaction_id"
                 value={transactionId}
                 onChange={(e) => setTransactionId(e.target.value)}
                 placeholder="Enter Transaction ID"
-                className="mt-1"
+                className="mt-1 w-full"
                 disabled={paymentLoading}
               />
+            </div>
+            <div className="w-full">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Attachments
+                {attachments.length > 0 && (
+                  <span className="ml-2 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-blue-500 rounded-full">
+                    {attachments.length}
+                  </span>
+                )}
+              </label>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleAttachmentChange}
+                disabled={paymentLoading}
+                className="hidden"
+                accept="*/*"
+              />
+
+              {/* Drag and Drop Area */}
+              <div
+                ref={dragDropRef}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => !paymentLoading && fileInputRef.current?.click()}
+                className={`relative p-6 rounded-lg border-2 border-dashed transition-all cursor-pointer ${isDragActive
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+                  } ${paymentLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <div className="flex flex-col items-center justify-center space-y-2">
+                  <CloudUploadIcon
+                    sx={{
+                      fontSize: 40,
+                      color: isDragActive ? '#3B82F6' : '#9CA3AF',
+                      transition: 'all 0.3s ease',
+                    }}
+                  />
+                  <div className="text-center">
+                    <p className="text-sm font-semibold text-gray-700">
+                      {isDragActive ? 'Drop files here' : 'Drag files here or click to browse'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Support: PDF, Images, Videos, Audio, Documents (Max size per file: 10MB)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* File List */}
+              {attachments.length > 0 && (
+                <div className="mt-5">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-gray-700">
+                      Files to upload ({attachments.length})
+                    </h3>
+                    {attachments.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setAttachments([])}
+                        disabled={paymentLoading}
+                        className="text-xs text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+                      >
+                        Clear all
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {attachments.map((file, idx) => {
+                      const fileInfo = getFileTypeInfo(file.name);
+                      const IconComponent = fileInfo.icon;
+
+                      return (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-white hover:shadow-sm transition-shadow"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div
+                              className="flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0"
+                              style={{ backgroundColor: fileInfo.bgColor }}
+                            >
+                              <IconComponent sx={{ fontSize: 20, color: fileInfo.color }} />
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {file.name}
+                                </p>
+                                <span
+                                  className="px-2 py-0.5 text-xs font-semibold rounded-full text-white flex-shrink-0"
+                                  style={{ backgroundColor: fileInfo.color }}
+                                >
+                                  {fileInfo.type}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                {formatFileSize(file.size)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAttachments(attachments.filter((_, i) => i !== idx));
+                            }}
+                            disabled={paymentLoading}
+                            className="ml-3 flex-shrink-0 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            title="Remove file"
+                          >
+                            <CloseIcon sx={{ fontSize: 18 }} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Summary */}
+                  <div className="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                    <p className="text-sm text-blue-800">
+                      <span className="font-semibold">{attachments.length}</span> file(s) ready to upload
+                      {' '}
+                      <span className="text-blue-600">
+                        ({formatFileSize(attachments.reduce((sum, f) => sum + f.size, 0))})
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>

@@ -108,6 +108,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
     const baseUrl = localStorage.getItem('baseUrl');
     const { id } = useParams();
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [boqs, setBoqs] = useState([]);
     const [boqDetails, setBOQDetails] = useState<BOQDetail[]>([
         {
@@ -124,6 +125,8 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         }
     ]);
     const [attachmentPreviews, setAttachmentPreviews] = useState<{ file: File, preview: string }[]>([]);
+    const [errors, setErrors] = useState({ invoiceNumber: '', invoiceDate: '', postingDate: '', boq: '' });
+    const [boqErrors, setBoqErrors] = useState<Record<string, { selectedBOQ: string; quantity: string }>>({});
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files.length > 0) {
@@ -213,15 +216,9 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         };
     };
 
-    useEffect(() => {
-        boqDetails.forEach((boq) => {
-            if (boq.selectedBOQ) {
-                fetchBOQDetails(boq.selectedBOQ, boq.id);
-            }
-        });
-    }, [boqDetails.map((boq) => boq.selectedBOQ).join(',')]);
-
     const resetForm = () => {
+        setErrors({ invoiceNumber: '', invoiceDate: '', postingDate: '', boq: '' });
+        setBoqErrors({});
         setInvoiceNumber("");
         setInvoiceDate("");
         setAdjustmentAmount("");
@@ -252,7 +249,54 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
     };
 
+    const validate = () => {
+        const newErrors = { invoiceNumber: '', invoiceDate: '', postingDate: '', boq: '' };
+        let isValid = true;
+
+        if (!invoiceNumber.trim()) {
+            newErrors.invoiceNumber = 'Invoice number is required.';
+            isValid = false;
+        }
+        if (!invoiceDate) {
+            newErrors.invoiceDate = 'Invoice date is required.';
+            isValid = false;
+        }
+        if (!postingDate) {
+            newErrors.postingDate = 'Posting date is required.';
+            isValid = false;
+        }
+
+        // BOQ: every row must have a BOQ selected and a quantity entered
+        const newBoqErrors: Record<string, { selectedBOQ: string; quantity: string }> = {};
+        let boqValid = true;
+        boqDetails.forEach(boq => {
+            const rowErrors = { selectedBOQ: '', quantity: '' };
+            if (!boq.selectedBOQ) {
+                rowErrors.selectedBOQ = 'BOQ is required.';
+                boqValid = false;
+            }
+            if (!boq.quantity.trim()) {
+                rowErrors.quantity = 'Quantity is required.';
+                boqValid = false;
+            }
+            newBoqErrors[boq.id] = rowErrors;
+        });
+
+        if (!boqValid) {
+            newErrors.boq = 'Please fill all required BOQ fields.';
+            isValid = false;
+        }
+
+        setErrors(newErrors);
+        setBoqErrors(newBoqErrors);
+        return isValid;
+    };
+
     const handleSaveInvoice = async () => {
+        if (!validate()) return;
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+
         try {
             const payload = {
                 work_order_invoice: {
@@ -281,6 +325,8 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         } catch (error) {
             console.error('Error saving invoice:', error);
             toast.error('Failed to save invoice');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -307,7 +353,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
     };
 
     const updateBOQDetail = (id: string, field: keyof BOQDetail, value: string) => {
-        setBOQDetails(boqDetails.map(boq => {
+        setBOQDetails(prev => prev.map(boq => {
             if (boq.id === id) {
                 const updatedBOQ = { ...boq, [field]: value };
                 if (field === 'quantity') {
@@ -318,6 +364,10 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
             }
             return boq;
         }));
+
+        if (field === 'selectedBOQ' && value) {
+            fetchBOQDetails(value, id);
+        }
     };
 
     return (
@@ -354,22 +404,26 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                         <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
                             <StyledTextField
                                 fullWidth
-                                label="Invoice Number"
+                                label="Invoice Number *"
                                 value={invoiceNumber}
-                                onChange={(e) => setInvoiceNumber(e.target.value)}
+                                onChange={(e) => { setInvoiceNumber(e.target.value); setErrors(prev => ({ ...prev, invoiceNumber: '' })); }}
                                 variant="outlined"
+                                error={!!errors.invoiceNumber}
+                                helperText={errors.invoiceNumber}
                             />
                         </Box>
 
                         <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
                             <StyledTextField
                                 fullWidth
-                                label="Invoice Date"
+                                label="Invoice Date *"
                                 type="date"
                                 value={invoiceDate}
-                                onChange={(e) => setInvoiceDate(e.target.value)}
+                                onChange={(e) => { setInvoiceDate(e.target.value); setErrors(prev => ({ ...prev, invoiceDate: '' })); }}
                                 InputLabelProps={{ shrink: true }}
                                 variant="outlined"
+                                error={!!errors.invoiceDate}
+                                helperText={errors.invoiceDate}
                             />
                         </Box>
                     </Box>
@@ -401,12 +455,14 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                         <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
                             <StyledTextField
                                 fullWidth
-                                label="Posting Date*"
+                                label="Posting Date *"
                                 type="date"
                                 value={postingDate}
-                                onChange={(e) => setPostingDate(e.target.value)}
+                                onChange={(e) => { setPostingDate(e.target.value); setErrors(prev => ({ ...prev, postingDate: '' })); }}
                                 InputLabelProps={{ shrink: true }}
                                 variant="outlined"
+                                error={!!errors.postingDate}
+                                helperText={errors.postingDate}
                             />
                             {postingDate && (
                                 <Typography variant="caption" sx={{ color: 'hsl(var(--muted-foreground))', mt: 1, display: 'block' }}>
@@ -570,12 +626,15 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                                 {/* BOQ and Quantity Row */}
                                 <Box sx={{ display: 'flex', gap: 3, mb: 3, flexWrap: 'wrap' }}>
                                     <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
-                                        <FormControl fullWidth variant="outlined">
-                                            <InputLabel sx={{ color: 'hsl(var(--label-text))' }}>BOQ</InputLabel>
+                                        <FormControl fullWidth variant="outlined" error={!!boqErrors[boq.id]?.selectedBOQ}>
+                                            <InputLabel sx={{ color: 'hsl(var(--label-text))' }}>BOQ *</InputLabel>
                                             <Select
                                                 value={boq.selectedBOQ}
-                                                onChange={(e) => updateBOQDetail(boq.id, 'selectedBOQ', e.target.value)}
-                                                label="BOQ"
+                                                onChange={(e) => {
+                                                    updateBOQDetail(boq.id, 'selectedBOQ', e.target.value);
+                                                    setBoqErrors(prev => ({ ...prev, [boq.id]: { ...prev[boq.id], selectedBOQ: '' } }));
+                                                }}
+                                                label="BOQ *"
                                                 sx={{
                                                     backgroundColor: 'hsl(var(--background))',
                                                     '&:hover .MuiOutlinedInput-notchedOutline': {
@@ -586,24 +645,32 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                                                     },
                                                 }}
                                             >
-                                                {
-                                                    boqs.map((boq: any) => (
-                                                        <MenuItem key={boq.id} value={boq.id}>
-                                                            {boq.label}
-                                                        </MenuItem>
-                                                    ))
-                                                }
+                                                {boqs.map((boq: any) => (
+                                                    <MenuItem key={boq.id} value={boq.id}>
+                                                        {boq.label}
+                                                    </MenuItem>
+                                                ))}
                                             </Select>
+                                            {boqErrors[boq.id]?.selectedBOQ && (
+                                                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+                                                    {boqErrors[boq.id].selectedBOQ}
+                                                </Typography>
+                                            )}
                                         </FormControl>
                                     </Box>
 
                                     <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
                                         <StyledTextField
                                             fullWidth
-                                            label="Quantity/Area(per Sq. ft)"
+                                            label="Quantity/Area(per Sq. ft) *"
                                             value={boq.quantity}
-                                            onChange={(e) => updateBOQDetail(boq.id, 'quantity', e.target.value)}
+                                            onChange={(e) => {
+                                                updateBOQDetail(boq.id, 'quantity', e.target.value);
+                                                setBoqErrors(prev => ({ ...prev, [boq.id]: { ...prev[boq.id], quantity: '' } }));
+                                            }}
                                             variant="outlined"
+                                            error={!!boqErrors[boq.id]?.quantity}
+                                            helperText={boqErrors[boq.id]?.quantity}
                                         />
                                     </Box>
                                 </Box>
@@ -687,9 +754,10 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                         </Button>
                         <Button
                             onClick={handleSaveInvoice}
-                            className="bg-red-600 hover:bg-red-700 text-white px-8"
+                            disabled={isSubmitting}
+                            className="bg-red-600 hover:bg-red-700 text-white px-8 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            Save
+                            {isSubmitting ? "Saving..." : "Save"}
                         </Button>
                     </Box>
                 </Box>

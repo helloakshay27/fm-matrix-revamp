@@ -1,10 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   Building2,
   Calendar,
+  Check,
+  ChevronDown,
   LineChart,
   Loader2,
+  Users,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -41,6 +44,115 @@ const inputClass =
 const selectTriggerClass =
   "h-11 w-full rounded-xl border-neutral-200 bg-white focus:ring-[#DA7756]/25";
 
+const SearchableSelect = ({
+  value,
+  onChange,
+  options,
+  placeholder = "Search...",
+  clearValue = "",
+  clearLabel = "Clear",
+  showClear = true,
+  menuPlacement = "bottom",
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+  placeholder?: string;
+  clearValue?: string;
+  clearLabel?: string;
+  showClear?: boolean;
+  menuPlacement?: "top" | "bottom";
+}) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
+
+  const selected = options.find((option) => option.value === value);
+  const filtered = options.filter((option) =>
+    option.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div ref={ref} className="relative" style={{ zIndex: open ? 50 : 1 }}>
+      <div className="relative">
+        <input
+          type="text"
+          className={inputClass}
+          placeholder={placeholder}
+          value={open ? search : selected?.label ?? ""}
+          onClick={() => {
+            setOpen(true);
+            setSearch("");
+          }}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setOpen(true);
+          }}
+          readOnly={!open}
+          style={{ paddingRight: 36, cursor: "pointer" }}
+        />
+        <ChevronDown
+          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 transition-transform"
+          style={{ transform: open ? "translateY(-50%) rotate(180deg)" : "translateY(-50%)" }}
+        />
+      </div>
+
+      {open && (
+        <div
+          className="absolute left-0 right-0 z-50 max-h-[200px] overflow-y-auto rounded-xl border border-neutral-200 bg-white shadow-lg"
+          style={menuPlacement === "top" ? { bottom: "calc(100% + 4px)" } : { top: "calc(100% + 4px)" }}
+        >
+          {showClear && value && value !== clearValue && (
+            <button
+              type="button"
+              onClick={() => {
+                onChange(clearValue);
+                setOpen(false);
+                setSearch("");
+              }}
+              className="w-full border-b border-neutral-100 px-3 py-2.5 text-left text-xs font-semibold text-red-500 hover:bg-red-50"
+            >
+              {clearLabel}
+            </button>
+          )}
+          {filtered.length === 0 ? (
+            <div className="px-3 py-3 text-center text-sm text-neutral-500">No results found</div>
+          ) : (
+            filtered.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                  setSearch("");
+                }}
+                className={cn(
+                  "flex w-full items-center justify-between border-b border-neutral-100 px-3 py-2.5 text-left text-sm font-medium last:border-b-0 hover:bg-[#fff8f6]",
+                  option.value === value ? "bg-[#fef6f4] text-[#DA7756]" : "text-neutral-800"
+                )}
+              >
+                <span className="truncate">{option.label}</span>
+                {option.value === value && <Check className="h-4 w-4 shrink-0 text-[#DA7756]" strokeWidth={3} />}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 type EditUser = {
   id: number;
   name: string;
@@ -57,7 +169,7 @@ export type EditKPIFormValues = {
   unit: string;
   departmentId: number | null;
   departmentName: string;
-  frequency: "weekly" | "monthly" | "quarterly";
+  frequency: "daily" | "weekly" | "monthly" | "quarterly";
   relatedUrl: string;
   targetValue: number;
   currentValue: number;
@@ -109,14 +221,30 @@ const EditKPIDialog: React.FC<EditKPIDialogProps> = ({
     );
   }, [departments, kpi]);
 
+  const resolvedAssigneeId = useMemo(() => {
+    if (!kpi) return "";
+
+    if (kpi.assigneeId != null) {
+      return String(kpi.assigneeId);
+    }
+
+    const matchedUser = users.find(
+      (user) => user.name.toLowerCase() === (kpi.owner ?? "").toLowerCase()
+    );
+
+    return matchedUser ? String(matchedUser.id) : "";
+  }, [kpi, users]);
+
   const [name, setName] = useState("");
   const [unit, setUnit] = useState("");
   const [departmentId, setDepartmentId] = useState("");
-  const [frequency, setFrequency] = useState<"weekly" | "monthly" | "quarterly">("weekly");
+  const [frequency, setFrequency] = useState<"daily" | "weekly" | "monthly" | "quarterly">("weekly");
   const [relatedUrl, setRelatedUrl] = useState("");
   const [targetValue, setTargetValue] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [weight, setWeight] = useState("10");
+  const [assigneeId, setAssigneeId] = useState("");
+  const toIntegerString = (value: string) => value.replace(/\D/g, "");
 
   useEffect(() => {
     if (!kpi || !open) return;
@@ -127,17 +255,20 @@ const EditKPIDialog: React.FC<EditKPIDialogProps> = ({
       resolvedDepartment ? String(resolvedDepartment.id) : ""
     );
     setFrequency(
-      kpi.frequency.toLowerCase() === "weekly"
+      kpi.frequency.toLowerCase() === "daily"
+        ? "daily"
+        : kpi.frequency.toLowerCase() === "weekly"
         ? "weekly"
         : kpi.frequency.toLowerCase() === "quarterly"
           ? "quarterly"
           : "monthly"
     );
     setRelatedUrl(kpi.description ?? "");
-    setTargetValue(String(kpi.target ?? "0"));
+    setTargetValue(String(Math.trunc(Number(kpi.target) || 0)));
     setPriority(kpi.priority ?? "medium");
-    setWeight("10");
-  }, [kpi, open, resolvedDepartment]);
+    setWeight(String(Math.trunc(Number(kpi.weight) || 10)));
+    setAssigneeId(resolvedAssigneeId);
+  }, [kpi, open, resolvedAssigneeId, resolvedDepartment]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,11 +290,11 @@ const EditKPIDialog: React.FC<EditKPIDialogProps> = ({
         "Operations",
       frequency,
       relatedUrl: relatedUrl.trim(),
-      targetValue: Number(targetValue) || 0,
-      currentValue: Number(kpi.value) || 0,
+      targetValue: parseInt(targetValue, 10) || 0,
+      currentValue: parseInt(String(kpi.value), 10) || 0,
       priority,
-      weight,
-      assigneeId: kpi.assigneeId ?? users[0]?.id ?? null,
+      weight: String(parseInt(weight, 10) || 0),
+      assigneeId: assigneeId ? Number(assigneeId) : null,
     });
   };
 
@@ -231,35 +362,51 @@ const EditKPIDialog: React.FC<EditKPIDialogProps> = ({
                   <Building2 className="h-4 w-4 text-[#DA7756]" />
                   Department *
                 </Label>
-                <Select value={departmentId} onValueChange={setDepartmentId}>
-                  <SelectTrigger className={selectTriggerClass}>
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={String(dept.id)}>
-                        {dept.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={departmentId}
+                  onChange={setDepartmentId}
+                  options={departments.map((dept) => ({
+                    value: String(dept.id),
+                    label: dept.name,
+                  }))}
+                  placeholder="Search department..."
+                  clearLabel="Clear department"
+                />
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-1.5 text-sm text-neutral-700">
                   <Calendar className="h-4 w-4 text-[#DA7756]" />
                   Frequency *
                 </Label>
-                <Select value={frequency} onValueChange={(value) => setFrequency(value as "weekly" | "monthly" | "quarterly")}>
+                <Select value={frequency} onValueChange={(value) => setFrequency(value as "daily" | "weekly" | "monthly" | "quarterly")}>
                   <SelectTrigger className={selectTriggerClass}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
                     <SelectItem value="weekly">Weekly</SelectItem>
                     <SelectItem value="monthly">Monthly</SelectItem>
                     <SelectItem value="quarterly">Quarterly</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <Label className="flex items-center gap-1.5 text-sm text-neutral-700">
+                <Users className="h-4 w-4 text-[#DA7756]" />
+                Assigned User
+              </Label>
+              <SearchableSelect
+                value={assigneeId}
+                onChange={setAssigneeId}
+                options={users.map((user) => ({
+                  value: String(user.id),
+                  label: user.name,
+                }))}
+                placeholder="Search user..."
+                clearLabel="Clear user"
+              />
             </div>
 
             <div className="mt-4 space-y-2">
@@ -284,9 +431,9 @@ const EditKPIDialog: React.FC<EditKPIDialogProps> = ({
                 <input
                   id="edit-kpi-target"
                   type="text"
-                  inputMode="decimal"
+                  inputMode="numeric"
                   value={targetValue}
-                  onChange={(e) => setTargetValue(e.target.value)}
+                  onChange={(e) => setTargetValue(toIntegerString(e.target.value))}
                   className={inputClass}
                 />
               </div>
@@ -312,7 +459,7 @@ const EditKPIDialog: React.FC<EditKPIDialogProps> = ({
                   type="text"
                   inputMode="numeric"
                   value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
+                  onChange={(e) => setWeight(toIntegerString(e.target.value))}
                   className={inputClass}
                 />
               </div>

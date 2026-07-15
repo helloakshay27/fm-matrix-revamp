@@ -24,7 +24,7 @@ export const ActionSelectionPanel: React.FC<ActionSelectionPanelProps> = ({
   }
 
   return (
-    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px]">
+    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px] selection-panel">
       {/* Beige left strip - 44px wide */}
       <div className="w-[44px] bg-[#C4B59A] rounded-l-lg flex flex-col items-center justify-center">
         <div className="text-[#C72030] font-bold text-lg"></div>
@@ -41,7 +41,7 @@ export const ActionSelectionPanel: React.FC<ActionSelectionPanelProps> = ({
 
         <div className="flex items-center gap-2">
           {/* Add Visitor Button */}
-          {shouldShow("assets", "add") && (
+          {shouldShow("Audit", "create") && (
             <Button
               onClick={onAddVisitor}
               variant="ghost"
@@ -54,7 +54,7 @@ export const ActionSelectionPanel: React.FC<ActionSelectionPanelProps> = ({
           )}
 
           {/* Import Visitors Button */}
-          {!shouldShow("assets", "create") && (
+          {!shouldShow("Audit", "create") && (
             <Button
               onClick={onImportVisitors}
               variant="ghost"

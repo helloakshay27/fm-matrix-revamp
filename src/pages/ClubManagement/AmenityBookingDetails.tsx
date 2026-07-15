@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch } from "@/store/hooks";
 import {
@@ -6,7 +6,7 @@ import {
   fetchBookingDetails,
   getLogs,
 } from "@/store/slices/facilityBookingsSlice";
-import { ArrowLeft, Logs, Ticket, CreditCard, Download } from "lucide-react";
+import { ArrowLeft, Logs, Ticket, CreditCard, Download, Edit } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,17 @@ import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "sonner";
+import {
+  CloudUpload,
+  PictureAsPdf,
+  Image,
+  Description,
+  AudioFile,
+  VideoLibrary,
+  AttachFile,
+} from '@mui/icons-material';
+import { Close as CloseIcon } from '@mui/icons-material';
+
 
 export const AmenityBookingDetailsClubPage = () => {
   const { id } = useParams();
@@ -41,34 +52,59 @@ export const AmenityBookingDetailsClubPage = () => {
   // Payment modal state
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const [paymentMode, setPaymentMode] = useState('online');
-  const [paymentMethod, setPaymentMethod] = useState('upi');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [transactionId, setTransactionId] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
+
+  // Attachment state
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragDropRef = useRef<HTMLDivElement>(null);
+
   // Payment API handler
   const handlePayment = async () => {
     if (!id) return;
     setPaymentLoading(true);
     try {
-      const response = await axios.post(
-        `https://${baseUrl}/pms/admin/facility_bookings/${id}/payment`,
-        {
+      let data: any;
+      let headers: any = { Authorization: `Bearer ${token}` };
+
+      if (attachments.length > 0) {
+        const formData = new FormData();
+        formData.append('lock_payment[payment_mode]', paymentMode);
+        formData.append('lock_payment[payment_method]', paymentMethod);
+        formData.append('lock_payment[pg_transaction_id]', transactionId);
+        attachments.forEach((file) => {
+          formData.append('attachments[]', file);
+        });
+        data = formData;
+        headers['Content-Type'] = 'multipart/form-data';
+      } else {
+        data = {
           lock_payment: {
             payment_mode: paymentMode,
-            payment_method: paymentMethod
+            payment_method: paymentMethod,
+            pg_transaction_id: transactionId
           }
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
+        };
+        headers['Content-Type'] = 'application/json';
+      }
+
+      const response = await axios.post(
+        `https://${baseUrl}/pms/admin/facility_bookings/${id}/payment`,
+        data,
+        { headers }
       );
       toast.success('Payment request sent successfully!');
+      setAttachments([]);
       setOpenPaymentModal(false);
       fetchDetails();
     } catch (error) {
       toast.error('Failed to send payment request');
       console.error('Payment error:', error);
+      // Clear attachments on error
+      setAttachments([]);
     } finally {
       setPaymentLoading(false);
     }
@@ -106,7 +142,94 @@ export const AmenityBookingDetailsClubPage = () => {
     }
   };
 
+  const getFileTypeInfo = useCallback((fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+    if (['pdf'].includes(ext)) {
+      return { icon: PictureAsPdf, color: '#DC2626', bgColor: '#FEE2E2', type: 'PDF' };
+    }
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+      return { icon: Image, color: '#2563EB', bgColor: '#DBEAFE', type: 'Image' };
+    }
+    if (['mp3', 'wav', 'aac', 'flac', 'm4a'].includes(ext)) {
+      return { icon: AudioFile, color: '#9333EA', bgColor: '#F3E8FF', type: 'Audio' };
+    }
+    if (['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext)) {
+      return { icon: VideoLibrary, color: '#EA580C', bgColor: '#FFEDD5', type: 'Video' };
+    }
+    if (['doc', 'docx', 'txt', 'rtf', 'xlsx', 'xls', 'csv', 'ppt', 'pptx'].includes(ext)) {
+      return { icon: Description, color: '#16A34A', bgColor: '#DCFCE7', type: 'Document' };
+    }
+    return { icon: AttachFile, color: '#6B7280', bgColor: '#F3F4F6', type: 'File' };
+  }, []);
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const validateAndAddFiles = useCallback((filesToAdd: File[]) => {
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    const validFiles: File[] = [];
+    const invalidFiles: string[] = [];
+
+    filesToAdd.forEach((file) => {
+      if (file.size > MAX_FILE_SIZE) {
+        invalidFiles.push(`${file.name} (${formatFileSize(file.size)})`);
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    if (invalidFiles.length > 0) {
+      toast.dismiss();
+      invalidFiles.forEach((fileName) => {
+        toast.error(`${fileName} exceeds 10MB limit`);
+      });
+    }
+
+    if (validFiles.length > 0) {
+      setAttachments([...attachments, ...validFiles]);
+      toast.dismiss();
+      toast.success(`${validFiles.length} file(s) added successfully`);
+    }
+  }, [attachments]);
+
+  const handleDrag = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setIsDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setIsDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+    const files = Array.from(e.dataTransfer.files || []) as File[];
+    if (files.length > 0) {
+      validateAndAddFiles(files);
+    }
+  };
+
+  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []) as File[];
+    if (files.length > 0) {
+      validateAndAddFiles(files);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(attachments.filter((_, i) => i !== index));
+  };
 
   const fetchDetails = async () => {
     try {
@@ -116,6 +239,25 @@ export const AmenityBookingDetailsClubPage = () => {
       setBookings(response);
     } catch (error) {
       console.error("Error fetching booking details:", error);
+    }
+  };
+
+  const [sendingInvoice, setSendingInvoice] = useState(false);
+
+  const handleSendInvoice = async () => {
+    setSendingInvoice(true);
+    try {
+      await axios.post(
+        `https://${baseUrl}/api/facility_bookings/${id}/send_invoice_mail`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Invoice sent successfully');
+    } catch (error: any) {
+      const msg = error?.response?.data?.error || error?.response?.data?.message || 'Failed to send invoice';
+      toast.error(msg);
+    } finally {
+      setSendingInvoice(false);
     }
   };
 
@@ -324,13 +466,15 @@ export const AmenityBookingDetailsClubPage = () => {
                   {bookings?.booked_by_name}
                 </span>
               </div>
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">CGST</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {bookings?.gst || "-"}%
-                </span>
-              </div>
+              {(bookings?.payment_method !== 'complementary' && bookings?.payment_method !== "NA") && (
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">CGST</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {bookings?.gst || "-"}%
+                  </span>
+                </div>
+              )}
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Scheduled Date</span>
                 <span className="text-gray-500 mx-2">:</span>
@@ -355,13 +499,15 @@ export const AmenityBookingDetailsClubPage = () => {
                 </span>
               </div>
 
-              <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">SGST</span>
-                <span className="text-gray-500 mx-2">:</span>
-                <span className="text-gray-900 font-medium">
-                  {bookings?.sgst || "-"}%
-                </span>
-              </div>
+              {(bookings?.payment_method !== 'complementary' && bookings?.payment_method !== "NA") && (
+                <div className="flex items-start">
+                  <span className="text-gray-500 min-w-[140px]">SGST</span>
+                  <span className="text-gray-500 mx-2">:</span>
+                  <span className="text-gray-900 font-medium">
+                    {bookings?.sgst || "-"}%
+                  </span>
+                </div>
+              )}
               <div className="flex items-start">
                 <span className="text-gray-500 min-w-[140px]">Booked On</span>
                 <span className="text-gray-500 mx-2">:</span>
@@ -457,7 +603,7 @@ export const AmenityBookingDetailsClubPage = () => {
                     <div key={index} className="flex justify-between items-center pl-4">
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-600">{item.facility_booking_accessory.name}</span>
-                        <span className="text-xs text-gray-400">({item.facility_booking_accessory.quantity} x ₹{item.facility_booking_accessory.price.toFixed(2)})</span>
+                        <span className="text-xs text-gray-400">({item.facility_booking_accessory.quantity} x ₹{item.facility_booking_accessory?.price?.toFixed(2)})</span>
                       </div>
                       <span className="text-sm font-medium">₹{item.facility_booking_accessory.total.toFixed(2)}</span>
                     </div>
@@ -469,12 +615,7 @@ export const AmenityBookingDetailsClubPage = () => {
               <div className="flex justify-between items-center py-2 border-b border-gray-200">
                 <span className="text-gray-700 font-medium">Subtotal</span>
                 <span className="text-gray-900 font-medium">
-                  ₹{(
-                    (bookings?.member_charges || 0) +
-                    (bookings?.guest_charges || 0) +
-                    (bookings?.slot_charges || 0) +
-                    (bookings?.facility_booking_accessories?.reduce((acc, curr) => acc + curr.facility_booking_accessory.total, 0) || 0)
-                  ).toFixed(2)}
+                  ₹{bookings?.sub_total.toFixed(2) || '0.00'}
                 </span>
               </div>
 
@@ -495,7 +636,7 @@ export const AmenityBookingDetailsClubPage = () => {
               )}
 
               {/* CGST */}
-              {bookings?.cgst_amount != null && bookings.cgst_amount > 0 && (
+              {bookings?.cgst_amount != null && bookings.cgst_amount > 0 && bookings?.payment_method !== 'complementary' && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <div className="flex items-center gap-2">
                     <span className="text-gray-700">CGST</span>
@@ -506,7 +647,7 @@ export const AmenityBookingDetailsClubPage = () => {
               )}
 
               {/* SGST */}
-              {bookings?.sgst_amount != null && bookings.sgst_amount > 0 && (
+              {bookings?.sgst_amount != null && bookings.sgst_amount > 0 && bookings?.payment_method !== 'complementary' && (
                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                   <div className="flex items-center gap-2">
                     <span className="text-gray-700">SGST</span>
@@ -637,8 +778,8 @@ export const AmenityBookingDetailsClubPage = () => {
                           </td>
                           <td className="border border-gray-300 px-4 py-3">
                             <span className={`px-2 py-1 rounded text-xs font-medium ${member.booked_member?.oftype === 'primary'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-800'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
                               }`}>
                               {member.booked_member?.oftype || '-'}
                             </span>
@@ -682,16 +823,17 @@ export const AmenityBookingDetailsClubPage = () => {
 
   return (
     <div className="p-[30px] min-h-screen bg-transparent">
-      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-1 hover:text-gray-800 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
-        </button>
-      </div>
       <>
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-1 hover:text-gray-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back</span>
+          </button>
+        </div>
+
         <div className="flex items-center gap-4 mb-6">
           <h1 className="text-[24px] font-semibold text-[#1a1a1a]">
             {bookings.facility_name}
@@ -701,20 +843,48 @@ export const AmenityBookingDetailsClubPage = () => {
 
         {/* Payment & Cancel Button for Pending/Confirmed Status */}
 
-        {(bookings?.current_status === 'Pending' || bookings?.current_status === 'Confirmed') && (
-          <div className="flex justify-end mt-6 mb-4 gap-2">
-            {bookings?.current_status === 'Pending' && (
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setOpenPaymentModal(true)}>
-                Payment
+        {/* {(bookings?.current_status === 'Pending' || bookings?.current_status === 'Confirmed') && ( */}
+        <div className="flex justify-end mt-6 mb-4 gap-2">.
+          {
+            bookings?.current_status === 'Confirmed' && (
+              <Button
+                variant="outline"
+                className="border-[#C72030] text-[#C72030] hover:bg-red-50"
+                onClick={handleSendInvoice}
+                disabled={sendingInvoice}
+              >
+                {sendingInvoice ? 'Sending...' : 'Send Invoice'}
               </Button>
-            )}
-            {bookings?.current_status === 'Confirmed' && bookings?.can_cancel_bool && (
-              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={() => setShowCancelModal(true)}>
-                Cancel Booking
+            )
+          }
+          {
+            bookings?.current_status === 'Pending' && (
+              <Button
+                variant="outline"
+                className="border-[#C72030] text-[#C72030] hover:bg-red-50"
+                onClick={() => navigate(`/club-management/amenities-booking-club/${id}/edit`)}
+              >
+                <Edit className="w-4 h-4 mr-1" />
+                Edit
               </Button>
-            )}
-          </div>
-        )}
+            )
+          }
+          {((bookings?.current_status === 'Pending') || (bookings?.payment_method === "pay_on_facility" && bookings?.amount_paid === null)) && (
+            <Button variant="outline" onClick={() => setOpenPaymentModal(true)}>
+              <CreditCard className="w-4 h-4 mr-1" />
+              Payment
+            </Button>
+          )}
+          {bookings?.current_status === 'Confirmed' && bookings?.can_cancel_bool && (
+            <Button
+              variant="outline"
+              className="border-[#C72030] text-[#C72030] hover:bg-red-50"
+              onClick={() => setShowCancelModal(true)}
+            >
+              Cancel Booking
+            </Button>
+          )}
+        </div>
 
 
 
@@ -726,13 +896,19 @@ export const AmenityBookingDetailsClubPage = () => {
 
 
         {/* Payment Modal */}
-        <Dialog open={openPaymentModal} onOpenChange={setOpenPaymentModal}>
-          <DialogContent className="sm:max-w-[400px]">
+        <Dialog open={openPaymentModal} onOpenChange={(open) => {
+          setOpenPaymentModal(open);
+          if (!open) {
+            setTransactionId('');
+            setAttachments([]);
+          }
+        }}>
+          <DialogContent className="sm:max-w-[600px] w-[95vw] bg-white max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Make Payment</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
+            <div className="space-y-4 overflow-hidden px-1">
+              <div className="w-full">
                 <Label htmlFor="payment_mode">Payment Mode</Label>
                 <Select
                   value={paymentMode}
@@ -748,7 +924,7 @@ export const AmenityBookingDetailsClubPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
+              <div className="w-full">
                 <Label htmlFor="payment_method">Payment Method</Label>
                 <Select
                   value={paymentMethod}
@@ -759,12 +935,136 @@ export const AmenityBookingDetailsClubPage = () => {
                     <SelectValue placeholder="Select Payment Method" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="upi">UPI</SelectItem>
-                    <SelectItem value="card">Card</SelectItem>
-                    <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="netbanking">Net Banking</SelectItem>
+                    {
+                      paymentMode === "online" ? (
+                        <>
+                          <SelectItem value="upi">UPI</SelectItem>
+                          <SelectItem value="card">Card</SelectItem>
+                          <SelectItem value="cash">Cash</SelectItem>
+                          <SelectItem value="netbanking">Net Banking</SelectItem>
+                        </>
+                      ) : (
+                        <>
+                          <SelectItem value="offline">Offline</SelectItem>
+                        </>
+                      )
+                    }
+
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="w-full">
+                <Label htmlFor="transaction_id">Transaction ID</Label>
+                <Input
+                  id="transaction_id"
+                  type="text"
+                  placeholder="Enter transaction ID"
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  disabled={paymentLoading}
+                  className="w-full mt-1"
+                />
+              </div>
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Attachments
+                  {attachments.length > 0 && (
+                    <span className="ml-2 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-blue-500 rounded-full">
+                      {attachments.length}
+                    </span>
+                  )}
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  onChange={handleAttachmentChange}
+                  disabled={paymentLoading}
+                  className="hidden"
+                  accept="*/*"
+                />
+                <div
+                  ref={dragDropRef}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={() => !paymentLoading && fileInputRef.current?.click()}
+                  className={`relative p-6 rounded-lg border-2 border-dashed transition-all cursor-pointer ${isDragActive
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+                    } ${paymentLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <div className="flex flex-col items-center justify-center">
+                    <CloudUpload
+                      style={{
+                        fontSize: 40,
+                        color: isDragActive ? '#3B82F6' : '#9CA3AF',
+                        marginBottom: 8,
+                        transition: 'all 0.3s ease',
+                      }}
+                    />
+                    <p className="text-sm font-medium text-gray-700">Drag files here or click to browse</p>
+                    <p className="text-xs text-gray-500 mt-1">Maximum file size: 10MB per file</p>
+                  </div>
+                </div>
+                {attachments.length > 0 && (
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-blue-500 rounded-full">
+                        {attachments.length}
+                      </span>
+                      <button
+                        onClick={() => setAttachments([])}
+                        className="text-sm text-red-600 hover:text-red-700 font-medium"
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                      {attachments.map((file, index) => {
+                        const fileInfo = getFileTypeInfo(file.name);
+                        const IconComponent = fileInfo.icon;
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded transition-colors"
+                          >
+                            <div
+                              style={{ backgroundColor: fileInfo.bgColor }}
+                              className="p-2 rounded flex-shrink-0"
+                            >
+                              <IconComponent style={{ color: fileInfo.color, fontSize: 20 }} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-700 truncate">{file.name}</p>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  style={{ backgroundColor: fileInfo.bgColor, color: fileInfo.color }}
+                                  className="text-xs font-medium px-2 py-0.5 rounded"
+                                >
+                                  {fileInfo.type}
+                                </span>
+                                <span className="text-xs text-gray-500">{formatFileSize(file.size)}</span>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => removeAttachment(index)}
+                              className="text-gray-400 hover:text-red-600 flex-shrink-0 transition-colors"
+                            >
+                              <CloseIcon style={{ fontSize: 18 }} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2 p-3 bg-blue-50 rounded-lg">
+                      <p className="text-xs text-blue-700">
+                        <strong>{attachments.length} file(s)</strong> • <strong>{formatFileSize(attachments.reduce((sum, f) => sum + f.size, 0))}</strong>
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <DialogFooter>

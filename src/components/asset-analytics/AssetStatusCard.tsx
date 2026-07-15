@@ -1,136 +1,106 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Download, Activity } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { Download } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+
+// Guideline pie colors
+const PIE_COLORS = ['#76CDC1', '#E39090', '#CDCAF5', '#EDC488'];
 
 interface AssetStatusCardProps {
   data: any;
   onDownload?: () => Promise<void>;
 }
 
-const COLORS = ['#c6b692', '#d8dcdd', '#8b7355', '#a3a8aa'];
+const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.55;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  return percent > 0.05 ? (
+    <text x={x} y={y} fill="#333" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={600}>
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  ) : null;
+};
 
 export const AssetStatusCard: React.FC<AssetStatusCardProps> = ({ data, onDownload }) => {
-  // Process data for chart
-  const processData = () => {
-    if (!data) {
-      return [
-        { name: 'No Data', value: 1, color: '#e5e7eb' }
-      ];
-    }
+  const statusData = data?.assets_statistics?.status ?? data ?? {};
 
-    // Handle both direct status data (from API service) and wrapped data
-    const statusData = data.assets_statistics?.status || data;
-    
-    const chartData = [
-      {
-        name: 'In Use',
-        value: statusData.assets_in_use_total || statusData.total_assets_in_use || 0,
-        color: '#c6b692'
-      },
-      {
-        name: 'Breakdown',
-        value: statusData.assets_in_breakdown_total || statusData.total_assets_in_breakdown || 0,
-        color: '#d8dcdd'
-      },
-      {
-        name: 'In Store',
-        value: statusData.in_store || 0,
-        color: '#8b7355'
-      },
-      {
-        name: 'In Disposed',
-        value: statusData.in_disposed || 0,
-        color: '#a3a8aa'
-      }
-    ].filter(item => item.value > 0);
+  const chartData = [
+    { name: 'In Use',      value: statusData.assets_in_use_total ?? statusData.total_assets_in_use ?? 0 },
+    { name: 'Breakdown',   value: statusData.assets_in_breakdown_total ?? statusData.total_assets_in_breakdown ?? 0 },
+    { name: 'In Store',    value: statusData.in_store ?? 0 },
+    { name: 'Disposed',    value: statusData.in_disposed ?? 0 },
+  ].filter(d => d.value > 0);
 
-    return chartData.length > 0 ? chartData : [{ name: 'No Data', value: 1, color: '#e5e7eb' }];
-  };
-
-  const chartData = processData();
-  const statusData = data?.assets_statistics?.status || data;
-  
-  // Debug logging
-  console.log('AssetStatusCard - Raw data:', data);
-  console.log('AssetStatusCard - Status data:', statusData);
-  console.log('AssetStatusCard - Chart data:', chartData);
-  
-  const hasData = statusData && (
-    statusData.assets_in_use_total !== undefined ||
-    statusData.assets_in_breakdown_total !== undefined ||
-    statusData.total_assets_in_use !== undefined ||
-    statusData.total_assets_in_breakdown !== undefined
-  );
-  
-  console.log('AssetStatusCard - Has data:', hasData);
+  const hasData = chartData.length > 0;
+  const total = chartData.reduce((s, d) => s + d.value, 0);
 
   return (
-    <Card className="h-96">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="flex items-center gap-2 text-base font-medium">
-          <Activity className="w-4 h-4" />
-          Assets Status
-        </CardTitle>
+    <div className="bg-white rounded-xl shadow-sm">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+          Asset Status Distribution
+        </h3>
         {onDownload && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onDownload}
-            className="h-8 w-8 p-0"
-            data-download-button
-          >
-            <Download className="w-4 h-4 !text-[#C72030]" style={{ color: '#C72030' }} />
-          </Button>
+          <Download
+            data-no-drag="true"
+            className="w-4 h-4 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors z-50"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDownload(); }}
+            onPointerDown={(e) => { e.stopPropagation(); }}
+            onMouseDown={(e) => { e.stopPropagation(); }}
+            style={{ pointerEvents: 'auto' }}
+          />
         )}
-      </CardHeader>
-      <CardContent>
+      </div>
+
+      <div className="flex-1 p-5 flex flex-col min-h-0">
         {hasData ? (
-          <div className="space-y-4">
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
+          <>
+            {/* Donut chart */}
+            <div className="relative" style={{ height: 260 }}>
+              <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
                   <Pie
                     data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={80}
-                    paddingAngle={5}
+                    cx="50%" cy="50%"
+                    innerRadius="38%" outerRadius="60%"
+                    paddingAngle={3}
                     dataKey="value"
+                    labelLine={false}
+                    label={CustomLabel}
                   >
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    {chartData.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip formatter={(v: any, n: any) => [v, n]} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
                 </PieChart>
               </ResponsiveContainer>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">
-                  {statusData?.assets_in_use_total || statusData?.total_assets_in_use || 0}
+              {/* Center total */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{total.toLocaleString()}</div>
+                  <div className="text-xs text-gray-500">Total</div>
                 </div>
-                <div className="text-muted-foreground">In Use</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-destructive">
-                  {statusData?.assets_in_breakdown_total || statusData?.total_assets_in_breakdown || 0}
-                </div>
-                <div className="text-muted-foreground">Breakdown</div>
               </div>
             </div>
-          </div>
+
+            {/* Legend + stat cards */}
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              {chartData.map((d, i) => (
+                <div key={d.name} className="rounded-xl px-3 py-3 text-center" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] + '25' }}>
+                  <div className="text-xl font-bold text-gray-900">{d.value.toLocaleString()}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{d.name}</div>
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
+          <div className="flex-1 flex items-center justify-center py-12 text-gray-400 text-sm">
             No data available
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

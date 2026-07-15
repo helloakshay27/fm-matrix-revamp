@@ -12,7 +12,7 @@ interface ScheduleAnalyticsCardProps {
   type: 'schedule_overview' | 'schedule_completion' | 'resource_utilization';
 }
 
-const COLORS = ['#10B981', '#F59E0B', '#C72030', '#3B82F6', '#8B5CF6', '#EF4444'];
+const COLORS = ['#76CDC1', '#E39090', '#CDCAF5', '#9EC8BA', '#EDC488', '#8E7BE0'];
 
 export const ScheduleAnalyticsCard: React.FC<ScheduleAnalyticsCardProps> = ({ title, data, type }) => {
   const {
@@ -39,9 +39,9 @@ export const ScheduleAnalyticsCard: React.FC<ScheduleAnalyticsCardProps> = ({ ti
       case 'schedule_overview':
         if (data.total_schedules !== undefined) {
           const overviewData = [
-            { name: 'Completed', value: data.completed_schedules || 0, color: '#10B981' },
-            { name: 'Pending', value: data.pending_schedules || 0, color: '#F59E0B' },
-            { name: 'Overdue', value: data.overdue_schedules || 0, color: '#C72030' }
+            { name: 'Completed', value: data.completed_schedules || 0, color: '#9EC8BA' },
+            { name: 'Pending', value: data.pending_schedules || 0, color: '#EDC488' },
+            { name: 'Overdue', value: data.overdue_schedules || 0, color: '#DA7756' }
           ];
 
           const scheduleBreakdown = data.schedule_breakdown ? [
@@ -113,7 +113,7 @@ export const ScheduleAnalyticsCard: React.FC<ScheduleAnalyticsCardProps> = ({ ti
                       <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} />
                       <Tooltip />
-                      <Bar dataKey="value" fill="#3B82F6" />
+                      <Bar dataKey="value" fill="#9EC8BA" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -142,8 +142,8 @@ export const ScheduleAnalyticsCard: React.FC<ScheduleAnalyticsCardProps> = ({ ti
                       <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} />
                       <Tooltip />
-                      <Line type="monotone" dataKey="completed" stroke="#10B981" strokeWidth={2} name="Completed" />
-                      <Line type="monotone" dataKey="pending" stroke="#F59E0B" strokeWidth={2} name="Pending" />
+                      <Line type="monotone" dataKey="completed" stroke="#9EC8BA" strokeWidth={2} name="Completed" />
+                      <Line type="monotone" dataKey="pending" stroke="#EDC488" strokeWidth={2} name="Pending" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -158,7 +158,7 @@ export const ScheduleAnalyticsCard: React.FC<ScheduleAnalyticsCardProps> = ({ ti
                       <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} />
                       <Tooltip />
-                      <Bar dataKey="completion_rate" fill="#3B82F6" name="Completion %" />
+                      <Bar dataKey="completion_rate" fill="#DA7756" name="Completion %" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -215,7 +215,7 @@ export const ScheduleAnalyticsCard: React.FC<ScheduleAnalyticsCardProps> = ({ ti
                       <XAxis dataKey="department" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} />
                       <Tooltip />
-                      <Bar dataKey="efficiency_rate" fill="#8B5CF6" name="Efficiency %" />
+                      <Bar dataKey="efficiency_rate" fill="#8E7BE0" name="Efficiency %" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

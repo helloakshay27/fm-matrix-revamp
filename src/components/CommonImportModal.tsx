@@ -190,7 +190,7 @@ export const CommonImportModal: React.FC<CommonImportModalProps> = ({
                         <Button
                             onClick={onSampleDownload}
                             variant="outline"
-                            className="flex-1 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                            className="flex-1"
                             disabled={isUploading}
                         >
                             Download Sample Format

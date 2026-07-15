@@ -1,84 +1,246 @@
 // ─────────────────────────────────────────────
 // DailyMeeting.jsx  —  Root component
 // ─────────────────────────────────────────────
-import React, { useState } from "react";
-import {
-  Calendar,
-  FileText,
-  History as HistoryIcon,
-  BarChart2,
-  Settings,
-  FileSpreadsheet,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import React, { useEffect, useState } from "react";
 import DailyLogTab from "./AdminCompassComponent/Dailylogtab";
-import HistoryTab from "./AdminCompassComponent/Historytab";
 import ReportsTab from "./AdminCompassComponent/Reportstab";
+import HistoryTab from "./AdminCompassComponent/Historytab";
 import AnalyticsTab from "./AdminCompassComponent/Analyticstab";
 import SettingsTab from "./AdminCompassComponent/Settingstab";
 import DailyTab from "./AdminCompassComponent/Dailytab";
-import { C } from "./AdminCompassComponent/Shared";
 
-const tabs = [
-  { name: "Daily", icon: Calendar },
-  { name: "Daily Log", icon: FileText },
-  { name: "History", icon: HistoryIcon },
-  { name: "Reports", icon: FileSpreadsheet },
-  { name: "Analytics", icon: BarChart2 },
-  { name: "Settings", icon: Settings },
-];
+const tabs = ["Daily", "Daily Log", "History", "Reports", "Analytics", "Settings"];
+
+const getLocalDateKey = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 const DailyMeeting = () => {
-  const [activeTab, setActiveTab] = useState("Daily Log");
-  const [selectedDateId, setSelectedDateId] = useState(7);
+  const [activeTab, setActiveTab] = useState("Daily");
+  const [selectedMeetingDate, setSelectedMeetingDate] = useState(() =>
+    getLocalDateKey()
+  );
+  const [selectedMeetingId, setSelectedMeetingId] = useState("");
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 640px)").matches
+      : false
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 640px)");
+    const onChange = (event: MediaQueryListEvent) => setIsMobile(event.matches);
+
+    setIsMobile(mediaQuery.matches);
+    mediaQuery.addEventListener("change", onChange);
+
+    return () => mediaQuery.removeEventListener("change", onChange);
+  }, []);
+
+  const handleMeetingSaved = (date: string) => {
+    setSelectedMeetingDate(date);
+    setActiveTab("History");
+  };
 
   return (
     <div
-      className="mx-auto border border-[rgba(218,119,86,0.16)] bg-[#f6f4ee] shadow-[0_18px_50px_rgba(15,23,42,0.05)]"
-      style={{ background: C.pageBg, color: C.textMain }}
+      style={{
+        padding: "clamp(12px, 3vw, 24px)",
+        backgroundColor: "#f8fafc",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        gap: "0px",
+        fontFamily: "'Poppins', sans-serif",
+        color: "#1a1a1a",
+        boxSizing: "border-box",
+      }}
     >
-        <div className="px-6 pt-6 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold">Daily Meetings</h1>
-      <p className="text-sm text-gray-500 mt-1">
-        Review daily reports and conduct team meetings
-      </p>
-    </div>
-      {/* ── Tab bar ── */}
-      <div className="p-6 pb-0">
-        <div className="flex space-x-1 bg-[#DA7756] rounded-2xl p-1 overflow-x-auto max-w-7xl mx-auto">
-          {tabs.map(({ name, icon: Icon }) => {
+      <div style={{ width: "100%", maxWidth: "1200px", margin: "0 auto" }}>
+      {/* ── Page Header ── */}
+      <div style={{ marginBottom: "8px" }}>
+        <h1
+          style={{
+            fontSize: "clamp(18px, 5vw, 24px)",
+            fontWeight: 700,
+            color: "#1a1a1a",
+            margin: 0,
+          }}
+        >
+          Daily Meetings
+        </h1>
+        <p style={{ fontSize: "clamp(11px, 3vw, 13px)", color: "#6b7280", marginTop: "4px" }}>
+          Review daily reports and conduct team meetings
+        </p>
+      </div>
+
+      {/* ── Tab controls ── */}
+      {isMobile ? (
+        <div
+          style={{
+            marginTop: "14px",
+            marginBottom: "18px",
+            backgroundColor: "#ffffff",
+            borderRadius: "14px",
+            border: "1px solid #e5e7eb",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+            padding: "8px",
+          }}
+        >
+          <label
+            htmlFor="daily-meeting-tab-select"
+            style={{
+              display: "block",
+              fontSize: "11px",
+              color: "#6b7280",
+              marginBottom: "6px",
+              fontWeight: 600,
+            }}
+          >
+            Navigate Section
+          </label>
+          <select
+            id="daily-meeting-tab-select"
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value)}
+            style={{
+              width: "100%",
+              borderRadius: "10px",
+              border: "1px solid #d1d5db",
+              background: "#fff",
+              color: "#1f2937",
+              fontFamily: "'Poppins', sans-serif",
+              fontSize: "14px",
+              fontWeight: 600,
+              padding: "10px 12px",
+              outline: "none",
+            }}
+          >
+            {tabs.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "inline-flex",
+            gap: "4px",
+            overflowX: "auto",
+            WebkitOverflowScrolling:
+              "touch" as React.CSSProperties["WebkitOverflowScrolling"],
+            scrollbarWidth: "none" as React.CSSProperties["scrollbarWidth"],
+            marginTop: "16px",
+            marginBottom: "20px",
+            padding: "5px",
+            backgroundColor: "#ffffff",
+            borderRadius: "9999px",
+            border: "1px solid #e5e7eb",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+            alignSelf: "flex-start",
+            width: "fit-content",
+            maxWidth: "100%",
+          }}
+        >
+          {tabs.map((name) => {
             const isActive = activeTab === name;
             return (
               <button
                 key={name}
                 onClick={() => setActiveTab(name)}
-                className={cn(
-                  "flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150 whitespace-nowrap flex-1",
-                  isActive
-                    ? "bg-white text-[#DA7756] shadow-sm"
-                    : "bg-transparent text-white/75 hover:bg-white/15 hover:text-white"
-                )}
+                style={{
+                  padding: "7px 14px",
+                  borderRadius: "9999px",
+                  fontSize: "clamp(11px, 2vw, 13.5px)",
+                  fontWeight: isActive ? 700 : 500,
+                  whiteSpace: "nowrap",
+                  transition: "all 0.18s ease",
+                  cursor: "pointer",
+                  border: "none",
+                  fontFamily: "'Poppins', sans-serif",
+                  letterSpacing: "0.01em",
+                  flexShrink: 0,
+                  ...(isActive
+                    ? {
+                        backgroundColor: "#DA7756",
+                        color: "#ffffff",
+                        boxShadow: "0 2px 10px rgba(218,119,86,0.30)",
+                      }
+                    : {
+                        backgroundColor: "transparent",
+                        color: "#6b7280",
+                      }),
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                      "#f3f4f6";
+                    (e.currentTarget as HTMLButtonElement).style.color = "#374151";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                      "transparent";
+                    (e.currentTarget as HTMLButtonElement).style.color = "#6b7280";
+                  }
+                }}
               >
-                <Icon className="w-4 h-4 flex-shrink-0" /> {name}
+                {name}
               </button>
             );
           })}
         </div>
-      </div>
+      )}
 
       {/* ── Tab content ── */}
-      <div className={activeTab !== "Settings" ? "p-6 max-w-7xl mx-auto" : "px-2 pb-2"}>
+      <div>
         {activeTab === "Daily" && (
           <DailyTab
-            selectedDateId={selectedDateId}
-            setSelectedDateId={setSelectedDateId}
+            selectedDate={selectedMeetingDate}
+            onSelectedDateChange={setSelectedMeetingDate}
+            selectedMeetingId={selectedMeetingId}
+            onSelectedMeetingChange={setSelectedMeetingId}
+            onMeetingSaved={handleMeetingSaved}
           />
         )}
-        {activeTab === "Daily Log" && <DailyLogTab />}
-        {activeTab === "History" && <HistoryTab />}
-        {activeTab === "Reports" && <ReportsTab />}
-        {activeTab === "Analytics" && <AnalyticsTab />}
+        {activeTab === "Daily Log" && (
+          <DailyLogTab
+            initialDate={selectedMeetingDate}
+            onSelectedDateChange={setSelectedMeetingDate}
+            selectedMeetingId={selectedMeetingId}
+            onSelectedMeetingChange={setSelectedMeetingId}
+          />
+        )}
+        {activeTab === "History" && (
+          <HistoryTab
+            initialDate={selectedMeetingDate}
+            onSelectedDateChange={setSelectedMeetingDate}
+            selectedMeetingId={selectedMeetingId}
+            onSelectedMeetingChange={setSelectedMeetingId}
+          />
+        )}
+        {activeTab === "Reports" && (
+          <ReportsTab
+            selectedMeetingId={selectedMeetingId}
+            onSelectedMeetingChange={setSelectedMeetingId}
+          />
+        )}
+        {activeTab === "Analytics" && (
+          <AnalyticsTab
+            selectedMeetingId={selectedMeetingId}
+            onSelectedMeetingChange={setSelectedMeetingId}
+          />
+        )}
         {activeTab === "Settings" && <SettingsTab />}
+      </div>
       </div>
     </div>
   );

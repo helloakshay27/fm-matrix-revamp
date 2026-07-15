@@ -287,7 +287,7 @@ const ProjectCreateModal = ({
       return false;
     }
     if (!formData.endDate) {
-      toast.error("Please select owner");
+      toast.error("Please select end date");
       return false;
     }
     const today = new Date();
@@ -529,7 +529,7 @@ const ProjectCreateModal = ({
                         <MenuItem value="">
                           <em>Select Owner</em>
                         </MenuItem>
-                        {owners.map((owner) => (
+                        {owners?.map((owner) => (
                           <MenuItem key={owner.id} value={owner.id}>
                             {owner.full_name}
                           </MenuItem>

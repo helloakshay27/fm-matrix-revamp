@@ -62,7 +62,6 @@ import ceoImage from "../assets/ceo/ceoimage.jpeg";
 
 import businessPlanIcon from "@/assets/business_plan.png";
 import ourGroupIcon from "@/assets/our_group.png";
-import productsIcon from "@/assets/products.png";
 import documentDriveIcon from "@/assets/document_drive.png";
 import hrPoliciesIcon from "@/assets/hr_policies.png";
 import directoryIcon from "@/assets/directory.png";
@@ -961,7 +960,6 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
   const quickLinks: QuickLink[] = [
     { name: "Business plan", icon: Users, image: businessPlanIcon },
     { name: "Our Group", icon: Users, image: ourGroupIcon },
-    { name: "Products", icon: Laptop, image: productsIcon },
     {
       name: "Document Drive",
       icon: FileText,
@@ -975,7 +973,7 @@ const CompanyHub: React.FC<CompanyHubProps> = ({ userName }) => {
       link: "/vas/documents",
     },
     { name: "Directory", icon: Book, image: directoryIcon },
-    { name: "Eployee FAQ", icon: Book, image: employeeFaqIcon },
+    { name: "Employee FAQ", icon: Book, image: employeeFaqIcon },
   ];
 
   const samplePollOptions = [

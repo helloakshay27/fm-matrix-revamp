@@ -8,6 +8,16 @@ import { TicketPagination } from '@/components/TicketPagination';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import axios from 'axios';
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogAction,
+    AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 
 // Type definitions for Credit Note
 interface CreditNote {
@@ -109,6 +119,9 @@ export const CreditNoteListPage: React.FC = () => {
     const [creditNoteData, setCreditNoteData] = useState<CreditNote[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<CreditNote | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
     const [pagination, setPagination] = useState({
         current_page: 1,
         per_page: 10,
@@ -270,13 +283,43 @@ export const CreditNoteListPage: React.FC = () => {
         };
         return (
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
-                {status.toUpperCase()}
+                {status.replace(/_/g, " ").toUpperCase()}
             </span>
         );
     };
 
     const totalRecords = pagination.total_count;
     const totalPages = pagination.total_pages;
+
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget) return;
+        try {
+            setDeleteLoading(true);
+            setLoading(true);
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+
+            await axios.delete(
+                `https://${baseUrl}/lock_account_credit_notes/${deleteTarget.id}.json${lock_account_id ? `?lock_account_id=${lock_account_id}` : ''}`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
+
+            toast.success('Credit note deleted successfully!');
+            setShowDeleteModal(false);
+            setDeleteTarget(null);
+            fetchCreditNoteData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+        } catch (error: unknown) {
+            console.error('Error deleting credit note:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            toast.error(`Failed to delete credit note: ${errorMessage}`);
+        } finally {
+            setDeleteLoading(false);
+            setLoading(false);
+        }
+    };
 
     const renderRow = (cn: CreditNote) => ({
         actions: (
@@ -301,25 +344,23 @@ export const CreditNoteListPage: React.FC = () => {
                 >
                     <Eye className="w-4 h-4" />
                 </button>
-                {/* <button
+                <button
                     onClick={() => navigate(`/accounting/credit-note/edit/${cn.id}`)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Edit"
                 >
                     <Edit className="w-4 h-4" />
-                </button> */}
-                {/* <button
+                </button>
+                <button
                     onClick={() => {
-                        if (confirm('Are you sure you want to delete this credit note?')) {
-                            toast.success('Credit note deleted successfully!');
-                            fetchCreditNoteData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-                        }
+                        setDeleteTarget(cn);
+                        setShowDeleteModal(true);
                     }}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Delete"
                 >
                     <Trash2 className="w-4 h-4" />
-                </button> */}
+                </button>
             </div>
         ),
         credit_note_number: (
@@ -378,10 +419,11 @@ export const CreditNoteListPage: React.FC = () => {
                 leftActions={(
                     <div className="flex items-center gap-2">
                         <Button
-                            className='bg-primary text-primary-foreground hover:bg-primary/90'
+                            // className='bg-primary text-primary-foreground hover:bg-primary/90'
+                            className='fm-button-fix fm-button-brand px-4 py-2P'
                             onClick={() => navigate('/accounting/credit-note/add')}
                         >
-                            <Plus className="w-4 h-4 mr-2" /> New
+                            <Plus className="w-4 h-4 mr-2" /> Add
                         </Button>
                         {selectedRows.length > 0 && (
                             <Button
@@ -409,6 +451,52 @@ export const CreditNoteListPage: React.FC = () => {
                     onPerPageChange={handlePerPageChange}
                 />
             )}
+            {/* Delete confirmation modal (matches provided UI) */}
+            <AlertDialog
+                open={showDeleteModal}
+                onOpenChange={(open) => {
+                    setShowDeleteModal(open);
+                    if (!open) setDeleteTarget(null);
+                }}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Credit Note</AlertDialogTitle>
+
+                        <AlertDialogDescription>
+                            Once you delete this credit note, you won't be able to retrieve it later.
+                            Are you sure you want to delete {deleteTarget?.credit_note_number || 'this credit note'}?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deleteLoading}>
+                            Cancel
+                        </AlertDialogCancel>
+
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                handleConfirmDelete();
+                            }}
+                            disabled={deleteLoading}
+                            style={{
+                                backgroundColor: "#dc2626",
+                                color: "#ffffff",
+                                border: "none",
+                            }}
+                            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#b91c1c";
+                            }}
+                            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                                (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#dc2626";
+                            }}
+                        >
+                            {deleteLoading ? "Deleting..." : "OK"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };

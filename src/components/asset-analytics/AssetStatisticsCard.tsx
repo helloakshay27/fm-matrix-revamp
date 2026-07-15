@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/tooltip";
 
 interface AssetStatisticsCardProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
   onDownload?: () => Promise<void>;
   metricDownloads?: Partial<
@@ -34,6 +35,7 @@ type AssetStatisticsMetricKey =
   | "ppm_assets"
   | "amc_assets";
 
+// Guideline colors: #EFEFFB/#6B5EA8, rgba(183,220,212,0.30)/#2E7D6B, rgba(227,144,144,0.15)/#D97655, rgba(133,189,246,0.20)/#85BDF6
 const metricConfigs: Array<{
   key: AssetStatisticsMetricKey;
   label: string;
@@ -42,60 +44,67 @@ const metricConfigs: Array<{
   bgColor: string;
   borderColor: string;
   iconBgColor: string;
+  numColor: string;
 }> = [
   {
     key: "total_assets",
     label: "Total Assets",
     icon: Package,
-    color: "text-[#2F2A1F]",
-    bgColor: "bg-[#F9F6EF]",
-    borderColor: "border-[#E4DDCE]",
-    iconBgColor: "bg-[#E6DDCF]",
+    color: "text-[#6B5EA8]",
+    bgColor: "bg-[#EFEFFB]",
+    borderColor: "border-transparent",
+    iconBgColor: "bg-[#CDCAF5]",
+    numColor: "#6B5EA8",
   },
   {
     key: "assets_in_use",
     label: "Assets in Use",
     icon: Activity,
-    color: "text-[#2F2A1F]",
-    bgColor: "bg-[#F9F6EF]",
-    borderColor: "border-[#E4DDCE]",
-    iconBgColor: "bg-[#E6DDCF]",
+    color: "text-[#2E7D6B]",
+    bgColor: "bg-[#B7DCD44D]",
+    borderColor: "border-transparent",
+    iconBgColor: "bg-[#76CDC180]",
+    numColor: "#2E7D6B",
   },
   {
     key: "assets_in_breakdown",
     label: "Assets in Breakdown",
     icon: AlertTriangle,
-    color: "text-[#2F2A1F]",
-    bgColor: "bg-[#F9F6EF]",
-    borderColor: "border-[#E4DDCE]",
-    iconBgColor: "bg-[#E6DDCF]",
+    color: "text-[#D97655]",
+    bgColor: "bg-[#E3909026]",
+    borderColor: "border-transparent",
+    iconBgColor: "bg-[#E3909060]",
+    numColor: "#D97655",
   },
   {
     key: "critical_assets_breakdown",
     label: "Critical Assets in Breakdown",
     icon: TrendingUp,
-    color: "text-[#2F2A1F]",
-    bgColor: "bg-[#F9F6EF]",
-    borderColor: "border-[#E4DDCE]",
-    iconBgColor: "bg-[#E6DDCF]",
+    color: "text-[#D97655]",
+    bgColor: "bg-[#E3909026]",
+    borderColor: "border-transparent",
+    iconBgColor: "bg-[#E3909060]",
+    numColor: "#D97655",
   },
   {
     key: "ppm_assets",
     label: "PPM Conduct Assets",
     icon: Wrench,
-    color: "text-[#2F2A1F]",
-    bgColor: "bg-[#F9F6EF]",
-    borderColor: "border-[#E4DDCE]",
-    iconBgColor: "bg-[#E6DDCF]",
+    color: "text-[#85BDF6]",
+    bgColor: "bg-[#85BDF633]",
+    borderColor: "border-transparent",
+    iconBgColor: "bg-[#85BDF660]",
+    numColor: "#85BDF6",
   },
   {
     key: "amc_assets",
     label: "AMC Assets",
     icon: BarChart3,
-    color: "text-[#2F2A1F]",
-    bgColor: "bg-[#F9F6EF]",
-    borderColor: "border-[#E4DDCE]",
-    iconBgColor: "bg-[#E6DDCF]",
+    color: "text-[#6B5EA8]",
+    bgColor: "bg-[#EFEFFB]",
+    borderColor: "border-transparent",
+    iconBgColor: "bg-[#CDCAF5]",
+    numColor: "#6B5EA8",
   },
 ];
 
@@ -221,14 +230,13 @@ export const AssetStatisticsCard: React.FC<AssetStatisticsCardProps> = ({
   };
 
   return (
-    <Card className="w-full border border-gray-200 shadow-sm bg-white">
-      <CardHeader className="flex items-center justify-between pb-4">
-        {/* <CardTitle className="text-xl font-semibold text-[#1A1A1A] flex items-center gap-2">
-          <Package className="w-5 h-5 text-[#C72030]" />
-          Assets Statistics
-        </CardTitle> */}
-      </CardHeader>
-      <CardContent className="pt-0">
+    <div className="bg-white rounded-xl shadow-sm w-full">
+      <div className="px-5 py-4 border-b border-gray-100">
+        <h3 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+          Asset Statistics Overview
+        </h3>
+      </div>
+      <div className="p-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {metricConfigs.map((metric) => {
             const Icon = metric.icon;
@@ -310,37 +318,28 @@ export const AssetStatisticsCard: React.FC<AssetStatisticsCardProps> = ({
             return (
               <div
                 key={metric.key}
-                className={`group relative ${bgColor} rounded-lg border ${borderColor} transition-all duration-200 ${
-                  !isDataAvailable ? "opacity-60" : "hover:shadow-md"
-                }`}
+                className={`group relative rounded-2xl px-5 py-6 text-center flex flex-col items-center gap-2 ${bgColor} ${!isDataAvailable ? 'opacity-60' : ''}`}
               >
-                <div className="p-6 space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div
-                      className={`w-12 h-12 rounded-lg ${iconBgColor} flex items-center justify-center`}
-                    >
-                      <Icon className={`w-6 h-6 ${color}`} />
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {renderInfoButton(infoText)}
-                      {renderDownloadButton(downloadHandler, !isDataAvailable)}
-              </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-medium text-[#6B7280] leading-tight">
-                      {metric.label}
-                    </h3>
-                    <div className="text-3xl font-semibold text-[#1F2937]">
-                      {displayValue}
-              </div>
-                  </div>
+                {/* top-right: info + download */}
+                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {renderInfoButton(infoText)}
+                  {renderDownloadButton(downloadHandler, !isDataAvailable)}
+                </div>
+                {/* icon */}
+                <div className={`w-10 h-10 rounded-full ${iconBgColor} flex items-center justify-center`}>
+                  <Icon className={`w-5 h-5 ${color}`} />
+                </div>
+                {/* label */}
+                <p className="text-xs text-gray-500 leading-tight">{metric.label}</p>
+                {/* big number */}
+                <div className="text-3xl font-bold leading-none" style={{ color: metric.numColor, fontFamily: 'Work Sans, sans-serif' }}>
+                  {displayValue}
                 </div>
               </div>
             );
           })}
           </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

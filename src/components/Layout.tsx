@@ -40,6 +40,8 @@ import { AdminCompassSidebar } from "./AdminCompassSidebar";
 import { ZycusDynamicHeaderCopy } from "./ZycusDynamicHeaderCopy";
 import { ZycusSidebarCopy } from "./ZycusSidebarCopy";
 import TopNavigation from "./CompanyHub/TopNavigation";
+import VendorSidebar from "./VendorSidebar";
+import VendorDynamicHeader from "./VendorDynamicHeader";
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -51,12 +53,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     getLayoutByCompanyId,
     currentSection,
     setCurrentSection,
+    isMobileSidebarOpen,
+    setIsMobileSidebarOpen,
   } = useLayout();
   const { isActionSidebarVisible } = useActionLayout();
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const { selectedSite } = useSelector((state: RootState) => state.site);
   const location = useLocation();
-  const currentUser = getUser();
+  const [currentUser, setCurrentUser] = useState(getUser);
+  useEffect(() => {
+    setCurrentUser(getUser());
+  }, [location.pathname]);
   const userEmail = currentUser?.email || "No email";
   const org_id = localStorage.getItem("org_id");
   const hostname = window.location.hostname;
@@ -149,15 +156,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       isOmanSite,
     });
 
-    if (isViSite) {
-      console.warn("✅ Rendering ViSidebar");
-      return <ViSidebar />;
-    }
-
     // Check if user is in Club Management route - render ClubSidebar
     if (isClubManagementRoute) {
       console.warn("✅ Rendering ClubSidebar");
       return <ClubSidebar />;
+    }
+
+    // Check if user is in Vendor Module route or is a vendor - render VendorSidebar
+    if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
+      console.warn("✅ Rendering VendorSidebar");
+      return <VendorSidebar />;
+    }
+
+    if (isViSite) {
+      console.warn("✅ Rendering ViSidebar");
+      return <ViSidebar />;
     }
 
     if (
@@ -226,6 +239,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "1" ||
       org_id === "10" ||
       org_id === "3" ||
+      org_id === "67" ||
       userEmail === "sumanta.karmakar@ltimindtree.com" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
@@ -237,9 +251,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "tested4@gmail.com" ||
       userEmail === "tested3@gmail.com" ||
       userEmail === "testtwo@gmail.com" ||
-      userEmail === "ps1@gophygital.work" ||
+      // userEmail === "ps1@gophygital.work" ||
       userEmail === "ps@gophygital.work" ||
-      userEmail === "abdul.g@gophygital.work"
+      userEmail === "abdul.g@gophygital.work" ||
+      userEmail === "zs@lockated.com"
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
@@ -302,6 +317,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return null;
     }
 
+    // Check if user is in Vendor Module route or is a vendor - render VendorDynamicHeader
+    if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
+      return <VendorDynamicHeader />;
+    }
+
     if (isViSite) {
       return <ViDynamicHeader />;
     }
@@ -330,6 +350,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "1" ||
       org_id === "10" ||
       org_id === "3" ||
+      org_id === "67" ||
       userEmail === "sumanta.karmakar@ltimindtree.com" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
@@ -341,9 +362,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "tested4@gmail.com" ||
       userEmail === "tested3@gmail.com" ||
       userEmail === "testtwo@gmail.com" ||
-      userEmail === "ps1@gophygital.work" ||
+      // userEmail === "ps1@gophygital.work" ||
       userEmail === "ps@gophygital.work" ||
-      userEmail === "abdul.g@gophygital.work"
+      userEmail === "abdul.g@gophygital.work" ||
+      userEmail === "zs@lockated.com"
     ) {
       return <ActionHeader />;
     }
@@ -447,6 +469,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   }, [location.search]);
 
+  // Close mobile sidebar on navigation
+  useEffect(() => {
+    setIsMobileSidebarOpen(false);
+  }, [location.pathname, setIsMobileSidebarOpen]);
+
   const [activeNavMenu, setActiveNavMenu] = useState<string | null>(null);
   const isNewEmpHubRoute = location.pathname === "/employee/company-hub-new";
 
@@ -464,15 +491,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Conditional Header - Hide in embedded mode, Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
       {isEmbedded ? null : isEmployeeUser && isLocalhost ? (
         selectedCompany?.id === 300 ||
-          selectedCompany?.id === 295 ||
-          selectedCompany?.id === 298 ||
-          selectedCompany?.id === 199 ||
-          org_id === "90" ||
-          org_id === "1" ||
-          userEmail === "ubaid.hashmat@lockated.com" ||
-          userEmail === "besis69240@azeriom.com" ||
-          userEmail === "megipow156@aixind.com" ||
-          userEmail === "jevosak839@cimario.com" ? (
+        selectedCompany?.id === 295 ||
+        selectedCompany?.id === 298 ||
+        selectedCompany?.id === 199 ||
+        org_id === "90" ||
+        org_id === "1" ||
+        userEmail === "ubaid.hashmat@lockated.com" ||
+        userEmail === "besis69240@azeriom.com" ||
+        userEmail === "megipow156@aixind.com" ||
+        userEmail === "jevosak839@cimario.com" ? (
           <EmployeeHeader />
         ) : (
           // isNewEmpHubRoute ? (
@@ -493,6 +520,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <Header />
       )}
 
+      {/* Mobile overlay backdrop - closes sidebar when tapping outside */}
+      {isMobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
       {renderSidebar()}
       {renderDynamicHeader()}
 
@@ -504,23 +539,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           isEmbedded
             ? "ml-0 pt-4"
             : // For employee users, only add left margin if on Project Task module
-            isEmployeeUser && isLocalhost
+              isEmployeeUser && isLocalhost
               ? currentSection === "Project Task" ||
                 currentSection === "Business Compass" ||
                 currentSection === "Admin Compass" ||
                 location.pathname.includes("/business-compass") ||
                 location.pathname.includes("/admin-compass")
                 ? isSidebarCollapsed
-                  ? "ml-16"
-                  : "ml-64"
+                  ? "ml-0 md:ml-16"
+                  : "ml-0 md:ml-64"
                 : "ml-0" // No margin for other modules
               : // For action sidebar, add extra top padding and adjust left margin
-              isActionSidebarVisible
-                ? "ml-64 pt-28" // ActionSidebar is visible (fixed width 64)
+                isActionSidebarVisible
+                ? "ml-0 md:ml-64 pt-28"
                 : isSidebarCollapsed
-                  ? "ml-16"
-                  : "ml-64"
-          } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? (!isNewEmpHubRoute ? "pt-16" : "pt-6") : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
+                  ? "ml-0 md:ml-16"
+                  : "ml-0 md:ml-64"
+        } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300 max-w-full overflow-x-hidden`}
       >
         <Outlet />
       </main>

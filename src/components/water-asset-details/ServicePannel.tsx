@@ -123,7 +123,7 @@ export const ServicePannel: React.FC<AssetSelectionPanelProps> = ({
 
   return (
     <div
-      className="fixed bg-white border border-gray-200 rounded-sm shadow-lg z-50"
+      className="selection-panel bg-white"
       style={{ top: "477px", left: "629px", width: "863px", height: "105px" }}
     >
       <div className="flex items-center justify-between w-full h-full pr-6">

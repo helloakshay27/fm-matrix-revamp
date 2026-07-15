@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { buildReturnToPath } from "@/utils/listBackNavigation";
 import { toast } from "sonner";
 import { GRNFilterDialog } from "@/components/GRNFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -10,6 +11,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getGRN } from "@/store/slices/grnSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -27,6 +29,7 @@ const columns: ColumnConfig[] = [
     draggable: true,
     defaultVisible: true,
   },
+  
   {
     key: "inventories_name",
     label: "Inventory",
@@ -37,6 +40,20 @@ const columns: ColumnConfig[] = [
   {
     key: "supplier_name",
     label: "Supplier",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "approved_status",
+    label: "Approved Status",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "last_approved_by",
+    label: "Last Approved By",
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -65,20 +82,6 @@ const columns: ColumnConfig[] = [
   {
     key: "po_reference_number",
     label: "P.O Reference Number",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "approved_status",
-    label: "Approved Status",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "last_approved_by",
-    label: "Last Approved By",
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -138,26 +141,28 @@ export const GRNSRNDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+  const { shouldShow } = useDynamicPermissions();
 
   const { loading } = useAppSelector(state => state.getGRN)
 
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+  const location = useLocation();
+  const urlParams = new URLSearchParams(location.search);
+  const urlPage = Number(urlParams.get("page")) || 1;
+  const initialSearch = urlParams.get("search") || "";
+  const initialFilters = {
+    grnNumber: urlParams.get("grnNumber") || "",
+    poNumber: urlParams.get("poNumber") || "",
+    supplierName: urlParams.get("supplierName") || "",
+    status: urlParams.get("status") || "",
+  };
+
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [grn, setGrn] = useState([]);
-  const [filters, setFilters] = useState<{
-    grnNumber?: string;
-    poNumber?: string;
-    supplierName?: string;
-    status?: string;
-  }>({
-    grnNumber: '',
-    poNumber: '',
-    supplierName: '',
-    status: ''
-  });
+  const [filters, setFilters] = useState(initialFilters);
   const [pagination, setPagination] = useState({
-    current_page: 1,
+    current_page: urlPage,
     total_count: 0,
     total_pages: 0,
   });
@@ -166,20 +171,37 @@ export const GRNSRNDashboard = () => {
     try {
       const response = await dispatch(getGRN({ baseUrl, token, page: page, ...filterData })).unwrap();
       setGrn(response.grns);
-      setPagination({
-        current_page: Number(response.page),
+      setPagination((prev) => ({
+        ...prev,
         total_count: response.total_count,
         total_pages: response.total_pages
-      })
+      }));
     } catch (error) {
       console.log(error);
       toast.error(error);
     }
   };
+  useEffect(() => {
+    fetchData(urlPage, {
+      grn_number: initialFilters.grnNumber,
+      po_number: initialFilters.poNumber,
+      supplier_name: initialFilters.supplierName,
+      approval_status: initialFilters.status,
+      search: initialSearch,
+    });
+  }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const params = new URLSearchParams();
+    if (pagination.current_page > 1) params.set("page", pagination.current_page.toString());
+    if (searchQuery) params.set("search", searchQuery);
+    if (filters.grnNumber) params.set("grnNumber", filters.grnNumber);
+    if (filters.poNumber) params.set("poNumber", filters.poNumber);
+    if (filters.supplierName) params.set("supplierName", filters.supplierName);
+    if (filters.status) params.set("status", filters.status);
+
+    navigate({ search: params.toString() }, { replace: true });
+  }, [pagination.current_page, searchQuery, filters, navigate]);
 
   const handleApplyFilters = (newFilters: {
     grnNumber?: string;
@@ -197,15 +219,15 @@ export const GRNSRNDashboard = () => {
   };
 
   const debouncedFetchData = useCallback(
-    debounce((query: string) => {
-      fetchData(1, { search: query });
+    debounce((query: string, filterData: any) => {
+      fetchData(1, { search: query, ...filterData });
     }, 500),
-    [pagination.current_page, filters]
+    []
   );
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
-    setPagination((prev) => ({ ...prev, current_page: 1 })); // Reset to first page on search
+    setPagination((prev) => ({ ...prev, current_page: 1 }));
     debouncedFetchData(query, {
       grn_number: filters.grnNumber,
       po_number: filters.poNumber,
@@ -269,68 +291,67 @@ export const GRNSRNDashboard = () => {
     setIsFilterDialogOpen(true);
   };
 
-  const handleView = (id: number) => {
-    navigate(`/finance/grn-srn/details/${id}`);
-  };
-
-  const handleEdit = (id: number) => {
-    navigate(`/finance/grn-srn/edit/${id}`);
-  };
-
   const renderActions = (item) => (
     <div className="flex gap-1">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={() => handleView(item.id)}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
-      {
-        item.approved_status === 'Pending' && <Button
+      {shouldShow("GRN/ SRN", "show") && (
+        <Button
           size="sm"
           variant="ghost"
           className="p-1"
-          onClick={() => handleEdit(item.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/finance/grn-srn/details/${item.id}`, {
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            });
+          }}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+      )}
+      {shouldShow("GRN/ SRN", "update") && item.can_edit === true && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/finance/grn-srn/edit/${item.id}`, {
+              state: { returnTo: buildReturnToPath(location.pathname, location.search) },
+            });
+          }}
         >
           <Edit className="w-4 h-4" />
         </Button>
-      }
+      )}
     </div>
   );
 
   const leftActions = (
     <div className="flex gap-3">
-      <Button
-        className="bg-[#C72030] hover:bg-[#A01020] text-white"
-        onClick={handleAddNew}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
+      {shouldShow("GRN/ SRN", "create") && (
+        <Button
+          className="bg-[#C72030] hover:bg-[#A01020] text-white"
+          onClick={handleAddNew}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add
+        </Button>
+      )}
     </div>
   );
 
-  const handlePageChange = async (page: number) => {
-    console.log(page)
+  const handlePageChange = (page: number) => {
     if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
       return;
     }
-
-    try {
-      setPagination((prev) => ({ ...prev, current_page: page }));
-      await fetchData(page, {
-        grn_number: filters.grnNumber,
-        po_number: filters.poNumber,
-        supplier_name: filters.supplierName,
-        approval_status: filters.status,
-        search: searchQuery,
-      });
-    } catch (error) {
-      console.error("Error changing page:", error);
-      toast.error("Failed to load page data. Please try again.");
-    }
+    setPagination((prev) => ({ ...prev, current_page: page }));
+    fetchData(page, {
+      grn_number: filters.grnNumber,
+      po_number: filters.poNumber,
+      supplier_name: filters.supplierName,
+      approval_status: filters.status,
+      search: searchQuery,
+    });
   };
 
   const renderPaginationItems = () => {

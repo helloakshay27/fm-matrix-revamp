@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, Key, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -9,7 +9,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { CreateLockSubFunctionDialog } from './LockSubFunctionCreate';
 import { CreateSubFunctionDialog } from './CreateSubFunctionDialog';
 import { lockSubFunctionService, LockSubFunction as ApiLockSubFunctionItem } from '@/services/lockSubFunctionService';
-
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 // Type definitions for the lock sub function data
 interface LockSubFunctionItem {
   id: number;
@@ -166,8 +166,13 @@ const transformLockSubFunctionData = (apiData: ApiLockSubFunctionItem[]): LockSu
 
 export const LockSubFunctionList = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+  const location = useLocation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
   const itemsPerPage = 15; // Same as ShiftDashboard
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
@@ -200,14 +205,16 @@ export const LockSubFunctionList = () => {
     fetchLockSubFunctionData();
   }, []);
 
-  // Reset pagination when data changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [allLockSubFunctionData.length]);
+useEffect(() => {
+    navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
+  }, [currentPage]);
 
-  // Reset pagination when search changes
+  const prevSearchRef = React.useRef('');
   useEffect(() => {
-    setCurrentPage(1);
+    if (debouncedSearchQuery !== prevSearchRef.current) {
+      prevSearchRef.current = debouncedSearchQuery;
+      setCurrentPage(1);
+    }
   }, [debouncedSearchQuery]);
 
   // Filter and paginate data
@@ -239,17 +246,22 @@ export const LockSubFunctionList = () => {
   // Pagination functions
   const goToPage = (page: number) => {
     setCurrentPage(page);
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
   };
 
   const goToPrevious = () => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      const newPage = currentPage - 1;
+      setCurrentPage(newPage);
+      navigate(`${location.pathname}?page=${newPage}`, { replace: true });
     }
   };
 
   const goToNext = () => {
     if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+      const newPage = currentPage + 1;
+      setCurrentPage(newPage);
+      navigate(`${location.pathname}?page=${newPage}`, { replace: true });
     }
   };
 
@@ -262,13 +274,15 @@ export const LockSubFunctionList = () => {
   const renderRow = (lockSubFunction: LockSubFunctionItem) => ({
     actions: (
       <div className="flex items-center gap-2">
+        {shouldShow("Lock Sub Function","update")&&(
         <button 
           onClick={() => handleEdit(lockSubFunction.id)} 
           className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
           title="Edit"
         >
           <Edit className="w-4 h-4" />
-        </button>
+        </button>)}
+        {shouldShow("Lock Sub Function","show")&&(
         <button 
           onClick={() => handleView(lockSubFunction.id)} 
           className="p-1 text-green-600 hover:bg-green-50 rounded" 
@@ -276,13 +290,15 @@ export const LockSubFunctionList = () => {
         >
           <Eye className="w-4 h-4" />
         </button>
+        )}
+        {shouldShow("Lock Sub Function","destroy")&&(
         <button 
           onClick={() => handleDelete(lockSubFunction.id)} 
           className="p-1 text-red-600 hover:bg-red-50 rounded" 
           title="Delete"
         >
           <Trash2 className="w-4 h-4" />
-        </button>
+        </button>)}
       </div>
     ),
     subFunctionName: (
@@ -402,6 +418,7 @@ export const LockSubFunctionList = () => {
             enableExport={false}
             exportFileName="lock-sub-function-data"
             leftActions={
+              shouldShow("Lock Sub Function","create")&&(
               <Button 
                 onClick={handleAdd} 
                 className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
@@ -409,7 +426,7 @@ export const LockSubFunctionList = () => {
                 <Plus className="w-4 h-4" />
                 Add
               </Button>
-            }
+       )}
             pagination={false} // Disable built-in pagination since we're adding custom
             loading={loading}
             emptyMessage="No lock sub functions found. Create your first lock sub function to get started."

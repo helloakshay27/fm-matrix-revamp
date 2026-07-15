@@ -215,7 +215,7 @@ const ProjectEditModal = ({
     if (!openDialog) return;
     dispatch(fetchProjectTeams());
     dispatch(fetchProjectTypes());
-    dispatch(fetchProjectsTags());
+    dispatch(fetchProjectsTags({ active: true }));
     getOwners();
   }, [openDialog, dispatch]);
 
@@ -650,7 +650,7 @@ const ProjectEditModal = ({
         isOpen={isTagModalOpen}
         onClose={() => setIsTagModalOpen(false)}
         onTagCreated={() => {
-          dispatch(fetchProjectsTags());
+          dispatch(fetchProjectsTags({ active: true }));
         }}
       />
 

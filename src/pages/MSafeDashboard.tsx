@@ -17,11 +17,13 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 
 interface ApiPagination { current_page: number; total_pages: number; total_count: number }
 
 export const MSafeDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
   const location = useLocation()
   const dispatch = useAppDispatch();
@@ -36,7 +38,11 @@ export const MSafeDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [filters, setFilters] = useState({ firstname: '', lastname: '', email: '', mobile: '', cluster: '', cluster_id: '', circle: '', department: '', role: '', report_to_id: '' });
-  const [page, setPage] = useState(1);
+  // const [page, setPage] = useState(1);
+ const [page, setPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
   const [pagination, setPagination] = useState<ApiPagination>({ current_page: 1, total_pages: 1, total_count: 0 });
 
 
@@ -115,14 +121,23 @@ export const MSafeDashboard = () => {
           name: `${u.firstname || ''} ${u.lastname || ''}`.trim() || u.email || '-'
         }));
         setFmUsers(users);
-        if (data.pagination) {
-          setPagination({
-            current_page: data.pagination.current_page,
+        // if (data.pagination) {
+        //   setPagination({
+        //     current_page: data.pagination.current_page,
+        //     total_pages: data.pagination.total_pages,
+        //     total_count: data.pagination.total_count,
+        //   });
+        // } else {
+        //   setPagination({ current_page: page, total_pages: 1, total_count: users.length });
+        // }
+       if (data.pagination) {
+          setPagination(prev => ({
+            ...prev,
             total_pages: data.pagination.total_pages,
             total_count: data.pagination.total_count,
-          });
+          }));
         } else {
-          setPagination({ current_page: page, total_pages: 1, total_count: users.length });
+          setPagination(prev => ({ ...prev, total_pages: 1, total_count: users.length }));
         }
       } catch (err) {
         console.error('Error fetching users:', err);
@@ -133,6 +148,10 @@ export const MSafeDashboard = () => {
     };
     fetchUsers();
   }, [page, debouncedSearch, filters]);
+
+useEffect(() => {
+    navigate(`${location.pathname}?page=${page}`, { replace: true });
+  }, [page]);
 
   // Reset to first page only when search/filters values actually change (not on page clicks)
   const prevSearchRef = useRef<string>('');
@@ -282,14 +301,16 @@ export const MSafeDashboard = () => {
   const renderActions = (user: FMUser) =>
   (
     <div className="flex items-center justify-center gap-2">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => navigate(`/safety/m-safe/user/${user.id}`, { state: { user } })}
-        className="h-8 w-8 p-0"
-      >
-        <Eye className="h-4 w-4" />
-      </Button>
+      {shouldShow("M Safe", "show") && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(`/safety/m-safe/user/${user.id}`, { state: { user } })}
+          className="h-8 w-8 p-0"
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   )
 
@@ -301,15 +322,20 @@ export const MSafeDashboard = () => {
     }
   };
 
+  // const handlePageChange = (newPage: number) => {
+  //   if (newPage < 1 || newPage > pagination.total_pages || newPage === page) return;
+  //   setPage(newPage);
+  // };
+
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > pagination.total_pages || newPage === page) return;
     setPage(newPage);
+    navigate(`${location.pathname}?page=${newPage}`, { replace: true });
   };
-
   const paginationItems = useMemo(() => {
     const items: React.ReactNode[] = [];
     const totalPages = pagination.total_pages;
-    const current = pagination.current_page;
+    const current = page;
     if (totalPages <= 1) return items;
     const pushPage = (p: number) => {
       items.push(
@@ -462,8 +488,7 @@ export const MSafeDashboard = () => {
             renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport} exportFileName="fm-users" pagination={false} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
           {!loading && pagination.total_pages > 1 && (
             <div className="flex flex-col items-center gap-2 mt-6">
-              <div className="text-sm text-gray-600">Page {pagination.current_page} of {pagination.total_pages} | Total {pagination.total_count}</div>
-              <Pagination>
+            <div className="text-sm text-gray-600">Page {page} of {pagination.total_pages} | Total {pagination.total_count}</div>              <Pagination>
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious className='cursor-pointer' onClick={() => handlePageChange(page - 1)} />

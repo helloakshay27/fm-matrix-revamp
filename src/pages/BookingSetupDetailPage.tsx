@@ -172,6 +172,7 @@ export const BookingSetupDetailPage = () => {
       dayType: string;
       blockReason: string;
       selectedSlots: string[];
+      blockSlotDetails: Array<{ id: number; label: string }>;
     }>,
   });
   const [departments, setDepartments] = useState([]);
@@ -394,6 +395,10 @@ export const BookingSetupDetailPage = () => {
           dayType: blocking.facility_blocking?.block_slot && blocking.facility_blocking?.block_slot.length > 0 ? "selectedSlots" : "entireDay",
           blockReason: blocking.facility_blocking?.reason || "",
           selectedSlots: blocking.facility_blocking?.block_slot || [],
+          blockSlotDetails: (blocking.facility_blocking?.block_slot_details || []).map((s: any) => ({
+            id: s.id,
+            label: s.label,
+          })),
         })) || [],
       });
 
@@ -995,91 +1000,60 @@ export const BookingSetupDetailPage = () => {
             </div>
 
             {formData.blockDays.length > 0 ? (
-              <div className="space-y-6">
-                {formData.blockDays.map((blockDay, index) => (
-                  <div key={blockDay.id || index} className="p-4 border rounded-lg space-y-4">
-                    <h4 className="text-sm font-semibold text-gray-700">Block Day {index + 1}</h4>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <TextField
-                        label="Date"
-                        type="date"
-                        value={blockDay.startDate}
-                        variant="outlined"
-                        InputProps={{ readOnly: true }}
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex gap-6 px-1">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          id={`entireDay-${index}`}
-                          name={`dayType-${index}`}
-                          checked={blockDay.dayType === "entireDay"}
-                          disabled
-                          className="text-blue-600"
-                        />
-                        <label htmlFor={`entireDay-${index}`}>Entire Day</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          id={`selectedSlots-${index}`}
-                          name={`dayType-${index}`}
-                          checked={blockDay.dayType === "selectedSlots"}
-                          disabled
-                          className="text-blue-600"
-                        />
-                        <label htmlFor={`selectedSlots-${index}`}>Selected Slots</label>
-                      </div>
-                    </div>
-
-                    {blockDay.dayType === "selectedSlots" && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-700 mb-2 block">Select Slots to Block</label>
-                        {blockDaySlots[index]?.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {blockDaySlots[index].map((slot: any) => {
-                              const isBlocked = blockDay.selectedSlots.includes(slot.id.toString());
-                              return (
-                                <div key={slot.id} className="flex items-center space-x-2 p-3 border rounded-lg bg-gray-50">
-                                  <input
-                                    type="checkbox"
-                                    id={`block-slot-${index}-${slot.id}`}
-                                    checked={isBlocked}
-                                    disabled
-                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-not-allowed"
-                                  />
-                                  <label
-                                    htmlFor={`block-slot-${index}-${slot.id}`}
-                                    className="text-sm font-medium cursor-not-allowed"
-                                  >
-                                    {slot.ampm}
-                                  </label>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="text-gray-500 text-sm">Loading slots...</div>
-                        )}
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
-                      <Textarea
-                        value={blockDay.blockReason}
-                        className="min-h-[100px]"
-                        readOnly
-                      />
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto rounded-lg border border-gray-200">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-[#F5F0E8]">
+                      <th className="px-4 py-3 text-left font-semibold text-gray-700 border-b border-gray-200 w-8">#</th>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-700 border-b border-gray-200 min-w-[130px]">Block Days</th>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-700 border-b border-gray-200">Blocked Slot</th>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-700 border-b border-gray-200">Block Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {formData.blockDays.map((blockDay, index) => (
+                      <tr key={blockDay.id || index} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                        <td className="px-4 py-3 text-gray-500 border-b border-gray-100 align-top">{index + 1}</td>
+                        <td className="px-4 py-3 border-b border-gray-100 align-top">
+                          <span className="font-medium text-gray-800">
+                            {blockDay.startDate
+                              ? new Date(blockDay.startDate).toLocaleDateString("en-GB", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                })
+                              : "-"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 border-b border-gray-100 align-top">
+                          {blockDay.dayType === "entireDay" ? (
+                            <span className="inline-flex items-center px-3 py-1 rounded text-xs font-medium bg-[#5A7A7A] text-white">
+                              All Slots Are Blocked
+                            </span>
+                          ) : blockDay.blockSlotDetails.length > 0 ? (
+                            <div className="flex flex-wrap gap-1.5">
+                              {blockDay.blockSlotDetails.map((slot) => (
+                                <span
+                                  key={slot.id}
+                                  className="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-[#C72030]/10 text-[#C72030] border border-[#C72030]/20"
+                                >
+                                  {slot.label}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-xs italic">No slots selected</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 border-b border-gray-100 align-top max-w-[280px]">
+                          <span className="text-gray-700 whitespace-pre-wrap break-words">
+                            {blockDay.blockReason || <span className="text-gray-400 italic">No reason provided</span>}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <p className="text-gray-500">No block days configured</p>

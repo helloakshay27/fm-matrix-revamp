@@ -16,10 +16,13 @@ interface TimeToGetPaidRow {
   bucket_31_45: number;
   bucket_above_45: number;
   average_days: number;
+
+  credit_balance: number; // ADD
 }
 
 const columns: ColumnConfig[] = [
   { key: "customer_name", label: "CUSTOMER NAME", sortable: true, hideable: false, draggable: true },
+  { key: "credit_balance", label: "CREDIT BALANCE", sortable: true, hideable: false, draggable: true },
   { key: "bucket_0_15", label: "0 - 15 DAYS", sortable: true, hideable: false, draggable: true },
   { key: "bucket_16_30", label: "16 - 30 DAYS", sortable: true, hideable: false, draggable: true },
   { key: "bucket_31_45", label: "31 - 45 DAYS", sortable: true, hideable: false, draggable: true },
@@ -91,6 +94,9 @@ const TimeToGetPaidReport: React.FC = () => {
         id: String(item.id || i),
         customerId: item.customer_id || item.id || "",
         customer_name: item.customer_name || item.name || "--",
+
+          credit_balance: item.credit_balance ?? 0,
+
         bucket_0_15: item["0_15"] ?? item.bucket_0_15 ?? 0,
         bucket_16_30: item["16_30"] ?? item.bucket_16_30 ?? 0,
         bucket_31_45: item["31_45"] ?? item.bucket_31_45 ?? 0,
@@ -114,13 +120,15 @@ const TimeToGetPaidReport: React.FC = () => {
     if (rows.length === 0) return rows;
     const totals = rows.reduce(
       (acc, r) => ({
+         credit_balance: acc.credit_balance + r.credit_balance, // ADD
+
         bucket_0_15: acc.bucket_0_15 + r.bucket_0_15,
         bucket_16_30: acc.bucket_16_30 + r.bucket_16_30,
         bucket_31_45: acc.bucket_31_45 + r.bucket_31_45,
         bucket_above_45: acc.bucket_above_45 + r.bucket_above_45,
         average_days: acc.average_days + r.average_days,
       }),
-      { bucket_0_15: 0, bucket_16_30: 0, bucket_31_45: 0, bucket_above_45: 0, average_days: 0 }
+      { credit_balance: 0,  bucket_0_15: 0, bucket_16_30: 0, bucket_31_45: 0, bucket_above_45: 0, average_days: 0 }
     );
     return [
       ...rows,
@@ -147,6 +155,13 @@ const TimeToGetPaidReport: React.FC = () => {
           {row.customer_name}
         </button>
       ),
+credit_balance: (
+    <span className={amtClass}>
+      {formatCurrency(row.credit_balance)}
+    </span>
+  ),
+  
+
       bucket_0_15: <span className={amtClass}>{formatCurrency(row.bucket_0_15)}</span>,
       bucket_16_30: <span className={amtClass}>{formatCurrency(row.bucket_16_30)}</span>,
       bucket_31_45: <span className={amtClass}>{formatCurrency(row.bucket_31_45)}</span>,
