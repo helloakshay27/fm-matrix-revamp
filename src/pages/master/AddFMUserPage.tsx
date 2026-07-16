@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getUser } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
@@ -19,8 +19,8 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { Entity, fetchEntities } from "@/store/slices/entitiesSlice";
 import {
   createFmUser,
+  fetchFMUsers,
   fetchRoles,
-  fetchSuppliers,
   fetchUnits,
 } from "@/store/slices/fmUserSlice";
 import { fetchDepartmentData } from "@/store/slices/departmentSlice";
@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { ticketManagementAPI } from "@/services/ticketManagementAPI";
 import axios from "axios";
 import { DuplicateUserDialog } from "@/components/DuplicateUserDialog";
+import { SupplierSearchSelect } from "@/components/SupplierSearchSelect";
 
 export const AddFMUserPage = () => {
   const dispatch = useAppDispatch();
@@ -44,11 +45,6 @@ export const AddFMUserPage = () => {
     loading,
     error,
   } = useAppSelector((state) => state.entities);
-  const {
-    data: suppliers,
-    loading: suppliersLoading,
-    error: suppliersError,
-  } = useAppSelector((state) => state.fetchSuppliers);
   const {
     data: units,
     loading: unitsLoading,
@@ -74,6 +70,7 @@ export const AddFMUserPage = () => {
 
   const [userCategories, setUserCategories] = useState([]);
   const [userAccount, setUserAccount] = useState({});
+  const [users, setUsers] = useState([]);
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
   const location = useLocation();
@@ -99,19 +96,28 @@ export const AddFMUserPage = () => {
     }
   };
 
+  const getUsers = async () => {
+    try {
+      const response = await dispatch(fetchFMUsers()).unwrap();
+      setUsers(response.users || response.fm_users || response.data || []);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     if (isRestrictedUser) {
       navigate("/maintenance/asset");
       return;
     }
     dispatch(fetchEntities());
-    dispatch(fetchSuppliers({ baseUrl, token }));
     dispatch(fetchUnits({ baseUrl, token }));
     dispatch(fetchDepartmentData());
     dispatch(fetchRoles({ baseUrl, token }));
     dispatch(fetchAllowedSites(userId));
     dispatch(fetchAllowedCompanies());
     fetchUserCategories();
+    getUsers();
   }, [dispatch, baseUrl, token, userId, isRestrictedUser, navigate]);
 
   useEffect(() => {
@@ -161,13 +167,25 @@ export const AddFMUserPage = () => {
     selectedSites: [] as string[],
     selectedCompanies: [] as string[],
     selectProfileType: "",
+    reportsTo: "",
   });
+
+  const [supplierDisplayLabel, setSupplierDisplayLabel] = useState('');
 
   const [duplicateUserDialog, setDuplicateUserDialog] = useState({
     open: false,
     companies: [],
     errorMessage: "",
   });
+
+  const handleSupplierIdChange = useCallback((supplierId: string) => {
+    handleInputChange('supplier', supplierId);
+    if (!supplierId) setSupplierDisplayLabel('');
+  }, []);
+
+  const handleSupplierOptionChange = useCallback((option: { label: string } | null) => {
+    setSupplierDisplayLabel(option?.label ?? '');
+  }, []);
 
   const handleInputChange = (field: string, value: string | string[]) => {
     setFormData((prev) => ({
@@ -282,7 +300,15 @@ export const AddFMUserPage = () => {
     setLoadingSubmitting(true);
 
     const formDataToSend = new FormData();
-    formDataToSend.append("user[site_id]", formData.baseSite);
+    const siteId = localStorage.getItem("selectedSiteId") || formData.baseSite;
+    const accountId =
+      (selectedCompany as any)?.id ||
+      (userAccount as any)?.company_id ||
+      localStorage.getItem("selectedCompanyId") ||
+      "";
+
+    formDataToSend.append("user[site_id]", siteId || "");
+    formDataToSend.append("user[registration_source]", "Web");
     formDataToSend.append("user[firstname]", formData.firstName);
     formDataToSend.append("user[lastname]", formData.lastName);
     formDataToSend.append("user[mobile]", formData.mobileNumber);
@@ -291,6 +317,7 @@ export const AddFMUserPage = () => {
     formDataToSend.append("user[entity_id]", formData.selectEntity);
     formDataToSend.append("user[supplier_id]", formData.supplier);
     formDataToSend.append("user[user_category_id]", formData.selectUserCategory);
+    formDataToSend.append("user[report_to_id]", formData.reportsTo);
     formDataToSend.append("user[profile_type]", formData.selectProfileType);
 
     if (profileImage) {
@@ -300,7 +327,7 @@ export const AddFMUserPage = () => {
     // Append permissions as a nested structure
     const permissions = [
       {
-        account_id: userAccount.company_id,
+        account_id: accountId,
         employee_id: formData.employeeId,
         designation: formData.designation,
         unit_id: formData.selectBaseUnit,
@@ -313,6 +340,7 @@ export const AddFMUserPage = () => {
             ? formData.selectedSites
             : formData.selectedCompanies,
         urgency_email_enabled: formData.selectEmailPreference,
+        status: "pending",
       },
     ];
 
@@ -590,30 +618,13 @@ export const AddFMUserPage = () => {
 
                 {/* Row 3 */}
                 <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Supplier</InputLabel>
-                    <Select
-                      value={formData.supplier}
-                      onChange={(e) =>
-                        handleInputChange("supplier", e.target.value)
-                      }
-                      label="Supplier"
-                      displayEmpty
-                    >
-                      <MenuItem value="">Select Supplier</MenuItem>
-                      {suppliersLoading && (
-                        <MenuItem disabled>Loading...</MenuItem>
-                      )}
-                      {suppliersError && (
-                        <MenuItem disabled>Error: {suppliersError}</MenuItem>
-                      )}
-                      {suppliers?.map((supplier) => (
-                        <MenuItem key={supplier.id} value={supplier.id}>
-                          {supplier.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <SupplierSearchSelect
+                    value={formData.supplier}
+                    onChange={handleSupplierIdChange}
+                    onOptionChange={handleSupplierOptionChange}
+                    size="compact"
+                    label="Supplier"
+                  />
                 </div>
 
                 <div>
@@ -944,6 +955,30 @@ export const AddFMUserPage = () => {
                     </div>
                   )
                 }
+
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Reports To</InputLabel>
+                    <Select
+                      value={formData.reportsTo}
+                      onChange={(e) =>
+                        handleInputChange("reportsTo", e.target.value)
+                      }
+                      label="Reports To"
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Reports To</MenuItem>
+                      {users?.map((user: any) => (
+                        <MenuItem key={user.id} value={String(user.id)}>
+                          {user.full_name ||
+                            user.name ||
+                            `${user.firstname || ""} ${user.lastname || ""}`.trim() ||
+                            user.email}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
 
                 {
                   !isClubSite && (
