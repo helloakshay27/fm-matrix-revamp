@@ -254,7 +254,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       // userEmail === "ps1@gophygital.work" ||
       userEmail === "ps@gophygital.work" ||
       userEmail === "abdul.g@gophygital.work" ||
-      userEmail === "zs@lockated.com"
+      userEmail === "zs@lockated.com" ||
+      (org_id === "87" &&
+        (userEmail === "reception.pune@zycus.com" ||
+          userEmail === "reception.blr@zycus.com" ||
+          userEmail === "reception@zycusitis.onmicrosoft.com"))
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
@@ -365,7 +369,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       // userEmail === "ps1@gophygital.work" ||
       userEmail === "ps@gophygital.work" ||
       userEmail === "abdul.g@gophygital.work" ||
-      userEmail === "zs@lockated.com"
+      userEmail === "zs@lockated.com" ||
+      (org_id === "87" &&
+        (userEmail === "reception.pune@zycus.com" ||
+          userEmail === "reception.blr@zycus.com" ||
+          userEmail === "reception@zycusitis.onmicrosoft.com"))
     ) {
       return <ActionHeader />;
     }
