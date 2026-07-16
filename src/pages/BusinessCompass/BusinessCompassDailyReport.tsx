@@ -7918,7 +7918,10 @@ const BusinessCompassDailyReport: React.FC = () => {
           setOpenTodoModal(false);
           setPreFillDate(null);
         }}
-        getTodos={fetchTodos}
+        getTodos={() => {
+          fetchTodos();
+          fetchTomorrowScheduled(startDate);
+        }}
         prefillData={{
           title: "",
           description: "",
@@ -8492,7 +8495,10 @@ const BusinessCompassDailyReport: React.FC = () => {
           setEditTodoData(null);
           fetchTodos();
         }}
-        getTodos={fetchTodos}
+        getTodos={() => {
+          fetchTodos();
+          fetchTomorrowScheduled(startDate);
+        }}
         editingTodo={editTodoData}
         isEditMode={!!editTodoData}
         prefillData={editTodoData || {}}
