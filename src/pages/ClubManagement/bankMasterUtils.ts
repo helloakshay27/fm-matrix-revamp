@@ -7,42 +7,36 @@ export interface BankRecord {
   ifscCode: string;
   swiftCode: string;
   branch: string;
+  active: boolean;
 }
 
-interface BankPayloadRecord {
+interface ApiBankMasterRecord {
+  id: number;
   beneficiary_name: string;
   bank_name: string;
-  account_no: string;
+  account_number: string;
+  account_type: string;
+  ifsc_code: string;
+  swift_code: string;
+  branch: string;
+  active: boolean;
+}
+
+interface BankMasterPayloadFields {
+  beneficiary_name: string;
+  bank_name: string;
+  account_number: string;
   account_type: string;
   ifsc_code: string;
   swift_code: string;
   branch: string;
 }
 
-interface BankCreatePayload {
-  pms_bank_master: {
-    bank_accounts_attributes: BankPayloadRecord[];
-  };
+export interface BankMasterPayload {
+  bank_master: BankMasterPayloadFields;
 }
 
-interface BankUpdatePayload {
-  pms_bank_master: {
-    id: number;
-    beneficiary_name: string;
-    bank_name: string;
-    account_no: string;
-    account_type: string;
-    ifsc_code: string;
-    swift_code: string;
-    branch: string;
-  };
-}
-
-export const BANK_MASTER_STORAGE_KEY = 'fm-bank-master-records';
-
-// Dummy/placeholder endpoint (mirrors the erp_uoms.json convention used by UnitMaster.tsx)
-// until the real Bank Master API is available. Local storage stays the source of truth.
-export const BANK_MASTER_API_PATH = 'pms_bank_masters';
+export const BANK_MASTER_API_PATH = 'bank_masters';
 
 export const ACCOUNT_TYPE_OPTIONS = ['Savings', 'Current', 'Salary', 'NRE', 'NRO'];
 
@@ -58,6 +52,27 @@ export const getBankMasterApiConfig = () => {
   };
 };
 
+export const bankMasterListUrl = (baseUrl: string | null, lockAccountId: string | null) =>
+  `https://${baseUrl}/${BANK_MASTER_API_PATH}.json?lock_account_id=${lockAccountId}`;
+
+export const bankMasterDetailUrl = (baseUrl: string | null, lockAccountId: string | null, id: number) =>
+  `https://${baseUrl}/${BANK_MASTER_API_PATH}/${id}.json?lock_account_id=${lockAccountId}`;
+
+export const bankMasterToggleActiveUrl = (baseUrl: string | null, lockAccountId: string | null, id: number) =>
+  `https://${baseUrl}/${BANK_MASTER_API_PATH}/${id}/toggle_active.json?lock_account_id=${lockAccountId}`;
+
+export const mapApiBankRecord = (raw: ApiBankMasterRecord): BankRecord => ({
+  id: raw.id,
+  beneficiaryName: raw.beneficiary_name || '',
+  bankName: raw.bank_name || '',
+  accountNo: raw.account_number || '',
+  accountType: raw.account_type || '',
+  ifscCode: raw.ifsc_code || '',
+  swiftCode: raw.swift_code || '',
+  branch: raw.branch || '',
+  active: Boolean(raw.active),
+});
+
 export const createBlankBank = (): BankRecord => ({
   id: Date.now() + Math.floor(Math.random() * 1000),
   beneficiaryName: '',
@@ -67,24 +82,8 @@ export const createBlankBank = (): BankRecord => ({
   ifscCode: '',
   swiftCode: '',
   branch: '',
+  active: true,
 });
-
-export const readBanksFromStorage = (): BankRecord[] => {
-  const storedBanks = localStorage.getItem(BANK_MASTER_STORAGE_KEY);
-
-  if (!storedBanks) return [];
-
-  try {
-    const parsedBanks = JSON.parse(storedBanks) as BankRecord[];
-    return Array.isArray(parsedBanks) ? parsedBanks : [];
-  } catch {
-    return [];
-  }
-};
-
-export const writeBanksToStorage = (banks: BankRecord[]) => {
-  localStorage.setItem(BANK_MASTER_STORAGE_KEY, JSON.stringify(banks));
-};
 
 export const isValidIfscCode = (value: string) => /^[A-Z]{4}0[A-Z0-9]{6}$/.test(value.trim().toUpperCase());
 export const isValidSwiftCode = (value: string) => !value || /^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(value.trim().toUpperCase());
@@ -127,27 +126,12 @@ export const validateBankRecord = (record: BankRecord) => {
   return errors;
 };
 
-export const buildBankPayloadForCreate = (records: BankRecord[]): BankCreatePayload => ({
-  pms_bank_master: {
-    bank_accounts_attributes: records.map((record) => ({
-      beneficiary_name: record.beneficiaryName,
-      bank_name: record.bankName,
-      account_no: record.accountNo,
-      account_type: record.accountType,
-      ifsc_code: record.ifscCode,
-      swift_code: record.swiftCode,
-      branch: record.branch,
-    })),
-  },
-});
-
-export const buildBankPayloadForUpdate = (record: BankRecord): BankUpdatePayload => ({
-  pms_bank_master: {
-    id: record.id,
+export const buildBankMasterPayload = (record: BankRecord): BankMasterPayload => ({
+  bank_master: {
     beneficiary_name: record.beneficiaryName,
     bank_name: record.bankName,
-    account_no: record.accountNo,
-    account_type: record.accountType,
+    account_number: record.accountNo,
+    account_type: record.accountType.toLowerCase(),
     ifsc_code: record.ifscCode,
     swift_code: record.swiftCode,
     branch: record.branch,

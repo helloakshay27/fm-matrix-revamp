@@ -9,14 +9,12 @@ import { ArrowLeft, CirclePlus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   ACCOUNT_TYPE_OPTIONS,
-  BANK_MASTER_API_PATH,
   BankRecord,
-  buildBankPayloadForCreate,
+  bankMasterListUrl,
+  buildBankMasterPayload,
   createBlankBank,
   getBankMasterApiConfig,
-  readBanksFromStorage,
   validateBankRecord,
-  writeBanksToStorage,
 } from './bankMasterUtils';
 
 const BankMasterAdd = () => {
@@ -80,26 +78,20 @@ const BankMasterAdd = () => {
     setIsSaving(true);
 
     try {
-      const apiPayload = buildBankPayloadForCreate(normalizedRows);
       const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
 
-      try {
-        await axios.post(
-          `https://${baseUrl}/${BANK_MASTER_API_PATH}.json?lock_account_id=${lockAccountId}`,
-          apiPayload,
-          { headers }
-        );
-      } catch {
-        // Dummy/placeholder endpoint until the real Bank Master API is available.
-        // Fall through and keep local storage as the source of truth so the UI keeps working.
-      }
+      // The API only accepts one bank_master per request, so add-another-row fires one POST per row.
+      await Promise.all(
+        normalizedRows.map((row) =>
+          axios.post(
+            bankMasterListUrl(baseUrl, lockAccountId),
+            buildBankMasterPayload(row),
+            { headers }
+          )
+        )
+      );
 
-      const nextBanks = normalizedRows.map((row) => ({
-        ...row,
-        id: Date.now() + Math.floor(Math.random() * 100000),
-      }));
-      writeBanksToStorage([...nextBanks, ...readBanksFromStorage()]);
-      toast.success(`${nextBanks.length} bank detail${nextBanks.length > 1 ? 's' : ''} added successfully`);
+      toast.success(`${normalizedRows.length} bank detail${normalizedRows.length > 1 ? 's' : ''} added successfully`);
       navigate('/accounting/bank-master');
     } catch {
       toast.error('Failed to save bank details');

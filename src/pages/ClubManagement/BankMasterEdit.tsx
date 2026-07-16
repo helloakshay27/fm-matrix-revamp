@@ -9,13 +9,13 @@ import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   ACCOUNT_TYPE_OPTIONS,
-  BANK_MASTER_API_PATH,
   BankRecord,
-  buildBankPayloadForUpdate,
+  bankMasterDetailUrl,
+  bankMasterListUrl,
+  buildBankMasterPayload,
   getBankMasterApiConfig,
-  readBanksFromStorage,
+  mapApiBankRecord,
   validateBankRecord,
-  writeBanksToStorage,
 } from './bankMasterUtils';
 
 const BankMasterEdit = () => {
@@ -27,14 +27,26 @@ const BankMasterEdit = () => {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    const banks = readBanksFromStorage();
-    const found = banks.find((b) => String(b.id) === String(id));
+    // No single-record GET endpoint is available, so the list is fetched and filtered by id.
+    const loadBank = async () => {
+      try {
+        const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(bankMasterListUrl(baseUrl, lockAccountId), { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        const found = data.map(mapApiBankRecord).find((b: BankRecord) => String(b.id) === String(id));
 
-    if (found) {
-      setBank({ ...found });
-    } else {
-      setNotFound(true);
-    }
+        if (found) {
+          setBank(found);
+        } else {
+          setNotFound(true);
+        }
+      } catch {
+        toast.error('Failed to load bank details');
+        setNotFound(true);
+      }
+    };
+
+    loadBank();
   }, [id]);
 
   const updateField = (field: keyof BankRecord, value: string) => {
@@ -70,22 +82,14 @@ const BankMasterEdit = () => {
     setIsSaving(true);
 
     try {
-      const apiPayload = buildBankPayloadForUpdate(normalized);
       const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
 
-      try {
-        await axios.patch(
-          `https://${baseUrl}/${BANK_MASTER_API_PATH}/${normalized.id}.json?lock_account_id=${lockAccountId}`,
-          apiPayload,
-          { headers }
-        );
-      } catch {
-        // Dummy/placeholder endpoint until the real Bank Master API is available.
-        // Fall through and keep local storage as the source of truth so the UI keeps working.
-      }
+      await axios.patch(
+        bankMasterDetailUrl(baseUrl, lockAccountId, normalized.id),
+        buildBankMasterPayload(normalized),
+        { headers }
+      );
 
-      const banks = readBanksFromStorage();
-      writeBanksToStorage(banks.map((b) => (b.id === normalized.id ? normalized : b)));
       toast.success('Bank details updated successfully');
       navigate('/accounting/bank-master');
     } catch {

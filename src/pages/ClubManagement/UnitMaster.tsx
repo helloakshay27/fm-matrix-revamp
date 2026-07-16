@@ -185,10 +185,10 @@ const UnitMaster: React.FC = () => {
                 <button
                     type="button"
                     onClick={() => handleToggleStatus(uom)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full !rounded-full transition-colors ${uom.active ? 'bg-red-500' : 'bg-gray-300'}`}
+                    className={`status-toggle relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${uom.active ? 'bg-red-500' : 'bg-gray-300'}`}
                 >
                     <span
-                        className={`inline-block h-4 w-4 transform rounded-full !rounded-full bg-white transition-transform ${uom.active ? 'translate-x-6' : 'translate-x-1'}`}
+                        className={`status-toggle-thumb inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${uom.active ? 'translate-x-6' : 'translate-x-1'}`}
                     />
                 </button>
 
@@ -230,7 +230,7 @@ const UnitMaster: React.FC = () => {
                 <h1 className="text-2xl font-bold tracking-tight">Unit of Measurement</h1>
             </header>
 
-            <div className="[&_*]:!rounded-none [&_.rounded-lg]:!rounded-none [&_.rounded-md]:!rounded-none [&_.rounded]:!rounded-none">
+            <div className="[&_*:not(.status-toggle):not(.status-toggle-thumb)]:!rounded-none [&_.rounded-lg]:!rounded-none [&_.rounded-md]:!rounded-none [&_.rounded]:!rounded-none">
                 <EnhancedTaskTable
                     data={uoms}
                     columns={columns}
