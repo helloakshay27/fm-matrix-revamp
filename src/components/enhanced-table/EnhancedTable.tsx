@@ -894,9 +894,9 @@ export function EnhancedTable<T extends Record<string, any>>({
           )}
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap justify-end">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
           {rightActions}
-          {/* Mobile: filter and columns on right side */}
+          {/* Mobile: filter, export, and columns on right side */}
           <div className="flex items-center gap-1 sm:hidden">
             {onFilterClick && (
               <Button
@@ -910,6 +910,22 @@ export function EnhancedTable<T extends Record<string, any>>({
               </Button>
             )}
             {filterAdjacentActions}
+            {!hideTableExport && enableExport && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportClick}
+                disabled={isExporting}
+                className="h-8 px-2"
+                title={isExporting ? "Exporting..." : "Export"}
+              >
+                {isExporting ? (
+                  <div className="animate-spin rounded-full border-2 border-current border-t-transparent w-4 h-4" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+              </Button>
+            )}
             {!hideColumnsButton && (
               <ColumnVisibilityMenu
                 columns={columns}
