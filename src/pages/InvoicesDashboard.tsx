@@ -49,6 +49,13 @@ const columns: ColumnConfig[] = [
     draggable: true,
   },
   {
+    key: 'rejection_reason',
+    label: 'Rejection Reason',
+    sortable: true,
+    defaultVisible: true,
+    draggable: true,
+  },
+  {
     key: 'last_approved_by',
     label: 'Last Approved By',
     sortable: true,
