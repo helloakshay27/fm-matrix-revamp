@@ -547,11 +547,11 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                 <span className="text-[#1a1a1a] font-medium text-sm">Every month between</span>
               </label>
               <div className="flex items-center gap-2 mt-3">
-                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '100px' }} value={bMonthStart} onChange={() => {}}>
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '100px' }} value={bMonthStart} onChange={() => { }}>
                   {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
                 <span className="text-sm text-[#1a1a1a]">and</span>
-                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '100px' }} value={bMonthEnd} onChange={() => {}}>
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '100px' }} value={bMonthEnd} onChange={() => { }}>
                   {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
@@ -575,7 +575,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                   <span className="text-[#1a1a1a] font-medium">Select All</span>
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((day) => (
+                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
                     <label key={day} className="flex items-center text-sm cursor-pointer">
                       <input type="checkbox" checked={weekdayChecked(day)} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
                       <span className="text-[#1a1a1a]">{day.substring(0, 3)}</span>
@@ -638,7 +638,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                 <span className="text-[#1a1a1a] font-medium text-sm">Specific minutes</span>
               </label>
               <div className="grid grid-cols-4 gap-1 mt-4">
-                {[0,5,10,15,20,25,30,35,40,45,50,55].map((minute) => (
+                {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minute) => (
                   <label key={minute} className="flex items-center text-xs cursor-pointer">
                     <input type="checkbox" checked={minuteChecked(minute)} readOnly className="mr-1 w-3 h-3" style={{ accentColor: '#C72030' }} />
                     <span className="text-[#1a1a1a]">{minute.toString().padStart(2, '0')} min</span>
@@ -650,12 +650,12 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                 <span className="text-[#1a1a1a] font-medium text-sm">Every minute between minute</span>
               </label>
               <div className="flex items-center gap-2 mt-3">
-                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '60px' }} value={bMinStart} onChange={() => {}}>
-                  {MINUTE_VALUES.map((m) => <option key={m} value={m.toString().padStart(2,"0")}>{m.toString().padStart(2,"0")}</option>)}
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '60px' }} value={bMinStart} onChange={() => { }}>
+                  {MINUTE_VALUES.map((m) => <option key={m} value={m.toString().padStart(2, "0")}>{m.toString().padStart(2, "0")}</option>)}
                 </select>
                 <span className="text-sm text-[#1a1a1a]">and minute</span>
-                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '60px' }} value={bMinEnd} onChange={() => {}}>
-                  {MINUTE_VALUES.map((m) => <option key={m} value={m.toString().padStart(2,"0")}>{m.toString().padStart(2,"0")}</option>)}
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '60px' }} value={bMinEnd} onChange={() => { }}>
+                  {MINUTE_VALUES.map((m) => <option key={m} value={m.toString().padStart(2, "0")}>{m.toString().padStart(2, "0")}</option>)}
                 </select>
               </div>
             </div>
@@ -1254,11 +1254,10 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                       key={group.frequency_config_id}
                       type="button"
                       onClick={() => setActivePreviewFreqTab(idx)}
-                      className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${
-                        idx === activePreviewFreqTab
+                      className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${idx === activePreviewFreqTab
                           ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
                           : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       {group.frequency.charAt(0).toUpperCase() + group.frequency.slice(1)}
                     </button>
@@ -1353,7 +1352,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
             </div>
 
             <div className="bg-[#F6F4EE] rounded-lg p-6">
-              <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">AMC Invoice</h3>
+              <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">Other Documents</h3>
               <div className="flex flex-wrap gap-4">
                 {renderAttachmentCards(invoiceDocuments, "No AMC invoice attachments available")}
               </div>

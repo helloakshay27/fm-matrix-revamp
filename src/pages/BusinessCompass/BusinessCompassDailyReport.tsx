@@ -2649,8 +2649,23 @@ const BusinessCompassDailyReport: React.FC = () => {
           : {}),
       }))
       .filter((p) => p.title !== "");
+
+    // Include scheduled items for next working day that aren't already in planningItems
+    const scheduledPlanItems = dedupedTomorrowItems
+      .filter((item) =>
+        !planningItems.some((p) => planningItemMatchesSourceItem(p, item))
+      )
+      .map((item) => ({
+        title: cleanReportText(item.title),
+        is_starred: false,
+        source_id: item.originalData?.id ?? null,
+        source_type: item.type ?? null,
+        originalData: item.originalData,
+      }));
+
     const tomorrowPlanPayload = [
       ...manualTomorrowPlan,
+      ...scheduledPlanItems,
     ]
       .filter((item) => item.title.trim() !== "")
       .filter((item, index, arr) => {
@@ -3816,31 +3831,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       title={`Edit ${item.type}`}
                                     >
                                       <Pencil size={13} />
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        const alreadyInPlan = addedToTomorrowIds.has(item.id);
-                                        if (alreadyInPlan) {
-                                          removeItemFromTomorrow(item);
-                                        } else {
-                                          addItemToTomorrow(item);
-                                        }
-                                      }}
-                                      className={cn(
-                                        "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
-                                        addedToTomorrowIds.has(item.id)
-                                          ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                          : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-100"
-                                      )}
-                                      title={
-                                        addedToTomorrowIds.has(item.id)
-                                          ? "Remove from tomorrow's plan"
-                                          : "Add to tomorrow's plan"
-                                      }
-                                    >
-                                      {addedToTomorrowIds.has(item.id)
-                                        ? "Added ✓"
-                                        : "+ Tomorrow"}
                                     </button>
                                   </div>
                                   {(() => {

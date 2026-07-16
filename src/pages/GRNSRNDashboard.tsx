@@ -29,6 +29,7 @@ const columns: ColumnConfig[] = [
     draggable: true,
     defaultVisible: true,
   },
+  
   {
     key: "inventories_name",
     label: "Inventory",
@@ -39,6 +40,20 @@ const columns: ColumnConfig[] = [
   {
     key: "supplier_name",
     label: "Supplier",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "approved_status",
+    label: "Approved Status",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "last_approved_by",
+    label: "Last Approved By",
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -67,20 +82,6 @@ const columns: ColumnConfig[] = [
   {
     key: "po_reference_number",
     label: "P.O Reference Number",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "approved_status",
-    label: "Approved Status",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "last_approved_by",
-    label: "Last Approved By",
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -307,7 +308,7 @@ export const GRNSRNDashboard = () => {
           <Eye className="w-4 h-4" />
         </Button>
       )}
-      {shouldShow("GRN/ SRN", "update") && item.approved_status === 'Pending' && (
+      {shouldShow("GRN/ SRN", "update") && item.can_edit === true && (
         <Button
           size="sm"
           variant="ghost"

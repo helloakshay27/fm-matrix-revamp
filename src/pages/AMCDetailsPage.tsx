@@ -103,6 +103,15 @@ interface Technician {
   email: string;
 }
 
+interface VisitAttachment {
+  id?: number;
+  document?: string;
+  document_url?: string;
+  filename?: string;
+  document_file_name?: string;
+  [key: string]: any;
+}
+
 interface AmcVisitLog {
   id: number;
   visit_number: number;
@@ -112,13 +121,8 @@ interface AmcVisitLog {
   updated_at: string;
   asset_period: string;
   technician: Technician | null;
-  // Added optional attachment to align with runtime usage (visit.attachment?.document / id)
-  attachment?: {
-    id?: number;
-    document?: string; // image URL or file URL
-    document_url?: string; // sometimes APIs use document_url
-    [key: string]: any; // allow extra backend-provided fields
-  } | null;
+  attachment?: VisitAttachment | null;
+  attachments?: VisitAttachment[];
 }
 
 interface VisitLogEntry {
@@ -131,12 +135,8 @@ interface VisitLogEntry {
   remarks?: string | null;
   assets_covered?: string[] | null;
   technician?: Technician | null;
-  attachment?: {
-    id?: number;
-    document?: string;
-    document_url?: string;
-    [key: string]: any;
-  } | null;
+  attachment?: VisitAttachment | null;
+  attachments?: VisitAttachment[];
 }
 
 interface FrequencyVisitGroup {
@@ -1004,7 +1004,7 @@ export const AMCDetailsPage = () => {
                   {/* AMC Invoice Card */}
                   <div className="bg-[#F6F4EE] rounded-lg p-6">
                     <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">
-                      AMC Invoice
+                      Other Documents
                     </h3>
                     <div className="flex flex-wrap gap-4">
                       {(() => {
@@ -1018,7 +1018,7 @@ export const AMCDetailsPage = () => {
                         if (documents.length === 0) {
                           return (
                             <p className="text-gray-500 text-sm">
-                              No AMC invoice attachments available
+                              No Other Documents. available
                             </p>
                           );
                         }
@@ -1737,11 +1737,45 @@ export const AMCDetailsPage = () => {
                                               ) : <span className="text-gray-400 text-sm">—</span>}
                                             </TableCell>
                                             <TableCell>
-                                              {visit.attachment?.document || visit.attachment?.document_url ? (
-                                                <a href={visit.attachment.document || visit.attachment.document_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[#C72030] hover:underline text-sm">
-                                                  <FileText className="w-4 h-4" />View
-                                                </a>
-                                              ) : <span className="text-gray-400 text-sm">—</span>}
+                                              {(() => {
+                                                const list: VisitAttachment[] = [
+                                                  ...(visit.attachments || []),
+                                                  ...(visit.attachment ? [visit.attachment] : []),
+                                                ].filter((a) => a?.document || a?.document_url);
+                                                if (!list.length) return <span className="text-gray-400 text-sm">—</span>;
+                                                return (
+                                                  <div className="flex flex-col gap-1">
+                                                    {list.map((a, ai) => {
+                                                      const url = a.document || a.document_url || '';
+                                                      const name = a.filename || a.document_file_name || `File ${ai + 1}`;
+                                                      return (
+                                                        <div key={a.id ?? ai} className="flex items-center gap-2">
+                                                          <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[#C72030] hover:underline text-sm">
+                                                            <FileText className="w-3.5 h-3.5" />{name}
+                                                          </a>
+                                                          <button
+                                                            title="Download"
+                                                            className="text-gray-500 hover:text-[#C72030]"
+                                                            onClick={async () => {
+                                                              try {
+                                                                const token = localStorage.getItem('token');
+                                                                const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                                                                const blob = await res.blob();
+                                                                const blobUrl = URL.createObjectURL(new Blob([blob], { type: 'application/octet-stream' }));
+                                                                const el = document.createElement('a'); el.href = blobUrl; el.download = name;
+                                                                document.body.appendChild(el); el.click(); el.remove();
+                                                                URL.revokeObjectURL(blobUrl);
+                                                              } catch { window.open(url, '_blank'); }
+                                                            }}
+                                                          >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                                                          </button>
+                                                        </div>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                );
+                                              })()}
                                             </TableCell>
                                           </TableRow>
                                         );
@@ -1795,127 +1829,153 @@ export const AMCDetailsPage = () => {
                     };
                     return (
                       <>
-                  <div className="bg-white rounded-lg border overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-[#EDEAE3]">
-                          <TableHead className="w-10" />
-                          <TableHead className="font-semibold text-[#1a1a1a]">Visit</TableHead>
-                          <TableHead className="font-semibold text-[#1a1a1a]">Visit Date</TableHead>
-                          <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
-                          <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
-                          <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
-                          <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                          <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
-                          <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody className="bg-white">
-                        {amcVisitData.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={9} className="text-center py-6 text-gray-500">
-                              No visit history found.
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          vflatSlice.map((visit) => {
-                            const isSelected = selectedVisitId === visit.id;
-                            return (
-                              <TableRow
-                                key={visit.id}
-                                className={`border-b border-gray-200 transition-colors ${isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"}`}
-                              >
-                                <TableCell className="w-10">
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={() => setSelectedVisitId(isSelected ? null : visit.id)}
-                                    className="w-4 h-4 rounded border-gray-300 accent-[#C72030] cursor-pointer"
-                                  />
-                                </TableCell>
-                                <TableCell className="font-medium text-gray-900">{visit.visit_number ?? "—"}</TableCell>
-                                <TableCell className="text-gray-900">
-                                  {visit.visit_date ? new Date(visit.visit_date).toLocaleDateString("en-GB") : "—"}
-                                </TableCell>
-                                <TableCell className="text-gray-900">
-                                  {(visit as any).actual_visit_date
-                                    ? (() => {
-                                      const raw = (visit as any).actual_visit_date as string;
-                                      if (raw.includes("/")) return raw;
-                                      const d = new Date(raw);
-                                      return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
-                                    })()
-                                    : "—"}
-                                </TableCell>
-                                <TableCell className="text-gray-900">{visit.technician?.name || "—"}</TableCell>
-                                <TableCell className="text-gray-900 max-w-[200px] whitespace-normal break-words">{visit.remarks || "—"}</TableCell>
-                                <TableCell>
-                                  {(visit as any).status ? (
-                                    <span
-                                      className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${(visit as any).status.toLowerCase() === "completed"
-                                        ? "bg-green-100 text-green-800"
-                                        : (visit as any).status.toLowerCase() === "cancelled"
-                                          ? "bg-red-100 text-red-800"
-                                          : "bg-gray-100 text-gray-700"
-                                        }`}
-                                    >
-                                      {((visit as any).status as string).toUpperCase()}
-                                    </span>
-                                  ) : (
-                                    <span className="text-gray-400 text-sm">—</span>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  {(() => {
-                                    const ids: any[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
-                                    const total = amcDetails?.amc_assets?.length ?? 0;
-                                    const covered = ids.length;
-                                    return covered > 0 ? (
-                                      <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFF0F0] text-[#C72030]">
-                                        {covered}{total > 0 ? ` / ${total}` : ""}
-                                      </span>
-                                    ) : (
-                                      <span className="text-gray-400 text-sm">—</span>
-                                    );
-                                  })()}
-                                </TableCell>
-                                <TableCell>
-                                  {visit.attachment?.document || visit.attachment?.document_url ? (
-                                    <a
-                                      href={visit.attachment.document || visit.attachment.document_url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="flex items-center gap-1 text-[#C72030] hover:underline text-sm"
-                                    >
-                                      <FileText className="w-4 h-4" />
-                                      View
-                                    </a>
-                                  ) : (
-                                    <span className="text-gray-400 text-sm">—</span>
-                                  )}
-                                </TableCell>
+                        <div className="bg-white rounded-lg border overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-[#EDEAE3]">
+                                <TableHead className="w-10" />
+                                <TableHead className="font-semibold text-[#1a1a1a]">Visit</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Visit Date</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
                               </TableRow>
-                            );
-                          })
+                            </TableHeader>
+                            <TableBody className="bg-white">
+                              {amcVisitData.length === 0 ? (
+                                <TableRow>
+                                  <TableCell colSpan={9} className="text-center py-6 text-gray-500">
+                                    No visit history found.
+                                  </TableCell>
+                                </TableRow>
+                              ) : (
+                                vflatSlice.map((visit) => {
+                                  const isSelected = selectedVisitId === visit.id;
+                                  return (
+                                    <TableRow
+                                      key={visit.id}
+                                      className={`border-b border-gray-200 transition-colors ${isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"}`}
+                                    >
+                                      <TableCell className="w-10">
+                                        <input
+                                          type="checkbox"
+                                          checked={isSelected}
+                                          onChange={() => setSelectedVisitId(isSelected ? null : visit.id)}
+                                          className="w-4 h-4 rounded border-gray-300 accent-[#C72030] cursor-pointer"
+                                        />
+                                      </TableCell>
+                                      <TableCell className="font-medium text-gray-900">{visit.visit_number ?? "—"}</TableCell>
+                                      <TableCell className="text-gray-900">
+                                        {visit.visit_date ? new Date(visit.visit_date).toLocaleDateString("en-GB") : "—"}
+                                      </TableCell>
+                                      <TableCell className="text-gray-900">
+                                        {(visit as any).actual_visit_date
+                                          ? (() => {
+                                            const raw = (visit as any).actual_visit_date as string;
+                                            if (raw.includes("/")) return raw;
+                                            const d = new Date(raw);
+                                            return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
+                                          })()
+                                          : "—"}
+                                      </TableCell>
+                                      <TableCell className="text-gray-900">{visit.technician?.name || "—"}</TableCell>
+                                      <TableCell className="text-gray-900 max-w-[200px] whitespace-normal break-words">{visit.remarks || "—"}</TableCell>
+                                      <TableCell>
+                                        {(visit as any).status ? (
+                                          <span
+                                            className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${(visit as any).status.toLowerCase() === "completed"
+                                              ? "bg-green-100 text-green-800"
+                                              : (visit as any).status.toLowerCase() === "cancelled"
+                                                ? "bg-red-100 text-red-800"
+                                                : "bg-gray-100 text-gray-700"
+                                              }`}
+                                          >
+                                            {((visit as any).status as string).toUpperCase()}
+                                          </span>
+                                        ) : (
+                                          <span className="text-gray-400 text-sm">—</span>
+                                        )}
+                                      </TableCell>
+                                      <TableCell>
+                                        {(() => {
+                                          const ids: any[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
+                                          const total = amcDetails?.amc_assets?.length ?? 0;
+                                          const covered = ids.length;
+                                          return covered > 0 ? (
+                                            <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFF0F0] text-[#C72030]">
+                                              {covered}{total > 0 ? ` / ${total}` : ""}
+                                            </span>
+                                          ) : (
+                                            <span className="text-gray-400 text-sm">—</span>
+                                          );
+                                        })()}
+                                      </TableCell>
+                                      <TableCell>
+                                        {(() => {
+                                          const list: VisitAttachment[] = [
+                                            ...(visit.attachments || []),
+                                            ...(visit.attachment ? [visit.attachment] : []),
+                                          ].filter((a) => a?.document || a?.document_url);
+                                          if (!list.length) return <span className="text-gray-400 text-sm">—</span>;
+                                          return (
+                                            <div className="flex flex-col gap-1">
+                                              {list.map((a, ai) => {
+                                                const url = a.document || a.document_url || '';
+                                                const name = a.filename || a.document_file_name || `File ${ai + 1}`;
+                                                return (
+                                                  <div key={a.id ?? ai} className="flex items-center gap-2">
+                                                    <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[#C72030] hover:underline text-sm">
+                                                      <FileText className="w-3.5 h-3.5" />{name}
+                                                    </a>
+                                                    <button
+                                                      title="Download"
+                                                      className="text-gray-500 hover:text-[#C72030]"
+                                                      onClick={async () => {
+                                                        try {
+                                                          const token = localStorage.getItem('token');
+                                                          const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                                                          const blob = await res.blob();
+                                                          const blobUrl = URL.createObjectURL(new Blob([blob], { type: 'application/octet-stream' }));
+                                                          const el = document.createElement('a'); el.href = blobUrl; el.download = name;
+                                                          document.body.appendChild(el); el.click(); el.remove();
+                                                          URL.revokeObjectURL(blobUrl);
+                                                        } catch { window.open(url, '_blank'); }
+                                                      }}
+                                                    >
+                                                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                                                    </button>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          );
+                                        })()}
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })
+                              )}
+                            </TableBody>
+                          </Table>
+                        </div>
+                        {vflatTotal > 1 && (
+                          <div className="flex justify-center mt-4">
+                            <Pagination>
+                              <PaginationContent>
+                                <PaginationItem>
+                                  <PaginationPrevious onClick={() => setVisitFlatPage((p) => Math.max(1, p - 1))} className={visitFlatPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                                </PaginationItem>
+                                {renderFlatPages()}
+                                <PaginationItem>
+                                  <PaginationNext onClick={() => setVisitFlatPage((p) => Math.min(vflatTotal, p + 1))} className={visitFlatPage === vflatTotal ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                                </PaginationItem>
+                              </PaginationContent>
+                            </Pagination>
+                          </div>
                         )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  {vflatTotal > 1 && (
-                    <div className="flex justify-center mt-4">
-                      <Pagination>
-                        <PaginationContent>
-                          <PaginationItem>
-                            <PaginationPrevious onClick={() => setVisitFlatPage((p) => Math.max(1, p - 1))} className={visitFlatPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-                          </PaginationItem>
-                          {renderFlatPages()}
-                          <PaginationItem>
-                            <PaginationNext onClick={() => setVisitFlatPage((p) => Math.min(vflatTotal, p + 1))} className={visitFlatPage === vflatTotal ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-                          </PaginationItem>
-                        </PaginationContent>
-                      </Pagination>
-                    </div>
-                  )}
                       </>
                     );
                   })()

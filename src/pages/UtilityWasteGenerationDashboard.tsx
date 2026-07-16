@@ -9,6 +9,7 @@ import {
   Droplets, Percent, Package
 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { WasteGenerationFilterDialog } from '../components/WasteGenerationFilterDialog';
 import { WasteGenerationBulkDialog } from '../components/WasteGenerationBulkDialog';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
@@ -168,6 +169,7 @@ const UtilityWasteGenerationDashboard = () => {
   const [activeFilters, setActiveFilters] = useState<WasteGenerationFilters>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [listCounts, setListCounts] = useState<WasteGenerationCounts | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // ── Analytics States ─────────────────────────────────────────────────────
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
@@ -315,8 +317,10 @@ useEffect(() => {
   const handleClearSelection = () => setShowActionPanel(false);
   const handleApplyFilters = (filters: WasteGenerationFilters) => { setActiveFilters(filters); setCurrentPage(1); };
 
-  const handleExport = async (filters: WasteGenerationFilters) => {
+  const handleExport = async () => {
+    setIsExporting(true);
     try {
+      const filters = activeFilters;
       const queryParts: string[] = [];
       if (filters.commodity_id_eq) queryParts.push(`q[commodity_id_eq]=${encodeURIComponent(filters.commodity_id_eq)}`);
       if (filters.category_id_eq) queryParts.push(`q[category_id_eq]=${encodeURIComponent(filters.category_id_eq)}`);
@@ -341,6 +345,7 @@ useEffect(() => {
       URL.revokeObjectURL(downloadUrl);
       toast.success('Data exported successfully!');
     } catch { toast.error('Export failed'); }
+    finally { setIsExporting(false); }
   };
 
   const handleView = (id: number) => navigate(`/maintenance/waste/generation/${id}`);
@@ -382,7 +387,7 @@ useEffect(() => {
                   icon: <RefreshCw className="w-6 h-6 text-[#C72030]" />,
                 },
                 {
-                  label: 'Recycling %',
+                  label: 'Wet Waste',
                   value: listCounts ? `${listCounts.recycling_percentage}%` : '—',
                   icon: <Percent className="w-6 h-6 text-[#C72030]" />,
                 },
@@ -417,6 +422,7 @@ useEffect(() => {
                 { key: 'id', label: 'ID' },
                 { key: 'date', label: 'Date' },
                 { key: 'time', label: 'Time' },
+                { key: 'location', label: 'Location' },
                 { key: 'user_type', label: 'User Type' },
                 { key: 'client_name', label: 'Client / Tenant Name' },
                 { key: 'user_name', label: 'User Name' },
@@ -441,6 +447,7 @@ useEffect(() => {
                   }
                   return '-';
                 }
+                if (key === 'location') return item.location_details || '-';
                 if (key === 'user_type') return item.user_type || item.resource_type || '-';
                 if (key === 'client_name') return item.client_name || item.vendor?.company_name || item.agency_name || '-';
                 if (key === 'user_name') return item.user_name || item.created_by?.full_name || '-';
@@ -461,6 +468,9 @@ useEffect(() => {
               getItemId={(item) => item.id.toString()}
               onSearchChange={setSearchTerm}
               onFilterClick={() => setIsFilterOpen(true)}
+              enableExport={true}
+              onExport={handleExport}
+              isExporting={isExporting}
               leftActions={
                 shouldShow("Waste Generation", "show") ? (
                   <Button className="bg-[#C72030] text-white rounded-none" onClick={handleActionClick}>
@@ -549,7 +559,7 @@ useEffect(() => {
         </div>
       )}
 
-      <WasteGenerationFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleApplyFilters} onExport={handleExport} />
+      <WasteGenerationFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleApplyFilters} />
       <WasteGenerationBulkDialog isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} type="import" />
   <AssetAnalyticsFilterDialog
   isOpen={isAnalyticsFilterOpen}

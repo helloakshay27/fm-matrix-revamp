@@ -177,7 +177,7 @@ export const AddFacilityBookingPage = () => {
     return true;
   };
 
-  // Helper: Check if a slot can be selected (enforce consecutive rule for requestable)
+  // Helper: Check if a slot can be selected
   const isSlotSelectable = (slotId: number) => {
     if (!canSelectSlots) return false;
     if (selectedSlots.includes(slotId)) return true; // allow deselect
@@ -194,19 +194,8 @@ export const AddFacilityBookingPage = () => {
 
       return true;
     } else {
-      // For bookable type, use existing logic
-      if (selectedSlots.length >= maxSelectableSlots) return false;
-      const all = [...selectedSlots, slotId].sort((a, b) => a - b);
-      let maxConsec = 1, curr = 1;
-      for (let i = 1; i < all.length; i++) {
-        if (all[i] === all[i - 1] + 1) {
-          curr++;
-          maxConsec = Math.max(maxConsec, curr);
-        } else {
-          curr = 1;
-        }
-      }
-      return maxConsec <= maxConcurrentSlots;
+      // For bookable type: allow free multi-selection
+      return true;
     }
   };
   const [openCancelPolicy, setOpenCancelPolicy] = useState(false);

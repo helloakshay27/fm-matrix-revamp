@@ -43,10 +43,10 @@ export const RecentPermitsSidebar: React.FC<RecentPermitsSidebarProps> = ({
     status: p.status || "—",
     createdAt: p.created_at
       ? new Date(p.created_at).toLocaleDateString("en-US", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
       : "—",
   });
 
@@ -99,7 +99,7 @@ export const RecentPermitsSidebar: React.FC<RecentPermitsSidebarProps> = ({
         <button
           onClick={() => setIsCollapsed((v) => {
             const next = !v;
-            try { localStorage.setItem("sidebarCollapsed", String(next)); } catch {}
+            try { localStorage.setItem("sidebarCollapsed", String(next)); } catch { }
             return next;
           })}
           title={isCollapsed ? "Expand" : "Collapse"}
@@ -122,83 +122,83 @@ export const RecentPermitsSidebar: React.FC<RecentPermitsSidebarProps> = ({
       )}
 
       {!isCollapsed && (
-      <div className="flex-1 space-y-4 overflow-y-auto p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        {loading && (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-sm text-gray-600">Loading recent permits...</div>
-          </div>
-        )}
+        <div className="flex-1 space-y-4 overflow-y-auto p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          {loading && (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-sm text-gray-600">Loading recent permits...</div>
+            </div>
+          )}
 
-        {!loading && recentPermits.length === 0 && (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-sm text-gray-600">No recent permits found</div>
-          </div>
-        )}
+          {!loading && recentPermits.length === 0 && (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-sm text-gray-600">No recent permits found</div>
+            </div>
+          )}
 
-        {!loading &&
-          recentPermits.map((permit) => (
-            <div
-              key={permit.id}
-              className="bg-white border border-[#C4B89D]/40 rounded-lg p-4"
-            >
-              {/* Permit ID + Date */}
-              <div className="flex items-center justify-between mb-4">
-                <span className="font-semibold text-gray-500 text-sm leading-[12px] tracking-[0px]">
-                  #{permit.referenceNumber}
-                </span>
-                <span className="text-xs text-gray-400">{permit.createdAt}</span>
-              </div>
+          {!loading &&
+            recentPermits.map((permit) => (
+              <div
+                key={permit.id}
+                className="bg-white border border-[#C4B89D]/40 rounded-lg p-4"
+              >
+                {/* Permit ID + Date */}
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-semibold text-gray-500 text-sm leading-[12px] tracking-[0px]">
+                    #{permit.referenceNumber}
+                  </span>
+                  <span className="text-xs text-gray-400">{permit.createdAt}</span>
+                </div>
 
-              {/* Permit For */}
-              <div className="mb-3">
-                <h3 className="font-semibold text-gray-900 text-sm leading-[14px] tracking-[0px] line-clamp-2">
-                  {permit.permitFor}
-                </h3>
-              </div>
+                {/* Permit For */}
+                <div className="mb-3">
+                  <h3 className="font-semibold text-gray-900 text-sm leading-[14px] tracking-[0px] line-clamp-2">
+                    {permit.permitFor}
+                  </h3>
+                </div>
 
-              {/* Permit Type */}
-              <div className="flex items-center gap-3 mb-3">
-                <FileText className="h-4 w-4 text-red-500 shrink-0" />
-                <span className="text-sm font-medium text-gray-700 min-w-[80px]">
-                  Type :
-                </span>
-                <span className="text-sm text-gray-900 truncate">{permit.permitType}</span>
-              </div>
+                {/* Permit Type */}
+                <div className="flex items-center gap-3 mb-3">
+                  <FileText className="h-4 w-4 text-red-500 shrink-0" />
+                  <span className="text-sm font-medium text-gray-700 min-w-[80px]">
+                    Type :
+                  </span>
+                  <span className="text-sm text-gray-900 truncate">{permit.permitType}</span>
+                </div>
 
-              {/* Location */}
-              <div className="flex items-center gap-3 mb-3">
-                <MapPin className="h-4 w-4 text-red-500 shrink-0" />
-                <span className="text-sm font-medium text-gray-700 min-w-[80px]">
-                  Location :
-                </span>
-                <span className="text-sm text-gray-900 truncate">{permit.location}</span>
-              </div>
+                {/* Location */}
+                <div className="flex items-center gap-3 mb-3">
+                  <MapPin className="h-4 w-4 text-red-500 shrink-0" />
+                  <span className="text-sm font-medium text-gray-700 min-w-[80px]">
+                    Location :
+                  </span>
+                  <span className="text-sm text-gray-900 truncate">{permit.location}</span>
+                </div>
 
-              {/* Status */}
-              <div className="flex items-center gap-3 mb-4">
-                <Activity className="h-4 w-4 text-red-500 shrink-0" />
-                <span className="text-sm font-medium text-gray-700 min-w-[80px]">
-                  Status :
-                </span>
-                <span
-                  className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(permit.status)}`}
-                >
-                  {permit.status}
-                </span>
-              </div>
+                {/* Status */}
+                <div className="flex items-center gap-3 mb-4">
+                  <Activity className="h-4 w-4 text-red-500 shrink-0" />
+                  <span className="text-sm font-medium text-gray-700 min-w-[80px]">
+                    Status :
+                  </span>
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(permit.status)}`}
+                  >
+                    {permit.status}
+                  </span>
+                </div>
 
-              {/* View button */}
-              <div className="flex items-center justify-end gap-4">
+                {/* View button */}
+                {/* <div className="flex items-center justify-end gap-4">
                 <button
                   className="flex items-center gap-1 text-sm font-medium underline text-[#C72030] hover:opacity-80"
                   onClick={() => handleViewDetails(permit.id)}
                 >
                   <EyeIcon className="h-[24px] w-[24px]" color="#C72030" />
                 </button>
+              </div> */}
               </div>
-            </div>
-          ))}
-      </div>
+            ))}
+        </div>
       )}
     </div>
   );

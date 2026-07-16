@@ -19,6 +19,10 @@ let modelsLoaded = false;
 const FACE_RECOGNITION_INTERVAL_MS = 3000;
 const FACE_AUTH_TOAST_INTERVAL_MS = 6000;
 
+// Master switch for the face-detection/camera-verification feature across
+// all product pages. Flip to true to re-enable.
+export const FACE_DETECTION_ENABLED = false;
+
 export type FaceAuthStatus =
   | "loading"
   | "presence_only"
@@ -60,11 +64,15 @@ export interface SecurityState {
 export function useProductSecurity(): SecurityState {
   const currentFaceAuthUser = useMemo(() => getCurrentFaceAuthUser(), []);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [model, setModel] = useState<any>(modelsLoaded ? true : null);
-  const [modelLoading, setModelLoading] = useState(!modelsLoaded);
-  const [faceDetected, setFaceDetected] = useState(false);
+  const [model, setModel] = useState<any>(
+    !FACE_DETECTION_ENABLED || modelsLoaded ? true : null
+  );
+  const [modelLoading, setModelLoading] = useState(
+    FACE_DETECTION_ENABLED && !modelsLoaded
+  );
+  const [faceDetected, setFaceDetected] = useState(!FACE_DETECTION_ENABLED);
   const [faceAuthStatus, setFaceAuthStatus] = useState<FaceAuthStatus>(
-    modelsLoaded ? "ready" : "loading"
+    !FACE_DETECTION_ENABLED ? "verified" : modelsLoaded ? "ready" : "loading"
   );
   const [faceAuthMessage, setFaceAuthMessage] = useState(
     "Initializing camera security."
@@ -73,7 +81,7 @@ export function useProductSecurity(): SecurityState {
   const [registeringFace, setRegisteringFace] = useState(false);
   const [cameraPermission, setCameraPermission] = useState<
     "pending" | "granted" | "denied"
-  >("pending");
+  >(FACE_DETECTION_ENABLED ? "pending" : "granted");
   const [isBlurred, setIsBlurred] = useState(false);
   const isBlurredRef = useRef(false);
   const blurTimeoutRef = useRef<number | undefined>(undefined);
@@ -169,6 +177,8 @@ export function useProductSecurity(): SecurityState {
   }, []);
 
   const refreshFaceProfile = useCallback(async () => {
+    if (!FACE_DETECTION_ENABLED) return;
+
     const hasStoredProfile = hasLocalFaceProfile(currentFaceAuthUser.id);
 
     setFaceDetected(false);
@@ -184,6 +194,11 @@ export function useProductSecurity(): SecurityState {
   }, [currentFaceAuthUser.id, currentFaceAuthUser.label]);
 
   const registerFace = useCallback(async () => {
+    if (!FACE_DETECTION_ENABLED) {
+      setFaceAuthMessage("Face detection is currently disabled.");
+      return;
+    }
+
     const video = videoRef.current;
 
     if (!currentFaceAuthUser.id) {
@@ -250,6 +265,8 @@ export function useProductSecurity(): SecurityState {
 
   // 1. Load face-api.js models + setup camera
   useEffect(() => {
+    if (!FACE_DETECTION_ENABLED) return;
+
     let mounted = true;
     let timeoutId: number | undefined;
 
@@ -362,12 +379,15 @@ export function useProductSecurity(): SecurityState {
   }, [cameraPermission, model]);
 
   useEffect(() => {
+    if (!FACE_DETECTION_ENABLED) return;
     if (!model || modelLoading) return;
     refreshFaceProfile();
   }, [model, modelLoading, refreshFaceProfile]);
 
   // Face detection interval using face-api.js TinyFaceDetector
   useEffect(() => {
+    if (!FACE_DETECTION_ENABLED) return;
+
     let detectionInterval: number | undefined;
     let noFaceCount = 0;
 

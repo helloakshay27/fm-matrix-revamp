@@ -138,11 +138,20 @@ export const Header = () => {
   useEffect(() => {
     const uid = getUser()?.id;
     if (!uid) return;
+    // Desktop (Electron) exposes device name + LAN IP via the preload bridge.
+    // In the browser build this is undefined and the fields are simply omitted.
+    const electronBridge = (
+      window as Window & {
+        electron?: { getDeviceInfo?: () => Record<string, string | undefined> };
+      }
+    ).electron;
+    const deviceInfo = electronBridge?.getDeviceInfo?.() ?? {};
     posthog.identify(String(uid), {
       organization_name: localStorage.getItem("selectedOrg") ?? undefined,
       company_name: localStorage.getItem("selectedCompany") ?? undefined,
       site_name: localStorage.getItem("selectedSiteName") ?? undefined,
       email: getUser()?.email ?? undefined,
+      ...deviceInfo,
     });
   }, [selectedCompany, selectedSite]);
 
