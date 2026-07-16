@@ -129,7 +129,10 @@ const Index = () => {
       userEmail === "abdul.ghaffar@lockated.com" ||
       userEmail === "mailroom2@zs.com" ||
       userEmail === "abdul.g@gophygital.work" ||
-      userEmail === "zs@lockated.com";
+      userEmail === "zs@lockated.com" ||
+      userEmail === "reception.pune@zycus.com" ||
+      userEmail === "reception.blr@zycus.com" ||
+      userEmail === "reception@zycusitis.onmicrosoft.com";
 
     const isPulseSite =
       hostname.includes("pulse.lockated.com") ||
