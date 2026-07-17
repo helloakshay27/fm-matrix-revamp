@@ -36,6 +36,10 @@ export interface BankMasterPayload {
   bank_master: BankMasterPayloadFields;
 }
 
+export interface BankMastersBulkPayload {
+  bank_masters: BankMasterPayloadFields[];
+}
+
 export const BANK_MASTER_API_PATH = 'bank_masters';
 
 export const ACCOUNT_TYPE_OPTIONS = ['Savings', 'Current', 'Salary', 'NRE', 'NRO'];
@@ -126,14 +130,20 @@ export const validateBankRecord = (record: BankRecord) => {
   return errors;
 };
 
+const toBankMasterFields = (record: BankRecord): BankMasterPayloadFields => ({
+  beneficiary_name: record.beneficiaryName,
+  bank_name: record.bankName,
+  account_number: record.accountNo,
+  account_type: record.accountType.toLowerCase(),
+  ifsc_code: record.ifscCode,
+  swift_code: record.swiftCode,
+  branch: record.branch,
+});
+
 export const buildBankMasterPayload = (record: BankRecord): BankMasterPayload => ({
-  bank_master: {
-    beneficiary_name: record.beneficiaryName,
-    bank_name: record.bankName,
-    account_number: record.accountNo,
-    account_type: record.accountType.toLowerCase(),
-    ifsc_code: record.ifscCode,
-    swift_code: record.swiftCode,
-    branch: record.branch,
-  },
+  bank_master: toBankMasterFields(record),
+});
+
+export const buildBankMastersPayload = (records: BankRecord[]): BankMastersBulkPayload => ({
+  bank_masters: records.map(toBankMasterFields),
 });
