@@ -7,6 +7,16 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   BankRecord,
   bankMasterDetailUrl,
   bankMasterListUrl,
@@ -32,6 +42,9 @@ const BankMaster = () => {
   const navigate = useNavigate();
   const [banks, setBanks] = useState<BankRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedDeleteBank, setSelectedDeleteBank] = useState<BankRecord | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchBanks = useCallback(async () => {
     setLoading(true);
@@ -51,18 +64,25 @@ const BankMaster = () => {
     fetchBanks();
   }, [fetchBanks]);
 
-  const deleteBank = async (id: number) => {
-    const confirmDelete = window.confirm('Are you sure you want to delete this bank detail?');
+  const openDeleteDialog = (bank: BankRecord) => {
+    setSelectedDeleteBank(bank);
+    setDeleteDialogOpen(true);
+  };
 
-    if (!confirmDelete) return;
-
+  const handleDelete = async () => {
+    if (!selectedDeleteBank) return;
+    setDeleteLoading(true);
     try {
       const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
-      await axios.delete(bankMasterDetailUrl(baseUrl, lockAccountId, id), { headers });
+      await axios.delete(bankMasterDetailUrl(baseUrl, lockAccountId, selectedDeleteBank.id), { headers });
       toast.success('Bank detail deleted successfully');
+      setDeleteDialogOpen(false);
+      setSelectedDeleteBank(null);
       fetchBanks();
     } catch {
       toast.error('Failed to delete bank detail');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -83,7 +103,7 @@ const BankMaster = () => {
         <Button size="icon" variant="ghost" onClick={() => navigate(`/accounting/bank-master/edit/${bank.id}`)} title="Edit">
           <Pencil className="h-4 w-4" />
         </Button>
-        <Button size="icon" variant="ghost" onClick={() => deleteBank(bank.id)} title="Delete">
+        <Button size="icon" variant="ghost" onClick={() => openDeleteDialog(bank)} title="Delete">
           <Trash2 className="h-4 w-4 text-red-500" />
         </Button>
       </div>
@@ -147,6 +167,33 @@ const BankMaster = () => {
           emptyMessage="No bank details found. Add your first bank record."
         />
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => {
+        setDeleteDialogOpen(open);
+        if (!open) setSelectedDeleteBank(null);
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Bank Detail</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedDeleteBank?.beneficiaryName ?? 'this bank detail'}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={deleteLoading}
+              style={{ backgroundColor: '#dc2626', color: '#ffffff', border: 'none' }}
+            >
+              {deleteLoading ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

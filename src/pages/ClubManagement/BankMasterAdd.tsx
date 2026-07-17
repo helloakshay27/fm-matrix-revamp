@@ -11,7 +11,7 @@ import {
   ACCOUNT_TYPE_OPTIONS,
   BankRecord,
   bankMasterListUrl,
-  buildBankMasterPayload,
+  buildBankMastersPayload,
   createBlankBank,
   getBankMasterApiConfig,
   validateBankRecord,
@@ -80,15 +80,10 @@ const BankMasterAdd = () => {
     try {
       const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
 
-      // The API only accepts one bank_master per request, so add-another-row fires one POST per row.
-      await Promise.all(
-        normalizedRows.map((row) =>
-          axios.post(
-            bankMasterListUrl(baseUrl, lockAccountId),
-            buildBankMasterPayload(row),
-            { headers }
-          )
-        )
+      await axios.post(
+        bankMasterListUrl(baseUrl, lockAccountId),
+        buildBankMastersPayload(normalizedRows),
+        { headers }
       );
 
       toast.success(`${normalizedRows.length} bank detail${normalizedRows.length > 1 ? 's' : ''} added successfully`);
@@ -139,12 +134,8 @@ const BankMasterAdd = () => {
         </Button>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <h1 className="text-2xl font-semibold">Add Bank Details</h1>
-        <Button type="button" variant="outline" onClick={addAnotherBankRow}>
-          <CirclePlus className="mr-2 h-4 w-4" />
-          Add Another Bank
-        </Button>
       </div>
 
       <p className="text-sm text-slate-500 mb-4">
@@ -153,62 +144,73 @@ const BankMasterAdd = () => {
 
       <div className="space-y-4">
         {draftBanks.map((row, index) => (
-          <div key={`${row.id}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50/60 p-4">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-800">Bank Record {index + 1}</h3>
-              {draftBanks.length > 1 && (
-                <Button type="button" variant="ghost" size="icon" onClick={() => removeDraftRow(index)}>
-                  <X className="h-4 w-4 text-red-600" />
-                </Button>
-              )}
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {renderField('Beneficiary / Account Name', 'beneficiaryName', row.beneficiaryName, index, true, 'Enter beneficiary or account name')}
-              {renderField('Bank Name', 'bankName', row.bankName, index, true, 'Enter bank name')}
-              {renderField('A/c No.', 'accountNo', row.accountNo, index, true, 'Enter account number', 'number')}
-
-              <div className="space-y-1.5">
-                <Label>
-                  A/c Type
-                  <span className="text-red-500"> *</span>
-                </Label>
-                <FormControl fullWidth size="small" error={Boolean(errors[`${index}-accountType`])}>
-                  <MuiSelect
-                    displayEmpty
-                    value={row.accountType}
-                    onChange={(e) => updateDraftRow(index, 'accountType', e.target.value)}
-                    renderValue={(val) =>
-                      val ? val : <span style={{ color: '#aaa' }}>Select account type</span>
-                    }
-                    sx={{
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: errors[`${index}-accountType`] ? '#d32f2f' : '#cbd5e1',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: errors[`${index}-accountType`] ? '#d32f2f' : '#94a3b8',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#C72030',
-                      },
-                      backgroundColor: '#fff',
-                      borderRadius: 0,
-                    }}
-                  >
-                    <MenuItem value=""><em>Select account type</em></MenuItem>
-                    {ACCOUNT_TYPE_OPTIONS.map((option) => (
-                      <MenuItem key={option} value={option}>{option}</MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-                {errors[`${index}-accountType`] && <p className="text-xs text-red-500">{errors[`${index}-accountType`]}</p>}
+          <React.Fragment key={`${row.id}-${index}`}>
+            <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-slate-800">Bank Record {index + 1}</h3>
+                {draftBanks.length > 1 && (
+                  <Button type="button" variant="ghost" size="icon" onClick={() => removeDraftRow(index)}>
+                    <X className="h-4 w-4 text-red-600" />
+                  </Button>
+                )}
               </div>
 
-              {renderField('IFSC Code', 'ifscCode', row.ifscCode, index, true, 'Enter IFSC Code')}
-              {renderField('Swift Code', 'swiftCode', row.swiftCode, index, false, 'Enter SWIFT/BIC code')}
-              {renderField('Branch', 'branch', row.branch, index, true, 'Enter branch name')}
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {renderField('Beneficiary / Account Name', 'beneficiaryName', row.beneficiaryName, index, true, 'Enter beneficiary or account name')}
+                {renderField('Bank Name', 'bankName', row.bankName, index, true, 'Enter bank name')}
+                {renderField('A/c No.', 'accountNo', row.accountNo, index, true, 'Enter account number', 'number')}
+
+                <div className="space-y-1.5">
+                  <Label>
+                    A/c Type
+                    <span className="text-red-500"> *</span>
+                  </Label>
+                  <FormControl fullWidth size="small" error={Boolean(errors[`${index}-accountType`])}>
+                    <MuiSelect
+                      displayEmpty
+                      value={row.accountType}
+                      onChange={(e) => updateDraftRow(index, 'accountType', e.target.value)}
+                      renderValue={(val) =>
+                        val ? val : <span style={{ color: '#aaa' }}>Select account type</span>
+                      }
+                      sx={{
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: errors[`${index}-accountType`] ? '#d32f2f' : '#cbd5e1',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: errors[`${index}-accountType`] ? '#d32f2f' : '#94a3b8',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#C72030',
+                        },
+                        backgroundColor: '#fff',
+                        borderRadius: 0,
+                      }}
+                    >
+                      <MenuItem value=""><em>Select account type</em></MenuItem>
+                      {ACCOUNT_TYPE_OPTIONS.map((option) => (
+                        <MenuItem key={option} value={option}>{option}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  {errors[`${index}-accountType`] && <p className="text-xs text-red-500">{errors[`${index}-accountType`]}</p>}
+                </div>
+
+                {renderField('IFSC Code', 'ifscCode', row.ifscCode, index, true, 'Enter IFSC Code')}
+                {renderField('Swift Code', 'swiftCode', row.swiftCode, index, false, 'Enter SWIFT/BIC code')}
+                {renderField('Branch', 'branch', row.branch, index, true, 'Enter branch name')}
+              </div>
             </div>
-          </div>
+
+            {index === draftBanks.length - 1 && (
+              <div className="mt-1 flex justify-end">
+                <Button type="button" variant="outline" size="sm" onClick={addAnotherBankRow}>
+                  <CirclePlus className="mr-2 h-4 w-4" />
+                  Add Another Bank
+                </Button>
+              </div>
+            )}
+          </React.Fragment>
         ))}
       </div>
 
