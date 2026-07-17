@@ -245,7 +245,7 @@ const isViSite =
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
-  hostname === "fm-matrix.lockated.com"  
+  hostname === "fm-matrix.lockated.com"
   || hostname === "localhost";
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
@@ -398,7 +398,7 @@ const ASSET_RESTRICTED_EMAILS = [
   "reception1@gmail.com",
   "reception.pune@zycus.com",
   "reception.blr@zycus.com",
-  "Reception@zycusitis.onmicrosoft.com",
+  // "Reception@zycusitis.onmicrosoft.com",
 ].map((email) => email.toLowerCase());
 
 export const isAssetRestrictedUser = (

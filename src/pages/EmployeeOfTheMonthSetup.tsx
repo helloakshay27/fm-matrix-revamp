@@ -551,14 +551,19 @@ const EmployeeOfTheMonthSetup: React.FC = () => {
 
             <div className="flex items-center justify-center gap-4 pt-6 border-t">
               <Button variant="outline" onClick={() => navigate(-1)} className="border-[#C72030] text-[#C72030] px-8">Cancel</Button>
-              <Button onClick={handleEOMUpdate} disabled={eomLoading} className="bg-[#C72030] text-white hover:bg-[#a61a28] px-8 font-semibold">
+              <button
+                onClick={handleEOMUpdate}
+                disabled={eomLoading}
+                className="px-8 py-2 font-semibold text-white rounded-none"
+                style={{ backgroundColor: '#C72030' }}
+              >
                 {eomLoading ? "Saving..." : "Save Employee of Month"}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-3">
               <Trophy className="w-6 h-6 text-[#C72030]" />
@@ -576,7 +581,7 @@ const EmployeeOfTheMonthSetup: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-gray-200">
+          <div className="overflow-hidden rounded-lg">
             <EnhancedTable
               data={eomHistory}
               columns={historyColumns}

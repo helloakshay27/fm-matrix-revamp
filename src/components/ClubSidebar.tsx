@@ -350,6 +350,7 @@ const modulesByPackage = {
           name: "Payment Terms",
           href: "/accounting/payment-terms",
         },
+        
         // {
         //   name: "Tax Sections",
         //   href: "/accounting/section",
@@ -378,6 +379,10 @@ const modulesByPackage = {
          {
           name: "UOM Master",
           href: "/accounting/uom-master",
+        },
+        {
+          name: "Bank Master",
+          href: "/accounting/bank-master",
         },
         
         // { name: "Charges ", href: "/accounting/charge-setup" },

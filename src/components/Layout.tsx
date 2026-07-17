@@ -60,7 +60,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { selectedCompany } = useSelector((state: RootState) => state.project);
   const { selectedSite } = useSelector((state: RootState) => state.site);
   const location = useLocation();
-  const currentUser = getUser();
+  const [currentUser, setCurrentUser] = useState(getUser);
+  useEffect(() => {
+    setCurrentUser(getUser());
+  }, [location.pathname]);
   const userEmail = currentUser?.email || "No email";
   const org_id = localStorage.getItem("org_id");
   const hostname = window.location.hostname;
@@ -250,7 +253,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "testtwo@gmail.com" ||
       // userEmail === "ps1@gophygital.work" ||
       userEmail === "ps@gophygital.work" ||
-      userEmail === "abdul.g@gophygital.work"
+      userEmail === "abdul.g@gophygital.work" ||
+      userEmail === "zs@lockated.com" ||
+      (org_id === "87" &&
+        (userEmail === "reception.pune@zycus.com" ||
+          userEmail === "reception.blr@zycus.com" ||
+          userEmail === "reception@zycusitis.onmicrosoft.com"))
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
       return <ActionSidebar />;
@@ -313,17 +321,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       return null;
     }
 
+    // Check if user is in Vendor Module route or is a vendor - render VendorDynamicHeader
+    if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
+      return <VendorDynamicHeader />;
+    }
+
     if (isViSite) {
       return <ViDynamicHeader />;
     }
     // Check if user is in Club Management route - render StaticDynamicHeader
     if (isClubManagementRoute) {
       return <ClubDynamicHeader />;
-    }
-
-    // Check if user is in Vendor Module route or is a vendor - render VendorDynamicHeader
-    if (location.pathname.startsWith("/vendor")) {
-      return <VendorDynamicHeader />;
     }
 
     // Check if user is employee (pms_occupant) - Employee layout takes priority
@@ -360,7 +368,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "testtwo@gmail.com" ||
       // userEmail === "ps1@gophygital.work" ||
       userEmail === "ps@gophygital.work" ||
-      userEmail === "abdul.g@gophygital.work"
+      userEmail === "abdul.g@gophygital.work" ||
+      userEmail === "zs@lockated.com" ||
+      (org_id === "87" &&
+        (userEmail === "reception.pune@zycus.com" ||
+          userEmail === "reception.blr@zycus.com" ||
+          userEmail === "reception@zycusitis.onmicrosoft.com"))
     ) {
       return <ActionHeader />;
     }
