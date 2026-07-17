@@ -39,13 +39,17 @@ export const MobileSurveyThankYou: React.FC = () => {
   const { mappingId } = useParams<{ mappingId: string }>();
   const state = location.state as LocationState;
 
-  // Resolve org_id from URL params first, then fall back to sessionStorage
-  const urlOrgId = new URLSearchParams(location.search).get("org_id");
-  const isOrg3 = urlOrgId === "3" || sessionStorage.getItem("survey_org_id") === "3";
-
   const [countdown, setCountdown] = useState(10);
   const [surveyData, setSurveyData] = useState<SurveyData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Resolve org_id from URL params first, then sessionStorage, then the survey API response
+  const urlOrgId = new URLSearchParams(location.search).get("org_id");
+  const resolvedOrgId =
+    urlOrgId ||
+    sessionStorage.getItem("survey_org_id") ||
+    (surveyData?.org_id != null ? String(surveyData.org_id) : "");
+  const isOrg3 = resolvedOrgId === "3";
 
   // Fetch survey data for dynamic background
   useEffect(() => {
@@ -77,8 +81,11 @@ export const MobileSurveyThankYou: React.FC = () => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          const orgParam = urlOrgId ? `?org_id=${urlOrgId}` : sessionStorage.getItem("survey_org_id") ? `?org_id=${sessionStorage.getItem("survey_org_id")}` : "";
-          navigate(`/mobile/survey/${mappingId}${orgParam}`, { replace: true });
+          // Preserve the original query string (public survey access mode
+          // relies on org_id being in the URL); fall back to the resolved org_id
+          const search =
+            location.search || (resolvedOrgId ? `?org_id=${resolvedOrgId}` : "");
+          navigate(`/mobile/survey/${mappingId}${search}`, { replace: true });
           return 0;
         }
         return prev - 1;
@@ -86,7 +93,7 @@ export const MobileSurveyThankYou: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isOrg3, navigate, mappingId, urlOrgId]);
+  }, [isOrg3, navigate, mappingId, location.search, resolvedOrgId]);
 
   const getThankYouMessage = () => {
     if (state?.rating >= 3) {
