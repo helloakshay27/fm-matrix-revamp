@@ -229,6 +229,13 @@ const initialAmcData: AMCRecord[] = [];
 const columns: ColumnConfig[] = [
   { key: "actions", label: "Actions", sortable: false, defaultVisible: true },
   { key: "id", label: "ID", sortable: true, defaultVisible: true },
+
+  {
+    key: "contract_name",
+    label: "Contract Name",
+    sortable: true,
+    defaultVisible: true,
+  },
   {
     key: "asset_name",
     label: "Asset/ Service Name",
@@ -248,12 +255,7 @@ const columns: ColumnConfig[] = [
     sortable: true,
     defaultVisible: true,
   },
-  {
-    key: "contract_name",
-    label: "Contract Name",
-    sortable: true,
-    defaultVisible: true,
-  },
+
   {
     key: "amc_start_date",
     label: "Start Date",
