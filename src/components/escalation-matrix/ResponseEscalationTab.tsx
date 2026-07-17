@@ -689,7 +689,7 @@ export const ResponseEscalationTab: React.FC = () => {
     setIsDownloadingTemplate(true);
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/admin/import_complaint_worker_template`,
+        `https://${baseUrl}/pms/admin/import_complaint_worker_template.xlsx`,
         { headers: { Authorization: `Bearer ${token}` }, responseType: "blob" }
       );
       const url = URL.createObjectURL(new Blob([response.data]));
