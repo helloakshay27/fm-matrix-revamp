@@ -797,7 +797,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
       await surveyApi.submitSurveyResponse(payload);
 
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: true,
           rating: currentAnswer.rating || 5,
@@ -805,7 +805,7 @@ export const MobileSurveyLanding: React.FC = () => {
       });
     } catch (error) {
       console.error("Failed to submit survey:", error);
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: false,
           rating: 5,
@@ -978,7 +978,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
       await surveyApi.submitSurveyResponse(payload);
 
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: true,
           rating: answerData.rating || 1,
@@ -986,7 +986,7 @@ export const MobileSurveyLanding: React.FC = () => {
       });
     } catch (error) {
       console.error("Failed to submit survey:", error);
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: false,
           rating: 1,
@@ -1491,7 +1491,7 @@ export const MobileSurveyLanding: React.FC = () => {
         .filter((rating): rating is number => rating !== undefined);
       const minRating = allRatings.length > 0 ? Math.min(...allRatings) : 5;
 
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: true,
           rating: minRating,
@@ -1499,7 +1499,7 @@ export const MobileSurveyLanding: React.FC = () => {
       });
     } catch (error) {
       console.error("Failed to submit survey:", error);
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: false,
           rating: 5,
@@ -2017,7 +2017,7 @@ export const MobileSurveyLanding: React.FC = () => {
       const minFormRating =
         allFormRatings.length > 0 ? Math.min(...allFormRatings) : 5;
 
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: true,
           rating: minFormRating,
@@ -2025,7 +2025,7 @@ export const MobileSurveyLanding: React.FC = () => {
       });
     } catch (error) {
       console.error("Failed to submit survey:", error);
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: false,
           rating: 5,
