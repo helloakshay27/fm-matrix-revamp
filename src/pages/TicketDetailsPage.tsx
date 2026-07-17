@@ -11119,7 +11119,7 @@ export const TicketDetailsPage = () => {
                                       document: url,
                                       type: 'image'
                                     });
-                                    setIsModalOpen(true);
+                                    setShowImagePreview(true);
                                   }}
                                   type="button"
                                 >
@@ -11138,7 +11138,7 @@ export const TicketDetailsPage = () => {
                                       document: url,
                                       type: 'image'
                                     });
-                                    setIsModalOpen(true);
+                                    setShowImagePreview(true);
                                   }}
                                   onError={(e) => {
                                     (e.target as HTMLImageElement).style.display = 'none';
@@ -11183,7 +11183,7 @@ export const TicketDetailsPage = () => {
                                     doctype: attachment.doctype,
                                     type: 'document'
                                   });
-                                  setIsModalOpen(true);
+                                  setShowImagePreview(true);
                                 }}
                               >
                                 <Download className="w-4 h-4" />

@@ -2936,27 +2936,31 @@ export const MobileSurveyLanding: React.FC = () => {
                                 }
                               }
 
-                              // Reset states immediately
-                              setShowGenericTags(false);
-                              setSelectedTags([]);
-                              setCurrentNegativeComments(""); // Reset only current question's comments
-                              setPendingNegativeType(null);
-                              setPendingNegativeAnswer(null);
-
                               // For single question negative responses, submit with complete data
                               if (isSingleQuestion && answerData) {
-                                handleSingleQuestionSubmitWithNegativeData(
+                                // Keep this screen mounted while submitting so the
+                                // main question page doesn't flash before the
+                                // thank-you navigation; the button shows the
+                                // "Submitting..." spinner meanwhile.
+                                await handleSingleQuestionSubmitWithNegativeData(
                                   answerData
                                 );
                               } else {
+                                // Reset states before moving on
+                                setShowGenericTags(false);
+                                setSelectedTags([]);
+                                setCurrentNegativeComments(""); // Reset only current question's comments
+                                setPendingNegativeType(null);
+                                setPendingNegativeAnswer(null);
                                 // For multi-question surveys, proceed to next question
                                 // Use moveToNextQuestion to avoid re-saving the answer
                                 moveToNextQuestion();
                               }
                             }}
                             disabled={
-                              selectedTags.length === 0 &&
-                              !getCurrentNegativeComments().trim()
+                              isSubmitting ||
+                              (selectedTags.length === 0 &&
+                                !getCurrentNegativeComments().trim())
                             }
                             className="w-full bg-black/90 hover:bg-black/100 disabled:bg-black/50 text-white/100 py-2 xs:py-2.5 px-3 xs:px-4 rounded-lg text-xs xs:text-sm font-medium transition-colors disabled:cursor-not-allowed"
                           >
