@@ -75,6 +75,15 @@ interface DebitNote {
     created_by?: string;
 }
 
+interface BillDeskDetail {
+    invoice_type?: string | null;
+    billdesk_number?: string;
+    tracking_number?: string;
+    status?: string;
+    billdesk_remark?: string;
+    location?: string;
+}
+
 interface Invoice {
     id?: string;
     invoice_number?: string;
@@ -102,6 +111,7 @@ interface Invoice {
     approval_levels?: ApprovalLevel[];
     debit_notes?: DebitNote[];
     external_api_calls?: ExternalApiCall[];
+    billdesk_detail?: BillDeskDetail;
 }
 
 interface ExternalApiCall {
@@ -649,6 +659,35 @@ export const InvoiceDetails = () => {
                         <span className="text-gray-900 font-medium">{invoice.notes}</span>
                     </div>
                 </div>
+                {invoice.billdesk_detail && (
+                    <>
+                        <h4 className="text-sm font-semibold uppercase text-[#1A1A1A] mt-6 mb-3">Billdesk Details</h4>
+                        <EnhancedTable
+                            data={[{
+                                invoice_type: invoice.billdesk_detail.invoice_type || "-",
+                                billdesk_number: invoice.billdesk_detail.billdesk_number || "-",
+                                tracking_number: invoice.billdesk_detail.tracking_number || "-",
+                                status: invoice.billdesk_detail.status || "-",
+                                billdesk_remark: invoice.billdesk_detail.billdesk_remark || "-",
+                                location: invoice.billdesk_detail.location || "-",
+                            }]}
+                            columns={[
+                                { key: "invoice_type", label: "Invoice Type", sortable: false, draggable: false, defaultVisible: true },
+                                { key: "billdesk_number", label: "Billdesk Number", sortable: false, draggable: false, defaultVisible: true },
+                                { key: "tracking_number", label: "Tracking Number", sortable: false, draggable: false, defaultVisible: true },
+                                { key: "status", label: "Status", sortable: false, draggable: false, defaultVisible: true },
+                                { key: "billdesk_remark", label: "Billdesk Remark", sortable: false, draggable: false, defaultVisible: true },
+                                { key: "location", label: "Location", sortable: false, draggable: false, defaultVisible: true },
+                            ]}
+                            renderCell={(item, col) => item[col]}
+                            storageKey="invoice-billdesk-table"
+                            hideColumnsButton={true}
+                            hideTableSearch={true}
+                            hideTableExport={true}
+                            pagination={false}
+                        />
+                    </>
+                )}
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">

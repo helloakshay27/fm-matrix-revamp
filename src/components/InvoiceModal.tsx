@@ -19,7 +19,9 @@ import {
     Close as CloseIcon,
     Delete as DeleteIcon,
     PictureAsPdf as PdfIcon,
-    TableChart as ExcelIcon
+    TableChart as ExcelIcon,
+    KeyboardArrowDown,
+    KeyboardArrowUp,
 } from "@mui/icons-material";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
@@ -109,6 +111,17 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
     const { id } = useParams();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [billDeskOpen, setBillDeskOpen] = useState(false);
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
+    const [billDeskDetail, setBillDeskDetail] = useState({
+        invoice_type: "",
+        billdesk_number: "",
+        tracking_number: "",
+        status: "",
+        billdesk_remark: "",
+        location: "",
+    });
     const [boqs, setBoqs] = useState([]);
     const [boqDetails, setBOQDetails] = useState<BOQDetail[]>([
         {
@@ -240,6 +253,9 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
             }
         ]);
         setAttachmentPreviews([]);
+        setFromDate("");
+        setToDate("");
+        setBillDeskDetail({ invoice_type: "", billdesk_number: "", tracking_number: "", status: "", billdesk_remark: "", location: "" });
     };
 
     const formatIndian = (val: string | number): string => {
@@ -294,6 +310,18 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
     const handleSaveInvoice = async () => {
         if (!validate()) return;
+
+        if (!billDeskDetail.invoice_type.trim()) {
+            toast.error("Invoice Type is required in Billdesk Details");
+            setBillDeskOpen(true);
+            return;
+        }
+        if (!billDeskDetail.location.trim()) {
+            toast.error("Location is required in Billdesk Details");
+            setBillDeskOpen(true);
+            return;
+        }
+
         if (isSubmitting) return;
         setIsSubmitting(true);
 
@@ -307,6 +335,17 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                     adjustment_amount: adjustmentAmount,
                     posting_date: postingDate,
                     notes: notes,
+                    from_date: fromDate,
+                    to_date: toDate,
+                    billdesk_detail_attributes: {
+                        id: null,
+                        invoice_type: billDeskDetail.invoice_type,
+                        billdesk_number: billDeskDetail.billdesk_number,
+                        tracking_number: billDeskDetail.tracking_number,
+                        status: billDeskDetail.status,
+                        billdesk_remark: billDeskDetail.billdesk_remark,
+                        location: billDeskDetail.location,
+                    },
                     wo_invoice_inventories_attributes: boqDetails.map(boq => ({
                         pms_po_inventory_id: boq.selectedBOQ,
                         quantity: boq.quantity,
@@ -399,111 +438,180 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
 
             <DialogContent sx={{ padding: '24px', maxHeight: '70vh', overflow: 'auto' }}>
                 <Box sx={{ mt: 2 }}>
-                    {/* Basic Invoice Fields */}
-                    <Box sx={{ display: 'flex', gap: 3, mb: 4, flexWrap: 'wrap' }}>
-                        <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
-                            <StyledTextField
-                                fullWidth
-                                label="Invoice Number *"
-                                value={invoiceNumber}
-                                onChange={(e) => { setInvoiceNumber(e.target.value); setErrors(prev => ({ ...prev, invoiceNumber: '' })); }}
-                                variant="outlined"
-                                error={!!errors.invoiceNumber}
-                                helperText={errors.invoiceNumber}
-                            />
+
+                    {/* Invoice Details Card */}
+                    <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 3, color: 'hsl(var(--foreground))' }}>
+                            Invoice Details
+                        </Typography>
+
+                        <Box sx={{ display: 'flex', gap: 3, mb: 3, flexWrap: 'wrap' }}>
+                            <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
+                                <StyledTextField
+                                    fullWidth
+                                    label="Invoice Number *"
+                                    value={invoiceNumber}
+                                    onChange={(e) => { setInvoiceNumber(e.target.value); setErrors(prev => ({ ...prev, invoiceNumber: '' })); }}
+                                    variant="outlined"
+                                    error={!!errors.invoiceNumber}
+                                    helperText={errors.invoiceNumber}
+                                />
+                            </Box>
+                            <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
+                                <StyledTextField
+                                    fullWidth
+                                    label="Invoice Date *"
+                                    type="date"
+                                    value={invoiceDate}
+                                    onChange={(e) => { setInvoiceDate(e.target.value); setErrors(prev => ({ ...prev, invoiceDate: '' })); }}
+                                    InputLabelProps={{ shrink: true }}
+                                    variant="outlined"
+                                    error={!!errors.invoiceDate}
+                                    helperText={errors.invoiceDate}
+                                />
+                            </Box>
+                            <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
+                                <StyledTextField
+                                    fullWidth
+                                    label="Posting Date *"
+                                    type="date"
+                                    value={postingDate}
+                                    onChange={(e) => { setPostingDate(e.target.value); setErrors(prev => ({ ...prev, postingDate: '' })); }}
+                                    InputLabelProps={{ shrink: true }}
+                                    variant="outlined"
+                                    error={!!errors.postingDate}
+                                    helperText={errors.postingDate}
+                                />
+                            </Box>
                         </Box>
 
-                        <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
-                            <StyledTextField
-                                fullWidth
-                                label="Invoice Date *"
-                                type="date"
-                                value={invoiceDate}
-                                onChange={(e) => { setInvoiceDate(e.target.value); setErrors(prev => ({ ...prev, invoiceDate: '' })); }}
-                                InputLabelProps={{ shrink: true }}
-                                variant="outlined"
-                                error={!!errors.invoiceDate}
-                                helperText={errors.invoiceDate}
-                            />
-                        </Box>
-                    </Box>
-
-                    <Box sx={{ display: 'flex', gap: 3, mb: 4, flexWrap: 'wrap' }}>
-                        <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
-                            <StyledTextField
-                                fullWidth
-                                label="Related To"
-                                value={relatedTo}
-                                onChange={(e) => setRelatedTo(e.target.value)}
-                                variant="outlined"
-                            />
-                        </Box>
-
-                        <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
-                            <StyledTextField
-                                fullWidth
-                                label="Adjustment Amount"
-                                type="number"
-                                value={adjustmentAmount}
-                                onChange={(e) => setAdjustmentAmount(e.target.value)}
-                                variant="outlined"
-                            />
-                        </Box>
-                    </Box>
-
-                    <Box sx={{ display: 'flex', gap: 3, mb: 4, flexWrap: 'wrap' }}>
-                        <Box sx={{ flex: '1 1 300px', minWidth: '250px' }}>
-                            <StyledTextField
-                                fullWidth
-                                label="Posting Date *"
-                                type="date"
-                                value={postingDate}
-                                onChange={(e) => { setPostingDate(e.target.value); setErrors(prev => ({ ...prev, postingDate: '' })); }}
-                                InputLabelProps={{ shrink: true }}
-                                variant="outlined"
-                                error={!!errors.postingDate}
-                                helperText={errors.postingDate}
-                            />
-                            {postingDate && (
-                                <Typography variant="caption" sx={{ color: 'hsl(var(--muted-foreground))', mt: 1, display: 'block' }}>
-                                    {new Date(postingDate).toLocaleDateString('en-GB')}
+                        <Box sx={{ display: 'flex', gap: 3, mb: 3, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                            <Box sx={{ flex: '2 1 500px', minWidth: '420px' }}>
+                                <Typography variant="body2" sx={{ mb: 2, color: 'hsl(var(--label-text))', fontWeight: 500 }}>
+                                    Bill Period
                                 </Typography>
-                            )}
+                                <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                                    <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
+                                        <StyledTextField
+                                            fullWidth
+                                            label="From Date"
+                                            type="date"
+                                            value={fromDate}
+                                            onChange={(e) => setFromDate(e.target.value)}
+                                            InputLabelProps={{ shrink: true }}
+                                            variant="outlined"
+                                        />
+                                    </Box>
+                                    <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
+                                        <StyledTextField
+                                            fullWidth
+                                            label="To Date"
+                                            type="date"
+                                            value={toDate}
+                                            onChange={(e) => setToDate(e.target.value)}
+                                            InputLabelProps={{ shrink: true }}
+                                            variant="outlined"
+                                        />
+                                    </Box>
+                                </Box>
+                            </Box>
+                            <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
+                                <StyledTextField
+                                    fullWidth
+                                    label="Related To"
+                                    value={relatedTo}
+                                    onChange={(e) => setRelatedTo(e.target.value)}
+                                    variant="outlined"
+                                />
+                            </Box>
                         </Box>
-                    </Box>
 
-                    {/* Notes */}
-                    <Box sx={{ mb: 4 }}>
-                        <StyledTextField
-                            fullWidth
-                            label="Notes"
-                            multiline
-                            rows={2}
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            placeholder="Add any additional notes..."
-                            variant="outlined"
-                            sx={{
-                                mt: 1,
-                                "& .MuiOutlinedInput-root": {
-                                    height: "auto !important",
-                                    padding: "2px !important",
-                                    display: "flex",
-                                },
-                                "& .MuiInputBase-input[aria-hidden='true']": {
-                                    flex: 0,
-                                    width: 0,
-                                    height: 0,
-                                    padding: "0 !important",
-                                    margin: 0,
-                                    display: "none",
-                                },
-                                "& .MuiInputBase-input": {
-                                    resize: "none !important",
-                                },
-                            }}
-                        />
-                    </Box>
+                        <Box sx={{ display: 'flex', gap: 3, mb: 3, flexWrap: 'wrap' }}>
+                            <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
+                                <StyledTextField
+                                    fullWidth
+                                    label="Invoice Type *"
+                                    value={billDeskDetail.invoice_type}
+                                    onChange={(e) => setBillDeskDetail(prev => ({ ...prev, invoice_type: e.target.value }))}
+                                    variant="outlined"
+                                />
+                            </Box>
+                            <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
+                                <StyledTextField
+                                    fullWidth
+                                    label="Location *"
+                                    value={billDeskDetail.location}
+                                    onChange={(e) => setBillDeskDetail(prev => ({ ...prev, location: e.target.value }))}
+                                    variant="outlined"
+                                />
+                            </Box>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', gap: 3, mb: 3, flexWrap: 'wrap' }}>
+                            <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
+                                <StyledTextField
+                                    fullWidth
+                                    label="Adjustment Amount"
+                                    type="number"
+                                    value={adjustmentAmount}
+                                    onChange={(e) => setAdjustmentAmount(e.target.value)}
+                                    variant="outlined"
+                                />
+                            </Box>
+                            <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
+                                <StyledTextField
+                                    fullWidth
+                                    label="Notes"
+                                    multiline
+                                    rows={2}
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    placeholder="Add any additional notes..."
+                                    variant="outlined"
+                                    sx={{
+                                        "& .MuiOutlinedInput-root": { height: "auto !important", padding: "2px !important", display: "flex" },
+                                        "& .MuiInputBase-input[aria-hidden='true']": { flex: 0, width: 0, height: 0, padding: "0 !important", margin: 0, display: "none" },
+                                        "& .MuiInputBase-input": { resize: "none !important" },
+                                    }}
+                                />
+                            </Box>
+                        </Box>
+                    </Paper>
+
+                    {/* Billdesk Details Card — collapsible, read-only, default collapsed */}
+                    <Paper elevation={1} sx={{ mb: 3 }}>
+                        <Box
+                            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, cursor: 'pointer', userSelect: 'none' }}
+                            onClick={() => setBillDeskOpen(o => !o)}
+                        >
+                            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'hsl(var(--foreground))' }}>
+                                Billdesk Details
+                            </Typography>
+                            <IconButton size="small" sx={{ color: 'hsl(var(--muted-foreground))' }}>
+                                {billDeskOpen ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+                            </IconButton>
+                        </Box>
+                        {billDeskOpen && (
+                            <Box sx={{ px: 3, pb: 3 }}>
+                                <Box sx={{ display: 'flex', gap: 3, mb: 3, flexWrap: 'wrap' }}>
+                                    <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
+                                        <StyledTextField fullWidth label="Billdesk Number" value={billDeskDetail.billdesk_number} variant="outlined" InputProps={{ readOnly: true, sx: { backgroundColor: 'hsl(var(--muted))' } }} />
+                                    </Box>
+                                    <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
+                                        <StyledTextField fullWidth label="Tracking Number" value={billDeskDetail.tracking_number} variant="outlined" InputProps={{ readOnly: true, sx: { backgroundColor: 'hsl(var(--muted))' } }} />
+                                    </Box>
+                                </Box>
+                                <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                                    <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
+                                        <StyledTextField fullWidth label="Status" value={billDeskDetail.status} variant="outlined" InputProps={{ readOnly: true, sx: { backgroundColor: 'hsl(var(--muted))' } }} />
+                                    </Box>
+                                    <Box sx={{ flex: '1 1 250px', minWidth: '200px' }}>
+                                        <StyledTextField fullWidth label="Billdesk Remark" value={billDeskDetail.billdesk_remark} variant="outlined" InputProps={{ readOnly: true, sx: { backgroundColor: 'hsl(var(--muted))' } }} />
+                                    </Box>
+                                </Box>
+                            </Box>
+                        )}
+                    </Paper>
 
                     {/* Attachment */}
                     <Box sx={{ mb: 4 }}>
