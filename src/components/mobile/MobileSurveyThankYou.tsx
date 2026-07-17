@@ -39,7 +39,7 @@ export const MobileSurveyThankYou: React.FC = () => {
   const { mappingId } = useParams<{ mappingId: string }>();
   const state = location.state as LocationState;
 
-  const [countdown, setCountdown] = useState(10);
+  const [countdown, setCountdown] = useState(2);
   const [surveyData, setSurveyData] = useState<SurveyData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
