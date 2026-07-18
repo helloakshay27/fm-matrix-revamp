@@ -15,6 +15,16 @@ body {
   max-width: 100%;
 }
 
+/* Product pages (/products, /product/*) only: table cells wrap instead of
+   overflowing, since horizontal scroll is suppressed app-wide above. */
+body.product-pages-scope table td,
+body.product-pages-scope table th {
+  min-width: 100px;
+  max-width: max-content;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
 /* Mobile-friendly scrollbar styling */
 .scrollbar-thin {
   scrollbar-width: thin;

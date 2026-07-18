@@ -64,6 +64,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   useEffect(() => {
     setCurrentUser(getUser());
   }, [location.pathname]);
+
+  // Scope the product-pages table CSS (see index.css) to /products and /product/* routes only
+  useEffect(() => {
+    const isProductRoute =
+      location.pathname.startsWith("/products") ||
+      location.pathname.startsWith("/product/");
+    document.body.classList.toggle("product-pages-scope", isProductRoute);
+    return () => {
+      document.body.classList.remove("product-pages-scope");
+    };
+  }, [location.pathname]);
+
   const userEmail = currentUser?.email || "No email";
   const org_id = localStorage.getItem("org_id");
   const hostname = window.location.hostname;
