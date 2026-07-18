@@ -25,6 +25,33 @@ body.product-pages-scope table th {
   overflow-wrap: break-word;
 }
 
+/* Product pages only: force every table to the shared baseline look
+   (src/pages/products/tabs/EnhancementsTab.tsx) regardless of how each
+   individual product page's markup/inline styles were hand-authored.
+   !important is required because several product pages set colors/fonts
+   via inline style={{...}} (e.g. PostSalesEnhancementsTab.tsx), which
+   normal stylesheet rules cannot override. */
+body.product-pages-scope table {
+  font-family: "Poppins", sans-serif !important;
+  border-collapse: collapse !important;
+}
+
+body.product-pages-scope table th {
+  color: #da7756 !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  font-size: 14px !important;
+  letter-spacing: 0.02em !important;
+  border-color: #e5e7eb !important;
+}
+
+body.product-pages-scope table td {
+  color: #2c2c2c !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  border-color: #e5e7eb !important;
+}
+
 /* Mobile-friendly scrollbar styling */
 .scrollbar-thin {
   scrollbar-width: thin;

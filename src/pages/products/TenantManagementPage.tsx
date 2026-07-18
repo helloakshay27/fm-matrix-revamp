@@ -130,13 +130,13 @@ const MANIPULATIVE_CSS = `
   .tenant-mgmt-page .ritz td,
   .tenant-mgmt-page .ritz th {
     font-family: 'Poppins', sans-serif !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     font-weight: 400 !important;
-    color: #3A3530 !important;
+    color: #2C2C2C !important;
     background-color: #ffffff !important;
     vertical-align: top !important;
     padding: 10px 14px !important;
-    border: 1px solid #EDE9E1 !important;
+    border: 1px solid #E5E7EB !important;
     line-height: 1.7 !important;
     white-space: normal !important;
     word-wrap: break-word !important;
@@ -147,7 +147,7 @@ const MANIPULATIVE_CSS = `
   .tenant-mgmt-page .ritz .s0 {
     background-color: #F6F4EE !important;
     color: #2C2C2C !important;
-    font-size: 13.5px !important;
+    font-size: 15px !important;
     font-weight: 700 !important;
     letter-spacing: 0.02em !important;
     padding: 15px 16px !important;
@@ -197,11 +197,11 @@ const MANIPULATIVE_CSS = `
   /* ── s5  Column header — Snag360-style: orange bg, white text ───── */
   .tenant-mgmt-page .ritz .s5 {
     background-color: #F6F4EE !important;
-    color: #2C2C2C !important;
-    font-weight: 700 !important;
-    font-size: 10.5px !important;
+    color: #DA7756 !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.07em !important;
+    letter-spacing: 0.02em !important;
     padding: 11px 14px !important;
     border-bottom: none !important;
     border-top: none !important;
@@ -238,10 +238,10 @@ const MANIPULATIVE_CSS = `
   .tenant-mgmt-page .ritz .s9 {
     background-color: #F6F4EE !important;
     color: #2C2C2C !important;
-    font-weight: 700 !important;
-    font-size: 10.5px !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.08em !important;
+    letter-spacing: 0.04em !important;
     padding: 10px 14px 10px 16px !important;
     vertical-align: middle !important;
     border-left: 0 !important;

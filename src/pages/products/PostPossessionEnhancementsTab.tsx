@@ -418,13 +418,13 @@ const PostPossessionEnhancementsTab: React.FC = () => {
       <div className="overflow-x-auto border border-[#D3D1C7] bg-white shadow-sm">
         <div className="min-w-[2290px]">
           <div
-            className="grid border-b border-[#D3D1C7] bg-[#DA7756] text-[10px] font-bold uppercase tracking-[0.08em] text-white"
+            className="grid border-b border-[#D3D1C7] bg-[#F6F4EE] text-[14px] font-semibold uppercase tracking-[0.02em] text-[#DA7756]"
             style={{ gridTemplateColumns: gridTemplate }}
           >
             {columns.map((column) => (
               <div
                 key={column}
-                className="border-r border-white/15 px-3 py-4 last:border-r-0"
+                className="border-r border-[#E5E7EB] px-3 py-4 last:border-r-0"
               >
                 {column}
               </div>
@@ -438,7 +438,7 @@ const PostPossessionEnhancementsTab: React.FC = () => {
               return (
                 <div
                   key={item.id}
-                  className={`grid text-[12px] leading-5 text-[#2C2C2C] ${
+                  className={`grid text-[13px] leading-5 text-[#2C2C2C] font-medium ${
                     isHighImpact ? "bg-[#FFF4EC]" : "bg-white"
                   }`}
                   style={{ gridTemplateColumns: gridTemplate }}
