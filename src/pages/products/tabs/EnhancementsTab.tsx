@@ -179,9 +179,9 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
                     ? "25+ future enhancements. AI/ML and MCP/automation innovations highlighted. Not duplicating product roadmap items."
                     : "Each row shows: current behaviour to enhanced behaviour with integration type"}
               </div>
-              <div className="bg-white border border-[#E5E7EB]">
+              <div className="bg-white border border-[#E5E7EB] overflow-x-auto">
                 {hasVendorEnhancementShape ? (
-                  <table className="w-full table-fixed border-collapse font-poppins text-[12px] leading-[1.55] text-left">
+                  <table className="w-full table-fixed border-collapse font-poppins text-[12px] leading-[1.55] text-left min-w-[1100px]">
                     <thead>
                       <tr className="bg-[#F6F4EE] text-[#DA7756] border-b border-[#D3D1C7] font-semibold uppercase">
                         {hasRowId && (
@@ -257,7 +257,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
                     </tbody>
                   </table>
                 ) : (
-                  <table className="w-full border-collapse font-poppins text-[11px] leading-[1.5] text-left">
+                  <table className="w-full table-fixed border-collapse font-poppins text-[11px] leading-[1.5] text-left min-w-[1300px]">
                     <thead>
                       <tr className="bg-[#F6F4EE] text-[#DA7756] border-b border-[#D3D1C7] font-semibold uppercase">
                         {hasRowId && (
@@ -425,7 +425,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
       {/* 3. Strategic Enhancements (Alternative Format) */}
       {productData.extendedContent?.detailedEnhancements && (
         <div className="border border-[#C4B89D] rounded-xl bg-white">
-          <table className="w-full border-collapse font-poppins text-[11px] leading-[1.5] bg-white text-center">
+          <table className="w-full table-fixed border-collapse font-poppins text-[11px] leading-[1.5] bg-white text-center">
             <thead>
               <tr className="bg-white text-[#DA7756] font-semibold uppercase text-center border-b border-[#D3D1C7]">
                 <th className="border border-[#E5E7EB]/50 p-4 w-[12%]">
