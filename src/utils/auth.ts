@@ -396,7 +396,7 @@ export const getOrganizationsByEmail = async (
 // Asset module access restrictions for specific users
 const ASSET_RESTRICTED_EMAILS = [
   "reception1@gmail.com",
-  "reception.pune@zycus.com",
+  // "reception.pune@zycus.com",
   // "reception.blr@zycus.com",
   // "Reception@zycusitis.onmicrosoft.com",
 ].map((email) => email.toLowerCase());
