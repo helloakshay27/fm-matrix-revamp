@@ -377,7 +377,8 @@ export const OutboundDetailPage: React.FC = () => {
                     <div className="flex gap-2 flex-wrap justify-end">
                         <Button
                             onClick={handleAddAttachments}
-                            className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white"
+                            variant="ghost"
+                            className="fm-button-fix fm-button-brand px-4 py-2"
                         >
                             Add Attachments
                         </Button>

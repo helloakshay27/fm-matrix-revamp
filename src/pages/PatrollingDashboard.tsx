@@ -581,7 +581,8 @@ export const PatrollingDashboard = () => {
             {shouldShow("Patrolling", "create") && (
               <Button
                 size="sm"
-                className='bg-[#C72030] text-white hover:bg-[#C72030]/90'
+                className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                 onClick={() => setShowActionPanel((prev) => !prev)}
               >
                 <Plus className="w-4 h-4 mr-2" /> Action

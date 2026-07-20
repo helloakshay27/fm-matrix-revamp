@@ -568,6 +568,8 @@ export default function Todo() {
               {(shouldShow("Todo","create") &&
               <Button
                 onClick={() => setIsAddTodoModalOpen(true)}
+                className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
               >
                 <Plus size={18} />
                 Add

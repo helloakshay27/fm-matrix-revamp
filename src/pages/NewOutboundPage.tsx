@@ -925,7 +925,8 @@ export const NewOutboundPage = () => {
             <Button
               type="button"
               onClick={handleAddPackage}
-              className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white flex items-center gap-2"
+             className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
             >
               <Plus className="w-4 h-4" />
               Package
@@ -936,7 +937,8 @@ export const NewOutboundPage = () => {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="px-8 py-2 font-medium"
+              className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
               style={{
                 backgroundColor: '#C72030',
                 color: '#FFF',

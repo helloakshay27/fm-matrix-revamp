@@ -1045,7 +1045,7 @@ const TaskForm = ({
 
       <div className="mb-6">
         <div
-          className="text-[12px] text-[red] text-right cursor-pointer mb-2"
+          className="text-[12px] text-[#DA7756] text-right cursor-pointer mb-2"
           onClick={() => setIsTagModalOpen(true)}
         >
           <i>Create new tag</i>
@@ -1996,7 +1996,7 @@ const ProjectTaskCreateModal = ({
         <div className="flex items-center justify-center gap-4 w-full bottom-0 py-3 bg-white text-[12px]">
           <button
             type="submit"
-            className="flex items-center justify-center border-2 text-[red] border-[red] px-4 py-2 w-[100px]"
+            className="flex items-center justify-center border-2 text-[#DA7756] border-[#DA7756] px-4 py-2 w-[100px]"
             disabled={isSubmitting}
           >
             {loading || editLoading
@@ -2018,7 +2018,7 @@ const ProjectTaskCreateModal = ({
             ) : (
               <button
                 type="button"
-                className="flex items-center justify-center border-2 text-[red] border-[red] px-4 py-2 w-max"
+                className="flex items-center justify-center border-2 text-[#DA7756] border-[#DA7756] px-4 py-2 w-max"
                 onClick={handleAddTask}
                 disabled={isSubmitting}
               >

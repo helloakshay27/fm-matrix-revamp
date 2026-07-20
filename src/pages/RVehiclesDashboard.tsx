@@ -305,7 +305,8 @@ export const RVehiclesDashboard = () => {
             {shouldShow("R Vehicles", "create") && (
               <Button
                 onClick={() => setIsAddModalOpen(true)}
-                className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg"
+                className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
               >
                 <Plus className="w-4 h-4" />
                 Add

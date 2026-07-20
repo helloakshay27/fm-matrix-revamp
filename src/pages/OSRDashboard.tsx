@@ -260,14 +260,16 @@ export const OSRDashboard = () => {
     <div className="flex items-center gap-3">
       <Button
         onClick={handleGenerateReceipt}
-        className="fm-button-fix fm-button-brand-solid px-4 py-2 rounded-lg flex items-center gap-2"
+       className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
       >
         <FileText className="w-4 h-4" />
         Generate Receipt
       </Button>
       <Button
         onClick={() => setShowCreateModal(true)}
-        className="fm-button-fix fm-button-brand-solid px-4 py-2 rounded-lg flex items-center gap-2"
+        className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
       >
         <Plus className="w-4 h-4" />
         Add

@@ -93,8 +93,8 @@ export const RVehiclesHistoryFilterModal = ({ isOpen, onClose }: RVehiclesHistor
             </Button>
             <Button
               onClick={handleApply}
-              style={{ backgroundColor: '#6B46C1' }}
-              className="hover:bg-purple-700 text-white px-6 py-2"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
               Apply
             </Button>

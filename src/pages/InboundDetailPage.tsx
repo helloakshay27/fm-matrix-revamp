@@ -647,7 +647,8 @@ export const InboundDetailPage = () => {
                         {inboundData.status.toLowerCase() !== 'collected' && (
                             <Button
                                 onClick={handleAddAttachments}
-                                className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white"
+                                variant="ghost"
+                                className="fm-button-fix fm-button-brand px-4 py-2"
                             >
                                 Add Attachments
                             </Button>
@@ -665,7 +666,8 @@ export const InboundDetailPage = () => {
                         {inboundData.status.toLowerCase() !== 'collected' && (
                             <Button
                                 onClick={handleMarkAsCollected}
-                                className="bg-white hover:bg-gray-50 text-[#1a1a1a] border border-gray-300"
+                                variant="ghost"
+                                className="fm-button-fix fm-button-brand px-4 py-2"
                             >
                                 Mark As Collected
                             </Button>

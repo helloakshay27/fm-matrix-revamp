@@ -944,9 +944,9 @@ export const PatrollingDetailPage: React.FC = () => {
                 onClick={handleEdit}
                 variant="outline"
                 size="sm"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756]/10"
               >
-                <Edit className="w-4 h-4 mr-2" />
+                <Edit className="w-4 h-4 mr-2 text-[#DA7756]" />
                 Edit
               </Button>
             )}

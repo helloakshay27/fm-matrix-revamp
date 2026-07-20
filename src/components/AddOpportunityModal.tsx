@@ -522,7 +522,7 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
               </Typography>
               <label
                 onClick={() => setIsTagModalOpen(true)}
-                className="text-xs text-red-500 cursor-pointer hover:underline"
+                className="text-xs text-orange-500 cursor-pointer hover:underline"
               >
                 Create new tag
               </label>
@@ -754,7 +754,7 @@ const AddOpportunityModal: React.FC<AddOpportunityModalProps> = ({
 
               <div>
                 <div
-                  className="text-[12px] text-[red] text-right cursor-pointer mb-2"
+                  className="text-[12px] text-orange-500 text-right cursor-pointer mb-2"
                   onClick={() => setIsTagModalOpen(true)}
                 >
                   <i>Create new tag</i>

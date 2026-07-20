@@ -914,7 +914,8 @@ const BookingListDashboard = () => {
               <div className="flex gap-3 pt-4">
                 <Button
                   onClick={handleApplyFilters}
-                  className="flex-1 bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
+                  variant="outline"
+                  className="fm-button-fix fm-button-brand flex-1"
                   disabled={isFiltering}
                 >
                   Apply
@@ -922,7 +923,7 @@ const BookingListDashboard = () => {
                 <Button
                   onClick={handleResetFilters}
                   variant="outline"
-                  className="flex-1"
+                  className="fm-button-fix fm-button-brand flex-1"
                 >
                   Reset
                 </Button>

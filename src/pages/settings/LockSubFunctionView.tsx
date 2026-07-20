@@ -100,7 +100,11 @@ export const LockSubFunctionView = () => {
             <Edit className="w-4 h-4 mr-2" />
             Edit
           </Button>
-          <Button variant="destructive" onClick={handleDelete}>
+          <Button
+            variant="outline"
+            onClick={handleDelete}
+            className="border-[#DA7756] bg-white text-[#DA7756] hover:bg-[#F2EEE9] hover:text-[#DA7756]"
+          >
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
           </Button>

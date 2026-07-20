@@ -815,7 +815,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                 <Upload className="w-4 h-4 mr-2" />
                 Import
               </Button>
-              <Button type="submit" disabled={loading} className="bg-purple-600 hover:bg-purple-700 text-white px-8">
+              <Button type="submit" variant="ghost" disabled={loading} className="fm-button-fix fm-button-brand px-4 py-2">
                 {loading ? 'Creating...' : 'Submit'}
               </Button>
             </div>
@@ -847,7 +847,7 @@ export const ResolutionEscalationTab: React.FC = () => {
               </Select>
             </div>
             <div className="flex space-x-2">
-              <Button onClick={handleFilter} variant="default" className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Button onClick={handleFilter} variant="ghost" className="fm-button-fix fm-button-brand px-4 py-2">
                 Apply
               </Button>
               <Button onClick={handleResetFilter} variant="outline">

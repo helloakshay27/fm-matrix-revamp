@@ -93,7 +93,8 @@ export const AddEmployeeDashboard = () => {
       </div>
       <Button
         size="sm"
-        className="bg-blue-600 hover:bg-blue-700 text-white mt-3"
+        variant="ghost"
+        className="fm-button-fix fm-button-brand px-4 py-2 mt-3"
       >
         <Plus className="w-4 h-4" />
       </Button>

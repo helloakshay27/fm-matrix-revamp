@@ -486,7 +486,7 @@ useEffect(() => {
     shouldShow("Inwards", "create") && (
       <Button
         size="sm"
-        className="fm-button-fix fm-button-brand px-8 py-2"
+        className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
         onClick={() => setShowActionPanel((prev) => !prev)}
       >
         <Plus className="w-4 h-4 mr-2" />

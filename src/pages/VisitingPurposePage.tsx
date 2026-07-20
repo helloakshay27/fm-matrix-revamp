@@ -960,7 +960,8 @@ export const VisitingPurposePage = () => {
               {activeTab === 'Visit Purpose' && shouldShow("Visiting Purpose","create")&&(
                 <Button 
                   onClick={handleAddPurpose}
-                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                 className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Purpose
@@ -970,7 +971,8 @@ export const VisitingPurposePage = () => {
               {activeTab === 'Move In/Out' && shouldShow("Visiting Purpose","create")&&(
                 <Button 
                   onClick={handleMoveInOut}
-                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                  className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Move In/Out
@@ -980,7 +982,8 @@ export const VisitingPurposePage = () => {
               {activeTab === 'Work Type' && shouldShow("Visiting Purpose","create")&&(
                 <Button 
                   onClick={handleWorkType}
-                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                 className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Work Type

@@ -171,7 +171,7 @@ const SacHsn = () => {
     const leftActions = (
         <div className="flex flex-wrap gap-3">
             {shouldShow("SAC/HSN Code", "create") && (
-            <Button onClick={handleAddClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button onClick={handleAddClick} variant="ghost" className="fm-button-fix fm-button-brand px-4 py-2">
                 <Plus className="w-4 h-4" /> Add
             </Button>
             )}

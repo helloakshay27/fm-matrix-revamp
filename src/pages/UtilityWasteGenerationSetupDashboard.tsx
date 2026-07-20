@@ -436,7 +436,8 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                   {shouldShow("Waste Generation", "create") && (
                   <Button
                     onClick={handleAddCommodity}
-                    className="bg-[#6B2C91] hover:bg-[#5A2579] text-white"
+                   className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Commodity
@@ -508,7 +509,8 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                   {shouldShow("Waste Generation", "create") && (
                   <Button
                     onClick={handleAddCategory}
-                    className="bg-[#6B2C91] hover:bg-[#5A2579] text-white"
+                   className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Category
@@ -584,7 +586,8 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                   {shouldShow("Waste Generation", "create") && (
                   <Button
                     onClick={handleAddLandlord}
-                    className="bg-[#6B2C91] hover:bg-[#5A2579] text-white"
+                    className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Landlord/Tenant
@@ -677,7 +680,8 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             <Button variant="outline" onClick={() => setIsAddCommodityModalOpen(false)} disabled={submitting}>
               Cancel
             </Button>
-            <Button onClick={handleCommoditySubmit} className="bg-[#6B2C91] hover:bg-[#5A2579] text-white" disabled={submitting}>
+            <Button onClick={handleCommoditySubmit} className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost" disabled={submitting}>
               {submitting ? 'Submitting...' : 'Submit'}
             </Button>
           </div>
@@ -735,7 +739,8 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             <Button variant="outline" onClick={() => setIsAddCategoryModalOpen(false)} disabled={submitting}>
               Cancel
             </Button>
-            <Button onClick={handleCategorySubmit} className="bg-[#6B2C91] hover:bg-[#5A2579] text-white" disabled={submitting}>
+            <Button onClick={handleCategorySubmit} className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost" disabled={submitting}>
               {submitting ? 'Submitting...' : 'Submit'}
             </Button>
           </div>
@@ -767,7 +772,8 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             <Button variant="outline" onClick={() => setIsAddLandlordModalOpen(false)} disabled={submitting}>
               Cancel
             </Button>
-            <Button onClick={handleLandlordSubmit} className="bg-[#6B2C91] hover:bg-[#5A2579] text-white" disabled={submitting}>
+            <Button onClick={handleLandlordSubmit} className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost" disabled={submitting}>
               {submitting ? 'Submitting...' : 'Submit'}
             </Button>
           </div>
