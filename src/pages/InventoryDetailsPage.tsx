@@ -6,10 +6,12 @@ import { ArrowLeft, QrCode, Edit, Loader2, Box, ChevronDown, ChevronUp, ArrowRig
 import { apiClient } from '@/utils/apiClient';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const InventoryDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [inventoryData, setInventoryData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -638,6 +640,7 @@ export const InventoryDetailsPage = () => {
             <Edit className="w-4 h-4 mr-2" />
             Edit
           </Button> */}
+          {shouldShow("Inventory", "update") && (
           <Button
             onClick={handleEdit}
             variant="outline"
@@ -669,6 +672,7 @@ export const InventoryDetailsPage = () => {
               </g>
             </svg>
           </Button>
+          )}
         </div>
 
       </div>

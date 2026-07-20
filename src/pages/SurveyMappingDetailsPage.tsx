@@ -44,6 +44,7 @@ import { getAuthHeader, getFullUrl } from "@/config/apiConfig";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { QuestionMark } from "@mui/icons-material";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 // Questions table item interface
 interface QuestionsTableItem {
   qnumber: string;
@@ -150,6 +151,7 @@ interface LocationTableItem {
 export const SurveyMappingDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
 
   const [mapping, setMapping] = useState<SurveyMappingDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1071,6 +1073,7 @@ export const SurveyMappingDetailsPage = () => {
               <ChevronDown className="w-3 h-3 ml-1" />
             </Badge>
 
+            {shouldShow("Survey Mapping", "update") && (
             <Button
               onClick={handleEdit}
               variant="outline"
@@ -1078,6 +1081,7 @@ export const SurveyMappingDetailsPage = () => {
             >
               <Edit className="w-4 h-4 " />
             </Button>
+            )}
             {/* <Button
               onClick={handleDelete}
               variant="destructive"

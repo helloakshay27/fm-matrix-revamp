@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Search, Eye } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import {
   Pagination,
   PaginationContent,
@@ -20,6 +21,7 @@ export const IncidentListDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
+  const { shouldShow } = useDynamicPermissions();
 
   // Determine if we're in Safety or Maintenance context
   const isSafetyContext = location.pathname.startsWith('/safety');
@@ -102,14 +104,16 @@ export const IncidentListDashboard = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
   {/* Add Button */}
   <div className="w-full lg:w-auto">
-    <Button 
+    {shouldShow("Incident", "create") && (
+    <Button
       onClick={handleAddIncident}
-      style={{ backgroundColor: '#C72030' }} 
+      style={{ backgroundColor: '#C72030' }}
       className="text-white hover:opacity-90 w-full lg:w-auto"
     >
       <Plus className="w-4 h-4 mr-2 text-[#C72030] stroke-[#C72030]" />
       Add
     </Button>
+    )}
   </div>
 
   {/* Search + Go + Reset */}
@@ -167,13 +171,15 @@ export const IncidentListDashboard = () => {
             {incidents.map((incident) => (
               <TableRow key={incident.id}>
                 <TableCell>
-                  <Button 
-                    variant="ghost" 
+                  {shouldShow("Incident", "show") && (
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleViewIncident(incident.id)}
                   >
                     <Eye className="w-4 h-4" />
                   </Button>
+                  )}
                 </TableCell>
                 <TableCell className="text-blue-600 font-medium">
                   {incident.id}

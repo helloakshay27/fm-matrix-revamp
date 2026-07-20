@@ -42,6 +42,7 @@ import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import axios from "axios";
 import DebitCreditModal from "@/components/DebitCreditModal";
 import { format } from "date-fns";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Define the interface for Approval
 interface Approval {
@@ -129,6 +130,7 @@ const debitNoteColumns: ColumnConfig[] = [
 
 export const GRNDetailsPage = () => {
   const dispatch = useAppDispatch();
+  const { shouldShow } = useDynamicPermissions();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
@@ -408,7 +410,7 @@ export const GRNDetailsPage = () => {
           GRN DETAILS
         </h1>
         <div className="flex gap-2 flex-wrap">
-          {canEdit && (
+          {shouldShow("GRN/ SRN", "update") && canEdit && (
             <Button
               size="sm"
               variant="outline"

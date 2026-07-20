@@ -7,6 +7,7 @@ import { GVehicleFilterModal } from '@/components/GVehicleFilterModal';
 import { GVehicleOutDashboard } from './GVehicleOutDashboard';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 const gVehicleData = [
   {
@@ -157,6 +158,7 @@ const columns: ColumnConfig[] = [
 ];
 
 export const GVehiclesDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const [activeTab, setActiveTab] = useState('History');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -226,13 +228,15 @@ export const GVehiclesDashboard = () => {
         hideColumnsButton={false}
         leftActions={
           <div className="flex gap-3">
-            <Button 
-              onClick={() => setIsAddModalOpen(true)}
-              className="fm-button-fix fm-button-brand px-4 py-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </Button>
+            {shouldShow("G Vehicles", "create") && (
+              <Button
+                onClick={() => setIsAddModalOpen(true)}
+                className="fm-button-fix fm-button-brand px-4 py-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add
+              </Button>
+            )}
           </div>
         }
         onFilterClick={() => setIsFilterModalOpen(true)}

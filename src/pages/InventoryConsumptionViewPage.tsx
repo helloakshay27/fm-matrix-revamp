@@ -21,10 +21,12 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 const InventoryConsumptionViewPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -369,12 +371,14 @@ const InventoryConsumptionViewPage = () => {
           emptyMessage="No consumption data available"
           leftActions={
             <div className="flex items-center gap-2">
+              {shouldShow("Inventory Consumption", "create") && (
               <Button
                 onClick={handleAddConsume}
                 className="inline-flex items-center gap-1 bg-[#6B2C91] text-white hover:bg-[#5A2479] rounded-md px-3 py-2 h-9 text-sm"
               >
                 Add / Consume
               </Button>
+              )}
               <Button
                 onClick={handleExport}
                 disabled={isExporting || loading}

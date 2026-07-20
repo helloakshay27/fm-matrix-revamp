@@ -17,6 +17,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useNavigate } from 'react-router-dom';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useToast } from '@/hooks/use-toast';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface ConsumptionRecord {
   id: number;
@@ -52,6 +53,7 @@ const columns: ColumnConfig[] = [
 const UtilityConsumptionDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { shouldShow } = useDynamicPermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -135,12 +137,16 @@ const UtilityConsumptionDashboard = () => {
       case 'actions':
         return (
           <div className="flex items-center justify-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => handleEdit(item)} className="h-8 w-8 p-0">
-              <Edit className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleView(item)} className="h-8 w-8 p-0">
-              <Eye className="w-4 h-4" />
-            </Button>
+            {shouldShow("Utility Consumption", "update") && (
+              <Button variant="ghost" size="sm" onClick={() => handleEdit(item)} className="h-8 w-8 p-0">
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
+            {shouldShow("Utility Consumption", "show") && (
+              <Button variant="ghost" size="sm" onClick={() => handleView(item)} className="h-8 w-8 p-0">
+                <Eye className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         );
       case 'customer_name':
@@ -177,13 +183,15 @@ const UtilityConsumptionDashboard = () => {
       </h1>
 
       <div className="flex flex-wrap gap-3">
-        <Button
-          onClick={() => navigate('/utility/utility-consumption/generate-bill')}
-          className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
-        >
-          <Plus className="w-4 h-4" />
-          Generate New
-        </Button>
+        {shouldShow("Utility Consumption", "create") && (
+          <Button
+            onClick={() => navigate('/utility/utility-consumption/generate-bill')}
+            className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
+          >
+            <Plus className="w-4 h-4" />
+            Generate New
+          </Button>
+        )}
         <Button
           onClick={() => setIsFilterModalOpen(true)}
           className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"

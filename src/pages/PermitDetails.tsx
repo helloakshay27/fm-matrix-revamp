@@ -34,6 +34,7 @@ import { AddPermitCommentModal } from "@/components/AddPermitCommentModal";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { FormControl, InputLabel, Select, MenuItem, OutlinedInput, Chip, Box, SelectChangeEvent, TextField } from '@mui/material';
 import { format } from "date-fns";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // MUI field styles
 const fieldStyles = {
@@ -357,6 +358,7 @@ const Field = memo(({
 export const PermitDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const { shouldShow } = useDynamicPermissions();
     const [searchParams] = useSearchParams();
     const [permitData, setPermitData] = useState<PermitDetailsResponse | null>(null);
     console.log(permitData)
@@ -1467,7 +1469,7 @@ export const PermitDetails = () => {
                 </button>
                 {!permitData.all_buttons_hidden && (
                     <div className="flex items-center gap-4">
-                        {/* {!isFromPendingApprovals && permitData.show_edit_button && (
+                        {!isFromPendingApprovals && permitData.show_edit_button && shouldShow("Permit", "update") && (
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -1477,7 +1479,7 @@ export const PermitDetails = () => {
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit
                             </Button>
-                        )} */}
+                        )}
                         {!isFromPendingApprovals && (permitData.show_extend_permit_approved_button || permitData.show_extend_button) && (
                             <Button
                                 variant="outline"
