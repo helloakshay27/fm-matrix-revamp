@@ -666,7 +666,7 @@ export const EditInventoryPage = () => {
         borderColor: '#1A1A1A',
       },
       '&.Mui-focused fieldset': {
-        borderColor: '#C72030',
+        borderColor: '#DA7756',
         borderWidth: 2,
       },
     },
@@ -675,7 +675,7 @@ export const EditInventoryPage = () => {
       fontWeight: 500,
       fontSize: '16px', // Increased from default 14px
       '&.Mui-focused': {
-        color: '#C72030',
+        color: '#DA7756',
       },
     },
     '& .MuiInputBase-input': {
@@ -728,10 +728,10 @@ export const EditInventoryPage = () => {
             className="w-full flex items-center justify-between p-4 text-left"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
+              <div className="w-8 h-8 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm font-bold">
                 1
               </div>
-              <h2 className="text-lg font-semibold text-[#C72030] uppercase">INVENTORY DETAILS</h2>
+              <h2 className="text-lg font-semibold text-[#DA7756] uppercase">INVENTORY DETAILS</h2>
             </div>
             {inventoryDetailsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </button>
@@ -756,9 +756,9 @@ export const EditInventoryPage = () => {
                       fontSize: '14px',
                     },
                     '& .MuiRadio-root': {
-                      color: '#C72030',
+                      color: '#DA7756',
                       '&.Mui-checked': {
-                        color: '#C72030',
+                        color: '#DA7756',
                       },
                     },
                   }}
@@ -789,9 +789,9 @@ export const EditInventoryPage = () => {
                       fontSize: '14px',
                     },
                     '& .MuiRadio-root': {
-                      color: '#C72030',
+                      color: '#DA7756',
                       '&.Mui-checked': {
-                        color: '#C72030',
+                        color: '#DA7756',
                       },
                     },
                   }}
@@ -830,7 +830,7 @@ export const EditInventoryPage = () => {
                       displayEmpty
                       disabled={loading}
                     >
-                      <MenuItem value="" sx={{ color: '#C72030' }}>
+                      <MenuItem value="" sx={{ color: '#DA7756' }}>
                         {loading ? 'Loading...' : 'Select an Option...'}
                       </MenuItem>
                       {assets.map((asset) => (
@@ -845,7 +845,7 @@ export const EditInventoryPage = () => {
                 <div>
                   <div ref={inventoryNameWrapperRef} className="relative">
                     <TextField
-                      label={<>Inventory Name<span style={{ color: '#C72030' }}>*</span></>}
+                      label={<>Inventory Name<span style={{ color: '#DA7756' }}>*</span></>}
                       placeholder="Name"
                       value={formData.inventoryName}
                       onChange={(e) => {
@@ -898,7 +898,7 @@ export const EditInventoryPage = () => {
 
                 <div>
                   <TextField
-                    label={<>Inventory Code<span style={{ color: '#C72030' }}>*</span></>}
+                    label={<>Inventory Code<span style={{ color: '#DA7756' }}>*</span></>}
                     placeholder="code"
                     value={formData.inventoryCode}
                     onChange={(e) => handleInputChange('inventoryCode', e.target.value)}
@@ -1113,7 +1113,7 @@ export const EditInventoryPage = () => {
                       displayEmpty
                       disabled={orgId === 63}
                     >
-                      <MenuItem value="" sx={{ color: '#C72030' }}>
+                      <MenuItem value="" sx={{ color: '#DA7756' }}>
                         Select an Option...
                       </MenuItem>
                       <MenuItem value="Non Technical">Non Technical</MenuItem>
@@ -1196,7 +1196,7 @@ export const EditInventoryPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <TextField
-                    label={<>Max.Stock Level<span style={{ color: '#C72030' }}>*</span></>}
+                    label={<>Max.Stock Level<span style={{ color: '#DA7756' }}>*</span></>}
                     placeholder="Max Stock"
                     value={formData.maxStockLevel}
                     onChange={(e) => handleInputChange('maxStockLevel', e.target.value.replace(/\D/g, ''))}
@@ -1211,7 +1211,7 @@ export const EditInventoryPage = () => {
 
                 <div>
                   <TextField
-                    label={<>Min.Stock Level<span style={{ color: '#C72030' }}>*</span></>}
+                    label={<>Min.Stock Level<span style={{ color: '#DA7756' }}>*</span></>}
                     placeholder="Min Stock"
                     value={formData.minStockLevel}
                     onChange={(e) => handleInputChange('minStockLevel', e.target.value)}
@@ -1251,10 +1251,10 @@ export const EditInventoryPage = () => {
             className="w-full flex items-center justify-between p-4 text-left"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
+              <div className="w-8 h-8 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm font-bold">
                 2
               </div>
-              <h2 className="text-lg font-semibold text-[#C72030] uppercase">TAX DETAILS</h2>
+              <h2 className="text-lg font-semibold text-[#DA7756] uppercase">TAX DETAILS</h2>
             </div>
             {taxDetailsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </button>
@@ -1354,7 +1354,8 @@ export const EditInventoryPage = () => {
           <Button
             onClick={handleSubmit}
             disabled={editLoading}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
+            variant="ghost"
+            className="fm-button-fix fm-button-brand px-8"
           >
             {editLoading ? 'Updating...' : 'Update Inventory'}
           </Button>

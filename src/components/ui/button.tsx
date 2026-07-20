@@ -8,14 +8,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-[#F2EEE9] text-[#BF213E]",
-        destructive: "bg-[#F2EEE9] text-[#BF213E]",
-        outline: "bg-white text-[#BF213E] border border-[#BF213E]",
-        secondary: "bg-[#F2EEE9] text-[#BF213E] border-none",
-        ghost: "bg-transparent text-black",
-        link: "text-[#BF213E] underline-offset-4 hover:underline",
-        primary: "bg-[#F2EEE9] text-[#BF213E]",
-        icon: "bg-transparent text-white",
+        default: "!bg-[#F2EEE9] !text-[#DA7756] [&_svg]:text-[#DA7756]",
+        destructive: "!bg-[#F2EEE9] !text-[#DA7756] [&_svg]:text-[#DA7756]",
+        outline: "!bg-white !text-[#DA7756] !border !border-[#DA7756] [&_svg]:text-[#DA7756]",
+        secondary: "!bg-[#F2EEE9] !text-[#DA7756] !border-none [&_svg]:text-[#DA7756]",
+        ghost: "bg-transparent text-black [&_svg]:text-black",
+        link: "!text-[#DA7756] underline-offset-4 hover:underline [&_svg]:text-[#DA7756]",
+        primary: "!bg-[#F2EEE9] !text-[#DA7756] [&_svg]:text-[#DA7756]",
+        icon: "bg-transparent text-white [&_svg]:text-white",
       },
       size: {
         default: "h-[28px] sm:h-[36px] px-4 py-1.5",
@@ -33,7 +33,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  VariantProps<typeof buttonVariants> {
   asChild?: boolean
 }
 

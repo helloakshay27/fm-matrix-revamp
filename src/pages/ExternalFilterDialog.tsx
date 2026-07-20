@@ -279,7 +279,7 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2, pt: 0 }}>
         <Button variant="outline" onClick={handleReset} className="border-gray-300 text-gray-700 hover:bg-gray-50">Reset</Button>
-        <Button onClick={handleSubmit} className="bg-red-500 hover:bg-red-600 text-white">Apply</Button>
+        <Button onClick={handleSubmit} variant="ghost" className="fm-button-fix fm-button-brand">Apply</Button>
       </DialogActions>
     </Dialog>
   );
