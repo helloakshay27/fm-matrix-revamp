@@ -77,15 +77,15 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
         boxSizing: 'border-box'
       },
       '&:hover fieldset': {
-        borderColor: '#C72030'
+        borderColor: '#DA7756'
       },
       '&.Mui-focused fieldset': {
-        borderColor: '#C72030'
+        borderColor: '#DA7756'
       }
     },
     '& .MuiInputLabel-root': {
       '&.Mui-focused': {
-        color: '#C72030'
+        color: '#DA7756'
       }
     },
     '& .MuiInputLabel-shrink': {
@@ -110,7 +110,7 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
           <div className="space-y-6">
             {/* Survey Details Section */}
             <div>
-              <h3 className="text-lg font-semibold text-[#C72030] mb-4">Survey Details</h3>
+              <h3 className="text-lg font-semibold text-[#DA7756] mb-4">Survey Details</h3>
               <div className="space-y-4">
                 {/* Survey Title Filter */}
                 <Box>
@@ -133,13 +133,14 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
             <Button 
               onClick={handleReset} 
               variant="outline" 
-              className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white px-8"
+              className="fm-button-fix fm-button-brand px-8"
             >
               Reset
             </Button>
             <Button 
               onClick={handleApply} 
-              className="bg-[#C72030] text-white hover:bg-[#A01828] px-8"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-8"
             >
               Apply
             </Button>

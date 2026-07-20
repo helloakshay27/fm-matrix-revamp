@@ -8,13 +8,13 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "!bg-[#F2EEE9] !text-[#BF213E] [&_svg]:text-[#BF213E]",
-        destructive: "!bg-[#F2EEE9] !text-[#BF213E] [&_svg]:text-[#BF213E]",
-        outline: "!bg-white !text-[#BF213E] !border !border-[#BF213E] [&_svg]:text-[#BF213E]",
-        secondary: "!bg-[#F2EEE9] !text-[#BF213E] !border-none [&_svg]:text-[#BF213E]",
+        default: "!bg-[#F2EEE9] !text-[#DA7756] [&_svg]:text-[#DA7756]",
+        destructive: "!bg-[#F2EEE9] !text-[#DA7756] [&_svg]:text-[#DA7756]",
+        outline: "!bg-white !text-[#DA7756] !border !border-[#DA7756] [&_svg]:text-[#DA7756]",
+        secondary: "!bg-[#F2EEE9] !text-[#DA7756] !border-none [&_svg]:text-[#DA7756]",
         ghost: "bg-transparent text-black [&_svg]:text-black",
-        link: "!text-[#BF213E] underline-offset-4 hover:underline [&_svg]:text-[#BF213E]",
-        primary: "!bg-[#F2EEE9] !text-[#BF213E] [&_svg]:text-[#BF213E]",
+        link: "!text-[#DA7756] underline-offset-4 hover:underline [&_svg]:text-[#DA7756]",
+        primary: "!bg-[#F2EEE9] !text-[#DA7756] [&_svg]:text-[#DA7756]",
         icon: "bg-transparent text-white [&_svg]:text-white",
       },
       size: {

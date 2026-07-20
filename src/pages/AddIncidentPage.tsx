@@ -29,13 +29,13 @@
 //       borderColor: '#9ca3af',
 //     },
 //     '&.Mui-focused fieldset': {
-//       borderColor: '#C72030',
+//       borderColor: '#DA7756',
 //     },
 //   },
 //   '& .MuiInputLabel-root': {
 //     color: '#6b7280',
 //     '&.Mui-focused': {
-//       color: '#C72030',
+//       color: '#DA7756',
 //     },
 //   },
 // };
@@ -623,7 +623,7 @@
 //           <span className="mx-2">{'>'}</span>
 //           <span>Incident</span>
 //         </nav>
-//         <Heading level="h1" variant="primary" spacing="none" className="text-[#C72030] font-semibold">
+//         <Heading level="h1" variant="primary" spacing="none" className="text-[#DA7756] font-semibold">
 //           NEW INCIDENT
 //         </Heading>
 //       </div>
@@ -632,17 +632,17 @@
 //       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
 //         <CardHeader className='bg-[#F6F4EE] mb-4'>
 //           <CardTitle className="text-lg text-black flex items-center">
-//             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+//             <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
 //             INCIDENT DETAILS
 //           </CardTitle>
 //         </CardHeader>
 //         <CardContent className="p-6 bg-white">
 //           {/* Time & Date Section */}
 //           <div className="mb-6">
-//             <h3 className="text-sm font-medium mb-3">Time & Date <span style={{ color: '#C72030' }}>*</span></h3>
+//             <h3 className="text-sm font-medium mb-3">Time & Date <span style={{ color: '#DA7756' }}>*</span></h3>
 //             <div className="grid grid-cols-5 gap-2">
 //               <FormControl fullWidth variant="outlined">
-//                 <InputLabel shrink>Year <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//                 <InputLabel shrink>Year <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //                 <MuiSelect
 //                   label="Year *"
 //                   value={incidentData.year}
@@ -664,7 +664,7 @@
 //               </FormControl>
 
 //               <FormControl fullWidth variant="outlined">
-//                 <InputLabel shrink>Month <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//                 <InputLabel shrink>Month <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //                 <MuiSelect
 //                   label="Month *"
 //                   value={incidentData.month}
@@ -690,7 +690,7 @@
 //               </FormControl>
 
 //               <FormControl fullWidth variant="outlined">
-//                 <InputLabel shrink>Day <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//                 <InputLabel shrink>Day <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //                 <MuiSelect
 //                   label="Day *"
 //                   value={incidentData.day}
@@ -707,7 +707,7 @@
 //               </FormControl>
 
 //               <FormControl fullWidth variant="outlined">
-//                 <InputLabel shrink>Hour <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//                 <InputLabel shrink>Hour <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //                 <MuiSelect
 //                   label="Hour *"
 //                   value={incidentData.hour}
@@ -724,7 +724,7 @@
 //               </FormControl>
 
 //               <FormControl fullWidth variant="outlined">
-//                 <InputLabel shrink>Minute <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//                 <InputLabel shrink>Minute <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //                 <MuiSelect
 //                   label="Minute *"
 //                   value={incidentData.minute}
@@ -747,7 +747,7 @@
 //           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 //             {/* Building Dropdown */}
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-//               <InputLabel shrink>Building <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Building <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Building *"
 //                 value={incidentData.building}
@@ -766,7 +766,7 @@
 //             {/* PRIMARY CATEGORY HIERARCHY */}
 //             {/* Level 1: Category */}
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-//               <InputLabel shrink>Primary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Primary Category <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Primary Category *"
 //                 value={incidentData.categoryForIncident}
@@ -784,7 +784,7 @@
 
 //             {/* Level 2: Sub Category */}
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.categoryForIncident}>
-//               <InputLabel shrink>Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Sub Category <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Sub Category *"
 //                 value={incidentData.primaryCategory}
@@ -802,7 +802,7 @@
 
 //             {/* Level 3: Sub Sub Category */}
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.primaryCategory}>
-//               <InputLabel shrink>Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Sub Sub Category <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Sub Sub Category *"
 //                 value={incidentData.subCategory}
@@ -820,7 +820,7 @@
 
 //             {/* Level 4: Sub Sub Sub Category */}
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.subCategory}>
-//               <InputLabel shrink>Sub Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Sub Sub Sub Category <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Sub Sub Sub Category *"
 //                 value={incidentData.subSubCategory}
@@ -910,7 +910,7 @@
 //             </FormControl>
 
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-//               <InputLabel shrink>Severity <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Severity <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Severity *"
 //                 value={incidentData.severity}
@@ -929,7 +929,7 @@
 //             </FormControl>
 
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-//               <InputLabel shrink>Probability <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Probability <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Probability *"
 //                 value={incidentData.probability}
@@ -948,7 +948,7 @@
 //             </FormControl>
 
 //             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-//               <InputLabel shrink>Incident level <span style={{ color: '#C72030' }}>*</span></InputLabel>
+//               <InputLabel shrink>Incident level <span style={{ color: '#DA7756' }}>*</span></InputLabel>
 //               <MuiSelect
 //                 label="Incident level *"
 //                 value={incidentData.incidentLevel}
@@ -980,7 +980,7 @@
 //           {/* Description */}
 //           {/* <div className="mt-6">
 //             <TextField
-//               label={<>Description<span style={{ color: '#C72030' }}>*</span></>}
+//               label={<>Description<span style={{ color: '#DA7756' }}>*</span></>}
 //               value={incidentData.description}
 //               onChange={e => handleInputChange('description', e.target.value)}
 //               fullWidth
@@ -1012,7 +1012,7 @@
 //           </div> */}
 //           <div className="mt-6">
 //             <TextField
-//               label={<>Description<span style={{ color: '#C72030' }}>*</span></>}
+//               label={<>Description<span style={{ color: '#DA7756' }}>*</span></>}
 //               value={incidentData.description}
 //               onChange={e => handleInputChange('description', e.target.value)}
 //               fullWidth
@@ -1041,7 +1041,7 @@
 //       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
 //         <CardHeader className='bg-[#F6F4EE] mb-4'>
 //           <CardTitle className="text-lg text-black flex items-center">
-//             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+//             <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
 //             SUPPORT & DISCLAIMER
 //           </CardTitle>
 //         </CardHeader>
@@ -1055,9 +1055,9 @@
 //                     checked={incidentData.supportRequired}
 //                     onChange={(e) => handleCheckboxChange('supportRequired', e.target.checked)}
 //                     sx={{
-//                       color: '#C72030',
+//                       color: '#DA7756',
 //                       '&.Mui-checked': {
-//                         color: '#C72030',
+//                         color: '#DA7756',
 //                       },
 //                     }}
 //                   />
@@ -1067,16 +1067,16 @@
 //             </div>
 
 //             <div>
-//               <h3 className="text-lg font-medium mb-3">Disclaimer <span style={{ color: '#C72030' }}>*</span></h3>
+//               <h3 className="text-lg font-medium mb-3">Disclaimer <span style={{ color: '#DA7756' }}>*</span></h3>
 //               <FormControlLabel
 //                 control={
 //                   <Checkbox
 //                     checked={incidentData.factsCorrect}
 //                     onChange={(e) => handleCheckboxChange('factsCorrect', e.target.checked)}
 //                     sx={{
-//                       color: '#C72030',
+//                       color: '#DA7756',
 //                       '&.Mui-checked': {
-//                         color: '#C72030',
+//                         color: '#DA7756',
 //                       },
 //                     }}
 //                   />
@@ -1092,7 +1092,7 @@
 //       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
 //         <CardHeader className='bg-[#F6F4EE] mb-4'>
 //           <CardTitle className="text-lg text-black flex items-center">
-//             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+//             <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
 //             ATTACHMENTS
 //           </CardTitle>
 //         </CardHeader>
@@ -1120,7 +1120,7 @@
 //             <div>
 //               <Button
 //                 style={{
-//                   backgroundColor: '#C72030'
+//                   backgroundColor: '#DA7756'
 //                 }}
 //                 className="text-white hover:opacity-90"
 //               >
@@ -1184,13 +1184,13 @@ const fieldStyles = {
       borderColor: '#9ca3af',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+      borderColor: '#DA7756',
     },
   },
   '& .MuiInputLabel-root': {
     color: '#6b7280',
     '&.Mui-focused': {
-      color: '#C72030',
+      color: '#DA7756',
     },
   },
 };
@@ -1739,7 +1739,7 @@ export const AddIncidentPage = () => {
           <span className="mx-2">{'>'}</span>
           <span>Incident</span>
         </nav>
-        <Heading level="h1" variant="primary" spacing="none" className="text-[#C72030] font-semibold">
+        <Heading level="h1" variant="primary" spacing="none" className="text-[#DA7756] font-semibold">
           NEW INCIDENT
         </Heading>
       </div>
@@ -1748,17 +1748,17 @@ export const AddIncidentPage = () => {
       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
         <CardHeader className='bg-[#F6F4EE] mb-4'>
           <CardTitle className="text-lg text-black flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+            <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
             INCIDENT DETAILS
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 bg-white">
           {/* Time & Date Section */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium mb-3">Time & Date <span style={{ color: '#C72030' }}>*</span></h3>
+            <h3 className="text-sm font-medium mb-3">Time & Date <span style={{ color: '#DA7756' }}>*</span></h3>
             <div className="grid grid-cols-5 gap-2">
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Year <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                <InputLabel shrink>Year <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                 <MuiSelect
                   label="Year *"
                   value={incidentData.year}
@@ -1780,7 +1780,7 @@ export const AddIncidentPage = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Month <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                <InputLabel shrink>Month <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                 <MuiSelect
                   label="Month *"
                   value={incidentData.month}
@@ -1806,7 +1806,7 @@ export const AddIncidentPage = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Day <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                <InputLabel shrink>Day <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                 <MuiSelect
                   label="Day *"
                   value={incidentData.day}
@@ -1823,7 +1823,7 @@ export const AddIncidentPage = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Hour <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                <InputLabel shrink>Hour <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                 <MuiSelect
                   label="Hour *"
                   value={incidentData.hour}
@@ -1840,7 +1840,7 @@ export const AddIncidentPage = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Minute <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                <InputLabel shrink>Minute <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                 <MuiSelect
                   label="Minute *"
                   value={incidentData.minute}
@@ -1863,7 +1863,7 @@ export const AddIncidentPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {/* Building Dropdown */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Building <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Building <span style={{ color: '#DA7756' }}>*</span></InputLabel>
               <MuiSelect
                 label="Building *"
                 value={incidentData.building}
@@ -1882,7 +1882,7 @@ export const AddIncidentPage = () => {
             {/* PRIMARY CATEGORY HIERARCHY */}
             {/* Level 1: Primary Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Primary Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Primary Category <span style={{ color: '#DA7756' }}>*</span></InputLabel>
               <MuiSelect
                 label="Primary Category *"
                 value={incidentData.primaryCategory}
@@ -1900,7 +1900,7 @@ export const AddIncidentPage = () => {
 
             {/* Level 2: Sub Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.primaryCategory}>
-              <InputLabel shrink>Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Sub Category <span style={{ color: '#DA7756' }}>*</span></InputLabel>
               <MuiSelect
                 label="Sub Category *"
                 value={incidentData.subCategory}
@@ -1918,7 +1918,7 @@ export const AddIncidentPage = () => {
 
             {/* Level 3: Sub Sub Category */}
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }} disabled={!incidentData.subCategory}>
-              <InputLabel shrink>Sub Sub Category <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Sub Sub Category <span style={{ color: '#DA7756' }}>*</span></InputLabel>
               <MuiSelect
                 label="Sub Sub Category *"
                 value={incidentData.subSubCategory}
@@ -2026,7 +2026,7 @@ export const AddIncidentPage = () => {
             </FormControl>
 
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Severity <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Severity <span style={{ color: '#DA7756' }}>*</span></InputLabel>
               <MuiSelect
                 label="Severity *"
                 value={incidentData.severity}
@@ -2045,7 +2045,7 @@ export const AddIncidentPage = () => {
             </FormControl>
 
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Probability <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Probability <span style={{ color: '#DA7756' }}>*</span></InputLabel>
               <MuiSelect
                 label="Probability *"
                 value={incidentData.probability}
@@ -2064,7 +2064,7 @@ export const AddIncidentPage = () => {
             </FormControl>
 
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Incident level <span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <InputLabel shrink>Incident level <span style={{ color: '#DA7756' }}>*</span></InputLabel>
               <MuiSelect
                 label="Incident level *"
                 value={incidentData.incidentLevel}
@@ -2096,7 +2096,7 @@ export const AddIncidentPage = () => {
           {/* Description */}
           <div className="mt-6">
             <TextField
-              label={<>Description<span style={{ color: '#C72030' }}>*</span></>}
+              label={<>Description<span style={{ color: '#DA7756' }}>*</span></>}
               value={incidentData.description}
               onChange={e => handleInputChange('description', e.target.value)}
               fullWidth
@@ -2136,7 +2136,7 @@ export const AddIncidentPage = () => {
       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
         <CardHeader className='bg-[#F6F4EE] mb-4'>
           <CardTitle className="text-lg text-black flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+            <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
             SUPPORT & DISCLAIMER
           </CardTitle>
         </CardHeader>
@@ -2150,9 +2150,9 @@ export const AddIncidentPage = () => {
                     checked={incidentData.supportRequired}
                     onChange={(e) => handleCheckboxChange('supportRequired', e.target.checked)}
                     sx={{
-                      color: '#C72030',
+                      color: '#DA7756',
                       '&.Mui-checked': {
-                        color: '#C72030',
+                        color: '#DA7756',
                       },
                     }}
                   />
@@ -2162,16 +2162,16 @@ export const AddIncidentPage = () => {
             </div>
 
             <div>
-              <h3 className="text-lg font-medium mb-3">Disclaimer <span style={{ color: '#C72030' }}>*</span></h3>
+              <h3 className="text-lg font-medium mb-3">Disclaimer <span style={{ color: '#DA7756' }}>*</span></h3>
               <FormControlLabel
                 control={
                   <Checkbox
                     checked={incidentData.factsCorrect}
                     onChange={(e) => handleCheckboxChange('factsCorrect', e.target.checked)}
                     sx={{
-                      color: '#C72030',
+                      color: '#DA7756',
                       '&.Mui-checked': {
-                        color: '#C72030',
+                        color: '#DA7756',
                       },
                     }}
                   />
@@ -2187,7 +2187,7 @@ export const AddIncidentPage = () => {
       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
         <CardHeader className='bg-[#F6F4EE] mb-4'>
           <CardTitle className="text-lg text-black flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+            <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
             ATTACHMENTS
           </CardTitle>
         </CardHeader>
@@ -2299,7 +2299,7 @@ export const AddIncidentPage = () => {
             {/* <div>
               <Button
                 style={{
-                  backgroundColor: '#C72030'
+                  backgroundColor: '#DA7756'
                 }}
                 className="text-white hover:opacity-90"
               >
@@ -2314,11 +2314,8 @@ export const AddIncidentPage = () => {
       <div className="flex justify-center pt-6">
         <Button
           onClick={handleSubmit}
-          // style={{
-          //   backgroundColor: '#8B4A8C'
-          // }}
-          // className="text-white hover:opacity-90 px-8 py-3 text-lg"
-          className='text-[18px]'
+          variant="ghost"
+          className="fm-button-fix fm-button-brand px-8 text-[18px]"
         >
           Create Incident
         </Button>

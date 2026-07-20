@@ -595,7 +595,8 @@ const LMCDashboard = () => {
                     </Button>
                     <Button
                         onClick={handleApplyFilters}
-                        className="bg-red-500 hover:bg-red-600 text-white"
+                        variant="ghost"
+                        className="fm-button-fix fm-button-brand"
                     >
                         Apply
                     </Button>

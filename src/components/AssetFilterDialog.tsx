@@ -817,10 +817,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6">
-            <Button variant="secondary" onClick={handleSubmit} className="flex-1 h-11">
+            <Button variant="ghost" onClick={handleSubmit} className="fm-button-fix fm-button-brand flex-1 h-11">
               Apply
             </Button>
-            <Button variant="outline" onClick={handleReset} className="flex-1 h-11">
+            <Button variant="ghost" onClick={handleReset} className="fm-button-fix fm-button-brand flex-1 h-11">
               Reset
             </Button>
           </div>

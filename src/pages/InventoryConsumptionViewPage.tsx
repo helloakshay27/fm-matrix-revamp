@@ -374,7 +374,8 @@ const InventoryConsumptionViewPage = () => {
               {shouldShow("Inventory Consumption", "create") && (
               <Button
                 onClick={handleAddConsume}
-                className="inline-flex items-center gap-1 bg-[#6B2C91] text-white hover:bg-[#5A2479] rounded-md px-3 py-2 h-9 text-sm"
+                variant="ghost"
+                className="fm-button-fix fm-button-brand gap-1"
               >
                 Add / Consume
               </Button>
@@ -435,7 +436,7 @@ const InventoryConsumptionViewPage = () => {
                   shrink: true,
                   sx: {
                     '& .MuiFormLabel-asterisk': {
-                      color: '#C72030',
+                      color: '#DA7756',
                     },
                   },
                 }}
@@ -449,7 +450,7 @@ const InventoryConsumptionViewPage = () => {
                     color: '#9CA3AF',
                     fontSize: '16px',
                     fontWeight: '500',
-                    '&.Mui-focused': { color: '#C72030' },
+                    '&.Mui-focused': { color: '#DA7756' },
                   },
                   '& .MuiOutlinedInput-input': {
                     fontSize: '16px',
@@ -474,8 +475,8 @@ const InventoryConsumptionViewPage = () => {
                   sx={{
                     color: '#9CA3AF',
                     fontSize: '14px',
-                    '& .MuiFormLabel-asterisk': { color: '#C72030' },
-                    '&.Mui-focused': { color: '#C72030' },
+                    '& .MuiFormLabel-asterisk': { color: '#DA7756' },
+                    '&.Mui-focused': { color: '#DA7756' },
                   }}
                 >
                   Select Type
@@ -525,7 +526,7 @@ const InventoryConsumptionViewPage = () => {
                   '& .MuiInputLabel-root': {
                     color: '#9CA3AF',
                     fontSize: '16px',
-                    '&.Mui-focused': { color: '#C72030' },
+                    '&.Mui-focused': { color: '#DA7756' },
                   },
                   // Match provided behavior: directly style the inner textarea
                   '& textarea': {
@@ -548,7 +549,8 @@ const InventoryConsumptionViewPage = () => {
                 <Button
                   onClick={handleFormSubmit}
                   disabled={!isFormValid || isSubmitting}
-                  className="bg-[#6B2C91] text-white hover:bg-[#5A2479] rounded-lg px-8 py-3 h-12 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  variant="ghost"
+                  className="fm-button-fix fm-button-brand px-8 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <div className="flex items-center gap-2">
