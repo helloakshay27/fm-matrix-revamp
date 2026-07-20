@@ -27,6 +27,9 @@ import {
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions, getAuthHeader, ENDPOINTS } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 
 // Get current site ID dynamically from localStorage
 const getCurrentSiteId = (): number => {
@@ -187,6 +190,9 @@ export const VisitorsDashboard = () => {
   const [selectedVisitors, setSelectedVisitors] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportFromDate, setExportFromDate] = useState('');
+  const [exportToDate, setExportToDate] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -1315,23 +1321,28 @@ export const VisitorsDashboard = () => {
   };
 
   const handleExport = async () => {
-    console.log('VisitorsDashboard - Export clicked');
+    setExportDialogOpen(true);
+  };
 
-    // Show loading toast with infinite duration
+  const handleExportWithDateRange = async () => {
+    setExportDialogOpen(false);
     const loadingToastId = toast.loading("Preparing export file...", {
-      duration: Infinity, // Keep it visible until we dismiss it
+      duration: Infinity,
     });
 
     try {
-      console.log('📥 Exporting visitor history data');
-
-      // Build the export URL using the configured endpoint
       const exportUrl = getFullUrl(ENDPOINTS.VISITOR_HISTORY_EXPORT);
 
-      console.log('📥 Export URL:', exportUrl);
+      const fromParts = exportFromDate.split('/');
+      const toParts = exportToDate.split('/');
+      const dateRangeParam = `${fromParts[1]}%2F${fromParts[0]}%2F${fromParts[2]}-${toParts[1]}%2F${toParts[0]}%2F${toParts[2]}`;
 
-      // Make the API call to get the Excel file
-      const response = await fetch(exportUrl, {
+      const separator = exportUrl.includes('?') ? '&' : '?';
+      const urlWithDateRange = `${exportUrl}${separator}q[date_range]=${dateRangeParam}`;
+
+      console.log('Export URL with date range:', urlWithDateRange);
+
+      const response = await fetch(urlWithDateRange, {
         method: 'GET',
         headers: {
           'Authorization': getAuthHeader(),
@@ -1340,54 +1351,33 @@ export const VisitorsDashboard = () => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Export API error response:', errorText);
-
+        console.error('Export API error response:', errorText);
         if (response.status === 401) {
-          console.error('401 Authentication failed during export - invalid or expired token');
           throw new Error('Authentication failed. Please login again.');
         }
-
         throw new Error(`Export failed: ${response.status} ${response.statusText}`);
       }
 
-      // Get the file blob
       const blob = await response.blob();
-
-      // Create download link
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-
-      // Generate filename with timestamp
       const timestamp = new Date().toISOString().slice(0, 10);
       link.download = `visitor_history_${timestamp}.xlsx`;
-
-      // Trigger download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      // Clean up the blob URL
       window.URL.revokeObjectURL(downloadUrl);
 
-      console.log('✅ Export completed successfully');
-
-      // Dismiss loading toast and show success
       toast.dismiss(loadingToastId);
       toast.success('Visitor history exported successfully!');
-
     } catch (error) {
-      console.error('❌ Export failed:', error);
-
-      // Dismiss loading toast and show error
+      console.error('Export failed:', error);
       toast.dismiss(loadingToastId);
-
-      // Handle authentication errors specifically
       if (error instanceof Error && error.message.includes('Authentication failed')) {
         toast.error("Your session has expired. Please login again.");
         return;
       }
-
       toast.error(`Failed to export visitor history: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -1855,6 +1845,44 @@ const handlePageChange = (page: number) => {
           setIsActionPanelOpen(false);
         }}
       />
+
+      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Export Visitor History</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>From</Label>
+              <MaterialDatePicker
+                value={exportFromDate}
+                onChange={setExportFromDate}
+                placeholder="Select start date"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>To</Label>
+              <MaterialDatePicker
+                value={exportToDate}
+                onChange={setExportToDate}
+                placeholder="Select end date"
+                className="mt-1"
+              />
+            </div>
+            <div className="flex justify-end pt-4">
+              <Button
+                style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+                className="hover:bg-[#F2EEE9]/90 px-8"
+                onClick={handleExportWithDateRange}
+                disabled={!exportFromDate || !exportToDate}
+              >
+                Export
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
