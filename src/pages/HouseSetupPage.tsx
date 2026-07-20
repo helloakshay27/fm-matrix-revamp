@@ -17,9 +17,6 @@ import { Label } from "@/components/ui/label";
 interface House {
     id: number;
     name: string;
-    color: string;
-    house_type: string;
-    floor_count: number;
     attachments?: { id: number; url: string; filename: string }[];
 }
 
@@ -28,7 +25,7 @@ const HouseSetupPage = () => {
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingHouse, setEditingHouse] = useState<House | null>(null);
-    const [formData, setFormData] = useState({ name: '', color: '#000000', house_type: '', floor_count: 0 });
+    const [formData, setFormData] = useState({ name: '' });
     const [attachment, setAttachment] = useState<File | null>(null);
     const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -68,18 +65,13 @@ const HouseSetupPage = () => {
     const handleOpenModal = (house?: House) => {
         if (house) {
             setEditingHouse(house);
-            setFormData({
-                name: house.name,
-                color: house.color || '#000000',
-                house_type: house.house_type || '',
-                floor_count: house.floor_count,
-            });
+            setFormData({ name: house.name });
             if (house.attachments && house.attachments.length > 0) {
                 setAttachmentPreview(house.attachments[0].url);
             }
         } else {
             setEditingHouse(null);
-            setFormData({ name: '', color: '#000000', house_type: '', floor_count: 0 });
+            setFormData({ name: '' });
             setAttachmentPreview(null);
         }
         setAttachment(null);
@@ -89,7 +81,7 @@ const HouseSetupPage = () => {
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setEditingHouse(null);
-        setFormData({ name: '', color: '#000000', house_type: '', floor_count: 0 });
+        setFormData({ name: '' });
         setAttachment(null);
         setAttachmentPreview(null);
     };
@@ -122,9 +114,6 @@ const HouseSetupPage = () => {
         try {
             const formDataPayload = new FormData();
             formDataPayload.append('house[name]', formData.name);
-            formDataPayload.append('house[color]', formData.color);
-            formDataPayload.append('house[house_type]', formData.house_type);
-            formDataPayload.append('house[floor_count]', String(Number(formData.floor_count)));
             if (attachment) {
                 formDataPayload.append('house[attachments][]', attachment);
             }
@@ -164,31 +153,17 @@ const HouseSetupPage = () => {
     const columns = useMemo(() => [
         { key: 'id', label: 'ID', sortable: true },
         { key: 'name', label: 'Name', sortable: true },
-        { key: 'logo', label: 'Logo', sortable: false },
-        { key: 'color', label: 'Color', sortable: true },
-        { key: 'house_type', label: 'House Type', sortable: true },
-        { key: 'floor_count', label: 'Floor Count', sortable: true },
+        { key: 'icon', label: 'Icon', sortable: false },
         { key: 'actions', label: 'Actions', sortable: false },
     ], []);
 
     const renderCell = (item: House, columnKey: string) => {
-        if (columnKey === 'logo') {
-            const logoUrl = item.attachments?.[0]?.url;
-            return logoUrl ? (
-                <img src={logoUrl} alt={`${item.name} logo`} className="w-10 h-10 rounded object-cover border border-gray-200" />
+        if (columnKey === 'icon') {
+            const iconUrl = item.attachments?.[0]?.url;
+            return iconUrl ? (
+                <img src={iconUrl} alt={`${item.name} icon`} className="w-10 h-10 rounded object-cover border border-gray-200" />
             ) : (
                 <span className="text-gray-400">--</span>
-            );
-        }
-        if (columnKey === 'color') {
-            return (
-                <div className="flex items-center gap-2">
-                    <div
-                        className="w-5 h-5 rounded border border-gray-300"
-                        style={{ backgroundColor: item.color }}
-                    />
-                    <span>{item.color}</span>
-                </div>
             );
         }
         if (columnKey === 'actions') {
@@ -231,7 +206,7 @@ const HouseSetupPage = () => {
             </div>
 
             <Dialog open={isModalOpen} onOpenChange={(open) => !open && handleCloseModal()}>
-                <DialogContent className="sm:max-w-[500px] bg-white">
+                <DialogContent className="sm:max-w-[425px] bg-white">
                     <DialogHeader>
                         <DialogTitle>{editingHouse ? 'Edit House' : 'Add House'}</DialogTitle>
                     </DialogHeader>
@@ -248,54 +223,12 @@ const HouseSetupPage = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="color">Color</Label>
-                            <div className="flex items-center gap-3">
-                                <input
-                                    id="color"
-                                    type="color"
-                                    value={formData.color}
-                                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                                    className="w-10 h-10 rounded border border-gray-300 cursor-pointer p-0"
-                                />
-                                <Input
-                                    type="text"
-                                    value={formData.color}
-                                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                                    placeholder="#000000"
-                                    className="w-32"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="house_type">House Type</Label>
-                            <Input
-                                id="house_type"
-                                value={formData.house_type}
-                                onChange={(e) => setFormData({ ...formData, house_type: e.target.value })}
-                                placeholder="Enter house type"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="floor_count">Floor Count</Label>
-                            <Input
-                                id="floor_count"
-                                type="number"
-                                min="0"
-                                value={formData.floor_count}
-                                onChange={(e) => setFormData({ ...formData, floor_count: parseInt(e.target.value) || 0 })}
-                                placeholder="Enter floor count"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label>Attachment (Image)</Label>
+                            <Label>Icon</Label>
                             {attachmentPreview ? (
                                 <div className="relative w-full border rounded-md p-2">
                                     <img
                                         src={attachmentPreview}
-                                        alt="Attachment preview"
+                                        alt="Icon preview"
                                         className="w-full h-40 object-contain rounded"
                                     />
                                     <button
@@ -312,7 +245,7 @@ const HouseSetupPage = () => {
                                     className="w-full border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
                                 >
                                     <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                                    <span className="text-sm text-gray-500">Click to upload image</span>
+                                    <span className="text-sm text-gray-500">Click to upload icon</span>
                                 </div>
                             )}
                             <input
