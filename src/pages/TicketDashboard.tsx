@@ -1521,15 +1521,14 @@ export const TicketDashboard = () => {
             <div className="flex justify-end items-center gap-2">
 
               <Button
-                variant="outline"
                 onClick={() => setIsAnalyticsFilterOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+                className="fm-button-fix fm-button-brand flex items-center gap-2"
               >
-                <Calendar className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">
+                <Calendar className="w-4 h-4" />
+                <span className="text-sm font-medium">
                   {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
                 </span>
-                <Filter className="w-4 h-4 text-gray-600" />
+                <Filter className="w-4 h-4" />
               </Button>
 
               <TicketSelector onSelectionChange={handleSelectionChange} />

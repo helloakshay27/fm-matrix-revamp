@@ -1526,15 +1526,14 @@ export const ScheduledTaskDashboard = () => {
 
               <div className="flex gap-2 items-center">
                 <Button
-                  variant="outline"
                   onClick={() => setShowAnalyticsFilter(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+                  className="fm-button-fix fm-button-brand flex items-center gap-2"
                 >
-                  <CalendarIcon className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">
+                  <CalendarIcon className="w-4 h-4" />
+                  <span className="text-sm font-medium">
                     {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
                   </span>
-                  <FilterIcon className="w-4 h-4 text-gray-600" />
+                  <FilterIcon className="w-4 h-4" />
                 </Button>
                 <TaskAnalyticsSelector
                   onSelectionChange={handleAnalyticsSelectionChange}

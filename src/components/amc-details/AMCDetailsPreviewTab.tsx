@@ -1255,6 +1255,8 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                       type="button"
                       onClick={() => setActivePreviewFreqTab(idx)}
                       className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${idx === activePreviewFreqTab
+                        ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                           ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
                           : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                         }`}
@@ -1358,6 +1360,8 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
               </div>
             </div>
           </div>
+
+
 
           <Dialog
             open={isModalOpen}

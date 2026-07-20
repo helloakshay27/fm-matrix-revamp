@@ -175,7 +175,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
 
     // Check if user is in Vendor Module route or is a vendor - render VendorSidebar
-    if (location.pathname.startsWith("/vendor") || currentUser?.is_vendor) {
+    if (location.pathname.startsWith("/vendor")) {
       console.warn("✅ Rendering VendorSidebar");
       return <VendorSidebar />;
     }
