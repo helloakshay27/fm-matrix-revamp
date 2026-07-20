@@ -341,9 +341,9 @@ export const AddEmployeeDashboard = () => {
           <div className="flex justify-center pt-4">
             <Button
               onClick={handleSubmit}
-              className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-12 py-3 text-lg"
+              className="!bg-[#DA7756] hover:!bg-[#C45F40] px-12 py-3 text-lg"
             >
-              Submit
+              <span className="!text-white font-medium">Submit</span>
             </Button>
           </div>
         </div>
