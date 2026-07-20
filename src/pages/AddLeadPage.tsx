@@ -207,9 +207,9 @@ export const AddLeadPage = () => {
             <div className="flex justify-center">
               <Button 
                 type="submit"
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 h-10 text-sm font-medium min-w-[100px] rounded-sm"
+                className="!bg-[#DA7756] hover:!bg-[#C45F40] px-8 py-2 h-10 text-sm font-medium min-w-[100px] rounded-sm"
               >
-                Submit
+                <span className="!text-white font-medium">Submit</span>
               </Button>
             </div>
           </form>
