@@ -440,10 +440,9 @@ const CRMWalletDetails = () => {
                         {shouldShow("Wallet", "create") && (
                         <Button
                             onClick={() => setShowRuleCreateAlert(true)}
-                            variant="outline"
-                            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                            className="!bg-[#DA7756] hover:!bg-[#C45F40]"
                         >
-                            + Add
+                            <span className="!text-white font-medium">+ Add</span>
                         </Button>
                         )}
                     </div>
