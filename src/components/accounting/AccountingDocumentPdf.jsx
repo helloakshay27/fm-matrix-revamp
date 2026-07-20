@@ -56,6 +56,7 @@ export const AccountingDocumentPdf = ({
   secondaryDateLabel,
   secondaryDate,
   referenceNumber,
+  bankDetail,
 }) => {
   const statusDisplay = formatStatus(status);
   const billingAddress = data?.address_detail?.billing_address || data?.billing_address;
@@ -221,6 +222,13 @@ export const AccountingDocumentPdf = ({
 
           <div className="grid grid-cols-[1fr_305px]">
             <div className="p-3 border-r border-gray-500 min-h-[190px]">
+              {bankDetail && (
+                <div className="mb-4">
+                  <p className="font-bold">Bank Details</p>
+                  <p className="mt-1">{bankDetail.bankName} - A/C {bankDetail.accountNo}</p>
+                  <p>{bankDetail.beneficiaryName}{bankDetail.ifscCode ? `, IFSC: ${bankDetail.ifscCode}` : ""}{bankDetail.branch ? `, ${bankDetail.branch}` : ""}</p>
+                </div>
+              )}
               <div className="mb-4">
                 <p className="font-bold">Notes</p>
                 <p className="whitespace-pre-wrap mt-1">{notes || "-"}</p>

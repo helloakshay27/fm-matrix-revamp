@@ -68,6 +68,11 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import AccountingDocumentPdf from "@/components/accounting/AccountingDocumentPdf";
+import {
+  bankMasterListUrl,
+  getBankMasterApiConfig,
+  mapApiBankRecord,
+} from "./bankMasterUtils";
 
 export const InvoiceDashboardDetailsPage = () => {
   const { id } = useParams();
@@ -102,6 +107,7 @@ export const InvoiceDashboardDetailsPage = () => {
   const [sendThankYou, setSendThankYou] = useState(true);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+  const [bankDetail, setBankDetail] = useState(null);
   const invoicePdfRef = useRef(null);
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -112,6 +118,31 @@ export const InvoiceDashboardDetailsPage = () => {
       fetchLockAccount();
     }
   }, [id, baseUrl, token]);
+
+  // Resolve the bank selected on the invoice, if any
+  useEffect(() => {
+    const fetchBankDetail = async () => {
+      const bankId = invoiceData?.bank_master_id || invoiceData?.bank_master?.id;
+      if (!bankId) {
+        setBankDetail(null);
+        return;
+      }
+      if (invoiceData?.bank_master) {
+        setBankDetail(mapApiBankRecord(invoiceData.bank_master));
+        return;
+      }
+      try {
+        const { baseUrl: bmBaseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(bankMasterListUrl(bmBaseUrl, lockAccountId), { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        const found = data.map(mapApiBankRecord).find((b) => String(b.id) === String(bankId));
+        setBankDetail(found || null);
+      } catch (err) {
+        setBankDetail(null);
+      }
+    };
+    fetchBankDetail();
+  }, [invoiceData]);
 
   useEffect(() => {
     if (!baseUrl || !token || !lock_account_id) return;
@@ -1057,6 +1088,43 @@ export const InvoiceDashboardDetailsPage = () => {
               </CardContent>
             </Card>
 
+            {/* Bank Details */}
+            {bankDetail && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Bank Details</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
+                    <p className="text-sm mt-1">{bankDetail.bankName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Account Number</p>
+                    <p className="text-sm mt-1">{bankDetail.accountNo}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Beneficiary / Account Name</p>
+                    <p className="text-sm mt-1">{bankDetail.beneficiaryName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">IFSC Code</p>
+                    <p className="text-sm mt-1">{bankDetail.ifscCode}</p>
+                  </div>
+                  {bankDetail.swiftCode && (
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Swift Code</p>
+                      <p className="text-sm mt-1">{bankDetail.swiftCode}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Branch</p>
+                    <p className="text-sm mt-1">{bankDetail.branch}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Notes and Terms */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {invoiceData.customer_notes && (
@@ -1528,6 +1596,7 @@ export const InvoiceDashboardDetailsPage = () => {
                       secondaryDateLabel="Due Date"
                       secondaryDate={invoiceData.due_date}
                       referenceNumber={invoiceData.order_number}
+                      bankDetail={bankDetail}
                     />
                   </div>
                 </div>
@@ -1774,6 +1843,7 @@ export const InvoiceDashboardDetailsPage = () => {
               secondaryDateLabel="Due Date"
               secondaryDate={invoiceData.due_date}
               referenceNumber={invoiceData.order_number}
+              bankDetail={bankDetail}
             />
           </div>
         </div>
