@@ -446,10 +446,12 @@ const CRMPollsPage = () => {
             Edit Poll
           </MenuItem>
           )}
+          {shouldShow("Polls", "destroy") && (
           <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>
             <Trash2 size={16} style={{ marginRight: 12 }} />
             Delete
           </MenuItem>
+          )}
         </Menu>
       </Paper>
     </Container>

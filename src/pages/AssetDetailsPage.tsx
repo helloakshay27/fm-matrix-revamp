@@ -27,6 +27,7 @@ import { BreakdownModal } from "@/components/BreakdownModal";
 import { StatusBadge } from "@/components/StatusBadge";
 import { toast } from "sonner";
 import { getReturnToFromState } from "@/utils/listBackNavigation";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 export const AssetDetailsPage = () => {
   const { id } = useParams();
@@ -34,6 +35,7 @@ export const AssetDetailsPage = () => {
   const location = useLocation();
   const user = getUser();
   const isRestrictedUser = user?.email === 'karan.balsara@zycus.com';
+  const { shouldShow } = useDynamicPermissions();
 
   // Get type from URL search params
   const searchParams = new URLSearchParams(location.search);
@@ -246,7 +248,7 @@ export const AssetDetailsPage = () => {
                 View QR
               </Button>
 
-              {!isRestrictedUser && (
+              {!isRestrictedUser && shouldShow("assets", "update") && (
                 <Button
                   onClick={handleEditDetails}
                   variant="outline"

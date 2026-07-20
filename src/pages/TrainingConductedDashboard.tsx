@@ -5,6 +5,7 @@ import { FileText, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
 import { apiClient } from "@/utils/apiClient";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import {
   Pagination,
   PaginationContent,
@@ -38,6 +39,7 @@ interface AuditConductedResponse {
 }
 
 export const TrainingConductedDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [conductedData, setConductedData] = useState<
     AuditConductedOccurrence[]
@@ -170,7 +172,7 @@ export const TrainingConductedDashboard = () => {
   const renderCell = (item: AuditConductedOccurrence, columnKey: string) => {
     switch (columnKey) {
       case "actions":
-        return (
+        return shouldShow("Training", "show") ? (
           <Button
             variant="ghost"
             size="sm"
@@ -178,7 +180,7 @@ export const TrainingConductedDashboard = () => {
           >
             <Eye className="w-4 h-4" />
           </Button>
-        );
+        ) : null;
       case "report":
         return item.has_response && item.print_pdf_url ? (
           <Button

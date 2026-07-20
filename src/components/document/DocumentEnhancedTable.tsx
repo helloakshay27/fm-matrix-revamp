@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FileIcon } from "./FileIcon";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface Document {
   id: number;
@@ -70,6 +71,7 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
   selectedItems,
   onSelectionChange,
 }) => {
+  const { shouldShow } = useDynamicPermissions();
   // Check if this is a file list view (folder details page)
   const isFileListView = window.location.pathname.includes("/folder/");
 
@@ -227,6 +229,7 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
       <div className="flex items-center justify-between gap-3  p-4 rounded-lg shadow-sm  ">
         {/* Left: Action Button - Only show when NOT in file list view */}
         {/* {!isFileListView && ( */}
+        {shouldShow("employee_project_documents", "create") && (
         <Button
           onClick={onActionClick}
           className="bg-[#C72030] hover:bg-[#A01828] text-white"
@@ -234,6 +237,7 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
           <Plus className="w-4 h-4 mr-2" />
           Action
         </Button>
+        )}
         {/* )} */}
 
         {/* Right: Search, Filter, Sort, View Toggle */}

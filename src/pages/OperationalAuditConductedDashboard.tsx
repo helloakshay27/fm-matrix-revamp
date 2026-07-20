@@ -5,6 +5,8 @@ import { FileText, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
 import { apiClient } from "@/utils/apiClient";
+import { PostHogAuditActivity } from "@/components/PostHogAuditActivity";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import {
   Pagination,
   PaginationContent,
@@ -38,6 +40,7 @@ interface AuditConductedResponse {
 }
 
 export const OperationalAuditConductedDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [conductedData, setConductedData] = useState<
     AuditConductedOccurrence[]
@@ -164,7 +167,7 @@ export const OperationalAuditConductedDashboard = () => {
   const renderCell = (item: AuditConductedOccurrence, columnKey: string) => {
     switch (columnKey) {
       case "actions":
-        return (
+        return shouldShow("Audit", "show") ? (
           <Button
             variant="ghost"
             size="sm"
@@ -172,7 +175,7 @@ export const OperationalAuditConductedDashboard = () => {
           >
             <Eye className="w-4 h-4" />
           </Button>
-        );
+        ) : null;
       case "report":
         return item.has_response && item.print_pdf_url ? (
           <Button
@@ -196,11 +199,10 @@ export const OperationalAuditConductedDashboard = () => {
       case "status":
         return (
           <span
-            className={`px-2 py-1 rounded text-xs font-medium ${
-              item.status === "Completed"
+            className={`px-2 py-1 rounded text-xs font-medium ${item.status === "Completed"
                 ? "bg-green-100 text-green-800"
                 : "bg-yellow-100 text-yellow-800"
-            }`}
+              }`}
           >
             {item.status}
           </span>

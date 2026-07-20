@@ -22,6 +22,7 @@ import { TicketJobSheetModal } from '@/components/TicketJobSheetModal';
 import Select, { components } from "react-select";
 import { min } from 'lodash';
 import { getReturnToFromState } from "@/utils/listBackNavigation";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Utility function to format date to DD/MM/YYYY
 const formatDateToDDMMYYYY = (dateString: string) => {
@@ -548,6 +549,7 @@ const getBalanceTATSeconds = (escalationTime: string | null | undefined): number
 export const TicketDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
    const location = useLocation();
   const [ticketData, setTicketData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -5526,6 +5528,7 @@ export const TicketDetailsPage = () => {
                           </svg>
                         </button>
                       )}
+                      {shouldShow("Ticket", "update") && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -5536,6 +5539,7 @@ export const TicketDetailsPage = () => {
                         <Edit className="w-4 h-4 mr-1" />
                         {(loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons) ? 'Loading...' : 'Edit'}
                       </Button>
+                      )}
                     </div>
                   </div>
 
@@ -6695,6 +6699,7 @@ export const TicketDetailsPage = () => {
                       </h3>
 
                     </div>
+                    {shouldShow("Ticket", "update") && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -6705,6 +6710,7 @@ export const TicketDetailsPage = () => {
                       <Edit className="w-4 h-4 mr-1" />
                       {loadingResponsiblePersons ? 'Loading...' : 'Edit'}
                     </Button>
+                    )}
                   </div>
 
                   {/* Body */}
@@ -7434,6 +7440,7 @@ export const TicketDetailsPage = () => {
                         Location Details
                       </h3>
                     </div>
+                    {shouldShow("Ticket", "update") && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -7444,6 +7451,7 @@ export const TicketDetailsPage = () => {
                       <Edit className="w-4 h-4 mr-1" />
                       Edit
                     </Button>
+                    )}
                   </div>
 
                   <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
@@ -8957,6 +8965,7 @@ export const TicketDetailsPage = () => {
                       </svg>
                     </button>
                   )}
+                  {shouldShow("Ticket", "update") && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -8967,6 +8976,7 @@ export const TicketDetailsPage = () => {
                     <Edit className="w-4 h-4 mr-1" />
                     {(loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons) ? 'Loading...' : 'Edit'}
                   </Button>
+                  )}
                 </div>
               </div>
 
@@ -10119,6 +10129,7 @@ export const TicketDetailsPage = () => {
                   </h3>
 
                 </div>
+                {shouldShow("Ticket", "update") && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -10129,6 +10140,7 @@ export const TicketDetailsPage = () => {
                   <Edit className="w-4 h-4 mr-1" />
                   {loadingResponsiblePersons ? 'Loading...' : 'Edit'}
                 </Button>
+                )}
               </div>
 
               {/* Body */}
@@ -10859,6 +10871,7 @@ export const TicketDetailsPage = () => {
                     Location Details
                   </h3>
                 </div>
+                {shouldShow("Ticket", "update") && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -10869,6 +10882,7 @@ export const TicketDetailsPage = () => {
                   <Edit className="w-4 h-4 mr-1" />
                   Edit
                 </Button>
+                )}
               </div>
 
               <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">

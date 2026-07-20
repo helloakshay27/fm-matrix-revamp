@@ -19,6 +19,7 @@ import { ArrowLeft } from "lucide-react";
 import { Fragment, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const transactionColumns: ColumnConfig[] = [
     {
@@ -69,6 +70,7 @@ const CRMWalletDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+    const { shouldShow } = useDynamicPermissions();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
 
@@ -435,6 +437,7 @@ const CRMWalletDetails = () => {
                             RECURRING RULE STATUS
                         </CardTitle>
 
+                        {shouldShow("Wallet", "create") && (
                         <Button
                             onClick={() => setShowRuleCreateAlert(true)}
                             variant="outline"
@@ -442,6 +445,7 @@ const CRMWalletDetails = () => {
                         >
                             + Add
                         </Button>
+                        )}
                     </div>
                 </CardHeader>
                 <CardContent

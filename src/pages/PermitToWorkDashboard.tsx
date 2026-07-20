@@ -53,6 +53,7 @@ import {
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { debounce } from "lodash";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Type definitions for permit data
 interface Permit {
@@ -447,6 +448,7 @@ const PERMIT_ANALYTICS_OPTIONS = [
 
 export const PermitToWorkDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [permits, setPermits] = useState<Permit[]>([]);
@@ -970,16 +972,18 @@ export const PermitToWorkDashboard = () => {
   // Render actions for each row
   const renderActions = (permit: Permit) => (
     <div className="flex items-center gap-2">
-      <div title="View permit details">
-        <Eye
-          className="w-5 h-5 text-gray-600 cursor-pointer hover:text-[#C72030]"
-          onClick={(e) => {
-            e.stopPropagation();
-            console.log("Eye clicked for permit:", permit.id);
-            handleViewPermit(permit.id);
-          }}
-        />
-      </div>
+      {shouldShow("Permit", "show") && (
+        <div title="View permit details">
+          <Eye
+            className="w-5 h-5 text-gray-600 cursor-pointer hover:text-[#C72030]"
+            onClick={(e) => {
+              e.stopPropagation();
+              console.log("Eye clicked for permit:", permit.id);
+              handleViewPermit(permit.id);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 
@@ -1088,13 +1092,15 @@ export const PermitToWorkDashboard = () => {
 
   const leftActions = (
     <div className="flex items-center gap-2">
-      <Button
-        onClick={handleAddPermit}
-        className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
-      >
-        <Plus className="w-4 h-4" />
-        Create Permit
-      </Button>
+      {shouldShow("Permit", "create") && (
+        <Button
+          onClick={handleAddPermit}
+          className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Create Permit
+        </Button>
+      )}
     </div>
   )
 

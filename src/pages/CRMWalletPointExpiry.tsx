@@ -10,6 +10,7 @@ import { Pen } from 'lucide-react';
 import RuleAlert from '@/components/RuleAlert';
 import { useNavigate } from 'react-router-dom';
 import { LogEntry, LogsTimeline } from '@/components/LogTimeline';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 const formattedLogs = (logs) => {
     return logs.map((log, index) => {
@@ -24,6 +25,7 @@ const formattedLogs = (logs) => {
 const CRMWalletPointExpiry = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+    const { shouldShow } = useDynamicPermissions();
     const token = localStorage.getItem('token');
     const baseUrl = localStorage.getItem('baseUrl');
 
@@ -127,7 +129,7 @@ const CRMWalletPointExpiry = () => {
                         </CardTitle>
 
                         {
-                            !addAllowed && (
+                            !addAllowed && shouldShow("Wallet", "update") && (
                                 <Button
                                     variant="ghost"
                                         className="fm-button-fix fm-button-brand px-4 py-2"
@@ -219,6 +221,7 @@ const CRMWalletPointExpiry = () => {
             {
                 addAllowed && (
                     <div className='flex items-center justify-center gap-3'>
+                        {shouldShow("Wallet", "create") && (
                         <Button
                             onClick={() => setShowRuleCreateAlert(true)}
                             style={{ backgroundColor: "#C72030" }}
@@ -226,6 +229,7 @@ const CRMWalletPointExpiry = () => {
                         >
                             Create Rule
                         </Button>
+                        )}
                         <Button
                             onClick={resetForm}
                             variant="outline"

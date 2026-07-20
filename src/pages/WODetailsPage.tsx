@@ -47,6 +47,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import DebitCreditModal from "@/components/DebitCreditModal";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface Approval {
   id: string;
@@ -201,6 +202,7 @@ const formatIndian = (val: string | number | null | undefined): string => {
 
 export const WODetailsPage = () => {
   const dispatch = useAppDispatch();
+  const { shouldShow } = useDynamicPermissions();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
   const location = useLocation();
@@ -509,7 +511,7 @@ export const WODetailsPage = () => {
               Send To SAP Team
             </Button>
           )}
-          {workOrder.all_level_approved === null && !shouldShowButtons && (
+          {shouldShow("WO", "update") && workOrder.all_level_approved === null && !shouldShowButtons && (
             <Button
               size="sm"
               variant="outline"

@@ -5,6 +5,7 @@ import { useLayout } from '@/contexts/LayoutContext';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface PermitChecklist {
     id: number;
@@ -18,6 +19,7 @@ interface PermitChecklist {
 export const PermitChecklistList = () => {
     const { setCurrentSection } = useLayout();
     const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
 
     React.useEffect(() => {
         setCurrentSection('Safety');
@@ -173,14 +175,16 @@ export const PermitChecklistList = () => {
                     return <div className="text-center">{item[columnKey as keyof PermitChecklist]}</div>;
                 }}
                 renderActions={(item) => (
-                    <Button
-                        onClick={() => handleViewDetails(item.id)}
-                        variant="ghost"
-                        size="sm"
-                        className="p-2 hover:bg-gray-100"
-                    >
-                        <Eye className="h-4 w-4" />
-                    </Button>
+                    shouldShow("Permit Checklist", "show") && (
+                        <Button
+                            onClick={() => handleViewDetails(item.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="p-2 hover:bg-gray-100"
+                        >
+                            <Eye className="h-4 w-4" />
+                        </Button>
+                    )
                 )}
                 enableSearch={true}
                 searchPlaceholder="Search checklists..."
@@ -189,13 +193,13 @@ export const PermitChecklistList = () => {
                 storageKey="permit-checklist-list"
                 enableExport={true}
                 exportFileName="permit-checklists"
-                leftActions={(<Button
+                leftActions={(shouldShow("Permit Checklist", "create") && (<Button
                     onClick={handleAddChecklist}
                     className="fm-button-fix fm-button-brand px-4 py-2"
                     variant="ghost"                >
                     <Plus className="h-4 w-4" />
                     Add Checklist
-                </Button>)}
+                </Button>))}
             />
         </div>
     );

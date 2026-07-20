@@ -481,9 +481,11 @@ export const ScheduleListDashboard = () => {
     <Edit className="w-4 h-4" />
   </Button>
 )}
+          {shouldShow("Schedule", "create") && (
           <Button variant="ghost" size="sm" onClick={() => handleCopySchedule(item)} title="Clone Schedule">
             <Copy className="w-4 h-4" />
           </Button>
+          )}
          {shouldShow("Schedule", "show") && (
   <Button
     variant="ghost"

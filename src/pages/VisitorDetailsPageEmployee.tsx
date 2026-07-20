@@ -8,6 +8,7 @@ import { ArrowLeft, User, QrCode, ClipboardList, Edit, ChevronUp, ChevronDown, L
 import { toast } from 'sonner';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions, ENDPOINTS } from '@/config/apiConfig';
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Types
 interface AdditionalVisitor {
@@ -85,6 +86,7 @@ interface VisitorData {
 export const VisitorDetailsPageEmployee = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [visitorData, setVisitorData] = useState<VisitorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -502,9 +504,11 @@ export const VisitorDetailsPageEmployee = () => {
             )}
 
             {/* Edit Button */}
-            {/* <Button onClick={handleUpdate} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
-              <Edit className="w-4 h-4 mr-2" /> Edit
-            </Button> */}
+            {shouldShow("Visitor", "update") && (
+              <Button onClick={handleUpdate} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
+                <Edit className="w-4 h-4 mr-2" /> Edit
+              </Button>
+            )}
           </div>
         </div>
       </div>

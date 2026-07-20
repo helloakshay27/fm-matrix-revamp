@@ -4,6 +4,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Plus, Eye } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface ScheduleItem {
   id: number;
@@ -28,6 +29,7 @@ interface PaginationData {
 
 export const VendorAuditScheduledDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,7 +99,7 @@ export const VendorAuditScheduledDashboard = () => {
 
   const renderCell = (item: any, columnKey: string) => {
     if (columnKey === 'actions') {
-      return (
+      return shouldShow("Vendor Audit", "show") ? (
         <Button
           variant="ghost"
           size="sm"
@@ -107,7 +109,7 @@ export const VendorAuditScheduledDashboard = () => {
         >
           <Eye className="w-4 h-4" />
         </Button>
-      );
+      ) : null;
     }
     if (columnKey === 'id') {
       return <span className="text-blue-600 font-medium">{item.id}</span>;
@@ -162,14 +164,16 @@ export const VendorAuditScheduledDashboard = () => {
           className="w-full"
           loading={loading}
           leftActions={
-            <Button
-              onClick={handleAddSchedule}
-              className="fm-button-fix fm-button-brand px-4 py-2"
-              variant="ghost"
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </Button>
+            shouldShow("Vendor Audit", "create") ? (
+              <Button
+                onClick={handleAddSchedule}
+                className="fm-button-fix fm-button-brand px-4 py-2"
+                variant="ghost"
+              >
+                <Plus className="w-4 h-4" />
+                Add
+              </Button>
+            ) : undefined
           }
         />
       </div>

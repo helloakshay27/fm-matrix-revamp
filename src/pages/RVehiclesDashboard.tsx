@@ -9,6 +9,7 @@ import { EditVehicleDialog } from '@/components/EditVehicleDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useNavigate } from 'react-router-dom';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface Vehicle {
   id: number;
@@ -161,6 +162,7 @@ const columns: ColumnConfig[] = [
 ];
 
 export const RVehiclesDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const [activeTab, setActiveTab] = useState('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -191,8 +193,8 @@ export const RVehiclesDashboard = () => {
   };
 
   const handleSaveVehicle = (updatedVehicle: Vehicle) => {
-    setVehicleData(prevData => 
-      prevData.map(vehicle => 
+    setVehicleData(prevData =>
+      prevData.map(vehicle =>
         vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle
       )
     );
@@ -201,10 +203,10 @@ export const RVehiclesDashboard = () => {
 
   const handleStatusToggle = (vehicleId: number) => {
     console.log(`Toggling status for Vehicle ${vehicleId}`);
-    
-    setVehicleData(prev => 
-      prev.map(vehicle => 
-        vehicle.id === vehicleId 
+
+    setVehicleData(prev =>
+      prev.map(vehicle =>
+        vehicle.id === vehicleId
           ? { ...vehicle, statusCode: vehicle.statusCode === 'Active' ? 'Inactive' : 'Active' }
           : vehicle
       )
@@ -214,13 +216,17 @@ export const RVehiclesDashboard = () => {
   // Render row function for enhanced table
   const renderRow = (vehicle: any) => ({
     actions: (
-      <button 
-        onClick={() => handleEditClick(vehicle)}
-        className="text-gray-400 hover:text-gray-600"
-        title="Edit vehicle"
-      >
-        <Edit className="w-4 h-4" />
-      </button>
+      <>
+        {shouldShow("R Vehicles", "update") && (
+          <button
+            onClick={() => handleEditClick(vehicle)}
+            className="text-gray-400 hover:text-gray-600"
+            title="Edit vehicle"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+        )}
+      </>
     ),
     vehicleNumber: <span className="text-blue-600 font-medium">{vehicle.vehicleNumber}</span>,
     parkingSlot: vehicle.parkingSlot || '--',
@@ -230,10 +236,10 @@ export const RVehiclesDashboard = () => {
     category: vehicle.category,
     registrationNumber: vehicle.registrationNumber || '--',
     activeInactive: (
-      <input 
-        type="checkbox" 
-        checked={vehicle.activeInactive} 
-        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" 
+      <input
+        type="checkbox"
+        checked={vehicle.activeInactive}
+        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
         readOnly
       />
     ),
@@ -243,15 +249,13 @@ export const RVehiclesDashboard = () => {
     status: (
       <div className="flex items-center">
         <div
-          className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-            vehicle.statusCode === 'Active' ? 'bg-green-500' : 'bg-gray-300'
-          }`}
+          className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${vehicle.statusCode === 'Active' ? 'bg-green-500' : 'bg-gray-300'
+            }`}
           onClick={() => handleStatusToggle(vehicle.id)}
         >
           <span
-            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-              vehicle.statusCode === 'Active' ? 'translate-x-6' : 'translate-x-1'
-            }`}
+            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${vehicle.statusCode === 'Active' ? 'translate-x-6' : 'translate-x-1'
+              }`}
           />
         </div>
       </div>
@@ -262,10 +266,10 @@ export const RVehiclesDashboard = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Vehicle Parkings</h1>
-      
+
       {/* Action Buttons */}
       <div className="flex items-center gap-3 mb-6">
-        <Button 
+        <Button
           onClick={() => setIsAddModalOpen(true)}
           style={{ backgroundColor: '#C72030' }}
           className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
@@ -273,7 +277,7 @@ export const RVehiclesDashboard = () => {
           <Plus className="w-4 h-4" />
           Add
         </Button>
-        <Button 
+        <Button
           onClick={() => setIsImportModalOpen(true)}
           style={{ backgroundColor: '#C72030' }}
           className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
@@ -281,7 +285,7 @@ export const RVehiclesDashboard = () => {
           <Download className="w-4 h-4" />
           Import
         </Button>
-        <Button 
+        <Button
           onClick={() => setIsFilterModalOpen(true)}
           style={{ backgroundColor: '#C72030' }}
           className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
@@ -297,11 +301,10 @@ export const RVehiclesDashboard = () => {
           <button
             key={tab}
             onClick={() => handleTabClick(tab)}
-            className={`px-6 py-3 text-sm font-medium transition-colors ${
-              activeTab === tab
+            className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === tab
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }`}
+              }`}
           >
             {tab}
           </button>
@@ -323,44 +326,48 @@ export const RVehiclesDashboard = () => {
         hideTableExport={false}
         hideColumnsButton={false}
         leftActions={
-          <div className="flex gap-3">
-            <Button 
-              onClick={() => setIsAddModalOpen(true)}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:opacity-90 text-white px-4 py-2"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add
-            </Button>
-            <Button 
-              onClick={() => setIsImportModalOpen(true)}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:opacity-90 text-white px-4 py-2"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Import
-            </Button>
-          </div>
+          <>
+            {shouldShow("R Vehicles", "create") && (
+              <Button
+                onClick={() => setIsAddModalOpen(true)}
+                className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg"
+              >
+                <Plus className="w-4 h-4" />
+                Add
+              </Button>
+            )}
+          </>
+        }
+        filterAdjacentActions={
+          <Button
+            onClick={() => setIsImportModalOpen(true)}
+            title="Import"
+            variant="outline"
+            size="sm"
+            className="p-2 h-9 w-9 rounded-lg"
+          >
+            <Download className="w-4 h-4" />
+          </Button>
         }
         onFilterClick={() => setIsFilterModalOpen(true)}
       />
 
-      <AddVehicleParkingModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
+      <AddVehicleParkingModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
       />
-      
-      <RVehicleImportModal 
-        isOpen={isImportModalOpen} 
-        onClose={() => setIsImportModalOpen(false)} 
+
+      <RVehicleImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
       />
-      
-      <RVehicleFilterModal 
-        isOpen={isFilterModalOpen} 
-        onClose={() => setIsFilterModalOpen(false)} 
+
+      <RVehicleFilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
       />
-      
-      <EditVehicleDialog 
+
+      <EditVehicleDialog
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         vehicle={selectedVehicle}

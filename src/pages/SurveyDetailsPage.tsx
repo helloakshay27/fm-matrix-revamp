@@ -32,6 +32,7 @@ import {
 } from "@/services/snagChecklistAPI";
 import { toast } from "sonner";
 import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 // Removed unused imports related to location data to fix linter errors
 
 const EMOJIS = ["😁", "😊", "😐", "😟", "😞"];
@@ -60,6 +61,7 @@ type ExtendedQuestion = {
 export const SurveyDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
 
   // State declarations (renamed to avoid conflicts)
   const [snagChecklist, setSnagChecklist] = useState<SnagChecklist | null>(
@@ -168,7 +170,7 @@ export const SurveyDetailsPage = () => {
           <ArrowLeft className="w-4 h-4" />
           Back to Question List
         </Button>
-        {!loading && snagChecklist && (
+        {!loading && snagChecklist && shouldShow("Survey List", "update") && (
           <Button
             onClick={() => navigate(`/maintenance/survey/edit/${id}`)}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"

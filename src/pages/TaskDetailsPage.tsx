@@ -24,7 +24,7 @@ import {
   Trash2,
   Flag,
 } from "lucide-react";
-import { useLocation} from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -49,6 +49,7 @@ import { ticketManagementAPI } from "@/services/ticketManagementAPI";
 import { bulkTaskService, EscalateUser } from "@/services/bulkTaskService";
 import { JobSheetModal } from "@/components/JobSheetModal";
 import { getReturnToFromState } from "@/utils/listBackNavigation";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // If User type is not imported, define minimally here:
 type User = {
@@ -60,6 +61,20 @@ export const TaskDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { shouldShow } = useDynamicPermissions();
+  const taskEventKeyRef = useRef(0);
+  const [taskEvent, setTaskEvent] = useState<{
+    key: number;
+    event: React.ComponentProps<typeof PostHogTaskActivity>['event'];
+    properties?: Record<string, unknown>;
+  } | null>(null);
+
+  const captureTaskEvent = (
+    event: React.ComponentProps<typeof PostHogTaskActivity>['event'],
+    properties?: Record<string, unknown>
+  ) => {
+    setTaskEvent({ key: ++taskEventKeyRef.current, event, properties });
+  };
   const [taskDetails, setTaskDetails] = useState<TaskOccurrence | null>(null);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
@@ -474,7 +489,7 @@ export const TaskDetailsPage = () => {
       taskService
         .getJobSheet(id)
         .then(setJobSheetData)
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => setJobSheetLoading(false));
     }
   }, [taskDetails, id]);
@@ -1096,13 +1111,15 @@ export const TaskDetailsPage = () => {
       case "actions":
         return (
           <div className="flex items-center gap-1">
-            <button
-              className="p-1 hover:bg-gray-100 rounded"
-              onClick={() => handleTicketView(item.ticket_number)}
-              title="View ticket details"
-            >
-              <Eye className="w-4 h-4 text-gray-600" />
-            </button>
+            {shouldShow("Ticket", "show") && (
+              <button
+                className="p-1 hover:bg-gray-100 rounded"
+                onClick={() => handleTicketView(item.ticket_number)}
+                title="View ticket details"
+              >
+                <Eye className="w-4 h-4 text-gray-600" />
+              </button>
+            )}
             <button
               className={`p-1 hover:bg-gray-100 rounded transition-colors ${item.is_flagged
                 ? "text-red-500 hover:text-red-600"
@@ -1273,7 +1290,7 @@ export const TaskDetailsPage = () => {
     );
   }
 
-   const handleBackToList = () => {
+  const handleBackToList = () => {
     const returnTo = getReturnToFromState(location.state);
     navigate(returnTo ?? "/maintenance/task");
   };
@@ -1282,10 +1299,10 @@ export const TaskDetailsPage = () => {
       <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
         {/* Header */}
         <div className="mb-6">
-         <button
-          onClick={handleBackToList}
-          className="flex items-center gap-1 hover:text-gray-800 mb-4"
-        >
+          <button
+            onClick={handleBackToList}
+            className="flex items-center gap-1 hover:text-gray-800 mb-4"
+          >
             <ArrowLeft className="w-4 h-4" />
             Back to Task List
           </button>
@@ -2047,25 +2064,25 @@ export const TaskDetailsPage = () => {
           {/* Task Comments from Job Sheet */}
           {(jobSheetData?.data?.job_sheet?.task_details?.task_comments ||
             jobSheetData?.job_sheet?.task_details?.task_comments) && (
-            <Card className="w-full bg-transparent shadow-none border-none">
-              <div className="figma-card-header">
-                <div className="flex items-center gap-3">
-                  <div className="figma-card-icon-wrapper">
-                    <FileText className="figma-card-icon" />
+              <Card className="w-full bg-transparent shadow-none border-none">
+                <div className="figma-card-header">
+                  <div className="flex items-center gap-3">
+                    <div className="figma-card-icon-wrapper">
+                      <FileText className="figma-card-icon" />
+                    </div>
+                    <h3 className="figma-card-title">Task Comments</h3>
                   </div>
-                  <h3 className="figma-card-title">Task Comments</h3>
                 </div>
-              </div>
-              <div className="figma-card-content">
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <p className="text-sm whitespace-pre-wrap text-gray-700">
-                    {jobSheetData?.data?.job_sheet?.task_details?.task_comments ||
-                      jobSheetData?.job_sheet?.task_details?.task_comments}
-                  </p>
+                <div className="figma-card-content">
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <p className="text-sm whitespace-pre-wrap text-gray-700">
+                      {jobSheetData?.data?.job_sheet?.task_details?.task_comments ||
+                        jobSheetData?.job_sheet?.task_details?.task_comments}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </Card>
-          )}
+              </Card>
+            )}
 
           {/* Attachments - Show only for closed/completed/partially closed status */}
           {(() => {
