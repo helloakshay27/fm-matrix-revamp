@@ -229,6 +229,13 @@ const initialAmcData: AMCRecord[] = [];
 const columns: ColumnConfig[] = [
   { key: "actions", label: "Actions", sortable: false, defaultVisible: true },
   { key: "id", label: "ID", sortable: true, defaultVisible: true },
+
+  {
+    key: "contract_name",
+    label: "Contract Name",
+    sortable: true,
+    defaultVisible: true,
+  },
   {
     key: "asset_name",
     label: "Asset/ Service Name",
@@ -248,12 +255,7 @@ const columns: ColumnConfig[] = [
     sortable: true,
     defaultVisible: true,
   },
-  {
-    key: "contract_name",
-    label: "Contract Name",
-    sortable: true,
-    defaultVisible: true,
-  },
+
   {
     key: "amc_start_date",
     label: "Start Date",
@@ -1188,7 +1190,7 @@ export const AMCDashboard = () => {
       case "actions":
         return (
           <div className="flex items-center justify-center gap-1">
-            {/* {shouldShow("AMC", "show") && ( */}
+            {shouldShow("AMC", "show") && (
             <div
               onClick={() => handleViewDetails(item.id)}
               className="p-1 cursor-pointer hover:text-gray-700"
@@ -1196,7 +1198,7 @@ export const AMCDashboard = () => {
             >
               <Eye className="w-4 h-4" />
             </div>
-            {/* )} */}
+            )}
             <div
               title="Flag AMC"
               onClick={(e) => {
@@ -1209,7 +1211,7 @@ export const AMCDashboard = () => {
                 className={`w-4 h-4 ${item.is_flagged ? "text-red-500 fill-red-500" : "text-gray-600"}`}
               />
             </div>
-            {/* {shouldShow("AMC", "update") && ( */}
+            {shouldShow("AMC", "update") && (
             <Link
               to={`/maintenance/amc/edit/${item.id}`}
               className="p-1 text-gray-600"
@@ -1217,7 +1219,7 @@ export const AMCDashboard = () => {
             >
               <Pencil className="w-4 h-4" />
             </Link>
-            {/* )} */}
+            )}
           </div>
         );
       case "id":
@@ -2247,7 +2249,7 @@ export const AMCDashboard = () => {
               pagination={false}
               onFilterClick={handleFiltersClick}
               leftActions={
-                // shouldShow("AMC", "create") && (
+                shouldShow("AMC", "create") && (
                 <Button
                   onClick={handleActionClick}
                   className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
@@ -2255,7 +2257,7 @@ export const AMCDashboard = () => {
                   <Plus className="w-4 h-4" />
                   Action
                 </Button>
-                // )
+                )
               }
               enableSearch={true}
               searchTerm={searchQuery}

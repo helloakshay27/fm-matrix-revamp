@@ -52,7 +52,10 @@ import {
   EyeOff,
   ChevronDown,
   ChevronUp,
+  Upload,
+  Download,
 } from "lucide-react";
+import axios from "axios";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchHelpdeskCategories } from "@/store/slices/helpdeskCategoriesSlice";
 import {
@@ -118,6 +121,10 @@ export const ResponseEscalationTab: React.FC = () => {
   const [editingRule, setEditingRule] =
     useState<ResponseEscalationGetResponse | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
   const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(
     null
   );
@@ -676,6 +683,62 @@ export const ResponseEscalationTab: React.FC = () => {
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    const token = localStorage.getItem("token");
+    const baseUrl = localStorage.getItem("baseUrl");
+    setIsDownloadingTemplate(true);
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/admin/import_complaint_worker_template.xlsx`,
+        { headers: { Authorization: `Bearer ${token}` }, responseType: "blob" }
+      );
+      const url = URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      const contentDisposition = response.headers["content-disposition"];
+      const filename = contentDisposition
+        ? contentDisposition.split("filename=")[1]?.replace(/"/g, "") || "template.xlsx"
+        : "template.xlsx";
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Template downloaded successfully");
+    } catch (error) {
+      toast.error("Failed to download template");
+    } finally {
+      setIsDownloadingTemplate(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) {
+      toast.error("Please select a file to import");
+      return;
+    }
+    const token = localStorage.getItem("token");
+    const baseUrl = localStorage.getItem("baseUrl");
+    setIsImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", importFile);
+      await axios.post(
+        `https://${baseUrl}/pms/admin/import_complaint_worker`,
+        formData,
+        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } }
+      );
+      toast.success("Import successful");
+      setIsImportModalOpen(false);
+      setImportFile(null);
+      dispatch(fetchResponseEscalations());
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to import file");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Form Section */}
@@ -866,7 +929,16 @@ export const ResponseEscalationTab: React.FC = () => {
         </Card>
 
         {/* Submit Button */}
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setIsImportModalOpen(true)}
+            className="border-[#C72030] text-[#C72030] hover:bg-red-50 font-semibold px-8 py-2"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Import
+          </Button>
           <Button
             type="submit"
             className="bg-[#C72030] hover:bg-[#A61B29] text-white border-none font-semibold px-8 py-2"
@@ -1064,6 +1136,50 @@ export const ResponseEscalationTab: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Import Modal */}
+      <Dialog open={isImportModalOpen} onOpenChange={(open) => { setIsImportModalOpen(open); if (!open) setImportFile(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Import Escalation Matrix</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select File</label>
+              <input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-red-50 file:text-[#C72030] hover:file:bg-red-100 border border-gray-300 rounded-md p-1"
+              />
+              {importFile && (
+                <p className="text-xs text-gray-500 mt-1">{importFile.name}</p>
+              )}
+            </div>
+            <div className="flex justify-between gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleDownloadTemplate}
+                disabled={isDownloadingTemplate}
+                className="flex-1"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {isDownloadingTemplate ? "Downloading..." : "Download Template"}
+              </Button>
+              <Button
+                type="button"
+                onClick={handleImport}
+                disabled={isImporting || !importFile}
+                className="flex-1 bg-[#C72030] hover:bg-[#A61B29] text-white"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {isImporting ? "Importing..." : "Import"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

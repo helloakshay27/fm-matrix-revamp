@@ -39,6 +39,12 @@ import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail
 import axios from 'axios';
 import { toast } from "sonner";
 import { format, parseISO } from 'date-fns';
+import {
+    BankRecord,
+    bankMasterListUrl,
+    getBankMasterApiConfig,
+    mapApiBankRecord,
+} from './bankMasterUtils';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -469,6 +475,24 @@ export const InvoiceAdd: React.FC = () => {
     const [attachments, setAttachments] = useState<File[]>([]);
     const [displayAttachmentsInPortal, setDisplayAttachmentsInPortal] = useState(false);
 
+    // Bank Details
+    const [bankOptions, setBankOptions] = useState<BankRecord[]>([]);
+    const [selectedBankId, setSelectedBankId] = useState<string>('');
+
+    useEffect(() => {
+        const fetchBanks = async () => {
+            try {
+                const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+                const res = await axios.get(`${bankMasterListUrl(baseUrl, lockAccountId)}&active=true`, { headers });
+                const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+                setBankOptions(data.map(mapApiBankRecord));
+            } catch (err) {
+                setBankOptions([]);
+            }
+        };
+        fetchBanks();
+    }, []);
+
     // Email Communications
     const [sendEmailToCustomer, setSendEmailToCustomer] = useState(false);
     const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
@@ -708,6 +732,7 @@ export const InvoiceAdd: React.FC = () => {
             if (q.subject) setSubject(q.subject);
             if (q.sales_person_id) setSalesperson(String(q.sales_person_id));
             if (q.payment_term_id) setSelectedTerm(String(q.payment_term_id));
+            if (q.bank_master_id) setSelectedBankId(String(q.bank_master_id));
             // Set place of supply directly from quote
             const quotePlaceOfSupply = q.place_of_supply || q.address_detail?.gst_detail?.place_of_supply || '';
             if (quotePlaceOfSupply) setPlaceOfSupply(quotePlaceOfSupply);
@@ -766,6 +791,7 @@ export const InvoiceAdd: React.FC = () => {
                 setSalesperson(String(saleOrder.sales_person_id || saleOrder.sales_person_name));
             }
             if (saleOrder.payment_term_id) setSelectedTerm(String(saleOrder.payment_term_id));
+            if (saleOrder.bank_master_id) setSelectedBankId(String(saleOrder.bank_master_id));
 
             const convertedPlaceOfSupply =
                 saleOrder.place_of_supply ||
@@ -1289,6 +1315,13 @@ export const InvoiceAdd: React.FC = () => {
             return false;
         }
 
+        if (!selectedBankId) {
+            newErrors.bank = 'Bank is required';
+            setErrors(newErrors);
+            toast.error('Please select a bank');
+            return false;
+        }
+
         const hasValidItems = items.some(
             item => item.name && item.quantity > 0 && item.rate > 0
         );
@@ -1392,6 +1425,7 @@ export const InvoiceAdd: React.FC = () => {
             // formData.append('lock_account_invoice[delivery_method]', deliveryMethod);
             formData.append('lock_account_invoice[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
             formData.append('lock_account_invoice[customer_notes]', customerNotes);
+            formData.append('lock_account_invoice[bank_master_id]', selectedBankId || '');
             formData.append('lock_account_invoice[terms_and_conditions]', termsAndConditions);
             formData.append('lock_account_invoice[subject]', subject);
             // formData.append('lock_account_invoice[status]', 'draft');
@@ -2467,6 +2501,45 @@ export const InvoiceAdd: React.FC = () => {
         />
         <div className="text-xs text-gray-400 text-right mt-1">
             {(customerNotes?.length || 0)}/500
+        </div>
+
+        <div className="mt-4 w-1/2">
+            <label className="block text-sm font-medium mb-2">
+                Bank<span className="text-red-500">*</span>
+            </label>
+            <FormControl fullWidth size="small" error={!!errors.bank}>
+                <Select
+                    displayEmpty
+                    value={selectedBankId}
+                    onChange={(e) => {
+                        setSelectedBankId(String(e.target.value));
+                        if (errors.bank) {
+                            setErrors((prev) => {
+                                const next = { ...prev };
+                                delete next.bank;
+                                return next;
+                            });
+                        }
+                    }}
+                    renderValue={(val) =>
+                        val
+                            ? (() => {
+                                const bank = bankOptions.find(b => String(b.id) === String(val));
+                                return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
+                            })()
+                            : <span style={{ color: '#aaa' }}>Select Bank</span>
+                    }
+                    sx={fieldStyles}
+                >
+                    <MenuItem value=""><em>Select Bank</em></MenuItem>
+                    {bankOptions.map((bank) => (
+                        <MenuItem key={bank.id} value={String(bank.id)}>
+                            {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+            {errors.bank && <p className="text-xs text-red-500 mt-1">{errors.bank}</p>}
         </div>
     </Section>
 

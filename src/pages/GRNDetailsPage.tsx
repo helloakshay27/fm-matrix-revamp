@@ -21,7 +21,9 @@ import {
   Printer,
   Rss,
   ScrollText,
-  Loader2
+  Loader2,
+  Truck,
+  Receipt,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -40,6 +42,7 @@ import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import axios from "axios";
 import DebitCreditModal from "@/components/DebitCreditModal";
 import { format } from "date-fns";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Define the interface for Approval
 interface Approval {
@@ -127,6 +130,7 @@ const debitNoteColumns: ColumnConfig[] = [
 
 export const GRNDetailsPage = () => {
   const dispatch = useAppDispatch();
+  const { shouldShow } = useDynamicPermissions();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
@@ -406,7 +410,7 @@ export const GRNDetailsPage = () => {
           GRN DETAILS
         </h1>
         <div className="flex gap-2 flex-wrap">
-          {canEdit && (
+          {shouldShow("GRN/ SRN", "update") && canEdit && (
             <Button
               size="sm"
               variant="outline"
@@ -728,7 +732,128 @@ export const GRNDetailsPage = () => {
             <span className="text-gray-900 font-medium">{grnDetails.notes}</span>
           </div>
         </div>
+        {grnDetails.billdesk_detail && (
+          <>
+            <h4 className="text-sm font-semibold uppercase text-[#1A1A1A] mt-6 mb-3">Billdesk Details</h4>
+            <EnhancedTable
+              data={[{
+                invoice_type: grnDetails.billdesk_detail.invoice_type || "-",
+                billdesk_number: grnDetails.billdesk_detail.billdesk_number || "-",
+                tracking_number: grnDetails.billdesk_detail.tracking_number || "-",
+                status: grnDetails.billdesk_detail.status || "-",
+                billdesk_remark: grnDetails.billdesk_detail.billdesk_remark || "-",
+              }]}
+              columns={[
+                { key: "invoice_type", label: "Invoice Type", sortable: false, draggable: false, defaultVisible: true },
+                { key: "billdesk_number", label: "Billdesk Number", sortable: false, draggable: false, defaultVisible: true },
+                { key: "tracking_number", label: "Tracking Number", sortable: false, draggable: false, defaultVisible: true },
+                { key: "status", label: "Status", sortable: false, draggable: false, defaultVisible: true },
+                { key: "billdesk_remark", label: "Billdesk Remark", sortable: false, draggable: false, defaultVisible: true },
+              ]}
+              renderCell={(item, col) => item[col]}
+              storageKey="grn-billdesk-table"
+              hideColumnsButton={true}
+              hideTableSearch={true}
+              hideTableExport={true}
+              pagination={false}
+            />
+          </>
+        )}
       </div>
+
+      {/* Gate Entry Details Section */}
+      {grnDetails.gate_entry_and_transport_details && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+          <div className="flex items-center gap-3 pb-3">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <Truck className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Gate Entry Details</h3>
+          </div>
+          <EnhancedTable
+            data={[{
+              driver_name: grnDetails.gate_entry_and_transport_details.driver_name || "-",
+              mobile_number: grnDetails.gate_entry_and_transport_details.mobile_number || "-",
+              vehicle_number: grnDetails.gate_entry_and_transport_details.vehicle_number || "-",
+              gate_entry_date: grnDetails.gate_entry_and_transport_details.gate_entry_date || "-",
+              gate_entry_number: grnDetails.gate_entry_and_transport_details.gate_entry_number || "-",
+            }]}
+            columns={[
+              { key: "driver_name", label: "Driver Name", sortable: false, draggable: false, defaultVisible: true },
+              { key: "mobile_number", label: "Mobile Number", sortable: false, draggable: false, defaultVisible: true },
+              { key: "vehicle_number", label: "Vehicle Number", sortable: false, draggable: false, defaultVisible: true },
+              { key: "gate_entry_date", label: "Gate Entry Date", sortable: false, draggable: false, defaultVisible: true },
+              { key: "gate_entry_number", label: "Gate Entry Number", sortable: false, draggable: false, defaultVisible: true },
+            ]}
+            renderCell={(item, col) => item[col]}
+            storageKey="grn-gate-entry-table"
+            hideColumnsButton={true}
+            hideTableSearch={true}
+            hideTableExport={true}
+            pagination={false}
+          />
+        </div>
+      )}
+
+      {/* Transport Invoice Details Section */}
+      {grnDetails.gate_entry_and_transport_details && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+          <div className="flex items-center gap-3 pb-3">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <Receipt className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Transport Invoice Details</h3>
+          </div>
+          <EnhancedTable
+            data={[{
+              transportation_vendor: grnDetails.gate_entry_and_transport_details.transportation_vendor_name || "-",
+              transport_invoice_number: grnDetails.gate_entry_and_transport_details.transport_invoice_number || "-",
+              transport_invoice_date: grnDetails.gate_entry_and_transport_details.transport_invoice_date || "-",
+              transport_invoice_amount: grnDetails.gate_entry_and_transport_details.transport_invoice_amount ?? "-",
+            }]}
+            columns={[
+              { key: "transportation_vendor", label: "Transportation Vendor", sortable: false, draggable: false, defaultVisible: true },
+              { key: "transport_invoice_number", label: "Transport Invoice Number", sortable: false, draggable: false, defaultVisible: true },
+              { key: "transport_invoice_date", label: "Transport Invoice Date", sortable: false, draggable: false, defaultVisible: true },
+              { key: "transport_invoice_amount", label: "Transport Invoice Amount", sortable: false, draggable: false, defaultVisible: true },
+            ]}
+            renderCell={(item, col) => item[col]}
+            storageKey="grn-transport-invoice-table"
+            hideColumnsButton={true}
+            hideTableSearch={true}
+            hideTableExport={true}
+            pagination={false}
+          />
+          {grnDetails.gate_entry_and_transport_details.billdesk_detail && (
+            <>
+              <h4 className="text-sm font-semibold uppercase text-[#1A1A1A] mt-6 mb-3">Billdesk Details</h4>
+              <EnhancedTable
+                data={[{
+                  invoice_type: grnDetails.gate_entry_and_transport_details.billdesk_detail.invoice_type || "-",
+                  billdesk_number: grnDetails.gate_entry_and_transport_details.billdesk_detail.billdesk_number || "-",
+                  tracking_number: grnDetails.gate_entry_and_transport_details.billdesk_detail.tracking_number || "-",
+                  status: grnDetails.gate_entry_and_transport_details.billdesk_detail.status || "-",
+                  billdesk_remark: grnDetails.gate_entry_and_transport_details.billdesk_detail.billdesk_remark || "-",
+                }]}
+                columns={[
+                  { key: "invoice_type", label: "Invoice Type", sortable: false, draggable: false, defaultVisible: true },
+                  { key: "billdesk_number", label: "Billdesk Number", sortable: false, draggable: false, defaultVisible: true },
+                  { key: "tracking_number", label: "Tracking Number", sortable: false, draggable: false, defaultVisible: true },
+                  { key: "status", label: "Status", sortable: false, draggable: false, defaultVisible: true },
+                  { key: "billdesk_remark", label: "Billdesk Remark", sortable: false, draggable: false, defaultVisible: true },
+                ]}
+                renderCell={(item, col) => item[col]}
+                storageKey="grn-transport-billdesk-table"
+                hideColumnsButton={true}
+                hideTableSearch={true}
+                hideTableExport={true}
+                pagination={false}
+              />
+            </>
+          )}
+        </div>
+      )}
+
 
       {/* Items Table Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">

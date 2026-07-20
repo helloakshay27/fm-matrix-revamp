@@ -17,7 +17,7 @@ import EisenhowerMatrix from "@/components/EisenhowerMatrix";
 import { useTodos, useToggleTodo, usePriorityTodos } from "@/hooks/useTodos";
 import PriorityTodo from "@/components/PriorityTodo";
 import { DndContext, DragEndEvent, useDraggable, useDroppable, DragOverlay, Active } from "@dnd-kit/core";
-
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 // Countdown timer component with real-time updates
 const CountdownTimer = ({
   startDate,
@@ -112,7 +112,7 @@ const TodoSkeleton = () => {
 
 export default function Todo() {
   const { setCurrentSection } = useLayout();
-
+ const { shouldShow } = useDynamicPermissions(); 
   const view = localStorage.getItem("selectedView");
   const [taskType, setTaskType] = useState<"all" | "my">("my");
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
@@ -565,12 +565,14 @@ export default function Todo() {
           <div className="flex items-center justify-between gap-3 sm:gap-6 flex-wrap">
             {/* Date Filters - Left Side */}
             <div className="flex items-end gap-4 flex-shrink-0">
+              {(shouldShow("Todo","create") &&
               <Button
                 onClick={() => setIsAddTodoModalOpen(true)}
               >
                 <Plus size={18} />
                 Add
               </Button>
+              )}
             </div>
 
             {/* Existing Controls - Right Side */}

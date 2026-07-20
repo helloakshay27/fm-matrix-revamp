@@ -4,10 +4,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { EditLeadModal } from '@/components/EditLeadModal';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const LeadDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Sample lead data - in real app, this would be fetched based on ID
@@ -40,12 +42,14 @@ export const LeadDetailsPage = () => {
         <div className="bg-white rounded-lg shadow p-8">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-2xl font-semibold text-gray-900">Detail</h1>
-            <Button 
+            {shouldShow("Lead", "update") && (
+            <Button
               onClick={handleEditClick}
               className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-sm"
             >
               Edit
             </Button>
+            )}
           </div>
           
           <div className="grid grid-cols-2 gap-x-16 gap-y-6 mb-8">

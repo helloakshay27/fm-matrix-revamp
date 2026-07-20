@@ -55,6 +55,7 @@ import { AMCAnalyticsTab } from "@/components/amc-details/AMCAnalyticsTab";
 import { AMCDetailsPreviewTab } from "@/components/amc-details/AMCDetailsPreviewTab";
 import { getReturnToFromState } from "@/utils/listBackNavigation";
 import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface AMCDetailsData {
   id: number;
@@ -171,6 +172,7 @@ interface TicketRecord {
 
 export const AMCDetailsPage = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
@@ -530,7 +532,7 @@ export const AMCDetailsPage = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">AMC Details</h1>
           <div className="flex gap-2">
-            {activeTab === "amc-information" && activeSubTab === "amc-details" && (
+            {shouldShow("AMC", "update") && activeTab === "amc-information" && activeSubTab === "amc-details" && (
               <Button
                 onClick={() => navigate(`/maintenance/amc/edit/${id}`)}
                 variant="outline"

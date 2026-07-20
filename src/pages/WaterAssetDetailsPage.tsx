@@ -15,10 +15,12 @@ import { WaterLogsTab } from '@/components/water-asset-details/WaterLogsTab';
 import { WaterHistoryCardTab } from '@/components/water-asset-details/WaterHistoryCardTab';
 import { WaterCostOfOwnershipTab } from '@/components/water-asset-details/WaterCostOfOwnershipTab';
 import { EditStatusModal } from '@/components/EditStatusModal';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const WaterAssetDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [isInUse, setIsInUse] = useState(true);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
 
@@ -121,21 +123,25 @@ export const WaterAssetDetailsPage = () => {
               <Edit className="w-4 h-4 mr-2" />
             </Button>
 
-            <Button
-              onClick={handleEditDetails}
-              variant="outline"
-              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Details
-            </Button>
+            {shouldShow("Water", "update") && (
+              <Button
+                onClick={handleEditDetails}
+                variant="outline"
+                className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Details
+              </Button>
+            )}
 
-            <Button
-              onClick={handleCreateChecklist}
-              className="bg-[#C72030] hover:bg-[#A61B2A] text-white"
-            >
-              Create a Checklist
-            </Button>
+            {shouldShow("Water", "create") && (
+              <Button
+                onClick={handleCreateChecklist}
+                className="bg-[#C72030] hover:bg-[#A61B2A] text-white"
+              >
+                Create a Checklist
+              </Button>
+            )}
           </div>
         </div>
 

@@ -50,6 +50,7 @@ import { ticketManagementAPI } from "@/services/ticketManagementAPI";
 import { bulkTaskService, EscalateUser } from "@/services/bulkTaskService";
 import { JobSheetModal } from "@/components/JobSheetModal";
 import { getReturnToFromState } from "@/utils/listBackNavigation";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // If User type is not imported, define minimally here:
 type User = {
@@ -61,6 +62,7 @@ export const TaskDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { shouldShow } = useDynamicPermissions();
   const taskEventKeyRef = useRef(0);
   const [taskEvent, setTaskEvent] = useState<{
     key: number;
@@ -1112,6 +1114,7 @@ export const TaskDetailsPage = () => {
       case "actions":
         return (
           <div className="flex items-center gap-1">
+            {shouldShow("Ticket", "show") && (
             <button
               className="p-1 hover:bg-gray-100 rounded"
               onClick={() => handleTicketView(item.ticket_number)}
@@ -1119,6 +1122,7 @@ export const TaskDetailsPage = () => {
             >
               <Eye className="w-4 h-4 text-gray-600" />
             </button>
+            )}
             <button
               className={`p-1 hover:bg-gray-100 rounded transition-colors ${item.is_flagged
                 ? "text-red-500 hover:text-red-600"

@@ -29,6 +29,7 @@ import {
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { QRCodeModal } from "@/components/QRCodeModal";
 import VisitorPassWeb from "@/components/VisitorPassWeb";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Types
 interface DocumentItem {
@@ -137,6 +138,7 @@ interface VisitorData {
 export const VisitorDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [visitorData, setVisitorData] = useState<VisitorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -540,12 +542,14 @@ export const VisitorDetailsPage = () => {
               View Pass
             </Button>
 
-            {/* <Button
-              onClick={handleUpdate}
-              className="bg-white text-white hover:bg-[#C72030]/90"
-            >
-              <Pencil className="w-4 h-4 mr-2" /> 
-            </Button> */}
+            {shouldShow("Visitor", "update") && (
+              <Button
+                onClick={handleUpdate}
+                className="bg-white text-white hover:bg-[#C72030]/90"
+              >
+                <Pencil className="w-4 h-4 mr-2" />
+              </Button>
+            )}
              {/* <Button
                               onClick={handleUpdate}
                               variant="outline"

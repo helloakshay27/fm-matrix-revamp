@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const columns: ColumnConfig[] = [
     {
@@ -56,6 +57,7 @@ const columns: ColumnConfig[] = [
 
 export const PRDeletionRequests = () => {
     const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token")
     const baseUrl = localStorage.getItem("baseUrl")
@@ -113,18 +115,22 @@ export const PRDeletionRequests = () => {
                         ? `finance/service-pr/details`
                         : ``;
             return (
-                <Button
-                    size="sm"
-                    variant="ghost"
-                    className="p-1"
-                    onClick={() =>
-                        navigate(
-                            `/${url}/${item.id}?level_id=${item.level_id}&user_id=${item.user_id}&request_id=${item.delete_request_id}&type=delete-request`
-                        )
-                    }
-                >
-                    <Eye className="h-4 w-4" />
-                </Button>
+                <>
+                    {shouldShow("Material PR", "show") && (
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="p-1"
+                            onClick={() =>
+                                navigate(
+                                    `/${url}/${item.id}?level_id=${item.level_id}&user_id=${item.user_id}&request_id=${item.delete_request_id}&type=delete-request`
+                                )
+                            }
+                        >
+                            <Eye className="h-4 w-4" />
+                        </Button>
+                    )}
+                </>
             );
         }
         return item[columnKey];

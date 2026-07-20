@@ -187,6 +187,9 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
   const handleReset = () => {
     setFilters(EMPTY_FILTERS);
     setSubcategories([]);
+    onApplyFilters({});
+    toast.success('Filters reset successfully!');
+    onClose();
   };
 
   const categoryOptions = useMemo(

@@ -33,7 +33,6 @@ interface InventoryOption {
 const INVENTORIES_ENDPOINT =
   "/pms/inventories/get_inventories_for_purchase_order.json";
 const BRAND_RED = "#C72030";
-const ACTION_PURPLE = "#6B2C65";
 
 const compactFieldSx = {
   mt: 1,
@@ -827,11 +826,10 @@ export const AddGDNPage = () => {
             <Button
               type="button"
               onClick={addInventoryItem}
-              className="mt-5 gap-2 text-white"
-              style={{ backgroundColor: ACTION_PURPLE }}
+              className="mt-5 gap-2 !bg-[#DA7756] hover:!bg-[#C45F40]"
             >
-              <Plus className="w-4 h-4" />
-              Add Inventory
+              <Plus className="w-4 h-4 !text-white" />
+              <span className="!text-white font-medium">Add Inventory</span>
             </Button>
           </div>
         </section>
@@ -841,10 +839,9 @@ export const AddGDNPage = () => {
         <Button
           type="button"
           onClick={handleSubmit}
-          className="px-6 text-white"
-          style={{ backgroundColor: ACTION_PURPLE }}
+          className="px-6 !bg-[#DA7756] hover:!bg-[#C45F40]"
         >
-          Submit
+          <span className="!text-white font-medium">Submit</span>
         </Button>
       </div>
     </div>

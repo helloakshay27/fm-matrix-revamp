@@ -457,6 +457,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, Pagi
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 interface Vendor {
   id: number;
   company_name: string;
@@ -478,6 +479,7 @@ interface Vendor {
 
 export const VendorPage = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -698,9 +700,11 @@ export const VendorPage = () => {
       case 'actions':
         return (
           <div className="flex gap-1">
+            {shouldShow("Vendor", "show") && (
             <Button variant="ghost" size="sm" onClick={() => handleViewVendor(item.id)}>
               <Eye className="w-4 h-4" />
             </Button>
+            )}
           </div>
         );
       case 'supplier_type':
@@ -857,6 +861,7 @@ export const VendorPage = () => {
 
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-2 sm:gap-3">
+      {shouldShow("Vendor", "create") && (
       <Button
         onClick={() => setShowActionPanel((prev) => !prev)}
         className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
@@ -864,6 +869,7 @@ export const VendorPage = () => {
         <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
         Action
       </Button>
+      )}
     </div>
   );
 

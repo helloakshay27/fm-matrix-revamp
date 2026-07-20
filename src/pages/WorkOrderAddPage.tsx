@@ -1548,10 +1548,10 @@ export const WorkOrderAddPage: React.FC = () => {
             {/* Add Items Button inside details card */}
             <div className="mt-6 pt-6 border-t border-gray-200">
               <Button
-                className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
+                className="!bg-[#DA7756] hover:!bg-[#C45F40] px-6 py-2"
                 onClick={addNewDetailsForm}
               >
-                Add Items
+                <span className="!text-white font-medium">Add Items</span>
               </Button>
             </div>
           </div>

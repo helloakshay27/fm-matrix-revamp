@@ -30,6 +30,7 @@ import { FinalClosureModal } from '@/components/FinalClosureModal';
 import { incidentService, type Incident } from '@/services/incidentService';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Field component for consistent styling - defined outside main component to prevent re-renders
 const Field = memo(({
@@ -55,6 +56,7 @@ const Field = memo(({
 export const IncidentDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showInjuryModal, setShowInjuryModal] = useState(false);
@@ -285,6 +287,7 @@ export const IncidentDetailsPage = () => {
             <h1 className="text-2xl font-bold text-[#1a1a1a]">Details ({incident.id})</h1>
           </div>
           <div className="flex flex-wrap gap-3">
+            {shouldShow("Incident", "update") && (
             <Button
               onClick={handleEditDetails}
               style={{ backgroundColor: '#C72030' }}
@@ -293,6 +296,7 @@ export const IncidentDetailsPage = () => {
               <Edit className="w-4 h-4 mr-2" style={{ color: '#C72030', background: '#E5E0D3' }} />
               Edit Details
             </Button>
+            )}
             <Button
               onClick={() => setShowUpdateModal(true)}
               style={{ backgroundColor: '#C72030' }}
@@ -309,6 +313,7 @@ export const IncidentDetailsPage = () => {
               <Settings className="w-4 h-4 mr-2" style={{ color: '#C72030', background: '#E5E0D3' }} />
               Final Closure
             </Button>
+            {shouldShow("Incident", "create") && (
             <Button
               onClick={() => setShowInjuryModal(true)}
               style={{ backgroundColor: '#C72030' }}
@@ -317,6 +322,7 @@ export const IncidentDetailsPage = () => {
               <Plus className="w-4 h-4 mr-2" style={{ color: '#C72030', background: '#E5E0D3' }} />
               Add Injury
             </Button>
+            )}
             <Button
               onClick={handleDownloadReport}
               disabled={downloadLoading}

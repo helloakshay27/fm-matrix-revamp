@@ -22,6 +22,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Interface definitions for API response
 interface CustomerName {
@@ -96,6 +97,7 @@ const columns: ColumnConfig[] = [
 
 export default function UtilityDailyReadingsDashboard() {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -404,14 +406,16 @@ export default function UtilityDailyReadingsDashboard() {
       case 'actions':
         return (
           <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEdit(item)}
-              className="h-8 w-8 p-0"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
+            {shouldShow("Daily Readings", "update") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEdit(item)}
+                className="h-8 w-8 p-0"
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         );
       case 'id':

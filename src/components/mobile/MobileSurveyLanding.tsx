@@ -796,7 +796,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
       await surveyApi.submitSurveyResponse(payload);
 
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: true,
           rating: currentAnswer.rating || 5,
@@ -804,7 +804,7 @@ export const MobileSurveyLanding: React.FC = () => {
       });
     } catch (error) {
       console.error("Failed to submit survey:", error);
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: false,
           rating: 5,
@@ -977,7 +977,7 @@ export const MobileSurveyLanding: React.FC = () => {
 
       await surveyApi.submitSurveyResponse(payload);
 
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: true,
           rating: answerData.rating || 1,
@@ -985,7 +985,7 @@ export const MobileSurveyLanding: React.FC = () => {
       });
     } catch (error) {
       console.error("Failed to submit survey:", error);
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: false,
           rating: 1,
@@ -1490,7 +1490,7 @@ export const MobileSurveyLanding: React.FC = () => {
         .filter((rating): rating is number => rating !== undefined);
       const minRating = allRatings.length > 0 ? Math.min(...allRatings) : 5;
 
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: true,
           rating: minRating,
@@ -1498,7 +1498,7 @@ export const MobileSurveyLanding: React.FC = () => {
       });
     } catch (error) {
       console.error("Failed to submit survey:", error);
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: false,
           rating: 5,
@@ -2016,7 +2016,7 @@ export const MobileSurveyLanding: React.FC = () => {
       const minFormRating =
         allFormRatings.length > 0 ? Math.min(...allFormRatings) : 5;
 
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: true,
           rating: minFormRating,
@@ -2024,7 +2024,7 @@ export const MobileSurveyLanding: React.FC = () => {
       });
     } catch (error) {
       console.error("Failed to submit survey:", error);
-      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+      navigate(`/mobile/survey/${mappingId}/thank-you${window.location.search}`, {
         state: {
           submittedFeedback: false,
           rating: 5,
@@ -2935,27 +2935,31 @@ export const MobileSurveyLanding: React.FC = () => {
                                 }
                               }
 
-                              // Reset states immediately
-                              setShowGenericTags(false);
-                              setSelectedTags([]);
-                              setCurrentNegativeComments(""); // Reset only current question's comments
-                              setPendingNegativeType(null);
-                              setPendingNegativeAnswer(null);
-
                               // For single question negative responses, submit with complete data
                               if (isSingleQuestion && answerData) {
-                                handleSingleQuestionSubmitWithNegativeData(
+                                // Keep this screen mounted while submitting so the
+                                // main question page doesn't flash before the
+                                // thank-you navigation; the button shows the
+                                // "Submitting..." spinner meanwhile.
+                                await handleSingleQuestionSubmitWithNegativeData(
                                   answerData
                                 );
                               } else {
+                                // Reset states before moving on
+                                setShowGenericTags(false);
+                                setSelectedTags([]);
+                                setCurrentNegativeComments(""); // Reset only current question's comments
+                                setPendingNegativeType(null);
+                                setPendingNegativeAnswer(null);
                                 // For multi-question surveys, proceed to next question
                                 // Use moveToNextQuestion to avoid re-saving the answer
                                 moveToNextQuestion();
                               }
                             }}
                             disabled={
-                              selectedTags.length === 0 &&
-                              !getCurrentNegativeComments().trim()
+                              isSubmitting ||
+                              (selectedTags.length === 0 &&
+                                !getCurrentNegativeComments().trim())
                             }
                             className="w-full bg-black/90 hover:bg-black/100 disabled:bg-black/50 text-white/100 py-2 xs:py-2.5 px-3 xs:px-4 rounded-lg text-xs xs:text-sm font-medium transition-colors disabled:cursor-not-allowed"
                           >
