@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const ExternalUserDetail = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -149,14 +151,16 @@ export const ExternalUserDetail = () => {
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button
-            variant="outline"
-            className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
-            onClick={() => navigate(`/safety/m-safe/external/user/${userId}/edit`, { state: { user } })}
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Edit
-          </Button>
+          {shouldShow("Non FTE Users", "update") && (
+            <Button
+              variant="outline"
+              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
+              onClick={() => navigate(`/safety/m-safe/external/user/${userId}/edit`, { state: { user } })}
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit
+            </Button>
+          )}
           <Button
             onClick={() => navigate(`/safety/m-safe/external/user/${userId}/lmc-manager`)}
             className="bg-[#C72030] text-white hover:bg-[#C72030]/90"

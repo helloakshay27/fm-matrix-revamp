@@ -41,6 +41,7 @@ import { BulkMoveDialog } from "@/components/document/BulkMoveDialog";
 import { DocumentSelectionPanel } from "@/components/document/DocumentSelectionPanel";
 import { DocumentShareModal } from "@/components/document/DocumentShareModal";
 import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface FolderItem {
   id: number;
@@ -204,6 +205,7 @@ const columns: ColumnConfig[] = [
 
 export const FolderDetailsPage = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -1114,7 +1116,7 @@ export const FolderDetailsPage = () => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          {!isPulseSite && (
+          {!isPulseSite && shouldShow("employee_project_documents", "show") && (
             <DropdownMenuItem onClick={() => handlePreview(item.id.toString())}>
               <Eye className="w-4 h-4 mr-2" />
               Preview
@@ -1132,10 +1134,12 @@ export const FolderDetailsPage = () => {
               Share
             </DropdownMenuItem>
           )}
+          {shouldShow("employee_project_documents", "update") && (
           <DropdownMenuItem onClick={() => handleUpdate(item.id.toString())}>
             <Edit className="w-4 h-4 mr-2" />
             Update
           </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             onClick={() => handleDelete(item.id.toString())}
             className="text-red-600 focus:text-red-600"

@@ -9,8 +9,10 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchEcoFriendlyList } from '@/store/slices/ecoFriendlyListSlice';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 const EcoFriendlyListPage = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const dispatch = useDispatch<AppDispatch>();
   
   const { inventories, loading, error } = useSelector((state: RootState) => state.ecoFriendlyList);
@@ -173,9 +175,11 @@ const EcoFriendlyListPage = () => {
       case 'actions':
         return (
           <div className="flex items-center space-x-2">
+            {shouldShow("Inventory", "show") && (
             <Button variant="ghost" size="sm" onClick={() => handleViewItem(item)} className="h-8 w-8 p-0">
               <Eye className="h-4 w-4" />
             </Button>
+            )}
           </div>
         );
       case 'status':

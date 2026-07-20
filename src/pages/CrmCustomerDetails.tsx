@@ -9,6 +9,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useAppDispatch } from '@/store/hooks';
 import { toast } from 'sonner';
 import { getCustomerById } from '@/store/slices/cusomerSlice';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface Customer {
     id?: number;
@@ -98,6 +99,7 @@ const leaseColumns: ColumnConfig[] = [
 
 export const CrmCustomerDetails = () => {
     const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
     const dispatch = useAppDispatch();
 
     const { id } = useParams<{ id: string }>();
@@ -165,6 +167,7 @@ export const CrmCustomerDetails = () => {
                     >
                         Top-Up Wallet
                     </Button> */}
+                    {shouldShow("Customers", "update") && (
                     <Button
                         variant="outline"
                         size="sm"
@@ -174,6 +177,7 @@ export const CrmCustomerDetails = () => {
                     >
                         <Edit2 className="w-4 h-4" />
                     </Button>
+                    )}
                 </div>
             </div>
 

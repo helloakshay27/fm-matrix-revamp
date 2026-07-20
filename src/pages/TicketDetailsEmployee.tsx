@@ -19,6 +19,7 @@ import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 import { TicketJobSheetModal } from '@/components/TicketJobSheetModal';
 import Select, { components } from "react-select";
 import { min } from 'lodash';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Utility function to format date to DD/MM/YYYY
 const formatDateToDDMMYYYY = (dateString: string) => {
@@ -545,6 +546,7 @@ const getBalanceTATSeconds = (escalationTime: string | null | undefined): number
 export const TicketDetailsEmployee = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [ticketData, setTicketData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -5175,6 +5177,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                           </svg>
                         </button>
                       )}
+                      {shouldShow("Ticket", "update") && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -5185,6 +5188,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                         <Edit className="w-4 h-4 mr-1" />
                         {(loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons) ? 'Loading...' : 'Edit'}
                       </Button>
+                      )}
                     </div>
                   </div>
 
@@ -6194,6 +6198,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                       </h3>
 
                     </div>
+                    {shouldShow("Ticket", "update") && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -6201,9 +6206,10 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                       onClick={handleTicketClosureEdit}
                       disabled={isEditingTicketClosure || loadingResponsiblePersons}
                     >
-                      <Edit className="w-4 h-4 mr-1" /> 
+                      <Edit className="w-4 h-4 mr-1" />
                       {loadingResponsiblePersons ? 'Loading...' : 'Edit'}
                     </Button>
+                    )}
                   </div>
 
                   {/* Body */}
@@ -6891,6 +6897,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                         Location Details
                       </h3>
                     </div>
+                    {shouldShow("Ticket", "update") && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -6901,6 +6908,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                       <Edit className="w-4 h-4 mr-1" />
                       Edit
                     </Button>
+                    )}
                   </div>
 
                   <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
@@ -8153,6 +8161,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                           </svg>
                         </button>
                       )}
+                      {shouldShow("Ticket", "update") && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -8163,6 +8172,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                         <Edit className="w-4 h-4 mr-1" />
                         {(loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons) ? 'Loading...' : 'Edit'}
                       </Button>
+                      )}
                     </div>
                   </div>
 
@@ -9170,6 +9180,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                       </h3>
 
                     </div>
+                    {shouldShow("Ticket", "update") && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -9177,9 +9188,10 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                       onClick={handleTicketClosureEdit}
                       disabled={isEditingTicketClosure || loadingResponsiblePersons}
                     >
-                      <Edit className="w-4 h-4 mr-1" /> 
+                      <Edit className="w-4 h-4 mr-1" />
                       {loadingResponsiblePersons ? 'Loading...' : 'Edit'}
                     </Button>
+                    )}
                   </div>
 
                   {/* Body */}
@@ -9869,6 +9881,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                         Location Details
                       </h3>
                     </div>
+                    {shouldShow("Ticket", "update") && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -9879,6 +9892,7 @@ console.log("status logic:", isTicketOnHold, isTicketClosed)
                       <Edit className="w-4 h-4 mr-1" />
                       Edit
                     </Button>
+                    )}
                   </div>
 
                   <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">

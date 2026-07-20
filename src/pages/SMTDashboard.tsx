@@ -10,6 +10,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { SMTImportModal } from '@/components/SMTImportModal';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 const SMTDashboard = () => {
   // simple debounce hook (local)
@@ -72,6 +73,7 @@ const SMTDashboard = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const debouncedSearch = useDebounce(searchTerm, 500);
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
 
@@ -148,14 +150,16 @@ const SMTDashboard = () => {
       case 'actions':
         return (
           <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => navigate(`/safety/m-safe/smt/${item.id}`, { state: { row: item } })}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
+            {shouldShow("SMT", "show") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => navigate(`/safety/m-safe/smt/${item.id}`, { state: { row: item } })}
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            )}
             {/* <Button
               variant="ghost"
               size="sm"
@@ -593,7 +597,7 @@ const SMTDashboard = () => {
         columns={columns}
         renderCell={renderCell}
         leftActions={
-          canSeeActionButton ? (
+          canSeeActionButton && shouldShow("SMT", "create") ? (
             <Button
               onClick={() => setShowActionPanel(true)}
               className="text-white bg-[#C72030] hover:bg-[#C72030]/90"

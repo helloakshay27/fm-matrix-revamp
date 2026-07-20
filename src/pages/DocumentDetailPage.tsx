@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import {
   getDocumentDetail,
   deleteDocument,
@@ -85,6 +86,7 @@ interface DocumentDetail {
 
 export const DocumentDetailPage = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const { id } = useParams<{ id: string }>();
   const [document, setDocument] = useState<DocumentDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -471,6 +473,7 @@ export const DocumentDetailPage = () => {
               <Copy className="w-5 h-5 text-[#C72030]" />
             </button>
             {/* Edit Button */}
+            {shouldShow("employee_project_documents", "update") && (
             <button
               onClick={handleEdit}
               className="w-10 h-10 border border-[#C72030] rounded flex items-center justify-center hover:bg-[#FFF5F5] transition-colors"
@@ -478,6 +481,7 @@ export const DocumentDetailPage = () => {
             >
               <Pencil className="w-5 h-5 text-[#C72030]" />
             </button>
+            )}
             {/* Delete Button */}
             <button
               onClick={handleDelete}

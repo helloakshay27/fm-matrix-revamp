@@ -476,6 +476,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate,useLocation } from 'react-router-dom';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import axios from 'axios';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Define type for consumption data
 interface ConsumptionData {

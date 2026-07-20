@@ -8,6 +8,7 @@ import { Dialog, DialogContent, TextField } from "@mui/material"
 import { Edit, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions"
 
 const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
@@ -42,6 +43,7 @@ const columns: ColumnConfig[] = [
 
 const MsafeCirlce = () => {
     const dispatch = useAppDispatch()
+    const { shouldShow } = useDynamicPermissions()
     const token = localStorage.getItem("token")
     const baseUrl = localStorage.getItem("baseUrl")
 
@@ -187,30 +189,34 @@ const MsafeCirlce = () => {
 
     const leftActions = (
         <>
-            <Button
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={() => setIsAddModalOpen(true)}
-            >
-                <Plus className="w-4 h-4 mr-2" />
-                Add
-            </Button>
+            {shouldShow("M Safe", "create") && (
+                <Button
+                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    onClick={() => setIsAddModalOpen(true)}
+                >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add
+                </Button>
+            )}
         </>
     );
 
     const renderActions = (item: any) => {
         return (
-            <Button
-                size="sm"
-                variant="ghost"
-                className="p-1"
-                onClick={() => {
-                    setIsEditing(true)
-                    setRecord(item)
-                    setIsAddModalOpen(true)
-                }}
-            >
-                <Edit className="w-4 h-4" />
-            </Button>
+            shouldShow("M Safe", "update") && (
+                <Button
+                    size="sm"
+                    variant="ghost"
+                    className="p-1"
+                    onClick={() => {
+                        setIsEditing(true)
+                        setRecord(item)
+                        setIsAddModalOpen(true)
+                    }}
+                >
+                    <Edit className="w-4 h-4" />
+                </Button>
+            )
         )
     };
 

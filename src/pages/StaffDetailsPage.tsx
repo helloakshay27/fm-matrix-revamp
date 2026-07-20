@@ -8,10 +8,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Edit, Printer, ArrowLeft, Loader2, ChevronDown, ChevronUp, User, MapPin, Calendar, FileText, Image, QrCode } from 'lucide-react';
 import { staffService, SocietyStaffDetails } from '@/services/staffService';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const StaffDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [staff, setStaff] = useState<SocietyStaffDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -277,13 +279,15 @@ export const StaffDetailsPage = () => {
                 'Verify Number'
               )}
             </Button>
-            <Button
-              onClick={handleEdit}
-              style={{ backgroundColor: '#C72030' }} 
-              className="text-white hover:bg-[#C72030]/90"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
+            {shouldShow("Staff", "update") && (
+              <Button
+                onClick={handleEdit}
+                style={{ backgroundColor: '#C72030' }}
+                className="text-white hover:bg-[#C72030]/90"
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>

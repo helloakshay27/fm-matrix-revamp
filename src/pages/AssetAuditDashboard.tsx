@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import StatusDropdown from '@/components/StatusDropdown';
 import AssetAuditFilterModal, { FilterParams } from '@/components/AssetAuditFilterModal';
 import {
@@ -98,6 +99,7 @@ const convertStatusToApi = (status: string): string => {
 
 export const AssetAuditDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [audits, setAudits] = useState<AuditRecord[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -604,6 +606,7 @@ export const AssetAuditDashboard = () => {
     switch (columnKey) {
       case 'actions':
         return (
+          shouldShow("Audit", "show") && (
           <Button
             variant="ghost"
             size="sm"
@@ -614,6 +617,7 @@ export const AssetAuditDashboard = () => {
           >
             <Eye className="w-4 h-4" />
           </Button>
+          )
         );
       case 'auditName':
         return (
@@ -992,12 +996,14 @@ export const AssetAuditDashboard = () => {
               //   </Button>
               // }
               leftActions={
+                shouldShow("Audit", "create") && (
                 <Button
                   onClick={() => setShowActionPanel(prev => !prev)}
                   className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
                 >
                   + Action
                 </Button>
+                )
               }
             />
 
