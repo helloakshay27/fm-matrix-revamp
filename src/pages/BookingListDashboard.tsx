@@ -676,7 +676,26 @@ const BookingListDashboard = () => {
   const confirmDownload = async () => {
     setExportLoading(true);
     try {
-      const response = await axios.get(`https://${baseUrl}/pms/admin/facility_bookings/export.xlsx`, {
+      const exportParams = new URLSearchParams();
+      if (filters.facilityName) {
+        exportParams.append('q[facility_id_in][]', filters.facilityName);
+      }
+      if (filters.status) {
+        exportParams.append('q[current_status_cont]', filters.status);
+      }
+      if (createdOnDateFrom && createdOnDateTo) {
+        const from = format(parse(createdOnDateFrom, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy');
+        const to = format(parse(createdOnDateTo, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy');
+        exportParams.append('q[date_range]', `${from} - ${to}`);
+      }
+      if (scheduledDateFrom && scheduledDateTo) {
+        const from = format(parse(scheduledDateFrom, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy');
+        const to = format(parse(scheduledDateTo, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy');
+        exportParams.append('q[date_range1]', `${from} - ${to}`);
+      }
+      const queryString = exportParams.toString();
+      const exportUrl = `https://${baseUrl}/pms/admin/facility_bookings/export.xlsx${queryString ? `?${queryString}` : ''}`;
+      const response = await axios.get(exportUrl, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
