@@ -710,7 +710,8 @@ export const OutboundListPage = () => {
             </Button>
             <Button
               onClick={handleApplyFilters}
-              className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white px-6"
+              className="fm-button-fix fm-button-brand px-4 py-2"
+              variant="ghost"
             >
               Apply
             </Button>
