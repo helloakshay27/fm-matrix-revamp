@@ -72,9 +72,9 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
     <div
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      className="border-2 border-dashed border-[#DA7756] rounded-lg px-3 py-1.5 flex items-center gap-2 h-9 min-w-[120px]"
+      className="border-2 border-dashed border-[#C72030] rounded-lg px-3 py-1.5 flex items-center gap-2 h-9 min-w-[120px]"
     >
-      <Upload className="w-4 h-4 text-[#DA7756] shrink-0" />
+      <Upload className="w-4 h-4 text-[#C72030] shrink-0" />
       <input
         type="file"
         id="fileInput"
@@ -82,7 +82,7 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
         onChange={handleFileSelect}
         accept=".xlsx,.xls,.csv"
       />
-      <label htmlFor="fileInput" className="text-[#DA7756] cursor-pointer hover:opacity-75 text-sm truncate max-w-[70px]">
+      <label htmlFor="fileInput" className="text-[#C72030] cursor-pointer hover:opacity-75 text-sm truncate max-w-[70px]">
         {selectedFile
           ? selectedFile.name.substring(0, 10) + (selectedFile.name.length > 10 ? "..." : "")
           : "Choose File"}
@@ -95,16 +95,18 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
       <Button
         onClick={handleDownloadSampleFormat}
         title="Download Sample Format"
-        className="h-9 w-9 min-h-9 p-0 flex items-center justify-center rounded-lg border border-[#DA7756] bg-[#fffaf6] hover:bg-[#fdf0ea] text-[#DA7756]"
-        variant="outline"
+        style={{ backgroundColor: "#C72030" }}
+        className="fm-button-fix fm-button-brand p-2 h-9 w-9 rounded-lg"
+        variant="ghost"
       >
         <Download className="w-4 h-4" />
       </Button>
       <Button
         onClick={handleImportQuestions}
         title="Import Questions"
-        className="h-9 w-9 min-h-9 p-0 flex items-center justify-center rounded-lg border border-[#DA7756] bg-[#fffaf6] hover:bg-[#fdf0ea] text-[#DA7756]"
-        variant="outline"
+        style={{ backgroundColor: "#C72030" }}
+        className="fm-button-fix fm-button-brand p-2 h-9 w-9 rounded-lg"
+        variant="ghost"
       >
         <Upload className="w-4 h-4" />
       </Button>
@@ -153,7 +155,8 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
           shouldShow("Master Checklist", "create") ? (
             <Button
               onClick={handleAddMasterChecklist}
-              className="fm-button-fix fm-button-brand px-4 py-2 rounded-none"
+              style={{ backgroundColor: "#C72030" }}
+              className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg"
               variant="ghost"
             >
               <Plus className="w-4 h-4" />

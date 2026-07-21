@@ -1339,8 +1339,8 @@ export const InventoryDashboard = () => {
               <div className="flex items-center gap-2">
                 <Button
                   onClick={() => setIsAnalyticsFilterOpen(true)}
-                  variant="ghost"
-                  className="fm-button-fix fm-button-brand flex items-center gap-2"
+                  variant="outline"
+                  className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
                 >
                   <CalendarIcon className="w-4 h-4 text-gray-600" />
                   <span className="text-sm font-medium text-gray-700">

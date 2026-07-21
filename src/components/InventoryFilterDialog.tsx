@@ -271,16 +271,42 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button
           onClick={handleApply}
-          className="fm-button-fix fm-button-brand h-[45px] px-5 font-medium text-[16px]"
-          disableElevation
+          sx={{
+            height: '45px',
+            backgroundColor: '#F7F3F0',
+            color: '#C72030',
+            // borderRadius: '6px',
+            textTransform: 'none',
+            fontWeight: 500,
+            fontSize: '16px',
+            padding: '0 20px',
+            boxShadow: 'none',
+            '&:hover': {
+              backgroundColor: '#eee7e3',
+              boxShadow: 'none',
+            },
+          }}
         >
           Apply
         </Button>
 
         <Button
           onClick={handleReset}
-          className="fm-button-fix fm-button-brand h-[45px] px-5 font-medium text-[16px]"
-          disableElevation
+          sx={{
+            height: '45px',
+            backgroundColor: '#F7F3F0',
+            color: '#C72030',
+            // borderRadius: '6px',
+            textTransform: 'none',
+            fontWeight: 500,
+            fontSize: '16px',
+            padding: '0 20px',
+            boxShadow: 'none',
+            '&:hover': {
+              backgroundColor: '#eee7e3',
+              boxShadow: 'none',
+            },
+          }}
         >
           Reset
         </Button>

@@ -538,11 +538,11 @@ export const AddInventoryPage = () => {
         borderColor: '#1A1A1A',
       },
       '&.Mui-focused fieldset': {
-        borderColor: '#DA7756',
+        borderColor: '#C72030',
         borderWidth: 2,
       },
       '&.Mui-error fieldset': {
-        borderColor: '#DA7756',
+        borderColor: '#C72030',
       },
     },
     '& .MuiInputLabel-root': {
@@ -550,10 +550,10 @@ export const AddInventoryPage = () => {
       fontWeight: 500,
       fontSize: '16px',
       '&.Mui-focused': {
-        color: '#DA7756',
+        color: '#C72030',
       },
       '&.Mui-error': {
-        color: '#DA7756',
+        color: '#C72030',
       },
     },
     '& .MuiInputBase-input': {
@@ -741,10 +741,10 @@ export const AddInventoryPage = () => {
             className="w-full flex items-center justify-between p-4 text-left bg-[#F6F4EE] mb-3"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm font-bold">
+              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
                 1
               </div>
-              <h2 className="text-lg font-semibold text-[#DA7756] uppercase">INVENTORY DETAILS</h2>
+              <h2 className="text-lg font-semibold text-[#C72030] uppercase">INVENTORY DETAILS</h2>
             </div>
             {inventoryDetailsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </button>
@@ -769,9 +769,9 @@ export const AddInventoryPage = () => {
                       fontSize: '14px',
                     },
                     '& .MuiRadio-root': {
-                      color: '#DA7756',
+                      color: '#C72030',
                       '&.Mui-checked': {
-                        color: '#DA7756',
+                        color: '#C72030',
                       },
                     },
                   }}
@@ -802,9 +802,9 @@ export const AddInventoryPage = () => {
                       fontSize: '14px',
                     },
                     '& .MuiRadio-root': {
-                      color: '#DA7756',
+                      color: '#C72030',
                       '&.Mui-checked': {
-                        color: '#DA7756',
+                        color: '#C72030',
                       },
                     },
                   }}
@@ -841,7 +841,7 @@ export const AddInventoryPage = () => {
                       displayEmpty
                       disabled={loading}
                     >
-                      <MenuItem value="" sx={{ color: '#DA7756' }}>
+                      <MenuItem value="" sx={{ color: '#C72030' }}>
                         {loading ? 'Loading...' : 'Select an Option...'}
                       </MenuItem>
                       {assets.map((asset) => (
@@ -856,7 +856,7 @@ export const AddInventoryPage = () => {
 
                 <div ref={inventoryNameWrapperRef} className="relative">
                   <TextField
-                    label={<>Inventory Name<span style={{ color: '#DA7756' }}>*</span></>}
+                    label={<>Inventory Name<span style={{ color: '#C72030' }}>*</span></>}
                     placeholder="Name"
                     value={formData.inventoryName}
                     onChange={(e) => {
@@ -914,7 +914,7 @@ export const AddInventoryPage = () => {
 
                 <div>
                   <TextField
-                    label={<>Inventory Code<span style={{ color: '#DA7756' }}>*</span></>}
+                    label={<>Inventory Code<span style={{ color: '#C72030' }}>*</span></>}
                     placeholder="code"
                     value={formData.inventoryCode}
                     onChange={(e) => handleInputChange('inventoryCode', e.target.value)}
@@ -1111,7 +1111,7 @@ export const AddInventoryPage = () => {
                       notched
                       displayEmpty
                     >
-                      <MenuItem value="" sx={{ color: '#DA7756' }}>
+                      <MenuItem value="" sx={{ color: '#C72030' }}>
                         Select an Option...
                       </MenuItem>
                       <MenuItem value="Non Technical">Non Technical</MenuItem>
@@ -1189,7 +1189,7 @@ export const AddInventoryPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <TextField
-                    label={<>Max.Stock Level<span style={{ color: '#DA7756' }}>*</span></>}
+                    label={<>Max.Stock Level<span style={{ color: '#C72030' }}>*</span></>}
                     placeholder="Max Stock"
                     value={formData.maxStockLevel}
                     onChange={(e) => handleInputChange('maxStockLevel', e.target.value)}
@@ -1204,7 +1204,7 @@ export const AddInventoryPage = () => {
 
                 <div>
                   <TextField
-                    label={<>Min.Stock Level<span style={{ color: '#DA7756' }}>*</span></>}
+                    label={<>Min.Stock Level<span style={{ color: '#C72030' }}>*</span></>}
                     placeholder="Min Stock"
                     value={formData.minStockLevel}
                     onChange={(e) => handleInputChange('minStockLevel', e.target.value)}
@@ -1246,10 +1246,10 @@ export const AddInventoryPage = () => {
             className="w-full flex items-center justify-between p-4 text-left bg-[#F6F4EE] mb-4"
           >
             <div className="flex items-center gap-3  ">
-              <div className="w-8 h8 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm font-bold">
+              <div className="w-8 h8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold">
                 2
               </div>
-              <h2 className="text-lg font-semibold text-[#DA7756] uppercase">TAX DETAILS</h2>
+              <h2 className="text-lg font-semibold text-[#C72030] uppercase">TAX DETAILS</h2>
             </div>
             {taxDetailsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </button>
@@ -1375,8 +1375,7 @@ export const AddInventoryPage = () => {
           <Button
             onClick={handleSubmit}
             disabled={submitting}
-            variant="ghost"
-            className="fm-button-fix fm-button-brand px-8 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {submitting && (
               <svg

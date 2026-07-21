@@ -431,11 +431,11 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
       <div className="flex items-center justify-end gap-3">
         {/* Date Range Label */}
         {(activeFilters.dateFrom || activeFilters.dateTo) && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-[#da7756] rounded-lg">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className="text-sm font-medium text-white">
+            <span className="text-sm font-medium text-gray-700">
               {activeFilters.dateFrom && activeFilters.dateTo
                 ? `${activeFilters.dateFrom} - ${activeFilters.dateTo}`
                 : activeFilters.dateFrom || activeFilters.dateTo || 'All Dates'}
@@ -445,7 +445,8 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
 
         <Button
           onClick={() => setIsFilterModalOpen(true)}
-          className="fm-button-fix fm-button-brand flex items-center gap-2"
+          variant="outline"
+          className="flex items-center gap-2 px-4 py-2 h-10"
         >
           <Filter className="h-4 w-4" />
           {activeFilterCount > 0 && (

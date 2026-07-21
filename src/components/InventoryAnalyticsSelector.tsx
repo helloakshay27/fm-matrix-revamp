@@ -102,8 +102,8 @@ export function InventoryAnalyticsSelector({ onSelectionChange, dateRange }: Inv
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button 
-          variant="ghost" 
-          className="fm-button-fix fm-button-brand flex items-center gap-2"
+          variant="outline" 
+          className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
         >
           <Package className="w-4 h-4" />
           Select Reports ({selectedCount})

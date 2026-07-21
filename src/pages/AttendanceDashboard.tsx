@@ -822,8 +822,9 @@ export const AttendanceDashboard = () => {
                     <div className="space-y-4 sm:space-y-6">
                       <div className="flex justify-end mb-2">
                         <Button
+                          variant="outline"
                           size="sm"
-                          className="fm-button-fix fm-button-brand text-xs"
+                          className="text-xs border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
                           onClick={() => setIsChartFilterOpen(true)}
                         >
                           <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="inline-block mr-1"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-6.414 6.414A1 1 0 0013 13.414V19a1 1 0 01-1.447.894l-2-1A1 1 0 009 18v-4.586a1 1 0 00-.293-.707L2.293 6.707A1 1 0 012 6V4z" /></svg>
