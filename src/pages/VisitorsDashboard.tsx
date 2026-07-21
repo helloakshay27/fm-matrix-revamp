@@ -223,6 +223,29 @@ export const VisitorsDashboard = () => {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportFromDate, setExportFromDate] = useState('');
   const [exportToDate, setExportToDate] = useState('');
+  const EXPORT_MAX_RANGE_DAYS = 5;
+
+  // exportFromDate/exportToDate are DD/MM/YYYY strings from MaterialDatePicker
+  const parseDDMMYYYY = (value: string): Date | null => {
+    const parts = value.split('/');
+    if (parts.length !== 3) return null;
+    const [dd, mm, yyyy] = parts.map(Number);
+    const date = new Date(yyyy, mm - 1, dd);
+    return isNaN(date.getTime()) ? null : date;
+  };
+
+  const getExportDateRangeError = (from: string, to: string): string => {
+    if (!from || !to) return '';
+    const fromDate = parseDDMMYYYY(from);
+    const toDate = parseDDMMYYYY(to);
+    if (!fromDate || !toDate) return '';
+    if (fromDate > toDate) return '"From" date cannot be later than "To" date';
+    const diffDays = (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24);
+    if (diffDays > EXPORT_MAX_RANGE_DAYS) return `Date range cannot exceed ${EXPORT_MAX_RANGE_DAYS} days`;
+    return '';
+  };
+
+  const exportDateRangeError = getExportDateRangeError(exportFromDate, exportToDate);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -1428,6 +1451,12 @@ export const VisitorsDashboard = () => {
   };
 
   const handleExportWithDateRange = async () => {
+    const rangeError = getExportDateRangeError(exportFromDate, exportToDate);
+    if (rangeError) {
+      toast.error(rangeError);
+      return;
+    }
+
     setExportDialogOpen(false);
     const loadingToastId = toast.loading("Preparing export file...", {
       duration: Infinity,
@@ -2019,12 +2048,15 @@ export const VisitorsDashboard = () => {
                 className="mt-1"
               />
             </div>
+            {exportDateRangeError && (
+              <p className="text-sm text-red-600">{exportDateRangeError}</p>
+            )}
             <div className="flex justify-end pt-4">
               <Button
                 style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
                 className="hover:bg-[#F2EEE9]/90 px-8"
                 onClick={handleExportWithDateRange}
-                disabled={!exportFromDate || !exportToDate}
+                disabled={!exportFromDate || !exportToDate || !!exportDateRangeError}
               >
                 Export
               </Button>
