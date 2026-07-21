@@ -917,6 +917,7 @@ const AddAddressMaster = lazy(() => import("./pages/master/AddAddressMaster"));
 const EditAddressMaster = lazy(() => import("./pages/master/EditAddressMaster"));
 const MobileLMCPage = lazy(() => import("./pages/MobileLMCPage"));
 const ViBusinessCard = lazy(() => import("./pages/mobile/ViBusinessCard").then(m => ({ default: m.ViBusinessCard })));
+const GoPhygitalBusinessCard = lazy(() => import("./pages/mobile/GoPhygitalBusinessCard").then(m => ({ default: m.GoPhygitalBusinessCard })));
 const CompanyPartnersSetupDashboard = lazy(() => import("./pages/CompanyPartnersSetupDashboard").then(m => ({ default: m.CompanyPartnersSetupDashboard })));
 const TestimonialsSetupDashboard = lazy(() => import("./pages/TestimonialsSetupDashboard").then(m => ({ default: m.TestimonialsSetupDashboard })));
 const BannerListPage = lazy(() => import("./pages/BannerListPage"));
@@ -6788,6 +6789,10 @@ function App() {
                           <Route
                             path="/vi-business-card"
                             element={<ViBusinessCard />}
+                          />
+                          <Route
+                            path="/gophygital-business-card"
+                            element={<GoPhygitalBusinessCard />}
                           />
 
                           {/* Quick Links Routes */}
