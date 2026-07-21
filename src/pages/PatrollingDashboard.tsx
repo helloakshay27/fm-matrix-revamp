@@ -596,6 +596,7 @@ export const PatrollingDashboard = () => {
             variant="outline"
             onClick={handleRefreshSchedules}
             disabled={refreshLoading}
+            className="rounded-lg"
           >
             {refreshLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
