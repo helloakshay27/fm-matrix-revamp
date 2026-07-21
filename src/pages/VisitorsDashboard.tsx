@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag, Download } from 'lucide-react';
-import { useNavigate,useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
 import { VisitorFilterDialog, VisitorFilters } from '@/components/VisitorFilterDialog';
@@ -257,7 +257,7 @@ export const VisitorsDashboard = () => {
     totalEntries: 0,
     perPage: 20
   });
- const [historyPagination, setHistoryPagination] = useState(() => {
+  const [historyPagination, setHistoryPagination] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return {
       currentPage: Number(params.get('page')) || 1,
@@ -426,7 +426,7 @@ export const VisitorsDashboard = () => {
       console.log('🔍 Using site ID for visitor history:', siteId);
       console.log('🔍 SearchTerm being passed to visitor history:', searchTerm);
       const data = await getVisitorHistory(siteId, page, 20, searchTerm);
-     setVisitorHistoryData(data.visitors || []);
+      setVisitorHistoryData(data.visitors || []);
       setHistoryPagination(prev => ({
         ...prev,
         totalPages: data.pagination?.total_pages || 1,
@@ -1640,7 +1640,7 @@ export const VisitorsDashboard = () => {
     navigate(`${location.pathname}?page=${historyPagination.currentPage}`, { replace: true });
   }, [historyPagination.currentPage]);
 
-const handlePageChange = (page: number) => {
+  const handlePageChange = (page: number) => {
     navigate(`${location.pathname}?page=${page}`, { replace: true });
     setHistoryPagination(prev => ({ ...prev, currentPage: page }));
     if (mainTab === 'visitor') {
@@ -1876,7 +1876,7 @@ const handlePageChange = (page: number) => {
               }
               onSelectAll={handleSelectAll}
               getItemId={visitor => visitor.id.toString()}
-              // enableExport={true}
+              enableExport={true}
               handleExport={handleExport}
               exportFileName="visitor-history"
               pagination={false}
