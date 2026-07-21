@@ -1147,13 +1147,13 @@ export const FBAnalyticsComponents: React.FC<FBAnalyticsProps> = ({
               <Button
                 onClick={() => setIsAnalyticsFilterOpen(true)}
                 variant="outline"
-                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-orange-50 border-orange-500"
               >
-                <CalendarIcon className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">
+                <CalendarIcon className="w-4 h-4 text-orange-500" />
+                <span className="text-sm font-medium text-orange-500">
                   {getFormattedDateRange()}
                 </span>
-                <Filter className="w-4 h-4 text-gray-600" />
+                <Filter className="w-4 h-4 text-orange-500" />
               </Button>
             )}
 

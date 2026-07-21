@@ -624,7 +624,7 @@ export default function Todo() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
+                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2 rounded-lg"
                 title='Filter'
                 onClick={() => setIsFilterModalOpen(true)}
               >
