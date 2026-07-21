@@ -1362,14 +1362,14 @@ export const PermitToWorkDashboard = () => {
             <Button
               onClick={() => setIsAnalyticsFilterOpen(true)}
               variant="outline"
-              className="flex items-center gap-2 px-4 py-2 rounded-none border border-[#DA7756] bg-[#fffaf6] hover:bg-[#fdf0ea] text-[#DA7756]"
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
             >
-              <CalendarIcon className="w-4 h-4" />
-              <span className="text-sm font-medium">
+              <CalendarIcon className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">
                 {formatDateForDisplay(analyticsDateRange.fromDate)} &ndash;{" "}
                 {formatDateForDisplay(analyticsDateRange.toDate)}
               </span>
-              <Filter className="w-4 h-4" />
+              <Filter className="w-4 h-4 text-gray-600" />
             </Button>
 
             {/* Analytics Selector Popover */}
@@ -1380,16 +1380,16 @@ export const PermitToWorkDashboard = () => {
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 min-w-[200px] justify-between px-4 py-2 rounded-none border border-[#DA7756] bg-[#fffaf6] hover:bg-[#fdf0ea] text-[#DA7756]"
+                  className="flex items-center gap-2 min-w-[200px] justify-between px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
                 >
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium text-gray-700">
                     {selectedAnalyticsTypes.length === 0
                       ? "Select Analytics"
                       : selectedAnalyticsTypes.length === PERMIT_ANALYTICS_OPTIONS.length
                         ? "All Analytics Selected"
                         : `${selectedAnalyticsTypes.length} / ${PERMIT_ANALYTICS_OPTIONS.length} Selected`}
                   </span>
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-4 h-4 text-gray-600" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-72" align="end">
