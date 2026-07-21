@@ -599,14 +599,15 @@ export const AddGatePassInwardPage = () => {
         <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-800">Gate Pass Details</h2>
-            <button
+            <Button
               type="button"
               onClick={() => openCustomFieldModal("gatePassDetails")}
-              className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+              className="fm-button-fix fm-button-brand px-4 py-2"
+              variant="ghost"
             >
               <Plus className="w-4 h-4" />
               Custom Field
-            </button>
+            </Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Move Site and Building fields to the top */}
