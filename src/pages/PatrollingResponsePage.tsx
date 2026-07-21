@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Shield, CheckCircle, AlertCircle, Activity, X, ChevronLeft, ChevronRight, Paperclip, CalendarIcon, Filter } from 'lucide-react';
+import { Shield, CheckCircle, AlertCircle, Activity, X, ChevronLeft, ChevronRight, Paperclip, CalendarIcon, Filter, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -101,6 +101,7 @@ interface PatrollingVisit {
 interface PatrollingResponse {
   id: number;
   patrol_name: string;
+  checkpoint_id: number | null;
   checkpoint_name: string;
   building: string;
   wing: string;
@@ -188,6 +189,7 @@ const transformVisitsToResponses = (
     const baseRow: PatrollingResponse = {
       id: visit.id,
       patrol_name: visit.session?.route_name || '-',
+      checkpoint_id: visit.checkpoint?.id ?? null,
       checkpoint_name: visit.checkpoint?.name || '-',
       building: visit.building || visit.checkpoint?.building_name || '-',
       wing: visit.wing || '-',
@@ -530,10 +532,12 @@ export const PatrollingResponsePage = () => {
     fetchPatrollingResponses(currentPage, debouncedSearchTerm, selectedStatus, appliedFilters);
   }, [currentPage, debouncedSearchTerm, selectedStatus, appliedFilters, fetchPatrollingResponses]);
 
-  const handleViewDetails = (item: PatrollingResponse) => {
-    navigate(`/security/patrolling/response/details/${item.id}`, {
-      state: { responseData: item },
-    });
+  const handleViewCheckpointHistory = (item: PatrollingResponse) => {
+    if (!item.checkpoint_id) {
+      toast.error('Checkpoint information is unavailable for this response');
+      return;
+    }
+    navigate(`/security/patrolling/checkpoints/${item.checkpoint_id}/history`);
   };
 
   const handleSearchChange = useCallback((newSearchTerm: string) => {
@@ -983,6 +987,18 @@ export const PatrollingResponsePage = () => {
     }
   };
 
+  const renderActions = (item: PatrollingResponse) => (
+    <Button
+      size="sm"
+      variant="ghost"
+      className="p-1"
+      title="View checkpoint history"
+      onClick={() => handleViewCheckpointHistory(item)}
+    >
+      <Eye className="w-4 h-4" />
+    </Button>
+  );
+
   return (
     <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
       {/* Image Preview Dialog */}
@@ -1187,6 +1203,7 @@ export const PatrollingResponsePage = () => {
               data={responseData}
               columns={enhancedTableColumns}
               renderCell={renderCell}
+              renderActions={renderActions}
               storageKey="patrolling-response-table"
               enableExport={true}
               exportFileName="patrolling-response-data"

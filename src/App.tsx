@@ -1238,6 +1238,7 @@ import BusinessCompassTaskDetailsPage from "./pages/BusinessCompass/BusinessComp
 import BusinessCompassIssuesPage from "./pages/BusinessCompass/BusinessCompassIssuesPage.tsx";
 import BusinessCompassIssueDetailsPage from "./pages/BusinessCompass/BusinessCompassIssueDetailsPage.tsx";
 import BusinessCompassTodoPage from "./pages/BusinessCompass/BusinessCompassTodoPage.tsx";
+import PatrollingCheckpointHistoryPage from "./pages/PatrollingCheckpointHistoryPage.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -5227,6 +5228,10 @@ function App() {
                             <Route
                               path="/security/patrolling/response/details/:id"
                               element={<PatrollingDetailPage />}
+                            />
+                              <Route
+                              path="/security/patrolling/checkpoints/:checkpointId/history"
+                              element={<PatrollingCheckpointHistoryPage />}
                             />
                             <Route
                               path="/security/staff"
