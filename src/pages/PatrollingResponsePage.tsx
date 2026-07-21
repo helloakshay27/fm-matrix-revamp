@@ -786,6 +786,7 @@ export const PatrollingResponsePage = () => {
     const endColumns = [
       { key: 'ticket_id', label: 'Ticket Id', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('ticket_id'), hideable: true },
       { key: 'incident_id', label: 'Incident Id', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('incident_id'), hideable: true },
+      { key: 'attachments', label: 'Attachments', sortable: false, draggable: true, defaultVisible: true, visible: isColumnVisible('attachments'), hideable: true },
     ];
 
     return [...baseColumns, ...questionColumns, ...endColumns].filter((col) => col.visible);
