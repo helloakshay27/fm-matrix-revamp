@@ -385,7 +385,8 @@ export const EditSlotConfigurationPage = () => {
           />
           <Button
             size="sm"
-            className={`${buttonColorClass} text-white`}
+            className="fm-button-fix fm-button-brand px-4 py-2"
+            variant="ghost"
             onClick={() => handleSlotCountChange(category, type, count + 1)}
           >
             Add
@@ -691,7 +692,8 @@ export const EditSlotConfigurationPage = () => {
           <Button
             onClick={handleSubmit}
             disabled={submitting || !formData.building_id || !formData.floor_id}
-            className="bg-purple-600 hover:bg-purple-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="fm-button-fix fm-button-brand px-4 py-2"
+            variant="ghost"
           >
             {submitting ? 'Updating...' : 'Update'}
           </Button>

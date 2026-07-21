@@ -263,7 +263,7 @@ export const EditEmployeePage = () => {
     file: File | null; 
   }) => (
     <div className="border rounded-lg p-4">
-      <h4 className="font-medium text-blue-600 mb-3">{title}</h4>
+      <h4 className="font-medium text-orange-500 mb-3">{title}</h4>
       <div className="flex items-center gap-2">
         <input
           type="file"
@@ -293,7 +293,8 @@ export const EditEmployeePage = () => {
       </div>
       <Button
         size="sm"
-        className="mt-2 bg-blue-500 hover:bg-blue-600 text-white"
+        className="fm-button-fix fm-button-brand px-4 py-2"
+        variant="ghost"
       >
         <Plus className="w-4 h-4" />
       </Button>
@@ -574,7 +575,8 @@ export const EditEmployeePage = () => {
           <div className="flex justify-center">
             <Button 
               type="submit"
-              className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2"
+              className="fm-button-fix fm-button-brand px-4 py-2"
+              variant="ghost"
             >
               Submit
             </Button>

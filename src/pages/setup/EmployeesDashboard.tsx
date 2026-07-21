@@ -152,7 +152,7 @@ export const EmployeesDashboard = () => {
                       className="p-1"
                       onClick={() => handleEditClick(item)}
                     >
-                      <Edit className="w-4 h-4 text-green-600" />
+                      <Edit className="w-4 h-4 text-black" />
                     </Button>
                   </div>
                 );

@@ -1132,13 +1132,13 @@ import {
   RadioGroup,
   Select,
   TextField,
-  Button,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
 } from "@mui/material";
+import { Button } from "@/components/ui/button";
 import { EditOutlined, Close as CloseIcon } from "@mui/icons-material";
 import { Receipt, Calendar, FileText, CreditCard } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
@@ -2448,35 +2448,18 @@ const NewRecurringExpensePage: React.FC = () => {
         {/* Action Buttons */}
         <div className="flex justify-center gap-4 pt-2 pb-6">
           <Button
-            variant="contained"
             onClick={handleSave}
             disabled={isSubmitting}
-            sx={{
-              textTransform: "none",
-              backgroundColor: "#DA7756",
-              color: "#ffffff",
-              borderRadius: "6px",
-              boxShadow: "none",
-              padding: "8px 24px",
-              fontWeight: 600,
-              "&:hover": { backgroundColor: "#C45F40", boxShadow: "none" },
-            }}
+            className="fm-button-fix fm-button-brand px-4 py-2"
+            variant="ghost"
           >
             {isSubmitting ? "Saving…" : "Save"}
           </Button>
           <Button
-            variant="outlined"
             onClick={handleCancel}
             disabled={isSubmitting}
-            sx={{
-              textTransform: "none",
-              color: "#DA7756",
-              borderColor: "#DA7756",
-              borderRadius: "6px",
-              padding: "8px 24px",
-              fontWeight: 600,
-              "&:hover": { borderColor: "#C45F40", backgroundColor: "transparent" },
-            }}
+            className="fm-button-fix fm-button-brand px-4 py-2"
+            variant="ghost"
           >
             Cancel
           </Button>

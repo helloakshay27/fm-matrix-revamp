@@ -423,7 +423,7 @@ const EditApprovalMatrixPage = () => {
                           <MenuItem key={user.id} value={user.id.toString()}>
                             <Checkbox
                               checked={level.users.includes(user.id.toString())}
-                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                              sx={{ color: '#F97316', '&.Mui-checked': { color: '#F97316' } }}
                             />
                             {user.full_name}
                           </MenuItem>
@@ -441,7 +441,7 @@ const EditApprovalMatrixPage = () => {
                       <Checkbox
                         checked={level.sendEmails}
                         onChange={(e) => updateApprovalLevel(index, 'sendEmails', e.target.checked)}
-                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                        sx={{ color: '#F97316', '&.Mui-checked': { color: '#F97316' } }}
                       />
                     }
                     label="Send Emails"
@@ -469,7 +469,7 @@ const EditApprovalMatrixPage = () => {
             onClick={addApprovalLevel}
             className="bg-[#f6f4ee] hover:bg-[#e8e5dc] text-[#6B2C91] w-12 h-12 rounded-lg p-0"
           >
-            <Plus className="w-6 h-6" />
+            <Plus className="w-6 h-6 text-orange-500" />
           </Button>
         </div>
 
@@ -478,15 +478,16 @@ const EditApprovalMatrixPage = () => {
           <Button
             onClick={handleUpdate}
             disabled={isSubmitting || isLoading}
-            className="bg-[#6B2C91] hover:bg-[#5A2478] text-white px-8 disabled:opacity-50"
+            className="fm-button-fix fm-button-brand px-4 py-2"
+            variant="ghost"
           >
             {isSubmitting ? 'Updating...' : 'Update'}
           </Button>
 
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={() => navigate('/settings/approval-matrix/setup')}
-            className="border-[#6B2C91] text-[#6B2C91] hover:bg-[#6B2C91] hover:text-white px-8"
+            className="fm-button-fix fm-button-brand px-4 py-2"
           >
             Cancel
           </Button>
