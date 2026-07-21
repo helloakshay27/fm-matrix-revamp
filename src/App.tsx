@@ -1226,13 +1226,13 @@ const RideDetail = lazy(() => import("./pages/pulse/RideDetail").then(m => ({ de
 import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
 import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 import { LoginPageWrapper } from "./components/LoginPageWrapper";
-import { AddFacilityType } from "./pages/ClubManagement/Settings/AddFacilityType";
 import { VendorDashboard } from "./pages/vendor/VendorDashboard";
 import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoiceDetails.tsx";
 import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
 import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
 import PATMCeoDashboard from "./pages/PATMCeoDashboard/index.tsx";
 import { EditPaymentPage } from "./pages/PaymentMadeEdit.tsx";
+import PatrollingCheckpointHistoryPage from "./pages/PatrollingCheckpointHistoryPage.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -1784,7 +1784,7 @@ function App() {
                               path="admin/disc-report"
                               element={<DiscReport />}
                             />
-                             <Route
+                            <Route
                               path="admin/business-card-setup"
                               element={<BusinessCardSetupPage />}
                             />
@@ -4422,8 +4422,8 @@ function App() {
                             <Route path="/vendor/other-bills/details/:id" element={<VendorOtherBillDetailPage />} />
                             <Route path="/vendor/permits/details/:id" element={<VendorPermitDetailPage />} />
 
-                            
- <Route path="/vendor/po/details/:id" element={<VendorPODetailPage />} />
+
+                            <Route path="/vendor/po/details/:id" element={<VendorPODetailPage />} />
                             <Route path="/vendor/grn/details/:id" element={<VendorGRNDetailPage />} />
                             <Route path="/vendor/wo/details/:id" element={<VendorWODetailPage />} />
                             <Route path="/vendor/invoice/details/:id" element={<VendorInvoiceDetailPage />} />
@@ -5196,6 +5196,10 @@ function App() {
                             <Route
                               path="/security/patrolling/response/details/:id"
                               element={<PatrollingDetailPage />}
+                            />
+                            <Route
+                              path="/security/patrolling/checkpoints/:checkpointId/history"
+                              element={<PatrollingCheckpointHistoryPage />}
                             />
                             <Route
                               path="/security/staff"
@@ -6759,7 +6763,7 @@ function App() {
                             path="/vi-business-card"
                             element={<ViBusinessCard />}
                           />
-                            <Route
+                          <Route
                             path="/gophygital-business-card"
                             element={<GoPhygitalBusinessCard />}
                           />
