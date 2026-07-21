@@ -1302,7 +1302,7 @@ export const VisitingPurposePage = () => {
               <Button 
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
               >
                 {isSubmitting ? (
                   <>
@@ -1418,7 +1418,7 @@ export const VisitingPurposePage = () => {
               <Button 
                 onClick={handleMoveInOutSubmit}
                 disabled={isSubmittingMoveInOut}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
               >
                 {isSubmittingMoveInOut ? (
                   <>
@@ -1508,7 +1508,7 @@ export const VisitingPurposePage = () => {
               <Button 
                 onClick={handleWorkTypeSubmit}
                 disabled={isSubmittingWorkType}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
               >
                 {isSubmittingWorkType ? (
                   <>
@@ -1582,7 +1582,7 @@ export const VisitingPurposePage = () => {
               <Button 
                 onClick={handleCommentSubmit}
                 disabled={isSubmittingComment}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
               >
                 {isSubmittingComment ? (
                   <>
@@ -1686,7 +1686,7 @@ export const VisitingPurposePage = () => {
             <div className="flex justify-center pt-4">
               <Button 
                 onClick={handleEditSubmit}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
                 disabled={isSubmittingEdit || editingPurposes.every(p => !p.trim())}
               >
                 {isSubmittingEdit ? (

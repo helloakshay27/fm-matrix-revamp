@@ -1095,7 +1095,8 @@ export const IconsDashboard = () => {
               <Button 
                 onClick={handleEditSubmit}
                 disabled={isSubmitting}
-                className="bg-green-500 hover:bg-green-600 text-white px-6"
+                className="fm-button-fix fm-button-brand px-4 py-2"
+                variant="ghost"
               >
                 {isSubmitting ? 'Updating...' : 'Update'}
               </Button>
