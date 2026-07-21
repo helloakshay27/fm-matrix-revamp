@@ -173,7 +173,8 @@ export const SurveyDetailsPage = () => {
         {!loading && snagChecklist && shouldShow("Survey List", "update") && (
           <Button
             onClick={() => navigate(`/maintenance/survey/edit/${id}`)}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+            variant="ghost"
+            className="fm-button-fix fm-button-brand flex items-center gap-2"
           >
             <Edit className="w-4 h-4" />
             Edit Survey

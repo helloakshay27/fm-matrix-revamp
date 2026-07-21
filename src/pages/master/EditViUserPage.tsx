@@ -190,7 +190,7 @@ export const EditViUserPage = () => {
                         className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-[#C72030] to-[#a01828] rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+                      <div className="w-full h-full bg-[#DA7756] rounded-full flex items-center justify-center border-4 border-white shadow-lg">
                         <span className="text-2xl font-bold text-white">
                           {user.firstname?.charAt(0)}
                           {user.lastname?.charAt(0)}
@@ -411,12 +411,14 @@ export const EditViUserPage = () => {
                 variant="outline"
                 onClick={handleCancel}
                 disabled={updateLoading}
+                className="fm-button-fix"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="bg-[#C72030] hover:bg-[#a01828] text-white"
+                variant="ghost"
+                className="fm-button-fix fm-button-brand"
                 disabled={updateLoading}
               >
                 {updateLoading ? (
