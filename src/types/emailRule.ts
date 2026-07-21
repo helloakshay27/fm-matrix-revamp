@@ -13,6 +13,6 @@ export interface EmailRule {
   active: boolean;
 }
 
-export const TRIGGER_TYPES = ['PPM', 'AMC','Asset Breakdown','Asset InUse', 'Asset Breakdown Reminder'] as const;
+export const TRIGGER_TYPES = ['PPM', 'AMC','Asset Breakdown','Asset InUse', 'Asset Breakdown Reminder','AMC Visit Reminder'] as const;
 export const TRIGGER_TO_OPTIONS = ['Site Admin', 'Occupant Admin', 'Supplier'] as const;
 export const PERIOD_TYPES = ['days', 'weeks', 'months'] as const;
