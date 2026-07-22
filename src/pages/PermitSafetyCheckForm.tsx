@@ -146,8 +146,8 @@ const PermitSafetyCheckForm = () => {
             (data.questions || []).forEach((q: any) => {
                 initialAnswers[q.id] = {
                     question_id: q.id,
-                    answer_type: data.answers?.[q.id]?.answer_type || "",
-                    remarks: data.answers?.[q.id]?.remarks || "",
+                    answer_type: "",
+                    remarks: "",
                 };
             });
             setAnswers(initialAnswers);

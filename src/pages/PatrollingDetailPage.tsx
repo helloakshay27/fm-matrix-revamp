@@ -74,6 +74,7 @@ import {
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Type definitions matching the API response
 interface ChecklistData {
@@ -275,6 +276,7 @@ const SortableCheckpointRow: React.FC<SortableCheckpointRowProps> = ({
 export const PatrollingDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [patrolling, setPatrolling] = useState<PatrollingDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("patrol-information");
@@ -937,15 +939,17 @@ export const PatrollingDetailPage: React.FC = () => {
           </div>
 
           <div className="flex gap-2">
-            <Button
-              onClick={handleEdit}
-              variant="outline"
-              size="sm"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
-            </Button>
+            {shouldShow("Patrolling", "update") && (
+              <Button
+                onClick={handleEdit}
+                variant="outline"
+                size="sm"
+                className="border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756]/10"
+              >
+                <Edit className="w-4 h-4 mr-2 text-[#DA7756]" />
+                Edit
+              </Button>
+            )}
             <Button
               onClick={handleDelete}
               variant="outline"

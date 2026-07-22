@@ -58,6 +58,11 @@ import {
     AccordionTrigger,
     AccordionContent,
 } from "@/components/ui/accordion";
+import {
+    bankMasterListUrl,
+    getBankMasterApiConfig,
+    mapApiBankRecord,
+} from "./bankMasterUtils";
 
 
 
@@ -76,6 +81,7 @@ export const QuotesDetails = () => {
     const [showApprovalLog, setShowApprovalLog] = useState(false);
     const [pdfGenerating, setPdfGenerating] = useState(false);
     const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+    const [bankDetail, setBankDetail] = useState(null);
     const quotePdfRef = useRef(null);
 
     const baseUrl = localStorage.getItem("baseUrl");
@@ -94,6 +100,31 @@ export const QuotesDetails = () => {
         document.addEventListener("mousedown", handler);
         return () => document.removeEventListener("mousedown", handler);
     }, []);
+
+    // Resolve the bank selected on the quote, if any
+    useEffect(() => {
+        const fetchBankDetail = async () => {
+            const bankId = quoteData?.bank_master_id || quoteData?.bank_master?.id;
+            if (!bankId) {
+                setBankDetail(null);
+                return;
+            }
+            if (quoteData?.bank_master) {
+                setBankDetail(mapApiBankRecord(quoteData.bank_master));
+                return;
+            }
+            try {
+                const { baseUrl: bmBaseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+                const res = await axios.get(bankMasterListUrl(bmBaseUrl, lockAccountId), { headers });
+                const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+                const found = data.map(mapApiBankRecord).find((b) => String(b.id) === String(bankId));
+                setBankDetail(found || null);
+            } catch (err) {
+                setBankDetail(null);
+            }
+        };
+        fetchBankDetail();
+    }, [quoteData]);
 
     const fetchQuoteDetails = async () => {
         try {
@@ -558,6 +589,13 @@ export const QuotesDetails = () => {
 
                     <div className="grid grid-cols-[1fr_305px]">
                         <div className="p-3 border-r border-gray-500 min-h-[190px]">
+                            {bankDetail && (
+                                <div className="mb-4">
+                                    <p className="font-bold">Bank Details</p>
+                                    <p className="mt-1">{bankDetail.bankName} - A/C {bankDetail.accountNo}</p>
+                                    <p>{bankDetail.beneficiaryName}{bankDetail.ifscCode ? `, IFSC: ${bankDetail.ifscCode}` : ""}{bankDetail.branch ? `, ${bankDetail.branch}` : ""}</p>
+                                </div>
+                            )}
                             <div className="mb-4">
                                 <p className="font-bold">Notes</p>
                                 <p className="whitespace-pre-wrap mt-1">{quoteNotes || "—"}</p>
@@ -1246,6 +1284,43 @@ export const QuotesDetails = () => {
                                 )}
                             </CardContent>
                         </Card>
+
+                        {/* Bank Details */}
+                        {bankDetail && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">Bank Details</CardTitle>
+                                </CardHeader>
+                                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
+                                        <p className="text-sm mt-1">{bankDetail.bankName}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Account Number</p>
+                                        <p className="text-sm mt-1">{bankDetail.accountNo}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Beneficiary / Account Name</p>
+                                        <p className="text-sm mt-1">{bankDetail.beneficiaryName}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">IFSC Code</p>
+                                        <p className="text-sm mt-1">{bankDetail.ifscCode}</p>
+                                    </div>
+                                    {bankDetail.swiftCode && (
+                                        <div>
+                                            <p className="text-sm font-medium text-muted-foreground">Swift Code</p>
+                                            <p className="text-sm mt-1">{bankDetail.swiftCode}</p>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Branch</p>
+                                        <p className="text-sm mt-1">{bankDetail.branch}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
 
                         {/* Notes and Terms */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

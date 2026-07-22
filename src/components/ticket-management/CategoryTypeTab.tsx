@@ -1201,7 +1201,8 @@ export const CategoryTypeTab: React.FC = () => {
                 <Button 
                   onClick={handleCreateSubmit}
                   disabled={isSubmitting}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                 className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                 >
                   {isSubmitting ? 'Saving...' : 'Submit'}
                 </Button>
@@ -1566,7 +1567,8 @@ export const CategoryTypeTab: React.FC = () => {
                 <Button 
                   onClick={() => handleEditSubmit({})}
                   disabled={isSubmitting}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                  className="fm-button-fix fm-button-brand px-4 py-2"
+                  variant="ghost"
                 >
                   {isSubmitting ? 'Updating...' : 'Submit'}
                 </Button>

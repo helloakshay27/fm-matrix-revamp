@@ -351,9 +351,9 @@ export const PatrollingFilterModal = ({ isOpen, onClose, onApply }: PatrollingFi
             >
               Apply Filters
             </Button>
-            <Button 
-              variant="outline"
-              className="px-8 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+            <Button
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2"
               onClick={handleReset}
             >
               Reset

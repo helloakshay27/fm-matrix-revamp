@@ -70,13 +70,10 @@ const MANIPULATIVE_CSS = `
     overflow-x: auto !important;
     width: 100% !important;
     background: #ffffff !important;
-    margin-bottom: 32px !important;
-    border-radius: 12px !important;
-    border: 1px solid rgba(196,184,157,0.45) !important;
-    box-shadow:
-      0 1px 3px rgba(44,44,44,0.06),
-      0 4px 18px rgba(44,44,44,0.05),
-      0 0 0 1px rgba(218,119,86,0.06) !important;
+    margin-bottom: 24px !important;
+    border-radius: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
   }
 
   /* ── Table reset ─────────────────────────────────────────────────── */
@@ -100,13 +97,13 @@ const MANIPULATIVE_CSS = `
   .ptw-mgmt-page .ritz td,
   .ptw-mgmt-page .ritz th {
     font-family: 'Poppins', sans-serif !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     font-weight: 400 !important;
-    color: #3A3530 !important;
+    color: #2C2C2C !important;
     background-color: #ffffff !important;
     vertical-align: top !important;
     padding: 10px 14px !important;
-    border: 1px solid #EDE9E1 !important;
+    border: 1px solid #E5E7EB !important;
     line-height: 1.7 !important;
     white-space: normal !important;
     word-wrap: break-word !important;
@@ -115,15 +112,15 @@ const MANIPULATIVE_CSS = `
 
   /* ── s0  Title bar — warm terracotta gradient ────────────────────── */
   .ptw-mgmt-page .ritz .s0 {
-    background: linear-gradient(135deg, #DA7756 0%, #C9624A 100%) !important;
-    color: #ffffff !important;
-    font-size: 13.5px !important;
+    background-color: #F6F4EE !important;
+    color: #2C2C2C !important;
+    font-size: 15px !important;
     font-weight: 700 !important;
     letter-spacing: 0.02em !important;
     padding: 15px 16px !important;
     vertical-align: middle !important;
     border-bottom: 2px solid rgba(255,255,255,0.15) !important;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.15) !important;
+    text-shadow: none !important;
   }
 
   /* ── s1  Italic subtitle — warm cream with muted text ───────────── */
@@ -166,17 +163,17 @@ const MANIPULATIVE_CSS = `
 
   /* ── s5  Column header — Snag360-style: orange bg, white text ───── */
   .ptw-mgmt-page .ritz .s5 {
-    background-color: #DA7756 !important;
-    color: #ffffff !important;
-    font-weight: 700 !important;
-    font-size: 10.5px !important;
+    background-color: #F6F4EE !important;
+    color: #DA7756 !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.07em !important;
+    letter-spacing: 0.02em !important;
     padding: 11px 14px !important;
     border-bottom: none !important;
     border-top: none !important;
     vertical-align: middle !important;
-    text-shadow: 0 1px 1px rgba(0,0,0,0.12) !important;
+    text-shadow: none !important;
   }
 
   /* ── s6  Alternating row A — warm parchment ─────────────────────── */
@@ -206,12 +203,12 @@ const MANIPULATIVE_CSS = `
 
   /* ── s9  Section header — DARK charcoal + orange left accent ───── */
   .ptw-mgmt-page .ritz .s9 {
-    background-color: #2C2C2C !important;
-    color: #F6F4EE !important;
-    font-weight: 700 !important;
-    font-size: 10.5px !important;
+    background-color: #F6F4EE !important;
+    color: #2C2C2C !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.08em !important;
+    letter-spacing: 0.04em !important;
     padding: 10px 14px 10px 16px !important;
     vertical-align: middle !important;
     border-left: 4px solid #DA7756 !important;
@@ -256,7 +253,7 @@ const MANIPULATIVE_CSS = `
     transition: background-color 0.15s ease !important;
   }
   .ptw-mgmt-page .ritz tbody tr:hover td.s9 {
-    background-color: #3a3a3a !important;
+    background-color: rgba(218,119,86,0.08) !important;
   }
   .ptw-mgmt-page .ritz tbody tr:hover td.s0,
   .ptw-mgmt-page .ritz tbody tr:hover td.s5 {

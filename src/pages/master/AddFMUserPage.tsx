@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getUser } from "@/utils/auth";
 import { useLayout } from "@/contexts/LayoutContext";
@@ -21,7 +21,6 @@ import {
   createFmUser,
   fetchFMUsers,
   fetchRoles,
-  fetchSuppliers,
   fetchUnits,
 } from "@/store/slices/fmUserSlice";
 import { fetchDepartmentData } from "@/store/slices/departmentSlice";
@@ -32,6 +31,7 @@ import { toast } from "sonner";
 import { ticketManagementAPI } from "@/services/ticketManagementAPI";
 import axios from "axios";
 import { DuplicateUserDialog } from "@/components/DuplicateUserDialog";
+import { SupplierSearchSelect } from "@/components/SupplierSearchSelect";
 
 export const AddFMUserPage = () => {
   const dispatch = useAppDispatch();
@@ -45,11 +45,6 @@ export const AddFMUserPage = () => {
     loading,
     error,
   } = useAppSelector((state) => state.entities);
-  const {
-    data: suppliers,
-    loading: suppliersLoading,
-    error: suppliersError,
-  } = useAppSelector((state) => state.fetchSuppliers);
   const {
     data: units,
     loading: unitsLoading,
@@ -116,7 +111,6 @@ export const AddFMUserPage = () => {
       return;
     }
     dispatch(fetchEntities());
-    dispatch(fetchSuppliers({ baseUrl, token }));
     dispatch(fetchUnits({ baseUrl, token }));
     dispatch(fetchDepartmentData());
     dispatch(fetchRoles({ baseUrl, token }));
@@ -176,11 +170,22 @@ export const AddFMUserPage = () => {
     reportsTo: "",
   });
 
+  const [supplierDisplayLabel, setSupplierDisplayLabel] = useState('');
+
   const [duplicateUserDialog, setDuplicateUserDialog] = useState({
     open: false,
     companies: [],
     errorMessage: "",
   });
+
+  const handleSupplierIdChange = useCallback((supplierId: string) => {
+    handleInputChange('supplier', supplierId);
+    if (!supplierId) setSupplierDisplayLabel('');
+  }, []);
+
+  const handleSupplierOptionChange = useCallback((option: { label: string } | null) => {
+    setSupplierDisplayLabel(option?.label ?? '');
+  }, []);
 
   const handleInputChange = (field: string, value: string | string[]) => {
     setFormData((prev) => ({
@@ -613,30 +618,13 @@ export const AddFMUserPage = () => {
 
                 {/* Row 3 */}
                 <div>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Supplier</InputLabel>
-                    <Select
-                      value={formData.supplier}
-                      onChange={(e) =>
-                        handleInputChange("supplier", e.target.value)
-                      }
-                      label="Supplier"
-                      displayEmpty
-                    >
-                      <MenuItem value="">Select Supplier</MenuItem>
-                      {suppliersLoading && (
-                        <MenuItem disabled>Loading...</MenuItem>
-                      )}
-                      {suppliersError && (
-                        <MenuItem disabled>Error: {suppliersError}</MenuItem>
-                      )}
-                      {suppliers?.map((supplier) => (
-                        <MenuItem key={supplier.id} value={supplier.id}>
-                          {supplier.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <SupplierSearchSelect
+                    value={formData.supplier}
+                    onChange={handleSupplierIdChange}
+                    onOptionChange={handleSupplierOptionChange}
+                    size="compact"
+                    label="Supplier"
+                  />
                 </div>
 
                 <div>
@@ -1022,14 +1010,15 @@ export const AddFMUserPage = () => {
               <Button
                 variant="outline"
                 onClick={handleCancel}
-                className="px-8 py-3 text-base font-medium"
+                className="fm-button-fix px-8 py-3 text-base font-medium"
               >
                 Cancel
               </Button>
               <Button
                 disabled={loadingSubmitting}
                 onClick={handleSubmit}
-                className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-none px-8 py-3 text-base font-medium"
+                variant="ghost"
+                className="fm-button-fix fm-button-brand px-8 py-3 text-base font-medium"
               >
                 Submit
               </Button>

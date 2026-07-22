@@ -5,6 +5,7 @@ import { ChevronLeft, Download, Pencil, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { incidentService, type Incident } from '@/services/incidentService';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import ReportStep from './Reportstep';
 import InvestigateStep from './InvestigateStep';
 import ProvisionalStep from './ProvisionalStep';
@@ -97,6 +98,7 @@ export interface IncidentInvestigation {
 export const IncidentNewDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
 
     const [currentStep, setCurrentStep] = useState(1);
     const [incident, setIncident] = useState<Incident | null>(null);
@@ -2354,15 +2356,17 @@ export const IncidentNewDetails = () => {
                         {reportDownloadLoading ? 'Downloading...' : 'Incident Report'}
                     </Button>
 
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/safety/incident/edit/${id}`)}
-                        className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
-                    >
-                        <Pencil className="w-4 h-4" />
-                        Edit
-                    </Button>
+                    {shouldShow("Incident", "update") && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/safety/incident/edit/${id}`)}
+                            className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
+                        >
+                            <Pencil className="w-4 h-4" />
+                            Edit
+                        </Button>
+                    )}
 
                     <Button
                         size="sm"

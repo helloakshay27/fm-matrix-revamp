@@ -33,7 +33,7 @@ export const getGRN = createAsyncThunk(
                 queryParams.append("q[external_id_cont]", grn_number);
             }
             if (po_number) {
-                queryParams.append("q[pms_purchase_order_external_id_eq]", po_number);
+                queryParams.append("q[pms_purchase_order_external_id_cont]", po_number);
             }
             if (supplier_name) {
                 queryParams.append("q[pms_supplier_company_name_cont]", supplier_name);
@@ -42,9 +42,11 @@ export const getGRN = createAsyncThunk(
             if (approval_status) {
                 queryParams.append("q[approve_status_eq]", approval_status);
             }
+            if (search) {
+                queryParams.append("q[pms_purchase_order_external_id_cont]", search);
+            }
             const response = await axios.get(
-                `https://${baseUrl}/pms/grns.json?page=${page}&q[pms_purchase_order_external_id_eq]=${search}${queryParams.toString() ? `&${queryParams}` : ""
-                }`,
+                `https://${baseUrl}/pms/grns.json?page=${page}${queryParams.toString() ? `&${queryParams}` : ""}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,

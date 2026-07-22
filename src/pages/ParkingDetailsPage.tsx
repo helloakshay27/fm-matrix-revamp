@@ -188,8 +188,8 @@ const ParkingDetailsPage = () => {
           <div className="flex gap-3">
             <Button 
               onClick={() => navigate(`/vas/parking/edit/${clientId}`)}
-              style={{ backgroundColor: '#C72030' }} 
-              className="text-white hover:bg-[#C72030]/90"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
               <Edit className="w-4 h-4" />
             </Button>

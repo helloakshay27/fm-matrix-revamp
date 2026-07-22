@@ -1198,6 +1198,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent } from '@mui/material';
 import StatusDropdown from '@/components/StatusDropdown';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Helper Functions
 const formatDate = (dateString: string): string => {
@@ -1230,6 +1231,7 @@ const capitalizeFirstLetter = (string: string) => {
 export const AssetAuditDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
 
   const [loading, setLoading] = useState(true);
   const [auditData, setAuditData] = useState<any>(null);
@@ -1621,6 +1623,7 @@ export const AssetAuditDetailsPage = () => {
                 <Eye className="w-4 h-4 mr-2" /> View Report
               </Button>
             )}
+            {shouldShow("Audit", "update") && (
             <Button
               variant="outline"
               className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
@@ -1652,6 +1655,7 @@ export const AssetAuditDetailsPage = () => {
                 </g>
               </svg>
             </Button>
+            )}
           </div>
         </div>
 

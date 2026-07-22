@@ -15,6 +15,7 @@ import jsPDF from 'jspdf';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import formSchema from './lmc_form.json';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 const columns = [
     { key: 'actions', label: 'Actions', sortable: false },
@@ -157,6 +158,7 @@ const LMCDashboard = () => {
     ];
 
     const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
 
     const downloadPdf = async (row: LMCTableRow) => {
         const baseUrl = localStorage.getItem('baseUrl');
@@ -392,15 +394,17 @@ const LMCDashboard = () => {
         if (columnKey === 'actions') {
             return (
                 <div className="flex gap-1">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        title="View"
-                        onClick={() => navigate(`/safety/m-safe/lmc/${row.id}`, { state: { row } })}
-                    >
-                        <Eye className="h-4 w-4" />
-                    </Button>
+                    {shouldShow("LMC", "show") && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            title="View"
+                            onClick={() => navigate(`/safety/m-safe/lmc/${row.id}`, { state: { row } })}
+                        >
+                            <Eye className="h-4 w-4" />
+                        </Button>
+                    )}
                     {/* <Button
                         variant="ghost"
                         size="sm"
@@ -591,7 +595,8 @@ const LMCDashboard = () => {
                     </Button>
                     <Button
                         onClick={handleApplyFilters}
-                        className="bg-red-500 hover:bg-red-600 text-white"
+                        variant="ghost"
+                        className="fm-button-fix fm-button-brand"
                     >
                         Apply
                     </Button>

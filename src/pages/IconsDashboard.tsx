@@ -618,7 +618,8 @@ export const IconsDashboard = () => {
         <div className="flex items-center gap-3">
           <Button 
             onClick={handleAdd}
-            className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
+           className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add
@@ -947,7 +948,8 @@ export const IconsDashboard = () => {
               <Button 
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="bg-green-500 hover:bg-green-600 text-white px-6"
+               className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
               >
                 {isSubmitting ? 'Creating...' : 'Submit'}
               </Button>
@@ -1093,7 +1095,8 @@ export const IconsDashboard = () => {
               <Button 
                 onClick={handleEditSubmit}
                 disabled={isSubmitting}
-                className="bg-green-500 hover:bg-green-600 text-white px-6"
+                className="fm-button-fix fm-button-brand px-4 py-2"
+                variant="ghost"
               >
                 {isSubmitting ? 'Updating...' : 'Update'}
               </Button>

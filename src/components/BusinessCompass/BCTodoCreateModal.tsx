@@ -22,14 +22,20 @@ interface BCTodoCreateModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess?: () => void;
+    prefilledDate?: string;
+    dateResetKey?: number;
 }
 
-const BCTodoCreateModal = ({ isOpen, onClose, onSuccess }: BCTodoCreateModalProps) => {
+const BCTodoCreateModal = ({ isOpen, onClose, onSuccess, prefilledDate, dateResetKey }: BCTodoCreateModalProps) => {
     const baseURL = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState("")
-    const [date, setDate] = useState(null);
+    const [date, setDate] = useState<string | null>(() => prefilledDate ?? null);
+
+    useEffect(() => {
+        setDate(prefilledDate ?? null);
+    }, [dateResetKey]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [users, setUsers] = useState([]);
@@ -61,9 +67,10 @@ const BCTodoCreateModal = ({ isOpen, onClose, onSuccess }: BCTodoCreateModalProp
     }, [isListening, transcript, activeId, baseValue]);
 
     const priorityOptions = [
-        { value: 'low', label: 'Low' },
-        { value: 'medium', label: 'Medium' },
-        { value: 'high', label: 'High' },
+        { value: 'P1', label: 'Q1: Urgent & Important' },
+        { value: 'P2', label: 'Q2: Important, Not Urgent' },
+        { value: 'P3', label: 'Q3: Urgent, Not Important' },
+        { value: 'P4', label: 'Q4: Not Urgent or Important' },
     ];
 
     useEffect(() => {

@@ -6,6 +6,16 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import axios from 'axios';
 
@@ -39,6 +49,9 @@ const UnitMaster: React.FC = () => {
     const [editOpen, setEditOpen] = useState(false);
     const [editId, setEditId] = useState<number | null>(null);
     const [form, setForm] = useState(emptyForm);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [selectedDeleteUom, setSelectedDeleteUom] = useState<Uom | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     const headers = { Authorization: `Bearer ${token}` };
 
@@ -109,17 +122,27 @@ const UnitMaster: React.FC = () => {
         }
     };
 
-    const handleDelete = async (uom: Uom) => {
-        if (!window.confirm(`Delete "${uom.name}"?`)) return;
+    const openDeleteDialog = (uom: Uom) => {
+        setSelectedDeleteUom(uom);
+        setDeleteDialogOpen(true);
+    };
+
+    const handleDelete = async () => {
+        if (!selectedDeleteUom) return;
+        setDeleteLoading(true);
         try {
             await axios.delete(
-                `https://${baseUrl}/erp_uoms/${uom.id}.json?lock_account_id=${lock_account_id}`,
+                `https://${baseUrl}/erp_uoms/${selectedDeleteUom.id}.json?lock_account_id=${lock_account_id}`,
                 { headers }
             );
             toast.success('UOM deleted successfully');
+            setDeleteDialogOpen(false);
+            setSelectedDeleteUom(null);
             fetchUoms();
         } catch {
             toast.error('Failed to delete UOM');
+        } finally {
+            setDeleteLoading(false);
         }
     };
 
@@ -132,8 +155,8 @@ const UnitMaster: React.FC = () => {
     const handleToggleStatus = async (uom: Uom) => {
         try {
             await axios.patch(
-                `https://${baseUrl}/erp_uoms/${uom.id}.json?lock_account_id=${lock_account_id}`,
-                { erp_uom: { active: !uom.active } },
+                `https://${baseUrl}/erp_uoms/${uom.id}/toggle_active.json?lock_account_id=${lock_account_id}`,
+                null,
                 { headers }
             );
             toast.success('Status updated successfully');
@@ -149,7 +172,7 @@ const UnitMaster: React.FC = () => {
                 <Button size="icon" variant="ghost" onClick={() => openEdit(uom)} title="Edit">
                     <Edit className="w-4 h-4" />
                 </Button>
-                <Button size="icon" variant="ghost" onClick={() => handleDelete(uom)} title="Delete">
+                <Button size="icon" variant="ghost" onClick={() => openDeleteDialog(uom)} title="Delete">
                     <Trash2 className="w-4 h-4 text-red-500" />
                 </Button>
             </div>
@@ -158,11 +181,22 @@ const UnitMaster: React.FC = () => {
         name: <span>{uom.name}</span>,
         short_name: <span>{uom.short_name}</span>,
         status: (
-            <div
-                className={`relative inline-flex items-center h-6 w-11 rounded-full cursor-pointer transition-colors ${uom.active ? 'bg-green-500' : 'bg-gray-300'}`}
-                onClick={() => handleToggleStatus(uom)}
-            >
-                <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${uom.active ? 'translate-x-6' : 'translate-x-1'}`} />
+            <div className="flex items-center gap-3">
+                <button
+                    type="button"
+                    onClick={() => handleToggleStatus(uom)}
+                    className={`status-toggle relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${uom.active ? 'bg-red-500' : 'bg-gray-300'}`}
+                >
+                    <span
+                        className={`status-toggle-thumb inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${uom.active ? 'translate-x-6' : 'translate-x-1'}`}
+                    />
+                </button>
+
+                <span
+                    className={`text-sm font-medium ${uom.active ? 'text-red-600' : 'text-red-600'}`}
+                >
+                    {/* {uom.active ? 'Active' : 'Inactive'} */}
+                </span>
             </div>
         ),
     });
@@ -196,7 +230,7 @@ const UnitMaster: React.FC = () => {
                 <h1 className="text-2xl font-bold tracking-tight">Unit of Measurement</h1>
             </header>
 
-            <div className="[&_*]:!rounded-none [&_.rounded-lg]:!rounded-none [&_.rounded-md]:!rounded-none [&_.rounded]:!rounded-none">
+            <div className="[&_*:not(.status-toggle):not(.status-toggle-thumb)]:!rounded-none [&_.rounded-lg]:!rounded-none [&_.rounded-md]:!rounded-none [&_.rounded]:!rounded-none">
                 <EnhancedTaskTable
                     data={uoms}
                     columns={columns}
@@ -233,6 +267,33 @@ const UnitMaster: React.FC = () => {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => {
+                setDeleteDialogOpen(open);
+                if (!open) setSelectedDeleteUom(null);
+            }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete UOM</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to delete {selectedDeleteUom?.name ?? 'this UOM'}? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                handleDelete();
+                            }}
+                            disabled={deleteLoading}
+                            style={{ backgroundColor: '#dc2626', color: '#ffffff', border: 'none' }}
+                        >
+                            {deleteLoading ? 'Deleting...' : 'Delete'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             {/* Edit Modal */}
             <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) { setForm(emptyForm); setEditId(null); } }}>

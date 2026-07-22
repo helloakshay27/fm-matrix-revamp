@@ -110,7 +110,7 @@ interface EnhancedTableProps<T> {
   data: T[];
   columns: ColumnConfig[];
   renderCell?: (item: T, columnKey: string) => React.ReactNode;
-  renderRow?: (item: T) => Record<string, any>;
+  renderRow?: (item: T, index: number) => Record<string, any>;
   renderActions?: (item: T) => React.ReactNode;
   onRowClick?: (item: T) => void;
   storageKey?: string;
@@ -559,7 +559,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                         ? handleExport(columnVisibility)
                         : exportToExcel(
                             filteredData,
-                            visibleColumns,
+                            visibleColumns.filter(col => col.key !== 'action' && col.key !== 'actions'),
                             exportFileName
                           )
               }
@@ -738,7 +738,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                         )}
                         {visibleColumns.map((column) => {
                           const renderedRow = renderRow
-                            ? renderRow(item)
+                            ? renderRow(item, index)
                             : item;
                           const cellContent = renderRow
                             ? renderedRow[column.key]

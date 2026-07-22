@@ -40,6 +40,12 @@ import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail
 import axios from 'axios';
 import { toast } from "sonner";
 import { format, parseISO } from 'date-fns';
+import {
+    BankRecord,
+    bankMasterListUrl,
+    getBankMasterApiConfig,
+    mapApiBankRecord,
+} from './bankMasterUtils';
 
 // Zoho-style item search input with dropdown
 const ItemSearchInput: React.FC<{
@@ -462,6 +468,7 @@ export const QuotesEdit: React.FC = () => {
                     setExpectedShipmentDate(data.expiry_date || data.expected_shipment_date || '');
                     setCustomerNotes(data.customer_notes || '');
                     setTermsAndConditions(data.terms_and_conditions || '');
+                    setSelectedBankId(data.bank_master_id ? String(data.bank_master_id) : (data.bank_master?.id ? String(data.bank_master.id) : ''));
                     
                     if (data.customer) {
                         setSelectedCustomer({
@@ -989,6 +996,24 @@ export const QuotesEdit: React.FC = () => {
     const [termsAndConditions, setTermsAndConditions] = useState('');
     const [attachments, setAttachments] = useState<File[]>([]);
     const [displayAttachmentsInPortal, setDisplayAttachmentsInPortal] = useState(false);
+
+    // Bank Details
+    const [bankOptions, setBankOptions] = useState<BankRecord[]>([]);
+    const [selectedBankId, setSelectedBankId] = useState<string>('');
+
+    useEffect(() => {
+        const fetchBanks = async () => {
+            try {
+                const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+                const res = await axios.get(`${bankMasterListUrl(baseUrl, lockAccountId)}&active=true`, { headers });
+                const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+                setBankOptions(data.map(mapApiBankRecord));
+            } catch (err) {
+                setBankOptions([]);
+            }
+        };
+        fetchBanks();
+    }, []);
 
     // Email Communications
     const [sendEmailToCustomer, setSendEmailToCustomer] = useState(false);
@@ -1567,6 +1592,13 @@ export const QuotesEdit: React.FC = () => {
             return false;
         }
 
+        if (!selectedBankId) {
+            newErrors.bank = 'Bank is required';
+            setErrors(newErrors);
+            toast.error('Please select a bank');
+            return false;
+        }
+
         if (!salesOrderDate) {
             // newErrors.salesOrderDate = 'Sales order date is required';
             setErrors(newErrors);
@@ -1698,6 +1730,7 @@ export const QuotesEdit: React.FC = () => {
             formData.append('lock_account_quote[expiry_date]', expectedShipmentDate);
             formData.append('lock_account_quote[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
             formData.append('lock_account_quote[customer_notes]', customerNotes);
+            formData.append('lock_account_quote[bank_master_id]', selectedBankId || '');
             formData.append('lock_account_quote[terms_and_conditions]', termsAndConditions);
             formData.append('lock_account_quote[subject]', subject);
             // formData.append('lock_account_quote[status]', 'draft');
@@ -2670,6 +2703,45 @@ export const QuotesEdit: React.FC = () => {
                     />
                     <div className="text-xs text-gray-400 text-right mt-1">
                         {(customerNotes?.length || 0)}/500
+                    </div>
+
+                    <div className="mt-4 w-1/2">
+                        <label className="block text-sm font-medium mb-2">
+                            Bank<span className="text-red-500">*</span>
+                        </label>
+                        <FormControl fullWidth size="small" error={!!errors.bank}>
+                            <Select
+                                displayEmpty
+                                value={selectedBankId}
+                                onChange={(e) => {
+                                    setSelectedBankId(String(e.target.value));
+                                    if (errors.bank) {
+                                        setErrors((prev) => {
+                                            const next = { ...prev };
+                                            delete next.bank;
+                                            return next;
+                                        });
+                                    }
+                                }}
+                                renderValue={(val) =>
+                                    val
+                                        ? (() => {
+                                            const bank = bankOptions.find(b => String(b.id) === String(val));
+                                            return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
+                                        })()
+                                        : <span style={{ color: '#aaa' }}>Select Bank</span>
+                                }
+                                sx={fieldStyles}
+                            >
+                                <MenuItem value=""><em>Select Bank</em></MenuItem>
+                                {bankOptions.map((bank) => (
+                                    <MenuItem key={bank.id} value={String(bank.id)}>
+                                        {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        {errors.bank && <p className="text-xs text-red-500 mt-1">{errors.bank}</p>}
                     </div>
                 </Section>
 

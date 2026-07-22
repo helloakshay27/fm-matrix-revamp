@@ -90,7 +90,7 @@ export const EditLeadModal = ({ isOpen, onClose, onSave, leadData }: EditLeadMod
           <div className="flex justify-center pt-4">
             <Button 
               onClick={handleSave}
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 h-10 text-sm font-medium rounded-sm"
+              className="!bg-[#DA7756] hover:!bg-[#C45F40] text-white px-8 py-2 h-10 text-sm font-medium rounded-sm"
             >
               Save
             </Button>

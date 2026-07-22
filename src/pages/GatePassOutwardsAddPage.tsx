@@ -499,15 +499,15 @@ export const GatePassOutwardsAddPage = () => {
           >
             <span className="text-sm font-medium text-gray-700 mr-4 self-center">Returnable Status:</span>
             <FormControlLabel value="returnable" control={<Radio sx={{
-              color: '#C72030',
+              color: '#F97316',
               '&.Mui-checked': {
-                color: '#C72030',
+                color: '#F97316',
               },
             }} />} label="Returnable" />
             <FormControlLabel value="non-returnable" control={<Radio sx={{
-              color: '#C72030',
+              color: '#F97316',
               '&.Mui-checked': {
-                color: '#C72030',
+                color: '#F97316',
               },
             }} />} label="Non-Returnable" />
           </RadioGroup>
@@ -1014,25 +1014,13 @@ export const GatePassOutwardsAddPage = () => {
             </div>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <MuiButton
-              variant="outlined"
+            <Button
               onClick={() => fileInputRef.current?.click()}
-              sx={{
-                borderColor: '#C72030',
-                color: '#C72030',
-                textTransform: 'none',
-                fontFamily: 'Work Sans, sans-serif',
-                fontWeight: 500,
-                borderRadius: '0',
-                padding: '8px 16px',
-                '&:hover': {
-                  borderColor: '#B8252F',
-                  backgroundColor: 'rgba(199, 32, 48, 0.04)',
-                },
-              }}
+              className="fm-button-fix fm-button-brand px-4 py-2"
+              variant="ghost"
             >
               Add Attachment
-            </MuiButton>
+            </Button>
             <input
               type="file"
               ref={fileInputRef}

@@ -231,7 +231,8 @@ export const DepartmentDashboard = () => {
                     <div className="flex justify-end">
                       <Button
                         onClick={handleSubmit}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6 w-full sm:w-auto"
+                        className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                       >
                         Submit
                       </Button>

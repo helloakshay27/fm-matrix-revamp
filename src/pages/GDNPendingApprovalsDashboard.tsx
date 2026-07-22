@@ -16,6 +16,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface GDNPendingApproval {
   gdnId: number;
@@ -108,6 +109,7 @@ const getPaginationFromResponse = (
 
 export const GDNPendingApprovalsDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [pendingApprovalsData, setPendingApprovalsData] = useState<
     GDNPendingApproval[]
   >([]);
@@ -192,14 +194,18 @@ export const GDNPendingApprovalsDashboard = () => {
   };
 
   const renderActions = (item: GDNPendingApproval) => (
-    <Button
-      size="sm"
-      variant="ghost"
-      className="p-1"
-      onClick={() => handleView(item)}
-    >
-      <Eye className="h-4 w-4" />
-    </Button>
+    <>
+      {shouldShow("GDN", "show") && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={() => handleView(item)}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      )}
+    </>
   );
 
   const handlePageChange = (page: number) => {

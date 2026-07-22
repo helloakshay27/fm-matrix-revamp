@@ -564,9 +564,10 @@ export const AddSlotConfigurationPage = () => {
         {/* Action Buttons */}
         <div className="flex justify-center items-center gap-4">
           <Button
+            variant="outline"
             onClick={handleSubmit}
             disabled={submitting || !formData.building_id || !formData.floor_id}
-            className="bg-purple-600 hover:bg-purple-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="fm-button-fix fm-button-brand disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? 'Creating...' : 'Submit'}
           </Button>
@@ -574,6 +575,7 @@ export const AddSlotConfigurationPage = () => {
             variant="outline"
             onClick={handleCancel}
             disabled={submitting}
+            className="fm-button-fix fm-button-brand"
           >
             Cancel
           </Button>

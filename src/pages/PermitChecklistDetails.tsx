@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Edit, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { toast as sonnerToast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface ChecklistQuestion {
     id: number;
@@ -31,6 +32,7 @@ export const PermitChecklistDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { toast } = useToast();
+    const { shouldShow } = useDynamicPermissions();
 
     const [checklistDetails, setChecklistDetails] = useState<ChecklistDetails | null>(null);
     const [loading, setLoading] = useState(true);
@@ -333,12 +335,14 @@ export const PermitChecklistDetails = () => {
                     </Button>
                     <h1 className="text-xl font-semibold text-gray-900">DETAILS</h1>
                 </div>
-                <Button
-                    onClick={handleEdit}
-                    className="border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-3 py-2 h-8 text-sm flex items-center gap-2 rounded-md transition-all"
-                >
-                    <Edit className="w-4 h-4" />
-                </Button>
+                {shouldShow("Permit Checklist", "update") && (
+                    <Button
+                        onClick={handleEdit}
+                        className="border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-3 py-2 h-8 text-sm flex items-center gap-2 rounded-md transition-all"
+                    >
+                        <Edit className="w-4 h-4" />
+                    </Button>
+                )}
             </div>
 
             {/* Main Card */}

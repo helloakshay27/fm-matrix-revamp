@@ -152,7 +152,7 @@ export const EmployeesDashboard = () => {
                       className="p-1"
                       onClick={() => handleEditClick(item)}
                     >
-                      <Edit className="w-4 h-4 text-green-600" />
+                      <Edit className="w-4 h-4 text-black" />
                     </Button>
                   </div>
                 );
@@ -167,7 +167,8 @@ export const EmployeesDashboard = () => {
           leftActions={
             <Button
               onClick={handleAddClick}
-              className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg"
+             className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
             >
               <Plus className="w-4 h-4" />
               Add

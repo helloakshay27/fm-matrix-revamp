@@ -63,8 +63,8 @@ interface SprintMemberModalProps {
   onClose: () => void;
   membersSummary: MemberSummary[];
   membersLoading: boolean;
-  onFilterTask: (memberId: number) => void;
-  onFilterIssue: (memberId: number) => void;
+  onFilterTask: (memberId: number, status?: string) => void;
+  onFilterIssue: (memberId: number, status?: string) => void;
 }
 
 export default function SprintMemberModal({
@@ -139,7 +139,7 @@ export default function SprintMemberModal({
                   <th
                     rowSpan={2}
                     className="bg-[#f5f5dc] text-black text-left px-2 py-2 font-semibold text-xs tracking-wide border-r border-slate-300 align-middle"
-                    style={{ minWidth: 140 }}
+                    style={{ width: 200, maxWidth: 300 }}
                   >
                     Member
                   </th>
@@ -213,8 +213,11 @@ export default function SprintMemberModal({
                     className={`border-b border-slate-100 transition-colors hover:bg-slate-50/70 ${i % 2 === 0 ? "bg-white" : "bg-slate-50/40"}`}
                   >
                     {/* Member */}
-                    <td className="px-2 py-2 border-r border-slate-100">
-                      <div className="flex items-center gap-2">
+                    <td
+                      className="px-2 py-2 border-r border-slate-100 overflow-hidden"
+                      style={{ width: 200, maxWidth: 300 }}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
                         <div
                           className="w-8 h-8 rounded-full flex items-center !justify-center text-white text-[11px] font-bold shrink-0 select-none"
                           style={{
@@ -224,9 +227,12 @@ export default function SprintMemberModal({
                         >
                           {getInitials(m.member_name)}
                         </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <p className="text-[13px] font-semibold text-gray-800 truncate">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <p
+                              className="text-[13px] font-semibold text-gray-800 truncate min-w-0"
+                              title={m.member_name}
+                            >
                               {m.member_name}
                             </p>
                             {m.department_name && (
@@ -235,7 +241,10 @@ export default function SprintMemberModal({
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-gray-400 truncate">
+                          <p
+                            className="text-[11px] text-gray-400 truncate"
+                            title={m.email}
+                          >
                             {m.email}
                           </p>
                         </div>
@@ -267,7 +276,7 @@ export default function SprintMemberModal({
                           </td>
                           <td
                             className="px-1.5 py-2 text-center border-r border-slate-300 cursor-pointer hover:bg-blue-50"
-                            onClick={() => onFilterTask(m.member_id)}
+                            onClick={() => onFilterTask(m.member_id, "completed")}
                           >
                             <span className="text-[13px] font-semibold text-blue-600">
                               {m.completed_tasks}
@@ -308,7 +317,7 @@ export default function SprintMemberModal({
                           </td>
                           <td
                             className="px-1.5 py-2 text-center border-r border-slate-300 cursor-pointer hover:bg-blue-50"
-                            onClick={() => onFilterIssue(m.member_id)}
+                            onClick={() => onFilterIssue(m.member_id, "completed")}
                           >
                             <span className="text-[13px] font-semibold text-blue-600">
                               {m.completed_issues}

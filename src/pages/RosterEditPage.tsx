@@ -77,6 +77,7 @@ interface RosterFormData {
   departments: number[];
   shift: number | null;
   selectedEmployees: number[];
+  approverIds: number[];
   rosterType: "Permanent";
   active: boolean;
 }
@@ -103,6 +104,7 @@ export const RosterEditPage: React.FC = () => {
     departments: [],
     shift: null,
     selectedEmployees: [],
+    approverIds: [],
     rosterType: "Permanent",
     active: true,
   });
@@ -124,6 +126,8 @@ export const RosterEditPage: React.FC = () => {
   // Data states
   const [fmUsers, setFMUsers] = useState<FMUser[]>([]);
   const [filteredFMUsers, setFilteredFMUsers] = useState<FMUser[]>([]);
+  const [approverUsers, setApproverUsers] = useState<FMUser[]>([]);
+  const [loadingApproverUsers, setLoadingApproverUsers] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [currentLocation, setCurrentLocation] = useState<string>("");
@@ -167,6 +171,7 @@ export const RosterEditPage: React.FC = () => {
       fetchDepartments();
       fetchShifts();
       fetchCurrentLocation();
+      fetchApproverUsers();
     }
   }, [id]);
 
@@ -268,8 +273,17 @@ export const RosterEditPage: React.FC = () => {
             ? [Number(r.resource_id)]
             : [];
 
+      // Map approvers from the API response
+      const approverIds =
+        r.approvers && Array.isArray(r.approvers)
+          ? r.approvers.map((a: any) => (typeof a === "object" ? a.id : Number(a)))
+          : r.approver_ids && Array.isArray(r.approver_ids)
+            ? r.approver_ids.map(Number)
+            : [];
+
       console.log("🏢 Mapped Departments:", departments);
       console.log("👥 Mapped Employees:", selectedEmployees);
+      console.log("✅ Mapped Approvers:", approverIds);
       console.log("📊 Original departments data:", r.departments);
       console.log("📊 Original employees data:", r.employees);
 
@@ -282,6 +296,7 @@ export const RosterEditPage: React.FC = () => {
         departments,
         shift: r.user_shift_id ? Number(r.user_shift_id) : null,
         selectedEmployees,
+        approverIds,
         rosterType: r.allocation_type || "Permanent",
         active: r.active !== undefined ? r.active : true,
       });
@@ -490,6 +505,37 @@ export const RosterEditPage: React.FC = () => {
     }
   };
 
+  const fetchApproverUsers = async () => {
+    const siteId = selectedSite?.id || localStorage.getItem("selectedSiteId");
+    if (!siteId) return;
+    setLoadingApproverUsers(true);
+    try {
+      const apiUrl = `${API_CONFIG.BASE_URL}/pms/admin/user_roasters/approver_users?site_id=${siteId}`;
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+      });
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      const users = Array.isArray(data) ? data : data.users || data.fm_users || [];
+      setApproverUsers(
+        users.map((user: { id: number; name?: string; email?: string }) => ({
+          id: user.id,
+          name: user.name || "",
+          email: user.email || "",
+        }))
+      );
+    } catch (error) {
+      console.error("Error fetching approver users:", error);
+    } finally {
+      setLoadingApproverUsers(false);
+    }
+  };
+
   // Handle day type selection
   const handleDayTypeChange = (type: "Weekdays" | "Weekends" | "Recurring") => {
     setFormData((prev) => ({
@@ -618,13 +664,14 @@ export const RosterEditPage: React.FC = () => {
   const handleInputChange = (field: keyof RosterFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-    // If departments are being changed, fetch filtered users and clear selected employees
+    // If departments are being changed, fetch filtered users and clear selected employees/approvers
     if (field === "departments") {
       const departmentIds = value as number[];
       setFormData((prev) => ({
         ...prev,
         [field]: departmentIds,
         selectedEmployees: [],
+        approverIds: [],
       }));
       fetchFilteredFMUsers(departmentIds);
     }
@@ -735,6 +782,7 @@ export const RosterEditPage: React.FC = () => {
         user_roaster: {
           ...baseUserRoaster,
           ...commonDateFields,
+          approver_ids: formData.approverIds.join(","),
         },
         department_id: formData.departments.map(String),
         no_of_days: "",
@@ -1476,6 +1524,93 @@ export const RosterEditPage: React.FC = () => {
                 </p>
               </div>
             )}
+
+            {/* Approvers Dropdown */}
+            <div className="relative lg:col-span-2">
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ "& .MuiInputBase-root": fieldStyles }}
+              >
+                <InputLabel shrink>Approvers</InputLabel>
+                <MuiSelect
+                  multiple
+                  value={formData.approverIds}
+                  onChange={(e) =>
+                    handleInputChange(
+                      "approverIds",
+                      e.target.value as number[]
+                    )
+                  }
+                  input={<OutlinedInput notched label="Approvers" />}
+                  renderValue={(selected) => {
+                    const selectedArray = selected as number[];
+                    if (selectedArray.length === 0) return "";
+                    if (selectedArray.length === 1) {
+                      const user = approverUsers.find(
+                        (u) => u.id === selectedArray[0]
+                      );
+                      return user?.name || `User ${selectedArray[0]}`;
+                    }
+                    if (selectedArray.length <= 3) {
+                      return selectedArray
+                        .map((value) => {
+                          const user = approverUsers.find(
+                            (u) => u.id === value
+                          );
+                          return user?.name || `User ${value}`;
+                        })
+                        .join(", ");
+                    }
+                    return `${selectedArray.length} approvers selected`;
+                  }}
+                  displayEmpty
+                  disabled={loadingApproverUsers || isSubmitting}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                        overflow: "auto",
+                      },
+                    },
+                  }}
+                >
+                  {approverUsers.length > 0 ? (
+                    approverUsers.map((user) => (
+                      <MenuItem key={user.id} value={user.id}>
+                        <Checkbox
+                          checked={
+                            formData.approverIds.indexOf(user.id) > -1
+                          }
+                          sx={{
+                            color: "#D5DbDB",
+                            "&.Mui-checked": {
+                              color: "#C72030",
+                            },
+                          }}
+                        />
+                        <ListItemText
+                          primary={user.name || "No name available"}
+                          // secondary={user.email}
+                        />
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled>
+                      <ListItemText
+                        primary="No approvers available"
+                        sx={{ fontStyle: "italic", color: "#9ca3af" }}
+                      />
+                    </MenuItem>
+                  )}
+                </MuiSelect>
+                {loadingApproverUsers && (
+                  <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+                    <CircularProgress size={16} />
+                  </div>
+                )}
+              </FormControl>
+            </div>
           </div>
         </Section>
 

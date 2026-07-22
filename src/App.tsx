@@ -216,6 +216,7 @@ const PermitChecklistList = lazy(() => import("./pages/PermitChecklistList").the
 const PermitChecklistDetails = lazy(() => import("./pages/PermitChecklistDetails").then(m => ({ default: m.PermitChecklistDetails })));
 const EditPermitChecklist = lazy(() => import("./pages/EditPermitCheklist").then(m => ({ default: m.EditPermitChecklist })));
 const CompanySetup = lazy(() => import("./pages/CompanySetup"));
+const BusinessCardSetupPage = lazy(() => import("./pages/admin/BusinessCardSetupPage"));
 const EmployeeOfTheMonthSetup = lazy(() => import("./pages/EmployeeOfTheMonthSetup"));
 const AnnouncementsSetup = lazy(() => import("./pages/AnnouncementsSetup"));
 const TeamSetup = lazy(() => import("./pages/settings/company-hub/team-setup"));
@@ -916,6 +917,7 @@ const AddAddressMaster = lazy(() => import("./pages/master/AddAddressMaster"));
 const EditAddressMaster = lazy(() => import("./pages/master/EditAddressMaster"));
 const MobileLMCPage = lazy(() => import("./pages/MobileLMCPage"));
 const ViBusinessCard = lazy(() => import("./pages/mobile/ViBusinessCard").then(m => ({ default: m.ViBusinessCard })));
+const GoPhygitalBusinessCard = lazy(() => import("./pages/mobile/GoPhygitalBusinessCard").then(m => ({ default: m.GoPhygitalBusinessCard })));
 const CompanyPartnersSetupDashboard = lazy(() => import("./pages/CompanyPartnersSetupDashboard").then(m => ({ default: m.CompanyPartnersSetupDashboard })));
 const TestimonialsSetupDashboard = lazy(() => import("./pages/TestimonialsSetupDashboard").then(m => ({ default: m.TestimonialsSetupDashboard })));
 const BannerListPage = lazy(() => import("./pages/BannerListPage"));
@@ -1230,6 +1232,13 @@ import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
 import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
 import PATMCeoDashboard from "./pages/PATMCeoDashboard/index.tsx";
 import { EditPaymentPage } from "./pages/PaymentMadeEdit.tsx";
+import SalesBySalesPersonDetails from "./pages/SalesBySalesPersonDetails.tsx";
+import BusinessCompassTasksPage from "./pages/BusinessCompass/BusinessCompassTasksPage.tsx";
+import BusinessCompassTaskDetailsPage from "./pages/BusinessCompass/BusinessCompassTaskDetailsPage.tsx";
+import BusinessCompassIssuesPage from "./pages/BusinessCompass/BusinessCompassIssuesPage.tsx";
+import BusinessCompassIssueDetailsPage from "./pages/BusinessCompass/BusinessCompassIssueDetailsPage.tsx";
+import BusinessCompassTodoPage from "./pages/BusinessCompass/BusinessCompassTodoPage.tsx";
+import PatrollingCheckpointHistoryPage from "./pages/PatrollingCheckpointHistoryPage.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -1265,6 +1274,9 @@ const TaxRateSetupPage = lazy(() => import("./pages/ClubManagement/TaxRateSetupP
 const DefaultTaxPreferencesPage = lazy(() => import("./pages/ClubManagement/DefaultTaxPreferencesPage"));
 const SalesPersonMaster = lazy(() => import("./pages/ClubManagement/SalesPersonMaster"));
 const PaymentTermsMaster = lazy(() => import("./pages/ClubManagement/PaymentTermsMaster"));
+const BankMaster = lazy(() => import("./pages/ClubManagement/BankMaster"));
+const BankMasterAdd = lazy(() => import("./pages/ClubManagement/BankMasterAdd"));
+const BankMasterEdit = lazy(() => import("./pages/ClubManagement/BankMasterEdit"));
 const UomMasterPage = lazy(() => import("./pages/ClubManagement/UnitMaster").then(m => ({ default: m.UnitMaster })));
 const CustomersDetails = lazy(() => import("./pages/ClubManagement/CustomersDetails").then(m => ({ default: m.CustomersDetails })));
 const BillsAdd = lazy(() => import("./pages/ClubManagement/BillsAdd").then(m => ({ default: m.BillsAdd })));
@@ -1775,6 +1787,10 @@ function App() {
                               path="admin/disc-report"
                               element={<DiscReport />}
                             />
+                            <Route
+                              path="admin/business-card-setup"
+                              element={<BusinessCardSetupPage />}
+                            />
 
                             <Route
                               path="master/user/fm-users"
@@ -2282,23 +2298,23 @@ function App() {
                           /> */}
                             <Route
                               path="/business-compass/tasks"
-                              element={<ProjectTasksPage />}
+                              element={<BusinessCompassTasksPage />}
                             />
                             <Route
                               path="/business-compass/tasks/:taskId"
-                              element={<ProjectTaskDetails />}
+                              element={<BusinessCompassTaskDetailsPage />}
                             />
                             <Route
                               path="/business-compass/issues"
-                              element={<IssuesListPage />}
+                              element={<BusinessCompassIssuesPage />}
                             />
                             <Route
                               path="/business-compass/issues/:id"
-                              element={<IssueDetailsPage />}
+                              element={<BusinessCompassIssueDetailsPage />}
                             />
                             <Route
                               path="/business-compass/todo"
-                              element={<Todo />}
+                              element={<BusinessCompassTodoPage />}
                             />
                             <Route
                               path="/business-compass/channels"
@@ -2690,15 +2706,15 @@ function App() {
                             />
                             <Route
                               path="/crm/broadcast"
-                              element={<BroadcastDashboard />}
+                              element={(hostname === "vi-web.gophygital.work" || hostname === "localhost") ? <ClubBroadcastDashboard /> : <BroadcastDashboard />}
                             />
                             <Route
                               path="/crm/broadcast/add"
-                              element={<AddBroadcastPage />}
+                              element={(hostname === "vi-web.gophygital.work" || hostname === "localhost") ? <AddClubBroadcastPage /> : <AddBroadcastPage />}
                             />
                             <Route
                               path="/crm/broadcast/details/:id"
-                              element={<BroadcastDetailsPage />}
+                              element={(hostname === "vi-web.gophygital.work" || hostname === "localhost") ? <ClubBroadcastDetailsPage /> : <BroadcastDetailsPage />}
                             />
                             <Route path="/crm/polls" element={<CRMPollsPage />} />
                             <Route
@@ -3219,6 +3235,18 @@ function App() {
                               element={<SalesBySalesPersonReport />}
                             />
                             <Route
+                              path="/accounting/reports/sales-by-sales-person/details"
+                              element={<SalesBySalesPersonDetails />}
+                            />
+                            <Route
+                              path="/reports/sales-by-sp"
+                              element={<SalesBySalesPersonReport />}
+                            />
+                            <Route
+                              path="/reports/sales-details-by-sp"
+                              element={<SalesBySalesPersonDetails />}
+                            />
+                            <Route
                               path="/accounting/reports/sales-summary"
                               element={<SalesSummaryReport />}
                             />
@@ -3688,6 +3716,18 @@ function App() {
                             <Route
                               path="/accounting/payment-terms"
                               element={<PaymentTermsMaster />}
+                            />
+                            <Route
+                              path="/accounting/bank-master"
+                              element={<BankMaster />}
+                            />
+                            <Route
+                              path="/accounting/bank-master/add"
+                              element={<BankMasterAdd />}
+                            />
+                            <Route
+                              path="/accounting/bank-master/edit/:id"
+                              element={<BankMasterEdit />}
                             />
                             <Route
                               path="/accounting/uom-master"
@@ -5193,6 +5233,10 @@ function App() {
                             <Route
                               path="/security/patrolling/response/details/:id"
                               element={<PatrollingDetailPage />}
+                            />
+                              <Route
+                              path="/security/patrolling/checkpoints/:checkpointId/history"
+                              element={<PatrollingCheckpointHistoryPage />}
                             />
                             <Route
                               path="/security/staff"
@@ -6755,6 +6799,10 @@ function App() {
                           <Route
                             path="/vi-business-card"
                             element={<ViBusinessCard />}
+                          />
+                          <Route
+                            path="/gophygital-business-card"
+                            element={<GoPhygitalBusinessCard />}
                           />
 
                           {/* Quick Links Routes */}

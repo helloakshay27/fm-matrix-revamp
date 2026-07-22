@@ -227,15 +227,17 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
             </div>
 
             <div className="flex gap-2 ml-auto">
-              <Button 
+              <Button
                 onClick={handleApply}
-                className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 text-white px-6 py-2 h-9"
+                variant="ghost"
+                className="fm-button-fix fm-button-brand px-4 py-2 h-9"
               >
                 Apply
               </Button>
-              <Button 
+              <Button
                 onClick={handleReset}
-                className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 text-white px-6 py-2 h-9"
+                variant="ghost"
+                className="fm-button-fix fm-button-brand px-4 py-2 h-9"
               >
                 Reset
               </Button>

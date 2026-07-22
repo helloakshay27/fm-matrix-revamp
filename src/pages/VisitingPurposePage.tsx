@@ -960,7 +960,8 @@ export const VisitingPurposePage = () => {
               {activeTab === 'Visit Purpose' && shouldShow("Visiting Purpose","create")&&(
                 <Button 
                   onClick={handleAddPurpose}
-                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                 className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Purpose
@@ -970,7 +971,8 @@ export const VisitingPurposePage = () => {
               {activeTab === 'Move In/Out' && shouldShow("Visiting Purpose","create")&&(
                 <Button 
                   onClick={handleMoveInOut}
-                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                  className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Move In/Out
@@ -980,7 +982,8 @@ export const VisitingPurposePage = () => {
               {activeTab === 'Work Type' && shouldShow("Visiting Purpose","create")&&(
                 <Button 
                   onClick={handleWorkType}
-                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                 className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Work Type
@@ -1299,7 +1302,7 @@ export const VisitingPurposePage = () => {
               <Button 
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
               >
                 {isSubmitting ? (
                   <>
@@ -1415,7 +1418,7 @@ export const VisitingPurposePage = () => {
               <Button 
                 onClick={handleMoveInOutSubmit}
                 disabled={isSubmittingMoveInOut}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
               >
                 {isSubmittingMoveInOut ? (
                   <>
@@ -1505,7 +1508,7 @@ export const VisitingPurposePage = () => {
               <Button 
                 onClick={handleWorkTypeSubmit}
                 disabled={isSubmittingWorkType}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
               >
                 {isSubmittingWorkType ? (
                   <>
@@ -1579,7 +1582,7 @@ export const VisitingPurposePage = () => {
               <Button 
                 onClick={handleCommentSubmit}
                 disabled={isSubmittingComment}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
               >
                 {isSubmittingComment ? (
                   <>
@@ -1683,7 +1686,7 @@ export const VisitingPurposePage = () => {
             <div className="flex justify-center pt-4">
               <Button 
                 onClick={handleEditSubmit}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
                 disabled={isSubmittingEdit || editingPurposes.every(p => !p.trim())}
               >
                 {isSubmittingEdit ? (

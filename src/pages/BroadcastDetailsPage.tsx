@@ -9,6 +9,7 @@ import { fetchBroadcastById } from '@/store/slices/broadcastSlice';
 import { format } from 'date-fns';
 import axios from 'axios';
 import { Switch } from '@mui/material';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface BroadcastDetails {
   id?: string;
@@ -33,6 +34,7 @@ export const BroadcastDetailsPage = () => {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
 
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem("token");
@@ -274,6 +276,7 @@ export const BroadcastDetailsPage = () => {
           <ArrowLeft className="w-4 h-4" />
           Back
         </Button>
+        {shouldShow("Broadcast", "update") && (
         <Button
           variant="outline"
           onClick={() => navigate(`/pulse/notices/edit/${id}`)}
@@ -281,6 +284,7 @@ export const BroadcastDetailsPage = () => {
         >
           <Pencil className="w-4 h-4" />
         </Button>
+        )}
       </div>
 
       {/* Main Content Card */}

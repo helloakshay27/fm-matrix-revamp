@@ -53,6 +53,7 @@ import {
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { debounce } from "lodash";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Type definitions for permit data
 interface Permit {
@@ -447,6 +448,7 @@ const PERMIT_ANALYTICS_OPTIONS = [
 
 export const PermitToWorkDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [permits, setPermits] = useState<Permit[]>([]);
@@ -970,16 +972,18 @@ export const PermitToWorkDashboard = () => {
   // Render actions for each row
   const renderActions = (permit: Permit) => (
     <div className="flex items-center gap-2">
-      <div title="View permit details">
-        <Eye
-          className="w-5 h-5 text-gray-600 cursor-pointer hover:text-[#C72030]"
-          onClick={(e) => {
-            e.stopPropagation();
-            console.log("Eye clicked for permit:", permit.id);
-            handleViewPermit(permit.id);
-          }}
-        />
-      </div>
+      {shouldShow("Permit", "show") && (
+        <div title="View permit details">
+          <Eye
+            className="w-5 h-5 text-gray-600 cursor-pointer hover:text-[#C72030]"
+            onClick={(e) => {
+              e.stopPropagation();
+              console.log("Eye clicked for permit:", permit.id);
+              handleViewPermit(permit.id);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 
@@ -1088,13 +1092,15 @@ export const PermitToWorkDashboard = () => {
 
   const leftActions = (
     <div className="flex items-center gap-2">
-      <Button
-        onClick={handleAddPermit}
-        className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
-      >
-        <Plus className="w-4 h-4" />
-        Create Permit
-      </Button>
+      {shouldShow("Permit", "create") && (
+        <Button
+          onClick={handleAddPermit}
+          className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Create Permit
+        </Button>
+      )}
     </div>
   )
 
@@ -1356,14 +1362,14 @@ export const PermitToWorkDashboard = () => {
             <Button
               onClick={() => setIsAnalyticsFilterOpen(true)}
               variant="outline"
-              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+              className="flex items-center gap-2 px-4 py-2 rounded-none border border-[#DA7756] bg-[#fffaf6] hover:bg-[#fdf0ea] text-[#DA7756]"
             >
-              <CalendarIcon className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">
+              <CalendarIcon className="w-4 h-4" />
+              <span className="text-sm font-medium">
                 {formatDateForDisplay(analyticsDateRange.fromDate)} &ndash;{" "}
                 {formatDateForDisplay(analyticsDateRange.toDate)}
               </span>
-              <Filter className="w-4 h-4 text-gray-600" />
+              <Filter className="w-4 h-4" />
             </Button>
 
             {/* Analytics Selector Popover */}
@@ -1374,16 +1380,16 @@ export const PermitToWorkDashboard = () => {
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="flex items-center gap-2 min-w-[200px] justify-between px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+                  className="flex items-center gap-2 min-w-[200px] justify-between px-4 py-2 rounded-none border border-[#DA7756] bg-[#fffaf6] hover:bg-[#fdf0ea] text-[#DA7756]"
                 >
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium">
                     {selectedAnalyticsTypes.length === 0
                       ? "Select Analytics"
                       : selectedAnalyticsTypes.length === PERMIT_ANALYTICS_OPTIONS.length
                         ? "All Analytics Selected"
                         : `${selectedAnalyticsTypes.length} / ${PERMIT_ANALYTICS_OPTIONS.length} Selected`}
                   </span>
-                  <ChevronDown className="w-4 h-4 text-gray-600" />
+                  <ChevronDown className="w-4 h-4" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-72" align="end">

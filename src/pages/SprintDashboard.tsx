@@ -35,7 +35,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 interface Sprint {
   id: string;
   name?: string;
@@ -162,6 +162,7 @@ const statusLabelMap: Record<string, string> = {
 };
 
 export const SprintDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const { setCurrentSection } = useLayout();
   const view = localStorage.getItem("selectedView");
 
@@ -309,6 +310,7 @@ export const SprintDashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex items-center justify-center gap-2">
+      {(shouldShow("Sprint","show") &&
       <Button
         size="sm"
         variant="ghost"
@@ -317,6 +319,7 @@ export const SprintDashboard = () => {
       >
         <Eye className="w-4 h-4" />
       </Button>
+      )}
       <Button
         size="sm"
         variant="ghost"
@@ -400,6 +403,7 @@ export const SprintDashboard = () => {
   };
 
   const leftActions = (
+    shouldShow("Sprint","create") &&
     <Button
       className="bg-[#C72030] hover:bg-[#A01020] text-white"
       onClick={() => setAddSprintModalOpen(true)}

@@ -1242,16 +1242,16 @@ export const AddAMCPage = () => {
         borderColor: '#ddd',
       },
       '&:hover fieldset': {
-        borderColor: '#C72030',
+        borderColor: '#DA7756',
       },
       '&.Mui-focused fieldset': {
-        borderColor: '#C72030',
+        borderColor: '#DA7756',
       },
     },
     '& .MuiInputLabel-root': {
       fontSize: '14px',
       '&.Mui-focused': {
-        color: '#C72030',
+        color: '#DA7756',
       },
     },
   };
@@ -1280,7 +1280,7 @@ export const AddAMCPage = () => {
       helperText={errors.supplier}
       label={
         <>
-          Supplier <span style={{ color: '#C72030' }}>*</span>
+          Supplier <span style={{ color: '#DA7756' }}>*</span>
         </>
       }
       required
@@ -1288,7 +1288,7 @@ export const AddAMCPage = () => {
   );
 
   // Custom input styles for non-Material-UI elements
-  const inputStyles = "w-full h-[40px] px-3 py-2 border border-[#ddd] rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] disabled:bg-gray-50 disabled:text-gray-500";
+  const inputStyles = "w-full h-[40px] px-3 py-2 border border-[#ddd] rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#DA7756] focus:border-[#DA7756] disabled:bg-gray-50 disabled:text-gray-500";
   const labelStyles = "block text-sm font-semibold text-[#1a1a1a] mb-2";
   const errorStyles = "text-red-500 text-sm mt-1";
 
@@ -1489,11 +1489,11 @@ export const AddAMCPage = () => {
                     cursor: (index > currentStep && !completedSteps.includes(index - 1)) ? 'not-allowed' : 'pointer',
                     width: '187px',
                     height: '40px',
-                    backgroundColor: (index === currentStep || completedSteps.includes(index)) ? '#C72030' :
+                    backgroundColor: (index === currentStep || completedSteps.includes(index)) ? '#DA7756' :
                       (index > currentStep && !completedSteps.includes(index - 1)) ? 'rgba(245, 245, 245, 1)' : 'rgba(255, 255, 255, 1)',
                     color: (index === currentStep || completedSteps.includes(index)) ? 'white' :
                       (index > currentStep && !completedSteps.includes(index - 1)) ? 'rgba(150, 150, 150, 1)' : 'rgba(196, 184, 157, 1)',
-                    border: (index === currentStep || completedSteps.includes(index)) ? '2px solid #C72030' :
+                    border: (index === currentStep || completedSteps.includes(index)) ? '2px solid #DA7756' :
                       (index > currentStep && !completedSteps.includes(index - 1)) ? '1px solid rgba(200, 200, 200, 1)' : '1px solid rgba(196, 184, 157, 1)',
                     padding: '12px 20px',
                     fontSize: '13px',
@@ -1502,7 +1502,7 @@ export const AddAMCPage = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: index === currentStep ? '0 2px 4px rgba(199, 32, 48, 0.3)' : 'none',
+                    boxShadow: index === currentStep ? '0 2px 4px rgba(218, 119, 86, 0.3)' : 'none',
                     transition: 'all 0.2s ease',
                     fontFamily: 'Work Sans, sans-serif',
                     position: 'relative',
@@ -1599,7 +1599,7 @@ export const AddAMCPage = () => {
                 <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-3 font-medium">
                   ✓
                 </span>
-                <h3 className="text-[#C72030]" style={{ 
+                <h3 className="text-[#DA7756]" style={{ 
                   fontFamily: 'Work Sans, sans-serif',
                   fontWeight: 600,
                   fontSize: '26px',
@@ -1622,7 +1622,7 @@ export const AddAMCPage = () => {
                 }}>
                   <CardHeader className="bg-[#F6F4EE] ">
                     <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">1</span>
+                      <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">1</span>
                       AMC CONFIGURATION
                     </CardTitle>
                   </CardHeader>
@@ -1639,7 +1639,7 @@ export const AddAMCPage = () => {
                             readOnly
                             disabled
                             className="mr-2 w-4 h-4"
-                            style={{ accentColor: '#C72030' }}
+                            style={{ accentColor: '#DA7756' }}
                           />
                           <span className="text-[#1a1a1a] font-medium">Asset</span>
                         </label>
@@ -1652,7 +1652,7 @@ export const AddAMCPage = () => {
                             readOnly
                             disabled
                             className="mr-2 w-4 h-4"
-                            style={{ accentColor: '#C72030' }}
+                            style={{ accentColor: '#DA7756' }}
                           />
                           <span className="text-[#1a1a1a] font-medium">Service</span>
                         </label>
@@ -1671,7 +1671,7 @@ export const AddAMCPage = () => {
                             readOnly
                             disabled
                             className="mr-2 w-4 h-4"
-                            style={{ accentColor: '#C72030' }}
+                            style={{ accentColor: '#DA7756' }}
                           />
                           <span className="text-[#1a1a1a] font-medium">Comprehensive</span>
                         </label>
@@ -1684,7 +1684,7 @@ export const AddAMCPage = () => {
                             readOnly
                             disabled
                             className="mr-2 w-4 h-4"
-                            style={{ accentColor: '#C72030' }}
+                            style={{ accentColor: '#DA7756' }}
                           />
                           <span className="text-[#1a1a1a] font-medium">Non-Comprehensive</span>
                         </label>
@@ -1703,7 +1703,7 @@ export const AddAMCPage = () => {
                             readOnly
                             disabled
                             className="mr-2 w-4 h-4"
-                            style={{ accentColor: '#C72030' }}
+                            style={{ accentColor: '#DA7756' }}
                           />
                           <span className="text-[#1a1a1a] font-medium">Individual</span>
                         </label>
@@ -1716,7 +1716,7 @@ export const AddAMCPage = () => {
                             readOnly
                             disabled
                             className="mr-2 w-4 h-4"
-                            style={{ accentColor: '#C72030' }}
+                            style={{ accentColor: '#DA7756' }}
                           />
                           <span className="text-[#1a1a1a] font-medium">Group</span>
                         </label>
@@ -1727,7 +1727,7 @@ export const AddAMCPage = () => {
                       <>
                         {formData.details === 'Asset' ? (
                           <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                            <InputLabel shrink>Assets <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                            <InputLabel shrink>Assets <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                             <MuiSelect
                               multiple
                               label="Assets"
@@ -1757,7 +1757,7 @@ export const AddAMCPage = () => {
                           </FormControl>
                         ) : (
                           <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                            <InputLabel shrink>Service <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                            <InputLabel shrink>Service <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                             <MuiSelect
                               multiple
                               label="Service"
@@ -1779,7 +1779,7 @@ export const AddAMCPage = () => {
                         )}
 
                         <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                          <InputLabel shrink>Supplier <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                          <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                           <MuiSelect
                             label="Supplier"
                             displayEmpty
@@ -1854,7 +1854,7 @@ export const AddAMCPage = () => {
                           </FormControl>
 
                           <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                            <InputLabel shrink>Supplier <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                            <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                             <MuiSelect
                               label="Supplier"
                               displayEmpty
@@ -1904,7 +1904,7 @@ export const AddAMCPage = () => {
                 }}>
                   <CardHeader className="bg-[#F6F4EE] ">
                     <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">2</span>
+                      <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">2</span>
                       AMC DETAILS
                     </CardTitle>
                   </CardHeader>
@@ -1969,7 +1969,7 @@ export const AddAMCPage = () => {
                       />
 
                       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Payment Terms <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                        <InputLabel shrink>Payment Terms <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Payment Terms"
                           displayEmpty
@@ -2031,7 +2031,7 @@ export const AddAMCPage = () => {
                 }}>
                   <CardHeader className="bg-[#F6F4EE] ">
                     <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">3</span>
+                      <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">3</span>
                       SCHEDULE
                     </CardTitle>
                   </CardHeader>
@@ -2050,7 +2050,7 @@ export const AddAMCPage = () => {
                 }}>
                   <CardHeader className="bg-[#F6F4EE] ">
                     <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                      <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">4</span>
+                      <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">4</span>
                       ATTACHMENTS
                     </CardTitle>
                   </CardHeader>
@@ -2065,7 +2065,7 @@ export const AddAMCPage = () => {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoices</label>
+                        <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">Other Documents</label>
                         <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 text-center">
                           <p className="text-sm text-gray-600">
                             {attachments.invoices.length} file(s) uploaded
@@ -2092,13 +2092,13 @@ export const AddAMCPage = () => {
           Back to AMC List
         </Button>
           <h1 className="flex items-center" style={{
-            color: '#C72030',
+            color: '#DA7756',
             fontFamily: '"Work Sans", sans-serif',
             fontSize: '26px',
             fontWeight: 600,
             lineHeight: 'normal'
           }}>
-            <span className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">
+            <span className="w-8 h-8 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-3">
               ⚙️
             </span>
             AMC Configuration
@@ -2122,7 +2122,7 @@ export const AddAMCPage = () => {
                 <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-3 font-medium">
                   ✓
                 </span>
-                <h3 className="text-[#C72030]" style={{
+                <h3 className="text-[#DA7756]" style={{
                   fontFamily: 'Work Sans, sans-serif',
                   fontWeight: 600,
                   fontSize: '26px',
@@ -2143,7 +2143,7 @@ export const AddAMCPage = () => {
               }}>
                 {/* <CardHeader className="bg-[#F6F4EE] ">
                   <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                    <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">1</span>
+                    <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">1</span>
                     AMC CONFIGURATION
                   </CardTitle>
                 </CardHeader> */}
@@ -2159,7 +2159,7 @@ export const AddAMCPage = () => {
                           checked={formData.details === 'Asset'}
                           readOnly
                           className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
+                          style={{ accentColor: '#DA7756' }}
                           disabled
                         />
                         <span className="text-[#1a1a1a] font-medium">Asset</span>
@@ -2172,7 +2172,7 @@ export const AddAMCPage = () => {
                           checked={formData.details === 'Service'}
                           readOnly
                           className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
+                          style={{ accentColor: '#DA7756' }}
                           disabled
                         />
                         <span className="text-[#1a1a1a] font-medium">Service</span>
@@ -2191,7 +2191,7 @@ export const AddAMCPage = () => {
                           checked={formData.amcType === 'Comprehensive'}
                           readOnly
                           className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
+                          style={{ accentColor: '#DA7756' }}
                           disabled
                         />
                         <span className="text-[#1a1a1a] font-medium">Comprehensive</span>
@@ -2204,7 +2204,7 @@ export const AddAMCPage = () => {
                           checked={formData.amcType === 'Non-Comprehensive'}
                           readOnly
                           className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
+                          style={{ accentColor: '#DA7756' }}
                           disabled
                         />
                         <span className="text-[#1a1a1a] font-medium">Non-Comprehensive</span>
@@ -2223,7 +2223,7 @@ export const AddAMCPage = () => {
                           checked={formData.type === 'Individual'}
                           readOnly
                           className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
+                          style={{ accentColor: '#DA7756' }}
                           disabled
                         />
                         <span className="text-[#1a1a1a] font-medium">Individual</span>
@@ -2236,7 +2236,7 @@ export const AddAMCPage = () => {
                           checked={formData.type === 'Group'}
                           readOnly
                           className="mr-2 w-4 h-4"
-                          style={{ accentColor: '#C72030' }}
+                          style={{ accentColor: '#DA7756' }}
                           disabled
                         />
                         <span className="text-[#1a1a1a] font-medium">Group</span>
@@ -2248,7 +2248,7 @@ export const AddAMCPage = () => {
                     <>
                       {formData.details === 'Asset' ? (
                         <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                          <InputLabel shrink>Assets <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                          <InputLabel shrink>Assets <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                           <MuiSelect
                             multiple
                             label="Assets"
@@ -2279,7 +2279,7 @@ export const AddAMCPage = () => {
                         </FormControl>
                       ) : (
                         <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                          <InputLabel shrink>Service <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                          <InputLabel shrink>Service <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                           <MuiSelect
                             multiple
                             label="Service"
@@ -2300,7 +2300,7 @@ export const AddAMCPage = () => {
                       )}
 
                       <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Supplier <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                        <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Supplier"
                           displayEmpty
@@ -2374,7 +2374,7 @@ export const AddAMCPage = () => {
                         </FormControl>
 
                         <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                          <InputLabel shrink>Supplier <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                          <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                           <MuiSelect
                             label="Supplier"
                             displayEmpty
@@ -2421,7 +2421,7 @@ export const AddAMCPage = () => {
                 <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-3 font-medium">
                   ✓
                 </span>
-                <h3 className="text-[#C72030]" style={{
+                <h3 className="text-[#DA7756]" style={{
                   fontFamily: 'Work Sans, sans-serif',
                   fontWeight: 600,
                   fontSize: '26px',
@@ -2440,7 +2440,7 @@ export const AddAMCPage = () => {
               }}>
                 {/* <CardHeader className="bg-[#F6F4EE] ">
                   <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                    <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">2</span>
+                    <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">2</span>
                     AMC DETAILS
                   </CardTitle>
                 </CardHeader> */}
@@ -2486,7 +2486,7 @@ export const AddAMCPage = () => {
                     />
 
                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Payment Terms <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                      <InputLabel shrink>Payment Terms <span style={{ color: '#DA7756' }}>*</span></InputLabel>
                       <MuiSelect
                         label="Payment Terms"
                         displayEmpty
@@ -2552,7 +2552,7 @@ export const AddAMCPage = () => {
                 <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-3 font-medium">
                   ✓
                 </span>
-                <h3 className="text-[#C72030]" style={{
+                <h3 className="text-[#DA7756]" style={{
                   fontFamily: 'Work Sans, sans-serif',
                   fontWeight: 600,
                   fontSize: '26px',
@@ -2577,11 +2577,10 @@ export const AddAMCPage = () => {
                             key={cfg.frequency}
                             type="button"
                             onClick={() => setActiveFrequencyTab(idx)}
-                            className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
-                              activeFrequencyTab === idx
-                                ? 'border-b-2 border-[#C72030] text-[#C72030] bg-white'
-                                : 'text-gray-500 hover:text-[#C72030] bg-[#F6F4EE]'
-                            }`}
+                            className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${activeFrequencyTab === idx
+                              ? 'border-b-2 border-[#DA7756] text-[#DA7756] bg-white'
+                              : 'text-gray-500 hover:text-[#DA7756] bg-[#F6F4EE]'
+                              }`}
                           >
                             {FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}
                           </button>
@@ -2599,7 +2598,7 @@ export const AddAMCPage = () => {
                           </div>
                           <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
                             <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
-                            <span className="font-mono text-[#C72030]">{buildCronFromTimeData(cfg.timeSetupData as typeof initialTimeSetupState)}</span>
+                            <span className="font-mono text-[#DA7756]">{buildCronFromTimeData(cfg.timeSetupData as typeof initialTimeSetupState)}</span>
                           </div>
                           <TimeSetupStep data={cfg.timeSetupData as typeof initialTimeSetupState} hideTitle disabled showEditButton={false} />
                         </div>
@@ -2621,7 +2620,7 @@ export const AddAMCPage = () => {
                 <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-3 font-medium">
                   ✓
                 </span>
-                <h3 className="text-[#C72030]" style={{
+                <h3 className="text-[#DA7756]" style={{
                   fontFamily: 'Work Sans, sans-serif',
                   fontWeight: 600,
                   fontSize: '26px',
@@ -2640,7 +2639,7 @@ export const AddAMCPage = () => {
               }}>
                 {/* <CardHeader className="bg-[#F6F4EE] ">
                   <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                    <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">4</span>
+                    <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">4</span>
                     ATTACHMENTS
                   </CardTitle>
                 </CardHeader> */}
@@ -2684,7 +2683,7 @@ export const AddAMCPage = () => {
                                   <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
                                   <button
                                     type="button"
-                                    className="absolute top-1 right-1 h-6 w-6 p-0 text-gray-600 bg-white rounded-full border border-gray-300 flex items-center justify-center hover:bg-red-100 hover:text-red-600"
+                                    className="absolute top-1 right-1 h-6 w-6 p-0 text-gray-600 bg-white rounded-full border border-gray-300 flex items-center justify-center hover:bg-[#DA7756]/20 hover:text-[#DA7756]"
                                     onClick={() => removeFile('contracts', index)}
                                     disabled={isSubmitting}
                                   >
@@ -2702,7 +2701,8 @@ export const AddAMCPage = () => {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoices <span style={{ color: 'red' }}>*</span></label>
+                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">Other Documents </label>
+                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">Other Documents</label>
                       <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 min-h-[200px]">
                         {attachments.invoices.length > 0 ? (
                           <div className="flex flex-wrap gap-3">
@@ -2739,7 +2739,7 @@ export const AddAMCPage = () => {
                                   <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
                                   <button
                                     type="button"
-                                    className="absolute top-1 right-1 h-6 w-6 p-0 text-gray-600 bg-white rounded-full border border-gray-300 flex items-center justify-center hover:bg-red-100 hover:text-red-600"
+                                    className="absolute top-1 right-1 h-6 w-6 p-0 text-gray-600 bg-white rounded-full border border-gray-300 flex items-center justify-center hover:bg-[#DA7756]/20 hover:text-[#DA7756]"
                                     onClick={() => removeFile('invoices', index)}
                                     disabled={isSubmitting}
                                   >
@@ -2755,24 +2755,20 @@ export const AddAMCPage = () => {
                           </div>
                         )}
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                    </div >
+                  </div >
+                </CardContent >
+              </Card >
+            </div >
 
             {/* Preview Mode Buttons */}
-            <div className="flex gap-4 justify-center">
+            < div className="flex gap-4 justify-center" >
               <Button
                 type="button"
                 onClick={() => setIsPreviewMode(false)}
-                className="px-6 py-2 font-medium"
-                style={{
-                  backgroundColor: '#FFF',
-                  color: '#C72030',
-                  border: '1px solid #C72030',
-                  borderRadius: '4px'
-                }}
+                disabled={isSubmitting}
+                variant="ghost"
+                className="fm-button-fix fm-button-brand px-8 font-medium"
               >
                 Back to Edit
               </Button>
@@ -2799,13 +2795,8 @@ export const AddAMCPage = () => {
                   }
                 }}
                 disabled={isSubmitting}
-                className="px-6 py-2 font-medium disabled:opacity-50"
-                style={{
-                  backgroundColor: '#C72030',
-                  color: '#FFF',
-                  border: 'none',
-                  borderRadius: '4px'
-                }}
+                variant="ghost"
+                className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
               >
                 {isSubmitting ? (
                   <>
@@ -2816,888 +2807,552 @@ export const AddAMCPage = () => {
                   'Proceed to Save'
                 )}
               </Button>
-            </div>
-          </div>
+            </div >
+          </div >
         )}
 
         {/* Step 1: AMC Configuration */}
-        {currentStep === 0 && (
-          <>
-            {/* Header above card */}
-            <div className="flex items-center mb-4">
-              <Avatar sx={{
-                bgcolor: '#C72030',
-                color: 'white',
-                width: 32,
-                height: 32,
-                mr: 2,
-                fontSize: '16px'
+        {
+          currentStep === 0 && (
+            <>
+              {/* Header above card */}
+              <div className="flex items-center mb-4">
+                <Avatar sx={{
+                  bgcolor: '#DA7756',
+                  color: 'white',
+                  width: 32,
+                  height: 32,
+                  mr: 2,
+                  fontSize: '16px'
+                }}>
+                  <SettingsOutlinedIcon fontSize="small" />
+                </Avatar>
+                <h2 className="text-[#DA7756]" style={{
+                  fontFamily: 'Work Sans, sans-serif',
+                  fontWeight: 600,
+                  fontSize: '26px',
+                  lineHeight: '100%',
+                  letterSpacing: '0%'
+                }}>
+                  AMC Configuration
+                </h2>
+              </div>
+
+              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
+                borderRadius: '4px',
+                background: '#FFF',
+                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
               }}>
-                <SettingsOutlinedIcon fontSize="small" />
-              </Avatar>
-              <h2 className="text-[#C72030]" style={{
-                fontFamily: 'Work Sans, sans-serif',
-                fontWeight: 600,
-                fontSize: '26px',
-                lineHeight: '100%',
-                letterSpacing: '0%'
-              }}>
-                AMC Configuration
-              </h2>
-            </div>
-
-            <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-              borderRadius: '4px',
-              background: '#FFF',
-              boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-            }}>
-              <CardContent className="space-y-6 p-6">
-                <div>
-                  <label className="block text-sm font-medium mb-3 text-[#1a1a1a]">Details</label>
-                  <div className="flex gap-6">
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="radio"
-                        name="details"
-                        value="Asset"
-                        checked={formData.details === 'Asset'}
-                        onChange={e => handleInputChange('details', e.target.value)}
-                        className="mr-2 w-4 h-4"
-                        style={{ accentColor: '#C72030' }}
-                        disabled={isSubmitting}
-                      />
-                      <span className="text-[#1a1a1a] font-medium">Asset</span>
-                    </label>
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="radio"
-                        name="details"
-                        value="Service"
-                        checked={formData.details === 'Service'}
-                        onChange={e => handleInputChange('details', e.target.value)}
-                        className="mr-2 w-4 h-4"
-                        style={{ accentColor: '#C72030' }}
-                        disabled={isSubmitting}
-                      />
-                      <span className="text-[#1a1a1a] font-medium">Service</span>
-                    </label>
+                <CardContent className="space-y-6 p-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-3 text-[#1a1a1a]">Details</label>
+                    <div className="flex gap-6">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="details"
+                          value="Asset"
+                          checked={formData.details === 'Asset'}
+                          onChange={e => handleInputChange('details', e.target.value)}
+                          className="mr-2 w-4 h-4"
+                          style={{ accentColor: '#DA7756' }}
+                          disabled={isSubmitting}
+                        />
+                        <span className="text-[#1a1a1a] font-medium">Asset</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="details"
+                          value="Service"
+                          checked={formData.details === 'Service'}
+                          onChange={e => handleInputChange('details', e.target.value)}
+                          className="mr-2 w-4 h-4"
+                          style={{ accentColor: '#DA7756' }}
+                          disabled={isSubmitting}
+                        />
+                        <span className="text-[#1a1a1a] font-medium">Service</span>
+                      </label>
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-3 text-[#1a1a1a]">AMC Type</label>
-                  <div className="flex gap-6">
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="radio"
-                        name="amcType"
-                        value="Comprehensive"
-                        checked={formData.amcType === 'Comprehensive'}
-                        onChange={e => handleInputChange('amcType', e.target.value)}
-                        className="mr-2 w-4 h-4"
-                        style={{ accentColor: '#C72030' }}
-                        disabled={isSubmitting}
-                      />
-                      <span className="text-[#1a1a1a] font-medium">Comprehensive</span>
-                    </label>
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="radio"
-                        name="amcType"
-                        value="Non-Comprehensive"
-                        checked={formData.amcType === 'Non-Comprehensive'}
-                        onChange={e => handleInputChange('amcType', e.target.value)}
-                        className="mr-2 w-4 h-4"
-                        style={{ accentColor: '#C72030' }}
-                        disabled={isSubmitting}
-                      />
-                      <span className="text-[#1a1a1a] font-medium">Non-Comprehensive</span>
-                    </label>
+                  <div>
+                    <label className="block text-sm font-medium mb-3 text-[#1a1a1a]">AMC Type</label>
+                    <div className="flex gap-6">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="amcType"
+                          value="Comprehensive"
+                          checked={formData.amcType === 'Comprehensive'}
+                          onChange={e => handleInputChange('amcType', e.target.value)}
+                          className="mr-2 w-4 h-4"
+                          style={{ accentColor: '#DA7756' }}
+                          disabled={isSubmitting}
+                        />
+                        <span className="text-[#1a1a1a] font-medium">Comprehensive</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="amcType"
+                          value="Non-Comprehensive"
+                          checked={formData.amcType === 'Non-Comprehensive'}
+                          onChange={e => handleInputChange('amcType', e.target.value)}
+                          className="mr-2 w-4 h-4"
+                          style={{ accentColor: '#DA7756' }}
+                          disabled={isSubmitting}
+                        />
+                        <span className="text-[#1a1a1a] font-medium">Non-Comprehensive</span>
+                      </label>
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-3 text-[#1a1a1a]">Type</label>
-                  <div className="flex gap-6">
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="radio"
-                        name="type"
-                        value="Individual"
-                        checked={formData.type === 'Individual'}
-                        onChange={e => handleInputChange('type', e.target.value)}
-                        className="mr-2 w-4 h-4"
-                        style={{ accentColor: '#C72030' }}
-                        disabled={isSubmitting}
-                      />
-                      <span className="text-[#1a1a1a] font-medium">Individual</span>
-                    </label>
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="radio"
-                        name="type"
-                        value="Group"
-                        checked={formData.type === 'Group'}
-                        onChange={e => handleInputChange('type', e.target.value)}
-                        className="mr-2 w-4 h-4"
-                        style={{ accentColor: '#C72030' }}
-                        disabled={isSubmitting}
-                      />
-                      <span className="text-[#1a1a1a] font-medium">Group</span>
-                    </label>
+                  <div>
+                    <label className="block text-sm font-medium mb-3 text-[#1a1a1a]">Type</label>
+                    <div className="flex gap-6">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="type"
+                          value="Individual"
+                          checked={formData.type === 'Individual'}
+                          onChange={e => handleInputChange('type', e.target.value)}
+                          className="mr-2 w-4 h-4"
+                          style={{ accentColor: '#DA7756' }}
+                          disabled={isSubmitting}
+                        />
+                        <span className="text-[#1a1a1a] font-medium">Individual</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="type"
+                          value="Group"
+                          checked={formData.type === 'Group'}
+                          onChange={e => handleInputChange('type', e.target.value)}
+                          className="mr-2 w-4 h-4"
+                          style={{ accentColor: '#DA7756' }}
+                          disabled={isSubmitting}
+                        />
+                        <span className="text-[#1a1a1a] font-medium">Group</span>
+                      </label>
+                    </div>
                   </div>
-                </div>
 
-                {formData.type === 'Individual' ? (
-                  <>
-                    {formData.details === 'Asset' ? (
-                      <div>
-                        {/* Header row */}
-                        <div className="flex items-center justify-between mb-2">
-                          <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#444' }}>
-                            Assets <span style={{ color: '#C72030' }}>*</span>
-                          </Typography>
-                          {formData.asset_ids.length > 0 && (
-                            <span className="text-xs text-[#C72030] font-medium">{formData.asset_ids.length} selected</span>
-                          )}
-                        </div>
+                  {formData.type === 'Individual' ? (
+                    <>
+                      {formData.details === 'Asset' ? (
+                        <div>
+                          {/* Header row */}
+                          <div className="flex items-center justify-between mb-2">
+                            <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#444' }}>
+                              Assets <span style={{ color: '#DA7756' }}>*</span>
+                            </Typography>
+                            {formData.asset_ids.length > 0 && (
+                              <span className="text-xs text-[#DA7756] font-medium">{formData.asset_ids.length} selected</span>
+                            )}
+                          </div>
 
-                        {/* Group / SubGroup filters */}
-                        {(() => {
-                          const uniqueGroups = Array.from(new Set(assetOptions.map((a: any) => a.asset_group).filter(Boolean))) as string[];
-                          const uniqueSubGroups = Array.from(new Set(
-                            assetOptions
-                              .filter((a: any) => !indivGroupFilter || a.asset_group === indivGroupFilter)
-                              .map((a: any) => a.asset_sub_group)
-                              .filter(Boolean)
-                          )) as string[];
-                          return (
-                            <div className="grid grid-cols-2 gap-3 mb-3">
-                              <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Group</label>
-                                <select
-                                  value={indivGroupFilter}
-                                  onChange={e => { setIndivGroupFilter(e.target.value); setIndivSubGroupFilter(''); }}
-                                  disabled={isSubmitting}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030]"
-                                >
-                                  <option value="">All Groups</option>
-                                  {uniqueGroups.map(g => <option key={g} value={g}>{g}</option>)}
-                                </select>
+                          {/* Group / SubGroup filters */}
+                          {(() => {
+                            const uniqueGroups = Array.from(new Set(assetOptions.map((a: any) => a.asset_group).filter(Boolean))) as string[];
+                            const uniqueSubGroups = Array.from(new Set(
+                              assetOptions
+                                .filter((a: any) => !indivGroupFilter || a.asset_group === indivGroupFilter)
+                                .map((a: any) => a.asset_sub_group)
+                                .filter(Boolean)
+                            )) as string[];
+                            return (
+                              <div className="grid grid-cols-2 gap-3 mb-3">
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 mb-1">Group</label>
+                                  <select
+                                    value={indivGroupFilter}
+                                    onChange={e => { setIndivGroupFilter(e.target.value); setIndivSubGroupFilter(''); }}
+                                    disabled={isSubmitting}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#DA7756]"
+                                  >
+                                    <option value="">All Groups</option>
+                                    {uniqueGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 mb-1">Sub Group</label>
+                                  <select
+                                    value={indivSubGroupFilter}
+                                    onChange={e => setIndivSubGroupFilter(e.target.value)}
+                                    disabled={isSubmitting || !indivGroupFilter}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#DA7756] disabled:bg-gray-50 disabled:text-gray-400"
+                                  >
+                                    <option value="">All Sub Groups</option>
+                                    {uniqueSubGroups.map(sg => <option key={sg} value={sg}>{sg}</option>)}
+                                  </select>
+                                </div>
                               </div>
-                              <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Sub Group</label>
-                                <select
-                                  value={indivSubGroupFilter}
-                                  onChange={e => setIndivSubGroupFilter(e.target.value)}
-                                  disabled={isSubmitting || !indivGroupFilter}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030] disabled:bg-gray-50 disabled:text-gray-400"
-                                >
-                                  <option value="">All Sub Groups</option>
-                                  {uniqueSubGroups.map(sg => <option key={sg} value={sg}>{sg}</option>)}
-                                </select>
-                              </div>
-                            </div>
-                          );
-                        })()}
+                            );
+                          })()}
 
-                        {/* Search */}
-                        <div className="relative mb-3">
-                          <input
-                            type="text"
-                            placeholder="Search assets by name (min 3 chars)..."
-                            value={assetQuery}
-                            onChange={e => setAssetQuery(e.target.value)}
-                            disabled={isSubmitting}
-                            className="w-full px-3 py-2 pl-9 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030]"
-                          />
-                          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-                          </svg>
-                          {assetSearchLoading && (
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Loading…</span>
-                          )}
-                        </div>
+                          {/* Search */}
+                          <div className="relative mb-3">
+                            <input
+                              type="text"
+                              placeholder="Search assets by name (min 3 chars)..."
+                              value={assetQuery}
+                              onChange={e => setAssetQuery(e.target.value)}
+                              disabled={isSubmitting}
+                              className="w-full px-3 py-2 pl-9 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#DA7756]"
+                            />
+                            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                            </svg>
+                            {assetSearchLoading && (
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Loading…</span>
+                            )}
+                          </div>
 
-                        {/* Table */}
-                        <div className={`border rounded overflow-auto max-h-64 ${errors.asset_ids ? 'border-red-400' : 'border-gray-200'}`}>
-                          <table className="w-full text-sm border-collapse min-w-[600px]">
-                            <thead className="bg-[#F6F4EE] sticky top-0 z-10">
-                              <tr>
-                                <th className="px-3 py-2 w-10">
-                                  <input
-                                    type="checkbox"
-                                    style={{ accentColor: '#C72030' }}
-                                    disabled={isSubmitting || assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).length === 0}
-                                    checked={assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).length > 0 && assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).every((a: any) => formData.asset_ids.includes(Number(a.id)))}
-                                    onChange={e => {
-                                      const filteredIds = assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).map((a: any) => Number(a.id));
-                                      setFormData(prev => ({
-                                        ...prev,
-                                        asset_ids: e.target.checked
-                                          ? [...new Set([...prev.asset_ids, ...filteredIds])]
-                                          : prev.asset_ids.filter(id => !filteredIds.includes(id)),
-                                      }));
-                                      setErrors(prev => ({ ...prev, asset_ids: '' }));
-                                    }}
-                                  />
-                                </th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Name</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Manufacturer</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Equipment ID</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Group</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Sub Group</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Building</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Wing</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Area</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Floor</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Room</th>
-                                <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Criticality</th>
-
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {(() => {
-                                const displayAssets = assetOptions.filter((a: any) =>
-                                  (!indivGroupFilter || a.asset_group === indivGroupFilter) &&
-                                  (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)
-                                );
-                                if (displayAssets.length === 0) return (
-                                  <tr>
-                                    <td colSpan={12} className="px-3 py-8 text-center text-gray-400 text-sm">
-                                      {assetSearchLoading
-                                        ? 'Searching…'
-                                        : assetQuery.length > 0 && assetQuery.length < 3
-                                          ? 'Type at least 3 characters to search'
-                                          : 'No assets found'}
-                                    </td>
-                                  </tr>
-                                );
-                                return displayAssets.map((asset: any) => {
-                                  const isChecked = formData.asset_ids.includes(Number(asset.id));
-                                  return (
-                                    <tr
-                                      key={asset.id}
-                                      className={`border-t border-gray-100 cursor-pointer transition-colors ${isChecked ? 'bg-red-50' : 'hover:bg-gray-50'}`}
-                                      onClick={() => {
-                                        if (isSubmitting) return;
-                                        const id = Number(asset.id);
+                          {/* Table */}
+                          <div className={`border rounded overflow-auto max-h-64 ${errors.asset_ids ? 'border-red-400' : 'border-gray-200'}`}>
+                            <table className="w-full text-sm border-collapse min-w-[600px]">
+                              <thead className="bg-[#F6F4EE] sticky top-0 z-10">
+                                <tr>
+                                  <th className="px-3 py-2 w-10">
+                                    <input
+                                      type="checkbox"
+                                      style={{ accentColor: '#DA7756' }}
+                                      disabled={isSubmitting || assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).length === 0}
+                                      checked={assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).length > 0 && assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).every((a: any) => formData.asset_ids.includes(Number(a.id)))}
+                                      onChange={e => {
+                                        const filteredIds = assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).map((a: any) => Number(a.id));
                                         setFormData(prev => ({
                                           ...prev,
-                                          asset_ids: isChecked
-                                            ? prev.asset_ids.filter(x => x !== id)
-                                            : [...prev.asset_ids, id],
+                                          asset_ids: e.target.checked
+                                            ? [...new Set([...prev.asset_ids, ...filteredIds])]
+                                            : prev.asset_ids.filter(id => !filteredIds.includes(id)),
                                         }));
                                         setErrors(prev => ({ ...prev, asset_ids: '' }));
                                       }}
-                                    >
-                                      <td className="px-3 py-2 text-center">
-                                        <input
-                                          type="checkbox"
-                                          style={{ accentColor: '#C72030' }}
-                                          checked={isChecked}
-                                          onChange={() => { }}
-                                          disabled={isSubmitting}
-                                        />
+                                    />
+                                  </th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Name</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Manufacturer</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Equipment ID</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Group</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Sub Group</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Building</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Wing</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Area</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Floor</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Room</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-[#1a1a1a] uppercase tracking-wide">Criticality</th>
+
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {(() => {
+                                  const displayAssets = assetOptions.filter((a: any) =>
+                                    (!indivGroupFilter || a.asset_group === indivGroupFilter) &&
+                                    (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)
+                                  );
+                                  if (displayAssets.length === 0) return (
+                                    <tr>
+                                      <td colSpan={12} className="px-3 py-8 text-center text-gray-400 text-sm">
+                                        {assetSearchLoading
+                                          ? 'Searching…'
+                                          : assetQuery.length > 0 && assetQuery.length < 3
+                                            ? 'Type at least 3 characters to search'
+                                            : 'No assets found'}
                                       </td>
-                                      <td className="px-3 py-2 font-medium text-[#1a1a1a]">{asset.name || '-'}</td>
-                                      <td className="px-3 py-2 text-gray-600">{asset.manufacturer || '-'}</td>
-                                      <td className="px-3 py-2 text-gray-600">{asset.ext_reference_id || '-'}</td>
-                                      <td className="px-3 py-2 text-gray-600">{asset.asset_group || '-'}</td>
-                                      <td className="px-3 py-2 text-gray-600">{asset.asset_sub_group || '-'}</td>
-                                      <td className="px-3 py-2 text-gray-600">{asset.location?.building || '-'}</td>
-                                      <td className="px-3 py-2 text-gray-600">{asset.location?.wing || '-'}</td>
-                                      <td className="px-3 py-2 text-gray-600">{asset.location?.area || '-'}</td>
-                                      <td className="px-3 py-2 text-gray-600">{asset.location?.floor || '-'}</td>
-                                      <td className="px-3 py-2 text-gray-600">{asset.location?.room || '-'}</td>
-                                      <td className="px-3 py-2 text-gray-600">{asset.criticality || '-'}</td>
                                     </tr>
                                   );
-                                });
-                              })()}
-                            </tbody>
-                          </table>
-                        </div>
-                        {errors.asset_ids && (
-                          <p className="text-xs text-red-600 mt-1">{errors.asset_ids}</p>
-                        )}
-
-                        {/* Selected Assets Order Panel */}
-                        {formData.asset_ids.length > 0 && (
-                          <div className="mt-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#444' }}>
-                                Selected Assets — Submission Order
-                              </Typography>
-                              <span className="text-xs text-gray-400">Use arrows to reorder</span>
-                            </div>
-                            <div className="border border-gray-200 rounded overflow-hidden">
-                              {formData.asset_ids.map((id, idx) => {
-                                const allAssets = [...(assetList || []), ...(assetOptions || [])];
-                                const asset = allAssets.find((a: any) => Number(a.id) === id);
-                                const total = formData.asset_ids.length;
-                                return (
-                                  <div
-                                    key={id}
-                                    className="flex items-center gap-3 px-3 py-2 bg-white border-b border-gray-100 last:border-b-0"
-                                  >
-                                    {/* Editable position — type a number to jump/swap */}
-                                    <div className="flex flex-col items-center shrink-0" title="Type a position number to move here">
-                                      <input
-                                        type="number"
-                                        min={1}
-                                        max={total}
-                                        disabled={isSubmitting}
-                                        value={idx + 1}
-                                        onChange={e => {
-                                          const target = Number(e.target.value) - 1;
-                                          if (isNaN(target) || target < 0 || target >= total || target === idx) return;
-                                          setFormData(prev => {
-                                            const arr = [...prev.asset_ids];
-                                            // Remove from current position, insert at target
-                                            arr.splice(idx, 1);
-                                            arr.splice(target, 0, id);
-                                            return { ...prev, asset_ids: arr };
-                                          });
+                                  return displayAssets.map((asset: any) => {
+                                    const isChecked = formData.asset_ids.includes(Number(asset.id));
+                                    return (
+                                      <tr
+                                        key={asset.id}
+                                        className={`border-t border-gray-100 cursor-pointer transition-colors ${isChecked ? 'bg-red-50' : 'hover:bg-gray-50'}`}
+                                        onClick={() => {
+                                          if (isSubmitting) return;
+                                          const id = Number(asset.id);
+                                          setFormData(prev => ({
+                                            ...prev,
+                                            asset_ids: isChecked
+                                              ? prev.asset_ids.filter(x => x !== id)
+                                              : [...prev.asset_ids, id],
+                                          }));
+                                          setErrors(prev => ({ ...prev, asset_ids: '' }));
                                         }}
-                                        className="w-9 h-7 text-center text-xs font-bold text-white rounded-full border-none outline-none bg-[#C72030] disabled:opacity-60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                      />
-                                      <span className="text-[9px] text-gray-400 mt-0.5 leading-none">pos</span>
-                                    </div>
-
-                                    {/* Asset info */}
-                                    <span className="flex-1 text-sm font-medium text-[#1a1a1a] truncate">
-                                      {asset?.name || `Asset #${id}`}
-                                    </span>
-                                    {asset?.location?.building && (
-                                      <span className="text-xs text-gray-400 shrink-0">
-                                        {[asset.location.building, asset.location.floor, asset.location.room]
-                                          .filter(Boolean).join(' › ')}
-                                      </span>
-                                    )}
-
-                                    {/* Up / Down buttons */}
-                                    <div className="flex flex-col gap-0.5 shrink-0">
-                                      <button
-                                        type="button"
-                                        disabled={idx === 0 || isSubmitting}
-                                        className="w-6 h-5 flex items-center justify-center rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
-                                        onClick={() => setFormData(prev => {
-                                          const arr = [...prev.asset_ids];
-                                          [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
-                                          return { ...prev, asset_ids: arr };
-                                        })}
-                                        title="Move up"
                                       >
-                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M14.77 12.79a.75.75 0 01-1.06-.02L10 8.832l-3.71 3.938a.75.75 0 01-1.08-1.04l4.25-4.5a.75.75 0 011.08 0l4.25 4.5a.75.75 0 01-.02 1.06z" clipRule="evenodd" /></svg>
-                                      </button>
-                                      <button
-                                        type="button"
-                                        disabled={idx === total - 1 || isSubmitting}
-                                        className="w-6 h-5 flex items-center justify-center rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
-                                        onClick={() => setFormData(prev => {
-                                          const arr = [...prev.asset_ids];
-                                          [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
-                                          return { ...prev, asset_ids: arr };
-                                        })}
-                                        title="Move down"
-                                      >
-                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" /></svg>
-                                      </button>
-                                    </div>
-
-                                    {/* Remove */}
-                                    <button
-                                      type="button"
-                                      disabled={isSubmitting}
-                                      className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30"
-                                      onClick={() => setFormData(prev => ({
-                                        ...prev,
-                                        asset_ids: prev.asset_ids.filter(x => x !== id),
-                                      }))}
-                                      title="Remove"
-                                    >
-                                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
-                                    </button>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                                        <td className="px-3 py-2 text-center">
+                                          <input
+                                            type="checkbox"
+                                            style={{ accentColor: '#DA7756' }}
+                                            checked={isChecked}
+                                            onChange={() => { }}
+                                            disabled={isSubmitting}
+                                          />
+                                        </td>
+                                        <td className="px-3 py-2 font-medium text-[#1a1a1a]">{asset.name || '-'}</td>
+                                        <td className="px-3 py-2 text-gray-600">{asset.manufacturer || '-'}</td>
+                                        <td className="px-3 py-2 text-gray-600">{asset.ext_reference_id || '-'}</td>
+                                        <td className="px-3 py-2 text-gray-600">{asset.asset_group || '-'}</td>
+                                        <td className="px-3 py-2 text-gray-600">{asset.asset_sub_group || '-'}</td>
+                                        <td className="px-3 py-2 text-gray-600">{asset.location?.building || '-'}</td>
+                                        <td className="px-3 py-2 text-gray-600">{asset.location?.wing || '-'}</td>
+                                        <td className="px-3 py-2 text-gray-600">{asset.location?.area || '-'}</td>
+                                        <td className="px-3 py-2 text-gray-600">{asset.location?.floor || '-'}</td>
+                                        <td className="px-3 py-2 text-gray-600">{asset.location?.room || '-'}</td>
+                                        <td className="px-3 py-2 text-gray-600">{asset.criticality || '-'}</td>
+                                      </tr>
+                                    );
+                                  });
+                                })()}
+                              </tbody>
+                            </table>
                           </div>
-                        )}
-                      </div>
-                    ) : (
+                          {errors.asset_ids && (
+                            <p className="text-xs text-red-600 mt-1">{errors.asset_ids}</p>
+                          )}
+
+                          {/* Selected Assets Order Panel */}
+                          {formData.asset_ids.length > 0 && (
+                            <div className="mt-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#444' }}>
+                                  Selected Assets — Submission Order
+                                </Typography>
+                                <span className="text-xs text-gray-400">Use arrows to reorder</span>
+                              </div>
+                              <div className="border border-gray-200 rounded overflow-hidden">
+                                {formData.asset_ids.map((id, idx) => {
+                                  const allAssets = [...(assetList || []), ...(assetOptions || [])];
+                                  const asset = allAssets.find((a: any) => Number(a.id) === id);
+                                  const total = formData.asset_ids.length;
+                                  return (
+                                    <div
+                                      key={id}
+                                      className="flex items-center gap-3 px-3 py-2 bg-white border-b border-gray-100 last:border-b-0"
+                                    >
+                                      {/* Editable position — type a number to jump/swap */}
+                                      <div className="flex flex-col items-center shrink-0" title="Type a position number to move here">
+                                        <input
+                                          type="number"
+                                          min={1}
+                                          max={total}
+                                          disabled={isSubmitting}
+                                          value={idx + 1}
+                                          onChange={e => {
+                                            const target = Number(e.target.value) - 1;
+                                            if (isNaN(target) || target < 0 || target >= total || target === idx) return;
+                                            setFormData(prev => {
+                                              const arr = [...prev.asset_ids];
+                                              // Remove from current position, insert at target
+                                              arr.splice(idx, 1);
+                                              arr.splice(target, 0, id);
+                                              return { ...prev, asset_ids: arr };
+                                            });
+                                          }}
+                                          className="w-9 h-7 text-center text-xs font-bold text-white rounded-full border-none outline-none bg-[#DA7756] disabled:opacity-60 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        />
+                                        <span className="text-[9px] text-gray-400 mt-0.5 leading-none">pos</span>
+                                      </div>
+
+                                      {/* Asset info */}
+                                      <span className="flex-1 text-sm font-medium text-[#1a1a1a] truncate">
+                                        {asset?.name || `Asset #${id}`}
+                                      </span>
+                                      {asset?.location?.building && (
+                                        <span className="text-xs text-gray-400 shrink-0">
+                                          {[asset.location.building, asset.location.floor, asset.location.room]
+                                            .filter(Boolean).join(' › ')}
+                                        </span>
+                                      )}
+
+                                      {/* Up / Down buttons */}
+                                      <div className="flex flex-col gap-0.5 shrink-0">
+                                        <button
+                                          type="button"
+                                          disabled={idx === 0 || isSubmitting}
+                                          className="w-6 h-5 flex items-center justify-center rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                                          onClick={() => setFormData(prev => {
+                                            const arr = [...prev.asset_ids];
+                                            [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+                                            return { ...prev, asset_ids: arr };
+                                          })}
+                                          title="Move up"
+                                        >
+                                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M14.77 12.79a.75.75 0 01-1.06-.02L10 8.832l-3.71 3.938a.75.75 0 01-1.08-1.04l4.25-4.5a.75.75 0 011.08 0l4.25 4.5a.75.75 0 01-.02 1.06z" clipRule="evenodd" /></svg>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={idx === total - 1 || isSubmitting}
+                                          className="w-6 h-5 flex items-center justify-center rounded text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                                          onClick={() => setFormData(prev => {
+                                            const arr = [...prev.asset_ids];
+                                            [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
+                                            return { ...prev, asset_ids: arr };
+                                          })}
+                                          title="Move down"
+                                        >
+                                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" /></svg>
+                                        </button>
+                                      </div>
+
+                                      {/* Remove */}
+                                      <button
+                                        type="button"
+                                        disabled={isSubmitting}
+                                        className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-[#DA7756]/10 disabled:opacity-30"
+                                        onClick={() => setFormData(prev => ({
+                                          ...prev,
+                                          asset_ids: prev.asset_ids.filter(x => x !== id),
+                                        }))}
+                                        title="Remove"
+                                      >
+                                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
 
 
 
 
-                      <FormControl fullWidth error={!!errors.service_ids}>
-                        <Typography
-                          sx={{
-                            fontSize: "14px",
-                            mb: 1,
-                            fontWeight: 500,
-                            color: "#444",
-                          }}
-                        >
-                          Services <span style={{ color: "#C72030" }}>*</span>
-                        </Typography>
+                        <FormControl fullWidth error={!!errors.service_ids}>
+                          <Typography
+                            sx={{
+                              fontSize: "14px",
+                              mb: 1,
+                              fontWeight: 500,
+                              color: "#444",
+                            }}
+                          >
+                            Services <span style={{ color: "#DA7756" }}>*</span>
+                          </Typography>
 
-                        <Select
-                          isMulti
-                          options={(services || []).map((item) => ({
-                            value: item.id,
-                            label: item.service_name,
-                          }))}
-                          value={(services || [])
-                            .filter((item) =>
-                              formData.service_ids.includes(item.id)
-                            )
-                            .map((item) => ({
+                          <Select
+                            isMulti
+                            options={(services || []).map((item) => ({
                               value: item.id,
                               label: item.service_name,
                             }))}
-                          onChange={(selected: any) => {
-                            setFormData((prev) => ({
-                              ...prev,
-                              service_ids: selected
-                                ? selected.map((item: any) => item.value)
-                                : [],
-                            }));
+                            value={(services || [])
+                              .filter((item) =>
+                                formData.service_ids.includes(item.id)
+                              )
+                              .map((item) => ({
+                                value: item.id,
+                                label: item.service_name,
+                              }))}
+                            onChange={(selected: any) => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                service_ids: selected
+                                  ? selected.map((item: any) => item.value)
+                                  : [],
+                              }));
 
-                            setErrors((prev: any) => ({
-                              ...prev,
-                              service_ids: "",
-                            }));
-                          }}
-                          isClearable
-                          closeMenuOnSelect={false}
-                          hideSelectedOptions={false}
-                          placeholder="Search Services"
-                          styles={{
-                            control: (base, state) => ({
-                              ...base,
-                              minHeight: "56px",
-                              borderRadius: "4px",
-                              borderColor: errors.service_ids
-                                ? "#d32f2f"
-                                : state.isFocused
-                                  ? "#C72030"
-                                  : "#c4c4c4",
-                              boxShadow: "none",
-                              "&:hover": {
-                                borderColor: "#C72030",
-                              },
-                            }),
+                              setErrors((prev: any) => ({
+                                ...prev,
+                                service_ids: "",
+                              }));
+                            }}
+                            isClearable
+                            closeMenuOnSelect={false}
+                            hideSelectedOptions={false}
+                            placeholder="Search Services"
+                            styles={{
+                              control: (base, state) => ({
+                                ...base,
+                                minHeight: "56px",
+                                borderRadius: "4px",
+                                borderColor: errors.service_ids
+                                  ? "#d32f2f"
+                                  : state.isFocused
+                                    ? "#DA7756"
+                                    : "#c4c4c4",
+                                boxShadow: "none",
+                                "&:hover": {
+                                  borderColor: "#DA7756",
+                                },
+                              }),
 
-                            menu: (base) => ({
-                              ...base,
-                              zIndex: 9999,
-                            }),
+                              menu: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
 
-                            // option: (base, state) => ({
-                            //   ...base,
-                            //   backgroundColor: state.isFocused
-                            //     ? "rgba(199,32,48,0.08)"
-                            //     : "#fff",
-                            //   color: "#000",
-                            //   cursor: "pointer",
-                            // }),
-                            option: (base, state) => ({
-                              ...base,
-                              backgroundColor: state.isFocused
-                                ? "#eff6ff" // faint blue on hover
-                                : "#fff",
-                              color: "#000",
-                              cursor: "pointer",
-                            }),
+                              // option: (base, state) => ({
+                              //   ...base,
+                              //   backgroundColor: state.isFocused
+                              //     ? "rgba(199,32,48,0.08)"
+                              //     : "#fff",
+                              //   color: "#000",
+                              //   cursor: "pointer",
+                              // }),
+                              option: (base, state) => ({
+                                ...base,
+                                backgroundColor: state.isFocused
+                                  ? "#eff6ff" // faint blue on hover
+                                  : "#fff",
+                                color: "#000",
+                                cursor: "pointer",
+                              }),
 
-                            placeholder: (base) => ({
-                              ...base,
-                              color: "#999",
-                            }),
+                              placeholder: (base) => ({
+                                ...base,
+                                color: "#999",
+                              }),
 
-                            multiValue: (base) => ({
-                              ...base,
-                              backgroundColor: "rgba(199,32,48,0.08)",
-                            }),
+                              multiValue: (base) => ({
+                                ...base,
+                                backgroundColor: "rgba(199,32,48,0.08)",
+                              }),
 
-                            multiValueLabel: (base) => ({
-                              ...base,
-                              color: "#C72030",
-                              fontWeight: 500,
-                            }),
+                              multiValueLabel: (base) => ({
+                                ...base,
+                                color: "#DA7756",
+                                fontWeight: 500,
+                              }),
 
-                            multiValueRemove: (base) => ({
-                              ...base,
-                              color: "#C72030",
-                              ":hover": {
-                                backgroundColor: "#C72030",
-                                color: "#fff",
-                              },
-                            }),
-                          }}
-                        />
+                              multiValueRemove: (base) => ({
+                                ...base,
+                                color: "#DA7756",
+                                ":hover": {
+                                  backgroundColor: "#DA7756",
+                                  color: "#fff",
+                                },
+                              }),
+                            }}
+                          />
 
-                        {errors.service_ids && (
-                          <FormHelperText>
-                            {errors.service_ids}
-                          </FormHelperText>
-                        )}
-                      </FormControl>
-                    )}
-
-
-
-
-
-                    {supplierField}
-
-
-
-
-
-
-
-
-
-                    <FormControl fullWidth error={!!errors.technician}>
-                      <Typography
-                        sx={{
-                          fontSize: "14px",
-                          mb: 1,
-                          fontWeight: 500,
-                          color: "#444",
-                        }}
-                      >
-                        Technician
-                      </Typography>
-
-                      <Select
-                        options={(technicianOptions || []).map((item) => ({
-                          value: item.id,
-                          label: item.full_name || item.name,
-                        }))}
-                        value={
-                          (technicianOptions || [])
-                            .filter(
-                              (item) =>
-                                String(item.id) ===
-                                String(formData.technician)
-                            )
-                            .map((item) => ({
-                              value: item.id,
-                              label: item.full_name || item.name,
-                            }))[0] || null
-                        }
-                        onChange={(selected: any) => {
-                          handleInputChange(
-                            "technician",
-                            selected ? String(selected.value) : ""
-                          );
-
-                          setErrors((prev: any) => ({
-                            ...prev,
-                            technician: "",
-                          }));
-                        }}
-                        isDisabled={
-                          loading || techniciansLoading || isSubmitting
-                        }
-                        isClearable
-                        placeholder="Search Technician"
-                        styles={{
-                          control: (base, state) => ({
-                            ...base,
-                            minHeight: "56px",
-                            borderRadius: "4px",
-                            borderColor: errors.technician
-                              ? "#d32f2f"
-                              : state.isFocused
-                                ? "#C72030"
-                                : "#c4c4c4",
-                            boxShadow: "none",
-                            "&:hover": {
-                              borderColor: "#C72030",
-                            },
-                          }),
-
-                          menu: (base) => ({
-                            ...base,
-                            zIndex: 9999,
-                          }),
-
-                          // option: (base, state) => ({
-                          //   ...base,
-                          //   backgroundColor: state.isFocused
-                          //     ? "rgba(199,32,48,0.08)"
-                          //     : "#fff",
-                          //   color: "#000",
-                          //   cursor: "pointer",
-                          // }),
-
-
-                          option: (base, state) => ({
-                            ...base,
-                            backgroundColor: state.isFocused
-                              ? "#eff6ff" // faint blue on hover
-                              : "#fff",
-                            color: "#000",
-                            cursor: "pointer",
-                          }),
-
-                          placeholder: (base) => ({
-                            ...base,
-                            color: "#999",
-                          }),
-
-                          singleValue: (base) => ({
-                            ...base,
-                            color: "#000",
-                          }),
-                        }}
-                      />
-
-                      {errors.technician && (
-                        <FormHelperText>
-                          {errors.technician}
-                        </FormHelperText>
+                          {errors.service_ids && (
+                            <FormHelperText>
+                              {errors.service_ids}
+                            </FormHelperText>
+                          )}
+                        </FormControl>
                       )}
-                    </FormControl>
-                  </>
-                ) : (
-                  // <>
-                  //   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  //     <FormControl fullWidth variant="outlined" error={!!errors.group} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  //       <InputLabel shrink>Group</InputLabel>
-                  //       <MuiSelect
-                  //         label="Group"
-                  //         displayEmpty
-                  //         value={formData.group}
-                  //         onChange={e => handleGroupChange(e.target.value)}
-                  //         disabled={loading || isSubmitting}
-                  //       >
-                  //         <MenuItem value=""><em>Select Group</em></MenuItem>
-                  //         {Array.isArray(assetGroups) && assetGroups.map((group) => (
-                  //           <MenuItem key={group.id} value={group.id.toString()}>
-                  //             {group.name}
-                  //           </MenuItem>
-                  //         ))}
-                  //       </MuiSelect>
-                  //       {errors.group && <FormHelperText>{errors.group}</FormHelperText>}
-                  //     </FormControl>
-
-                  //     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  //       <InputLabel shrink>SubGroup</InputLabel>
-                  //       <MuiSelect
-                  //         label="SubGroup"
-                  //         displayEmpty
-                  //         value={formData.subgroup}
-                  //         onChange={e => handleInputChange('subgroup', e.target.value)}
-                  //         disabled={!formData.group || loading || isSubmitting}
-                  //       >
-                  //         <MenuItem value=""><em>Select Sub Group</em></MenuItem>
-                  //         {Array.isArray(subGroups) && subGroups.map((subGroup) => (
-                  //           <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
-                  //             {subGroup.name}
-                  //           </MenuItem>
-                  //         ))}
-                  //       </MuiSelect>
-                  //     </FormControl>
-
-                  //     <FormControl fullWidth variant="outlined" error={!!errors.supplier} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  //       <InputLabel shrink>Supplier <span style={{ color: '#C72030' }}>*</span></InputLabel>
-                  //       <MuiSelect
-                  //         label="Supplier"
-                  //         displayEmpty
-                  //         value={formData.supplier}
-                  //         onChange={e => handleInputChange('supplier', e.target.value)}
-                  //         disabled={loading || suppliersLoading || isSubmitting}
-                  //       >
-                  //         <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                  //         {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
-                  //           <MenuItem key={supplier.id} value={supplier.id.toString()}>
-                  //             {supplier.company_name || supplier.name}
-                  //           </MenuItem>
-                  //         ))}
-                  //       </MuiSelect>
-                  //       {errors.supplier && <FormHelperText>{errors.supplier}</FormHelperText>}
-                  //     </FormControl>
-
-                  //     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  //       <InputLabel shrink>Technician</InputLabel>
-                  //       <MuiSelect
-                  //         label="Technician"
-                  //         displayEmpty
-                  //         value={formData.technician}
-                  //         onChange={e => handleInputChange('technician', e.target.value)}
-                  //         disabled={loading || techniciansLoading || isSubmitting}
-                  //       >
-                  //         <MenuItem value=""><em>Select Technician</em></MenuItem>
-                  //         {Array.isArray(technicianOptions) && technicianOptions.map((technician) => (
-                  //           <MenuItem key={technician.id} value={technician.id.toString()}>
-                  //             {technician.full_name || technician.name}
-                  //           </MenuItem>
-                  //         ))}
-                  //       </MuiSelect>
-                  //     </FormControl>
-                  //   </div>
-                  // </>
 
 
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                      {/* Group */}
-                      <FormControl fullWidth error={!!errors.group}>
-                        <Typography
-                          sx={{
-                            fontSize: "14px",
-                            mb: 1,
-                            fontWeight: 500,
-                            color: "#444",
-                          }}
-                        >
-                          Group
-                        </Typography>
 
-                        <Select
-                          options={(assetGroups || []).map((group) => ({
-                            value: group.id,
-                            label: group.name,
-                          }))}
-                          value={
-                            (assetGroups || [])
-                              .filter(
-                                (group) =>
-                                  String(group.id) === String(formData.group)
-                              )
-                              .map((group) => ({
-                                value: group.id,
-                                label: group.name,
-                              }))[0] || null
-                          }
-                          onChange={(selected: any) => {
-                            handleGroupChange(
-                              selected ? String(selected.value) : ""
-                            );
-                          }}
-                          isDisabled={loading || isSubmitting}
-                          placeholder="Search Group"
-                          isClearable
-                          styles={{
-                            control: (base, state) => ({
-                              ...base,
-                              minHeight: "56px",
-                              borderRadius: "4px",
-                              borderColor: errors.group
-                                ? "#d32f2f"
-                                : state.isFocused
-                                  ? "#C72030"
-                                  : "#c4c4c4",
-                              boxShadow: "none",
-                              "&:hover": {
-                                borderColor: "#C72030",
-                              },
-                            }),
-
-                            option: (base, state) => ({
-                              ...base,
-                              backgroundColor: state.isFocused
-                                ? "#eff6ff"
-                                : "#fff",
-                              color: "#000",
-                              cursor: "pointer",
-                            }),
-
-                            menu: (base) => ({
-                              ...base,
-                              zIndex: 9999,
-                            }),
-                          }}
-                        />
-
-                        {errors.group && (
-                          <FormHelperText>
-                            {errors.group}
-                          </FormHelperText>
-                        )}
-                      </FormControl>
-
-                      {/* SubGroup */}
-                      <FormControl fullWidth>
-                        <Typography
-                          sx={{
-                            fontSize: "14px",
-                            mb: 1,
-                            fontWeight: 500,
-                            color: "#444",
-                          }}
-                        >
-                          SubGroup
-                        </Typography>
-
-                        <Select
-                          options={(subGroups || []).map((subGroup) => ({
-                            value: subGroup.id,
-                            label: subGroup.name,
-                          }))}
-                          value={
-                            (subGroups || [])
-                              .filter(
-                                (subGroup) =>
-                                  String(subGroup.id) === String(formData.subgroup)
-                              )
-                              .map((subGroup) => ({
-                                value: subGroup.id,
-                                label: subGroup.name,
-                              }))[0] || null
-                          }
-                          onChange={(selected: any) => {
-                            handleInputChange(
-                              "subgroup",
-                              selected ? String(selected.value) : ""
-                            );
-                          }}
-                          isDisabled={
-                            !formData.group || loading || isSubmitting
-                          }
-                          isClearable
-                          placeholder="Search SubGroup"
-                          styles={{
-                            control: (base, state) => ({
-                              ...base,
-                              minHeight: "56px",
-                              borderRadius: "4px",
-                              borderColor: state.isFocused
-                                ? "#C72030"
-                                : "#c4c4c4",
-                              boxShadow: "none",
-                              "&:hover": {
-                                borderColor: "#C72030",
-                              },
-                            }),
-
-                            option: (base, state) => ({
-                              ...base,
-                              backgroundColor: state.isFocused
-                                ? "#eff6ff"
-                                : "#fff",
-                              color: "#000",
-                              cursor: "pointer",
-                            }),
-
-                            menu: (base) => ({
-                              ...base,
-                              zIndex: 9999,
-                            }),
-                          }}
-                        />
-                      </FormControl>
 
                       {supplierField}
 
-                      {/* Technician */}
+
+
+
+
+
+
+
+
                       <FormControl fullWidth error={!!errors.technician}>
                         <Typography
                           sx={{
@@ -3719,7 +3374,8 @@ export const AddAMCPage = () => {
                             (technicianOptions || [])
                               .filter(
                                 (item) =>
-                                  String(item.id) === String(formData.technician)
+                                  String(item.id) ===
+                                  String(formData.technician)
                               )
                               .map((item) => ({
                                 value: item.id,
@@ -3731,6 +3387,11 @@ export const AddAMCPage = () => {
                               "technician",
                               selected ? String(selected.value) : ""
                             );
+
+                            setErrors((prev: any) => ({
+                              ...prev,
+                              technician: "",
+                            }));
                           }}
                           isDisabled={
                             loading || techniciansLoading || isSubmitting
@@ -3742,27 +3403,49 @@ export const AddAMCPage = () => {
                               ...base,
                               minHeight: "56px",
                               borderRadius: "4px",
-                              borderColor: state.isFocused
-                                ? "#C72030"
-                                : "#c4c4c4",
+                              borderColor: errors.technician
+                                ? "#d32f2f"
+                                : state.isFocused
+                                  ? "#DA7756"
+                                  : "#c4c4c4",
                               boxShadow: "none",
                               "&:hover": {
-                                borderColor: "#C72030",
+                                borderColor: "#DA7756",
                               },
-                            }),
-
-                            option: (base, state) => ({
-                              ...base,
-                              backgroundColor: state.isFocused
-                                ? "#eff6ff"
-                                : "#fff",
-                              color: "#000",
-                              cursor: "pointer",
                             }),
 
                             menu: (base) => ({
                               ...base,
                               zIndex: 9999,
+                            }),
+
+                            // option: (base, state) => ({
+                            //   ...base,
+                            //   backgroundColor: state.isFocused
+                            //     ? "rgba(199,32,48,0.08)"
+                            //     : "#fff",
+                            //   color: "#000",
+                            //   cursor: "pointer",
+                            // }),
+
+
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff" // faint blue on hover
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
+
+                            placeholder: (base) => ({
+                              ...base,
+                              color: "#999",
+                            }),
+
+                            singleValue: (base) => ({
+                              ...base,
+                              color: "#000",
                             }),
                           }}
                         />
@@ -3773,606 +3456,876 @@ export const AddAMCPage = () => {
                           </FormHelperText>
                         )}
                       </FormControl>
+                    </>
+                  ) : (
+                    // <>
+                    //   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    //     <FormControl fullWidth variant="outlined" error={!!errors.group} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    //       <InputLabel shrink>Group</InputLabel>
+                    //       <MuiSelect
+                    //         label="Group"
+                    //         displayEmpty
+                    //         value={formData.group}
+                    //         onChange={e => handleGroupChange(e.target.value)}
+                    //         disabled={loading || isSubmitting}
+                    //       >
+                    //         <MenuItem value=""><em>Select Group</em></MenuItem>
+                    //         {Array.isArray(assetGroups) && assetGroups.map((group) => (
+                    //           <MenuItem key={group.id} value={group.id.toString()}>
+                    //             {group.name}
+                    //           </MenuItem>
+                    //         ))}
+                    //       </MuiSelect>
+                    //       {errors.group && <FormHelperText>{errors.group}</FormHelperText>}
+                    //     </FormControl>
 
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </>
-        )}
+                    //     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    //       <InputLabel shrink>SubGroup</InputLabel>
+                    //       <MuiSelect
+                    //         label="SubGroup"
+                    //         displayEmpty
+                    //         value={formData.subgroup}
+                    //         onChange={e => handleInputChange('subgroup', e.target.value)}
+                    //         disabled={!formData.group || loading || isSubmitting}
+                    //       >
+                    //         <MenuItem value=""><em>Select Sub Group</em></MenuItem>
+                    //         {Array.isArray(subGroups) && subGroups.map((subGroup) => (
+                    //           <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
+                    //             {subGroup.name}
+                    //           </MenuItem>
+                    //         ))}
+                    //       </MuiSelect>
+                    //     </FormControl>
 
-        {/* Step 2: AMC Details */}
-        {currentStep === 1 && (
-          <>
-            {/* Header above card */}
-            <div className="flex items-center mb-4">
-              <Avatar sx={{
-                bgcolor: '#C72030',
-                color: 'white',
-                width: 32,
-                height: 32,
-                mr: 2,
-                fontSize: '16px'
-              }}>
-                <SettingsOutlinedIcon fontSize="small" />
-              </Avatar>
-              <h2 className="text-[#C72030]" style={{
-                fontFamily: 'Work Sans, sans-serif',
-                fontWeight: 600,
-                fontSize: '26px',
-                lineHeight: '100%',
-                letterSpacing: '0%'
-              }}>
-                AMC Details
-              </h2>
-            </div>
+                    //     <FormControl fullWidth variant="outlined" error={!!errors.supplier} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    //       <InputLabel shrink>Supplier <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                    //       <MuiSelect
+                    //         label="Supplier"
+                    //         displayEmpty
+                    //         value={formData.supplier}
+                    //         onChange={e => handleInputChange('supplier', e.target.value)}
+                    //         disabled={loading || suppliersLoading || isSubmitting}
+                    //       >
+                    //         <MenuItem value=""><em>Select Supplier</em></MenuItem>
+                    //         {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
+                    //           <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                    //             {supplier.company_name || supplier.name}
+                    //           </MenuItem>
+                    //         ))}
+                    //       </MuiSelect>
+                    //       {errors.supplier && <FormHelperText>{errors.supplier}</FormHelperText>}
+                    //     </FormControl>
 
-            <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-              borderRadius: '4px',
-              background: '#FFF',
-              boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-            }}>
+                    //     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    //       <InputLabel shrink>Technician</InputLabel>
+                    //       <MuiSelect
+                    //         label="Technician"
+                    //         displayEmpty
+                    //         value={formData.technician}
+                    //         onChange={e => handleInputChange('technician', e.target.value)}
+                    //         disabled={loading || techniciansLoading || isSubmitting}
+                    //       >
+                    //         <MenuItem value=""><em>Select Technician</em></MenuItem>
+                    //         {Array.isArray(technicianOptions) && technicianOptions.map((technician) => (
+                    //           <MenuItem key={technician.id} value={technician.id.toString()}>
+                    //             {technician.full_name || technician.name}
+                    //           </MenuItem>
+                    //         ))}
+                    //       </MuiSelect>
+                    //     </FormControl>
+                    //   </div>
+                    // </>
 
-              <CardContent className="space-y-4 p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Row 1: Contract Name | Start Date | End Date */}
-                  <TextField
-                    disabled={isSubmitting}
-                    label={<span>Contract Name <span style={{ color: 'red' }}>*</span></span>}
-                    placeholder="Enter Contract Name"
-                    fullWidth
-                    value={formData.contractName}
-                    onChange={e => handleInputChange('contractName', e.target.value)}
-                    error={!!errors.contractName}
-                    helperText={errors.contractName}
-                    sx={{ mb: 3 }}
-                  />
 
-                  <TextField
-                    disabled={isSubmitting}
-                    label={<span>Start Date <span style={{ color: 'red' }}>*</span></span>}
-                    type="date"
-                    fullWidth
-                    value={formData.startDate || ''}
-                    onChange={(e) => handleInputChange('startDate', e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    error={!!errors.startDate}
-                    helperText={errors.startDate}
-                    sx={{ mb: 3 }}
-                  />
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                  <TextField
-                    disabled={!formData.startDate || isSubmitting}
-                    label={<span>End Date <span style={{ color: 'red' }}>*</span></span>}
-                    type="date"
-                    fullWidth
-                    value={formData.endDate || ''}
-                    onChange={(e) => handleInputChange('endDate', e.target.value)}
-                    inputProps={{ min: formData.startDate || undefined }}
-                    InputLabelProps={{ shrink: true }}
-                    error={!!errors.endDate}
-                    helperText={errors.endDate}
-                    sx={{ mb: 3 }}
-                  />
+                        {/* Group */}
+                        <FormControl fullWidth error={!!errors.group}>
+                          <Typography
+                            sx={{
+                              fontSize: "14px",
+                              mb: 1,
+                              fontWeight: 500,
+                              color: "#444",
+                            }}
+                          >
+                            Group
+                          </Typography>
 
-                  {/* Row 2: First Service Date | Payment Terms | AMC Cost */}
-                  <TextField
-                    disabled={isSubmitting}
-                    label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
-                    type="date"
-                    fullWidth
-                    value={formData.firstService || ''}
-                    onChange={(e) => handleInputChange('firstService', e.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    error={!!errors.firstService}
-                    helperText={errors.firstService}
-                    sx={{ mb: 3 }}
-                  />
+                          <Select
+                            options={(assetGroups || []).map((group) => ({
+                              value: group.id,
+                              label: group.name,
+                            }))}
+                            value={
+                              (assetGroups || [])
+                                .filter(
+                                  (group) =>
+                                    String(group.id) === String(formData.group)
+                                )
+                                .map((group) => ({
+                                  value: group.id,
+                                  label: group.name,
+                                }))[0] || null
+                            }
+                            onChange={(selected: any) => {
+                              handleGroupChange(
+                                selected ? String(selected.value) : ""
+                              );
+                            }}
+                            isDisabled={loading || isSubmitting}
+                            placeholder="Search Group"
+                            isClearable
+                            styles={{
+                              control: (base, state) => ({
+                                ...base,
+                                minHeight: "56px",
+                                borderRadius: "4px",
+                                borderColor: errors.group
+                                  ? "#d32f2f"
+                                  : state.isFocused
+                                    ? "#DA7756"
+                                    : "#c4c4c4",
+                                boxShadow: "none",
+                                "&:hover": {
+                                  borderColor: "#DA7756",
+                                },
+                              }),
 
-                  <FormControl fullWidth variant="outlined" error={!!errors.paymentTerms} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Payment Terms <span style={{ color: '#C72030' }}>*</span></InputLabel>
-                    <MuiSelect
-                      label="Payment Terms"
-                      displayEmpty
-                      value={formData.paymentTerms}
-                      onChange={e => handleInputChange('paymentTerms', e.target.value)}
-                      disabled={isSubmitting}
-                    >
-                      <MenuItem value=""><em>Select Payment Terms</em></MenuItem>
-                      <MenuItem value="monthly">Monthly</MenuItem>
-                      <MenuItem value="quarterly">Quarterly</MenuItem>
-                      <MenuItem value="half-yearly">Half Yearly</MenuItem>
-                      <MenuItem value="yearly">Yearly</MenuItem>
-                      <MenuItem value="full_payment">Full Payment</MenuItem>
-                      <MenuItem value="visit_based_payment">Visit Based Payment</MenuItem>
-                    </MuiSelect>
-                    {errors.paymentTerms && <FormHelperText>{errors.paymentTerms}</FormHelperText>}
-                  </FormControl>
+                              option: (base, state) => ({
+                                ...base,
+                                backgroundColor: state.isFocused
+                                  ? "#eff6ff"
+                                  : "#fff",
+                                color: "#000",
+                                cursor: "pointer",
+                              }),
 
-                  <TextField
-                    disabled={isSubmitting}
-                    label={<span>Cost <span style={{ color: 'red' }}>*</span></span>}
-                    placeholder="Enter Cost"
-                    type="number"
-                    fullWidth
-                    value={formData.cost}
-                    onChange={e => handleInputChange('cost', e.target.value)}
-                    onKeyDown={(e) => {
-                      if (['e', 'E', '+', '-'].includes(e.key)) {
-                        e.preventDefault();
-                      }
-                    }}
-                    error={!!errors.cost}
-                    helperText={errors.cost}
-                    sx={{ mb: 3 }}
-                  />
-
-                  {/* Row 3: No. of Visits | Remarks */}
-                  <TextField
-                    disabled={isSubmitting}
-                    label={<span>No. of Visits <span style={{ color: 'red' }}>*</span></span>}
-                    placeholder="Enter No. of Visits"
-                    type="number"
-                    fullWidth
-                    value={formData.noOfVisits}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (/^\d*$/.test(value)) {
-                        handleInputChange('noOfVisits', value);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
-                        e.preventDefault();
-                      }
-                    }}
-                    error={!!errors.noOfVisits}
-                    helperText={errors.noOfVisits}
-                    sx={{ mb: 3 }}
-                  />
-
-                  <TextField
-                    disabled={isSubmitting}
-                    label="Assets Per Day"
-                    placeholder="Enter Assets Per Day"
-                    type="number"
-                    fullWidth
-                    value={formData.assetsPerDay}
-                    onChange={e => {
-                      const value = e.target.value;
-                      if (/^\d*$/.test(value)) {
-                        handleInputChange('assetsPerDay', value);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
-                        e.preventDefault();
-                      }
-                    }}
-                    sx={{ mb: 3 }}
-                  />
-
-                  <TextField
-                    disabled={isSubmitting}
-                    label="Remarks"
-                    placeholder="Enter Remarks"
-                    fullWidth
-                    value={formData.remarks}
-                    onChange={e => handleInputChange('remarks', e.target.value)}
-                    sx={{ mb: 3 }}
-                  />
-
-                  {/* AMC Frequency multi-select */}
-                  <div className="md:col-span-3">
-                    <FormControl fullWidth>
-                      <Typography sx={{ fontSize: '14px', mb: 1, fontWeight: 500, color: '#444' }}>
-                        AMC Frequency
-                      </Typography>
-                      <Select
-                        isMulti
-                        options={FREQUENCY_OPTIONS}
-                        value={FREQUENCY_OPTIONS.filter(o => selectedFrequencies.includes(o.value))}
-                        onChange={(selected: any) => {
-                          setSelectedFrequencies(selected ? selected.map((s: any) => s.value) : []);
-                        }}
-                        isClearable
-                        closeMenuOnSelect={false}
-                        hideSelectedOptions={false}
-                        placeholder="Select Frequencies (optional)"
-                        isDisabled={isSubmitting}
-                        styles={{
-                          control: (base, state) => ({
-                            ...base,
-                            minHeight: '40px',
-                            borderRadius: '4px',
-                            borderColor: state.isFocused ? '#C72030' : '#c4c4c4',
-                            boxShadow: 'none',
-                            '&:hover': { borderColor: '#C72030' },
-                          }),
-                          menu: (base) => ({ ...base, zIndex: 9999 }),
-                          option: (base, state) => ({
-                            ...base,
-                            backgroundColor: state.isFocused ? '#eff6ff' : '#fff',
-                            color: '#000',
-                            cursor: 'pointer',
-                          }),
-                          multiValue: (base) => ({ ...base, backgroundColor: 'rgba(199,32,48,0.08)' }),
-                          multiValueLabel: (base) => ({ ...base, color: '#C72030', fontWeight: 500 }),
-                          multiValueRemove: (base) => ({
-                            ...base, color: '#C72030',
-                            ':hover': { backgroundColor: '#C72030', color: '#fff' },
-                          }),
-                        }}
-                      />
-                    </FormControl>
-                  </div>
-
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        {/* Step 3: Schedule */}
-        {currentStep === 2 && (
-          <>
-            <div className="flex items-center mb-4">
-              <Avatar sx={{
-                bgcolor: '#C72030',
-                color: 'white',
-                width: 32,
-                height: 32,
-                mr: 2,
-                fontSize: '16px'
-              }}>
-                <SettingsOutlinedIcon fontSize="small" />
-              </Avatar>
-              <h2 className="text-[#C72030]" style={{
-                fontFamily: 'Work Sans, sans-serif',
-                fontWeight: 600,
-                fontSize: '26px',
-                lineHeight: '100%',
-                letterSpacing: '0%'
-              }}>
-                Schedule
-              </h2>
-            </div>
-            {/* If frequencies are selected, show one tab per frequency; otherwise show the default single setup */}
-            {frequencyConfigs.length > 0 ? (
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', background: '#FFF', boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)' }}>
-                <CardContent className="p-0">
-                  {/* Frequency tabs */}
-                  <div className="flex border-b border-gray-200 overflow-x-auto">
-                    {frequencyConfigs.map((cfg, idx) => (
-                      <button
-                        key={cfg.frequency}
-                        type="button"
-                        onClick={() => setActiveFrequencyTab(idx)}
-                        className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
-                          activeFrequencyTab === idx
-                            ? 'border-b-2 border-[#C72030] text-[#C72030] bg-white'
-                            : 'text-gray-500 hover:text-[#C72030] bg-[#F6F4EE]'
-                        }`}
-                      >
-                        {FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}
-                      </button>
-                    ))}
-                  </div>
-
-                  {frequencyConfigs.map((cfg, idx) => (
-                    <div key={cfg.frequency} className={idx === activeFrequencyTab ? 'block p-4' : 'hidden'}>
-                      {/* Description + Active toggle row */}
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="flex-1">
-                          <TextField
-                            label="Description"
-                            placeholder={`Description for ${FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}`}
-                            fullWidth
-                            size="small"
-                            value={cfg.description}
-                            disabled={isSubmitting}
-                            onChange={e => {
-                              const val = e.target.value;
-                              setFrequencyConfigs(prev => prev.map((c, i) => i === idx ? { ...c, description: val } : c));
+                              menu: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
                             }}
                           />
-                        </div>
-                        <label className="flex items-center gap-2 cursor-pointer shrink-0">
-                          <span className="text-sm font-medium text-[#1a1a1a]">Active</span>
-                          <div className="relative">
-                            <input
-                              type="checkbox"
-                              className="sr-only peer"
-                              checked={cfg.active}
+
+                          {errors.group && (
+                            <FormHelperText>
+                              {errors.group}
+                            </FormHelperText>
+                          )}
+                        </FormControl>
+
+                        {/* SubGroup */}
+                        <FormControl fullWidth>
+                          <Typography
+                            sx={{
+                              fontSize: "14px",
+                              mb: 1,
+                              fontWeight: 500,
+                              color: "#444",
+                            }}
+                          >
+                            SubGroup
+                          </Typography>
+
+                          <Select
+                            options={(subGroups || []).map((subGroup) => ({
+                              value: subGroup.id,
+                              label: subGroup.name,
+                            }))}
+                            value={
+                              (subGroups || [])
+                                .filter(
+                                  (subGroup) =>
+                                    String(subGroup.id) === String(formData.subgroup)
+                                )
+                                .map((subGroup) => ({
+                                  value: subGroup.id,
+                                  label: subGroup.name,
+                                }))[0] || null
+                            }
+                            onChange={(selected: any) => {
+                              handleInputChange(
+                                "subgroup",
+                                selected ? String(selected.value) : ""
+                              );
+                            }}
+                            isDisabled={
+                              !formData.group || loading || isSubmitting
+                            }
+                            isClearable
+                            placeholder="Search SubGroup"
+                            styles={{
+                              control: (base, state) => ({
+                                ...base,
+                                minHeight: "56px",
+                                borderRadius: "4px",
+                                borderColor: state.isFocused
+                                  ? "#DA7756"
+                                  : "#c4c4c4",
+                                boxShadow: "none",
+                                "&:hover": {
+                                  borderColor: "#DA7756",
+                                },
+                              }),
+
+                              option: (base, state) => ({
+                                ...base,
+                                backgroundColor: state.isFocused
+                                  ? "#eff6ff"
+                                  : "#fff",
+                                color: "#000",
+                                cursor: "pointer",
+                              }),
+
+                              menu: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
+                            }}
+                          />
+                        </FormControl>
+
+                        {supplierField}
+
+                        {/* Technician */}
+                        <FormControl fullWidth error={!!errors.technician}>
+                          <Typography
+                            sx={{
+                              fontSize: "14px",
+                              mb: 1,
+                              fontWeight: 500,
+                              color: "#444",
+                            }}
+                          >
+                            Technician
+                          </Typography>
+
+                          <Select
+                            options={(technicianOptions || []).map((item) => ({
+                              value: item.id,
+                              label: item.full_name || item.name,
+                            }))}
+                            value={
+                              (technicianOptions || [])
+                                .filter(
+                                  (item) =>
+                                    String(item.id) === String(formData.technician)
+                                )
+                                .map((item) => ({
+                                  value: item.id,
+                                  label: item.full_name || item.name,
+                                }))[0] || null
+                            }
+                            onChange={(selected: any) => {
+                              handleInputChange(
+                                "technician",
+                                selected ? String(selected.value) : ""
+                              );
+                            }}
+                            isDisabled={
+                              loading || techniciansLoading || isSubmitting
+                            }
+                            isClearable
+                            placeholder="Search Technician"
+                            styles={{
+                              control: (base, state) => ({
+                                ...base,
+                                minHeight: "56px",
+                                borderRadius: "4px",
+                                borderColor: state.isFocused
+                                  ? "#DA7756"
+                                  : "#c4c4c4",
+                                boxShadow: "none",
+                                "&:hover": {
+                                  borderColor: "#DA7756",
+                                },
+                              }),
+
+                              option: (base, state) => ({
+                                ...base,
+                                backgroundColor: state.isFocused
+                                  ? "#eff6ff"
+                                  : "#fff",
+                                color: "#000",
+                                cursor: "pointer",
+                              }),
+
+                              menu: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
+                            }}
+                          />
+
+                          {errors.technician && (
+                            <FormHelperText>
+                              {errors.technician}
+                            </FormHelperText>
+                          )}
+                        </FormControl>
+
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )
+        }
+
+        {/* Step 2: AMC Details */}
+        {
+          currentStep === 1 && (
+            <>
+              {/* Header above card */}
+              <div className="flex items-center mb-4">
+                <Avatar sx={{
+                  bgcolor: '#DA7756',
+                  color: 'white',
+                  width: 32,
+                  height: 32,
+                  mr: 2,
+                  fontSize: '16px'
+                }}>
+                  <SettingsOutlinedIcon fontSize="small" />
+                </Avatar>
+                <h2 className="text-[#DA7756]" style={{
+                  fontFamily: 'Work Sans, sans-serif',
+                  fontWeight: 600,
+                  fontSize: '26px',
+                  lineHeight: '100%',
+                  letterSpacing: '0%'
+                }}>
+                  AMC Details
+                </h2>
+              </div>
+
+              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
+                borderRadius: '4px',
+                background: '#FFF',
+                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
+              }}>
+
+                <CardContent className="space-y-4 p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Row 1: Contract Name | Start Date | End Date */}
+                    <TextField
+                      disabled={isSubmitting}
+                      label={<span>Contract Name <span style={{ color: 'red' }}>*</span></span>}
+                      placeholder="Enter Contract Name"
+                      fullWidth
+                      value={formData.contractName}
+                      onChange={e => handleInputChange('contractName', e.target.value)}
+                      error={!!errors.contractName}
+                      helperText={errors.contractName}
+                      sx={{ mb: 3 }}
+                    />
+
+                    <TextField
+                      disabled={isSubmitting}
+                      label={<span>Start Date <span style={{ color: 'red' }}>*</span></span>}
+                      type="date"
+                      fullWidth
+                      value={formData.startDate || ''}
+                      onChange={(e) => handleInputChange('startDate', e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      error={!!errors.startDate}
+                      helperText={errors.startDate}
+                      sx={{ mb: 3 }}
+                    />
+
+                    <TextField
+                      disabled={!formData.startDate || isSubmitting}
+                      label={<span>End Date <span style={{ color: 'red' }}>*</span></span>}
+                      type="date"
+                      fullWidth
+                      value={formData.endDate || ''}
+                      onChange={(e) => handleInputChange('endDate', e.target.value)}
+                      inputProps={{ min: formData.startDate || undefined }}
+                      InputLabelProps={{ shrink: true }}
+                      error={!!errors.endDate}
+                      helperText={errors.endDate}
+                      sx={{ mb: 3 }}
+                    />
+
+                    {/* Row 2: First Service Date | Payment Terms | AMC Cost */}
+                    <TextField
+                      disabled={isSubmitting}
+                      label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
+                      type="date"
+                      fullWidth
+                      value={formData.firstService || ''}
+                      onChange={(e) => handleInputChange('firstService', e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      error={!!errors.firstService}
+                      helperText={errors.firstService}
+                      sx={{ mb: 3 }}
+                    />
+
+                    <FormControl fullWidth variant="outlined" error={!!errors.paymentTerms} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Payment Terms <span style={{ color: '#DA7756' }}>*</span></InputLabel>
+                      <MuiSelect
+                        label="Payment Terms"
+                        displayEmpty
+                        value={formData.paymentTerms}
+                        onChange={e => handleInputChange('paymentTerms', e.target.value)}
+                        disabled={isSubmitting}
+                      >
+                        <MenuItem value=""><em>Select Payment Terms</em></MenuItem>
+                        <MenuItem value="monthly">Monthly</MenuItem>
+                        <MenuItem value="quarterly">Quarterly</MenuItem>
+                        <MenuItem value="half-yearly">Half Yearly</MenuItem>
+                        <MenuItem value="yearly">Yearly</MenuItem>
+                        <MenuItem value="full_payment">Full Payment</MenuItem>
+                        <MenuItem value="visit_based_payment">Visit Based Payment</MenuItem>
+                      </MuiSelect>
+                      {errors.paymentTerms && <FormHelperText>{errors.paymentTerms}</FormHelperText>}
+                    </FormControl>
+
+                    <TextField
+                      disabled={isSubmitting}
+                      label={<span>Cost <span style={{ color: 'red' }}>*</span></span>}
+                      placeholder="Enter Cost"
+                      type="number"
+                      fullWidth
+                      value={formData.cost}
+                      onChange={e => handleInputChange('cost', e.target.value)}
+                      onKeyDown={(e) => {
+                        if (['e', 'E', '+', '-'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      error={!!errors.cost}
+                      helperText={errors.cost}
+                      sx={{ mb: 3 }}
+                    />
+
+                    {/* Row 3: No. of Visits | Remarks */}
+                    <TextField
+                      disabled={isSubmitting}
+                      label={<span>No. of Visits <span style={{ color: 'red' }}>*</span></span>}
+                      placeholder="Enter No. of Visits"
+                      type="number"
+                      fullWidth
+                      value={formData.noOfVisits}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d*$/.test(value)) {
+                          handleInputChange('noOfVisits', value);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      error={!!errors.noOfVisits}
+                      helperText={errors.noOfVisits}
+                      sx={{ mb: 3 }}
+                    />
+
+                    <TextField
+                      disabled={isSubmitting}
+                      label="Assets Per Day"
+                      placeholder="Enter Assets Per Day"
+                      type="number"
+                      fullWidth
+                      value={formData.assetsPerDay}
+                      onChange={e => {
+                        const value = e.target.value;
+                        if (/^\d*$/.test(value)) {
+                          handleInputChange('assetsPerDay', value);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      sx={{ mb: 3 }}
+                    />
+
+                    <TextField
+                      disabled={isSubmitting}
+                      label="Remarks"
+                      placeholder="Enter Remarks"
+                      fullWidth
+                      value={formData.remarks}
+                      onChange={e => handleInputChange('remarks', e.target.value)}
+                      sx={{ mb: 3 }}
+                    />
+
+                    {/* AMC Frequency multi-select */}
+                    <div className="md:col-span-3">
+                      <FormControl fullWidth>
+                        <Typography sx={{ fontSize: '14px', mb: 1, fontWeight: 500, color: '#444' }}>
+                          AMC Frequency
+                        </Typography>
+                        <Select
+                          isMulti
+                          options={FREQUENCY_OPTIONS}
+                          value={FREQUENCY_OPTIONS.filter(o => selectedFrequencies.includes(o.value))}
+                          onChange={(selected: any) => {
+                            setSelectedFrequencies(selected ? selected.map((s: any) => s.value) : []);
+                          }}
+                          isClearable
+                          closeMenuOnSelect={false}
+                          hideSelectedOptions={false}
+                          placeholder="Select Frequencies (optional)"
+                          isDisabled={isSubmitting}
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: '40px',
+                              borderRadius: '4px',
+                              borderColor: state.isFocused ? '#DA7756' : '#c4c4c4',
+                              boxShadow: 'none',
+                              '&:hover': { borderColor: '#DA7756' },
+                            }),
+                            menu: (base) => ({ ...base, zIndex: 9999 }),
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused ? '#eff6ff' : '#fff',
+                              color: '#000',
+                              cursor: 'pointer',
+                            }),
+                            multiValue: (base) => ({ ...base, backgroundColor: 'rgba(199,32,48,0.08)' }),
+                            multiValueLabel: (base) => ({ ...base, color: '#DA7756', fontWeight: 500 }),
+                            multiValueRemove: (base) => ({
+                              ...base, color: '#DA7756',
+                              ':hover': { backgroundColor: '#DA7756', color: '#fff' },
+                            }),
+                          }}
+                        />
+                      </FormControl>
+                    </div>
+
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )
+        }
+
+        {/* Step 3: Schedule */}
+        {
+          currentStep === 2 && (
+            <>
+              <div className="flex items-center mb-4">
+                <Avatar sx={{
+                  bgcolor: '#DA7756',
+                  color: 'white',
+                  width: 32,
+                  height: 32,
+                  mr: 2,
+                  fontSize: '16px'
+                }}>
+                  <SettingsOutlinedIcon fontSize="small" />
+                </Avatar>
+                <h2 className="text-[#DA7756]" style={{
+                  fontFamily: 'Work Sans, sans-serif',
+                  fontWeight: 600,
+                  fontSize: '26px',
+                  lineHeight: '100%',
+                  letterSpacing: '0%'
+                }}>
+                  Schedule
+                </h2>
+              </div>
+              {/* If frequencies are selected, show one tab per frequency; otherwise show the default single setup */}
+              {frequencyConfigs.length > 0 ? (
+                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', background: '#FFF', boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)' }}>
+                  <CardContent className="p-0">
+                    {/* Frequency tabs */}
+                    <div className="flex border-b border-gray-200 overflow-x-auto">
+                      {frequencyConfigs.map((cfg, idx) => (
+                        <button
+                          key={cfg.frequency}
+                          type="button"
+                          onClick={() => setActiveFrequencyTab(idx)}
+                          className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors ${activeFrequencyTab === idx
+                            ? 'border-b-2 border-[#DA7756] text-[#DA7756] bg-white'
+                            : 'text-gray-500 hover:text-[#DA7756] bg-[#F6F4EE]'
+                            }`}
+                        >
+                          {FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}
+                        </button>
+                      ))}
+                    </div>
+
+                    {frequencyConfigs.map((cfg, idx) => (
+                      <div key={cfg.frequency} className={idx === activeFrequencyTab ? 'block p-4' : 'hidden'}>
+                        {/* Description + Active toggle row */}
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="flex-1">
+                            <TextField
+                              label="Description"
+                              placeholder={`Description for ${FREQUENCY_LABELS[cfg.frequency] || cfg.frequency}`}
+                              fullWidth
+                              size="small"
+                              value={cfg.description}
+                              disabled={isSubmitting}
                               onChange={e => {
-                                const val = e.target.checked;
-                                setFrequencyConfigs(prev => prev.map((c, i) => i === idx ? { ...c, active: val } : c));
+                                const val = e.target.value;
+                                setFrequencyConfigs(prev => prev.map((c, i) => i === idx ? { ...c, description: val } : c));
                               }}
                             />
-                            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#C72030]"></div>
                           </div>
-                        </label>
-                      </div>
+                          <label className="flex items-center gap-2 cursor-pointer shrink-0">
+                            <span className="text-sm font-medium text-[#1a1a1a]">Active</span>
+                            <div className="relative">
+                              <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                checked={cfg.active}
+                                onChange={e => {
+                                  const val = e.target.checked;
+                                  setFrequencyConfigs(prev => prev.map((c, i) => i === idx ? { ...c, active: val } : c));
+                                }}
+                              />
+                              <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#DA7756]"></div>
+                            </div>
+                          </label>
+                        </div>
 
-                      {/* Cron preview */}
-                      <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
-                        <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
-                        <span className="font-mono text-[#C72030]">{buildCronFromTimeData(cfg.timeSetupData as typeof initialTimeSetupState)}</span>
-                      </div>
+                        {/* Cron preview */}
+                        <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
+                          <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
+                          <span className="font-mono text-[#DA7756]">{buildCronFromTimeData(cfg.timeSetupData as typeof initialTimeSetupState)}</span>
+                        </div>
 
-                      <TimeSetupStep
-                        data={cfg.timeSetupData as typeof initialTimeSetupState}
-                        onChange={(field, value) => {
-                          setFrequencyConfigs(prev => prev.map((c, i) =>
-                            i === idx ? { ...c, timeSetupData: { ...c.timeSetupData, [field]: value } } : c
-                          ));
+                        <TimeSetupStep
+                          data={cfg.timeSetupData as typeof initialTimeSetupState}
+                          onChange={(field, value) => {
+                            setFrequencyConfigs(prev => prev.map((c, i) =>
+                              i === idx ? { ...c, timeSetupData: { ...c.timeSetupData, [field]: value } } : c
+                            ));
+                          }}
+                          hideTitle
+                        />
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
+                  borderRadius: '4px', background: '#FFF', boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
+                }}>
+                  <CardContent className="p-4">
+                    <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
+                      <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
+                      <span className="font-mono text-[#DA7756]">{buildCronExpression()}</span>
+                    </div>
+                    <TimeSetupStep
+                      data={timeSetupData}
+                      onChange={(field, value) => {
+                        setTimeSetupData(prev => ({ ...prev, [field]: value }));
+                      }}
+                      hideTitle
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Create Checklist */}
+              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', boxShadow: '0 4px 14.2px 0 rgba(0,0,0,0.10)' }}>
+                <CardContent className="p-4">
+                  {/* Toggle */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <Switch
+                      checked={createChecklist}
+                      onChange={(e) => {
+                        setCreateChecklist(e.target.checked);
+                        if (!e.target.checked) {
+                          setChecklistErrors({ templateId: '', graceTimeType: '', graceTimeValue: '' });
+                        }
+                      }}
+                      sx={{
+                        '& .MuiSwitch-switchBase.Mui-checked': {
+                          color: '#DA7756',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                          backgroundColor: '#DA7756',
+                        },
+                      }}
+                    />
+                    <span className="text-sm font-semibold text-[#1a1a1a]">Create Checklist</span>
+                  </div>
+
+                  {createChecklist && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Checklist Template */}
+                      <FormControl fullWidth variant="outlined" error={!!checklistErrors.templateId}>
+                        <InputLabel shrink>Checklist Template *</InputLabel>
+                        <MuiSelect
+                          label="Checklist Template *"
+                          value={checklistFields.templateId}
+                          onChange={e => {
+                            setChecklistFields(prev => ({ ...prev, templateId: String(e.target.value) }));
+                            setChecklistErrors(prev => ({ ...prev, templateId: '' }));
+                          }}
+                          displayEmpty
+                          disabled={checklistTemplatesLoading}
+                        >
+                          <MenuItem value=""><em>{checklistTemplatesLoading ? 'Loading...' : 'Select Template'}</em></MenuItem>
+                          {checklistTemplates.map(t => (
+                            <MenuItem key={t.id} value={String(t.id)}>{t.form_name}</MenuItem>
+                          ))}
+                        </MuiSelect>
+                        {checklistErrors.templateId && <FormHelperText>{checklistErrors.templateId}</FormHelperText>}
+                      </FormControl>
+
+                      {/* Grace Time Type */}
+                      <FormControl fullWidth variant="outlined" error={!!checklistErrors.graceTimeType}>
+                        <InputLabel shrink>Grace Time Type *</InputLabel>
+                        <MuiSelect
+                          label="Grace Time Type *"
+                          value={checklistFields.graceTimeType}
+                          onChange={e => {
+                            setChecklistFields(prev => ({ ...prev, graceTimeType: String(e.target.value) }));
+                            setChecklistErrors(prev => ({ ...prev, graceTimeType: '' }));
+                          }}
+                          displayEmpty
+                        >
+                          <MenuItem value=""><em>Select Type</em></MenuItem>
+                          <MenuItem value="hour">Hours</MenuItem>
+                          <MenuItem value="day">Days</MenuItem>
+                        </MuiSelect>
+                        {checklistErrors.graceTimeType && <FormHelperText>{checklistErrors.graceTimeType}</FormHelperText>}
+                      </FormControl>
+
+                      {/* Grace Time Value */}
+                      <TextField
+                        label="Grace Time Value *"
+                        type="number"
+                        variant="outlined"
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                        value={checklistFields.graceTimeValue}
+                        onChange={e => {
+                          setChecklistFields(prev => ({ ...prev, graceTimeValue: e.target.value }));
+                          setChecklistErrors(prev => ({ ...prev, graceTimeValue: '' }));
                         }}
-                        hideTitle
+                        error={!!checklistErrors.graceTimeValue}
+                        helperText={checklistErrors.graceTimeValue}
+                        inputProps={{ min: 0 }}
                       />
                     </div>
-                  ))}
+                  )}
                 </CardContent>
               </Card>
-            ) : (
-              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-                borderRadius: '4px', background: '#FFF', boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-              }}>
-                <CardContent className="p-4">
-                  <div className="mb-3 text-sm bg-[#F6F4EE] p-3 rounded">
-                    <span className="font-semibold text-[#1a1a1a]">Cron Expression:</span>{' '}
-                    <span className="font-mono text-[#C72030]">{buildCronExpression()}</span>
-                  </div>
-                  <TimeSetupStep
-                    data={timeSetupData}
-                    onChange={(field, value) => {
-                      setTimeSetupData(prev => ({ ...prev, [field]: value }));
-                    }}
-                    hideTitle
-                  />
-                </CardContent>
-              </Card>
-            )}
+            </>
 
-            {/* Create Checklist */}
-            <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{ borderRadius: '4px', boxShadow: '0 4px 14.2px 0 rgba(0,0,0,0.10)' }}>
-              <CardContent className="p-4">
-                {/* Toggle */}
-                <div className="flex items-center gap-3 mb-4">
-                  <Switch
-                    checked={createChecklist}
-                    onChange={(e) => {
-                      setCreateChecklist(e.target.checked);
-                      if (!e.target.checked) {
-                        setChecklistErrors({ templateId: '', graceTimeType: '', graceTimeValue: '' });
-                      }
-                    }}
-                    sx={{
-                      '& .MuiSwitch-switchBase.Mui-checked': {
-                        color: '#C72030',
-                      },
-                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                        backgroundColor: '#C72030',
-                      },
-                    }}
-                  />
-                  <span className="text-sm font-semibold text-[#1a1a1a]">Create Checklist</span>
-                </div>
-
-                {createChecklist && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Checklist Template */}
-                    <FormControl fullWidth variant="outlined" error={!!checklistErrors.templateId}>
-                      <InputLabel shrink>Checklist Template *</InputLabel>
-                      <MuiSelect
-                        label="Checklist Template *"
-                        value={checklistFields.templateId}
-                        onChange={e => {
-                          setChecklistFields(prev => ({ ...prev, templateId: String(e.target.value) }));
-                          setChecklistErrors(prev => ({ ...prev, templateId: '' }));
-                        }}
-                        displayEmpty
-                        disabled={checklistTemplatesLoading}
-                      >
-                        <MenuItem value=""><em>{checklistTemplatesLoading ? 'Loading...' : 'Select Template'}</em></MenuItem>
-                        {checklistTemplates.map(t => (
-                          <MenuItem key={t.id} value={String(t.id)}>{t.form_name}</MenuItem>
-                        ))}
-                      </MuiSelect>
-                      {checklistErrors.templateId && <FormHelperText>{checklistErrors.templateId}</FormHelperText>}
-                    </FormControl>
-
-                    {/* Grace Time Type */}
-                    <FormControl fullWidth variant="outlined" error={!!checklistErrors.graceTimeType}>
-                      <InputLabel shrink>Grace Time Type *</InputLabel>
-                      <MuiSelect
-                        label="Grace Time Type *"
-                        value={checklistFields.graceTimeType}
-                        onChange={e => {
-                          setChecklistFields(prev => ({ ...prev, graceTimeType: String(e.target.value) }));
-                          setChecklistErrors(prev => ({ ...prev, graceTimeType: '' }));
-                        }}
-                        displayEmpty
-                      >
-                        <MenuItem value=""><em>Select Type</em></MenuItem>
-                        <MenuItem value="hour">Hours</MenuItem>
-                        <MenuItem value="day">Days</MenuItem>
-                      </MuiSelect>
-                      {checklistErrors.graceTimeType && <FormHelperText>{checklistErrors.graceTimeType}</FormHelperText>}
-                    </FormControl>
-
-                    {/* Grace Time Value */}
-                    <TextField
-                      label="Grace Time Value *"
-                      type="number"
-                      variant="outlined"
-                      fullWidth
-                      InputLabelProps={{ shrink: true }}
-                      value={checklistFields.graceTimeValue}
-                      onChange={e => {
-                        setChecklistFields(prev => ({ ...prev, graceTimeValue: e.target.value }));
-                        setChecklistErrors(prev => ({ ...prev, graceTimeValue: '' }));
-                      }}
-                      error={!!checklistErrors.graceTimeValue}
-                      helperText={checklistErrors.graceTimeValue}
-                      inputProps={{ min: 0 }}
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </>
-
-        )}
+          )
+        }
 
         {/* Step 4: Attachments - Hide in preview mode */}
-        {currentStep === 3 && !isPreviewMode && (
-          <>
-            {/* Header above card */}
-            <div className="flex items-center mb-4">
-              <Avatar sx={{
-                bgcolor: '#C72030',
-                color: 'white',
-                width: 32,
-                height: 32,
-                mr: 2,
-                fontSize: '16px'
+        {
+          currentStep === 3 && !isPreviewMode && (
+            <>
+              {/* Header above card */}
+              <div className="flex items-center mb-4">
+                <Avatar sx={{
+                  bgcolor: '#DA7756',
+                  color: 'white',
+                  width: 32,
+                  height: 32,
+                  mr: 2,
+                  fontSize: '16px'
+                }}>
+                  <SettingsOutlinedIcon fontSize="small" />
+                </Avatar>
+                <h2 className="text-[#DA7756]" style={{
+                  fontFamily: 'Work Sans, sans-serif',
+                  fontWeight: 600,
+                  fontSize: '26px',
+                  lineHeight: '100%',
+                  letterSpacing: '0%'
+                }}>
+                  Attachments
+                </h2>
+              </div>
+
+              <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
+                borderRadius: '4px',
+                background: '#FFF',
+                boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
               }}>
-                <SettingsOutlinedIcon fontSize="small" />
-              </Avatar>
-              <h2 className="text-[#C72030]" style={{
-                fontFamily: 'Work Sans, sans-serif',
-                fontWeight: 600,
-                fontSize: '26px',
-                lineHeight: '100%',
-                letterSpacing: '0%'
-              }}>
-                Attachments
-              </h2>
-            </div>
-
-            <Card className="mb-6 border-[#D9D9D9] bg-white shadow-sm" style={{
-              borderRadius: '4px',
-              background: '#FFF',
-              boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-            }}>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div>
-                    <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts<span style={{ color: 'red' }}>*</span></label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
-                      <input
-                        type="file"
-                        multiple
-                        className="hidden"
-                        id="contracts-upload"
-                        onChange={e => {
-                          handleFileUpload('contracts', e.target.files);
-                          e.currentTarget.value = '';
-                        }}
-                        disabled={isSubmitting}
-                      />
-                      <div className="flex items-center justify-center gap-2 mb-4">
-                        <span className="text-[#C72030] font-medium" style={{ fontSize: '14px' }}>
-                          Choose File
-                        </span>
-                        <span className="text-gray-500" style={{ fontSize: '14px' }}>
-                          {attachments.contracts.length > 0 ? `${attachments.contracts.length} file(s) selected` : 'No file chosen'}
-                        </span>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts<span style={{ color: 'red' }}>*</span></label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
+                        <input
+                          type="file"
+                          multiple
+                          className="hidden"
+                          id="contracts-upload"
+                          onChange={e => {
+                            handleFileUpload('contracts', e.target.files);
+                            e.currentTarget.value = '';
+                          }}
+                          disabled={isSubmitting}
+                        />
+                        <div className="flex items-center justify-center gap-2 mb-4">
+                          <span className="text-[#DA7756] font-medium" style={{ fontSize: '14px' }}>
+                            Choose File
+                          </span>
+                          <span className="text-gray-500" style={{ fontSize: '14px' }}>
+                            {attachments.contracts.length > 0 ? `${attachments.contracts.length} file(s) selected` : 'No file chosen'}
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={() => document.getElementById('contracts-upload')?.click()}
+                          className="!bg-[#f6f4ee] !text-[#DA7756] !border-none text-sm flex items-center justify-center"
+                          disabled={isSubmitting}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Upload Files
+                        </Button>
+                        <p className="mt-3 text-xs text-gray-500">
+                          Max file size: {MAX_ATTACHMENT_SIZE_MB} MB
+                        </p>
                       </div>
-                      <Button
-                        type="button"
-                        onClick={() => document.getElementById('contracts-upload')?.click()}
-                        className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center"
-                        disabled={isSubmitting}
-                      >
-                        <Plus className="w-4 h-4 mr-1" />
-                        Upload Files
-                      </Button>
-                      <p className="mt-3 text-xs text-gray-500">
-                        Max file size: {MAX_ATTACHMENT_SIZE_MB} MB
-                      </p>
-                    </div>
 
-                    {attachments.contracts.length > 0 && (
-                      <div className="flex flex-wrap gap-3 mt-3">
-                        {attachments.contracts.map((file, index) => {
-                          const isImage = file.type.startsWith('image/');
-                          const isPdf = file.type === 'application/pdf';
-                          const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
-                          const fileURL = URL.createObjectURL(file);
+                      {attachments.contracts.length > 0 && (
+                        <div className="flex flex-wrap gap-3 mt-3">
+                          {attachments.contracts.map((file, index) => {
+                            const isImage = file.type.startsWith('image/');
+                            const isPdf = file.type === 'application/pdf';
+                            const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                            const fileURL = URL.createObjectURL(file);
 
-                          return (
-                            <div
-                              key={`${file.name}-${file.lastModified}`}
-                              className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm"
-                            >
-                              {isImage ? (
-                                <img src={fileURL} alt={file.name} className="w-[40px] h-[40px] object-cover rounded border mb-1" />
-                              ) : isPdf ? (
-                                <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
-                                  <FileText className="w-4 h-4" />
-                                </div>
-                              ) : isExcel ? (
-                                <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
-                                  <FileSpreadsheet className="w-4 h-4" />
-                                </div>
-                              ) : (
-                                <div className="w-[40px] h-[40px] flex items-center justify-center bg-gray-100 border rounded text-gray-500 mb-1">
-                                  <FileText className="w-4 h-4" />
-                                </div>
-                              )}
-                              <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-600"
-                                onClick={() => removeFile('contracts', index)}
-                                disabled={isSubmitting}
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Draft-restored contract attachments (metadata only — re-upload needed) */}
-                    {draftAttachmentMeta.contracts.length > 0 && (
-                      <div className="mt-3">
-                        <p className="text-xs text-amber-600 font-medium mb-2">From saved draft — please re-upload to include in submission:</p>
-                        <div className="flex flex-wrap gap-3">
-                          {draftAttachmentMeta.contracts.map((meta, index) => {
-                            const isPdf = meta.type === 'application/pdf';
-                            const isExcel = meta.name.endsWith('.xlsx') || meta.name.endsWith('.xls') || meta.name.endsWith('.csv');
                             return (
                               <div
-                                key={`draft-contract-${index}`}
-                                className="flex relative flex-col items-center border border-dashed border-amber-400 rounded-md pt-6 px-2 pb-3 w-[130px] bg-amber-50 shadow-sm"
+                                key={`${file.name}-${file.lastModified}`}
+                                className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm"
                               >
-                                {isPdf ? (
-                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-red-400 bg-white mb-1">
+                                {isImage ? (
+                                  <img src={fileURL} alt={file.name} className="w-[40px] h-[40px] object-cover rounded border mb-1" />
+                                ) : isPdf ? (
+                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
                                     <FileText className="w-4 h-4" />
                                   </div>
                                 ) : isExcel ? (
-                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-green-400 bg-white mb-1">
+                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
                                     <FileSpreadsheet className="w-4 h-4" />
                                   </div>
                                 ) : (
-                                  <div className="w-[40px] h-[40px] flex items-center justify-center bg-gray-100 border rounded text-gray-400 mb-1">
+                                  <div className="w-[40px] h-[40px] flex items-center justify-center bg-gray-100 border rounded text-gray-500 mb-1">
                                     <FileText className="w-4 h-4" />
                                   </div>
                                 )}
-                                <span className="text-[10px] text-center truncate max-w-[100px] mb-1 text-amber-700">{meta.name}</span>
-                                <span className="text-[9px] text-amber-500">re-upload needed</span>
+                                <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
                                 <Button
                                   type="button"
                                   variant="ghost"
                                   size="sm"
-                                  className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-400"
-                                  onClick={() => setDraftAttachmentMeta(prev => ({ ...prev, contracts: prev.contracts.filter((_, i) => i !== index) }))}
+                                  className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-600"
+                                  onClick={() => removeFile('contracts', index)}
                                   disabled={isSubmitting}
                                 >
                                   <X className="w-3 h-3" />
@@ -4381,153 +4334,203 @@ export const AddAMCPage = () => {
                             );
                           })}
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
 
-                  <div>
-                    <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoice <span style={{ color: 'red' }}>*</span></label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center flex flex-col items-center justify-center bg-white">
-                      <input
-                        type="file"
-                        multiple
-                        className="hidden"
-                        id="invoices-upload"
-                        onChange={e => {
-                          handleFileUpload('invoices', e.target.files);
-                          e.currentTarget.value = '';
-                        }}
-                        disabled={isSubmitting}
-                      />
-                      <div className="flex items-center justify-center gap-2 mb-4">
-                        <span className="text-[#C72030] font-medium" style={{ fontSize: '14px' }}>
-                          Choose File
-                        </span>
-                        <span className="text-gray-500" style={{ fontSize: '14px' }}>
-                          {attachments.invoices.length > 0 ? `${attachments.invoices.length} file(s) selected` : 'No file chosen'}
-                        </span>
-                      </div>
-                      <Button
-                        type="button"
-                        onClick={() => document.getElementById('invoices-upload')?.click()}
-                        className="!bg-[#f6f4ee] !text-[#C72030] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center justify-center"
-                        disabled={isSubmitting}
-                      >
-                        <Plus className="w-4 h-4 mr-1" />
-                        Upload Files
-                      </Button>
-                      <p className="mt-3 text-xs text-gray-500">
-                        Max file size: {MAX_ATTACHMENT_SIZE_MB} MB
-                      </p>
-                    </div>
-                    {attachments.invoices.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {attachments.invoices.map((file, index) => {
-                          const isImage = file.type.startsWith("image/");
-                          const isPdf = file.type === "application/pdf";
-                          const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls") || file.name.endsWith(".csv");
-                          const fileURL = URL.createObjectURL(file);
-
-                          return (
-                            <div
-                              key={`${file.name}-${file.lastModified}`}
-                              className="flex relative flex-col items-center border rounded pt-6 p-3 w-[120px] bg-[#F9F8F4] shadow-sm"
-                            >
-                              {isImage ? (
-                                <img src={fileURL} alt={file.name} className="w-10 h-10 object-cover rounded border mb-1" />
-                              ) : isPdf ? (
-                                <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
-                                  <FileText className="w-4 h-4" />
-                                </div>
-                              ) : isExcel ? (
-                                <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
-                                  <FileSpreadsheet className="w-4 h-4" />
-                                </div>
-                              ) : (
-                                <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-600 bg-white mb-1">
-                                  <File className="w-4 h-4" />
-                                </div>
-                              )}
-                              <span className="text-[10px] text-center truncate max-w-[90px] mb-1">{file.name}</span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-500"
-                                onClick={() => removeFile("invoices", index)}
-                                disabled={isSubmitting}
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Draft-restored invoice attachments (metadata only — re-upload needed) */}
-                    {draftAttachmentMeta.invoices.length > 0 && (
-                      <div className="mt-3">
-                        <p className="text-xs text-amber-600 font-medium mb-2">From saved draft — please re-upload to include in submission:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {draftAttachmentMeta.invoices.map((meta, index) => {
-                            const isPdf = meta.type === 'application/pdf';
-                            const isExcel = meta.name.endsWith('.xlsx') || meta.name.endsWith('.xls') || meta.name.endsWith('.csv');
-                            return (
-                              <div
-                                key={`draft-invoice-${index}`}
-                                className="flex relative flex-col items-center border border-dashed border-amber-400 rounded pt-6 p-3 w-[120px] bg-amber-50 shadow-sm"
-                              >
-                                {isPdf ? (
-                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-red-400 bg-white mb-1">
-                                    <FileText className="w-4 h-4" />
-                                  </div>
-                                ) : isExcel ? (
-                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-green-400 bg-white mb-1">
-                                    <FileSpreadsheet className="w-4 h-4" />
-                                  </div>
-                                ) : (
-                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-400 bg-white mb-1">
-                                    <File className="w-4 h-4" />
-                                  </div>
-                                )}
-                                <span className="text-[10px] text-center truncate max-w-[90px] mb-1 text-amber-700">{meta.name}</span>
-                                <span className="text-[9px] text-amber-500">re-upload needed</span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-400"
-                                  onClick={() => setDraftAttachmentMeta(prev => ({ ...prev, invoices: prev.invoices.filter((_, i) => i !== index) }))}
-                                  disabled={isSubmitting}
+                      {/* Draft-restored contract attachments (metadata only — re-upload needed) */}
+                      {draftAttachmentMeta.contracts.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-xs text-amber-600 font-medium mb-2">From saved draft — please re-upload to include in submission:</p>
+                          <div className="flex flex-wrap gap-3">
+                            {draftAttachmentMeta.contracts.map((meta, index) => {
+                              const isPdf = meta.type === 'application/pdf';
+                              const isExcel = meta.name.endsWith('.xlsx') || meta.name.endsWith('.xls') || meta.name.endsWith('.csv');
+                              return (
+                                <div
+                                  key={`draft-contract-${index}`}
+                                  className="flex relative flex-col items-center border border-dashed border-amber-400 rounded-md pt-6 px-2 pb-3 w-[130px] bg-amber-50 shadow-sm"
                                 >
-                                  <X className="w-3 h-3" />
-                                </Button>
-                              </div>
-                            );
-                          })}
+                                  {isPdf ? (
+                                    <div className="w-10 h-10 flex items-center justify-center border rounded text-red-400 bg-white mb-1">
+                                      <FileText className="w-4 h-4" />
+                                    </div>
+                                  ) : isExcel ? (
+                                    <div className="w-10 h-10 flex items-center justify-center border rounded text-green-400 bg-white mb-1">
+                                      <FileSpreadsheet className="w-4 h-4" />
+                                    </div>
+                                  ) : (
+                                    <div className="w-[40px] h-[40px] flex items-center justify-center bg-gray-100 border rounded text-gray-400 mb-1">
+                                      <FileText className="w-4 h-4" />
+                                    </div>
+                                  )}
+                                  <span className="text-[10px] text-center truncate max-w-[100px] mb-1 text-amber-700">{meta.name}</span>
+                                  <span className="text-[9px] text-amber-500">re-upload needed</span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-400"
+                                    onClick={() => setDraftAttachmentMeta(prev => ({ ...prev, contracts: prev.contracts.filter((_, i) => i !== index) }))}
+                                    disabled={isSubmitting}
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">Other Documents </label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center flex flex-col items-center justify-center bg-white">
+                        <input
+                          type="file"
+                          multiple
+                          className="hidden"
+                          id="invoices-upload"
+                          onChange={e => {
+                            handleFileUpload('invoices', e.target.files);
+                            e.currentTarget.value = '';
+                          }}
+                          disabled={isSubmitting}
+                        />
+                        <div className="flex items-center justify-center gap-2 mb-4">
+                          <span className="text-[#DA7756] font-medium" style={{ fontSize: '14px' }}>
+                            Choose File
+                          </span>
+                          <span className="text-gray-500" style={{ fontSize: '14px' }}>
+                            {attachments.invoices.length > 0 ? `${attachments.invoices.length} file(s) selected` : 'No file chosen'}
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={() => document.getElementById('invoices-upload')?.click()}
+                          className="!bg-[#f6f4ee] !text-[#DA7756] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center justify-center"
+                          disabled={isSubmitting}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Upload Files
+                        </Button>
+                        <p className="mt-3 text-xs text-gray-500">
+                          Max file size: {MAX_ATTACHMENT_SIZE_MB} MB
+                        </p>
                       </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
+                      {
+                        attachments.invoices.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {attachments.invoices.map((file, index) => {
+                              const isImage = file.type.startsWith("image/");
+                              const isPdf = file.type === "application/pdf";
+                              const isExcel = file.name.endsWith(".xlsx") || file.name.endsWith(".xls") || file.name.endsWith(".csv");
+                              const fileURL = URL.createObjectURL(file);
+
+                              return (
+                                <div
+                                  key={`${file.name}-${file.lastModified}`}
+                                  className="flex relative flex-col items-center border rounded pt-6 p-3 w-[120px] bg-[#F9F8F4] shadow-sm"
+                                >
+                                  {isImage ? (
+                                    <img src={fileURL} alt={file.name} className="w-10 h-10 object-cover rounded border mb-1" />
+                                  ) : isPdf ? (
+                                    <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                                      <FileText className="w-4 h-4" />
+                                    </div>
+                                  ) : isExcel ? (
+                                    <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                                      <FileSpreadsheet className="w-4 h-4" />
+                                    </div>
+                                  ) : (
+                                    <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-600 bg-white mb-1">
+                                      <File className="w-4 h-4" />
+                                    </div>
+                                  )}
+                                  <span className="text-[10px] text-center truncate max-w-[90px] mb-1">{file.name}</span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-500"
+                                    onClick={() => removeFile("invoices", index)}
+                                    disabled={isSubmitting}
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )
+                      }
+
+                      {/* Draft-restored invoice attachments (metadata only — re-upload needed) */}
+                      {
+                        draftAttachmentMeta.invoices.length > 0 && (
+                          <div className="mt-3">
+                            <p className="text-xs text-amber-600 font-medium mb-2">From saved draft — please re-upload to include in submission:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {draftAttachmentMeta.invoices.map((meta, index) => {
+                                const isPdf = meta.type === 'application/pdf';
+                                const isExcel = meta.name.endsWith('.xlsx') || meta.name.endsWith('.xls') || meta.name.endsWith('.csv');
+                                return (
+                                  <div
+                                    key={`draft-invoice-${index}`}
+                                    className="flex relative flex-col items-center border border-dashed border-amber-400 rounded pt-6 p-3 w-[120px] bg-amber-50 shadow-sm"
+                                  >
+                                    {isPdf ? (
+                                      <div className="w-10 h-10 flex items-center justify-center border rounded text-red-400 bg-white mb-1">
+                                        <FileText className="w-4 h-4" />
+                                      </div>
+                                    ) : isExcel ? (
+                                      <div className="w-10 h-10 flex items-center justify-center border rounded text-green-400 bg-white mb-1">
+                                        <FileSpreadsheet className="w-4 h-4" />
+                                      </div>
+                                    ) : (
+                                      <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-400 bg-white mb-1">
+                                        <File className="w-4 h-4" />
+                                      </div>
+                                    )}
+                                    <span className="text-[10px] text-center truncate max-w-[90px] mb-1 text-amber-700">{meta.name}</span>
+                                    <span className="text-[9px] text-amber-500">re-upload needed</span>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-400"
+                                      onClick={() => setDraftAttachmentMeta(prev => ({ ...prev, invoices: prev.invoices.filter((_, i) => i !== index) }))}
+                                      disabled={isSubmitting}
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )
+                      }
+                    </div >
+                  </div >
+                </CardContent >
+              </Card >
+            </>
+          )
+        }
 
         {/* Step Navigation Buttons - Hide in preview mode */}
-        {!isPreviewMode && (
-          <div className="flex gap-4 justify-center mt-8">
-            {/* {currentStep > 0 && (
+        {
+          !isPreviewMode && (
+            <div className="flex gap-4 justify-center mt-8">
+              {/* {currentStep > 0 && (
           <Button
             type="button"
               onClick={goToPreviousStep}
               className="px-6 py-2 font-medium"
               style={{ 
                 backgroundColor: '#FFF',
-                color: '#C72030',
-                border: '1px solid #C72030',
+                color: '#DA7756',
+                border: '1px solid #DA7756',
                 borderRadius: '4px'
               }}
             >
@@ -4535,326 +4538,311 @@ export const AddAMCPage = () => {
             </Button>
           )} */}
 
-            {currentStep < totalSteps - 1 ? (
-              <>
-                <Button
-                  type="button"
-                  onClick={handleProceedToSave}
-                  className="px-6 py-2 font-medium"
-                  style={{
-                    backgroundColor: '#C72030',
-                    color: '#FFF',
-                    border: 'none',
-                    borderRadius: '4px'
-                  }}
-                >
-                  Proceed to save
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSaveToDraft}
-                  className="px-6 py-2 font-medium"
-                  style={{
-                    backgroundColor: '#FFF',
-                    color: '#C72030',
-                    border: '1px solid #C72030',
-                    borderRadius: '4px'
-                  }}
-                >
-                  Save to draft
-                </Button>
-              </>
-            ) : (
-              <>
-                {/* Preview button for attachments step */}
-                <Button
-                  type="button"
-                  onClick={handlePreview}
-                  className="px-6 py-2 font-medium"
-                  style={{
-                    backgroundColor: '#C72030',
-                    color: '#FFF',
-                    border: 'none',
-                    borderRadius: '4px'
-                  }}
-                >
-                  Preview
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSaveToDraft}
-                  className="px-6 py-2 font-medium"
-                  style={{
-                    backgroundColor: '#FFF',
-                    color: '#C72030',
-                    border: '1px solid #C72030',
-                    borderRadius: '4px'
-                  }}
-                >
-                  Save to draft
-                </Button>
-              </>
-            )}
-          </div>
-        )}
+              {currentStep < totalSteps - 1 ? (
+                <>
+                  <Button
+                    type="button"
+                    onClick={handleProceedToSave}
+                    variant="ghost"
+                    className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+                  >
+                    Proceed to save
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleSaveToDraft}
+                    variant="ghost"
+                    className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+                  >
+                    Save to draft
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {/* Preview button for attachments step */}
+                  <Button
+                    type="button"
+                    onClick={handlePreview}
+                    variant="ghost"
+                    className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+                  >
+                    Preview
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleSaveToDraft}
+                    variant="ghost"
+                    className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
+                  >
+                    Save to draft
+                  </Button>
+                </>
+              )}
+            </div>
+          )
+        }
 
         {/* Progress indicator - Hide in preview mode */}
-        {!isPreviewMode && (
-          <div className="text-center mt-4 text-sm text-gray-600">
-            You've completed {completedSteps.length} out of {totalSteps} steps.
-          </div>
-        )}
+        {
+          !isPreviewMode && (
+            <div className="text-center mt-4 text-sm text-gray-600">
+              You've completed {completedSteps.length} out of {totalSteps} steps.
+            </div>
+          )
+        }
 
         {/* Read-only Previous Sections - Only show when using Save to Draft and NOT in preview mode */}
-        {currentStep > 0 && showPreviousSections && !isPreviewMode && (
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4" style={{ fontFamily: 'Work Sans, sans-serif' }}>
-              Previous Sections
-            </h3>
-            <div className="space-y-6">
-              {/* Show only non-completed previous steps as read-only */}
-              {Array.from({ length: currentStep }, (_, index) => {
-                // Only show if this step is not in completedSteps
-                if (completedSteps.includes(index)) return null;
-                return (
-                  <div key={`readonly-${index}`} className="bg-gray-50 border border-gray-200 rounded-md p-6">
-                    {/* Step Header */}
-                    <div className="flex items-center mb-4">
-                      <Avatar sx={{
-                        bgcolor: '#C72030',
-                        color: 'white',
-                        width: 32,
-                        height: 32,
-                        mr: 2,
-                        fontSize: '16px'
-                      }}>
-                        <SettingsOutlinedIcon fontSize="small" />
-                      </Avatar>
-                      <h4 className="text-[#C72030]" style={{
-                        fontFamily: 'Work Sans, sans-serif',
-                        fontWeight: 600,
-                        fontSize: '26px',
-                        lineHeight: '100%',
-                        letterSpacing: '0%'
-                      }}>
-                        {index === 0 && 'AMC Configuration'}
-                        {index === 1 && 'AMC Details'}
-                        {index === 2 && 'Schedule'}
-                        {index === 3 && 'Attachments'}
-                      </h4>
-                    </div>
-
-                    {/* Read-only Content */}
-                    <div className="opacity-75 pointer-events-none">
-                      {index === 0 && (
-                        <div className="space-y-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-600">Details</label>
-                            <div className="flex gap-6">
-                              <div className="flex items-center">
-                                <input type="radio" checked={formData.details === 'Asset'} readOnly className="mr-2" />
-                                <span className="text-sm text-gray-600">Asset</span>
-                              </div>
-                              <div className="flex items-center">
-                                <input type="radio" checked={formData.details === 'Service'} readOnly className="mr-2" />
-                                <span className="text-sm text-gray-600">Service</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-600">Type</label>
-                            <div className="flex gap-6">
-                              <div className="flex items-center">
-                                <input type="radio" checked={formData.type === 'Individual'} readOnly className="mr-2" />
-                                <span className="text-sm text-gray-600">Individual</span>
-                              </div>
-                              <div className="flex items-center">
-                                <input type="radio" checked={formData.type === 'Group'} readOnly className="mr-2" />
-                                <span className="text-sm text-gray-600">Group</span>
-                              </div>
-                            </div>
-                          </div>
-                          {formData.type === 'Individual' ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-600">
-                                  {formData.details === 'Asset' ? 'Assets' : 'Service'}
-                                </label>
-                                <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                                  {getServiceNamesFromIds() || 'Not selected'}
-                                </div>
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-600">Supplier</label>
-                                <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                                  {formData.supplier || 'Not selected'}
-                                </div>
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-600">Technician</label>
-                                <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                                  {technicianOptions.find(t => t.id?.toString?.() === formData.technician)?.full_name || technicianOptions.find(t => t.id?.toString?.() === formData.technician)?.name || 'Not selected'}
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-600">Group</label>
-                                <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                                  {assetGroups.find(g => g.id?.toString?.() === formData.group)?.name || 'Not selected'}
-                                </div>
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-600">Sub Group</label>
-                                <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                                  {subGroups.find(s => s.id?.toString?.() === formData.subgroup)?.name || 'Not selected'}
-                                </div>
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-600">Supplier</label>
-                                <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                                  {formData.supplier || 'Not selected'}
-                                </div>
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium mb-2 text-gray-600">Technician</label>
-                                <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                                  {technicianOptions.find(t => t.id?.toString?.() === formData.technician)?.full_name || technicianOptions.find(t => t.id?.toString?.() === formData.technician)?.name || 'Not selected'}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {index === 1 && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-600">Contract Name</label>
-                            <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                              {formData.contractName || 'Not filled'}
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-600">Start Date</label>
-                            <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                              {formData.startDate || 'Not selected'}
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-600">End Date</label>
-                            <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                              {formData.endDate || 'Not selected'}
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-600">First Service Date</label>
-                            <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                              {formData.firstService || 'Not selected'}
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-600">Payment Terms</label>
-                            <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                              {formData.paymentTerms || 'Not filled'}
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-600">Cost</label>
-                            <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                              {formData.cost || 'Not filled'}
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-600">Visits</label>
-                            <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                              {formData.noOfVisits || 'Not filled'}
-                            </div>
-                          </div>
-                          <div className="md:col-span-2">
-                            <label className="block text-sm font-medium mb-2 text-gray-600">Remarks</label>
-                            <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
-                              {formData.remarks || 'Not filled'}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {index === 2 && (
-                        <Card className="mb-4 border-[#D9D9D9] bg-white shadow-sm" style={{
-                          borderRadius: '4px',
-                          background: '#FFF',
-                          boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
+        {
+          currentStep > 0 && showPreviousSections && !isPreviewMode && (
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+                Previous Sections
+              </h3>
+              <div className="space-y-6">
+                {/* Show only non-completed previous steps as read-only */}
+                {Array.from({ length: currentStep }, (_, index) => {
+                  // Only show if this step is not in completedSteps
+                  if (completedSteps.includes(index)) return null;
+                  return (
+                    <div key={`readonly-${index}`} className="bg-gray-50 border border-gray-200 rounded-md p-6">
+                      {/* Step Header */}
+                      <div className="flex items-center mb-4">
+                        <Avatar sx={{
+                          bgcolor: '#DA7756',
+                          color: 'white',
+                          width: 32,
+                          height: 32,
+                          mr: 2,
+                          fontSize: '16px'
                         }}>
-                          <CardHeader className="bg-[#F6F4EE] ">
-                            <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-                              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">3</span>
-                              SCHEDULE
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-4">
-                            {/* Selected time summary */}
-                            {(() => {
-                              const joinOrAll = (arr: string[], map?: Record<string, string>) => {
-                                if (!arr || arr.length === 0) return 'All';
-                                const vals = map ? arr.map(v => map[v] ?? v) : arr;
-                                return vals.join(', ');
-                              };
-                              const weekdayMap: Record<string, string> = {
-                                'Monday': 'Mon', 'Tuesday': 'Tue', 'Wednesday': 'Wed', 'Thursday': 'Thu', 'Friday': 'Fri', 'Saturday': 'Sat', 'Sunday': 'Sun'
-                              };
-                              const monthMap: Record<string, string> = {
-                                'January': 'Jan', 'February': 'Feb', 'March': 'Mar', 'April': 'Apr', 'May': 'May', 'June': 'Jun', 'July': 'Jul', 'August': 'Aug', 'September': 'Sep', 'October': 'Oct', 'November': 'Nov', 'December': 'Dec'
-                              };
-                              const hours = timeSetupData.hourMode === 'specific' ? joinOrAll(timeSetupData.selectedHours) : 'All';
-                              const minutes = timeSetupData.minuteMode === 'specific' ? joinOrAll(timeSetupData.selectedMinutes) : `${timeSetupData.betweenMinuteStart}-${timeSetupData.betweenMinuteEnd}`;
-                              const days = timeSetupData.dayMode === 'weekdays' ? joinOrAll(timeSetupData.selectedWeekdays, weekdayMap)
-                                : (timeSetupData.dayMode === 'specific' ? joinOrAll(timeSetupData.selectedDays) : 'All');
-                              const months = timeSetupData.monthMode === 'specific' ? joinOrAll(timeSetupData.selectedMonths, monthMap)
-                                : (timeSetupData.monthMode === 'between' ? `${monthMap[timeSetupData.betweenMonthStart]}-${monthMap[timeSetupData.betweenMonthEnd]}` : 'All');
-                              return (
-                                <div className="mb-3 text-sm text-[#1a1a1a]">
-                                  <div><span className="font-semibold">Hours:</span> {hours}</div>
-                                  <div><span className="font-semibold">Minutes:</span> {minutes}</div>
-                                  <div><span className="font-semibold">Days:</span> {days}</div>
-                                  <div><span className="font-semibold">Months:</span> {months}</div>
-                                  <div className="mt-1"><span className="font-semibold">Cron:</span> {buildCronExpression()}</div>
-                                </div>
-                              );
-                            })()}
-                            <TimeSetupStep data={timeSetupData} hideTitle disabled showEditButton={false} />
-                          </CardContent>
-                        </Card>
-                      )}
+                          <SettingsOutlinedIcon fontSize="small" />
+                        </Avatar>
+                        <h4 className="text-[#DA7756]" style={{
+                          fontFamily: 'Work Sans, sans-serif',
+                          fontWeight: 600,
+                          fontSize: '26px',
+                          lineHeight: '100%',
+                          letterSpacing: '0%'
+                        }}>
+                          {index === 0 && 'AMC Configuration'}
+                          {index === 1 && 'AMC Details'}
+                          {index === 2 && 'Schedule'}
+                          {index === 3 && 'Attachments'}
+                        </h4>
+                      </div>
 
-                      {index === 3 && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-600">AMC Contracts</label>
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-100">
-                              <p className="text-sm text-gray-500">
-                                {attachments.contracts.length} file(s) uploaded
-                              </p>
+                      {/* Read-only Content */}
+                      <div className="opacity-75 pointer-events-none">
+                        {index === 0 && (
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-gray-600">Details</label>
+                              <div className="flex gap-6">
+                                <div className="flex items-center">
+                                  <input type="radio" checked={formData.details === 'Asset'} readOnly className="mr-2" />
+                                  <span className="text-sm text-gray-600">Asset</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <input type="radio" checked={formData.details === 'Service'} readOnly className="mr-2" />
+                                  <span className="text-sm text-gray-600">Service</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-gray-600">Type</label>
+                              <div className="flex gap-6">
+                                <div className="flex items-center">
+                                  <input type="radio" checked={formData.type === 'Individual'} readOnly className="mr-2" />
+                                  <span className="text-sm text-gray-600">Individual</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <input type="radio" checked={formData.type === 'Group'} readOnly className="mr-2" />
+                                  <span className="text-sm text-gray-600">Group</span>
+                                </div>
+                              </div>
+                            </div>
+                            {formData.type === 'Individual' ? (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium mb-2 text-gray-600">
+                                    {formData.details === 'Asset' ? 'Assets' : 'Service'}
+                                  </label>
+                                  <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                    {getServiceNamesFromIds() || 'Not selected'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2 text-gray-600">Supplier</label>
+                                  <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                    {formData.supplier || 'Not selected'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2 text-gray-600">Technician</label>
+                                  <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                    {technicianOptions.find(t => t.id?.toString?.() === formData.technician)?.full_name || technicianOptions.find(t => t.id?.toString?.() === formData.technician)?.name || 'Not selected'}
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium mb-2 text-gray-600">Group</label>
+                                  <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                    {assetGroups.find(g => g.id?.toString?.() === formData.group)?.name || 'Not selected'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2 text-gray-600">Sub Group</label>
+                                  <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                    {subGroups.find(s => s.id?.toString?.() === formData.subgroup)?.name || 'Not selected'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2 text-gray-600">Supplier</label>
+                                  <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                    {formData.supplier || 'Not selected'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium mb-2 text-gray-600">Technician</label>
+                                  <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                    {technicianOptions.find(t => t.id?.toString?.() === formData.technician)?.full_name || technicianOptions.find(t => t.id?.toString?.() === formData.technician)?.name || 'Not selected'}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {index === 1 && (
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-gray-600">Contract Name</label>
+                              <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                {formData.contractName || 'Not filled'}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-gray-600">Start Date</label>
+                              <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                {formData.startDate || 'Not selected'}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-gray-600">End Date</label>
+                              <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                {formData.endDate || 'Not selected'}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-gray-600">First Service Date</label>
+                              <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                {formData.firstService || 'Not selected'}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-gray-600">Payment Terms</label>
+                              <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                {formData.paymentTerms || 'Not filled'}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-gray-600">Cost</label>
+                              <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                {formData.cost || 'Not filled'}
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-gray-600">Visits</label>
+                              <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                {formData.noOfVisits || 'Not filled'}
+                              </div>
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium mb-2 text-gray-600">Remarks</label>
+                              <div className="p-3 border border-gray-300 rounded bg-gray-100 text-sm text-gray-600">
+                                {formData.remarks || 'Not filled'}
+                              </div>
                             </div>
                           </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-600">AMC Invoices</label>
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-100">
-                              <p className="text-sm text-gray-500">
-                                {attachments.invoices.length} file(s) uploaded
-                              </p>
+                        )}
+
+                        {index === 2 && (
+                          <Card className="mb-4 border-[#D9D9D9] bg-white shadow-sm" style={{
+                            borderRadius: '4px',
+                            background: '#FFF',
+                            boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
+                          }}>
+                            <CardHeader className="bg-[#F6F4EE] ">
+                              <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
+                                <span className="w-6 h-6 bg-[#DA7756] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">3</span>
+                                SCHEDULE
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4">
+                              {/* Selected time summary */}
+                              {(() => {
+                                const joinOrAll = (arr: string[], map?: Record<string, string>) => {
+                                  if (!arr || arr.length === 0) return 'All';
+                                  const vals = map ? arr.map(v => map[v] ?? v) : arr;
+                                  return vals.join(', ');
+                                };
+                                const weekdayMap: Record<string, string> = {
+                                  'Monday': 'Mon', 'Tuesday': 'Tue', 'Wednesday': 'Wed', 'Thursday': 'Thu', 'Friday': 'Fri', 'Saturday': 'Sat', 'Sunday': 'Sun'
+                                };
+                                const monthMap: Record<string, string> = {
+                                  'January': 'Jan', 'February': 'Feb', 'March': 'Mar', 'April': 'Apr', 'May': 'May', 'June': 'Jun', 'July': 'Jul', 'August': 'Aug', 'September': 'Sep', 'October': 'Oct', 'November': 'Nov', 'December': 'Dec'
+                                };
+                                const hours = timeSetupData.hourMode === 'specific' ? joinOrAll(timeSetupData.selectedHours) : 'All';
+                                const minutes = timeSetupData.minuteMode === 'specific' ? joinOrAll(timeSetupData.selectedMinutes) : `${timeSetupData.betweenMinuteStart}-${timeSetupData.betweenMinuteEnd}`;
+                                const days = timeSetupData.dayMode === 'weekdays' ? joinOrAll(timeSetupData.selectedWeekdays, weekdayMap)
+                                  : (timeSetupData.dayMode === 'specific' ? joinOrAll(timeSetupData.selectedDays) : 'All');
+                                const months = timeSetupData.monthMode === 'specific' ? joinOrAll(timeSetupData.selectedMonths, monthMap)
+                                  : (timeSetupData.monthMode === 'between' ? `${monthMap[timeSetupData.betweenMonthStart]}-${monthMap[timeSetupData.betweenMonthEnd]}` : 'All');
+                                return (
+                                  <div className="mb-3 text-sm text-[#1a1a1a]">
+                                    <div><span className="font-semibold">Hours:</span> {hours}</div>
+                                    <div><span className="font-semibold">Minutes:</span> {minutes}</div>
+                                    <div><span className="font-semibold">Days:</span> {days}</div>
+                                    <div><span className="font-semibold">Months:</span> {months}</div>
+                                    <div className="mt-1"><span className="font-semibold">Cron:</span> {buildCronExpression()}</div>
+                                  </div>
+                                );
+                              })()}
+                              <TimeSetupStep data={timeSetupData} hideTitle disabled showEditButton={false} />
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {index === 3 && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-gray-600">AMC Contracts</label>
+                              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-100">
+                                <p className="text-sm text-gray-500">
+                                  {attachments.contracts.length} file(s) uploaded
+                                </p>
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-2 text-gray-600">Other Documents</label>
+                              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-100">
+                                <p className="text-sm text-gray-500">
+                                  {attachments.invoices.length} file(s) uploaded
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        }
 
         {/* Completed Sections - Hide in preview mode */}
         {!isPreviewMode && renderCompletedSections()}
@@ -4867,7 +4855,7 @@ export const AddAMCPage = () => {
         >
           <DialogTitle
             sx={{
-              backgroundColor: '#C72030',
+              backgroundColor: '#DA7756',
               color: 'white',
               fontFamily: 'Work Sans, sans-serif',
               fontWeight: 600
@@ -4890,19 +4878,20 @@ export const AddAMCPage = () => {
             <Button
               variant="outline"
               onClick={handleStartFresh}
-              className="px-6 py-2 font-medium border border-[#C72030] text-[#C72030]"
+              className="px-6 py-2 font-medium border border-[#DA7756] text-[#DA7756]"
             >
               Start Fresh
             </Button>
             <Button
               onClick={handleContinueWithDraft}
-              className="px-6 py-2 font-medium bg-[#C72030] text-white hover:bg-[#C72030]/90"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-6 py-2 font-medium"
             >
               Continue with Draft
             </Button>
           </DialogActions>
         </MuiDialog>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };

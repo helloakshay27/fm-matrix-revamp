@@ -16,6 +16,7 @@ import { Coins, Download, Eye, Plus, Star, Users, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const columns: ColumnConfig[] = [
     { key: "entity_name", label: "Entity Name", sortable: true, draggable: true },
@@ -100,6 +101,7 @@ const transactionColumns: ColumnConfig[] = [
 const CRMWalletList = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
 
@@ -157,6 +159,7 @@ const CRMWalletList = () => {
     }, []);
 
     const renderActions = (item: any) => (
+        shouldShow("Wallet", "show") && (
         <Button
             variant="ghost"
             size="sm"
@@ -165,6 +168,7 @@ const CRMWalletList = () => {
         >
             <Eye className="w-4 h-4" />
         </Button>
+        )
     );
 
     const renderCell = (item: any, columnKey: string) => {

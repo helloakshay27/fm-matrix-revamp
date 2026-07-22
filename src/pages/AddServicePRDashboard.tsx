@@ -1790,10 +1790,10 @@ export const AddServicePRDashboard = () => {
 
             <div className="flex justify-end p-4">
               <Button
-                className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
+                className="!bg-[#DA7756] hover:!bg-[#C45F40] px-6 py-2"
                 onClick={addNewDetailsForm}
               >
-                Add Items
+                <span className="!text-white font-medium">Add Items</span>
               </Button>
             </div>
           </div>

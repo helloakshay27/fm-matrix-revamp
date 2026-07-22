@@ -578,14 +578,8 @@ export const NewInboundPage = () => {
                                     <Button
                                         type="button"
                                         onClick={() => setIsAddVendorModalOpen(true)}
-                                        className="mt-2"
-                                        style={{
-                                            backgroundColor: '#1976D2',
-                                            color: '#FFF',
-                                            fontSize: '12px',
-                                            padding: '4px 12px',
-                                            height: 'auto',
-                                        }}
+                                        variant="ghost"
+                                        className="fm-button-fix fm-button-brand px-4 py-2 mt-2"
                                     >
                                         + Add Vendor
                                     </Button>
@@ -914,7 +908,8 @@ export const NewInboundPage = () => {
                         <Button
                             type="button"
                             onClick={handleAddPackage}
-                            className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white"
+                           className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                         >
                             + Package
                         </Button>
@@ -925,13 +920,8 @@ export const NewInboundPage = () => {
                         <Button
                             type="submit"
                             disabled={isSubmitting}
-                            className="px-8 py-2 font-medium"
-                            style={{
-                                backgroundColor: '#C72030',
-                                color: '#FFF',
-                                border: 'none',
-                                borderRadius: '4px',
-                            }}
+                            variant="ghost"
+                            className="fm-button-fix fm-button-brand px-4 py-2"
                         >
                             {isSubmitting ? 'Submitting...' : 'Submit'}
                         </Button>

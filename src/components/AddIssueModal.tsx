@@ -149,8 +149,8 @@ const Attachments = ({ attachments, setAttachments }) => {
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
         className={`relative p-6 rounded-lg border-2 border-dashed transition-all cursor-pointer ${isDragActive
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+          ? 'border-blue-500 bg-blue-50'
+          : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
           }`}
       >
         <div className="flex flex-col items-center justify-center space-y-2">
@@ -545,7 +545,7 @@ const AddIssueModal = ({
           Authorization: `Bearer ${token}`,
         },
       });
-      setMentionTags(response.data || []);
+      setMentionTags(response.data?.filter(tag => tag?.active) || []);
     } catch (error) {
       console.log("Error fetching mention tags:", error);
     }
@@ -1565,10 +1565,10 @@ const AddIssueModal = ({
 
             <Box className="mb-4">
               <Box
-                className="text-[12px] text-[red] text-right cursor-pointer mb-2"
+                className="text-[12px] text-right cursor-pointer mb-2"
                 onClick={() => setIsTagModalOpen(true)}
               >
-                <i>Create new tag</i>
+                <span className="text-orange-500 font-medium">Create new tag</span>
               </Box>
               <MuiMultiSelect
                 label="Tags"
@@ -1618,6 +1618,7 @@ const AddIssueModal = ({
             >
               <Button
                 type="submit"
+                className="fm-button-fix fm-button-brand px-4 py-2"
                 variant="outlined"
                 disabled={isSubmitting}
                 sx={{

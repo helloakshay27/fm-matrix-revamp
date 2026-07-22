@@ -12,6 +12,7 @@ import axios from 'axios';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import { ExternalFilterDialog } from './ExternalFilterDialog';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Define External User interface (different from FMUser)
 interface ExternalUser {
@@ -77,6 +78,7 @@ export const ExternalUsersDashboard = () => {
   });
   const [pagination, setPagination] = useState<ApiPagination>({ current_page: 1, total_pages: 1, total_count: 0 });
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const pageSize = 25; // backend default (adjust if needed)
 
@@ -353,14 +355,16 @@ export const ExternalUsersDashboard = () => {
 
   const renderActions = (user: ExternalUser) => (
     <div className="flex items-center justify-center gap-2">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => navigate(`/safety/m-safe/external/user/${user.id}`, { state: { user } })}
-        className="h-8 w-8 p-0"
-      >
-        <Eye className="h-4 w-4" />
-      </Button>
+      {shouldShow("Non FTE Users", "show") && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(`/safety/m-safe/external/user/${user.id}`, { state: { user } })}
+          className="h-8 w-8 p-0"
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      )}
       {/* <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(user)} className="h-8 w-8 p-0">
         <Trash2 className="h-4 w-4" />
       </Button> */}
@@ -617,7 +621,7 @@ export const ExternalUsersDashboard = () => {
             data={externalUsers || []}
             leftActions={
               <div className="flex gap-2">
-                {canSeeActionButton && (
+                {canSeeActionButton && shouldShow("Non FTE Users", "create") && (
                   <Button
                     onClick={handleActionClick}
                     className="fm-button-fix fm-button-brand px-4 py-2"
@@ -627,14 +631,16 @@ export const ExternalUsersDashboard = () => {
                     Action
                   </Button>
                 )}
-                <Button
-                  onClick={() => navigate('/safety/m-safe/external-users/multiple-delete')}
-                  className="fm-button-fix fm-button-brand px-4 py-2"
-                  variant="ghost"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  User Deletion
-                </Button>
+                {shouldShow("Non FTE Users", "destroy") && (
+                  <Button
+                    onClick={() => navigate('/safety/m-safe/external-users/multiple-delete')}
+                    className="fm-button-fix fm-button-brand px-4 py-2"
+                    variant="ghost"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    User Deletion
+                  </Button>
+                )}
               </div>
             }
             columns={columns}

@@ -313,7 +313,7 @@ export const TACCodeTab = () => {
                 disabled={isLoading}
               >
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Create
+                <span className="!text-white font-medium">Create</span>
               </Button>
             </div>
           </div>
@@ -371,7 +371,7 @@ export const TACCodeTab = () => {
                 disabled={isLoading}
               >
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Update
+                <span className="!text-white font-medium">Update</span>
               </Button>
             </div>
           </div>

@@ -262,13 +262,14 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
           <Button 
             onClick={handleReset} 
             variant="outline" 
-            className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white px-8"
+            className="fm-button-fix px-8"
           >
             Reset
           </Button>
           <Button 
             onClick={handleApply} 
-            className="bg-[#C72030] text-white hover:bg-[#A01828] px-8"
+            variant="ghost"
+            className="fm-button-fix fm-button-brand px-8"
           >
             Apply
           </Button>

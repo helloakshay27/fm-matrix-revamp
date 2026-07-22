@@ -180,7 +180,8 @@ export const AddGroupModal = ({ isOpen, onClose, fetchGroups, isEditing, record 
 
               <Button
                 onClick={handleSelectAll}
-                className="bg-purple-700 hover:bg-purple-800 text-white text-sm px-4 py-2"
+                variant="outline"
+                className="fm-button-fix fm-button-brand text-sm px-4 py-2"
               >
                 Select All Members
               </Button>
@@ -219,7 +220,8 @@ export const AddGroupModal = ({ isOpen, onClose, fetchGroups, isEditing, record 
         <div className="flex justify-center px-6 py-4 border-t border-gray-200">
           <Button
             onClick={handleSubmit}
-            className="bg-green-600 hover:bg-green-700 text-white px-6"
+            variant="outline"
+            className="fm-button-fix fm-button-brand px-6"
             disabled={loading}
           >
             {loading ? 'Submitting...' : 'Submit'}

@@ -314,8 +314,8 @@ export const EditAMCPage = () => {
           ? 'Asset'
           : resourceDetailType;
       const coverageType =
-        data.amc_type === 'Non-Comprehensive' || data.amc_type === 'Comprehensive'
-          ? data.amc_type
+        data.pms_amc_type === 'Non-Comprehensive' || data.pms_amc_type === 'Comprehensive'
+          ? data.pms_amc_type
           : data.coverage_type || data.amc_coverage_type || 'Comprehensive';
       const isGroupType = data.amc_details_type === 'group';
 
@@ -2058,7 +2058,7 @@ export const EditAMCPage = () => {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoices</label>
+            <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">Other Documents</label>
             <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 text-center">
               <p className="text-sm text-gray-600">
                 {getTotalAttachmentCount('invoices')} file(s) ready
@@ -3368,7 +3368,7 @@ export const EditAMCPage = () => {
 
                       {/* AMC Invoices */}
                       <div>
-                        <label className="block text-sm font-medium mb-2">AMC Invoices</label>
+                        <label className="block text-sm font-medium mb-2">Other Documents</label>
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
                           <input type="file" multiple className="hidden" id="invoices-upload" onChange={e => handleFileUpload('invoices', e.target.files)} />
                           <div className="flex items-center justify-center gap-2 mb-4">

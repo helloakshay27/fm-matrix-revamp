@@ -309,7 +309,8 @@ export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, rec
           <div className="pt-4">
             <Button
               type="submit"
-              className="bg-purple-600 hover:bg-purple-700 text-white w-full"
+              variant="outline"
+              className="fm-button-fix fm-button-brand w-full"
             >
               Submit
             </Button>

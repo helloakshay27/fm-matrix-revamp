@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
 import { apiClient } from "@/utils/apiClient";
 import { PostHogAuditActivity } from "@/components/PostHogAuditActivity";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import {
   Pagination,
   PaginationContent,
@@ -39,6 +40,7 @@ interface AuditConductedResponse {
 }
 
 export const VendorAuditConductedDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [conductedData, setConductedData] = useState<
     AuditConductedOccurrence[]
@@ -173,7 +175,7 @@ export const VendorAuditConductedDashboard = () => {
   const renderCell = (item: AuditConductedOccurrence, columnKey: string) => {
     switch (columnKey) {
       case "actions":
-        return (
+        return shouldShow("Vendor Audit", "show") ? (
           <Button
             variant="ghost"
             size="sm"
@@ -181,7 +183,7 @@ export const VendorAuditConductedDashboard = () => {
           >
             <Eye className="w-4 h-4" />
           </Button>
-        );
+        ) : null;
       case "report":
         return item.has_response && item.print_pdf_url ? (
           <Button

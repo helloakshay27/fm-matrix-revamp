@@ -28,7 +28,7 @@ import { toast } from 'sonner';
 
 const emailRuleSchema = z.object({
   ruleName: z.string().min(1, 'Rule name is required'),
-  triggerType: z.enum(['PPM', 'AMC']),
+  triggerType: z.enum(['PPM', 'AMC','Asset Breakdown', 'Asset InUse', 'Asset Breakdown Reminder']),
   triggerTo: z.enum(['Site Admin', 'Occupant Admin', 'Supplier']),
   role: z.array(z.string()).min(1, 'At least one role is required'),
   periodValue: z.number().min(1, 'Period value must be at least 1'),
@@ -338,7 +338,8 @@ export const CreateEmailRuleDialogNew: React.FC<CreateEmailRuleDialogNewProps> =
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost">
               {isSubmitting ? 'Creating...' : 'Create Rule'}
             </Button>
           </div>

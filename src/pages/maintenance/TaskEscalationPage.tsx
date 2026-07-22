@@ -164,6 +164,8 @@ export const TaskEscalationPage: React.FC = () => {
           variant="outline" 
           onClick={loadUsers}
           disabled={loading.users}
+          className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
         >
           {loading.users ? 'Loading...' : 'Refresh Users'}
         </Button>
@@ -283,7 +285,10 @@ export const TaskEscalationPage: React.FC = () => {
               </div>
 
               <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting || loading.users}>
+                <Button type="submit" disabled={isSubmitting || loading.users}
+                className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
+                >
                   {isSubmitting ? 'Saving...' : 'Submit'}
                 </Button>
               </div>

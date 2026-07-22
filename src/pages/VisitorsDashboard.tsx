@@ -5,14 +5,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag, Download } from 'lucide-react';
+import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag } from 'lucide-react';
 import { useNavigate,useLocation } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
 import { VisitorFilterDialog, VisitorFilters } from '@/components/VisitorFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { ColumnVisibilityMenu } from '@/components/ColumnVisibilityDropdown';
+
 import { VisitorSelectionPanel } from '@/components/VisitorSelectionPanel';
 import { ActionSelectionPanel } from '@/components/ActionSelectionPanel';
 import {
@@ -27,6 +27,9 @@ import {
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions, getAuthHeader, ENDPOINTS } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 
 // Get current site ID dynamically from localStorage
 const getCurrentSiteId = (): number => {
@@ -50,117 +53,87 @@ const getCurrentSiteId = (): number => {
 
 
 // API Service using apiConfig
-const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, personToMeetId?: string, searchTerm?: string) => {
+const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, filters?: VisitorFilters, searchTerm?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.UNEXPECTED_VISITORS);
     const options = getAuthenticatedFetchOptions();
 
-    // Add query parameters
     const urlWithParams = new URL(url);
     urlWithParams.searchParams.append('site_id', siteId.toString());
     urlWithParams.searchParams.append('page', page.toString());
     urlWithParams.searchParams.append('per_page', perPage.toString());
 
-    // Add person to meet filter if provided
-    if (personToMeetId && personToMeetId !== 'all') {
-      urlWithParams.searchParams.append('q[person_to_meet_id_or_visitor_hosts_user_id_eq]', personToMeetId);
-      console.log('✅ Added person to meet filter:', personToMeetId);
-    } else {
-      console.log('❌ No person to meet filter applied. PersonToMeetId:', personToMeetId);
-    }
+    if (filters?.hostId) urlWithParams.searchParams.append('host_id', filters.hostId);
+    if (filters?.visitorName) urlWithParams.searchParams.append('q[guest_name_cont]', filters.visitorName);
+    if (filters?.purpose) urlWithParams.searchParams.append('q[visit_purpose_cont]', filters.purpose);
+    if (filters?.visitorType) urlWithParams.searchParams.append('visitor_type', filters.visitorType);
+    if (filters?.status) urlWithParams.searchParams.append('status', filters.status);
 
-    // Add dynamic search filter if provided
-    if (searchTerm && searchTerm.trim() !== '') {
+    if (searchTerm?.trim()) {
       urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
-      console.log('✅ Added search filter:', searchTerm);
     }
-
-    console.log('🚀 Final URL for unexpected visitors:', urlWithParams.toString());
-    console.log('🚀 Full API call being made to:', urlWithParams.href);
 
     const response = await fetch(urlWithParams.toString(), options);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch unexpected visitors: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('✅ Response received:', data);
-    return data;
+    if (!response.ok) throw new Error(`Failed to fetch unexpected visitors: ${response.status}`);
+    return await response.json();
   } catch (error) {
     console.error('❌ Error fetching unexpected visitors:', error);
     throw error;
   }
 };
 
-const getVisitorHistory = async (siteId: number, page: number = 1, perPage: number = 20, searchTerm?: string) => {
+const getVisitorHistory = async (siteId: number, page: number = 1, perPage: number = 20, filters?: VisitorFilters, searchTerm?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.VISITOR_HISTORY);
     const options = getAuthenticatedFetchOptions();
 
-    // Add query parameters
     const urlWithParams = new URL(url);
     urlWithParams.searchParams.append('site_id', siteId.toString());
     urlWithParams.searchParams.append('page', page.toString());
     urlWithParams.searchParams.append('per_page', perPage.toString());
 
-    // Add dynamic search filter if provided
-    if (searchTerm && searchTerm.trim() !== '') {
-      urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
-      console.log('✅ Added search filter to visitor history:', searchTerm);
-    }
+    if (filters?.hostId) urlWithParams.searchParams.append('host_id', filters.hostId);
+    if (filters?.visitorName) urlWithParams.searchParams.append('q[guest_name_cont]', filters.visitorName);
+    if (filters?.purpose) urlWithParams.searchParams.append('q[visit_purpose_cont]', filters.purpose);
+    if (filters?.visitorType) urlWithParams.searchParams.append('visitor_type', filters.visitorType);
+    if (filters?.status) urlWithParams.searchParams.append('status', filters.status);
 
-    console.log('🚀 Fetching visitor history from:', urlWithParams.toString());
+    if (searchTerm?.trim()) {
+      urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
+    }
 
     const response = await fetch(urlWithParams.toString(), options);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch visitor history: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('✅ Visitor history response received:', data);
-    return data;
+    if (!response.ok) throw new Error(`Failed to fetch visitor history: ${response.status}`);
+    return await response.json();
   } catch (error) {
     console.error('❌ Error fetching visitor history:', error);
     throw error;
   }
 };
 
-const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, personToMeetId?: string, searchTerm?: string) => {
+const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, filters?: VisitorFilters, searchTerm?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.EXPECTED_VISITORS);
     const options = getAuthenticatedFetchOptions();
 
-    // Add query parameters
     const urlWithParams = new URL(url);
     urlWithParams.searchParams.append('site_id', siteId.toString());
     urlWithParams.searchParams.append('page', page.toString());
     urlWithParams.searchParams.append('per_page', perPage.toString());
 
-    // Add person to meet filter if provided
-    if (personToMeetId && personToMeetId !== 'all') {
-      urlWithParams.searchParams.append('q[person_to_meet_id_or_visitor_hosts_user_id_eq]', personToMeetId);
-    }
+    if (filters?.hostId) urlWithParams.searchParams.append('host_id', filters.hostId);
+    if (filters?.visitorName) urlWithParams.searchParams.append('q[guest_name_cont]', filters.visitorName);
+    if (filters?.purpose) urlWithParams.searchParams.append('q[visit_purpose_cont]', filters.purpose);
+    if (filters?.visitorType) urlWithParams.searchParams.append('visitor_type', filters.visitorType);
+    if (filters?.status) urlWithParams.searchParams.append('status', filters.status);
 
-    // Add dynamic search filter if provided
-    if (searchTerm && searchTerm.trim() !== '') {
+    if (searchTerm?.trim()) {
       urlWithParams.searchParams.append('q[guest_name_or_guest_number_or_guest_from_or_guest_type_or_person_to_meet_firstname_or_person_to_meet_lastname_or_visit_purpose_or_guest_type_cont]', searchTerm.trim());
-      console.log('✅ Added search filter to expected visitors:', searchTerm);
     }
-
-    console.log('🚀 Final URL for expected visitors:', urlWithParams.toString());
-    console.log('🚀 Full API call being made to:', urlWithParams.href);
 
     const response = await fetch(urlWithParams.toString(), options);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch expected visitors: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('✅ Expected visitors response received:', data);
-    return data;
+    if (!response.ok) throw new Error(`Failed to fetch expected visitors: ${response.status}`);
+    return await response.json();
   } catch (error) {
     console.error('❌ Error fetching expected visitors:', error);
     throw error;
@@ -217,6 +190,32 @@ export const VisitorsDashboard = () => {
   const [selectedVisitors, setSelectedVisitors] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportFromDate, setExportFromDate] = useState('');
+  const [exportToDate, setExportToDate] = useState('');
+  const EXPORT_MAX_RANGE_DAYS = 5;
+
+  // exportFromDate/exportToDate are DD/MM/YYYY strings from MaterialDatePicker
+  const parseDDMMYYYY = (value: string): Date | null => {
+    const parts = value.split('/');
+    if (parts.length !== 3) return null;
+    const [dd, mm, yyyy] = parts.map(Number);
+    const date = new Date(yyyy, mm - 1, dd);
+    return isNaN(date.getTime()) ? null : date;
+  };
+
+  const getExportDateRangeError = (from: string, to: string): string => {
+    if (!from || !to) return '';
+    const fromDate = parseDDMMYYYY(from);
+    const toDate = parseDDMMYYYY(to);
+    if (!fromDate || !toDate) return '';
+    if (fromDate > toDate) return '"From" date cannot be later than "To" date';
+    const diffDays = (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24);
+    if (diffDays > EXPORT_MAX_RANGE_DAYS) return `Date range cannot exceed ${EXPORT_MAX_RANGE_DAYS} days`;
+    return '';
+  };
+
+  const exportDateRangeError = getExportDateRangeError(exportFromDate, exportToDate);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -261,21 +260,6 @@ export const VisitorsDashboard = () => {
     };
   });
 
-  // Column visibility state for visitor history table
-  const [visitorHistoryColumnVisibility, setVisitorHistoryColumnVisibility] = useState<Record<string, boolean>>({
-    action: true,
-    visitor_image: true,
-    guest_name: true,
-    guest_number: true,
-    primary_host: true,
-    visit_purpose: true,
-    guest_from: true,
-    visitor_type: true,
-    status: true,
-    check_in_time: true,
-    check_out_time: true,
-  });
-
   // Mock visitor data for expected visitors
   const expectedVisitorData = [
     {
@@ -317,12 +301,7 @@ export const VisitorsDashboard = () => {
     setLoading(true);
     try {
       const siteId = getCurrentSiteId();
-      const personToMeetId = unexpectedFilters.personToMeet;
-      console.log('🔍 Unexpected visitor filters:', unexpectedFilters);
-      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      console.log('🔍 SearchTerm being passed:', searchTerm);
-      console.log('🔍 Using site ID:', siteId);
-      const data = await getUnexpectedVisitors(siteId, page, 20, personToMeetId, searchTerm);
+      const data = await getUnexpectedVisitors(siteId, page, 20, unexpectedFilters, searchTerm);
       setUnexpectedVisitors(data.unexpected_visitors);
       setPagination({
         currentPage: data.pagination.current_page,
@@ -342,12 +321,7 @@ export const VisitorsDashboard = () => {
     setLoading(true);
     try {
       const siteId = getCurrentSiteId();
-      const personToMeetId = filters?.personToMeet;
-      console.log('🔍 Applying filters directly:', filters);
-      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      console.log('🔍 SearchTerm being passed:', searchTerm);
-      console.log('🔍 Using site ID:', siteId);
-      const data = await getUnexpectedVisitors(siteId, page, 20, personToMeetId, searchTerm);
+      const data = await getUnexpectedVisitors(siteId, page, 20, filters, searchTerm);
       setUnexpectedVisitors(data.unexpected_visitors);
       setPagination({
         currentPage: data.pagination.current_page,
@@ -367,12 +341,7 @@ export const VisitorsDashboard = () => {
     setExpectedLoading(true);
     try {
       const siteId = getCurrentSiteId();
-      const personToMeetId = expectedFilters.personToMeet;
-      console.log('🔍 Expected visitor filters:', expectedFilters);
-      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      console.log('🔍 SearchTerm being passed:', searchTerm);
-      console.log('🔍 Using site ID:', siteId);
-      const data = await getExpectedVisitors(siteId, page, 20, personToMeetId, searchTerm);
+      const data = await getExpectedVisitors(siteId, page, 20, expectedFilters, searchTerm);
       setExpectedVisitors(data.expected_visitors);
       setExpectedPagination({
         currentPage: data.pagination.current_page,
@@ -392,12 +361,7 @@ export const VisitorsDashboard = () => {
     setExpectedLoading(true);
     try {
       const siteId = getCurrentSiteId();
-      const personToMeetId = filters?.personToMeet;
-      console.log('🔍 Applying filters to expected visitors:', filters);
-      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      console.log('🔍 SearchTerm being passed:', searchTerm);
-      console.log('🔍 Using site ID:', siteId);
-      const data = await getExpectedVisitors(siteId, page, 20, personToMeetId, searchTerm);
+      const data = await getExpectedVisitors(siteId, page, 20, filters, searchTerm);
       setExpectedVisitors(data.expected_visitors);
       setExpectedPagination({
         currentPage: data.pagination.current_page,
@@ -413,14 +377,12 @@ export const VisitorsDashboard = () => {
   };
 
   // Fetch visitor history
-  const fetchVisitorHistory = useCallback(async (page: number = 1, searchTerm?: string) => {
+  const fetchVisitorHistory = useCallback(async (page: number = 1, filters?: VisitorFilters, searchTerm?: string) => {
     setHistoryLoading(true);
     try {
       const siteId = getCurrentSiteId();
-      console.log('🔍 Using site ID for visitor history:', siteId);
-      console.log('🔍 SearchTerm being passed to visitor history:', searchTerm);
-      const data = await getVisitorHistory(siteId, page, 20, searchTerm);
-     setVisitorHistoryData(data.visitors || []);
+      const data = await getVisitorHistory(siteId, page, 20, filters, searchTerm);
+      setVisitorHistoryData(data.visitors || []);
       setHistoryPagination(prev => ({
         ...prev,
         totalPages: data.pagination?.total_pages || 1,
@@ -485,57 +447,40 @@ export const VisitorsDashboard = () => {
   };
 
   const handleFilterApply = (filters: VisitorFilters) => {
-    console.log('🔧 Filter apply called with:', filters);
-    console.log('🔧 Active visitor type:', activeVisitorType);
-    console.log('🔧 Main tab:', mainTab);
     setVisitorFilters(filters);
     setIsFilterOpen(false);
 
-    // Set filters based on the active tab and visitor type
     if (mainTab === 'visitor') {
-      // For visitor history table
-      console.log('🔧 Setting visitor history filters:', filters);
-      fetchVisitorHistory(1); // Refresh history with filters if needed
+      fetchVisitorHistory(1, filters, searchTerm || undefined);
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
-      console.log('🔧 Setting unexpected visitor filters:', filters);
       setUnexpectedFilters(filters);
       fetchUnexpectedVisitorsWithFilters(1, filters);
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
-      console.log('🔧 Setting expected visitor filters:', filters);
       setExpectedFilters(filters);
       fetchExpectedVisitorsWithFilters(1, filters);
-    }
-    else if (visitorSubTab === 'visitor-out') {
+    } else if (visitorSubTab === 'visitor-out') {
       fetchVisitorsOut();
     } else if (visitorSubTab === 'history') {
-      fetchVisitorHistory();
+      fetchVisitorHistory(1, filters, searchTerm || undefined);
     }
   };
 
   const handleFilterReset = () => {
-    console.log('🔧 Filter reset called');
-    console.log('🔧 Active visitor type:', activeVisitorType);
-    console.log('🔧 Main tab:', mainTab);
     setVisitorFilters({});
     setIsFilterOpen(false);
 
-    // Reset filters based on the active tab and visitor type
     if (mainTab === 'visitor') {
-      // For visitor history table
-      console.log('🔧 Resetting visitor history filters');
-      fetchVisitorHistory(1); // Refresh history without filters
+      fetchVisitorHistory(1, {}, searchTerm || undefined);
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
-      console.log('🔧 Resetting unexpected visitor filters');
       setUnexpectedFilters({});
       fetchUnexpectedVisitorsWithFilters(1, {});
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
-      console.log('🔧 Resetting expected visitor filters');
       setExpectedFilters({});
       fetchExpectedVisitorsWithFilters(1, {});
     } else if (visitorSubTab === 'visitor-out') {
       fetchVisitorsOut();
     } else if (visitorSubTab === 'history') {
-      fetchVisitorHistory();
+      fetchVisitorHistory(1, {}, searchTerm || undefined);
     }
   };
 
@@ -1033,48 +978,31 @@ export const VisitorsDashboard = () => {
   // Debounced search effect - this triggers API calls when search term changes
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      console.log('🔍 Debounced search triggered with term:', searchTerm);
-
       if (mainTab === 'visitor') {
         if (visitorSubTab === 'history') {
-          console.log('📞 Calling fetchVisitorHistory with search term:', searchTerm);
-          fetchVisitorHistory(1, searchTerm);
+          fetchVisitorHistory(1, visitorFilters, searchTerm || undefined);
         } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
-          console.log('📞 Calling fetchUnexpectedVisitors with search term:', searchTerm);
           fetchUnexpectedVisitors(1, searchTerm);
         } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
-          console.log('📞 Calling fetchExpectedVisitors with search term:', searchTerm);
           fetchExpectedVisitors(1, searchTerm);
         } else if (visitorSubTab === 'visitor-out') {
-          console.log('📞 Calling fetchVisitorsOut with search term:', searchTerm);
           fetchVisitorsOut(1, searchTerm);
         }
       }
-    }, 300); // Reduced to 300ms for faster response
+    }, 300);
 
-    return () => {
-      console.log('🔍 Clearing search timeout');
-      clearTimeout(timeoutId);
-    };
-  }, [searchTerm, mainTab, visitorSubTab, activeVisitorType, fetchExpectedVisitors, fetchUnexpectedVisitors, fetchVisitorHistory, fetchVisitorsOut]);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, mainTab, visitorSubTab, activeVisitorType, visitorFilters, fetchExpectedVisitors, fetchUnexpectedVisitors, fetchVisitorHistory, fetchVisitorsOut]);
 
   const handleSearch = () => {
-    console.log('🔍 Manual search triggered for:', searchTerm);
-    console.log('📍 Current tab state - mainTab:', mainTab, 'visitorSubTab:', visitorSubTab, 'activeVisitorType:', activeVisitorType);
-
-    // Trigger immediate search
     if (mainTab === 'visitor') {
       if (visitorSubTab === 'history') {
-        console.log('📞 Manual call to fetchVisitorHistory');
-        fetchVisitorHistory(1, searchTerm);
+        fetchVisitorHistory(1, visitorFilters, searchTerm || undefined);
       } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
-        console.log('📞 Manual call to fetchUnexpectedVisitors');
         fetchUnexpectedVisitors(1, searchTerm);
       } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
-        console.log('📞 Manual call to fetchExpectedVisitors');
         fetchExpectedVisitors(1, searchTerm);
       } else if (visitorSubTab === 'visitor-out') {
-        console.log('📞 Manual call to fetchVisitorsOut');
         fetchVisitorsOut(1, searchTerm);
       }
     }
@@ -1082,11 +1010,9 @@ export const VisitorsDashboard = () => {
 
   const handleReset = () => {
     setSearchTerm('');
-    console.log('Search reset');
-    // Trigger search with empty term
     if (mainTab === 'visitor') {
       if (visitorSubTab === 'history') {
-        fetchVisitorHistory(1, '');
+        fetchVisitorHistory(1, visitorFilters, undefined);
       } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
         fetchUnexpectedVisitors(1, '');
       } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
@@ -1418,23 +1344,34 @@ export const VisitorsDashboard = () => {
   };
 
   const handleExport = async () => {
-    console.log('VisitorsDashboard - Export clicked');
+    setExportDialogOpen(true);
+  };
 
-    // Show loading toast with infinite duration
+  const handleExportWithDateRange = async () => {
+    const rangeError = getExportDateRangeError(exportFromDate, exportToDate);
+    if (rangeError) {
+      toast.error(rangeError);
+      return;
+    }
+
+    setExportDialogOpen(false);
     const loadingToastId = toast.loading("Preparing export file...", {
-      duration: Infinity, // Keep it visible until we dismiss it
+      duration: Infinity,
     });
 
     try {
-      console.log('📥 Exporting visitor history data');
-
-      // Build the export URL using the configured endpoint
       const exportUrl = getFullUrl(ENDPOINTS.VISITOR_HISTORY_EXPORT);
 
-      console.log('📥 Export URL:', exportUrl);
+      const fromParts = exportFromDate.split('/');
+      const toParts = exportToDate.split('/');
+      const dateRangeParam = `${fromParts[1]}%2F${fromParts[0]}%2F${fromParts[2]}-${toParts[1]}%2F${toParts[0]}%2F${toParts[2]}`;
 
-      // Make the API call to get the Excel file
-      const response = await fetch(exportUrl, {
+      const separator = exportUrl.includes('?') ? '&' : '?';
+      const urlWithDateRange = `${exportUrl}${separator}q[date_range]=${dateRangeParam}`;
+
+      console.log('Export URL with date range:', urlWithDateRange);
+
+      const response = await fetch(urlWithDateRange, {
         method: 'GET',
         headers: {
           'Authorization': getAuthHeader(),
@@ -1443,85 +1380,36 @@ export const VisitorsDashboard = () => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Export API error response:', errorText);
-
+        console.error('Export API error response:', errorText);
         if (response.status === 401) {
-          console.error('401 Authentication failed during export - invalid or expired token');
           throw new Error('Authentication failed. Please login again.');
         }
-
         throw new Error(`Export failed: ${response.status} ${response.statusText}`);
       }
 
-      // Get the file blob
       const blob = await response.blob();
-
-      // Create download link
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-
-      // Generate filename with timestamp
       const timestamp = new Date().toISOString().slice(0, 10);
       link.download = `visitor_history_${timestamp}.xlsx`;
-
-      // Trigger download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      // Clean up the blob URL
       window.URL.revokeObjectURL(downloadUrl);
 
-      console.log('✅ Export completed successfully');
-
-      // Dismiss loading toast and show success
       toast.dismiss(loadingToastId);
       toast.success('Visitor history exported successfully!');
-
     } catch (error) {
-      console.error('❌ Export failed:', error);
-
-      // Dismiss loading toast and show error
+      console.error('Export failed:', error);
       toast.dismiss(loadingToastId);
-
-      // Handle authentication errors specifically
       if (error instanceof Error && error.message.includes('Authentication failed')) {
         toast.error("Your session has expired. Please login again.");
         return;
       }
-
       toast.error(`Failed to export visitor history: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
-
-  // Column visibility handlers for visitor history table
-  const handleVisitorHistoryColumnToggle = (columnKey: string) => {
-    setVisitorHistoryColumnVisibility(prev => ({
-      ...prev,
-      [columnKey]: !prev[columnKey]
-    }));
-  };
-
-  const handleVisitorHistoryColumnReset = () => {
-    setVisitorHistoryColumnVisibility({
-      action: true,
-      visitor_image: true,
-      guest_name: true,
-      guest_number: true,
-      primary_host: true,
-      visit_purpose: true,
-      guest_from: true,
-      visitor_type: true,
-      status: true,
-      check_in_time: true,
-    });
-  };
-
-  // Filter visible columns for visitor history
-  const visibleVisitorHistoryColumns = visitorHistoryColumns.filter(
-    column => visitorHistoryColumnVisibility[column.key] !== false
-  );
 
   const renderPaginationItems = () => {
     const items = [];
@@ -1655,7 +1543,7 @@ const handlePageChange = (page: number) => {
     setHistoryPagination(prev => ({ ...prev, currentPage: page }));
     if (mainTab === 'visitor') {
       if (visitorSubTab === 'history') {
-        fetchVisitorHistory(page, searchTerm);
+        fetchVisitorHistory(page, visitorFilters, searchTerm || undefined);
       } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
         fetchUnexpectedVisitors(page, searchTerm);
       } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
@@ -1840,7 +1728,7 @@ const handlePageChange = (page: number) => {
                   renderCell={renderVisitorOutCell}
                   enableSearch={true}
                   enableSelection={false}
-                  // enableExport={true}
+                  enableExport={true}
                   enablePagination={true}
                   pagination={visitorsOutPagination}
                   onPageChange={fetchVisitorsOut}
@@ -1870,7 +1758,7 @@ const handlePageChange = (page: number) => {
             {/* Visitor History Table - Direct display without sub-tabs */}
             <EnhancedTable
               data={visitorHistoryData}
-              columns={visibleVisitorHistoryColumns}
+              columns={visitorHistoryColumns}
               selectable={true}
               renderCell={renderVisitorHistoryCell}
               enableSearch={true}
@@ -1886,14 +1774,14 @@ const handlePageChange = (page: number) => {
               }
               onSelectAll={handleSelectAll}
               getItemId={visitor => visitor.id.toString()}
-              // enableExport={true}
+              enableExport={true}
+              hideTableExport={false}
               handleExport={handleExport}
               exportFileName="visitor-history"
               pagination={false}
               storageKey="visitor-history-table"
               emptyMessage="No visitor history available"
               searchPlaceholder="Search visitors..."
-              hideColumnsButton={true}
               onFilterClick={handleFilterOpen}
               leftActions={
                 <div className="flex gap-3">
@@ -1902,31 +1790,14 @@ const handlePageChange = (page: number) => {
                       onClick={() => setIsActionPanelOpen(true)}
                       className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
                     >
-                      <Plus className="w-4 h-4 mr-2" />
+                      <Plus  className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost" />
                       Action
                     </Button>
                   )}
                 </div>
               }
-              rightActions={
-                <div className="flex gap-2">
-                  {/* Export Button */}
-                  {/* <Button
-                    onClick={handleExport}
-                    variant="outline"
-                    size="sm"
-                    className="h-9 px-3 bg-white hover:bg-gray-50 border-gray-300"
-                  >
-                    <Download className="w-4 h-4 " />
-                  </Button> */}
-                  <ColumnVisibilityMenu
-                    columns={visitorHistoryColumns}
-                    columnVisibility={visitorHistoryColumnVisibility}
-                    onToggleVisibility={handleVisitorHistoryColumnToggle}
-                    onResetToDefaults={handleVisitorHistoryColumnReset}
-                  />
-                </div>
-              }
+              rightActions={null}
             />
 
             {/* Pagination */}
@@ -1976,7 +1847,7 @@ const handlePageChange = (page: number) => {
         onClose={() => setIsFilterOpen(false)}
         onApplyFilters={handleFilterApply}
         onResetFilters={handleFilterReset}
-        currentFilters={activeVisitorType === 'unexpected' ? unexpectedFilters : expectedFilters}
+        currentFilters={mainTab === 'visitor' ? visitorFilters : (activeVisitorType === 'unexpected' ? unexpectedFilters : expectedFilters)}
       />
 
       {/* Visitor Selection Panel */}
@@ -2004,6 +1875,47 @@ const handlePageChange = (page: number) => {
           setIsActionPanelOpen(false);
         }}
       />
+
+      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Export Visitor History</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>From</Label>
+              <MaterialDatePicker
+                value={exportFromDate}
+                onChange={setExportFromDate}
+                placeholder="Select start date"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label>To</Label>
+              <MaterialDatePicker
+                value={exportToDate}
+                onChange={setExportToDate}
+                placeholder="Select end date"
+                className="mt-1"
+              />
+            </div>
+            {exportDateRangeError && (
+              <p className="text-sm text-red-600">{exportDateRangeError}</p>
+            )}
+            <div className="flex justify-end pt-4">
+              <Button
+                style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+                className="hover:bg-[#F2EEE9]/90 px-8"
+                onClick={handleExportWithDateRange}
+                disabled={!exportFromDate || !exportToDate || !!exportDateRangeError}
+              >
+                Export
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

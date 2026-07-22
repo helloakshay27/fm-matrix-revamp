@@ -2808,17 +2808,17 @@ export const AddVendorPage = () => {
       </div>
 
       <div className="flex justify-end gap-4 mt-8">
-        <DraftButton disabled={activeStep === 0} onClick={handleBack}>
+        <Button variant="outline" className="fm-button-fix fm-button-brand px-8" disabled={activeStep === 0} onClick={handleBack}>
           Back
-        </DraftButton>
+        </Button>
         {activeStep === steps.length - 1 ? (
-          <RedButton onClick={handleSave} disabled={isSubmitting}>
+          <Button variant="ghost" className="fm-button-fix fm-button-brand px-8" onClick={handleSave} disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : 'Save Vendor'}
-          </RedButton>
+          </Button>
         ) : (
-          <RedButton onClick={handleNext}>
+          <Button variant="ghost" className="fm-button-fix fm-button-brand px-8" onClick={handleNext}>
             Next
-          </RedButton>
+          </Button>
         )}
       </div>
     </div>

@@ -8,6 +8,7 @@ import { Dialog, DialogContent, TextField } from "@mui/material"
 import { Edit, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions"
 
 const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
@@ -42,6 +43,7 @@ const columns: ColumnConfig[] = [
 
 const MsafeCirlce = () => {
     const dispatch = useAppDispatch()
+    const { shouldShow } = useDynamicPermissions()
     const token = localStorage.getItem("token")
     const baseUrl = localStorage.getItem("baseUrl")
 
@@ -176,7 +178,7 @@ const MsafeCirlce = () => {
                         onCheckedChange={() =>
                             handleCheckboxChange(item)
                         }
-                        className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                        className="data-[state=checked]:bg-gray-500 data-[state=checked]:border-gray-500"
                         disabled={updatingStatus[item.id]}
                     />
                 );
@@ -187,30 +189,34 @@ const MsafeCirlce = () => {
 
     const leftActions = (
         <>
-            <Button
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={() => setIsAddModalOpen(true)}
-            >
-                <Plus className="w-4 h-4 mr-2" />
-                Add
-            </Button>
+            {shouldShow("M Safe", "create") && (
+                <Button
+                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    onClick={() => setIsAddModalOpen(true)}
+                >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add
+                </Button>
+            )}
         </>
     );
 
     const renderActions = (item: any) => {
         return (
-            <Button
-                size="sm"
-                variant="ghost"
-                className="p-1"
-                onClick={() => {
-                    setIsEditing(true)
-                    setRecord(item)
-                    setIsAddModalOpen(true)
-                }}
-            >
-                <Edit className="w-4 h-4" />
-            </Button>
+            shouldShow("M Safe", "update") && (
+                <Button
+                    size="sm"
+                    variant="ghost"
+                    className="p-1"
+                    onClick={() => {
+                        setIsEditing(true)
+                        setRecord(item)
+                        setIsAddModalOpen(true)
+                    }}
+                >
+                    <Edit className="w-4 h-4" />
+                </Button>
+            )
         )
     };
 
@@ -251,7 +257,8 @@ const MsafeCirlce = () => {
                         <div className="pt-4">
                             <Button
                                 type="submit"
-                                className="bg-purple-600 hover:bg-purple-700 text-white w-full"
+                                variant="outline"
+                                className="fm-button-fix fm-button-brand w-full"
                                 disabled={submitting}
                             >
                                 Submit

@@ -2181,7 +2181,9 @@ export const IncidentSetupDashboard = () => {
                   </div>
 
                   <div className="flex gap-3 pt-2">
-                    <Button onClick={handleEditEsclation} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2">
+                    <Button onClick={handleEditEsclation} 
+                    className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost">
                       Submit
                     </Button>
                     <Button onClick={handleEditBack} variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2">
@@ -2977,7 +2979,8 @@ export const IncidentSetupDashboard = () => {
                       />
                     </div>
                   )}
-                  <Button onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700 text-white px-8">
+                  <Button onClick={handleSubmit} className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost">
                     {selectedCategory === 'Approval Setup' && existingApprovalSetupId ? 'Update' : 'Submit'}
                   </Button>
                 </div>

@@ -9,6 +9,7 @@ import { EditVehicleDialog } from '@/components/EditVehicleDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useNavigate } from 'react-router-dom';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface Vehicle {
   id: number;
@@ -161,6 +162,7 @@ const columns: ColumnConfig[] = [
 ];
 
 export const RVehiclesDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const [activeTab, setActiveTab] = useState('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -214,13 +216,17 @@ export const RVehiclesDashboard = () => {
   // Render row function for enhanced table
   const renderRow = (vehicle: any) => ({
     actions: (
-      <button 
-        onClick={() => handleEditClick(vehicle)}
-        className="text-gray-400 hover:text-gray-600"
-        title="Edit vehicle"
-      >
-        <Edit className="w-4 h-4" />
-      </button>
+      <>
+        {shouldShow("R Vehicles", "update") && (
+          <button
+            onClick={() => handleEditClick(vehicle)}
+            className="text-gray-400 hover:text-gray-600"
+            title="Edit vehicle"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+        )}
+      </>
     ),
     vehicleNumber: <span className="text-blue-600 font-medium">{vehicle.vehicleNumber}</span>,
     parkingSlot: vehicle.parkingSlot || '--',
@@ -295,13 +301,18 @@ export const RVehiclesDashboard = () => {
         hideTableExport={false}
         hideColumnsButton={false}
         leftActions={
-          <Button
-            onClick={() => setIsAddModalOpen(true)}
-            className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg"
-          >
-            <Plus className="w-4 h-4" />
-            Add
-          </Button>
+          <>
+            {shouldShow("R Vehicles", "create") && (
+              <Button
+                onClick={() => setIsAddModalOpen(true)}
+                className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
+              >
+                <Plus className="w-4 h-4" />
+                Add
+              </Button>
+            )}
+          </>
         }
         filterAdjacentActions={
           <Button

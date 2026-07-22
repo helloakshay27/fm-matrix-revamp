@@ -18,6 +18,7 @@ import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable
 import { useDebounce } from '@/hooks/useDebounce';
 import { userService, User } from '@/services/userService';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Type definitions for the API response
 interface PatrollingItem {
@@ -145,6 +146,7 @@ const columns: ColumnConfig[] = [{
 export const PatrollingDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { shouldShow } = useDynamicPermissions();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -363,12 +365,16 @@ export const PatrollingDashboard = () => {
   // Render row function for enhanced table
   const renderRow = (patrol: PatrollingItem) => ({
     actions: <div className="flex items-center gap-2">
-      <button onClick={() => handleView(patrol.id)} className="p-1 text-black hover:bg-gray-100 rounded" title="View">
-        <Eye className="w-4 h-4" />
-      </button>
-      <button onClick={() => handleEdit(patrol.id)} className="p-1 text-black hover:bg-gray-100 rounded" title="Edit">
-        <Edit className="w-4 h-4" />
-      </button>
+      {shouldShow("Patrolling", "show") && (
+        <button onClick={() => handleView(patrol.id)} className="p-1 text-black hover:bg-gray-100 rounded" title="View">
+          <Eye className="w-4 h-4" />
+        </button>
+      )}
+      {shouldShow("Patrolling", "update") && (
+        <button onClick={() => handleEdit(patrol.id)} className="p-1 text-black hover:bg-gray-100 rounded" title="Edit">
+          <Edit className="w-4 h-4" />
+        </button>
+      )}
       {/* <button onClick={() => handleDelete(patrol.id)} className="p-1 text-black hover:bg-gray-100 rounded" title="Delete">
         <Trash2 className="w-4 h-4" />
       </button> */}
@@ -571,13 +577,18 @@ export const PatrollingDashboard = () => {
         onFilterClick={() => setIsFilterOpen(true)}
         loading={loading}
         leftActions={(
-          <Button
-            size="sm"
-            className='bg-[#C72030] text-white hover:bg-[#C72030]/90'
-            onClick={() => setShowActionPanel((prev) => !prev)}
-          >
-            <Plus className="w-4 h-4 mr-2" /> Action
-          </Button>
+          <>
+            {shouldShow("Patrolling", "create") && (
+              <Button
+                size="sm"
+                className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
+                onClick={() => setShowActionPanel((prev) => !prev)}
+              >
+                <Plus className="w-4 h-4 mr-2" /> Action
+              </Button>
+            )}
+          </>
         )}
         rightActions={(
           <Button
@@ -585,6 +596,7 @@ export const PatrollingDashboard = () => {
             variant="outline"
             onClick={handleRefreshSchedules}
             disabled={refreshLoading}
+            className="rounded-lg"
           >
             {refreshLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />

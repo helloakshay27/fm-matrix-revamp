@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Box as BoxIcon, RefreshCcw, Eye, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 type DeletionDetail = {
     email?: string;
@@ -37,6 +38,7 @@ type ApiResponse = {
 };
 
 const EmployeeDeletionHistory: React.FC = () => {
+    const { shouldShow } = useDynamicPermissions();
     const [rows, setRows] = useState<DeletionRecord[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -222,17 +224,19 @@ const EmployeeDeletionHistory: React.FC = () => {
                                                 <td className="p-4 align-middle whitespace-nowrap">{formatDateTime(r.created_at)}</td>
                                                 <td className="p-4 align-middle whitespace-nowrap">{r.deleted_by_email || '—'}</td>
                                                 <td className="p-4 align-middle">
-                                                    <button
-                                                        type="button"
-                                                        aria-label="View employee detail"
-                                                        className="inline-flex items-center gap-2 rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
-                                                        onMouseEnter={() => handleHoverStart(r)}
-                                                        onMouseLeave={handleHoverEnd}
-                                                        onClick={() => openDetails(r)}
-                                                    >
-                                                        <Eye className="w-4 h-4 text-gray-700" />
-                                                        View
-                                                    </button>
+                                                    {shouldShow("M Safe", "show") && (
+                                                        <button
+                                                            type="button"
+                                                            aria-label="View employee detail"
+                                                            className="inline-flex items-center gap-2 rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                                                            onMouseEnter={() => handleHoverStart(r)}
+                                                            onMouseLeave={handleHoverEnd}
+                                                            onClick={() => openDetails(r)}
+                                                        >
+                                                            <Eye className="w-4 h-4 text-gray-700" />
+                                                            View
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}

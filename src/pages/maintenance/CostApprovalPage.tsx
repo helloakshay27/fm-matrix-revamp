@@ -558,17 +558,17 @@ export const CostApprovalPage: React.FC = () => {
                       </Select>
                     </div>
                     <Button 
-                      variant="default"
+                      variant="ghost"
                       size="sm" 
-                      className="bg-[#C72030] hover:bg-[#A61B29] text-white border-none font-semibold px-4"
+                      className="fm-button-fix fm-button-brand px-4 py-2"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Apply
                     </Button>
                     <Button 
-                      variant="outline" 
+                      variant="ghost" 
                       size="sm" 
-                      className="border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold px-4"
+                      className="fm-button-fix fm-button-brand px-4 py-2"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Reset
@@ -704,17 +704,17 @@ export const CostApprovalPage: React.FC = () => {
                       </Select>
                     </div>
                     <Button 
-                      variant="default"
+                      variant="ghost"
                       size="sm" 
-                      className="bg-[#C72030] hover:bg-[#A61B29] text-white border-none font-semibold px-4"
+                      className="fm-button-fix fm-button-brand px-4 py-2"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Apply
                     </Button>
                     <Button 
-                      variant="outline" 
+                      variant="ghost" 
                       size="sm" 
-                      className="border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold px-4"
+                      className="fm-button-fix fm-button-brand px-4 py-2"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Reset

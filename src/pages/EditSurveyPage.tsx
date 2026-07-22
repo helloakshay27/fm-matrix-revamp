@@ -448,7 +448,9 @@ export const EditSurveyPage = () => {
                   ? "checkbox"
                   : q.qtype === "date"
                     ? "date"
-                    : q.qtype === "input"
+                    : q.qtype === "time"
+                      ? "time"
+                      : q.qtype === "input"
                       ? "input-box"
                       : q.qtype === "input_box"
                         ? "input-box"
@@ -1117,7 +1119,9 @@ export const EditSurveyPage = () => {
               ? "checkbox"
               : question.answerType === "date"
                 ? "date"
-                : question.answerType === "input-box"
+                : question.answerType === "time"
+                  ? "time"
+                  : question.answerType === "input-box"
                   ? "input_box"
                   : question.answerType === "rating"
                     ? "rating"
@@ -1736,6 +1740,7 @@ export const EditSurveyPage = () => {
                             <SelectItem value="input-box">Input Box</SelectItem>
                              <SelectItem value="checkbox">Checkbox</SelectItem>
                              <SelectItem value="date">Date</SelectItem>
+                             <SelectItem value="time">Time</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -2214,7 +2219,7 @@ export const EditSurveyPage = () => {
                 <Button
                   onClick={handleAddQuestion}
                   variant="outline"
-                  className="border-dashed border-red-400 text-red-600 hover:bg-red-50"
+                  className="fm-button-fix border-dashed"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add More Questions
@@ -2225,14 +2230,15 @@ export const EditSurveyPage = () => {
                 <Button
                   onClick={handleUpdateQuestion}
                   disabled={loading || isSubmitting}
-                  className="bg-red-600 hover:bg-red-700 text-white px-8"
+                  variant="ghost"
+                  className="fm-button-fix fm-button-brand px-8"
                 >
                   {loading || isSubmitting ? "Updating..." : "Update Question"}
                 </Button>
                 <Button
                   onClick={() => navigate("/master/survey/list")}
                   variant="outline"
-                  className="border-red-600 text-red-600 hover:bg-red-50 px-8"
+                  className="fm-button-fix px-8"
                 >
                   Cancel
                 </Button>

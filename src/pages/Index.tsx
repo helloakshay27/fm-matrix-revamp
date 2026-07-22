@@ -128,7 +128,11 @@ const Index = () => {
       userEmail === "deveshjain928@gmail.com" ||
       userEmail === "abdul.ghaffar@lockated.com" ||
       userEmail === "mailroom2@zs.com" ||
-      userEmail === "abdul.g@gophygital.work";
+      userEmail === "abdul.g@gophygital.work" ||
+      userEmail === "zs@lockated.com" ||
+      userEmail === "reception.pune@zycus.com" ||
+      userEmail === "reception.blr@zycus.com" ||
+      userEmail === "reception@zycusitis.onmicrosoft.com";
 
     const isPulseSite =
       hostname.includes("pulse.lockated.com") ||
@@ -176,7 +180,8 @@ const Index = () => {
       (isWebSite && userEmail === "deveshjain928@gmail.com") ||
       userEmail === "abdul.ghaffar@lockated.com" ||
       userEmail === "mailroom2@zs.com" ||
-      userEmail === "abdul.g@gophygital.work"
+      userEmail === "abdul.g@gophygital.work" ||
+      userEmail === "zs@lockated.com"
     ) {
       // For these companies and domains, use dynamic routing from permissions
       if (userRole) {

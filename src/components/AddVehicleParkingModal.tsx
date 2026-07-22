@@ -138,16 +138,16 @@ export const AddVehicleParkingModal = ({ isOpen, onClose }: AddVehicleParkingMod
         {/* Action Buttons */}
         <div className="flex justify-end gap-3 mt-6">
           <Button 
-            variant="outline" 
+            variant="ghost" 
             onClick={onClose}
-            className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="fm-button-fix fm-button-brand px-4 py-2"
           >
             Close
           </Button>
           <Button 
-            className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white"
+            className="px-6 py-2 !bg-[#DA7756] hover:!bg-[#C45F40]"
           >
-            Save
+            <span className="!text-white font-medium">Save</span>
           </Button>
         </div>
       </DialogContent>

@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBroadcasts } from "@/store/slices/broadcastSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { BroadcastFilterModal } from "@/components/BroadcastFilterModal";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const columns: ColumnConfig[] = [
     {
@@ -73,6 +74,7 @@ const columns: ColumnConfig[] = [
 export const ClubBroadcastDashboard = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
 
@@ -361,6 +363,7 @@ export const ClubBroadcastDashboard = () => {
     };
 
     const renderActions = (item: any) => (
+        shouldShow("Broadcast", "show") && (
         <Button
             variant="ghost"
             size="sm"
@@ -369,6 +372,7 @@ export const ClubBroadcastDashboard = () => {
         >
             <Eye className="w-4 h-4" />
         </Button>
+        )
     );
 
     return (
@@ -388,6 +392,8 @@ export const ClubBroadcastDashboard = () => {
                 pageSize={10}
                 onFilterClick={() => setIsFilterModalOpen(true)}
                 leftActions={
+                    <>
+                    {shouldShow("Broadcast", "create") && (
                     <Button
                         className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                         onClick={handleAdd}
@@ -395,6 +401,8 @@ export const ClubBroadcastDashboard = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         Add
                     </Button>
+                    )}
+                    </>
                 }
             />
 

@@ -63,6 +63,8 @@ interface RosterTemplate {
   // New fields from API response
   departments?: Array<{ id: number; name: string }>;
   employees?: Array<{ id: number; name: string; email: string }>;
+  approvers?: Array<{ id: number; name: string; email: string }>;
+  approver_ids?: number[];
   location?: string;
   shift?: string;
   created_by?: string;
@@ -325,6 +327,19 @@ export const RosterDetailPage: React.FC = () => {
   const getSelectedEmployee = () => {
     const employees = getSelectedEmployees();
     return employees.length > 0 ? employees[0] : null;
+  };
+
+  const getApprovers = () => {
+    if (!rosterTemplate) return [];
+    if (rosterTemplate.approvers && Array.isArray(rosterTemplate.approvers)) {
+      return rosterTemplate.approvers;
+    }
+    if (rosterTemplate.approver_ids && Array.isArray(rosterTemplate.approver_ids)) {
+      return rosterTemplate.approver_ids
+        .map((aid) => fmUsers.find((u) => u.id === aid))
+        .filter(Boolean) as FMUser[];
+    }
+    return [];
   };
 
   const getSelectedShift = () => {
@@ -608,6 +623,27 @@ export const RosterDetailPage: React.FC = () => {
                 <p className="text-gray-500 italic">No employees assigned</p>
               )}
             </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-2">
+                Approvers ({getApprovers().length})
+              </label>
+              {getApprovers().length > 0 ? (
+                <div className="space-y-2">
+                  {getApprovers().map((approver, index) => (
+                    <div key={approver.id || index} className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                      <Users className="w-4 h-4 text-[#C72030]" />
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900">{approver.name || 'No name available'}</div>
+                        <div className="text-sm text-gray-600">{approver.email}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 italic">No approvers assigned</p>
+              )}
+            </div>
           </div>
         </Section>
 
@@ -630,7 +666,7 @@ export const RosterDetailPage: React.FC = () => {
 
       {/* Footer Actions */}
       <div className="flex items-center gap-3 justify-center pt-2 border-t border-gray-200">
-        <Button onClick={handleEdit} className="px-8">
+        <Button onClick={handleEdit} className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost">
           <Edit className="w-4 h-4 mr-2" />
           Edit Template
         </Button>

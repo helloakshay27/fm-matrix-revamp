@@ -794,7 +794,7 @@ export const EditStaffPage = () => {
           <Button 
             type="submit"
             disabled={saving}
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
+            className="bg-red-600 hover:bg-red-700 !text-white px-8 py-2"
           >
             {saving ? (
               <>
@@ -807,9 +807,9 @@ export const EditStaffPage = () => {
           </Button>
           <Button 
             type="button"
-            variant="outline"
+            variant="ghost"
             onClick={handleBack}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+            className="fm-button-fix fm-button-brand px-4 py-2"
           >
             Cancel
           </Button>

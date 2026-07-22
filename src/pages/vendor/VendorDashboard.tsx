@@ -4,10 +4,16 @@ import { toast } from "sonner";
 
 export const VendorDashboard = () => {
   const [stats, setStats] = useState({
-    tickets: {
-      totalRaised: 0,
-      open: 0,
-      closed: 0,
+    // tickets: {
+    //   totalRaised: 0,
+    //   open: 0,
+    //   closed: 0,
+    // },
+
+     permits: {
+        total: 0,
+        approved: 0,
+        rejected: 0
     },
     bills: {
       totalBills: 0,
@@ -33,10 +39,10 @@ export const VendorDashboard = () => {
       const data = await response.json();
 
       setStats({
-        tickets: {
-          totalRaised: data.total_tickets ?? data.total_raised_tickets ?? data.tickets?.total ?? 0,
-          open: data.open_tickets ?? data.tickets?.open ?? 0,
-          closed: data.closed_tickets ?? data.tickets?.closed ?? 0,
+        permits: {
+          total: data.total_permits ?? data.permits?.total ?? 0,
+          approved: data.approved_permits ?? data.permits?.approved ?? 0,
+          rejected: data.rejected_permits ?? data.permits?.rejected ?? 0
         },
         bills: {
           totalBills: data.total_bills ?? data.bills?.total ?? 0,
@@ -62,17 +68,17 @@ export const VendorDashboard = () => {
       {loading && (
         <p className="text-sm text-gray-400 animate-pulse">Loading dashboard data...</p>
       )}
-      {/* Tickets Section */}
+      {/* Permits Section */}
       <section>
-        <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Tickets</h2>
+        <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Permit</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0 border border-[rgba(199,32,48,0.2)]">
               <Ticket className="w-7 h-7 text-[#D92818]" />
             </div>
             <div>
-              <p className="text-3xl font-bold text-[#D92818] leading-none mb-1">{stats.tickets.totalRaised}</p>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Raised Tickets</p>
+              <p className="text-3xl font-bold text-[#D92818] leading-none mb-1">{stats.permits.total}</p>
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Permits</p>
             </div>
           </div>
           
@@ -81,8 +87,8 @@ export const VendorDashboard = () => {
               <Ticket className="w-7 h-7 text-[#D92818]" />
             </div>
             <div>
-              <p className="text-3xl font-bold text-[#D92818] leading-none mb-1">{stats.tickets.open}</p>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Open Ticket</p>
+              <p className="text-3xl font-bold text-[#D92818] leading-none mb-1">{stats.permits.approved}</p>
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Approved Permits</p>
             </div>
           </div>
 
@@ -91,8 +97,8 @@ export const VendorDashboard = () => {
               <Ticket className="w-7 h-7 text-[#D92818]" />
             </div>
             <div>
-              <p className="text-3xl font-bold text-[#D92818] leading-none mb-1">{stats.tickets.closed}</p>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Closed Tickets</p>
+              <p className="text-3xl font-bold text-[#D92818] leading-none mb-1">{stats.permits.rejected}</p>
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Rejected Permits</p>
             </div>
           </div>
         </div>

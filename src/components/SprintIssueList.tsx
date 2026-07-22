@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Play, Pause, Loader2 } from "lucide-react";
+import { Eye, Play, Pause, Loader2, Trash } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import {
@@ -119,11 +119,15 @@ const mapSprintIssueData = (issue: any) => ({
 interface SprintIssueListProps {
   sprintId: string;
   initialMemberId?: number;
+  initialProjectId?: number;
+  initialStatus?: string;
 }
 
 export default function SprintIssueList({
   sprintId,
   initialMemberId,
+  initialProjectId,
+  initialStatus,
 }: SprintIssueListProps) {
   const baseUrl = localStorage.getItem("baseUrl") || "";
   const token = localStorage.getItem("token") || "";
@@ -135,15 +139,18 @@ export default function SprintIssueList({
   const [currentPage, setCurrentPage] = useState(1);
   const [users, setUsers] = useState<any[]>([]);
   const [issueTypeOptions, setIssueTypeOptions] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState("");
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [pauseIssueId, setPauseIssueId] = useState<number | null>(null);
   const [isPauseLoading, setIsPauseLoading] = useState(false);
+  const [unlinkingIssueId, setUnlinkingIssueId] = useState<number | null>(null);
   const [issueSearchQuery, setIssueSearchQuery] = useState("");
   const [issueTempSearch, setIssueTempSearch] = useState("");
   const debounceTimerIssue = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirstRenderIssue = useRef(true);
+  const isFirstSearchRenderIssue = useRef(true);
 
   const fetchIssues = useCallback(async (filters = "", page = 1, search = "") => {
     setLoadingIssues(true);
@@ -164,10 +171,18 @@ export default function SprintIssueList({
     }
   }, [sprintId, baseUrl, token]);
 
+  const buildInitialFilterString = () => {
+    const parts: string[] = [];
+    if (initialMemberId != null) parts.push(`q[responsible_person_id_in][]=${initialMemberId}`);
+    if (initialProjectId != null) parts.push(`q[project_management_id_eq]=${initialProjectId}`);
+    if (initialStatus) parts.push(`q[status_eq]=${initialStatus}`);
+    return parts.join("&");
+  };
+
   useEffect(() => {
     if (!sprintId) return;
-    if (initialMemberId != null) {
-      const filterString = `q[responsible_person_id_in][]=${initialMemberId}`;
+    if (initialMemberId != null || initialProjectId != null) {
+      const filterString = buildInitialFilterString();
       setAppliedFilters(filterString);
       fetchIssues(filterString, 1, "");
     } else {
@@ -177,13 +192,14 @@ export default function SprintIssueList({
 
   useEffect(() => {
     if (isFirstRenderIssue.current) { isFirstRenderIssue.current = false; return; }
-    if (initialMemberId == null) return;
-    const filterString = `q[responsible_person_id_in][]=${initialMemberId}`;
+    if (initialMemberId == null && initialProjectId == null) return;
+    const filterString = buildInitialFilterString();
     setAppliedFilters(filterString);
     fetchIssues(filterString, 1, "");
-  }, [initialMemberId]);
+  }, [initialMemberId, initialProjectId, initialStatus]);
 
   useEffect(() => {
+    if (isFirstSearchRenderIssue.current) { isFirstSearchRenderIssue.current = false; return; }
     if (debounceTimerIssue.current) clearTimeout(debounceTimerIssue.current);
     debounceTimerIssue.current = setTimeout(() => {
       setIssueSearchQuery(issueTempSearch);
@@ -206,12 +222,24 @@ export default function SprintIssueList({
         setIssueTypeOptions((r.data || []).map((i: any) => ({ value: i.id, label: i.name })));
       } catch (e) { }
     };
+    const fetchProjects = async () => {
+      try {
+        const r = await axios.get(`https://${baseUrl}/project_managements/projects_for_dropdown.json`, { headers: { Authorization: `Bearer ${token}` } });
+        setProjects(r.data || []);
+      } catch (e) { }
+    };
     fetchUsers();
     fetchIssueTypes();
+    fetchProjects();
   }, [baseUrl, token]);
 
   const issueApiCall = async (id: string, data: object) => {
     await axios.put(`https://${baseUrl}/issues/${id}.json`, { issue: data }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
+    fetchIssues(appliedFilters, currentPage, issueSearchQuery);
+  };
+
+  const updateIssueStatusApiCall = async (id: string, status: string) => {
+    await axios.put(`https://${baseUrl}/issues/${id}/update_status.json`, { status }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
     fetchIssues(appliedFilters, currentPage, issueSearchQuery);
   };
 
@@ -224,7 +252,7 @@ export default function SprintIssueList({
 
   const handlePlayIssue = async (id: number) => {
     try {
-      await issueApiCall(String(id), { status: "started" });
+      await updateIssueStatusApiCall(String(id), "started");
       toast.success("Issue started successfully");
     } catch { toast.error("Failed to start issue"); }
   };
@@ -232,17 +260,33 @@ export default function SprintIssueList({
   const handlePauseIssueSubmit = async (reason: string, iid: number) => {
     setIsPauseLoading(true);
     try {
-      await issueApiCall(String(iid), { status: "stopped" });
+      await updateIssueStatusApiCall(String(iid), "stopped");
       toast.success("Issue paused");
       setIsPauseModalOpen(false);
       setPauseIssueId(null);
     } catch { toast.error("Failed to pause issue"); } finally { setIsPauseLoading(false); }
   };
 
+  const handleUnlinkIssue = async (issueId: number) => {
+    setUnlinkingIssueId(issueId);
+    try {
+      await axios.delete(`https://${baseUrl}/sprints/${sprintId}/unlink`, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        data: { issue_ids: [issueId] },
+      });
+      toast.success("Issue unlinked from sprint");
+      fetchIssues(appliedFilters, currentPage, issueSearchQuery);
+    } catch {
+      toast.error("Failed to unlink issue");
+    } finally {
+      setUnlinkingIssueId(null);
+    }
+  };
+
   const handleEndIssueSubmit = async (reason: string, iid: number) => {
     setIsPauseLoading(true);
     try {
-      await issueApiCall(String(iid), { status: "completed" });
+      await updateIssueStatusApiCall(String(iid), "completed");
       toast.success("Issue ended");
       setIsPauseModalOpen(false);
       setPauseIssueId(null);
@@ -255,6 +299,9 @@ export default function SprintIssueList({
         <div className="flex items-center justify-center gap-2">
           <Button size="sm" variant="ghost" className="p-1" onClick={() => navigate(`/vas/issues/${item.id}`)} title="View Issue">
             <Eye className="w-4 h-4" />
+          </Button>
+          <Button size="sm" variant="ghost" className="p-1" onClick={() => handleUnlinkIssue(Number(item.id))} title="Unlink from Sprint" disabled={unlinkingIssueId === Number(item.id)}>
+            {unlinkingIssueId === Number(item.id) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash className="w-4 h-4" />}
           </Button>
         </div>
       );
@@ -439,7 +486,7 @@ export default function SprintIssueList({
         }}
         issueTypes={issueTypeOptions}
         users={users}
-        projects={[]}
+        projects={projects}
       />
 
       <SprintIssuePauseModal

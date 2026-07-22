@@ -122,7 +122,7 @@ interface EnhancedTableProps<T> {
   data: T[];
   columns: ColumnConfig[];
   renderCell?: (item: T, columnKey: string) => React.ReactNode;
-  renderRow?: (item: T) => Record<string, any>;
+  renderRow?: (item: T, index: number) => Record<string, any>;
   renderActions?: (item: T) => React.ReactNode;
   onRowClick?: (item: T) => void;
   onSort?: (columnKey: string) => void;
@@ -815,7 +815,8 @@ export function EnhancedTable<T extends Record<string, any>>({
       handleExport(columnVisibility);
     } else {
       // Fallback to CSV export
-      exportToExcel(data, columns, exportFileName);
+      const exportColumns = columns.filter(col => col.key !== 'action' && col.key !== 'actions');
+      exportToExcel(data, exportColumns, exportFileName);
     }
   };
 
@@ -893,9 +894,9 @@ export function EnhancedTable<T extends Record<string, any>>({
           )}
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap justify-end">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
           {rightActions}
-          {/* Mobile: filter and columns on right side */}
+          {/* Mobile: filter, export, and columns on right side */}
           <div className="flex items-center gap-1 sm:hidden">
             {onFilterClick && (
               <Button
@@ -909,6 +910,22 @@ export function EnhancedTable<T extends Record<string, any>>({
               </Button>
             )}
             {filterAdjacentActions}
+            {!hideTableExport && enableExport && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportClick}
+                disabled={isExporting}
+                className="h-8 px-2"
+                title={isExporting ? "Exporting..." : "Export"}
+              >
+                {isExporting ? (
+                  <div className="animate-spin rounded-full border-2 border-current border-t-transparent w-4 h-4" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+              </Button>
+            )}
             {!hideColumnsButton && (
               <ColumnVisibilityMenu
                 columns={columns}
@@ -1338,7 +1355,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                           )}
                           {visibleColumns.map((column, columnIndex) => {
                             const renderedRow = renderRow
-                              ? renderRow(item)
+                              ? renderRow(item, index)
                               : item;
                             const cellContent = renderRow
                               ? renderedRow[column.key]

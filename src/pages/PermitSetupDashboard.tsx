@@ -2759,7 +2759,8 @@ export const PermitSetupDashboard = () => {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                   className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     {isSubmitting ? (editingTypeId ? 'Updating...' : 'Submitting...') : (editingTypeId ? 'Update' : 'Submit')}
                   </Button>
@@ -2855,7 +2856,8 @@ export const PermitSetupDashboard = () => {
                   <Button
                     type="submit"
                     disabled={isSubmittingPermitActivity}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                   className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     {isSubmittingPermitActivity ? (editingActivityId ? 'Updating...' : 'Submitting...') : (editingActivityId ? 'Update' : 'Submit')}
                   </Button>
@@ -2965,7 +2967,8 @@ export const PermitSetupDashboard = () => {
                   <Button
                     type="submit"
                     disabled={isSubmittingPermitSubActivity}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                   className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     {isSubmittingPermitSubActivity ? (editingSubActivityId ? 'Updating...' : 'Submitting...') : (editingSubActivityId ? 'Update' : 'Submit')}
                   </Button>
@@ -3090,7 +3093,8 @@ export const PermitSetupDashboard = () => {
                   <Button
                     type="submit"
                     disabled={isSubmittingPermitHazardCategory}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     {isSubmittingPermitHazardCategory ? (editingHazardId ? 'Updating...' : 'Submitting...') : (editingHazardId ? 'Update' : 'Submit')}
                   </Button>
@@ -3233,7 +3237,8 @@ export const PermitSetupDashboard = () => {
                   <Button
                     type="submit"
                     disabled={isSubmittingPermitRisk}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                   className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     {isSubmittingPermitRisk ? (editingRiskId ? 'Updating...' : 'Submitting...') : (editingRiskId ? 'Update' : 'Submit')}
                   </Button>
@@ -3395,7 +3400,8 @@ export const PermitSetupDashboard = () => {
                 <Button
                   type="submit"
                   disabled={isSubmittingPermitSafetyEquipment}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                 className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                 >
                   {isSubmittingPermitSafetyEquipment ? (editingSafetyId ? 'Updating...' : 'Submitting...') : (editingSafetyId ? 'Update' : 'Submit')}
                 </Button>

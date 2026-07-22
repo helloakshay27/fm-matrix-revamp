@@ -572,6 +572,8 @@ const OpportunityDashboard = () => {
             <Button
                 size="sm"
                 onClick={() => setShowAddModal(true)}
+                className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
             >
                 <Plus className="w-4 h-4" /> Add Opportunity
             </Button>

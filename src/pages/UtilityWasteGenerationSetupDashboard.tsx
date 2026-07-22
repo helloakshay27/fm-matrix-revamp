@@ -22,6 +22,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { API_CONFIG } from '@/config/apiConfig';
 import { getToken } from '@/utils/auth';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface CommodityData {
   id: number;
@@ -55,6 +56,7 @@ interface LandlordData {
 
 export const UtilityWasteGenerationSetupDashboard = () => {
   const { toast } = useToast();
+  const { shouldShow } = useDynamicPermissions();
   const [activeTab, setActiveTab] = useState("Commodity");
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -431,13 +433,16 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             {activeTab === 'Commodity' && (
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
+                  {shouldShow("Waste Generation", "create") && (
                   <Button
                     onClick={handleAddCommodity}
-                    className="bg-[#6B2C91] hover:bg-[#5A2579] text-white"
+                   className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Commodity
                   </Button>
+                  )}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
@@ -501,13 +506,16 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             {activeTab === 'Category' && (
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
+                  {shouldShow("Waste Generation", "create") && (
                   <Button
                     onClick={handleAddCategory}
-                    className="bg-[#6B2C91] hover:bg-[#5A2579] text-white"
+                   className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Category
                   </Button>
+                  )}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
@@ -575,13 +583,16 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             {activeTab === 'Operational Name of Landlord/Tenant' && (
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
+                  {shouldShow("Waste Generation", "create") && (
                   <Button
                     onClick={handleAddLandlord}
-                    className="bg-[#6B2C91] hover:bg-[#5A2579] text-white"
+                    className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Landlord/Tenant
                   </Button>
+                  )}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
@@ -669,7 +680,8 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             <Button variant="outline" onClick={() => setIsAddCommodityModalOpen(false)} disabled={submitting}>
               Cancel
             </Button>
-            <Button onClick={handleCommoditySubmit} className="bg-[#6B2C91] hover:bg-[#5A2579] text-white" disabled={submitting}>
+            <Button onClick={handleCommoditySubmit} className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost" disabled={submitting}>
               {submitting ? 'Submitting...' : 'Submit'}
             </Button>
           </div>
@@ -727,7 +739,8 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             <Button variant="outline" onClick={() => setIsAddCategoryModalOpen(false)} disabled={submitting}>
               Cancel
             </Button>
-            <Button onClick={handleCategorySubmit} className="bg-[#6B2C91] hover:bg-[#5A2579] text-white" disabled={submitting}>
+            <Button onClick={handleCategorySubmit} className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost" disabled={submitting}>
               {submitting ? 'Submitting...' : 'Submit'}
             </Button>
           </div>
@@ -759,7 +772,8 @@ export const UtilityWasteGenerationSetupDashboard = () => {
             <Button variant="outline" onClick={() => setIsAddLandlordModalOpen(false)} disabled={submitting}>
               Cancel
             </Button>
-            <Button onClick={handleLandlordSubmit} className="bg-[#6B2C91] hover:bg-[#5A2579] text-white" disabled={submitting}>
+            <Button onClick={handleLandlordSubmit} className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost" disabled={submitting}>
               {submitting ? 'Submitting...' : 'Submit'}
             </Button>
           </div>

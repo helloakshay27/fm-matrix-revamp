@@ -500,7 +500,8 @@ const AddApprovalMatrixPage = () => {
           <Button
             variant="outline"
             onClick={handleSaveAndCreateNew}
-            className="border-[#6B2C91] text-[#6B2C91] hover:bg-[#6B2C91] hover:text-white px-8"
+           className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
           >
             Save And Create New
           </Button>
