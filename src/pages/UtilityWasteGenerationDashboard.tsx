@@ -476,7 +476,7 @@ useEffect(() => {
               }}
               getItemId={(item) => item.id.toString()}
               onSearchChange={setSearchTerm}
-              onFilterClick={() => setIsFilterOpen(true)}
+              onFilterClick={() => setIsFilterModalOpen(true)}
               enableExport={true}
               onExport={handleExport}
               isExporting={isExporting}
@@ -557,7 +557,7 @@ useEffect(() => {
             <button onClick={() => navigate('/maintenance/waste/generation/add')} className="flex flex-col items-center hover:text-[#C72030] transition-colors">
               <Plus className="w-6 h-6 mb-1"/><span className="text-xs font-bold uppercase">Add</span>
             </button>
-            <button onClick={() => setIsImportOpen(true)} className="flex flex-col items-center hover:text-[#C72030] transition-colors">
+            <button onClick={() => setIsBulkUploadOpen(true)} className="flex flex-col items-center hover:text-[#C72030] transition-colors">
               <Upload className="w-6 h-6 mb-1"/><span className="text-xs font-bold uppercase">Import</span>
             </button>
             <div className="w-px h-8 bg-gray-200" />
@@ -568,8 +568,8 @@ useEffect(() => {
         </div>
       )}
 
-      <WasteGenerationFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleApplyFilters} />
-      <WasteGenerationBulkDialog isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} type="import" />
+      <WasteGenerationFilterDialog isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
+      <WasteGenerationBulkDialog isOpen={isBulkUploadOpen} onClose={() => setIsBulkUploadOpen(false)} type="import" />
   <AssetAnalyticsFilterDialog
   isOpen={isAnalyticsFilterOpen}
   onClose={() => setIsAnalyticsFilterOpen(false)}

@@ -118,6 +118,27 @@ export const useUtilityEvents = () => {
     trackEvent('Solar Generator List Viewed', props);
   }, [trackEvent]);
 
+  // Dashboard View Events
+  const onUtilityWasteGenerationDashboardViewed = useCallback(() => {
+    trackEvent('Utility Waste Generation Dashboard Viewed', {});
+  }, [trackEvent]);
+
+  const onUtilitySTPDashboardViewed = useCallback(() => {
+    trackEvent('Utility STP Dashboard Viewed', {});
+  }, [trackEvent]);
+
+  const onUtilityEVDashboardViewed = useCallback(() => {
+    trackEvent('Utility EV Dashboard Viewed', {});
+  }, [trackEvent]);
+
+  const onUtilityDGDashboardViewed = useCallback(() => {
+    trackEvent('Utility DG Dashboard Viewed', {});
+  }, [trackEvent]);
+
+  const onUtilityDashboardAddAssetStarted = useCallback(() => {
+    trackEvent('Utility Dashboard Add Asset Started', {});
+  }, [trackEvent]);
+
   return {
     onDailyReadingsListViewed,
     onMeterReadingEditOpened,
@@ -134,6 +155,11 @@ export const useUtilityEvents = () => {
     onUtilityAnalyticsConfigured,
     onUtilityAnalyticsChartExported,
     onEVConsumptionListViewed,
-    onSolarGeneratorListViewed
+    onSolarGeneratorListViewed,
+    onUtilityWasteGenerationDashboardViewed,
+    onUtilitySTPDashboardViewed,
+    onUtilityEVDashboardViewed,
+    onUtilityDGDashboardViewed,
+    onUtilityDashboardAddAssetStarted
   };
 };
