@@ -221,10 +221,20 @@ export const AddPermitPage = () => {
   // Handler for multi-select changes
   const handleInputChange = (field: string, value: string) => {
     lastFocusedField.current = field;
-    setPermitData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    if (field === 'clientSpecific') {
+      // Reset copy to and list of entity when client specific changes
+      setPermitData(prev => ({
+        ...prev,
+        [field]: value,
+        copyTo: [],
+        listOfEntity: []
+      }));
+    } else {
+      setPermitData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
   };
 
   const handleMultiSelectChange = (field: string, value: string[]) => {
@@ -946,23 +956,6 @@ export const AddPermitPage = () => {
 
     fetchRooms();
   }, [permitData.floor]);
-
-  const handleInputChange = (field: string, value: string) => {
-    if (field === 'clientSpecific') {
-      // Reset copy to and list of entity when client specific changes
-      setPermitData(prev => ({
-        ...prev,
-        [field]: value,
-        copyTo: [],
-        listOfEntity: []
-      }));
-    } else {
-      setPermitData(prev => ({
-        ...prev,
-        [field]: value
-      }));
-    }
-  };
 
   // Handle building change and reset dependent dropdowns
   const handleBuildingChange = (value: string) => {
