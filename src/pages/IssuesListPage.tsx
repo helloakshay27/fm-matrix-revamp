@@ -322,7 +322,7 @@ const IssuePauseModal = ({
           <Button
             onClick={handleEnd}
             disabled={isLoading}
-            className="px-4 py-2 !bg-red-600 !text-white rounded-md disabled:opacity-50"
+          // className="px-4 py-2 !bg-red-600 !text-white rounded-md disabled:opacity-50"
           >
             {isLoading ? "Submitting..." : "End Issue"}
           </Button>
@@ -333,7 +333,7 @@ const IssuePauseModal = ({
             <Button
               onClick={handlePause}
               disabled={isLoading}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+            // className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
             >
               {isLoading ? "Submitting..." : "Pause Issue"}
             </Button>

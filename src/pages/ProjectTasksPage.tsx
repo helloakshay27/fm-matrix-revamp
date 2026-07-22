@@ -445,7 +445,7 @@ const PauseReasonModal = ({
                     <Button
                         onClick={handleEndTask}
                         disabled={isLoading}
-                        className="px-4 py-2 !bg-red-600 !text-white rounded-md !hover:bg-red-700 disabled:opacity-50"
+                    // className="px-4 py-2 !bg-red-600 !text-white rounded-md !hover:bg-red-700 disabled:opacity-50"
                     >
                         {isLoading ? "Submitting..." : "End Task"}
                     </Button>
@@ -456,7 +456,7 @@ const PauseReasonModal = ({
                         <Button
                             onClick={handleSubmit}
                             disabled={isLoading}
-                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                        // className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
                         >
                             {isLoading ? "Submitting..." : "Pause Task"}
                         </Button>
