@@ -14,7 +14,6 @@ import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
 import { cache } from "@/utils/cacheUtils";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
-import { useProcurementEvents } from "@/components/PostHogProcurementEvents";
 
 const CACHE_TTL = 5 * 60 * 1000;   // 5 minutes — fresh
 const STALE_TTL = 30 * 60 * 1000;  // 30 minutes — show stale while revalidating
@@ -140,7 +139,6 @@ export const MaterialPRDashboard = () => {
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [materialPR, setMaterialPR] = useState([]);
-  const procurementEvents = useProcurementEvents();
   const [filters, setFilters] = useState(initialFilters);
   const [pagination, setPagination] = useState({
     current_page: urlPage,
@@ -215,7 +213,6 @@ export const MaterialPRDashboard = () => {
       ).unwrap();
       cache.set(cacheKey, response, CACHE_TTL);
       applyResponse(response);
-      try { procurementEvents.onProcurementListViewed("material_pr_list", { list_type: "material_pr_list", row_count: response.purchase_orders.length }); } catch (err) {}
     } catch (error) {
       console.log(error);
       toast.error(error.message || "Failed to fetch material PR data. Please try again.");
@@ -321,10 +318,11 @@ export const MaterialPRDashboard = () => {
       await dispatch(
         updateActiveStaus({
           baseUrl,
-            onClick={() => {
-              try { procurementEvents.onProcurementRecordOpened("material_pr_list", { doc_type: "material_pr", record_status: item.approvedStatus, open_source: "list" }); } catch (err) {}
-              navigate(`/finance/material-pr/details/${item.id}`, { state: { returnTo: buildReturnToPath(location.pathname, location.search) } });
-            }}
+          token,
+          id: itemId,
+          data: {
+            pms_purchase_order: {
+              active: newStatus,
             },
           },
         })
