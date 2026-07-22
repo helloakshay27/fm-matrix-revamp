@@ -592,8 +592,24 @@ export const QuotesDetails = () => {
                             {bankDetail && (
                                 <div className="mb-4">
                                     <p className="font-bold">Bank Details</p>
-                                    <p className="mt-1">{bankDetail.bankName} - A/C {bankDetail.accountNo}</p>
-                                    <p>{bankDetail.beneficiaryName}{bankDetail.ifscCode ? `, IFSC: ${bankDetail.ifscCode}` : ""}{bankDetail.branch ? `, ${bankDetail.branch}` : ""}</p>
+                                    <div className="mt-2 space-y-1 text-[11px]">
+                                        {[
+                                            ["Bank Name", bankDetail.bankName],
+                                            ["A/c No.", bankDetail.accountNo],
+                                            ["Beneficiary / Account Name", bankDetail.beneficiaryName],
+                                            ["A/c Type", bankDetail.accountType],
+                                            ["IFSC Code", bankDetail.ifscCode],
+                                            ["Swift Code", bankDetail.swiftCode],
+                                            ["Branch", bankDetail.branch],
+                                        ]
+                                            .filter(([, value]) => value)
+                                            .map(([label, value]) => (
+                                                <div key={label} className="flex gap-2">
+                                                    <span className="font-semibold min-w-[120px]">{label}:</span>
+                                                    <span>{value}</span>
+                                                </div>
+                                            ))}
+                                    </div>
                                 </div>
                             )}
                             <div className="mb-4">

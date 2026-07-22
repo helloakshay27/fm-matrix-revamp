@@ -47,6 +47,11 @@ import axios from "axios";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import PurchaseOrderPdfTemplate from "./ClubManagement/PurchaseOrderPdfTemplate";
+import {
+  bankMasterListUrl,
+  getBankMasterApiConfig,
+  mapApiBankRecord,
+} from "./ClubManagement/bankMasterUtils";
 
 // Types based on actual API response
 interface PoInventory {
@@ -203,6 +208,7 @@ export const PurchaseOrderDetailPage = () => {
   const [activeTab, setActiveTab] = useState("order-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [bankDetail, setBankDetail] = useState<any>(null);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -272,6 +278,31 @@ export const PurchaseOrderDetailPage = () => {
   useEffect(() => {
     fetchPurchaseOrderDetail();
   }, [fetchPurchaseOrderDetail]);
+
+  // Resolve the bank selected on the purchase order, if any
+  useEffect(() => {
+    const fetchBankDetail = async () => {
+      const bankId = (purchaseOrder as any)?.bank_master_id || (purchaseOrder as any)?.bank_master?.id;
+      if (!bankId) {
+        setBankDetail(null);
+        return;
+      }
+      if ((purchaseOrder as any)?.bank_master) {
+        setBankDetail(mapApiBankRecord((purchaseOrder as any).bank_master));
+        return;
+      }
+      try {
+        const { baseUrl: bmBaseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(bankMasterListUrl(bmBaseUrl, lockAccountId), { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        const found = data.map(mapApiBankRecord).find((b: any) => String(b.id) === String(bankId));
+        setBankDetail(found || null);
+      } catch (err) {
+        setBankDetail(null);
+      }
+    };
+    fetchBankDetail();
+  }, [purchaseOrder]);
 
 
   const [hasSaleOrderApproval, setHasSaleOrderApproval] = useState(false);
@@ -1083,6 +1114,42 @@ export const PurchaseOrderDetailPage = () => {
                   </Card>
                 )}
 
+              {bankDetail && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Bank Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
+                      <p className="text-sm mt-1">{bankDetail.bankName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Account Number</p>
+                      <p className="text-sm mt-1">{bankDetail.accountNo}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Beneficiary / Account Name</p>
+                      <p className="text-sm mt-1">{bankDetail.beneficiaryName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">IFSC Code</p>
+                      <p className="text-sm mt-1">{bankDetail.ifscCode}</p>
+                    </div>
+                    {bankDetail.swiftCode && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Swift Code</p>
+                        <p className="text-sm mt-1">{bankDetail.swiftCode}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Branch</p>
+                      <p className="text-sm mt-1">{bankDetail.branch}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {purchaseOrder.terms_conditions && (
                 <Card>
                   <CardHeader>
@@ -1308,6 +1375,7 @@ export const PurchaseOrderDetailPage = () => {
                           if (!date) return "-";
                           return new Date(date).toLocaleDateString("en-GB");
                         }}
+                        bankDetail={bankDetail}
                       />
                     </div>
                   </div>
