@@ -300,31 +300,31 @@ export const RestaurantOrderDetailPage = () => {
     },
     ...(order.fnb_form && order.fnb_form.length > 0
       ? [
-          {
-            value: "fnb_form",
-            label: "F&B Form",
-            content: (
-              <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
-                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  F&B Form
-                </h3>
-                <div className="space-y-4 px-3">
-                  {order.fnb_form.map((field, index) => (
-                    <div key={field.question_id ?? index} className="flex items-start">
-                      <span className="text-gray-500 min-w-[200px]">
-                        {field.question_text || `Question ${index + 1}`}
-                      </span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">
-                        {field.option_text || field.answer}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+        {
+          value: "fnb_form",
+          label: "Requestor Info",
+          content: (
+            <div className="bg-white rounded-lg shadow border-2 p-6 space-y-6">
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                Requestor Info
+              </h3>
+              <div className="space-y-4 px-3">
+                {order.fnb_form.map((field, index) => (
+                  <div key={field.question_id ?? index} className="flex items-start">
+                    <span className="text-gray-500 min-w-[200px]">
+                      {field.question_text || `Question ${index + 1}`}
+                    </span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">
+                      {field.option_text || field.answer}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ),
-          },
-        ]
+            </div>
+          ),
+        },
+      ]
       : []),
     {
       value: "logs",
