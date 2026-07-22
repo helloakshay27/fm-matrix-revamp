@@ -44,11 +44,15 @@ import { SlideTransition } from "@/components/SprintMemberModal";
 interface SprintTaskListProps {
   sprintId: string;
   initialMemberId?: number;
+  initialProjectId?: number;
+  initialStatus?: string;
 }
 
 export default function SprintTaskList({
   sprintId,
   initialMemberId,
+  initialProjectId,
+  initialStatus,
 }: SprintTaskListProps) {
   const baseUrl = localStorage.getItem("baseUrl") || "";
   const token = localStorage.getItem("token") || "";
@@ -77,6 +81,7 @@ export default function SprintTaskList({
   const [tempSearchQuery, setTempSearchQuery] = useState("");
   const debounceTimerTask = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirstRenderTask = useRef(true);
+  const isFirstSearchRenderTask = useRef(true);
   const [dropdowns, setDropdowns] = useState({
     status: false, workflowStatus: false, responsiblePerson: false,
     createdBy: false, project: false, tags: false,
@@ -107,9 +112,20 @@ export default function SprintTaskList({
 
   useEffect(() => {
     if (!sprintId) return;
-    if (initialMemberId != null) {
-      const params = { "q[responsible_person_id_in][]": [initialMemberId] };
-      setSelectedResponsible([initialMemberId]);
+    if (initialMemberId != null || initialProjectId != null) {
+      const params: Record<string, any> = {};
+      if (initialMemberId != null) {
+        params["q[responsible_person_id_in][]"] = [initialMemberId];
+        setSelectedResponsible([initialMemberId]);
+      }
+      if (initialProjectId != null) {
+        params["q[project_management_id_eq]"] = initialProjectId;
+        setSelectedProjects([initialProjectId]);
+      }
+      if (initialStatus) {
+        params["q[status_eq]"] = initialStatus;
+        setSelectedStatuses([initialStatus]);
+      }
       setActiveFilters(params);
       fetchTasks(params, 1, "");
     } else {
@@ -119,14 +135,32 @@ export default function SprintTaskList({
 
   useEffect(() => {
     if (isFirstRenderTask.current) { isFirstRenderTask.current = false; return; }
-    if (initialMemberId == null) return;
-    const params = { "q[responsible_person_id_in][]": [initialMemberId] };
-    setSelectedResponsible([initialMemberId]);
+    if (initialMemberId == null && initialProjectId == null) return;
+    const params: Record<string, any> = {};
+    if (initialMemberId != null) {
+      params["q[responsible_person_id_in][]"] = [initialMemberId];
+      setSelectedResponsible([initialMemberId]);
+    } else {
+      setSelectedResponsible([]);
+    }
+    if (initialProjectId != null) {
+      params["q[project_management_id_eq]"] = initialProjectId;
+      setSelectedProjects([initialProjectId]);
+    } else {
+      setSelectedProjects([]);
+    }
+    if (initialStatus) {
+      params["q[status_eq]"] = initialStatus;
+      setSelectedStatuses([initialStatus]);
+    } else {
+      setSelectedStatuses([]);
+    }
     setActiveFilters(params);
     fetchTasks(params, 1, "");
-  }, [initialMemberId]);
+  }, [initialMemberId, initialProjectId, initialStatus]);
 
   useEffect(() => {
+    if (isFirstSearchRenderTask.current) { isFirstSearchRenderTask.current = false; return; }
     if (debounceTimerTask.current) clearTimeout(debounceTimerTask.current);
     debounceTimerTask.current = setTimeout(() => {
       setSearchQuery(tempSearchQuery);
