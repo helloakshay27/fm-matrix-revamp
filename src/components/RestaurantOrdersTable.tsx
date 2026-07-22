@@ -1,7 +1,7 @@
-import { useNavigate, useParams,useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Download, Eye, Loader2, Package, Info } from "lucide-react";
+import { Eye, Loader2, Package, Info, X } from "lucide-react";
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
 import { exportOrders, fetchRestaurantOrders, fetchRestaurants } from '@/store/slices/f&bSlice';
@@ -9,13 +9,33 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from './enhanced-table/EnhancedTable';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
 import axios from 'axios';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from './ui/pagination';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FBAnalyticsComponents } from '@/components/FBAnalyticsComponents';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select as MuiSelect, TextField, ThemeProvider, createTheme } from '@mui/material';
+
+interface OrderStatusFilter {
+  id: number;
+  name: string;
+  fixed_state: string;
+  color_code: string;
+  count: number;
+}
+
+interface OrderFilters {
+  total: number;
+  statuses: OrderStatusFilter[];
+}
+
+interface RestaurantOrderStatus {
+  id: number;
+  status_name: string;
+  color_code: string;
+  active?: boolean;
+}
 
 interface RestaurantOrder {
   id: number;
@@ -31,8 +51,65 @@ interface RestaurantOrder {
   status_name: string;
   total_amount: number;
   items: { id: number; menu_name: string; quantity: number; price: number }[];
-  statuses: { id: number; status_name: string; color_code: string }[];
+  statuses: RestaurantOrderStatus[];
 }
+
+const muiTheme = createTheme({
+  components: {
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '6px',
+            backgroundColor: '#FFFFFF',
+            height: { xs: '36px', sm: '45px' },
+            '& fieldset': {
+              borderColor: '#E0E0E0',
+            },
+            '&:hover fieldset': {
+              borderColor: '#1A1A1A',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#8B4B8C',
+              borderWidth: 2,
+            },
+          },
+          '& .MuiInputLabel-root': {
+            color: '#000000',
+            fontWeight: 500,
+            fontSize: { xs: '12px', sm: '14px' },
+          },
+          '& .MuiInputLabel-root.Mui-focused': {
+            color: '#8B4B8C',
+          },
+          '& .MuiInputLabel-shrink': {
+            transform: 'translate(14px, -9px) scale(0.75)',
+            backgroundColor: '#FFFFFF',
+            padding: '0 4px',
+          },
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        input: {
+          color: '#1A1A1A',
+          fontSize: '14px',
+          fontWeight: 400,
+          padding: '12px 14px',
+          '&::placeholder': {
+            color: '#1A1A1A',
+            opacity: 0.54,
+          },
+          '@media (max-width: 768px)': {
+            fontSize: '12px',
+            padding: '8px 12px',
+          },
+        },
+      },
+    },
+  },
+});
 
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
@@ -115,10 +192,26 @@ const columns: ColumnConfig[] = [
   },
 ];
 
+interface OrdersFilterState {
+  restaurantId: string;
+  statusId: string;
+  createdBy: string;
+  createdOnFrom: string;
+  createdOnTo: string;
+}
+
+const EMPTY_ORDERS_FILTERS: OrdersFilterState = {
+  restaurantId: '',
+  statusId: '',
+  createdBy: '',
+  createdOnFrom: '',
+  createdOnTo: '',
+};
+
 export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }) => {
   const { id } = useParams()
   const navigate = useNavigate();
-      const { shouldShow } = useDynamicPermissions();
+  const { shouldShow } = useDynamicPermissions();
 
   const location = useLocation();
   const dispatch = useAppDispatch();
@@ -126,10 +219,18 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
   const token = localStorage.getItem('token');
 
   const [orders, setOrders] = useState<RestaurantOrder[]>([]);
+  const [orderFilters, setOrderFilters] = useState<OrderFilters | null>(null);
   const [restoId, setRestoId] = useState<number | undefined>();
+  const [restaurantsList, setRestaurantsList] = useState<{ id: number; name: string }[]>([]);
   const [statusUpdating, setStatusUpdating] = useState<number | null>(null);
   const [loading, setLoading] = useState(true)
- const [pagination, setPagination] = useState(() => {
+
+  // Filter modal state
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [draftFilters, setDraftFilters] = useState<OrdersFilterState>(EMPTY_ORDERS_FILTERS);
+  const [appliedFilters, setAppliedFilters] = useState<OrdersFilterState>(EMPTY_ORDERS_FILTERS);
+  const [createdByUsers, setCreatedByUsers] = useState<{ id: number; full_name: string }[]>([]);
+  const [pagination, setPagination] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return {
       current_page: Number(params.get('page')) || 1,
@@ -153,6 +254,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
       if (needPadding) {
         try {
           const response = await dispatch(fetchRestaurants({ baseUrl, token })).unwrap();
+          setRestaurantsList(response || []);
           if (response && response.length > 0) {
             setRestoId(response[0]?.id);
           } else {
@@ -177,47 +279,78 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
   }, [dispatch, baseUrl, token]);
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      if (restoId) {
-        setLoading(true);
-        try {
-          const params = needPadding
-            ? {
-              baseUrl,
-              token,
-              id: Number(restoId),
-              pageSize: 10,
-              currentPage: pagination.current_page,
-              all: true,
-            }
-            : {
-              baseUrl,
-              token,
-              id: Number(restoId),
-              pageSize: 10,
-              currentPage: pagination.current_page,
-            };
-          const response = await dispatch(fetchRestaurantOrders(params)).unwrap();
-          setOrders(response.food_orders || []);
-          setPagination(prev => ({
-            ...prev,
-            total_count: response.total_records || 0,
-            total_pages: response.total_pages || 0
-          }));
-        } catch (error) {
-          console.error('Error fetching orders:', error);
-          toast.error('Failed to fetch orders');
-          setOrders([]);
-        } finally {
-          setLoading(false);
-        }
+    const fetchCreatedByUsers = async () => {
+      try {
+        const response = await axios.get(
+          `https://${baseUrl}/pms/users/get_escalate_to_users.json`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setCreatedByUsers(response.data?.users || []);
+      } catch (error) {
+        console.error('Error fetching users:', error);
       }
     };
 
-    fetchOrders();
-  }, [dispatch, restoId, baseUrl, token]);
+    if (baseUrl && token) {
+      fetchCreatedByUsers();
+    }
+  }, [baseUrl, token]);
 
-  const handleStatusUpdate = async (orderId: number, newStatus: string) => {
+  const fetchOrders = async (page = pagination.current_page, selectedStatusId = appliedFilters.statusId) => {
+    if (!restoId) return;
+
+    setLoading(true);
+    try {
+      const params = needPadding
+        ? {
+          baseUrl,
+          token,
+          id: Number(restoId),
+          pageSize: 10,
+          currentPage: page,
+          all: true,
+          statusId: selectedStatusId ? Number(selectedStatusId) : undefined,
+        }
+        : {
+          baseUrl,
+          token,
+          id: Number(restoId),
+          pageSize: 10,
+          currentPage: page,
+          statusId: selectedStatusId ? Number(selectedStatusId) : undefined,
+        };
+
+      const response = await dispatch(fetchRestaurantOrders(params)).unwrap();
+      setOrders(response.food_orders || []);
+      setOrderFilters(response.filters || null);
+      setPagination(prev => ({
+        ...prev,
+        total_count: response.total_records || 0,
+        total_pages: response.total_pages || 0,
+        current_page: page,
+      }));
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast.error('Failed to fetch orders');
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, [dispatch, restoId, baseUrl, token, needPadding, appliedFilters.statusId]);
+
+  const handleStatusUpdate = async (orderId: number, newStatusName: string) => {
+    const targetOrder = orders.find((order) => order.id === orderId);
+    const nextStatus = targetOrder?.statuses.find((status) => status.status_name === newStatusName);
+
+    if (!targetOrder || !nextStatus) {
+      toast.error('Failed to update order status');
+      return;
+    }
+
     setStatusUpdating(orderId);
     try {
       await axios.post(
@@ -226,7 +359,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
           osr_log: {
             about: 'FoodOrder',
             about_id: orderId,
-            osr_status_id: newStatus.id,
+            osr_status_id: nextStatus.id,
           },
         },
         {
@@ -238,11 +371,11 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
 
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
-          order.id === orderId ? { ...order, status_name: newStatus.name } : order
+          order.id === orderId ? { ...order, status_name: nextStatus.status_name } : order
         )
       );
 
-      toast.success(`Order ${orderId} status updated to ${newStatus.name}`);
+      toast.success(`Order ${orderId} status updated to ${nextStatus.status_name}`);
     } catch (error) {
       console.error('Error updating order status:', error);
       toast.error('Failed to update order status');
@@ -318,37 +451,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
       ...prev,
       current_page: page,
     }));
-    setLoading(true);
-    try {
-      const params = needPadding
-        ? {
-          baseUrl,
-          token,
-          id: Number(restoId),
-          pageSize: 10,
-          currentPage: page,
-          all: true,
-        }
-        : {
-          baseUrl,
-          token,
-          id: Number(restoId),
-          pageSize: 10,
-          currentPage: page,
-        };
-      const response = await dispatch(fetchRestaurantOrders(params)).unwrap();
-      setOrders(response.food_orders || []);
-     setPagination(prev => ({
-        ...prev,
-        total_count: response.total_records || 0,
-        total_pages: response.total_pages || 0
-      }));
-    } catch (error) {
-      toast.error('Failed to fetch orders');
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
+    await fetchOrders(page, appliedFilters.statusId);
   };
 
   const renderPaginationItems = () => {
@@ -364,9 +467,10 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
       items.push(
         <PaginationItem key={1} className='cursor-pointer'>
           <PaginationLink
-            onClick={() => handlePageChange(1)}
+            onClick={() => !loading && handlePageChange(1)}
             isActive={currentPage === 1}
-            disabled={loading}
+            aria-disabled={loading}
+            className={loading ? 'pointer-events-none opacity-50' : ''}
           >
             1
           </PaginationLink>
@@ -400,9 +504,10 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
           items.push(
             <PaginationItem key={i} className='cursor-pointer'>
               <PaginationLink
-                onClick={() => handlePageChange(i)}
+                onClick={() => !loading && handlePageChange(i)}
                 isActive={currentPage === i}
-                disabled={loading}
+                aria-disabled={loading}
+                className={loading ? 'pointer-events-none opacity-50' : ''}
               >
                 {i}
               </PaginationLink>
@@ -423,9 +528,10 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
             items.push(
               <PaginationItem key={i} className='cursor-pointer'>
                 <PaginationLink
-                  onClick={() => handlePageChange(i)}
+                  onClick={() => !loading && handlePageChange(i)}
                   isActive={currentPage === i}
-                  disabled={loading}
+                  aria-disabled={loading}
+                  className={loading ? 'pointer-events-none opacity-50' : ''}
                 >
                   {i}
                 </PaginationLink>
@@ -439,9 +545,10 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
         items.push(
           <PaginationItem key={totalPages} className='cursor-pointer'>
             <PaginationLink
-              onClick={() => handlePageChange(totalPages)}
+              onClick={() => !loading && handlePageChange(totalPages)}
               isActive={currentPage === totalPages}
-              disabled={loading}
+              aria-disabled={loading}
+              className={loading ? 'pointer-events-none opacity-50' : ''}
             >
               {totalPages}
             </PaginationLink>
@@ -453,9 +560,10 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
         items.push(
           <PaginationItem key={i} className='cursor-pointer'>
             <PaginationLink
-              onClick={() => handlePageChange(i)}
+              onClick={() => !loading && handlePageChange(i)}
               isActive={currentPage === i}
-              disabled={loading}
+              aria-disabled={loading}
+              className={loading ? 'pointer-events-none opacity-50' : ''}
             >
               {i}
             </PaginationLink>
@@ -514,23 +622,23 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
         return (
           <Select
             value={item.status_name}
-            onValueChange={(newStatus) => handleStatusUpdate(item.id, newStatus)}
+            onValueChange={(newStatusName) => handleStatusUpdate(item.id, newStatusName)}
             disabled={statusUpdating === item.id}
           >
             <SelectTrigger className="w-max border-none bg-transparent flex items-center [&>svg]:hidden">
               <SelectValue asChild>
-                <span className={`text-gray-900 pl-0 px-[5px] py-[3px] flex items-start gap-2 text-sm`} style={{ borderRadius: "4px", backgroundColor: item.statuses.find(status => status.name === item.status_name && status.color_code)?.color_code }}>
+                <span className={`text-gray-900 pl-0 px-[5px] py-[3px] flex items-start gap-2 text-sm`} style={{ borderRadius: "4px", backgroundColor: item.statuses.find(status => status.status_name === item.status_name)?.color_code }}>
                   {item.status_name}
                 </span>
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {item.statuses
-                .filter(status => status.active)
+                .filter(status => status.active !== false)
                 .map((status) => (
-                  <SelectItem key={status.id} value={status}>
+                  <SelectItem key={status.id} value={status.status_name}>
                     <span className={`text-gray-900 px-[5px] py-[3px] flex items-start gap-2 text-sm`} style={{ borderRadius: "4px", backgroundColor: status.color_code }}>
-                      {status.name}
+                      {status.status_name}
                     </span>
                   </SelectItem>
                 ))}
@@ -561,17 +669,92 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
     }
   };
 
+  const renderKpiCards = () => {
+    if (!orderFilters) return null;
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-6">
+        <button
+          type="button"
+          onClick={() => {
+            setAppliedFilters((prev) => ({ ...prev, statusId: '' }));
+            setPagination((prev) => ({ ...prev, current_page: 1 }));
+          }}
+          className="group relative bg-[#F6F4EE] rounded-lg border border-[#E5E5E5] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4 text-left"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-[#6B7280] truncate">Total</p>
+              <p className="text-2xl font-semibold text-[#1F2937]">{orderFilters.total}</p>
+            </div>
+          </div>
+        </button>
+        {orderFilters.statuses.map((status) => (
+          <button
+            key={status.id}
+            type="button"
+            onClick={() => {
+              setAppliedFilters((prev) => ({ ...prev, statusId: String(status.id) }));
+              setPagination((prev) => ({ ...prev, current_page: 1 }));
+            }}
+            className="group relative bg-[#F6F4EE] rounded-lg border border-[#E5E5E5] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4 pl-5 overflow-hidden text-left"
+          >
+            <div className="absolute top-0 left-0 h-full w-1" />
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-[#6B7280] truncate" title={status.name}>
+                  {status.name}
+                </p>
+                <p className="text-2xl font-semibold" style={{ color: status.color_code }}>
+                  {status.count}
+                </p>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  const handleOpenFilterModal = () => {
+    setDraftFilters(appliedFilters);
+    setIsFilterModalOpen(true);
+  };
+
+  const handleDraftFilterChange = (field: keyof OrdersFilterState, value: string) => {
+    setDraftFilters((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleApplyFilters = () => {
+    setAppliedFilters(draftFilters);
+    setIsFilterModalOpen(false);
+    // TODO: wire draftFilters (restaurantId, statusId, createdBy, createdOnFrom, createdOnTo) into
+    // the fetchRestaurantOrders query params once the exact backend param names are confirmed.
+  };
+
+  const handleResetFilters = () => {
+    setDraftFilters(EMPTY_ORDERS_FILTERS);
+    setAppliedFilters(EMPTY_ORDERS_FILTERS);
+    // TODO: re-fetch orders without filters once wired to the API.
+  };
+
+  const hasAppliedFilters =
+    !!appliedFilters.restaurantId ||
+    !!appliedFilters.statusId ||
+    !!appliedFilters.createdBy ||
+    !!appliedFilters.createdOnFrom ||
+    !!appliedFilters.createdOnTo;
+
   const renderActions = (order: RestaurantOrder) => (
     <div className="flex items-center gap-2">
-      {shouldShow("F&B","show")&&(
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleViewOrder(order)}
-        className="p-1 h-8 w-8"
-      >
-        <Eye className="w-4 h-4" />
-      </Button>)}
+      {shouldShow("F&B", "show") && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleViewOrder(order)}
+          className="p-1 h-8 w-8"
+        >
+          <Eye className="w-4 h-4" />
+        </Button>)}
     </div>
   );
 
@@ -617,11 +800,13 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
                 fill="currentColor"
               />
             </svg>
-            Analytics 
+            Analytics
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="list" className="space-y-6 mt-6">
+          {renderKpiCards()}
+
           <EnhancedTable
             data={orders}
             columns={columns}
@@ -637,6 +822,19 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
             pagination={true}
             pageSize={10}
             loading={loading}
+            onFilterClick={handleOpenFilterModal}
+            filterAdjacentActions={
+              hasAppliedFilters ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResetFilters}
+                  className="text-xs text-[#C72030] hover:bg-[#C72030]/10 h-8"
+                >
+                  Clear Filters
+                </Button>
+              ) : undefined
+            }
           />
 
           <div className="flex justify-center mt-6">
@@ -678,6 +876,128 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
           />
         </TabsContent>
       </Tabs>
+
+      <Dialog open={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} maxWidth="sm" fullWidth>
+        <DialogContent className="[&>button]:hidden">
+          <ThemeProvider theme={muiTheme}>
+            <div>
+              <div className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <h3 className="text-lg font-semibold">FILTER BY</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsFilterModalOpen(false)}
+                  className="h-6 w-6 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {needPadding && (
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel shrink>Restaurant</InputLabel>
+                      <MuiSelect
+                        label="Restaurant"
+                        value={draftFilters.restaurantId}
+                        onChange={(e) => handleDraftFilterChange('restaurantId', e.target.value as string)}
+                        displayEmpty
+                        variant="outlined"
+                        fullWidth
+                      >
+                        <MenuItem value="">Select Restaurant</MenuItem>
+                        {restaurantsList.map((restaurant) => (
+                          <MenuItem key={restaurant.id} value={String(restaurant.id)}>
+                            {restaurant.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                  )}
+
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Status</InputLabel>
+                    <MuiSelect
+                      label="Status"
+                      value={draftFilters.statusId}
+                      onChange={(e) => handleDraftFilterChange('statusId', e.target.value as string)}
+                      displayEmpty
+                      variant="outlined"
+                      fullWidth
+                    >
+                      <MenuItem value="">Select Status</MenuItem>
+                      {(orderFilters?.statuses || []).map((status) => (
+                        <MenuItem key={status.id} value={String(status.id)}>
+                          {status.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <TextField
+                    label="Created On From"
+                    type="date"
+                    value={draftFilters.createdOnFrom}
+                    onChange={(e) => handleDraftFilterChange('createdOnFrom', e.target.value)}
+                    variant="outlined"
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <span className="text-gray-500">–</span>
+                  <TextField
+                    label="Created On To"
+                    type="date"
+                    value={draftFilters.createdOnTo}
+                    onChange={(e) => handleDraftFilterChange('createdOnTo', e.target.value)}
+                    variant="outlined"
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Created By</InputLabel>
+                  <MuiSelect
+                    label="Created By"
+                    value={draftFilters.createdBy}
+                    onChange={(e) => handleDraftFilterChange('createdBy', e.target.value as string)}
+                    displayEmpty
+                    variant="outlined"
+                    fullWidth
+                  >
+                    <MenuItem value="">Select Created By</MenuItem>
+                    {createdByUsers.map((user) => (
+                      <MenuItem key={user.id} value={String(user.id)}>
+                        {user.full_name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={handleApplyFilters}
+                  variant="outline"
+                  className="fm-button-fix fm-button-brand flex-1"
+                >
+                  Apply
+                </Button>
+                <Button
+                  onClick={handleResetFilters}
+                  variant="outline"
+                  className="fm-button-fix fm-button-brand flex-1"
+                >
+                  Reset
+                </Button>
+              </div>
+            </div>
+          </ThemeProvider>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
