@@ -56,7 +56,7 @@ export const EditEventPage = () => {
     eventLocation: "",
     memberCapacity: "",
     perMemberLimit: "",
-    pulseCategory: "play",
+    // pulseCategory: "play",
     rsvp: "yes",
     showOnHomeScreen: "no",
     approvalRequired: "no",
@@ -101,7 +101,7 @@ export const EditEventPage = () => {
           eventLocation: localStorage.getItem('eventLocation') || prev.eventLocation,
           memberCapacity: localStorage.getItem('memberCapacity') || prev.memberCapacity,
           perMemberLimit: localStorage.getItem('perMemberLimit') || prev.perMemberLimit,
-          pulseCategory: localStorage.getItem('pulseCategory') || prev.pulseCategory,
+          // pulseCategory: localStorage.getItem('pulseCategory') || prev.pulseCategory,
           rsvp: localStorage.getItem('rsvp') || prev.rsvp,
           showOnHomeScreen: localStorage.getItem('showOnHomeScreen') || prev.showOnHomeScreen,
           approvalRequired: localStorage.getItem('approvalRequired') || prev.approvalRequired,
@@ -125,7 +125,8 @@ export const EditEventPage = () => {
         [
           'eventName', 'eventType', 'amountPerPerson', 'fromDate', 'toDate',
           'eventStartTime', 'eventEndTime', 'eventLocation', 'memberCapacity', 'perMemberLimit',
-          'pulseCategory', 'rsvp', 'showOnHomeScreen', 'approvalRequired', 'eventDescription', 'shareWith',
+          // 'pulseCategory',
+          'rsvp', 'showOnHomeScreen', 'approvalRequired', 'eventDescription', 'shareWith',
           'selectedTechParks'
         ].forEach(key => localStorage.removeItem(key));
 
@@ -174,7 +175,7 @@ export const EditEventPage = () => {
             rsvp: event.rsvp_action === "1" ? "yes" : "no",
             amountPerPerson: event.amount_per_member || "",
             perMemberLimit: event.per_member_limit || "",
-            pulseCategory: event.event_category || "play",
+            // pulseCategory: event.event_category || "play",
             eventType: event.is_paid ? "1" : "0",
             showOnHomeScreen: event.show_on_home === true ? "yes" : "no",
             approvalRequired: event.approval_required === true ? "yes" : "no",
@@ -310,7 +311,7 @@ export const EditEventPage = () => {
       localStorage.setItem('eventLocation', formData.eventLocation);
       localStorage.setItem('memberCapacity', formData.memberCapacity);
       localStorage.setItem('perMemberLimit', formData.perMemberLimit);
-      localStorage.setItem('pulseCategory', formData.pulseCategory);
+      // localStorage.setItem('pulseCategory', formData.pulseCategory);
       localStorage.setItem('rsvp', formData.rsvp);
       localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
       localStorage.setItem('approvalRequired', formData.approvalRequired);
@@ -427,7 +428,7 @@ export const EditEventPage = () => {
       formDataToSend.append("event[event_at]", formData.eventLocation);
       formDataToSend.append("event[capacity]", formData.memberCapacity);
       formDataToSend.append("event[per_member_limit]", formData.perMemberLimit);
-      formDataToSend.append("event[event_category]", formData.pulseCategory);
+      // formDataToSend.append("event[event_category]", formData.pulseCategory);
       formDataToSend.append("event[is_paid]", formData.eventType);
       formDataToSend.append("event[rsvp_action]", formData.rsvp === "yes" ? "1" : "0");
       formDataToSend.append("event[show_on_home]", formData.showOnHomeScreen === "yes" ? "1" : "0");
@@ -465,7 +466,8 @@ export const EditEventPage = () => {
       [
         'eventName', 'eventType', 'amountPerPerson', 'fromDate', 'toDate',
         'eventStartTime', 'eventEndTime', 'eventLocation', 'memberCapacity', 'perMemberLimit',
-        'pulseCategory', 'rsvp', 'showOnHomeScreen', 'approvalRequired', 'eventDescription', 'shareWith',
+        // 'pulseCategory',
+        'rsvp', 'showOnHomeScreen', 'approvalRequired', 'eventDescription', 'shareWith',
         'selectedTechParks', 'selectedCommunityIds'
       ].forEach(key => localStorage.removeItem(key));
 
@@ -805,6 +807,7 @@ export const EditEventPage = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 mb-4">
+              {/* Pulse Category UI commented out
               <div className="flex items-center gap-2">
                 <Label className="text-[12px] text-gray-700 whitespace-nowrap">
                   Pulse Category:
@@ -836,6 +839,7 @@ export const EditEventPage = () => {
                   />
                 </RadioGroup>
               </div>
+              */}
 
               <div className="flex items-center gap-2">
                 <Label className="text-[12px] text-gray-700 whitespace-nowrap">
@@ -1051,7 +1055,7 @@ export const EditEventPage = () => {
                     localStorage.setItem('eventLocation', formData.eventLocation);
                     localStorage.setItem('memberCapacity', formData.memberCapacity);
                     localStorage.setItem('perMemberLimit', formData.perMemberLimit);
-                    localStorage.setItem('pulseCategory', formData.pulseCategory);
+                    // localStorage.setItem('pulseCategory', formData.pulseCategory);
                     localStorage.setItem('rsvp', formData.rsvp);
                     localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
                     localStorage.setItem('approvalRequired', formData.approvalRequired);

@@ -56,7 +56,7 @@ export const AddEventPage = () => {
     eventLocation: "",
     memberCapacity: "",
     perMemberLimit: "",
-    pulseCategory: "play",
+    // pulseCategory: "play",
     rsvp: "yes",
     showOnHomeScreen: "no",
     eventDescription: "",
@@ -91,7 +91,7 @@ export const AddEventPage = () => {
     const savedEventLocation = localStorage.getItem('eventLocation');
     const savedMemberCapacity = localStorage.getItem('memberCapacity');
     const savedPerMemberLimit = localStorage.getItem('perMemberLimit');
-    const savedPulseCategory = localStorage.getItem('pulseCategory');
+    // const savedPulseCategory = localStorage.getItem('pulseCategory');
     const savedRsvp = localStorage.getItem('rsvp');
     const savedShowOnHomeScreen = localStorage.getItem('showOnHomeScreen');
     const savedApprovalRequired = localStorage.getItem('approvalRequired');
@@ -115,7 +115,7 @@ export const AddEventPage = () => {
         eventLocation: savedEventLocation || prev.eventLocation,
         memberCapacity: savedMemberCapacity || prev.memberCapacity,
         perMemberLimit: savedPerMemberLimit || prev.perMemberLimit,
-        pulseCategory: savedPulseCategory || prev.pulseCategory,
+        // pulseCategory: savedPulseCategory || prev.pulseCategory,
         rsvp: savedRsvp || prev.rsvp,
         showOnHomeScreen: savedShowOnHomeScreen || prev.showOnHomeScreen,
         approvalRequired: savedApprovalRequired || prev.approvalRequired,
@@ -147,7 +147,7 @@ export const AddEventPage = () => {
     localStorage.removeItem('eventLocation');
     localStorage.removeItem('memberCapacity');
     localStorage.removeItem('perMemberLimit');
-    localStorage.removeItem('pulseCategory');
+    // localStorage.removeItem('pulseCategory');
     localStorage.removeItem('rsvp');
     localStorage.removeItem('showOnHomeScreen');
     localStorage.removeItem('approvalRequired');
@@ -241,7 +241,7 @@ export const AddEventPage = () => {
       localStorage.setItem('eventLocation', formData.eventLocation);
       localStorage.setItem('memberCapacity', formData.memberCapacity);
       localStorage.setItem('perMemberLimit', formData.perMemberLimit);
-      localStorage.setItem('pulseCategory', formData.pulseCategory);
+      // localStorage.setItem('pulseCategory', formData.pulseCategory);
       localStorage.setItem('rsvp', formData.rsvp);
       localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
       localStorage.setItem('approvalRequired', formData.approvalRequired);
@@ -343,7 +343,7 @@ export const AddEventPage = () => {
       formDataToSend.append("event[event_at]", formData.eventLocation);
       formDataToSend.append("event[capacity]", formData.memberCapacity);
       formDataToSend.append("event[per_member_limit]", formData.perMemberLimit);
-      formDataToSend.append("event[event_category]", formData.pulseCategory);
+      // formDataToSend.append("event[event_category]", formData.pulseCategory);
       formDataToSend.append("event[rsvp_action]", formData.rsvp === "yes" ? "1" : "0");
       formDataToSend.append("event[show_on_home]", formData.showOnHomeScreen === "yes" ? "1" : "0");
       formDataToSend.append("event[approval_required]", formData.approvalRequired === "yes" ? "1" : "0");
@@ -389,7 +389,7 @@ export const AddEventPage = () => {
       localStorage.removeItem('eventLocation');
       localStorage.removeItem('memberCapacity');
       localStorage.removeItem('perMemberLimit');
-      localStorage.removeItem('pulseCategory');
+      // localStorage.removeItem('pulseCategory');
       localStorage.removeItem('rsvp');
       localStorage.removeItem('showOnHomeScreen');
       localStorage.removeItem('approvalRequired');
@@ -724,6 +724,7 @@ export const AddEventPage = () => {
 
             {/* Radio Groups Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-2 mb-4">
+              {/* Pulse Category UI commented out
               <div className="flex items-center gap-2">
                 <Label className="text-[12px] text-gray-700 whitespace-nowrap">
                   Pulse Category:
@@ -755,6 +756,7 @@ export const AddEventPage = () => {
                   />
                 </RadioGroup>
               </div>
+              */}
 
               <div className="flex items-center gap-2">
                 <Label className="text-[12px] text-gray-700 whitespace-nowrap">
@@ -996,7 +998,7 @@ export const AddEventPage = () => {
                     localStorage.setItem('eventLocation', formData.eventLocation);
                     localStorage.setItem('memberCapacity', formData.memberCapacity);
                     localStorage.setItem('perMemberLimit', formData.perMemberLimit);
-                    localStorage.setItem('pulseCategory', formData.pulseCategory);
+                    // localStorage.setItem('pulseCategory', formData.pulseCategory);
                     localStorage.setItem('rsvp', formData.rsvp);
                     localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
                     localStorage.setItem('approvalRequired', formData.approvalRequired);
