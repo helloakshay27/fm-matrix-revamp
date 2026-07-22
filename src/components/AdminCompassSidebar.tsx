@@ -17,6 +17,7 @@ import {
   LineChart,
   BarChart3,
   Users,
+  Briefcase,
 } from "lucide-react";
 
 // Module-based navigation structures for Admin Compass
@@ -56,6 +57,10 @@ const adminCompassNavigation: Record<string, any> = {
   "Team Setup": {
     icon: Users,
     href: "/admin-compass/team-setup",
+  },
+  Jobs: {
+    icon: Briefcase,
+    href: "/admin-compass/jobs",
   },
 };
 
