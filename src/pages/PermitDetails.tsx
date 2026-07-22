@@ -35,6 +35,7 @@ import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { FormControl, InputLabel, Select, MenuItem, OutlinedInput, Chip, Box, SelectChangeEvent, TextField } from '@mui/material';
 import { format } from "date-fns";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { usePermitEvents } from "@/components/PostHogPermitEvents";
 
 // MUI field styles
 const fieldStyles = {
@@ -372,6 +373,16 @@ export const PermitDetails = () => {
     const [openRejectDialog, setOpenRejectDialog] = useState(false);
     const [rejectComment, setRejectComment] = useState("");
     const [extensionId, setExtensionId] = useState<string>("");
+
+    const {
+        onPermitDetailOpened,
+        onApprovalItemOpened,
+        onPermitExtensionRequested,
+        onPermitClosureSubmitted,
+        onPermitFormPrinted,
+        onJSAPrinted,
+        onQRDownloaded
+    } = usePermitEvents();
 
     // Extend permit form states
     const [isExtending, setIsExtending] = useState(false);
@@ -835,7 +846,7 @@ export const PermitDetails = () => {
         }
 
         if (!extendReason.trim()) {
-            toast.error('Please provide a reason for extension');
+            toast.error("Please provide a reason for extension");
             return;
         }
 
@@ -848,6 +859,8 @@ export const PermitDetails = () => {
             toast.error('Please select at least one assignee');
             return;
         }
+
+        onPermitExtensionRequested({ reason_length: extendReason.length, has_attachment: !!extendAttachments });
 
         setIsExtending(true);
         try {
@@ -1097,9 +1110,11 @@ export const PermitDetails = () => {
         }
 
         if (!completionComment.trim()) {
-            toast.error('Please provide a completion comment');
+            toast.error("Please provide a completion comment");
             return;
         }
+
+        onPermitClosureSubmitted({ comment_length: completionComment.length, has_attachment: completeAttachments.length > 0 });
 
         setIsCompleting(true);
         try {
@@ -1184,7 +1199,7 @@ export const PermitDetails = () => {
 
     // Handle removing a file from the list
     const handleRemoveFile = (index: number) => {
-        setJsaAttachments(prev => prev.filter((_, i) => i !== index));
+        setJsaAttachments(prev => jsaAttachments.filter((_, i) => i !== index));
     };
 
     // Fetch permit details on component mount
@@ -1201,6 +1216,19 @@ export const PermitDetails = () => {
                 const response = await fetchPermitDetails(id);
                 console.log(response)
                 setPermitData(response);
+                
+                onPermitDetailOpened({
+                    permit_status: response.permit.status,
+                    open_source: isFromPendingApprovals ? 'approval_queue' : 'direct'
+                });
+
+                if (isFromPendingApprovals) {
+                    onApprovalItemOpened({
+                        approval_type: searchParams.get('resource_type') || 'unknown',
+                        level_id: searchParams.get('level_id') || 'unknown'
+                    });
+                }
+
                 setError(null);
             } catch (err) {
                 setError('Failed to load permit details');
@@ -1245,7 +1273,8 @@ export const PermitDetails = () => {
     // };
 
     const handleDownloadQR = async () => {
-        if (permitData?.qr_code?.id) {
+        if (permitData?.qr_code?.image_url) {
+            onQRDownloaded();
             try {
                 const baseUrl = localStorage.getItem('baseUrl');
                 const token = localStorage.getItem('token');
@@ -1300,11 +1329,8 @@ export const PermitDetails = () => {
 
     // Handle print form
     const handlePrintForm = async () => {
-        if (!id) {
-            toast.error('Permit ID is required');
-            return;
-        }
-
+        if (!id) return;
+        onPermitFormPrinted();
         try {
             const response = await fetch(`${API_CONFIG.BASE_URL}/pms/permits/${id}/download_print_pdf.pdf`, {
                 method: 'GET',
@@ -1336,11 +1362,8 @@ export const PermitDetails = () => {
 
     // Handle print JSA
     const handlePrintJSA = async () => {
-        if (!id) {
-            toast.error('Permit ID is required');
-            return;
-        }
-
+        if (!id) return;
+        onJSAPrinted();
         try {
             let baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');

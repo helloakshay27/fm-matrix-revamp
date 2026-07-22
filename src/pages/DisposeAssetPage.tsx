@@ -12,6 +12,7 @@ import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import axios from "axios";
 import { fetchAssetsData } from "@/store/slices/assetsSlice";
 import { useAppDispatch } from "@/store/hooks";
+import { useAssetEvents } from "@/components/PostHogAssetEvents";
 
 const muiTheme = createTheme({
   components: {
@@ -83,6 +84,7 @@ export const DisposeAssetPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const assetEvents = useAssetEvents();
   const [selectedAssets, setSelectedAssets] = useState(
     location.state?.selectedAssets || []
   );
@@ -245,6 +247,15 @@ export const DisposeAssetPage: React.FC = () => {
         title: "Asset Disposal Successful",
         description: 'Asset is marked as "Disposed" and recorded successfully',
         variant: "default",
+      });
+
+      // Asset Disposed — one event per disposed asset
+      selectedAssets.forEach((asset: any) => {
+        assetEvents.onAssetDisposed(
+          asset.id,
+          disposeReason || null,
+          soldValues[asset.id] ?? null
+        );
       });
 
       navigate("/maintenance/asset");

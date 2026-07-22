@@ -28,6 +28,7 @@ import type { Asset } from "@/hooks/useAssets";
 import { CumulativePowerWidget } from "@/components/charts/CumulativePowerWidget";
 import { SiteWisePowerConsumptionChart } from "@/components/charts/SiteWisePowerConsumptionChart";
 import { API_CONFIG } from "@/config/apiConfig";
+import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
 
 // ── dnd-kit — same imports as TicketDashboard ─────────────────────────────────
 import {
@@ -185,6 +186,7 @@ const ALL_CHART_KEYS: ChartKey[] = ["cumulative", "siteWise"];
 
 export const EnergyDashboard = () => {
   const navigate = useNavigate();
+  const { onUtilityAnalyticsViewed } = useUtilityEvents();
 
   // List tab
   const [searchTerm, setSearchTerm] = useState("");
@@ -479,9 +481,23 @@ export const EnergyDashboard = () => {
   // Only render charts that are both selected and in order
   const orderedVisibleCharts = chartOrder.filter((key) => selectedCharts[key]);
 
+  const handleTabChange = (value: string) => {
+    if (value === 'analytics') {
+      const d1 = new Date(toApiDate(analyticsDateRange.startDate));
+      const d2 = new Date(toApiDate(analyticsDateRange.endDate));
+      const days = (!isNaN(d1.getTime()) && !isNaN(d2.getTime())) ? Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24)) : 0;
+      
+      onUtilityAnalyticsViewed({
+        module: 'energy',
+        date_range_days: days,
+        kwh_total_shown: kpiData?.power_consumption != null
+      });
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6">
-      <Tabs defaultValue="list" className="w-full">
+      <Tabs defaultValue="list" className="w-full" onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger
             value="list"

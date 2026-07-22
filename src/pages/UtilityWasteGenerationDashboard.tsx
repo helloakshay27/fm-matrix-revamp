@@ -17,6 +17,7 @@ import { fetchWasteGenerations, WasteGeneration, WasteGenerationFilters, WasteGe
 import { useLayout } from '@/contexts/LayoutContext';
 import { API_CONFIG, getAuthHeader, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
 import { format, subYears } from 'date-fns';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -158,8 +159,16 @@ const UtilityWasteGenerationDashboard = () => {
   const { isSidebarCollapsed } = useLayout();
   const { shouldShow } = useDynamicPermissions();
   const panelRef = useRef<HTMLDivElement>(null);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<WasteGenerationFilters>({});
+
+  const { onUtilityWasteGenerationDashboardViewed } = useUtilityEvents();
+
+  useEffect(() => {
+    onUtilityWasteGenerationDashboardViewed();
+  }, [onUtilityWasteGenerationDashboardViewed]);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showActionPanel, setShowActionPanel] = useState(false);
   

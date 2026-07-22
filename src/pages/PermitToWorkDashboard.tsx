@@ -54,6 +54,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { debounce } from "lodash";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { usePermitEvents } from "@/components/PostHogPermitEvents";
 
 // Type definitions for permit data
 interface Permit {
@@ -469,6 +470,13 @@ export const PermitToWorkDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const {
+    onPermitListViewed,
+    onPermitStatusTileClicked,
+    onPermitSearchPerformed,
+    onPermitListExported
+  } = usePermitEvents();
+
   // Filter state to maintain filters across page navigation
   const [currentFilters, setCurrentFilters] = useState<string>('');
   // Search state to maintain search term across page navigation
@@ -657,6 +665,11 @@ export const PermitToWorkDashboard = () => {
         }
         setPermitCounts(countsResponse);
 
+        onPermitListViewed({
+          status_mix: Array.from(new Set(permitsResponse.permits.map(p => p.status))),
+          result_count: permitsResponse.pagination?.total_count || permitsResponse.permits.length
+        });
+
         // Update pagination info
         if (permitsResponse.pagination) {
           setTotalPages(permitsResponse.pagination.total_pages || 1);
@@ -685,6 +698,7 @@ export const PermitToWorkDashboard = () => {
 
       // Store search parameter in state
       if (searchValue) {
+        onPermitSearchPerformed({ query_length: searchValue.length, returned_zero: false });
         const searchParam = `q[reference_number_or_permit_type_name_cont]=${encodeURIComponent(searchValue)}`;
         setCurrentSearchParam(searchParam);
       } else {
@@ -760,6 +774,7 @@ export const PermitToWorkDashboard = () => {
   // Handle filtered results from the filter modal
   // Handle Excel export
   const handleExcelExport = async () => {
+    onPermitListExported({ row_count: permits.length, after_filter: isFilterApplied });
     try {
       setLoading(true);
       const exportUrl = `${API_CONFIG.BASE_URL}/pms/permits/export.xlsx`;
@@ -853,6 +868,7 @@ export const PermitToWorkDashboard = () => {
 
   // Navigation functions for StatCards
   const handleStatCardClick = async (status?: string) => {
+    if (status) onPermitStatusTileClicked({ status });
     try {
       setLoading(true);
       setCurrentPage(1); // Reset to first page when filtering

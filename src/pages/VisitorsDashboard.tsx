@@ -27,6 +27,7 @@ import {
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions, getAuthHeader, ENDPOINTS } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useVisitorEvents } from '@/components/PostHogVisitorEvents';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { MaterialDatePicker } from '@/components/ui/material-date-picker';
@@ -177,6 +178,7 @@ const getVisitorsOut = async (siteId: number, page: number = 1, perPage: number 
 
 export const VisitorsDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
+  const visitorEvents = useVisitorEvents();
   const [selectedPerson, setSelectedPerson] = useState('');
   const [isNewVisitorDialogOpen, setIsNewVisitorDialogOpen] = useState(false);
   const [isUpdateNumberDialogOpen, setIsUpdateNumberDialogOpen] = useState(false);
@@ -389,6 +391,12 @@ export const VisitorsDashboard = () => {
         totalEntries: data.pagination?.total_entries || data.visitors?.length || 0,
         perPage: data.pagination?.per_page || 20
       }));
+      // F3 · Visitor List Viewed
+      visitorEvents.onVisitorListViewed(page);
+      // F3 · Visitor Search Performed — a search term produced this result set
+      if (searchTerm?.trim()) {
+        visitorEvents.onVisitorSearchPerformed('name', (data.visitors?.length || 0) === 0);
+      }
     } catch (error) {
       console.error('Error fetching visitor history:', error);
     } finally {
@@ -1287,6 +1295,8 @@ export const VisitorsDashboard = () => {
       });
 
       toast.success(`Visitor ${!currentFlagStatus ? 'flagged' : 'unflagged'} successfully`);
+      // F3 · Visitor Flag Toggled
+      visitorEvents.onVisitorFlagToggled(visitorId, !currentFlagStatus);
 
       // TODO: Add actual API call here
       /*
@@ -1400,6 +1410,8 @@ export const VisitorsDashboard = () => {
 
       toast.dismiss(loadingToastId);
       toast.success('Visitor history exported successfully!');
+      // F3 · Visitor Register Exported
+      visitorEvents.onVisitorRegisterExported(historyPagination.totalEntries, 'xlsx');
     } catch (error) {
       console.error('Export failed:', error);
       toast.dismiss(loadingToastId);

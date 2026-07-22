@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
 
 // Interface definitions for API response
 interface CustomerName {
@@ -100,6 +101,7 @@ export default function UtilityDailyReadingsDashboard() {
   const { shouldShow } = useDynamicPermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const { onDailyReadingsListViewed, onReadingsImportOpened, onReadingsImportSubmitted } = useUtilityEvents();
 
   // API state management
   const [dailyReadingsData, setDailyReadingsData] = useState<DailyReadingItem[]>([]);
@@ -194,6 +196,9 @@ export default function UtilityDailyReadingsDashboard() {
 
       const transformedData = measurementsArray.map(transformMeasurement);
       setDailyReadingsData(transformedData);
+      
+      const filterNames = filters ? Object.keys(filters).filter(k => filters[k]).join(',') : '';
+      onDailyReadingsListViewed({ row_count: transformedData.length, filter_used: filterNames });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while fetching measurements';
       setError(errorMessage);
@@ -358,11 +363,13 @@ export default function UtilityDailyReadingsDashboard() {
   };
 
   const handleImport = () => {
+    onReadingsImportOpened();
     setIsBulkUploadOpen(true);
   };
 
   const handleImportComplete = (file: File) => {
     // Refresh the data after successful import
+    onReadingsImportSubmitted({ row_count: 0, error_count: 0 }); // Placeholder row_count and error_count since not returned directly
     fetchMeasurements(1); // Reset to first page after import
     setCurrentPage(1);
     toast.success('Data imported successfully');

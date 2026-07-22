@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PostHogTicketActivity } from '@/components/PostHogTicketActivity';
+import { useHelpdeskEvents } from '@/components/PostHogHelpdeskEvents';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -288,6 +289,7 @@ const getUserProfileFromAlternativeAPI = async () => {
 
 export const AddTicketDashboard = () => {
   const navigate = useNavigate();
+  const helpdeskEvents = useHelpdeskEvents();
 
   const [ticketEvent, setTicketEvent] = useState<{
     event: "Ticket Create Form Opened" | "ticket creation successful" | "ticket abandoned";
@@ -1144,6 +1146,27 @@ export const AddTicketDashboard = () => {
         : "Ticket created successfully!");
 
       setTicketEvent({ event: 'ticket creation successful', properties: { ticket_number: ticketNumber } });
+
+      // Business lifecycle event — Ticket Created
+      const createdId = response?.id || response?.complaint?.id || ticketNumber || null;
+      helpdeskEvents.onTicketCreated(createdId, {
+        ticket_type: ticketType || null,
+        on_behalf_of: onBehalfOf === 'self' ? 'self' : onBehalfOf,
+        category: formData.categoryType || null,
+        sub_category: formData.subCategoryType || null,
+        mode: formData.complaintMode || null,
+        identification: formData.proactiveReactive
+          ? (formData.proactiveReactive.toLowerCase() as 'proactive' | 'reactive')
+          : null,
+        priority: formData.adminPriority || null,
+        severity: formData.severity || null,
+        creation_source: 'web',
+        is_golden_ticket: isGoldenTicket,
+        is_flagged: isFlagged,
+        has_attachments: attachedFiles.length > 0,
+        vendor_assigned: Boolean(formData.vendor),
+        linked_asset_id: null,
+      });
 
       // navigate('/maintenance/ticket');
       const currentPath = window.location.pathname;

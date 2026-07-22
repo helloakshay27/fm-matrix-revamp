@@ -11,6 +11,7 @@ import { X, Upload } from "lucide-react";
 import axios from "axios";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import { toast } from "sonner";
+import { useAssetEvents } from "@/components/PostHogAssetEvents";
 
 interface BreakdownModalProps {
   isOpen: boolean;
@@ -49,6 +50,7 @@ export const BreakdownModal: React.FC<BreakdownModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const assetEvents = useAssetEvents();
   const [formData, setFormData] = useState<BreakdownData>({
     reason: "",
     date: new Date().toISOString().slice(0, 16),
@@ -176,6 +178,8 @@ export const BreakdownModal: React.FC<BreakdownModalProps> = ({
         toast.success("Breakdown Recorded", {
           description: "Asset breakdown has been recorded successfully with all attachments",
         });
+        // Asset Breakdown Recorded — status → breakdown (downtime starts)
+        assetEvents.onAssetBreakdownRecorded(assetId, {});
       } else {
         throw new Error(`API returned status ${response.status}`);
       }

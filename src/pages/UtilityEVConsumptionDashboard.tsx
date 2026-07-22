@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
+import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
 
 interface EVConsumptionData {
   id: number;
@@ -42,6 +43,12 @@ const UtilityEVConsumptionDashboard = () => {
   const [pageSize, setPageSize] = useState(15);
   const [totalPages, setTotalPages] = useState(1);
   const { toast } = useToast();
+  
+  const { onUtilityEVDashboardViewed } = useUtilityEvents();
+
+  useEffect(() => {
+    onUtilityEVDashboardViewed();
+  }, [onUtilityEVDashboardViewed]);
 
   // Column visibility state - updated to match API response
   const [columns, setColumns] = useState([

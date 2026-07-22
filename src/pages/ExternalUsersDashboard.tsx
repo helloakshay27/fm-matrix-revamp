@@ -7,6 +7,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { MSafeImportModal } from '@/components/MSafeImportModal';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -80,6 +81,7 @@ export const ExternalUsersDashboard = () => {
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
+  const msafeEvents = useMSafeEvents();
   const pageSize = 25; // backend default (adjust if needed)
 
   // Permission: show Action button only for these userIds
@@ -140,6 +142,8 @@ export const ExternalUsersDashboard = () => {
           name: `${u.firstname || ''} ${u.lastname || ''}`.trim()
         }));
         setExternalUsers(users);
+        const resultCount = response.data.pagination?.total_count ?? users.length;
+        const pendingCount = users.filter((u: any) => (u.lock_user_permission?.status || u.status) === 'pending').length;
         if (response.data.pagination) {
           setPagination(prev => ({
             ...prev,
@@ -148,6 +152,11 @@ export const ExternalUsersDashboard = () => {
           }));
         } else {
           setPagination(prev => ({ ...prev, total_pages: 1, total_count: users.length }));
+        }
+        msafeEvents.onMSafeExternalUserListViewed(resultCount, pendingCount);
+        msafeEvents.onMSafeUserListViewed('non_fte', resultCount);
+        if (hasSearch) {
+          msafeEvents.onMSafeUserSearchPerformed('non_fte', debouncedSearch.trim().length, users.length);
         }
       } catch (err) {
         if (axios.isCancel?.(err) || (err as any)?.name === 'CanceledError' || (err as any)?.code === 'ERR_CANCELED') {
@@ -424,6 +433,7 @@ export const ExternalUsersDashboard = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
       toast.success('External Users data exported successfully');
+      msafeEvents.onMSafeUserListExported('non_fte', selectedItems.length > 0 ? selectedItems.length : pagination.total_count);
     } catch (error) {
       console.error('Export failed:', error);
       toast.error('Failed to export External Users data');
@@ -451,6 +461,10 @@ export const ExternalUsersDashboard = () => {
       role: newFilters.role || '',
       report_to_id: newFilters.report_to_id ? String(newFilters.report_to_id) : ''
     });
+    const appliedFields = Object.entries(newFilters).filter(([, v]) => Boolean(v)).map(([k]) => k);
+    if (appliedFields.length > 0) {
+      msafeEvents.onMSafeUserFilterApplied('non_fte', appliedFields);
+    }
     // Immediately reset pagination UI to avoid showing stale total pages
     setPage(1);
     setPagination({ current_page: 1, total_pages: 1, total_count: 0 });
@@ -496,6 +510,11 @@ export const ExternalUsersDashboard = () => {
       };
       await axios.put(url, payload, { headers: { Authorization: `Bearer ${token}` } });
       toast.success(`User ${newValue ? 'activated (approved)' : 'deactivated (rejected)'} successfully`);
+      if (newValue) {
+        const createdAt = (user as any).created_at;
+        const pendingAgeDays = createdAt ? Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)) : null;
+        msafeEvents.onMSafeExternalUserApproved(pendingAgeDays);
+      }
     } catch (e: any) {
       // revert on error
       setExternalUsers(prev => prev.map(u => u.id === user.id ? { ...u, lock_user_permission: { ...u.lock_user_permission, active: current, status: previousStatus }, status: previousStatus } : u));

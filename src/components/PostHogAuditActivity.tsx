@@ -13,7 +13,10 @@ interface PostHogAuditActivityProps {
     | "Download Sample Format clicked"
     | "Report opened"
     | "Audit Filter Applied"
-    | "Audit Schedule Defined";
+    | "Audit Schedule Defined"
+    | "Audit Started"
+    | "Audit Completed"
+    | "Master Checklist Created";
   properties?: Record<string, unknown>;
 }
 
@@ -23,6 +26,6 @@ export function PostHogAuditActivity({ event, properties }: PostHogAuditActivity
     if (posthog) {
       posthog.capture(event, properties);
     }
-  }, [posthog]);
+  }, [posthog, event, properties]);
   return null;
 }

@@ -2226,11 +2226,13 @@ import { Info, FileText, Users, Settings, AlertTriangle, Search, Loader2, Paperc
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField, Checkbox, FormControlLabel } from '@mui/material';
 import { incidentService, type Incident } from '@/services/incidentService';
 import { toast } from 'sonner';
+import { useIncidentEvents } from '@/components/PostHogIncidentEvents';
 
 export const EditIncidentDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const incidentEvents = useIncidentEvents();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -2949,6 +2951,17 @@ export const EditIncidentDetailsPage = () => {
 
       // Show success message
       toast.success('Incident updated successfully!');
+
+      // F5 · Investigation & CAPA capture
+      const investigatorCount = Array.isArray(formData.investigationTeam)
+        ? formData.investigationTeam.filter((m: any) => !m?._destroy && (m?.name || '').trim()).length
+        : 0;
+      incidentEvents.onIncidentInvestigationSaved({
+        has_root_cause: Boolean((formData.rca || '').trim() || formData.primaryRootCauseCategory),
+        corrective_count: (formData.correctiveAction || '').trim() ? 1 : 0,
+        preventive_count: (formData.preventiveAction || '').trim() ? 1 : 0,
+        investigator_count: investigatorCount,
+      });
 
       // Navigate to the new details page
       navigate(`${basePath}/incident/new-details/${id}`);

@@ -14,7 +14,14 @@ type TaskActivityEvent =
   | "Task Rescheduled (UI)"
   | "Task Analytics Date Range Changed"
   | "Task Analytics Report Toggled"
-  | "Task Columns Customised";
+  | "Task Columns Customised"
+  // Business lifecycle events (Task & PPM catalogue) — curated, not UI-usage
+  | "Checklist Started"
+  | "Checklist Item Completed"
+  | "Maintenance Task Submitted"
+  | "Maintenance Task Assigned"
+  | "Maintenance Task Rescheduled"
+  | "Maintenance Task Reviewed";
 
 interface PostHogTaskActivityProps {
   event: TaskActivityEvent;
@@ -28,7 +35,7 @@ export function PostHogTaskActivity({ event, properties }: PostHogTaskActivityPr
     if (posthog) {
       posthog.capture(event, properties);
     }
-  }, [posthog]);
+  }, [posthog, event, properties]);
 
   return null;
 }

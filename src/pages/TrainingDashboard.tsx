@@ -85,8 +85,10 @@ import { useNavigate } from 'react-router-dom';
 import { Users, ClipboardList, CalendarCheck2, UserCheck, FileText, FileSpreadsheet, Download } from 'lucide-react';
 import TrainingFilterDialog from '@/components/TrainingFilterDialog';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 const TrainingDashboard = () => {
+  const msafeEvents = useMSafeEvents();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [trainings, setTrainings] = useState<TrainingRow[]>([]);
@@ -185,9 +187,11 @@ const TrainingDashboard = () => {
         setCurrentPage(json.pagination.current_page);
         setTotalPages(json.pagination.total_pages);
         setTotalCount(json.pagination.total_count);
+        msafeEvents.onMSafeSubmoduleViewed('training', json.pagination.total_count);
       } else {
         setTotalPages(1);
         setTotalCount(mapped.length);
+        msafeEvents.onMSafeSubmoduleViewed('training', mapped.length);
       }
     } catch (e: any) {
       console.error('Training fetch error', e);

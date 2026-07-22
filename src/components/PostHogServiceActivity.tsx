@@ -15,7 +15,7 @@ export function PostHogServiceActivity({ event, properties }: PostHogServiceActi
     if (posthog) {
       posthog.capture(event, properties);
     }
-  }, [posthog]);
+  }, [posthog, event, properties]);
 
   return null;
 }

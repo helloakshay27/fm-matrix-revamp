@@ -1,6 +1,7 @@
 'use strict';
 import React, { useState, useEffect } from 'react';
 import { PostHogScheduleActivity } from '@/components/PostHogScheduleActivity';
+import { capturePostHogEvent } from '@/utils/posthogHelpers';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -1336,6 +1337,38 @@ export const EditSchedulePage = () => {
 
       const result = await response.json();
       console.log('Update response:', result);
+
+      const checklistStepCount = questionSections.reduce(
+        (acc: number, s: any) => acc + s.tasks.filter((t: any) => (t.task || '').trim()).length,
+        0
+      );
+      const associationCount = formData.scheduleFor === 'Service'
+        ? (formData.service?.length || 0)
+        : (formData.checklistType === 'Individual'
+            ? (formData.asset?.length || 0)
+            : (formData.assetSubGroup?.length || 0));
+      const supervisorCount = String(formData.supervisors || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean).length;
+      // Business lifecycle event — fired synchronously since we navigate away immediately
+      capturePostHogEvent('Maintenance Schedule Defined', {
+        schedule_id: customFormCode || id,
+        schedule_type: (formData.type || '').toLowerCase(),
+        schedule_for: (formData.scheduleFor || '').toLowerCase(),
+        checklist_type: formData.checklistType === 'Individual' ? 'individual' : 'asset_group',
+        association_count: associationCount,
+        recurrence_pattern: formData.frequency || '',
+        grace_time_value: formData.graceTimeValue || '',
+        grace_time_unit: (formData.graceTime || '').toLowerCase(),
+        lock_overdue: formData.lockOverdueTask === 'true' || formData.lockOverdueTask === true ? 'yes' : 'no',
+        photo_capture: formData.checkInPhotograph || 'inactive',
+        has_supplier: Boolean(formData.supplier),
+        supervisor_count: supervisorCount,
+        checklist_step_count: checklistStepCount,
+        category: (formData.category || '').toLowerCase().replace(/\s+/g, '_'),
+        is_update: true,
+      });
 
       toast.success('Schedule updated successfully');
       navigate('/maintenance/schedule');

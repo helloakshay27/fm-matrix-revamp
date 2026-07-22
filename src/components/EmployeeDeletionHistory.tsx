@@ -4,6 +4,7 @@ import { Box as BoxIcon, RefreshCcw, Eye, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 type DeletionDetail = {
     email?: string;
@@ -39,6 +40,8 @@ type ApiResponse = {
 
 const EmployeeDeletionHistory: React.FC = () => {
     const { shouldShow } = useDynamicPermissions();
+    const msafeEvents = useMSafeEvents();
+    const viewedFiredRef = React.useRef(false);
     const [rows, setRows] = useState<DeletionRecord[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -78,6 +81,11 @@ const EmployeeDeletionHistory: React.FC = () => {
             setTotalPages(Number(data.total_pages || 1));
             setTotalCount(Number(data.total_count || 0));
             if (data.per_page) setPerPage(Number(data.per_page));
+            // F3 · Deletion History Viewed — fire once on first successful load
+            if (!viewedFiredRef.current) {
+                viewedFiredRef.current = true;
+                msafeEvents.onDeletionHistoryViewed(Number(data.total_count || 0));
+            }
         } catch (e: any) {
             console.error('Employee deletion history fetch error', e);
             setError(e?.message || 'Failed to load employee deletion history');

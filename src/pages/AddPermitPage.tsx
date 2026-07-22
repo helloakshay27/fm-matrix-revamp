@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
+import { usePermitEvents } from '@/components/PostHogPermitEvents';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox, ListItemText, FormControlLabel } from '@mui/material';
 
 const fieldStyles = {
@@ -66,6 +67,35 @@ const menuProps = {
 
 export const AddPermitPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { 
+    onPermitCreateFormOpened, 
+    onPermitCreateStepCompleted, 
+    onPermitActivityBlockAdded, 
+    onPermitRequestRaised, 
+    onPermitCreateFormAbandoned, 
+    onPermitFormValidationFailed 
+  } = usePermitEvents();
+
+  const mountTime = useRef(Date.now());
+  const isSubmitted = useRef(false);
+  const stepsTracked = useRef({ requestor: false, basic: false, permit: false, attachments: false });
+  const lastFocusedField = useRef('');
+
+  useEffect(() => {
+    onPermitCreateFormOpened({ entry_source: location.state?.from || 'direct_link' });
+    
+    return () => {
+      if (!isSubmitted.current) {
+        onPermitCreateFormAbandoned({
+          last_field_focused: lastFocusedField.current,
+          activity_block_count: activitiesRef.current.length,
+          time_on_form_sec: Math.floor((Date.now() - mountTime.current) / 1000)
+        });
+      }
+    };
+  }, []);
+
   const [permitData, setPermitData] = useState({
     // Requestor Details
     name: '',
@@ -114,7 +144,32 @@ export const AddPermitPage = () => {
   const [loadingEntityOptions, setLoadingEntityOptions] = useState(false);
 
   // State for Permit Types data
-  const [permitTypes, setPermitTypes] = useState<{ id: number; name: string }[]>([]);
+  const [permitTypes, setPermitTypes] = useState<{ id: number; name: string }[]>([]);  // ─── API State ─────────────────────────────────────────────────────────────
+  const activitiesRef = useRef(activities);
+  
+  useEffect(() => {
+    activitiesRef.current = activities;
+  }, [activities]);
+
+  useEffect(() => {
+    if (permitData.department && !stepsTracked.current.requestor) {
+      stepsTracked.current.requestor = true;
+      onPermitCreateStepCompleted({ step_key: 'requestor', step_index: 1 });
+    }
+    if (permitData.permitFor && !stepsTracked.current.basic) {
+      stepsTracked.current.basic = true;
+      onPermitCreateStepCompleted({ step_key: 'basic', step_index: 2 });
+    }
+    if (permitData.permitType && !stepsTracked.current.permit) {
+      stepsTracked.current.permit = true;
+      onPermitCreateStepCompleted({ step_key: 'permit', step_index: 3 });
+    }
+    if (permitData.attachments && !stepsTracked.current.attachments) {
+      stepsTracked.current.attachments = true;
+      onPermitCreateStepCompleted({ step_key: 'attachments', step_index: 4 });
+    }
+  }, [permitData]);
+
   const [loadingPermitTypes, setLoadingPermitTypes] = useState(false);
 
   // State for Permit Activities data
@@ -164,6 +219,14 @@ export const AddPermitPage = () => {
   ]);
 
   // Handler for multi-select changes
+  const handleInputChange = (field: string, value: string) => {
+    lastFocusedField.current = field;
+    setPermitData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const handleMultiSelectChange = (field: string, value: string[]) => {
     setPermitData(prev => ({
       ...prev,
@@ -955,6 +1018,7 @@ export const AddPermitPage = () => {
   };
 
   const handleAddActivity = () => {
+    onPermitActivityBlockAdded({ block_index: activities.length });
     setActivities(prev => [...prev, {
       activity: '',
       subActivity: '',
@@ -1112,43 +1176,49 @@ export const AddPermitPage = () => {
 
     try {
       setIsSubmitting(true);
+      const failed_fields: string[] = [];
 
       // Validate required fields
       if (!permitData.permitFor.trim()) {
+        failed_fields.push('permitFor');
         toast.error('Please enter permit for field');
-        return;
       }
       if (!permitData.building) {
+        failed_fields.push('building');
         toast.error('Please select building');
-        return;
       }
       if (!permitData.permitType) {
+        failed_fields.push('permitType');
         toast.error('Please select permit type');
-        return;
       }
       if (activities.length === 0 || !activities[0].activity) {
+        failed_fields.push('activity');
         toast.error('Please add at least one activity');
-        return;
       }
 
       // Validate first activity details (mandatory: sub activity, category of hazards, risks)
       const firstActivity = activities[0];
       if (!firstActivity.subActivity) {
+        failed_fields.push('subActivity');
         toast.error('Please select sub activity for Activity 1');
-        return;
       }
       if (!firstActivity.categoryOfHazards) {
+        failed_fields.push('categoryOfHazards');
         toast.error('Please select category of hazards for Activity 1');
-        return;
       }
       if (firstActivity.selectedRisks.length === 0) {
+        failed_fields.push('selectedRisks');
         toast.error('Please select at least one risk for Activity 1');
-        return;
       }
 
       // Validate vendor (mandatory)
       if (!permitData.vendor) {
+        failed_fields.push('vendor');
         toast.error('Please select vendor');
+      }
+
+      if (failed_fields.length > 0) {
+        onPermitFormValidationFailed({ failed_fields });
         return;
       }
 
@@ -1234,6 +1304,15 @@ export const AddPermitPage = () => {
 
       const responseData = await response.json();
       console.log('Permit created successfully:', responseData);
+
+      isSubmitted.current = true;
+      onPermitRequestRaised({
+        permit_type: permitTypes.find(t => t.id.toString() === permitData.permitType)?.name || 'Unknown',
+        activity_block_count: activities.length,
+        location_depth: [permitData.building, permitData.wing, permitData.floor, permitData.room].filter(Boolean).length,
+        has_attachments: !!permitData.attachments,
+        time_on_form_sec: Math.floor((Date.now() - mountTime.current) / 1000)
+      });
 
       toast.success(`Permit created successfully! Reference Number: ${responseData.permit?.reference_number || 'N/A'}`);
       navigate('/safety/permit');

@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, User as UserIcon, ChevronRight, ChevronDown, Trash2, ArrowLeftRight, ShieldAlert, ArrowLeft, Users, UserMinus, AlertCircle } from 'lucide-react';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 import { toast } from 'sonner';
 
 type Entry = {
@@ -15,6 +16,7 @@ type Entry = {
 
 export const MultipleUserDeletePage = () => {
     const navigate = useNavigate();
+    const msafeEvents = useMSafeEvents();
     const [entries, setEntries] = useState<Entry[]>([{ id: 1, value: '' }]);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [pendingIds, setPendingIds] = useState<string[]>([]);
@@ -212,6 +214,7 @@ export const MultipleUserDeletePage = () => {
         }
         setPendingIds(values);
         setConfirmOpen(true);
+        msafeEvents.onMSafeUserDeletionOpened('non_fte');
     };
 
     // Fetch hierarchy for tree tab
@@ -338,6 +341,9 @@ export const MultipleUserDeletePage = () => {
             if (nf.length) parts.push(`User Not Exist: ${nf.length}`);
             const summary = parts.length ? parts.join(' | ') : (result?.message || 'Processed');
             toast.success(summary);
+            if (deleted.length > 0) {
+                msafeEvents.onMSafeUserDeleted('non_fte', null);
+            }
 
             // Clear tree view after delete
             setTreeData(null);
@@ -458,6 +464,9 @@ export const MultipleUserDeletePage = () => {
             if (notFound.length) parts.push(`User Not Exist: ${notFound.length}`);
             const summary = parts.length ? parts.join(' | ') : (result?.message || 'Processed');
             toast.success(summary);
+            if (deleted.length > 0) {
+                msafeEvents.onMSafeUserDeleted('non_fte', null);
+            }
             setResultMessage(result?.message || summary);
             setDeletedUsers(prev => mergeUniqueUsers(prev, (deleted as UserRow[])));
             setSkippedUsers(prev => mergeUniqueUsers(prev, (skipped as UserRow[])));
@@ -940,7 +949,7 @@ export const MultipleUserDeletePage = () => {
 
                                 {/* Delete Hierarchy Option */}
                                 <button
-                                    onClick={() => { setShowDeleteChoice(false); setShowDeleteConfirm(true); }}
+                                    onClick={() => { setShowDeleteChoice(false); setShowDeleteConfirm(true); msafeEvents.onMSafeUserDeletionOpened('non_fte'); }}
                                     className="group relative flex flex-col items-start w-full h-full text-left rounded-xl border border-gray-200 hover:border-red-600 hover:shadow-md bg-white p-5 transition focus:outline-none focus:ring-2 focus:ring-red-600"
                                 >
                                     <div className="flex items-center justify-between w-full mb-3">

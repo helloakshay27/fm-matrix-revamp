@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
+import { useAssetEvents } from "@/components/PostHogAssetEvents";
 
 export interface StatusBadgeProps {
   status: string;
@@ -26,6 +27,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 }) => {
   const [currentStatus, setCurrentStatus] = useState<string>(status);
   const [isUpdating, setIsUpdating] = useState(false);
+  const assetEvents = useAssetEvents();
 
   useEffect(() => {
     setCurrentStatus(status)
@@ -123,6 +125,16 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         setCurrentStatus(updatedAssetData.status || newStatus);
       } else {
         setCurrentStatus(newStatus);
+      }
+
+      // Asset Status Changed — state-machine transition
+      assetEvents.onAssetStatusChanged(assetId, {
+        from_status: currentStatus || null,
+        to_status: newStatus,
+      });
+      // Asset Restored — transition out of breakdown back to operational
+      if (currentStatus === "breakdown" && newStatus === "in_use") {
+        assetEvents.onAssetRestored(assetId, {});
       }
 
       // Call the callback to refresh table data

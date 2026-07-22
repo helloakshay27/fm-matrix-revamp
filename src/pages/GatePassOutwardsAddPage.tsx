@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useGatePassEvents } from '@/components/PostHogGatePassEvents';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, RadioGroup, FormControlLabel, Radio, Box, Typography, IconButton, Button as MuiButton, Autocomplete } from '@mui/material';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { AttachFile, Close } from '@mui/icons-material';
@@ -69,8 +70,29 @@ interface MaterialRow {
 
 export const GatePassOutwardsAddPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const gatePassEvents = useGatePassEvents();
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // PostHog: form funnel tracking (F2 · Outward Pass Creation)
+  const formOpenedAtRef = useRef<number>(Date.now());
+  const sectionsSeenRef = useRef<Set<string>>(new Set());
+  const rowsAddedCountRef = useRef(0);
+  const hasSubmittedRef = useRef(false);
+  const returnableStatusSetRef = useRef(false);
+
+  useEffect(() => {
+    const entrySource = (location.state as { entrySource?: string } | null)?.entrySource ?? 'direct';
+    gatePassEvents.onGatePassFormOpened('outward', entrySource);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const markSectionSeen = (section: 'visitor' | 'pass' | 'items') => {
+    if (sectionsSeenRef.current.has(section)) return;
+    sectionsSeenRef.current.add(section);
+    gatePassEvents.onGatePassSectionCompleted(section, sectionsSeenRef.current.size - 1);
+  };
 
   const [returnableStatus, setReturnableStatus] = useState<'returnable' | 'non-returnable'>('returnable');
 
@@ -160,10 +182,18 @@ export const GatePassOutwardsAddPage = () => {
   }, [selectedSite?.id]);
 
   const handleVisitorChange = (field: keyof typeof visitorDetails, value: any) => {
+    markSectionSeen('visitor');
+    if (field === 'expectedReturnDate' && returnableStatusSetRef.current) {
+      gatePassEvents.onGatePassReturnableStatusSet(
+        returnableStatus === 'returnable' ? 'returnable' : 'non_returnable',
+        Boolean(value)
+      );
+    }
     setVisitorDetails(prev => ({ ...prev, [field]: value }));
   };
 
   const handleGatePassChange = (field: keyof typeof gatePassDetails, value: any) => {
+    markSectionSeen('pass');
     if (field === 'siteId') {
       setGatePassDetails(prev => ({ ...prev, siteId: value, buildingId: null }));
     } else {
@@ -172,7 +202,10 @@ export const GatePassOutwardsAddPage = () => {
   };
 
   const handleAddRow = () => {
+    markSectionSeen('items');
     const newId = materialRows.length > 0 ? Math.max(...materialRows.map(r => r.id)) + 1 : 1;
+    rowsAddedCountRef.current += 1;
+    gatePassEvents.onGatePassItemRowAdded(rowsAddedCountRef.current, null);
     setMaterialRows([...materialRows, { id: newId, itemTypeId: null, itemCategoryId: null, itemNameId: null, quantity: '', unit: '', description: '', maxQuantity: null, otherMaterialName: '' }]);
   };
 
@@ -190,6 +223,7 @@ export const GatePassOutwardsAddPage = () => {
   };
 
   const handleRowChange = async (id: number, field: keyof Omit<MaterialRow, 'id'>, value: any) => {
+    markSectionSeen('items');
     const newRows = materialRows.map(row => row.id === id ? { ...row, [field]: value } : row);
 
     if (field === 'itemTypeId') {
@@ -428,6 +462,13 @@ export const GatePassOutwardsAddPage = () => {
 
       await gatePassInwardService.createGatePassInward(formData);
       toast.success("Gate pass outward entry created successfully!");
+      hasSubmittedRef.current = true;
+      gatePassEvents.onGatePassSubmitted('outward', {
+        goods_type: returnableStatus === 'returnable' ? 'returnable' : 'non_returnable',
+        expected_return_date: visitorDetails.expectedReturnDate || null,
+        item_count: materialRows.length,
+        gate_number: visitorDetails.gateNoId,
+      });
       navigate('/security/gate-pass/outwards');
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -435,6 +476,13 @@ export const GatePassOutwardsAddPage = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const captureFormAbandoned = () => {
+    if (hasSubmittedRef.current) return;
+    const lastSection = Array.from(sectionsSeenRef.current).pop() ?? 'visitor';
+    const timeOnFormSec = Math.round((Date.now() - formOpenedAtRef.current) / 1000);
+    gatePassEvents.onGatePassFormAbandoned('outward', lastSection, rowsAddedCountRef.current, timeOnFormSec);
   };
   useEffect(() => {
     if (gatePassDetails.buildingId) {
@@ -453,6 +501,7 @@ export const GatePassOutwardsAddPage = () => {
   }, [gatePassDetails.buildingId]);
 
   const handleGoBack = () => {
+    captureFormAbandoned();
     navigate('/security/gate-pass/outwards');
   };
 
@@ -495,7 +544,15 @@ export const GatePassOutwardsAddPage = () => {
             aria-label="returnable-status"
             name="returnable-status"
             value={returnableStatus}
-            onChange={(e) => setReturnableStatus(e.target.value as 'returnable' | 'non-returnable')}
+            onChange={(e) => {
+              const nextStatus = e.target.value as 'returnable' | 'non-returnable';
+              setReturnableStatus(nextStatus);
+              returnableStatusSetRef.current = true;
+              gatePassEvents.onGatePassReturnableStatusSet(
+                nextStatus === 'returnable' ? 'returnable' : 'non_returnable',
+                Boolean(visitorDetails.expectedReturnDate)
+              );
+            }}
           >
             <span className="text-sm font-medium text-gray-700 mr-4 self-center">Returnable Status:</span>
             <FormControlLabel value="returnable" control={<Radio sx={{
@@ -1040,7 +1097,7 @@ export const GatePassOutwardsAddPage = () => {
           >
             {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
-          <Button type="button" variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-8 py-2" onClick={() => navigate('/security/gate-pass/outwards')}>Cancel</Button>
+          <Button type="button" variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-8 py-2" onClick={() => { captureFormAbandoned(); navigate('/security/gate-pass/outwards'); }}>Cancel</Button>
         </div>
       </form>
     </div>

@@ -36,6 +36,7 @@ import {
 } from "@/store/slices/serviceLocationSlice";
 import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { userService, User } from "@/services/userService";
+import { usePatrolEvents } from "@/components/PostHogSecurityEvents";
 
 // Section component
 const Section: React.FC<{
@@ -210,9 +211,11 @@ export const PatrollingEditPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { onPatrolFormOpened, onPatrolSubmitted } = usePatrolEvents();
 
   useEffect(() => {
     document.title = "Edit Patrolling";
+    onPatrolFormOpened();
   }, []);
 
   // Fetch buildings when component loads
@@ -1523,6 +1526,16 @@ export const PatrollingEditPage: React.FC = () => {
 
       const result = await response.json();
       console.log("✅ API Response:", result);
+
+      const validityDays = Math.ceil(Math.abs(new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+      
+      onPatrolSubmitted({
+        checkpoint_count: checkpoints.filter(c => (c.name || "").trim() !== "").length,
+        has_checklist: !!selectedChecklist,
+        schedule_slots_per_day: shifts.length,
+        grace_minutes: graceType === 'hours' ? (parseInt(grace) || 0) * 60 : (parseInt(grace) || 0),
+        validity_days: validityDays || 0
+      });
 
       toast.success("Patrolling updated successfully!", {
         duration: 3000,

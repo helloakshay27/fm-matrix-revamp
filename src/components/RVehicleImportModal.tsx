@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { useVehicleEvents } from '@/components/PostHogSecurityEvents';
 
 interface RVehicleImportModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface RVehicleImportModalProps {
 
 export const RVehicleImportModal = ({ isOpen, onClose }: RVehicleImportModalProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { onVehicleAdded } = useVehicleEvents();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -24,6 +26,7 @@ export const RVehicleImportModal = ({ isOpen, onClose }: RVehicleImportModalProp
 
   const handleImport = () => {
     console.log('Import file:', selectedFile);
+    onVehicleAdded({ is_bulk_import: true, category: 'unknown', type: 'unknown', is_approved: true });
     // Handle import logic
     onClose();
   };

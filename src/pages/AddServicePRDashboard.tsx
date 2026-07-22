@@ -29,6 +29,7 @@ import { getWorkOrderById } from "@/store/slices/workOrderSlice";
 import axios from "axios";
 import { Card, CardContent } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+import { useProcurementEvents, type PrSection } from "@/components/PostHogProcurementEvents";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -53,6 +54,18 @@ export const AddServicePRDashboard = () => {
   const isPanchshilOrg = orgId === "63";
 
   const { data = [] } = useAppSelector((state) => state.changePlantDetails) as { data: any[] };
+
+  const procurementEvents = useProcurementEvents();
+  const formOpenedAtRef = useRef<number>(Date.now());
+  const sectionsSeenRef = useRef<Set<PrSection>>(new Set());
+  const rowsAddedRef = useRef(0);
+  const hasSubmittedRef = useRef(false);
+  const hasAutoSavedRef = useRef(false);
+  const markSection = (section: PrSection) => {
+    if (sectionsSeenRef.current.has(section)) return;
+    sectionsSeenRef.current.add(section);
+    procurementEvents.onPrSectionCompleted("service", section, sectionsSeenRef.current.size - 1);
+  };
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -434,6 +447,8 @@ export const AddServicePRDashboard = () => {
           }
         );
         toast.success("Auto saved successfully");
+        hasAutoSavedRef.current = true;
+        procurementEvents.onPrDraftAutoSaved("service", slid, Array.from(sectionsSeenRef.current).pop() ?? "supplier");
 
         // Refetch details API immediately after successful auto-save
         // try {
@@ -602,11 +617,28 @@ export const AddServicePRDashboard = () => {
   }, [data]);
 
   const handleInputChange = (field, value) => {
+    if (value) markSection("supplier");
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
+
+  // F1 · PR Form Opened on mount + PR Form Abandoned on unmount
+  useEffect(() => {
+    const entrySource = (location.state as { entrySource?: string } | null)?.entrySource ?? "direct";
+    procurementEvents.onPrFormOpened("service", entrySource);
+    return () => {
+      if (hasSubmittedRef.current || hasAutoSavedRef.current) return;
+      const lastSection = Array.from(sectionsSeenRef.current).pop() ?? "supplier";
+      procurementEvents.onPrFormAbandoned("service", {
+        last_section: lastSection,
+        rows_added: rowsAddedRef.current,
+        time_on_form_sec: Math.round((Date.now() - formOpenedAtRef.current) / 1000),
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDashedBorderClick = () => {
     fileInputRef.current?.click();
@@ -659,12 +691,14 @@ export const AddServicePRDashboard = () => {
       // Validate file type
       if (!validFileTypes.includes(file.type)) {
         toast.error(`Invalid file type: ${file.name}. Only PDF files are accepted.`);
+        procurementEvents.onPrAttachmentFailed("service", "type");
         return;
       }
 
       // Validate file size
       if (file.size > maxFileSizeBytes) {
         toast.error(`File size exceeded: ${file.name}. Maximum allowed size is 12 MB`);
+        procurementEvents.onPrAttachmentFailed("service", "size");
         return;
       }
 
@@ -672,6 +706,7 @@ export const AddServicePRDashboard = () => {
     });
 
     if (validFiles.length > 0) {
+      markSection("attachments");
       setAttachedFiles((prev) => [...prev, ...validFiles]);
     }
   };
@@ -710,6 +745,9 @@ export const AddServicePRDashboard = () => {
   };
 
   const addNewDetailsForm = () => {
+    markSection("items");
+    rowsAddedRef.current += 1;
+    procurementEvents.onPrItemRowAdded("service", detailsForms.length, false);
     const newId = Math.max(...detailsForms.map((form) => form.id)) + 1;
     const newForm = {
       id: newId,
