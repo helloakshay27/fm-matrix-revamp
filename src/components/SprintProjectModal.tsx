@@ -29,6 +29,8 @@ interface SprintProjectModalProps {
   onClose: () => void;
   projectsSummary: ProjectSummary[];
   projectsLoading: boolean;
+  onFilterTask: (projectId: number, status?: string) => void;
+  onFilterIssue: (projectId: number, status?: string) => void;
 }
 
 const fmtMin = (m: number) => {
@@ -61,6 +63,8 @@ export default function SprintProjectModal({
   onClose,
   projectsSummary,
   projectsLoading,
+  onFilterTask,
+  onFilterIssue,
 }: SprintProjectModalProps) {
   return (
     <Dialog
@@ -241,12 +245,18 @@ export default function SprintProjectModal({
                             : "#ef4444";
                       return (
                         <>
-                          <td className="px-1.5 py-2 text-center border-r border-slate-100 border-l-2 border-l-slate-200">
+                          <td
+                            className="px-1.5 py-2 text-center border-r border-slate-100 border-l-2 border-l-slate-200 cursor-pointer hover:bg-blue-50"
+                            onClick={() => onFilterTask(p.project_id)}
+                          >
                             <span className="text-[13px] font-medium text-blue-600">
                               {p.total_tasks}
                             </span>
                           </td>
-                          <td className="px-1.5 py-2 text-center border-r border-slate-300">
+                          <td
+                            className="px-1.5 py-2 text-center border-r border-slate-300 cursor-pointer hover:bg-blue-50"
+                            onClick={() => onFilterTask(p.project_id, "completed")}
+                          >
                             <span className="text-[13px] font-semibold text-blue-600">
                               {p.completed_tasks}
                             </span>
@@ -276,12 +286,18 @@ export default function SprintProjectModal({
                             : "#ef4444";
                       return (
                         <>
-                          <td className="px-1.5 py-2 text-center border-r border-slate-100 border-l-2 border-l-slate-200">
+                          <td
+                            className="px-1.5 py-2 text-center border-r border-slate-100 border-l-2 border-l-slate-200 cursor-pointer hover:bg-blue-50"
+                            onClick={() => onFilterIssue(p.project_id)}
+                          >
                             <span className="text-[13px] font-medium text-blue-600">
                               {p.total_issues}
                             </span>
                           </td>
-                          <td className="px-1.5 py-2 text-center border-r border-slate-300">
+                          <td
+                            className="px-1.5 py-2 text-center border-r border-slate-300 cursor-pointer hover:bg-blue-50"
+                            onClick={() => onFilterIssue(p.project_id, "completed")}
+                          >
                             <span className="text-[13px] font-semibold text-blue-600">
                               {p.completed_issues}
                             </span>
