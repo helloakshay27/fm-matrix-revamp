@@ -486,18 +486,18 @@ export const CarpoolDashboard = () => {
         icon: MapPin,
         status: "active",
       },
-      {
-        title: "Active Report's",
-        count: apiData?.active_reports || 0,
-        icon: AlertCircle,
-        status: "reports",
-      },
-      {
-        title: "Active SOS",
-        count: apiData?.active_sos || 0,
-        icon: AlertCircle,
-        status: "sos",
-      },
+      // {
+      //   title: "Active Report's",
+      //   count: apiData?.active_reports || 0,
+      //   icon: AlertCircle,
+      //   status: "reports",
+      // },
+      // {
+      //   title: "Active SOS",
+      //   count: apiData?.active_sos || 0,
+      //   icon: AlertCircle,
+      //   status: "sos",
+      // },
     ],
     [apiData, todaysRidesData, upcomingRidesData, activeNowRidesData]
   );
@@ -1096,11 +1096,10 @@ export const CarpoolDashboard = () => {
         {statusCards.map((card, index) => (
           <div
             key={index}
-            className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-all ${
-              activeView === card.status
+            className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-all ${activeView === card.status
                 ? "ring-2 ring-[#C72030] shadow-lg"
                 : ""
-            }`}
+              }`}
             onClick={() => handleStatusCardClick(card.status)}
           >
             <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
@@ -1165,16 +1164,15 @@ export const CarpoolDashboard = () => {
                   onClick={() =>
                     !dateInfo.isOff &&
                     (setSelectedCalendarDate(dateInfo.date),
-                    setSelectedCalendarDateForApi(dateInfo.fullDate))
+                      setSelectedCalendarDateForApi(dateInfo.fullDate))
                   }
                   className={`border-r border-[#c9c2b8] w-[115px] px-1 py-0.5 text-center cursor-pointer transition-all
-            ${
-              selectedCalendarDate === dateInfo.date
-                ? "bg-[#f5f1ea] border-b-2 border-b-[#C72030]"
-                : dateInfo.isOff
-                  ? "bg-[#e6e6e6] text-gray-500 cursor-not-allowed"
-                  : "bg-[#efe9dd] hover:bg-[#f5f1ea]"
-            }`}
+            ${selectedCalendarDate === dateInfo.date
+                      ? "bg-[#f5f1ea] border-b-2 border-b-[#C72030]"
+                      : dateInfo.isOff
+                        ? "bg-[#e6e6e6] text-gray-500 cursor-not-allowed"
+                        : "bg-[#efe9dd] hover:bg-[#f5f1ea]"
+                    }`}
                 >
                   <div className="text-xs font-medium">{dateInfo.date}</div>
 
@@ -1208,103 +1206,103 @@ export const CarpoolDashboard = () => {
       {(activeView === "" ||
         activeView === "today" ||
         activeView === "total") && (
-        <>
-          <EnhancedTaskTable
-            data={currentRides}
-            columns={[
-              {
-                key: "actions",
-                label: "Action",
-                sortable: false,
-                hideable: false,
-                draggable: false,
-              },
-              {
-                key: "carImage",
-                label: "Car Image",
-                sortable: false,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "driver",
-                label: "Driver",
-                sortable: true,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "registrationNumber",
-                label: "Registration Number",
-                sortable: true,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "passengers",
-                label: "Passenger's",
-                sortable: false,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "leavingFrom",
-                label: "Leaving from",
-                sortable: true,
-                hideable: true,
-                draggable: true,
-              },
-              {
-                key: "destination",
-                label: "Destination",
-                sortable: true,
-                hideable: true,
-                draggable: true,
-              },
-            ]}
-            renderRow={(ride) => ({
-              actions: (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/pulse/carpool/ride-detail?id=${ride.id}`);
-                  }}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-              ),
-              carImage: (
-                <img
-                  src={ride.carImage}
-                  alt="Car"
-                  className="w-10 h-auto object-contain"
-                />
-              ),
-              driver: ride.driver,
-              registrationNumber: ride.registrationNumber,
-              passengers: (
-                <div className="max-w-[200px]">{ride.passengers}</div>
-              ),
-              leavingFrom: ride.leavingFrom,
-              destination: ride.destination,
-            })}
-            enableSearch={true}
-            enableSelection={false}
-            selectable={false}
-            enableExport={true}
-            hideTableSearch={false}
-            storageKey="carpool-rides-table"
-            searchTerm={searchQuery}
-            onSearchChange={handleSearch}
-            emptyMessage="No rides found"
-            searchPlaceholder="Search rides..."
-            exportFileName="carpool-rides"
-          />
-        </>
-      )}
+          <>
+            <EnhancedTaskTable
+              data={currentRides}
+              columns={[
+                {
+                  key: "actions",
+                  label: "Action",
+                  sortable: false,
+                  hideable: false,
+                  draggable: false,
+                },
+                {
+                  key: "carImage",
+                  label: "Car Image",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "driver",
+                  label: "Driver",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "registrationNumber",
+                  label: "Registration Number",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "passengers",
+                  label: "Passenger's",
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "leavingFrom",
+                  label: "Leaving from",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+                {
+                  key: "destination",
+                  label: "Destination",
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                },
+              ]}
+              renderRow={(ride) => ({
+                actions: (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/pulse/carpool/ride-detail?id=${ride.id}`);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                ),
+                carImage: (
+                  <img
+                    src={ride.carImage}
+                    alt="Car"
+                    className="w-10 h-auto object-contain"
+                  />
+                ),
+                driver: ride.driver,
+                registrationNumber: ride.registrationNumber,
+                passengers: (
+                  <div className="max-w-[200px]">{ride.passengers}</div>
+                ),
+                leavingFrom: ride.leavingFrom,
+                destination: ride.destination,
+              })}
+              enableSearch={true}
+              enableSelection={false}
+              selectable={false}
+              enableExport={true}
+              hideTableSearch={false}
+              storageKey="carpool-rides-table"
+              searchTerm={searchQuery}
+              onSearchChange={handleSearch}
+              emptyMessage="No rides found"
+              searchPlaceholder="Search rides..."
+              exportFileName="carpool-rides"
+            />
+          </>
+        )}
 
       {/* Upcoming Rides View with Different Columns */}
       {activeView === "upcoming" && (
