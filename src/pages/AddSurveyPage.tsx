@@ -47,6 +47,7 @@ interface Question {
   answerType: string;
   mandatory: boolean;
   answerOptions?: AnswerOption[];
+  placeholderText?: string;
   additionalFieldOnNegative?: boolean;
   additionalFields?: Array<{
     title: string;
@@ -646,6 +647,13 @@ export const AddSurveyPage = () => {
         );
         formData.append(`question[][image_mandatory]`, "false");
 
+        if (question.answerType === "input-box") {
+          formData.append(
+            `question[][placeholder_text]`,
+            question.placeholderText || ""
+          );
+        }
+
         // Handle question image upload
         if (question.questionImage) {
           formData.append(
@@ -1231,6 +1239,25 @@ export const AddSurveyPage = () => {
                       <MenuItem value="date">Date</MenuItem>
                     </MuiSelect>
                   </FormControl>
+
+                  {question.answerType === "input-box" && (
+                    <TextField
+                      label="Placeholder"
+                      placeholder="Enter placeholder"
+                      value={question.placeholderText || ""}
+                      onChange={(e) =>
+                        handleQuestionChange(
+                          question.id,
+                          "placeholderText",
+                          e.target.value
+                        )
+                      }
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                    />
+                  )}
 
                   {["multiple-choice", "rating", "emojis", "checkbox"].includes(
                     question.answerType
