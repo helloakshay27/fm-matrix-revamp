@@ -178,7 +178,7 @@ const MsafeCirlce = () => {
                         onCheckedChange={() =>
                             handleCheckboxChange(item)
                         }
-                        className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                        className="data-[state=checked]:bg-gray-500 data-[state=checked]:border-gray-500"
                         disabled={updatingStatus[item.id]}
                     />
                 );

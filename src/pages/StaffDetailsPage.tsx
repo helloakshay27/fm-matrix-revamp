@@ -284,7 +284,7 @@ export const StaffDetailsPage = () => {
               <Button
                 onClick={handleEdit}
                 style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:bg-[#C72030]/90"
+                className="text-white hover:bg-[#C72030]/90 [&_svg]:text-white"
               >
                 <Edit className="w-4 h-4" />
               </Button>

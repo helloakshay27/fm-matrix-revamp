@@ -794,7 +794,7 @@ export const EditStaffPage = () => {
           <Button 
             type="submit"
             disabled={saving}
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
+            className="bg-red-600 hover:bg-red-700 !text-white px-8 py-2"
           >
             {saving ? (
               <>
