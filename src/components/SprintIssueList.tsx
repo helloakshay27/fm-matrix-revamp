@@ -238,6 +238,11 @@ export default function SprintIssueList({
     fetchIssues(appliedFilters, currentPage, issueSearchQuery);
   };
 
+  const updateIssueStatusApiCall = async (id: string, status: string) => {
+    await axios.put(`https://${baseUrl}/issues/${id}/update_status.json`, { status }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
+    fetchIssues(appliedFilters, currentPage, issueSearchQuery);
+  };
+
   const handlePageChange = (page: number) => {
     if (page < 1 || page === currentPage || loadingIssues) return;
     if (paginationData && page > paginationData.total_pages) return;
@@ -247,7 +252,7 @@ export default function SprintIssueList({
 
   const handlePlayIssue = async (id: number) => {
     try {
-      await issueApiCall(String(id), { status: "started" });
+      await updateIssueStatusApiCall(String(id), "started");
       toast.success("Issue started successfully");
     } catch { toast.error("Failed to start issue"); }
   };
@@ -255,7 +260,7 @@ export default function SprintIssueList({
   const handlePauseIssueSubmit = async (reason: string, iid: number) => {
     setIsPauseLoading(true);
     try {
-      await issueApiCall(String(iid), { status: "stopped" });
+      await updateIssueStatusApiCall(String(iid), "stopped");
       toast.success("Issue paused");
       setIsPauseModalOpen(false);
       setPauseIssueId(null);
@@ -281,7 +286,7 @@ export default function SprintIssueList({
   const handleEndIssueSubmit = async (reason: string, iid: number) => {
     setIsPauseLoading(true);
     try {
-      await issueApiCall(String(iid), { status: "completed" });
+      await updateIssueStatusApiCall(String(iid), "completed");
       toast.success("Issue ended");
       setIsPauseModalOpen(false);
       setPauseIssueId(null);

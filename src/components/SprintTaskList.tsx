@@ -41,6 +41,38 @@ import {
 } from "@/components/ui/pagination";
 import { SlideTransition } from "@/components/SprintMemberModal";
 
+const SprintTaskPauseModal = ({ isOpen, onClose, onSubmit, onEndTask, isLoading, taskId }: any) => {
+  const [reason, setReason] = useState("");
+  useEffect(() => { if (!isOpen) setReason(""); }, [isOpen]);
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Pause/End</h2>
+        <textarea
+          value={reason}
+          onChange={e => setReason(e.target.value)}
+          placeholder="Enter reason..."
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 resize-none mb-6"
+          rows={4}
+          disabled={isLoading}
+        />
+        <div className="flex gap-3 justify-between">
+          <Button onClick={() => { if (!reason.trim()) { toast.error("Please enter a reason"); return; } onEndTask(reason, taskId); }} disabled={isLoading} className="!bg-red-600 !text-white rounded-md disabled:opacity-50">
+            {isLoading ? "Submitting..." : "End Task"}
+          </Button>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
+            <Button onClick={() => { if (!reason.trim()) { toast.error("Please enter a reason"); return; } onSubmit(reason, taskId); }} disabled={isLoading} className="bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50">
+              {isLoading ? "Submitting..." : "Pause Task"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 interface SprintTaskListProps {
   sprintId: string;
   initialMemberId?: number;
@@ -64,6 +96,9 @@ export default function SprintTaskList({
   const [statuses, setStatuses] = useState<any[]>([]);
 
   const [unlinkingTaskId, setUnlinkingTaskId] = useState<number | null>(null);
+  const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+  const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
+  const [isPauseLoading, setIsPauseLoading] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedResponsible, setSelectedResponsible] = useState<number[]>([]);
@@ -319,7 +354,17 @@ export default function SprintTaskList({
         "Content-Type": "application/json",
       },
     });
-    fetchTasks();
+    fetchTasks(activeFilters, currentPage, searchQuery);
+  };
+
+  const updateStatusApiCall = async (id: number, status: string) => {
+    await axios.put(`https://${baseUrl}/task_managements/${id}/update_status.json`, { status }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    fetchTasks(activeFilters, currentPage, searchQuery);
   };
 
   const handleStatusChange = async (id: number, status: string) => {
@@ -342,19 +387,38 @@ export default function SprintTaskList({
 
   const handlePlayTask = async (id: number) => {
     try {
-      await apiCall(id, { task_management: { status: "started" } });
+      await updateStatusApiCall(id, "started");
       toast.success("Task started successfully");
     } catch {
       toast.error("Failed to start task");
     }
   };
 
-  const handlePauseTask = async (id: number) => {
+  const handlePauseTaskSubmit = async (reason: string, tid: number) => {
+    setIsPauseLoading(true);
     try {
-      await apiCall(id, { task_management: { status: "stopped" } });
+      await updateStatusApiCall(tid, "stopped");
       toast.success("Task paused");
+      setIsPauseModalOpen(false);
+      setPauseTaskId(null);
     } catch {
       toast.error("Failed to pause task");
+    } finally {
+      setIsPauseLoading(false);
+    }
+  };
+
+  const handleEndTaskSubmit = async (reason: string, tid: number) => {
+    setIsPauseLoading(true);
+    try {
+      await updateStatusApiCall(tid, "completed");
+      toast.success("Task ended");
+      setIsPauseModalOpen(false);
+      setPauseTaskId(null);
+    } catch {
+      toast.error("Failed to end task");
+    } finally {
+      setIsPauseLoading(false);
     }
   };
 
@@ -493,7 +557,7 @@ export default function SprintTaskList({
               </Tooltip>
             </TooltipProvider>
             {!hasSubtasks && !isCompleted && (item.is_started ? (
-              <button onClick={() => handlePauseTask(item.id)} className="p-1 hover:bg-gray-200 rounded transition" title="Pause">
+              <button onClick={() => { setPauseTaskId(item.id); setIsPauseModalOpen(true); }} className="p-1 hover:bg-gray-200 rounded transition" title="Pause">
                 <Pause size={13} className="text-orange-500" />
               </button>
             ) : (
@@ -847,6 +911,15 @@ export default function SprintTaskList({
           </div>
         </DialogContent>
       </Dialog>
+
+      <SprintTaskPauseModal
+        isOpen={isPauseModalOpen}
+        onClose={() => { setIsPauseModalOpen(false); setPauseTaskId(null); }}
+        onSubmit={handlePauseTaskSubmit}
+        onEndTask={handleEndTaskSubmit}
+        isLoading={isPauseLoading}
+        taskId={pauseTaskId}
+      />
     </>
   );
 }
