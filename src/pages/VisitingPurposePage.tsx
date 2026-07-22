@@ -1034,7 +1034,7 @@ export const VisitingPurposePage = () => {
                               className="p-1 hover:bg-gray-100 rounded"
                               title="Edit"
                             >
-                              <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                              <Edit className="w-4 h-4 text-black" />
                             </button>)}
                           </TableCell>
                           <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
@@ -1081,7 +1081,7 @@ export const VisitingPurposePage = () => {
                                className="p-1 hover:bg-gray-100 rounded"
                                title="Edit"
                              >
-                               <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                               <Edit className="w-4 h-4 text-black" />
                              </button>
                            </TableCell>
                           <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
@@ -1129,7 +1129,7 @@ export const VisitingPurposePage = () => {
                                className="p-1 hover:bg-gray-100 rounded"
                                title="Edit"
                              >
-                               <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                               <Edit className="w-4 h-4 text-black" />
                              </button>
                            </TableCell>
                           <TableCell className="px-4 py-3 font-medium">{item.staffType}</TableCell>
@@ -1177,7 +1177,7 @@ export const VisitingPurposePage = () => {
                                className="p-1 hover:bg-gray-100 rounded"
                                title="Edit"
                              >
-                               <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                               <Edit className="w-4 h-4 text-black" />
                              </button>
                            </TableCell>
                           <TableCell className="px-4 py-3 font-medium">{item.comment}</TableCell>

@@ -1412,17 +1412,17 @@ export const HolidayCalendarPage = () => {
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-6">
                 <Button 
-                  variant="secondary" 
+                  variant="ghost"
                   onClick={handleUpdate} 
-                  className="flex-1 h-11"
+                  className="fm-button-fix fm-button-brand px-4 py-2"
                   disabled={isSubmitting || loadingEditData}
                 >
                   {isSubmitting ? 'Updating Holiday...' : 'Update Holiday'}
                 </Button>
                 <Button 
-                  variant="outline" 
+                  variant="ghost"
                   onClick={handleEditCancel} 
-                  className="flex-1 h-11"
+                  className="fm-button-fix fm-button-brand px-4 py-2"
                 >
                   Cancel
                 </Button>

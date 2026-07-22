@@ -415,7 +415,7 @@ export const ParkingCategoryPage = () => {
                         className="p-1 hover:bg-gray-100 rounded"
                         title="Edit"
                       >
-                        <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                        <Edit className="w-4 h-4 text-black" />
                       </button>
                       )}
                     </div>

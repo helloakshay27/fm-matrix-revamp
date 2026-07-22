@@ -211,7 +211,7 @@ export const DepartmentDashboard = () => {
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="sm:max-w-md mx-4 sm:mx-0">
                   <DialogHeader>
-                    <DialogTitle className="bg-[#C72030] text-white p-3 -m-6 mb-4 rounded-t-lg text-sm sm:text-base">
+                    <DialogTitle className="text-black p-3 -m-6 mb-4 rounded-t-lg text-sm sm:text-base">
                       Add Department
                     </DialogTitle>
                   </DialogHeader>
