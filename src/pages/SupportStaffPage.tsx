@@ -526,7 +526,8 @@ export const SupportStaffPage = () => {
             {shouldShow("Support Staff","create")&&(
             <Button
               onClick={handleAdd}
-              className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
+              className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add
@@ -605,7 +606,7 @@ export const SupportStaffPage = () => {
                           className="p-1 hover:bg-gray-100 rounded"
                           title="Edit"
                         >
-                          <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                          <Edit className="w-4 h-4 text-black" />
                         </button>
                       </TableCell>
                     )}
@@ -902,9 +903,10 @@ export const SupportStaffPage = () => {
                 Cancel
               </Button>
               <Button
+                variant="outline"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="px-6"
+                className="fm-button-fix fm-button-brand px-6"
               >
                 {isSubmitting ? 'Creating...' : 'Submit'}
               </Button>
@@ -1106,9 +1108,10 @@ export const SupportStaffPage = () => {
                 Cancel
               </Button>
               <Button
+                variant="outline"
                 onClick={handleEditSubmit}
                 disabled={isSubmitting}
-                className="bg-green-500 hover:bg-green-600 text-white px-6"
+                className="fm-button-fix fm-button-brand px-6"
               >
                 {isSubmitting ? 'Updating...' : 'Update'}
               </Button>

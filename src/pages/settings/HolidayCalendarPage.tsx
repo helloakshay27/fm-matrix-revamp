@@ -960,7 +960,8 @@ export const HolidayCalendarPage = () => {
                       <Button
                         type="button"
                         onClick={handleAddRow}
-                        className="bg-[#C72030] hover:bg-[#A61B29] text-white font-semibold px-6 h-10"
+                      className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                       >
                         <Plus className="w-4 h-4 mr-1" /> Add
                       </Button>
@@ -1008,7 +1009,8 @@ export const HolidayCalendarPage = () => {
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   <Button
                     type="button"
-                    className="bg-[#C72030] hover:bg-[#A61B29] text-white font-semibold flex-1 h-11"
+                    className="fm-button-fix fm-button-brand px-4 py-2"
+                    variant="ghost"
                     disabled={isSubmitting || pendingHolidays.length === 0}
                     onClick={handleSubmit}
                   >
@@ -1104,7 +1106,7 @@ export const HolidayCalendarPage = () => {
               />
             </div>
             <div className="flex gap-3 pt-2">
-              <Button onClick={handleApplyFilters} className="flex-1 bg-primary text-primary-foreground">
+              <Button onClick={handleApplyFilters} className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost">
                 Apply Filters
               </Button>
               <Button variant="outline" onClick={handleClearFilters} className="flex-1">
@@ -1410,17 +1412,17 @@ export const HolidayCalendarPage = () => {
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-6">
                 <Button 
-                  variant="secondary" 
+                  variant="ghost"
                   onClick={handleUpdate} 
-                  className="flex-1 h-11"
+                  className="fm-button-fix fm-button-brand px-4 py-2"
                   disabled={isSubmitting || loadingEditData}
                 >
                   {isSubmitting ? 'Updating Holiday...' : 'Update Holiday'}
                 </Button>
                 <Button 
-                  variant="outline" 
+                  variant="ghost"
                   onClick={handleEditCancel} 
-                  className="flex-1 h-11"
+                  className="fm-button-fix fm-button-brand px-4 py-2"
                 >
                   Cancel
                 </Button>

@@ -47,6 +47,7 @@ interface Question {
   answerType: string;
   mandatory: boolean;
   answerOptions?: AnswerOption[];
+  placeholderText?: string;
   rating?: number;
   selectedEmoji?: string;
   additionalFieldOnNegative?: boolean;
@@ -464,6 +465,7 @@ export const EditSurveyPage = () => {
                                 ? "description"
                                 : "description",
             mandatory: q.quest_mandatory,
+            placeholderText: q.placeholder_text || "",
             answerOptions:
               q.snag_quest_options?.map((option: any) => ({
                 id: option.id,
@@ -1136,6 +1138,13 @@ export const EditSurveyPage = () => {
         );
         formData.append(`question[][image_mandatory]`, "false");
 
+        if (question.answerType === "input-box") {
+          formData.append(
+            `question[][placeholder_text]`,
+            question.placeholderText || ""
+          );
+        }
+
         // Add rating
         if (question.answerType === "rating" && question.rating) {
           formData.append(`question[][rating]`, question.rating.toString());
@@ -1745,6 +1754,23 @@ export const EditSurveyPage = () => {
                         </Select>
                       </div>
 
+                      {question.answerType === "input-box" && (
+                        <div className="space-y-2">
+                          <Label>Placeholder</Label>
+                          <Input
+                            value={question.placeholderText || ""}
+                            onChange={(e) =>
+                              handleQuestionChange(
+                                question.id!,
+                                "placeholderText",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Enter placeholder"
+                          />
+                        </div>
+                      )}
+
                       {/* Multiple Choice, Rating, and Emoji Options */}
       {["multiple-choice", "rating", "emojis", "checkbox"].includes(
         question.answerType
@@ -2219,7 +2245,7 @@ export const EditSurveyPage = () => {
                 <Button
                   onClick={handleAddQuestion}
                   variant="outline"
-                  className="border-dashed border-red-400 text-red-600 hover:bg-red-50"
+                  className="fm-button-fix border-dashed"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add More Questions
@@ -2230,14 +2256,15 @@ export const EditSurveyPage = () => {
                 <Button
                   onClick={handleUpdateQuestion}
                   disabled={loading || isSubmitting}
-                  className="bg-red-600 hover:bg-red-700 text-white px-8"
+                  variant="ghost"
+                  className="fm-button-fix fm-button-brand px-8"
                 >
                   {loading || isSubmitting ? "Updating..." : "Update Question"}
                 </Button>
                 <Button
                   onClick={() => navigate("/master/survey/list")}
                   variant="outline"
-                  className="border-red-600 text-red-600 hover:bg-red-50 px-8"
+                  className="fm-button-fix px-8"
                 >
                   Cancel
                 </Button>

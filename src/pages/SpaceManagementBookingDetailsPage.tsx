@@ -455,12 +455,8 @@ export const SpaceManagementBookingDetailsPage = () => {
             </Button>
           )} */}
           <Button
-            variant="outline"
-            className="px-6 py-2 rounded hover:bg-gray-50 bg-white"
-            style={{ 
-              borderColor: '#D1D5DB',
-              color: '#1A1A1A'
-            }}
+            variant="ghost"
+            className="fm-button-fix fm-button-brand px-4 py-2"
             onClick={() => navigate(-1)}
           >
             Back to List

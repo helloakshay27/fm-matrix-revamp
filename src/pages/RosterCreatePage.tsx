@@ -1621,7 +1621,8 @@ export const RosterCreatePage: React.FC = () => {
       <div className="flex items-center gap-3 justify-center pt-2">
         <Button
           variant="destructive"
-          className="px-8"
+          className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
           onClick={handleSubmit}
           disabled={isSubmitting}
         >

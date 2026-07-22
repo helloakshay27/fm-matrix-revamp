@@ -58,6 +58,7 @@ export const PurchaseDocumentPdf = ({
   secondaryDateLabel,
   secondaryDate,
   referenceNumber,
+  bankDetail,
 }) => {
   const statusDisplay = formatStatus(status);
   const partyName = vendorName || customerName;
@@ -126,7 +127,7 @@ export const PurchaseDocumentPdf = ({
               </div>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 border-b border-gray-500 bg-gray-100 font-bold">
             <div className="px-2 py-1 border-r border-gray-500">{partyLabel}</div>
             <div className="px-2 py-1">Ship To</div>
@@ -224,6 +225,40 @@ export const PurchaseDocumentPdf = ({
 
           <div className="grid grid-cols-[1fr_305px]">
             <div className="p-3 border-r border-gray-500 min-h-[190px]">
+              {/* {bankDetail && (
+                <div className="mb-4">
+                  <p className="font-bold">Bank Details</p>
+                  <p className="mt-1">{bankDetail.bankName} - A/C {bankDetail.accountNo}</p>
+                  <p>{bankDetail.beneficiaryName}{bankDetail.ifscCode ? `, IFSC: ${bankDetail.ifscCode}` : ""}{bankDetail.branch ? `, ${bankDetail.branch}` : ""}</p>
+                </div>
+              )} */}
+
+              {bankDetail && (
+                <div className="mb-4">
+                  <p className="font-bold">Bank Details</p>
+
+                  <div className="mt-2 space-y-1 text-[11px]">
+                    {[
+                      ["Bank Name", bankDetail.bankName],
+                      ["A/c No.", bankDetail.accountNo],
+                      ["Beneficiary / Account Name", bankDetail.beneficiaryName],
+                      ["A/c Type", bankDetail.accountType],
+                      ["IFSC Code", bankDetail.ifscCode],
+                      ["Swift Code", bankDetail.swiftCode],
+                      ["Branch", bankDetail.branch],
+                    ]
+                      .filter(([, value]) => value)
+                      .map(([label, value]) => (
+                        <div key={label} className="flex gap-2">
+                          <span className="font-semibold min-w-[150px]">
+                            {label}:
+                          </span>
+                          <span>{value}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
               <div className="mb-4">
                 <p className="font-bold">Notes</p>
                 <p className="whitespace-pre-wrap mt-1">{notes || "-"}</p>

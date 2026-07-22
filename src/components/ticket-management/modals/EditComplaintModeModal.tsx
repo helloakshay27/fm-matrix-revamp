@@ -175,8 +175,10 @@ export const EditComplaintModeModal: React.FC<EditComplaintModeModalProps> = ({
                 Cancel
               </Button>
               <Button 
+                variant="ghost"
                 onClick={handleUpdateSubmit}
                 disabled={isSubmitting || isLoading}
+                className="fm-button-fix fm-button-brand px-4 py-2"
               >
                 {isSubmitting ? 'Updating...' : 'Update'}
               </Button>

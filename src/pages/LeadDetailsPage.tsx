@@ -45,7 +45,7 @@ export const LeadDetailsPage = () => {
             {shouldShow("Lead", "update") && (
             <Button
               onClick={handleEditClick}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-sm"
+              className="!bg-[#DA7756] hover:!bg-[#C45F40] text-white px-4 py-2 rounded-sm"
             >
               Edit
             </Button>

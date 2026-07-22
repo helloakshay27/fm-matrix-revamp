@@ -443,7 +443,8 @@ export const LockedUsersDashboard = () => {
               fetchLockedUsers(1);
             }}
             disabled={loading}
-            className="bg-[#C72030] hover:bg-[#a81c29] text-white"
+            variant="ghost"
+            className="fm-button-fix fm-button-brand"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
             Refresh
@@ -458,7 +459,7 @@ export const LockedUsersDashboard = () => {
             <CardTitle className="text-sm font-medium text-gray-600">
               Total Locked Users
             </CardTitle>
-            <Lock className="w-4 h-4 text-[#C72030]" />
+            <Lock className="w-4 h-4 text-[#DA7756]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
@@ -539,7 +540,7 @@ export const LockedUsersDashboard = () => {
                     <TableHead className="w-12">
                       <div
                         className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${selectedIds.size === filteredUsers.length && filteredUsers.length > 0
-                          ? "bg-[#C72030] border-[#C72030]"
+                          ? "bg-[#DA7756] border-[#DA7756]"
                           : "border-gray-300 hover:border-gray-400"
                           }`}
                         onClick={handleSelectAll}
@@ -563,7 +564,7 @@ export const LockedUsersDashboard = () => {
                       <TableCell>
                         <div
                           className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${selectedIds.has(user.id)
-                            ? "bg-[#C72030] border-[#C72030]"
+                            ? "bg-[#DA7756] border-[#DA7756]"
                             : "border-gray-300 hover:border-gray-400"
                             }`}
                           onClick={() => handleCheckboxChange(user.id)}
@@ -575,8 +576,8 @@ export const LockedUsersDashboard = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[#C72030] bg-opacity-10 flex items-center justify-center">
-                            <User className="w-5 h-5 text-[#C72030]" />
+                          <div className="w-10 h-10 rounded-full bg-[#DA7756] bg-opacity-10 flex items-center justify-center">
+                            <User className="w-5 h-5 text-[#DA7756]" />
                           </div>
                           <div>
                             <div className="font-medium text-gray-900">
@@ -620,7 +621,7 @@ export const LockedUsersDashboard = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="destructive">
+                        <Badge className="bg-[#F2EEE9] text-[#DA7756] border-[#DA7756] hover:bg-[#ede9e0]">
                           {user.failed_attempts || 0} attempts
                         </Badge>
                       </TableCell>

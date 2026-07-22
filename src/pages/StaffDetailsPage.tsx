@@ -265,7 +265,8 @@ export const StaffDetailsPage = () => {
           <div className="flex gap-3">
             <Button
               onClick={handleVerifyNumber}
-              className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-4 py-2"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2"
               disabled={staff.number_verified || sendingOTP}
             >
               {sendingOTP ? (
@@ -283,7 +284,7 @@ export const StaffDetailsPage = () => {
               <Button
                 onClick={handleEdit}
                 style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:bg-[#C72030]/90"
+                className="text-white hover:bg-[#C72030]/90 [&_svg]:text-white"
               >
                 <Edit className="w-4 h-4" />
               </Button>
@@ -508,7 +509,8 @@ export const StaffDetailsPage = () => {
           <div>
             <Button
               onClick={handlePrint}
-              className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2 flex items-center gap-2 mx-auto"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2 flex items-center gap-2 mx-auto"
               disabled={!staff.qr_code_present}
             >
               <Printer className="w-4 h-4" />

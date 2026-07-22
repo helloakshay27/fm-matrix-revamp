@@ -666,7 +666,7 @@ export const RosterDetailPage: React.FC = () => {
 
       {/* Footer Actions */}
       <div className="flex items-center gap-3 justify-center pt-2 border-t border-gray-200">
-        <Button onClick={handleEdit} className="px-8">
+        <Button onClick={handleEdit} className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost">
           <Edit className="w-4 h-4 mr-2" />
           Edit Template
         </Button>

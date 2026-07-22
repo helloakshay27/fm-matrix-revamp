@@ -318,7 +318,7 @@ export const EditEmailRuleDialog: React.FC<EditEmailRuleDialogProps> = ({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost">
               {isSubmitting ? 'Updating...' : 'Update'}
             </Button>
           </div>

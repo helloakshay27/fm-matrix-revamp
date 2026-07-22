@@ -339,7 +339,8 @@ export const TimeSlotSetupPage = () => {
           {shouldShow("Time Slot Setup", "create") && (
           <Button 
             onClick={handleAdd}
-            className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
+            className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add
@@ -411,7 +412,7 @@ export const TimeSlotSetupPage = () => {
                         className="p-1 hover:bg-gray-100 rounded"
                         title="Edit"
                       >
-                        <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                        <Edit className="w-4 h-4 text-black" />
                       </button>
                       )}
                     </div>
@@ -472,9 +473,10 @@ export const TimeSlotSetupPage = () => {
 {/* Submit Button */}
 <div className="flex justify-end pt-4">
   <Button
+    variant="outline"
     onClick={handleCreateTimeSlot}
     disabled={isCreating}
-    className="bg-purple-600 hover:bg-purple-700 text-white px-6 disabled:opacity-50"
+    className="fm-button-fix fm-button-brand px-6 disabled:opacity-50"
   >
     {isCreating ? 'Creating...' : 'Submit'}
   </Button>
@@ -525,9 +527,10 @@ export const TimeSlotSetupPage = () => {
             {/* Submit Button */}
             <div className="flex justify-end pt-4">
               <Button
+                variant="outline"
                 onClick={handleUpdateTimeSlot}
                 disabled={isUpdating}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6 disabled:opacity-50"
+                className="fm-button-fix fm-button-brand px-6 disabled:opacity-50"
               >
                 {isUpdating ? 'Updating...' : 'Submit'}
               </Button>

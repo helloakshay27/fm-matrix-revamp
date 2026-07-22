@@ -211,7 +211,7 @@ export const DepartmentDashboard = () => {
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="sm:max-w-md mx-4 sm:mx-0">
                   <DialogHeader>
-                    <DialogTitle className="bg-[#C72030] text-white p-3 -m-6 mb-4 rounded-t-lg text-sm sm:text-base">
+                    <DialogTitle className="text-black p-3 -m-6 mb-4 rounded-t-lg text-sm sm:text-base">
                       Add Department
                     </DialogTitle>
                   </DialogHeader>
@@ -231,7 +231,8 @@ export const DepartmentDashboard = () => {
                     <div className="flex justify-end">
                       <Button
                         onClick={handleSubmit}
-                        className="bg-green-600 hover:bg-green-700 text-white px-6 w-full sm:w-auto"
+                        className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                       >
                         Submit
                       </Button>

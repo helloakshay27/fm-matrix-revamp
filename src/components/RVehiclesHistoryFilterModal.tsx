@@ -86,15 +86,15 @@ export const RVehiclesHistoryFilterModal = ({ isOpen, onClose }: RVehiclesHistor
           <div className="flex justify-end gap-3">
             <Button
               onClick={handleReset}
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
               Reset
             </Button>
             <Button
               onClick={handleApply}
-              style={{ backgroundColor: '#6B46C1' }}
-              className="hover:bg-purple-700 text-white px-6 py-2"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
               Apply
             </Button>

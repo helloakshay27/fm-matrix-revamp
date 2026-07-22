@@ -304,7 +304,8 @@ const ParkingDashboard = () => {
         <div className="flex gap-2">
           {shouldShow("Parking","create")&&(
           <Button 
-            className="bg-[#2D2A26] hover:bg-[#1f1c19] text-white px-4 py-2 rounded-none border-none shadow-none" 
+           className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
             onClick={handleActionClick}
           >
              <Plus className="w-4 h-4 mr-2" />

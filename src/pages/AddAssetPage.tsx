@@ -183,9 +183,9 @@ const AssetImageUpload = ({
   return (
     <> </>
     // <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
-    //   <div className="border-l-4 border-l-[#C72030] p-4 bg-white">
-    //     <div className="flex items-center gap-2 text-[#C72030] text-sm font-semibold mb-4">
-    //       <span className="bg-[#C72030] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+    //   <div className="border-l-4 border-l-[#DA7756] p-4 bg-white">
+    //     <div className="flex items-center gap-2 text-[#DA7756] text-sm font-semibold mb-4">
+    //       <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
     //         <Package className="w-3 h-3" />
     //       </span>
     //       {categoryName.toUpperCase()} ASSET IMAGE
@@ -245,7 +245,7 @@ const AssetImageUpload = ({
     //             <p className="text-sm text-gray-500 mb-4">
     //               Click to upload an image of your {categoryName.toLowerCase()}
     //             </p>
-    //             <div className="inline-flex items-center gap-2 bg-[#f6f4ee] text-[#C72030] px-6 py-3 rounded-md hover:bg-[#f0ebe0] transition-colors">
+    //             <div className="inline-flex items-center gap-2 bg-[#f6f4ee] text-[#DA7756] px-6 py-3 rounded-md hover:bg-[#f0ebe0] transition-colors">
     //               <Package className="w-5 h-5" />
     //               Choose Image
     //             </div>
@@ -4318,7 +4318,7 @@ const AddAssetPage = () => {
 
   const renderCriticalField = () => (
     <div>
-      <label className="text-sm font-medium text-[#C72030] mb-2 block">
+      <label className="text-sm font-medium text-[#DA7756] mb-2 block">
         Critical
       </label>
       <div className="flex gap-6">
@@ -4333,9 +4333,9 @@ const AddAssetPage = () => {
               setCriticalStatus(e.target.value);
               handleFieldChange("critical", e.target.value);
             }}
-            className="w-4 h-4 text-[#C72030] border-gray-300"
+            className="w-4 h-4 text-[#DA7756] border-gray-300"
             style={{
-              accentColor: "#C72030",
+              accentColor: "#DA7756",
             }}
           />
           <label htmlFor="critical-yes" className="text-sm">
@@ -4353,9 +4353,9 @@ const AddAssetPage = () => {
               setCriticalStatus(e.target.value);
               handleFieldChange("critical", e.target.value);
             }}
-            className="w-4 h-4 text-[#C72030] border-gray-300"
+            className="w-4 h-4 text-[#DA7756] border-gray-300"
             style={{
-              accentColor: "#C72030",
+              accentColor: "#DA7756",
             }}
           />
           <label htmlFor="critical-no" className="text-sm">
@@ -4390,9 +4390,9 @@ const AddAssetPage = () => {
       <div className="space-y-4 sm:space-y-6">
         {/* Asset Category Selection */}
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <div className="border-l-4 border-l-[#C72030] p-2 sm:p-6 bg-white">
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-6">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+          <div className="border-l-4 border-l-[#DA7756] p-2 sm:p-6 bg-white">
+            <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold mb-6">
+              <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                 <Layers className="w-3 h-3 sm:w-4 sm:h-4" />
               </span>
               ASSET CATEGORY
@@ -4520,7 +4520,7 @@ const AddAssetPage = () => {
               {/* Basic Identification */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <FileText className="w-5 h-5" />
                       Basic Identification
@@ -4529,7 +4529,7 @@ const AddAssetPage = () => {
                       onClick={() =>
                         openCustomFieldModal("basicIdentification")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -4542,7 +4542,7 @@ const AddAssetPage = () => {
                     <TextField
                       label={
                         <span>
-                          Asset Name<span style={{ color: '#C72030' }}>*</span>
+                          Asset Name<span style={{ color: '#DA7756' }}>*</span>
                         </span>
                       }
                       placeholder="Enter land name"
@@ -4593,7 +4593,7 @@ const AddAssetPage = () => {
                         },
                       }}
                     >
-                      <InputLabel>Land Type<span style={{ color: '#C72030' }}>*</span></InputLabel>
+                      <InputLabel>Land Type<span style={{ color: '#DA7756' }}>*</span></InputLabel>
                       <MuiSelect
                         label="Land Type"
                         defaultValue=""
@@ -4657,14 +4657,14 @@ const AddAssetPage = () => {
               {/* Location & Ownership */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-5 h-5" />
                       Location & Ownership
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("locationOwnership")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -4676,7 +4676,7 @@ const AddAssetPage = () => {
                     <TextField
                       label={
                         <span>
-                          Location<span style={{ color: '#C72030' }}>*</span>
+                          Location<span style={{ color: '#DA7756' }}>*</span>
                         </span>
                       }
                       placeholder="Full address or GPS coordinates"
@@ -4842,14 +4842,14 @@ const AddAssetPage = () => {
               {/* Land Size & Value */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Ruler className="w-5 h-5" />
                       Land Size & Value
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("landSizeValue")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -4862,7 +4862,7 @@ const AddAssetPage = () => {
                       <TextField
                         label={
                           <span>
-                            Area<span style={{ color: '#C72030' }}>*</span>
+                            Area<span style={{ color: '#DA7756' }}>*</span>
                           </span>
                         }
                         placeholder="Enter area"
@@ -5076,7 +5076,7 @@ const AddAssetPage = () => {
               {/* Land Usage & Development */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Construction className="w-5 h-5" />
                       Land Usage & Development
@@ -5085,7 +5085,7 @@ const AddAssetPage = () => {
                       onClick={() =>
                         openCustomFieldModal("landUsageDevelopment")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -5215,14 +5215,14 @@ const AddAssetPage = () => {
               {/* Miscellaneous */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Archive className="w-5 h-5" />
                       Miscellaneous
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("miscellaneous")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -5370,14 +5370,14 @@ const AddAssetPage = () => {
               {/* Basic Identification */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <FileText className="w-5 h-5" />
                       Basic Identification
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("leaseholdBasicId")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -5389,7 +5389,7 @@ const AddAssetPage = () => {
                     <TextField
                       label={
                         <span>
-                          Asset Name <span style={{ color: '#C72030' }}>*</span>
+                          Asset Name <span style={{ color: '#DA7756' }}>*</span>
                         </span>
                       }
                       placeholder="e.g., Flooring, IT Cabling"
@@ -5472,7 +5472,7 @@ const AddAssetPage = () => {
               {/* Location & Association */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-5 h-5" />
                       Location & Association
@@ -5481,7 +5481,7 @@ const AddAssetPage = () => {
                       onClick={() =>
                         openCustomFieldModal("leaseholdLocationAssoc")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -5493,7 +5493,7 @@ const AddAssetPage = () => {
                     <TextField
                       label={
                         <span>
-                          Location / Site<span style={{ color: '#C72030' }}>*</span>
+                          Location / Site<span style={{ color: '#DA7756' }}>*</span>
                         </span>
                       }
                       placeholder="Enter location"
@@ -5595,14 +5595,14 @@ const AddAssetPage = () => {
               {/* Improvement Details */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Construction className="w-5 h-5" />
                       Improvement Details
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("improvementDetails")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -5614,7 +5614,7 @@ const AddAssetPage = () => {
                     <TextField
                       label={
                         <span>
-                          Improvement Description<span style={{ color: '#C72030' }}>*</span>
+                          Improvement Description<span style={{ color: '#DA7756' }}>*</span>
                         </span>
                       }
                       placeholder="Describe the improvement work"
@@ -5846,14 +5846,14 @@ const AddAssetPage = () => {
               {/* Financial & Depreciation */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <DollarSign className="w-5 h-5" />
                       Financial & Depreciation
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("leaseholdFinancial")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -6117,14 +6117,14 @@ const AddAssetPage = () => {
               {/* Lease & Maintenance Linkages */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-5 h-5" />
                       Lease & Maintenance Linkages
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("leaseholdLease")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -6305,14 +6305,14 @@ const AddAssetPage = () => {
               {/* Oversight & Documentation */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Users2 className="w-5 h-5" />
                       Oversight & Documentation
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("leaseholdOversight")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -6479,10 +6479,10 @@ const AddAssetPage = () => {
           <div className="bg-white shadow-sm rounded-lg overflow-hidden">
             <div
               onClick={() => toggleSection("assetAllocation")}
-              className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+              className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
             >
-              <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+              <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
                 </span>
                 ASSET ALLOCATION
@@ -6516,9 +6516,9 @@ const AddAssetPage = () => {
                             setSelectedUserId("");
                             handleSingleFieldChange("allocation_ids", "");
                           }}
-                          className="w-4 h-4 text-[#C72030] border-gray-300"
+                          className="w-4 h-4 text-[#DA7756] border-gray-300"
                           style={{
-                            accentColor: "#C72030",
+                            accentColor: "#DA7756",
                           }}
                         />
                         <label
@@ -6542,9 +6542,9 @@ const AddAssetPage = () => {
                             setSelectedUserId("");
                             handleSingleFieldChange("allocation_ids", "");
                           }}
-                          className="w-4 h-4 text-[#C72030] border-gray-300"
+                          className="w-4 h-4 text-[#DA7756] border-gray-300"
                           style={{
-                            accentColor: "#C72030",
+                            accentColor: "#DA7756",
                           }}
                         />
                         <label htmlFor="allocation-users" className="text-sm">
@@ -6649,14 +6649,14 @@ const AddAssetPage = () => {
               {/* Basic Identification */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <FileText className="w-5 h-5" />
                       Basic Identification
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("vehicleBasicId")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -6669,7 +6669,7 @@ const AddAssetPage = () => {
                     <TextField
                       label={
                         <span>
-                          Asset Name <span style={{ color: '#C72030' }}>*</span>
+                          Asset Name <span style={{ color: '#DA7756' }}>*</span>
                         </span>
                       }
                       placeholder="Name "
@@ -6698,7 +6698,7 @@ const AddAssetPage = () => {
                     />
 
                     <FormControl fullWidth sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}>
-                      <InputLabel>Vehicle Type<span style={{ color: '#C72030' }}>*</span></InputLabel>
+                      <InputLabel>Vehicle Type<span style={{ color: '#DA7756' }}>*</span></InputLabel>
                       <MuiSelect
                         label="Vehicle Type"
                         defaultValue=""
@@ -6724,7 +6724,7 @@ const AddAssetPage = () => {
                     <TextField
                       label={
                         <span>
-                          Make & Model<span style={{ color: '#C72030' }}>*</span>
+                          Make & Model<span style={{ color: '#DA7756' }}>*</span>
                         </span>
                       }
                       placeholder="e.g., Tata Ace, Honda Activa"
@@ -6744,7 +6744,7 @@ const AddAssetPage = () => {
                     <TextField
                       label={
                         <span>
-                          Registration Number<span style={{ color: '#C72030' }}>*</span>
+                          Registration Number<span style={{ color: '#DA7756' }}>*</span>
                         </span>
                       }
                       placeholder="e.g., MH01AB1234"
@@ -6764,7 +6764,7 @@ const AddAssetPage = () => {
 
                     {/* ✅ Asset Type radio buttons */}
                     <div className="mb-2 md:col-span-2">
-                      <label className="text-sm font-medium text-[#C72030] mb-2 block">
+                      <label className="text-sm font-medium text-[#DA7756] mb-2 block">
                         Asset Type
                       </label>
                       <div className="flex gap-6">
@@ -6775,8 +6775,8 @@ const AddAssetPage = () => {
                             name="assetType"
                             value="true"
                             checked={formData.asset_type === "true"}
-                            className="w-4 h-4 text-[#C72030] border-gray-300"
-                            style={{ accentColor: "#C72030" }}
+                            className="w-4 h-4 text-[#DA7756] border-gray-300"
+                            style={{ accentColor: "#DA7756" }}
                             onChange={(e) => handleFieldChange("asset_type", e.target.value)}
                           />
                           <label htmlFor="asset-type-comprehensive" className="text-sm">
@@ -6790,8 +6790,8 @@ const AddAssetPage = () => {
                             name="assetType"
                             value="false"
                             checked={formData.asset_type === "false"}
-                            className="w-4 h-4 text-[#C72030] border-gray-300"
-                            style={{ accentColor: "#C72030" }}
+                            className="w-4 h-4 text-[#DA7756] border-gray-300"
+                            style={{ accentColor: "#DA7756" }}
                             onChange={(e) => handleFieldChange("asset_type", e.target.value)}
                           />
                           <label htmlFor="asset-type-non-comprehensive" className="text-sm">
@@ -6836,7 +6836,7 @@ const AddAssetPage = () => {
               {/* Technical Specifications */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Cog className="w-5 h-5" />
                       Technical Specifications
@@ -6845,7 +6845,7 @@ const AddAssetPage = () => {
                       onClick={() =>
                         openCustomFieldModal("vehicleTechnicalSpecs")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -6966,14 +6966,14 @@ const AddAssetPage = () => {
               {/* Ownership & Usage */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Users2 className="w-5 h-5" />
                       Ownership & Usage
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("vehicleOwnership")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -7139,14 +7139,14 @@ const AddAssetPage = () => {
               {/* Financial & Depreciation */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <DollarSign className="w-5 h-5" />
                       Financial & Depreciation
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("vehicleFinancial")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -7314,7 +7314,7 @@ const AddAssetPage = () => {
                     <TextField
                       label={
                         <span>
-                          Warranty Expires On<span style={{ color: '#C72030' }}>*</span>
+                          Warranty Expires On<span style={{ color: '#DA7756' }}>*</span>
                         </span>
                       }
                       type="date"
@@ -7360,8 +7360,8 @@ const AddAssetPage = () => {
                                 e.target.value === "yes"
                               );
                             }}
-                            className="w-4 h-4 text-[#C72030] border-gray-300"
-                            style={{ accentColor: "#C72030" }}
+                            className="w-4 h-4 text-[#DA7756] border-gray-300"
+                            style={{ accentColor: "#DA7756" }}
                           />
                           <label
                             htmlFor="vehicle-warranty-yes"
@@ -7384,8 +7384,8 @@ const AddAssetPage = () => {
                                 e.target.value === "no"
                               );
                             }}
-                            className="w-4 h-4 text-[#C72030] border-gray-300"
-                            style={{ accentColor: "#C72030" }}
+                            className="w-4 h-4 text-[#DA7756] border-gray-300"
+                            style={{ accentColor: "#DA7756" }}
                           />
                           <label
                             htmlFor="vehicle-warranty-no"
@@ -7519,14 +7519,14 @@ const AddAssetPage = () => {
               {/* Performance Tracking */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Performance className="w-5 h-5" />
                       Performance Tracking
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("vehiclePerformance")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -7730,14 +7730,14 @@ const AddAssetPage = () => {
               {/* Legal & Compliance */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-5 h-5" />
                       Legal & Compliance
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("vehicleLegal")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -7978,7 +7978,7 @@ const AddAssetPage = () => {
               {/* Miscellaneous */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Archive className="w-5 h-5" />
                       Miscellaneous
@@ -7987,7 +7987,7 @@ const AddAssetPage = () => {
                       onClick={() =>
                         openCustomFieldModal("vehicleMiscellaneous")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -8135,14 +8135,14 @@ const AddAssetPage = () => {
               {/* Basic Identification */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <FileText className="w-5 h-5" />
                       Basic Identification
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("buildingBasicId")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -8152,7 +8152,7 @@ const AddAssetPage = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <TextField
-                      label={<span>Asset Name <span style={{ color: '#C72030' }}>*</span></span>}
+                      label={<span>Asset Name <span style={{ color: '#DA7756' }}>*</span></span>}
 
                       placeholder="Enter name"
                       variant="outlined"
@@ -8196,7 +8196,7 @@ const AddAssetPage = () => {
                         },
                       }}
                     >
-                      <InputLabel>Building Type<span style={{ color: '#C72030' }}>*</span></InputLabel>
+                      <InputLabel>Building Type<span style={{ color: '#DA7756' }}>*</span></InputLabel>
                       <MuiSelect
                         label="Building Type"
                         defaultValue=""
@@ -8287,14 +8287,14 @@ const AddAssetPage = () => {
               {/* Location & Ownership */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-5 h-5" />
                       Location & Ownership
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("buildingLocation")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -8306,7 +8306,7 @@ const AddAssetPage = () => {
                     <TextField
                       label={
                         <span>
-                          Location<span style={{ color: '#C72030' }}>*</span>
+                          Location<span style={{ color: '#DA7756' }}>*</span>
                         </span>
                       }
                       placeholder="Full address"
@@ -8420,7 +8420,7 @@ const AddAssetPage = () => {
               {/* Construction Details */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Construction className="w-5 h-5" />
                       Construction Details
@@ -8429,7 +8429,7 @@ const AddAssetPage = () => {
                       onClick={() =>
                         openCustomFieldModal("buildingConstruction")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -8518,7 +8518,7 @@ const AddAssetPage = () => {
                       <TextField
                         label={
                           <span>
-                            Built-up Area<span style={{ color: '#C72030' }}>*</span>
+                            Built-up Area<span style={{ color: '#DA7756' }}>*</span>
                           </span>
                         }
                         placeholder="Enter area"
@@ -8656,7 +8656,7 @@ const AddAssetPage = () => {
               {/* Acquisition & Value */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-5 h-5" />
                       Acquisition & Value
@@ -8665,7 +8665,7 @@ const AddAssetPage = () => {
                       onClick={() =>
                         openCustomFieldModal("buildingAcquisition")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -8957,14 +8957,14 @@ const AddAssetPage = () => {
               {/* Usage & Compliance */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-5 h-5" />
                       Usage & Compliance
                     </div>
                     <button
                       onClick={() => openCustomFieldModal("buildingUsage")}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -9224,7 +9224,7 @@ const AddAssetPage = () => {
               {/* Maintenance & Linkages */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Wrench className="w-5 h-5" />
                       Maintenance & Linkages
@@ -9233,7 +9233,7 @@ const AddAssetPage = () => {
                       onClick={() =>
                         openCustomFieldModal("buildingMaintenance")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -9341,7 +9341,7 @@ const AddAssetPage = () => {
               {/* Miscellaneous */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-[#C72030] text-lg font-semibold flex items-center justify-between">
+                  <CardTitle className="text-[#DA7756] text-lg font-semibold flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Archive className="w-5 h-5" />
                       Miscellaneous
@@ -9350,7 +9350,7 @@ const AddAssetPage = () => {
                       onClick={() =>
                         openCustomFieldModal("buildingMiscellaneous")
                       }
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -9491,10 +9491,10 @@ const AddAssetPage = () => {
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div
                   onClick={() => toggleSection("asset")}
-                  className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                  className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                       <Package className="w-3 h-3 sm:w-4 sm:h-4" />
                     </span>
                     ASSET DETAILS
@@ -9508,7 +9508,7 @@ const AddAssetPage = () => {
                       className="px-3 py-1 rounded text-sm flex items-center gap-1"
                       style={{
                         backgroundColor: "#F6F4EE",
-                        color: "#C72030",
+                        color: "#DA7756",
                       }}
                     >
                       <Plus className="w-4 h-4" />
@@ -9529,7 +9529,7 @@ const AddAssetPage = () => {
 
                         label={
                           <span>
-                            Asset Name<span style={{ color: '#C72030' }}>*</span>
+                            Asset Name<span style={{ color: '#DA7756' }}>*</span>
                           </span>
                         }
                         placeholder="Enter Asset Name"
@@ -9657,7 +9657,7 @@ const AddAssetPage = () => {
                         }}
                       >
                         <InputLabel id="group-select-label" shrink>
-                          Group<span style={{ color: '#C72030' }}>*</span>
+                          Group<span style={{ color: '#DA7756' }}>*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="group-select-label"
@@ -9694,7 +9694,7 @@ const AddAssetPage = () => {
                         }}
                       >
                         <InputLabel id="subgroup-select-label" shrink>
-                          Subgroup<span style={{ color: '#C72030' }}>*</span>
+                          Subgroup<span style={{ color: '#DA7756' }}>*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="subgroup-select-label"
@@ -9771,7 +9771,7 @@ const AddAssetPage = () => {
                     <div className="mb-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
-                          <label className="text-sm font-medium text-[#C72030] mb-2 block">
+                          <label className="text-sm font-medium text-[#DA7756] mb-2 block">
                             Status
                           </label>
                           <div className="flex gap-6">
@@ -9782,9 +9782,9 @@ const AddAssetPage = () => {
                                 name="status"
                                 value="false"
                                 defaultChecked
-                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                className="w-4 h-4 text-[#DA7756] border-gray-300"
                                 style={{
-                                  accentColor: "#C72030",
+                                  accentColor: "#DA7756",
                                 }}
                                 onChange={(e) => {
                                   handleFieldChange("breakdown", e.target.value)
@@ -9802,9 +9802,9 @@ const AddAssetPage = () => {
                                 id="status-breakdown"
                                 name="status"
                                 value="true"
-                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                className="w-4 h-4 text-[#DA7756] border-gray-300"
                                 style={{
-                                  accentColor: "#C72030",
+                                  accentColor: "#DA7756",
                                 }}
                                 onChange={(e) => {
                                   handleFieldChange("breakdown", e.target.value)
@@ -9826,7 +9826,7 @@ const AddAssetPage = () => {
                     <div className="mb-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
-                          <label className="text-sm font-medium text-[#C72030] mb-2 block">
+                          <label className="text-sm font-medium text-[#DA7756] mb-2 block">
                             Asset Type
                           </label>
                           <div className="flex gap-6">
@@ -9837,9 +9837,9 @@ const AddAssetPage = () => {
                                 name="assetType"
                                 value="true"
                                 checked={formData.asset_type === "true"}
-                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                className="w-4 h-4 text-[#DA7756] border-gray-300"
                                 style={{
-                                  accentColor: "#C72030",
+                                  accentColor: "#DA7756",
                                 }}
                                 onChange={(e) =>
                                   handleFieldChange("asset_type", e.target.value)
@@ -9856,9 +9856,9 @@ const AddAssetPage = () => {
                                 name="assetType"
                                 value="false"
                                 checked={formData.asset_type === "false"}
-                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                className="w-4 h-4 text-[#DA7756] border-gray-300"
                                 style={{
-                                  accentColor: "#C72030",
+                                  accentColor: "#DA7756",
                                 }}
                                 onChange={(e) =>
                                   handleFieldChange("asset_type", e.target.value)
@@ -9919,10 +9919,10 @@ const AddAssetPage = () => {
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div
                   onClick={() => toggleSection("location")}
-                  className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                  className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                       <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
                     </span>
                     LOCATION DETAILS
@@ -9945,7 +9945,7 @@ const AddAssetPage = () => {
                         sx={{ minWidth: 120 }}
                       >
                         <InputLabel id="site-select-label" shrink>
-                          Site<span style={{ color: '#C72030' }}>*</span>
+                          Site<span style={{ color: '#DA7756' }}>*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="site-select-label"
@@ -10184,10 +10184,10 @@ const AddAssetPage = () => {
                 <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                   <div
                     onClick={() => toggleSection("warranty")}
-                    className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                    className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                   >
-                    <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                      <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                    <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                      <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                         <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
                       </span>
                       IT ASSETS DETAILS
@@ -10201,7 +10201,7 @@ const AddAssetPage = () => {
                         className="px-3 py-1 rounded text-sm flex items-center gap-1 hover:opacity-80"
                         style={{
                           backgroundColor: "#F6F4EE",
-                          color: "#C72030",
+                          color: "#DA7756",
                         }}
                       >
                         <Plus className="w-4 h-4" />
@@ -10221,7 +10221,7 @@ const AddAssetPage = () => {
                         <h3
                           className="font-semibold mb-4"
                           style={{
-                            color: "#C72030",
+                            color: "#DA7756",
                           }}
                         >
                           SYSTEM DETAILS
@@ -10346,8 +10346,8 @@ const AddAssetPage = () => {
                                 }
                                 className="font-semibold text-sm bg-transparent border-b focus:outline-none"
                                 style={{
-                                  color: "#C72030",
-                                  borderColor: "#C72030",
+                                  color: "#DA7756",
+                                  borderColor: "#DA7756",
                                 }}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") {
@@ -10387,7 +10387,7 @@ const AddAssetPage = () => {
                             <div className="flex items-center gap-2">
                               <h3
                                 className="font-semibold"
-                                style={{ color: "#C72030" }}
+                                style={{ color: "#DA7756" }}
                               >
                                 {hardDiskHeading}
                               </h3>
@@ -10521,10 +10521,10 @@ const AddAssetPage = () => {
                   <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                     <div
                       onClick={() => toggleSection("meterCategory")}
-                      className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                      className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                     >
-                      <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                        <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                      <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                        <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                           <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
                         </span>
                         METER DETAILS
@@ -10542,7 +10542,7 @@ const AddAssetPage = () => {
                         {/* Meter Type */}
                         <div className="mb-6">
                           <div className="flex items-center gap-4 mb-4">
-                            <span className="text-[#C72030] font-medium text-sm sm:text-base">
+                            <span className="text-[#DA7756] font-medium text-sm sm:text-base">
                               Meter Type
                             </span>
                             <div className="flex gap-6">
@@ -10560,9 +10560,9 @@ const AddAssetPage = () => {
                                       e.target.value
                                     );
                                   }}
-                                  className="w-4 h-4 text-[#C72030] border-gray-300"
+                                  className="w-4 h-4 text-[#DA7756] border-gray-300"
                                   style={{
-                                    accentColor: "#C72030",
+                                    accentColor: "#DA7756",
                                   }}
                                 />
                                 <label
@@ -10586,9 +10586,9 @@ const AddAssetPage = () => {
                                       e.target.value
                                     );
                                   }}
-                                  className="w-4 h-4 text-[#C72030] border-gray-300"
+                                  className="w-4 h-4 text-[#DA7756] border-gray-300"
                                   style={{
-                                    accentColor: "#C72030",
+                                    accentColor: "#DA7756",
                                   }}
                                 />
                                 <label
@@ -10606,7 +10606,7 @@ const AddAssetPage = () => {
                         {meterType === "SubMeter" && (
                           <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Parent Meter <span style={{ color: '#C72030' }}>*</span>
+                              Parent Meter <span style={{ color: '#DA7756' }}>*</span>
                             </label>
                             <FormControl fullWidth>
                               <InputLabel>Parent Meter</InputLabel>
@@ -10673,9 +10673,9 @@ const AddAssetPage = () => {
                                             e.target.value
                                           )
                                         }
-                                        className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                        className="w-4 h-4 text-[#DA7756] border-gray-300 focus:ring-[#DA7756]"
                                         style={{
-                                          accentColor: "#C72030",
+                                          accentColor: "#DA7756",
                                         }}
                                       />
                                       <IconComponent className="w-4 h-4 text-gray-600" />
@@ -10733,9 +10733,9 @@ const AddAssetPage = () => {
                                           onChange={(e) => {
                                             handleSubCategoryChange(e.target.value);
                                           }}
-                                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                          className="w-4 h-4 text-[#DA7756] border-gray-300 focus:ring-[#DA7756]"
                                           style={{
-                                            accentColor: "#C72030",
+                                            accentColor: "#DA7756",
                                           }}
                                         />
                                         <IconComponent className="w-4 h-4 text-gray-600" />
@@ -10774,9 +10774,9 @@ const AddAssetPage = () => {
                                           onChange={(e) => {
                                             handleSubCategoryChange(e.target.value);
                                           }}
-                                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                          className="w-4 h-4 text-[#DA7756] border-gray-300 focus:ring-[#DA7756]"
                                           style={{
-                                            accentColor: "#C72030",
+                                            accentColor: "#DA7756",
                                           }}
                                         />
                                         <IconComponent className="w-4 h-4 text-gray-600" />
@@ -10815,9 +10815,9 @@ const AddAssetPage = () => {
                                           onChange={(e) => {
                                             handleSubCategoryChange(e.target.value);
                                           }}
-                                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                          className="w-4 h-4 text-[#DA7756] border-gray-300 focus:ring-[#DA7756]"
                                           style={{
-                                            accentColor: "#C72030",
+                                            accentColor: "#DA7756",
                                           }}
                                         />
                                         <IconComponent className="w-4 h-4 text-gray-600" />
@@ -10856,9 +10856,9 @@ const AddAssetPage = () => {
                                           onChange={(e) => {
                                             handleTertiaryCategoryChange(e.target.value);
                                           }}
-                                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                          className="w-4 h-4 text-[#DA7756] border-gray-300 focus:ring-[#DA7756]"
                                           style={{
-                                            accentColor: "#C72030",
+                                            accentColor: "#DA7756",
                                           }}
                                         />
                                         <IconComponent className="w-4 h-4 text-gray-600" />
@@ -10897,9 +10897,9 @@ const AddAssetPage = () => {
                                           onChange={(e) => {
                                             handleSubCategoryChange(e.target.value);
                                           }}
-                                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                          className="w-4 h-4 text-[#DA7756] border-gray-300 focus:ring-[#DA7756]"
                                           style={{
-                                            accentColor: "#C72030",
+                                            accentColor: "#DA7756",
                                           }}
                                         />
                                         <IconComponent className="w-4 h-4 text-gray-600" />
@@ -10998,10 +10998,10 @@ const AddAssetPage = () => {
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div
                   onClick={() => toggleSection("consumption")}
-                  className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                  className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                       <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
                     </span>
                     PURCHASE DETAILS
@@ -11012,7 +11012,7 @@ const AddAssetPage = () => {
                         e.stopPropagation();
                         openCustomFieldModal("purchaseDetails");
                       }}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
+                      className="flex items-center gap-1 text-[#DA7756] text-sm font-medium bg-[#f6f4ee] px-2 py-1 rounded"
                     >
                       <Plus className="w-4 h-4" />
                       Custom Field
@@ -11126,9 +11126,9 @@ const AddAssetPage = () => {
                               id="warranty-yes"
                               name="underWarranty"
                               value="yes"
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: "#DA7756",
                               }}
                               checked={underWarranty === "yes"}
                               onChange={(e) => {
@@ -11146,9 +11146,9 @@ const AddAssetPage = () => {
                               id="warranty-no"
                               name="underWarranty"
                               value="no"
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: "#DA7756",
                               }}
                               onChange={(e) => {
                                 setUnderWarranty(e.target.value);
@@ -11239,10 +11239,10 @@ const AddAssetPage = () => {
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div
                   onClick={() => toggleSection("nonConsumption")}
-                  className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                  className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                       <Percent className="w-3 h-3 sm:w-4 sm:h-4" />
                     </span>
                     DEPRECIATION RULE
@@ -11270,9 +11270,9 @@ const AddAssetPage = () => {
                               id="straight-line"
                               name="depreciationMethod"
                               value="straight_line"
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: "#DA7756",
                               }}
                               onChange={(e) =>
                                 handleFieldChange(
@@ -11294,9 +11294,9 @@ const AddAssetPage = () => {
                               id="wdv"
                               name="depreciationMethod"
                               value="wdv"
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: "#DA7756",
                               }}
                               onChange={(e) =>
                                 handleFieldChange(
@@ -11320,7 +11320,7 @@ const AddAssetPage = () => {
                         <TextField
                           label={
                             <span>
-                              Useful Life (Years)<span style={{ color: '#C72030' }}>*</span>
+                              Useful Life (Years)<span style={{ color: '#DA7756' }}>*</span>
                             </span>
                           }
                           placeholder="Enter years"
@@ -11357,7 +11357,7 @@ const AddAssetPage = () => {
                           required={!!formData.depreciation_method}
                           label={
                             <span>
-                              Salvage Value{formData.depreciation_method && <span style={{ color: '#C72030' }}>*</span>}
+                              Salvage Value{formData.depreciation_method && <span style={{ color: '#DA7756' }}>*</span>}
                             </span>
                           }
                           placeholder="Enter Value"
@@ -11445,9 +11445,9 @@ const AddAssetPage = () => {
                               name="depreciation_applicable_for"
                               value="only_this"
                               defaultChecked
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: "#DA7756",
                               }}
                               onChange={(e) =>
                                 handleFieldChange(
@@ -11468,9 +11468,9 @@ const AddAssetPage = () => {
                               id="similar-product"
                               name="depreciation_applicable_for"
                               value="similar_product"
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: "#DA7756",
                               }}
                               onChange={(e) =>
                                 handleFieldChange(
@@ -11502,9 +11502,9 @@ const AddAssetPage = () => {
                                       id="individual-asset"
                                       name="similar_product_type"
                                       value="individual"
-                                      className="w-4 h-4 text-[#C72030] border-gray-300"
+                                      className="w-4 h-4 text-[#DA7756] border-gray-300"
                                       style={{
-                                        accentColor: "#C72030",
+                                        accentColor: "#DA7756",
                                       }}
                                       onChange={(e) =>
                                         handleFieldChange(
@@ -11528,9 +11528,9 @@ const AddAssetPage = () => {
                                       id="group-asset"
                                       name="similar_product_type"
                                       value="group"
-                                      className="w-4 h-4 text-[#C72030] border-gray-300"
+                                      className="w-4 h-4 text-[#DA7756] border-gray-300"
                                       style={{
-                                        accentColor: "#C72030",
+                                        accentColor: "#DA7756",
                                       }}
                                       onChange={(e) =>
                                         handleFieldChange(
@@ -11773,10 +11773,10 @@ const AddAssetPage = () => {
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div
                   onClick={() => toggleSection("assetAllocation")}
-                  className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                  className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                       <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
                     </span>
                     ASSET ALLOCATION
@@ -11810,9 +11810,9 @@ const AddAssetPage = () => {
                                 setSelectedUserId("");
                                 handleSingleFieldChange("allocation_ids", "");
                               }}
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: "#DA7756",
                               }}
                             />
                             <label
@@ -11836,9 +11836,9 @@ const AddAssetPage = () => {
                                 setSelectedUserId("");
                                 handleSingleFieldChange("allocation_ids", "");
                               }}
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
+                              className="w-4 h-4 text-[#DA7756] border-gray-300"
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: "#DA7756",
                               }}
                             />
                             <label htmlFor="allocation-users" className="text-sm">
@@ -11937,10 +11937,10 @@ const AddAssetPage = () => {
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div
                   onClick={() => toggleSection("assetLoaned")}
-                  className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                  className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                       <Users className="w-3 h-3 sm:w-4 sm:h-4" />
                     </span>
                     ASSET LOANED
@@ -11996,7 +11996,7 @@ const AddAssetPage = () => {
                         }}
                       >
                         <InputLabel id="vendor-select-label" shrink>
-                          Vendor Name{assetLoanedToggle && <span style={{ color: '#C72030' }}>*</span>}
+                          Vendor Name{assetLoanedToggle && <span style={{ color: '#DA7756' }}>*</span>}
                         </InputLabel>
                         <MuiSelect
                           labelId="vendor-select-label"
@@ -12030,7 +12030,7 @@ const AddAssetPage = () => {
                       <TextField
                         label={
                           <span>
-                            Agreement Start Date{assetLoanedToggle && <span style={{ color: '#C72030' }}>*</span>}
+                            Agreement Start Date{assetLoanedToggle && <span style={{ color: '#DA7756' }}>*</span>}
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -12063,7 +12063,7 @@ const AddAssetPage = () => {
                       <TextField
                         label={
                           <span>
-                            Agreement End Date{assetLoanedToggle && <span style={{ color: '#C72030' }}>*</span>}
+                            Agreement End Date{assetLoanedToggle && <span style={{ color: '#DA7756' }}>*</span>}
                           </span>
                         }
                         placeholder="dd/mm/yyyy"
@@ -12097,10 +12097,10 @@ const AddAssetPage = () => {
               <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div
                   onClick={() => toggleSection("amcDetails")}
-                  className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+                  className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
                 >
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+                    <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                       <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
                     </span>
                     AMC DETAILS
@@ -12420,10 +12420,10 @@ const AddAssetPage = () => {
         <div className="bg-white shadow-sm rounded-lg overflow-hidden">
           <div
             onClick={() => toggleSection("attachments")}
-            className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white"
+            className="cursor-pointer border-l-4 border-l-[#DA7756] p-4 sm:p-6 flex justify-between items-center bg-white"
           >
-            <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+            <div className="flex items-center gap-2 text-[#DA7756] text-sm sm:text-base font-semibold">
+              <span className="bg-[#DA7756] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                 <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
               </span>
               ATTACHMENTS
@@ -12463,7 +12463,7 @@ const AddAssetPage = () => {
             //         className="cursor-pointer block"
             //       >
             //         <div className="flex items-center justify-center space-x-2 mb-2">
-            //           <span className="text-[#C72030] font-medium text-xs sm:text-sm">
+            //           <span className="text-[#DA7756] font-medium text-xs sm:text-sm">
             //             Choose Asset Image
             //           </span>
             //           <span className="text-gray-500 text-xs sm:text-sm">
@@ -12513,9 +12513,9 @@ const AddAssetPage = () => {
             //           onClick={() =>
             //             document.getElementById("asset-image-upload")?.click()
             //           }
-            //           className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
+            //           className="text-xs sm:text-sm bg-[#f6f4ee] text-[#DA7756] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
             //         >
-            //           <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+            //           <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#DA7756]" />
             //           Upload Asset Image
             //         </button>
             //       </div>
@@ -12582,7 +12582,7 @@ const AddAssetPage = () => {
             //             className="cursor-pointer block"
             //           >
             //             <div className="flex items-center justify-center space-x-2 mb-2">
-            //               <span className="text-[#C72030] font-medium text-xs sm:text-sm">
+            //               <span className="text-[#DA7756] font-medium text-xs sm:text-sm">
             //                 Choose File
             //               </span>
             //               <span className="text-gray-500 text-xs sm:text-sm">
@@ -12622,9 +12622,9 @@ const AddAssetPage = () => {
             //               onClick={() =>
             //                 document.getElementById(field.id)?.click()
             //               }
-            //               className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
+            //               className="text-xs sm:text-sm bg-[#f6f4ee] text-[#DA7756] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
             //             >
-            //               <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+            //               <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#DA7756]" />
             //               Upload Files
             //             </button>
             //           </div>
@@ -12662,7 +12662,7 @@ const AddAssetPage = () => {
                     className="cursor-pointer block"
                   >
                     <div className="flex items-center justify-center space-x-2 mb-2">
-                      <span className="text-[#C72030] font-medium text-xs sm:text-sm">
+                      <span className="text-[#DA7756] font-medium text-xs sm:text-sm">
                         Choose Asset Image
                       </span>
                       <span className="text-gray-500 text-xs sm:text-sm">
@@ -12712,9 +12712,9 @@ const AddAssetPage = () => {
                       onClick={() =>
                         document.getElementById("asset-image-upload")?.click()
                       }
-                      className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
+                      className="text-xs sm:text-sm bg-[#f6f4ee] text-[#DA7756] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
                     >
-                      <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                      <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#DA7756]" />
                       Upload Asset Image
                     </button>
                   </div>
@@ -12781,7 +12781,7 @@ const AddAssetPage = () => {
                         className="cursor-pointer block"
                       >
                         <div className="flex items-center justify-center space-x-2 mb-2">
-                          <span className="text-[#C72030] font-medium text-xs sm:text-sm">
+                          <span className="text-[#DA7756] font-medium text-xs sm:text-sm">
                             Choose File
                           </span>
                           <span className="text-gray-500 text-xs sm:text-sm">
@@ -12820,9 +12820,9 @@ const AddAssetPage = () => {
                           onClick={() =>
                             document.getElementById(field.id)?.click()
                           }
-                          className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
+                          className="text-xs sm:text-sm bg-[#f6f4ee] text-[#DA7756] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
                         >
-                          <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                          <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#DA7756]" />
                           Upload Files
                         </button>
                       </div>
@@ -12838,14 +12838,14 @@ const AddAssetPage = () => {
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">
           <button
             onClick={handleSaveAndShow}
-            className="border border-[#C72030] text-[#C72030] px-6 sm:px-8 py-2 rounded-md   text-sm sm:text-base"
+            className="fm-button-fix fm-button-brand px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base"
           // disabled={submitting}
           >
             Save & Show Details
           </button>
           <button
             onClick={handleSaveAndCreate}
-            className="px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base bg-[#f6f4ee] text-red-700"
+            className="fm-button-fix fm-button-brand px-6 sm:px-8 py-2 rounded-md text-sm sm:text-base"
           >
             Save & Create New Asset
           </button>
@@ -12901,7 +12901,7 @@ const AddAssetPage = () => {
                 setCustomFieldModalOpen(false);
                 setNewFieldName("");
               }}
-              className="px-6 py-2 border border-[#C72030] rounded-md hover:bg-gray-50 text-sm text-orange-700"
+              className="px-6 py-2 border border-[#DA7756] rounded-md hover:bg-gray-50 text-sm text-orange-700"
             >
               Cancel
             </button>

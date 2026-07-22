@@ -63,8 +63,8 @@ interface SprintMemberModalProps {
   onClose: () => void;
   membersSummary: MemberSummary[];
   membersLoading: boolean;
-  onFilterTask: (memberId: number) => void;
-  onFilterIssue: (memberId: number) => void;
+  onFilterTask: (memberId: number, status?: string) => void;
+  onFilterIssue: (memberId: number, status?: string) => void;
 }
 
 export default function SprintMemberModal({
@@ -276,7 +276,7 @@ export default function SprintMemberModal({
                           </td>
                           <td
                             className="px-1.5 py-2 text-center border-r border-slate-300 cursor-pointer hover:bg-blue-50"
-                            onClick={() => onFilterTask(m.member_id)}
+                            onClick={() => onFilterTask(m.member_id, "completed")}
                           >
                             <span className="text-[13px] font-semibold text-blue-600">
                               {m.completed_tasks}
@@ -317,7 +317,7 @@ export default function SprintMemberModal({
                           </td>
                           <td
                             className="px-1.5 py-2 text-center border-r border-slate-300 cursor-pointer hover:bg-blue-50"
-                            onClick={() => onFilterIssue(m.member_id)}
+                            onClick={() => onFilterIssue(m.member_id, "completed")}
                           >
                             <span className="text-[13px] font-semibold text-blue-600">
                               {m.completed_issues}

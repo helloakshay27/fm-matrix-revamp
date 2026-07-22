@@ -70,8 +70,7 @@ export const TaskAnalyticsSelector: React.FC<TaskAnalyticsSelectorProps> = ({
     <Popover>
       <PopoverTrigger asChild>
         <Button 
-          variant="outline" 
-          className="flex items-center gap-2 min-w-[200px] justify-between"
+          className="fm-button-fix fm-button-brand flex items-center gap-2 min-w-[200px] justify-between"
         >
           <span>
             {selectedCount} Report{selectedCount !== 1 ? 's' : ''} Selected

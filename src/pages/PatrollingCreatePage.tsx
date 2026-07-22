@@ -1741,7 +1741,8 @@ export const PatrollingCreatePage: React.FC = () => {
             </div>
           ))}
           <div className="flex justify-end">
-            <Button variant="outline" onClick={addCheckpoint} disabled={isSubmitting}>
+            <Button variant="outline" onClick={addCheckpoint} disabled={isSubmitting} className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost">
               <Plus className="w-4 h-4 mr-2" /> Add Checkpoint
             </Button>
           </div>
@@ -1751,7 +1752,8 @@ export const PatrollingCreatePage: React.FC = () => {
       <div className="flex items-center gap-3 justify-center pt-2">
         <Button
           variant="destructive"
-          className="px-8"
+          className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
           onClick={handleSubmit}
           disabled={isSubmitting}
         >

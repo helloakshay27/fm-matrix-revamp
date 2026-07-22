@@ -82,24 +82,27 @@ export const OSRDetailsPage = () => {
 
         {/* Action Buttons */}
         <div className="flex gap-3 mb-6">
-          <Button onClick={() => setShowCloseDialog(true)}>
+          <Button onClick={() => setShowCloseDialog(true)} variant="ghost" className="fm-button-fix fm-button-brand px-4 py-2">
             Close OSR
           </Button>
           <Button 
             onClick={() => setShowScheduleDialog(true)}
-            className="bg-[#17a2b8] hover:bg-[#17a2b8]/90"
+            variant="ghost"
+            className="fm-button-fix fm-button-brand px-4 py-2"
           >
             Schedule Second Visit
           </Button>
           <Button 
             onClick={() => setShowCancelDialog(true)}
-            className="bg-orange-500 hover:bg-orange-600"
+            variant="ghost"
+            className="fm-button-fix fm-button-brand px-4 py-2"
           >
             Cancel
           </Button>
           <Button 
             onClick={() => setShowEditDialog(true)}
-            className="bg-orange-500 hover:bg-orange-600 ml-auto"
+            variant="ghost"
+            className="fm-button-fix fm-button-brand px-4 py-2 ml-auto"
           >
             Edit
           </Button>

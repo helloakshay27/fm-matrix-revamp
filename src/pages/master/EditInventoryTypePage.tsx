@@ -192,7 +192,7 @@ const EditInventoryTypePage = () => {
               </div>
             </div>
             <div className="flex justify-center space-x-4 pt-4">
-              <Button type="submit" className="w-32">Save</Button>
+              <Button type="submit" className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost">Save</Button>
               <Button type="button" variant="outline" className="w-32" onClick={() => navigate(basePath)}>Cancel</Button>
             </div>
           </form>

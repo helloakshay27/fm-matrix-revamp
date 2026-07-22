@@ -917,6 +917,7 @@ const AddAddressMaster = lazy(() => import("./pages/master/AddAddressMaster"));
 const EditAddressMaster = lazy(() => import("./pages/master/EditAddressMaster"));
 const MobileLMCPage = lazy(() => import("./pages/MobileLMCPage"));
 const ViBusinessCard = lazy(() => import("./pages/mobile/ViBusinessCard").then(m => ({ default: m.ViBusinessCard })));
+const GoPhygitalBusinessCard = lazy(() => import("./pages/mobile/GoPhygitalBusinessCard").then(m => ({ default: m.GoPhygitalBusinessCard })));
 const CompanyPartnersSetupDashboard = lazy(() => import("./pages/CompanyPartnersSetupDashboard").then(m => ({ default: m.CompanyPartnersSetupDashboard })));
 const TestimonialsSetupDashboard = lazy(() => import("./pages/TestimonialsSetupDashboard").then(m => ({ default: m.TestimonialsSetupDashboard })));
 const BannerListPage = lazy(() => import("./pages/BannerListPage"));
@@ -1237,6 +1238,7 @@ import BusinessCompassTaskDetailsPage from "./pages/BusinessCompass/BusinessComp
 import BusinessCompassIssuesPage from "./pages/BusinessCompass/BusinessCompassIssuesPage.tsx";
 import BusinessCompassIssueDetailsPage from "./pages/BusinessCompass/BusinessCompassIssueDetailsPage.tsx";
 import BusinessCompassTodoPage from "./pages/BusinessCompass/BusinessCompassTodoPage.tsx";
+import PatrollingCheckpointHistoryPage from "./pages/PatrollingCheckpointHistoryPage.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -1363,6 +1365,7 @@ const BusinessCompassDailyReport = lazy(() => import("./pages/BusinessCompass/Bu
 const BusinessPlanAndGoles = lazy(() => import("./pages/AdminCompass/BusinessPlanAndGoles"));
 const DailyMeeting = lazy(() => import("./pages/AdminCompass/DailyMeeting"));
 const KPI = lazy(() => import("./pages/AdminCompass/KPI"));
+const AdminCompassJobs = lazy(() => import("./pages/AdminCompass/Jobs"));
 const ReportAnalytics = lazy(() => import("./pages/ReportAnalytics"));
 const WeeklyMeetings = lazy(() => import("./pages/AdminCompass/WeeklyMeetings"));
 const TeamDashboard = lazy(() => import("./pages/AdminCompass/TeamDashboard"));
@@ -2383,6 +2386,10 @@ function App() {
                             <Route
                               path="/admin-compass/team-setup"
                               element={<TeamSetup />}
+                            />
+                            <Route
+                              path="/admin-compass/jobs"
+                              element={<AdminCompassJobs />}
                             />
                             <Route
                               path="/admin-compass/disc-report"
@@ -5239,6 +5246,10 @@ function App() {
                               path="/security/patrolling/response/details/:id"
                               element={<PatrollingDetailPage />}
                             />
+                              <Route
+                              path="/security/patrolling/checkpoints/:checkpointId/history"
+                              element={<PatrollingCheckpointHistoryPage />}
+                            />
                             <Route
                               path="/security/staff"
                               element={<StaffsDashboard />}
@@ -6800,6 +6811,10 @@ function App() {
                           <Route
                             path="/vi-business-card"
                             element={<ViBusinessCard />}
+                          />
+                          <Route
+                            path="/gophygital-business-card"
+                            element={<GoPhygitalBusinessCard />}
                           />
 
                           {/* Quick Links Routes */}

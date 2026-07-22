@@ -53,6 +53,11 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import PurchaseDocumentPdf from "./purchasepdftamplate";
+import {
+  bankMasterListUrl,
+  getBankMasterApiConfig,
+  mapApiBankRecord,
+} from "./bankMasterUtils";
 // Types
 interface SalesOrderItem {
   id: number;
@@ -229,6 +234,7 @@ export const RecurringBillDetails = () => {
   const [showApprovalLog, setShowApprovalLog] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+  const [bankDetail, setBankDetail] = useState<any>(null);
   const recurringBillPdfRef = useRef<HTMLDivElement | null>(null);
   const [transactionRecords, setTransactionRecords] = useState<
     TransactionRecord[]
@@ -263,6 +269,31 @@ export const RecurringBillDetails = () => {
     };
     if (id) fetchSalesOrder();
   }, [id]);
+
+  // Resolve the bank selected on the recurring bill, if any
+  useEffect(() => {
+    const fetchBankDetail = async () => {
+      const bankId = (salesOrder as any)?.bank_master_id || (salesOrder as any)?.bank_master?.id;
+      if (!bankId) {
+        setBankDetail(null);
+        return;
+      }
+      if ((salesOrder as any)?.bank_master) {
+        setBankDetail(mapApiBankRecord((salesOrder as any).bank_master));
+        return;
+      }
+      try {
+        const { baseUrl: bmBaseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(bankMasterListUrl(bmBaseUrl, lockAccountId), { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        const found = data.map(mapApiBankRecord).find((b: any) => String(b.id) === String(bankId));
+        setBankDetail(found || null);
+      } catch (err) {
+        setBankDetail(null);
+      }
+    };
+    fetchBankDetail();
+  }, [salesOrder]);
 
   if (loading) {
     return (
@@ -877,6 +908,43 @@ export const RecurringBillDetails = () => {
                 </CardContent>
               </Card>
 
+              {/* Bank Details */}
+              {bankDetail && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base font-semibold">Bank Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
+                      <p className="text-sm mt-1">{bankDetail.bankName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Account Number</p>
+                      <p className="text-sm mt-1">{bankDetail.accountNo}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Beneficiary / Account Name</p>
+                      <p className="text-sm mt-1">{bankDetail.beneficiaryName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">IFSC Code</p>
+                      <p className="text-sm mt-1">{bankDetail.ifscCode}</p>
+                    </div>
+                    {bankDetail.swiftCode && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Swift Code</p>
+                        <p className="text-sm mt-1">{bankDetail.swiftCode}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Branch</p>
+                      <p className="text-sm mt-1">{bankDetail.branch}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Notes and Terms */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {salesOrder.customerNotes && (
@@ -1235,6 +1303,7 @@ export const RecurringBillDetails = () => {
                         secondaryDateLabel="Start Date"
                         secondaryDate={(salesOrder as any)?.recurring_detail?.start_date}
                         referenceNumber={(salesOrder as any)?.order_number}
+                        bankDetail={bankDetail}
                       />
                     </div>
                   </div>
@@ -1263,6 +1332,7 @@ export const RecurringBillDetails = () => {
               secondaryDateLabel="Start Date"
               secondaryDate={(salesOrder as any)?.recurring_detail?.start_date}
               referenceNumber={(salesOrder as any)?.order_number}
+              bankDetail={bankDetail}
             />
           </div>
         </div>

@@ -210,7 +210,8 @@ export const EmailRuleSetupPage: React.FC = () => {
           <div className="flex justify-between items-center">
             <Button 
               onClick={() => setCreateDialogOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add

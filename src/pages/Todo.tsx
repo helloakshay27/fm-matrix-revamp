@@ -568,6 +568,8 @@ export default function Todo() {
               {(shouldShow("Todo","create") &&
               <Button
                 onClick={() => setIsAddTodoModalOpen(true)}
+                className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
               >
                 <Plus size={18} />
                 Add
@@ -622,7 +624,7 @@ export default function Todo() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
+                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2 rounded-lg"
                 title='Filter'
                 onClick={() => setIsFilterModalOpen(true)}
               >

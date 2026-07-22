@@ -333,7 +333,8 @@ export const AddInvoiceApprovalsPage = () => {
             <Button
               onClick={handleCreate}
               disabled={submitting}
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+             className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
             >
               {submitting ? 'Creating...' : 'Create'}
             </Button>

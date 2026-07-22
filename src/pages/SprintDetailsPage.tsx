@@ -69,6 +69,12 @@ export const SprintDetailsPage = () => {
   const [selectedOption, setSelectedOption] = useState("Open");
   const [memberTaskFilter, setMemberTaskFilter] = useState<number | undefined>(undefined);
   const [memberIssueFilter, setMemberIssueFilter] = useState<number | undefined>(undefined);
+  const [memberTaskStatusFilter, setMemberTaskStatusFilter] = useState<string | undefined>(undefined);
+  const [memberIssueStatusFilter, setMemberIssueStatusFilter] = useState<string | undefined>(undefined);
+  const [projectTaskFilter, setProjectTaskFilter] = useState<number | undefined>(undefined);
+  const [projectIssueFilter, setProjectIssueFilter] = useState<number | undefined>(undefined);
+  const [projectTaskStatusFilter, setProjectTaskStatusFilter] = useState<string | undefined>(undefined);
+  const [projectIssueStatusFilter, setProjectIssueStatusFilter] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<
     "tasks" | "issues" | "activity_log"
   >("tasks");
@@ -439,10 +445,20 @@ export const SprintDetailsPage = () => {
               {/* Tab content */}
               <div className="mt-4 overflow-x-auto">
                 {activeTab === "tasks" && (
-                  <SprintTaskList sprintId={String(id)} initialMemberId={memberTaskFilter} />
+                  <SprintTaskList
+                    sprintId={String(id)}
+                    initialMemberId={memberTaskFilter}
+                    initialProjectId={projectTaskFilter}
+                    initialStatus={memberTaskStatusFilter ?? projectTaskStatusFilter}
+                  />
                 )}
                 {activeTab === "issues" && (
-                  <SprintIssueList sprintId={String(id)} initialMemberId={memberIssueFilter} />
+                  <SprintIssueList
+                    sprintId={String(id)}
+                    initialMemberId={memberIssueFilter}
+                    initialProjectId={projectIssueFilter}
+                    initialStatus={memberIssueStatusFilter ?? projectIssueStatusFilter}
+                  />
                 )}
                 {activeTab === "activity_log" && (
                   <SprintActivityLog sprintId={String(id)} />
@@ -458,15 +474,27 @@ export const SprintDetailsPage = () => {
         onClose={() => setIsMembersOpen(false)}
         membersSummary={membersSummary}
         membersLoading={membersLoading}
-        onFilterTask={(memberId) => {
+        onFilterTask={(memberId, status) => {
           setIsMembersOpen(false);
           setMemberIssueFilter(undefined);
+          setMemberIssueStatusFilter(undefined);
+          setProjectTaskFilter(undefined);
+          setProjectTaskStatusFilter(undefined);
+          setProjectIssueFilter(undefined);
+          setProjectIssueStatusFilter(undefined);
+          setMemberTaskStatusFilter(status);
           setMemberTaskFilter(memberId);
           setActiveTab("tasks");
         }}
-        onFilterIssue={(memberId) => {
+        onFilterIssue={(memberId, status) => {
           setIsMembersOpen(false);
           setMemberTaskFilter(undefined);
+          setMemberTaskStatusFilter(undefined);
+          setProjectTaskFilter(undefined);
+          setProjectTaskStatusFilter(undefined);
+          setProjectIssueFilter(undefined);
+          setProjectIssueStatusFilter(undefined);
+          setMemberIssueStatusFilter(status);
           setMemberIssueFilter(memberId);
           setActiveTab("issues");
         }}
@@ -476,6 +504,30 @@ export const SprintDetailsPage = () => {
         onClose={() => setIsProjectsOpen(false)}
         projectsSummary={projectsSummary}
         projectsLoading={projectsLoading}
+        onFilterTask={(projectId, status) => {
+          setIsProjectsOpen(false);
+          setMemberTaskFilter(undefined);
+          setMemberTaskStatusFilter(undefined);
+          setMemberIssueFilter(undefined);
+          setMemberIssueStatusFilter(undefined);
+          setProjectIssueFilter(undefined);
+          setProjectIssueStatusFilter(undefined);
+          setProjectTaskStatusFilter(status);
+          setProjectTaskFilter(projectId);
+          setActiveTab("tasks");
+        }}
+        onFilterIssue={(projectId, status) => {
+          setIsProjectsOpen(false);
+          setMemberTaskFilter(undefined);
+          setMemberTaskStatusFilter(undefined);
+          setMemberIssueFilter(undefined);
+          setMemberIssueStatusFilter(undefined);
+          setProjectTaskFilter(undefined);
+          setProjectTaskStatusFilter(undefined);
+          setProjectIssueStatusFilter(status);
+          setProjectIssueFilter(projectId);
+          setActiveTab("issues");
+        }}
       />
     </div>
   );

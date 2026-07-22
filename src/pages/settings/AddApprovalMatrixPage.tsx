@@ -284,6 +284,17 @@ const AddApprovalMatrixPage = () => {
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <style>{`
+          .MuiFormHelperText-root.Mui-error {
+            color: #DA7756 !important;
+          }
+          .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+            border-color: #DA7756 !important;
+          }
+          .MuiCheckbox-root.Mui-error {
+            color: #DA7756 !important;
+          }
+        `}</style>
         {/* Function Selection */}
         <div className="mb-8">
           <FormControl fullWidth error={!!functionError}>
@@ -430,8 +441,8 @@ const AddApprovalMatrixPage = () => {
                             <Checkbox
                               checked={level.users.includes(user.id.toString())}
                               sx={{
-                                color: '#C72030',
-                                '&.Mui-checked': { color: '#C72030' },
+                                color: '#DA7756',
+                                '&.Mui-checked': { color: '#DA7756' },
                               }}
                             />
                             {user.full_name}
@@ -453,8 +464,8 @@ const AddApprovalMatrixPage = () => {
                         checked={level.sendEmails}
                         onChange={(e) => updateApprovalLevel(index, 'sendEmails', e.target.checked)}
                         sx={{
-                          color: '#C72030',
-                          '&.Mui-checked': { color: '#C72030' },
+                          color: '#DA7756',
+                          '&.Mui-checked': { color: '#DA7756' },
                         }}
                       />
                     }
@@ -500,7 +511,8 @@ const AddApprovalMatrixPage = () => {
           <Button
             variant="outline"
             onClick={handleSaveAndCreateNew}
-            className="border-[#6B2C91] text-[#6B2C91] hover:bg-[#6B2C91] hover:text-white px-8"
+           className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
           >
             Save And Create New
           </Button>

@@ -283,7 +283,8 @@ export const OperationalDaysTab: React.FC = () => {
                       size="sm"
                       onClick={handleSubmit}
                       disabled={isSubmitting}
-                      className="w-20"
+                      className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                     >
                       {isSubmitting ? 'Saving...' : 'Save'}
                     </Button>
@@ -294,7 +295,8 @@ export const OperationalDaysTab: React.FC = () => {
           )}
 
           <div className="flex justify-end mt-6">
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
+            <Button onClick={handleSubmit} disabled={isSubmitting} className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost">
               {isSubmitting ? 'Saving...' : 'Save All Changes'}
             </Button>
           </div>

@@ -44,6 +44,12 @@ import ItemSearchInput from '@/components/ItemSearchInput';
 
 import { useAppDispatch } from '@/store/hooks';
 import axios from 'axios';
+import {
+    BankRecord,
+    bankMasterListUrl,
+    getBankMasterApiConfig,
+    mapApiBankRecord,
+} from './ClubManagement/bankMasterUtils';
 
 // Section component
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -258,6 +264,24 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const [vendorNotes, setVendorNotes] = useState('');
     const [termsAndConditions, setTermsAndConditions] = useState('');
     const [attachments, setAttachments] = useState<File[]>([]);
+
+    // Bank Details
+    const [bankOptions, setBankOptions] = useState<BankRecord[]>([]);
+    const [selectedBankId, setSelectedBankId] = useState<string>('');
+
+    useEffect(() => {
+        const fetchBanks = async () => {
+            try {
+                const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+                const res = await axios.get(`${bankMasterListUrl(baseUrl, lockAccountId)}&active=true`, { headers });
+                const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+                setBankOptions(data.map(mapApiBankRecord));
+            } catch (err) {
+                setBankOptions([]);
+            }
+        };
+        fetchBanks();
+    }, []);
     const [paymentTermsOptions, setPaymentTermsOptions] = useState<
         { id: string; name: string; days: number }[]
     >([]);
@@ -1410,6 +1434,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         if (!purchaseOrderDate) newErrors.purchaseOrderDate = 'Purchase order date is required';
         if (!expectedDeliveryDate) newErrors.expectedDeliveryDate = 'Expected delivery date is required';
         if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
+        if (!selectedBankId) newErrors.bank = 'Bank is required';
 
         if (referenceNumber && !/^\d{4,5}$/.test(referenceNumber)) {
             newErrors.referenceNumber = 'Reference number must be 4 to 5 digits';
@@ -1478,6 +1503,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     delivery_method: deliveryMethod,
                     vendor_note: vendorNotes,
                     terms_conditions: termsAndConditions,
+                    bank_master_id: selectedBankId ? Number(selectedBankId) : null,
                     account_id: accountId,
                     tax_id: selectedTaxObj?.id,
                     tax_type: taxType,
@@ -2735,6 +2761,45 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                             },
                         }}
                     />
+
+                    <div className="mt-4 w-1/2">
+                        <label className="block text-sm font-medium mb-2">
+                            Bank<span className="text-red-500">*</span>
+                        </label>
+                        <FormControl fullWidth size="small" error={!!errors.bank}>
+                            <Select
+                                displayEmpty
+                                value={selectedBankId}
+                                onChange={(e) => {
+                                    setSelectedBankId(String(e.target.value));
+                                    if (errors.bank) {
+                                        setErrors((prev) => {
+                                            const next = { ...prev };
+                                            delete next.bank;
+                                            return next;
+                                        });
+                                    }
+                                }}
+                                renderValue={(val) =>
+                                    val
+                                        ? (() => {
+                                            const bank = bankOptions.find(b => String(b.id) === String(val));
+                                            return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
+                                        })()
+                                        : <span style={{ color: '#aaa' }}>Select Bank</span>
+                                }
+                                sx={fieldStyles}
+                            >
+                                <MenuItem value=""><em>Select Bank</em></MenuItem>
+                                {bankOptions.map((bank) => (
+                                    <MenuItem key={bank.id} value={String(bank.id)}>
+                                        {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        {errors.bank && <p className="text-xs text-red-500 mt-1">{errors.bank}</p>}
+                    </div>
                 </Section>
 
                 {/* Terms & Conditions */}

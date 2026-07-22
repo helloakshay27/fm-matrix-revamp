@@ -1565,10 +1565,10 @@ const AddIssueModal = ({
 
             <Box className="mb-4">
               <Box
-                className="text-[12px] text-[red] text-right cursor-pointer mb-2"
+                className="text-[12px] text-right cursor-pointer mb-2"
                 onClick={() => setIsTagModalOpen(true)}
               >
-                <i>Create new tag</i>
+                <span className="text-orange-500 font-medium">Create new tag</span>
               </Box>
               <MuiMultiSelect
                 label="Tags"
@@ -1618,6 +1618,7 @@ const AddIssueModal = ({
             >
               <Button
                 type="submit"
+                className="fm-button-fix fm-button-brand px-4 py-2"
                 variant="outlined"
                 disabled={isSubmitting}
                 sx={{

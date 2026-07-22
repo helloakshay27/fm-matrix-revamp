@@ -483,7 +483,8 @@ export const SurveyListDashboard = () => {
               {shouldShow("Survey List", "create") && (
                 <Button
                   onClick={handleAddSurvey}
-                  className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80"
+                  variant="ghost"
+                  className="fm-button-fix fm-button-brand px-4 py-2 rounded-none"
                 >
                   <Plus className="w-4 h-4" />
                   Add

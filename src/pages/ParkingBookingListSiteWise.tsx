@@ -3132,9 +3132,9 @@ const ParkingBookingListSiteWise = () => {
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 pt-6">
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     onClick={handleApplyFilters}
-                    className="flex-1 h-11"
+                    className="fm-button-fix fm-button-brand px-4 py-2 flex-1 h-11"
                   >
                     Apply
                   </Button>
@@ -3234,14 +3234,14 @@ const ParkingBookingListSiteWise = () => {
                 setAnalyticsDraftRange(analyticsDateRange);
                 setIsAnalyticsFilterOpen(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-orange-500"
             >
-              <Calendar className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">
+              <Calendar className="w-4 h-4 text-orange-500" />
+              <span className="text-sm font-medium text-orange-500">
                 {analyticsDateRange.rangeA.label} vs{" "}
                 {analyticsDateRange.rangeB.label}
               </span>
-              <Filter className="w-4 h-4 text-gray-600" />
+              <Filter className="w-4 h-4 text-orange-500" />
             </Button>
 
             <ParkingAnalyticsSelector
