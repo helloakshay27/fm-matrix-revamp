@@ -48,6 +48,7 @@ interface Question {
   mandatory: boolean;
   answerOptions?: AnswerOption[];
   placeholderText?: string;
+  maxLength?: string;
   rating?: number;
   selectedEmoji?: string;
   additionalFieldOnNegative?: boolean;
@@ -466,6 +467,7 @@ export const EditSurveyPage = () => {
                                 : "description",
             mandatory: q.quest_mandatory,
             placeholderText: q.placeholder_text || "",
+            maxLength: q.max_length ? String(q.max_length) : "",
             answerOptions:
               q.snag_quest_options?.map((option: any) => ({
                 id: option.id,
@@ -1143,6 +1145,10 @@ export const EditSurveyPage = () => {
             `question[][placeholder_text]`,
             question.placeholderText || ""
           );
+          formData.append(
+            `question[][max_length]`,
+            question.maxLength || ""
+          );
         }
 
         // Add rating
@@ -1767,6 +1773,25 @@ export const EditSurveyPage = () => {
                               )
                             }
                             placeholder="Enter placeholder"
+                          />
+                        </div>
+                      )}
+
+                      {question.answerType === "input-box" && (
+                        <div className="space-y-2">
+                          <Label>Max Length</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={question.maxLength || ""}
+                            onChange={(e) =>
+                              handleQuestionChange(
+                                question.id!,
+                                "maxLength",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Enter max length"
                           />
                         </div>
                       )}

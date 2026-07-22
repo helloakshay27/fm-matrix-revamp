@@ -529,7 +529,7 @@ export const fetchRestaurantBookings = createAsyncThunk(
 
 export const fetchRestaurantOrders = createAsyncThunk(
     "fetchRestaurantOrders",
-    async ({ baseUrl, token, id, pageSize, currentPage, all }: { baseUrl: string; token: string; id: number; pageSize: number; currentPage: number, all?: boolean }, { rejectWithValue }) => {
+    async ({ baseUrl, token, id, pageSize, currentPage, all, statusId }: { baseUrl: string; token: string; id: number; pageSize: number; currentPage: number, all?: boolean, statusId?: number }, { rejectWithValue }) => {
         try {
             const params = new URLSearchParams({
                 page: String(currentPage),
@@ -538,6 +538,10 @@ export const fetchRestaurantOrders = createAsyncThunk(
 
             if (all) {
                 params.append("all", "true");
+            }
+
+            if (statusId) {
+                params.append("status_id_eq", String(statusId));
             }
 
             const response = await axios.get(
