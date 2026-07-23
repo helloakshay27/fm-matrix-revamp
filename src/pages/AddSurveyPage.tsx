@@ -633,13 +633,15 @@ export const AddSurveyPage = () => {
               ? "checkbox"
               : question.answerType === "date"
                 ? "date"
-                : question.answerType === "rating"
-                  ? "rating"
-                  : question.answerType === "emojis"
-                    ? "emoji"
-                    : question.answerType === "input-box"
-                      ? "input_box"
-                      : "description";
+                : question.answerType === "time"
+                  ? "time"
+                  : question.answerType === "rating"
+                    ? "rating"
+                    : question.answerType === "emojis"
+                      ? "emoji"
+                      : question.answerType === "input-box"
+                        ? "input_box"
+                        : "description";
 
         formData.append(`question[][qtype]`, qtype);
         formData.append(
@@ -1242,6 +1244,7 @@ export const AddSurveyPage = () => {
                       <MenuItem value="input-box">Input Box</MenuItem>
                       <MenuItem value="checkbox">Checkbox</MenuItem>
                       <MenuItem value="date">Date</MenuItem>
+                      <MenuItem value="time">Time</MenuItem>
                     </MuiSelect>
                   </FormControl>
 
