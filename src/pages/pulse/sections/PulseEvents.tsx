@@ -75,13 +75,13 @@ export function PulseEvents({ filters }: Props) {
           <div className="pd-subsection-title">Event Overview</div>
           <div className="pd-kpi-grid" style={{ marginBottom: 16 }}>
             {[
-              { label: "Total Events",        value: kpi.total_events },
-              { label: "Upcoming",            value: kpi.upcoming_events },
-              { label: "Past",                value: kpi.past_events },
-              { label: "Complementary",       value: kpi.complementary_events },
-              { label: "Paid",                value: kpi.paid_events },
-              { label: "Requestable",         value: kpi.requestable_events },
-              { label: "Pending Requests",    value: kpi.pending_requests },
+              { label: "Total Events", value: kpi.total_events },
+              { label: "Upcoming", value: kpi.upcoming_events },
+              { label: "Past", value: kpi.past_events },
+              { label: "Complementary", value: kpi.complementary_events },
+              { label: "Paid", value: kpi.paid_events },
+              { label: "Requestable", value: kpi.requestable_events },
+              { label: "Pending Requests", value: kpi.pending_requests },
               { label: "Total Registrations", value: kpi.total_registrations },
             ].map((item) => (
               <div key={item.label} className="pd-kpi-card">
@@ -98,12 +98,12 @@ export function PulseEvents({ filters }: Props) {
           <div className="pd-subsection-title">Registration Analytics</div>
           <div className="pd-kpi-grid">
             {[
-              { label: "Approved",           value: regKpi.approved },
-              { label: "Pending",            value: regKpi.pending },
-              { label: "Rejected",           value: regKpi.rejected },
-              { label: "Attended",           value: regKpi.attended },
+              { label: "Approved", value: regKpi.approved },
+              { label: "Pending", value: regKpi.pending },
+              { label: "Rejected", value: regKpi.rejected },
+              { label: "Attended", value: regKpi.attended },
               { label: "Paid Registrations", value: regKpi.paid_registrations },
-              { label: "Attendance Rate",    value: `${regKpi.attendance_rate}%` },
+              { label: "Attendance Rate", value: `${regKpi.attendance_rate}` },
             ].map((item) => (
               <div key={item.label} className="pd-kpi-card">
                 <div className="pd-kpi-value">{item.value.toLocaleString()}</div>
@@ -133,8 +133,8 @@ export function PulseEvents({ filters }: Props) {
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip labelFormatter={(v) => v ?? "Uncategorized"} />
                   <Legend verticalAlign="top" />
-                  <Bar dataKey="total_events"        name="Events"        fill={C.purple} radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="total_registrations" name="Registrations" fill={C.blue}   radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="total_events" name="Events" fill={C.purple} radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="total_registrations" name="Registrations" fill={C.blue} radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -150,7 +150,7 @@ export function PulseEvents({ filters }: Props) {
                   <Pie
                     data={[
                       { name: "Approved", value: regKpi.approved },
-                      { name: "Pending",  value: regKpi.pending },
+                      { name: "Pending", value: regKpi.pending },
                       { name: "Rejected", value: regKpi.rejected },
                       { name: "Attended", value: regKpi.attended },
                     ]}
