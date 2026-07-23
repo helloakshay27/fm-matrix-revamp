@@ -955,7 +955,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
 
                 <div className="flex items-center gap-3">
                   <TextField
-                    label="Created On From"
+                    label="From date"
                     type="date"
                     value={draftFilters.createdOnFrom}
                     onChange={(e) => handleDraftFilterChange('createdOnFrom', e.target.value)}
@@ -965,7 +965,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
                   />
                   <span className="text-gray-500">–</span>
                   <TextField
-                    label="Created On To"
+                    label="To date"
                     type="date"
                     value={draftFilters.createdOnTo}
                     onChange={(e) => handleDraftFilterChange('createdOnTo', e.target.value)}
