@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit } from "lucide-react";
+import { Plus, Edit, Loader2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 interface SeatSetupData {
@@ -19,6 +19,7 @@ interface SeatSetupData {
 
 export const SeatSetupDashboard = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
   const [seatSetups] = useState<SeatSetupData[]>([
     {
       id: 1,
@@ -81,6 +82,11 @@ export const SeatSetupDashboard = () => {
       }
     }
   ]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const seatTypeHeaders = ["Angular Ws", "Flexi Desk", "Cabin", "Fixed Desk", "IOS", "cabin", "circular", "Rectangle"];
 
@@ -145,7 +151,16 @@ export const SeatSetupDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {seatSetups.map((setup) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={seatTypeHeaders.length + 3} className="text-center py-8 text-gray-500">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin text-black" />
+                      <span>Loading...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : seatSetups.map((setup) => (
                 <TableRow key={setup.id} className="border-b">
                   <TableCell className="font-medium">{setup.location}</TableCell>
                   <TableCell>{setup.floor}</TableCell>

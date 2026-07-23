@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Eye, FileText, Plus } from 'lucide-react';
@@ -13,6 +13,7 @@ export const OSRDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Column configuration for EnhancedTaskTable
   const columns: ColumnConfig[] = [
@@ -160,6 +161,11 @@ export const OSRDashboard = () => {
     }
   ];
 
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Filter data based on search term
   const filteredData = osrData.filter(entry =>
     Object.values(entry).some(value =>
@@ -300,6 +306,7 @@ export const OSRDashboard = () => {
         emptyMessage="No OSR records found"
         getItemId={(item) => item.id}
         toolbarClassName="items-center"
+        loading={loading}
       />
 
       {/* Create Schedule Modal */}

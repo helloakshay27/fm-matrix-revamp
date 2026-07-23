@@ -116,22 +116,10 @@ const ParkingDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="p-6 bg-white min-h-screen">
-        <div className="flex items-center mb-6">
-          <Button 
-            onClick={handleBack}
-            variant="ghost" 
-            className="mr-4 p-2 hover:bg-[#C72030]/10"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-[#C72030]">Loading...</h1>
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading parking details...</div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading parking details...</p>
         </div>
       </div>
     );
