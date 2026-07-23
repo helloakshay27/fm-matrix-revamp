@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { RVehiclesHistoryFilterModal } from '@/components/RVehiclesHistoryFilterModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -162,7 +161,28 @@ const historyColumns: ColumnConfig[] = [
 
 export const RVehiclesHistoryDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [historyData, setHistoryData] = useState<typeof vehicleHistoryData>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  
+  useEffect(() => {
+    let active = true;
+    const fetchHistory = async () => {
+      setLoading(true);
+      try {
+        
+        await new Promise((res) => setTimeout(res, 800));
+        if (active) setHistoryData(vehicleHistoryData);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchHistory();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleAllVehiclesClick = () => {
     navigate('/security/vehicle/r-vehicles');
@@ -185,7 +205,7 @@ export const RVehiclesHistoryDashboard = () => {
       
       {/* Enhanced Table */}
       <EnhancedTable
-        data={vehicleHistoryData}
+        data={historyData}
         columns={historyColumns}
         renderRow={renderHistoryRow}
         enableSearch={true}
@@ -197,6 +217,7 @@ export const RVehiclesHistoryDashboard = () => {
         searchPlaceholder="Search by vehicle number, category, or staff name"
         hideTableExport={false}
         hideColumnsButton={false}
+        loading={loading}
         leftActions={
           <div className="flex gap-3">
             <Button 

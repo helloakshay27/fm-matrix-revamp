@@ -1214,11 +1214,7 @@ export const ScheduledTaskDashboard = () => {
 
             {/* Task Table */}
             <div className="rounded-lg">
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-gray-500">Loading tasks...</div>
-                </div>
-              ) : error ? (
+              {error ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="text-red-500">{error}</div>
                   <Button
@@ -1421,6 +1417,8 @@ export const ScheduledTaskDashboard = () => {
                     enableSelection={true}
                     selectable={true}
                     enableExport={true}
+                    loading={loading}
+                    loadingMessage="Loading Tasks..."
                     hideTableSearch={false}
                     storageKey="scheduled-tasks-table"
                     onFilterClick={() => setShowTaskFilter(true)}

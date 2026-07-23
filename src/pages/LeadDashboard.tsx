@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -84,8 +84,10 @@ const calculateStats = (leads: any[]) => {
     converted: leads.filter(l => l.status === "Converted").length,
     lost: leads.filter(l => l.status === "Lost").length,
     totalValue: leads.reduce((sum, l) => sum + l.value, 0),
-    avgValue: leads.reduce((sum, l) => sum + l.value, 0) / leads.length,
-    conversionRate: (leads.filter(l => l.status === "Converted").length / leads.length) * 100,
+    avgValue: leads.length ? leads.reduce((sum, l) => sum + l.value, 0) / leads.length : 0,
+    conversionRate: leads.length
+      ? (leads.filter(l => l.status === "Converted").length / leads.length) * 100
+      : 0,
   };
 };
 
@@ -104,8 +106,31 @@ export const LeadDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const stats = calculateStats(mockLeads);
-  const filteredLeads = mockLeads.filter(lead =>
+  // Loading state
+  const [loading, setLoading] = useState(true);
+  const [leads, setLeads] = useState<typeof mockLeads>([]);
+
+  
+  useEffect(() => {
+    let active = true;
+    const fetchLeads = async () => {
+      setLoading(true);
+      try {
+       
+        await new Promise((res) => setTimeout(res, 800));
+        if (active) setLeads(mockLeads);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchLeads();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const stats = calculateStats(leads);
+  const filteredLeads = leads.filter(lead =>
     lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.contactPerson.toLowerCase().includes(searchTerm.toLowerCase())
@@ -230,46 +255,71 @@ export const LeadDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLeads.map((lead) => (
-                  <TableRow key={lead.id}>
-                    <TableCell className="font-medium">{lead.id}</TableCell>
-                    <TableCell>{lead.name}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{lead.contactPerson}</div>
-                        <div className="text-sm text-gray-500 flex items-center gap-2">
-                          <Mail className="w-3 h-3" />
-                          {lead.email}
-                        </div>
-                        <div className="text-sm text-gray-500 flex items-center gap-2">
-                          <Phone className="w-3 h-3" />
-                          {lead.phone}
-                        </div>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={10} className="pt-4 pb-16">
+                      <div className="w-full flex items-center justify-start gap-3 pl-4">
+                        <div
+                          className="h-5 w-5 rounded-full animate-spin"
+                          style={{
+                            border: "2px solid #000000",
+                            borderTopColor: "transparent",
+                          }}
+                        />
+                        <span className="text-sm" style={{ color: "#000000" }}>
+                          Loading ...
+                        </span>
                       </div>
                     </TableCell>
-                    <TableCell>{lead.source}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(lead.status)}>
-                        {lead.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>${lead.value.toLocaleString()}</TableCell>
-                    <TableCell>{lead.probability}%</TableCell>
-                    <TableCell>{lead.expectedCloseDate}</TableCell>
-                    <TableCell>{lead.assignedTo}</TableCell>
-                    <TableCell className="text-right">
-                      {shouldShow("Lead", "show") && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewLead(lead.id)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      )}
+                  </TableRow>
+                ) : filteredLeads.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={10} className="py-12 text-center text-gray-500">
+                      No leads found
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredLeads.map((lead) => (
+                    <TableRow key={lead.id}>
+                      <TableCell className="font-medium">{lead.id}</TableCell>
+                      <TableCell>{lead.name}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{lead.contactPerson}</div>
+                          <div className="text-sm text-gray-500 flex items-center gap-2">
+                            <Mail className="w-3 h-3" />
+                            {lead.email}
+                          </div>
+                          <div className="text-sm text-gray-500 flex items-center gap-2">
+                            <Phone className="w-3 h-3" />
+                            {lead.phone}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{lead.source}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(lead.status)}>
+                          {lead.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>${lead.value.toLocaleString()}</TableCell>
+                      <TableCell>{lead.probability}%</TableCell>
+                      <TableCell>{lead.expectedCloseDate}</TableCell>
+                      <TableCell>{lead.assignedTo}</TableCell>
+                      <TableCell className="text-right">
+                        {shouldShow("Lead", "show") && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewLead(lead.id)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -279,38 +329,56 @@ export const LeadDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <h3 className="text-lg font-semibold mb-4">Lead Status Distribution</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>New: {stats.new}</span>
-                  <span>{((stats.new / stats.total) * 100).toFixed(1)}%</span>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div
+                    className="h-5 w-5 rounded-full animate-spin"
+                    style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                  />
                 </div>
-                <div className="flex justify-between">
-                  <span>Qualified: {stats.qualified}</span>
-                  <span>{((stats.qualified / stats.total) * 100).toFixed(1)}%</span>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>New: {stats.new}</span>
+                    <span>{stats.total ? ((stats.new / stats.total) * 100).toFixed(1) : "0.0"}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Qualified: {stats.qualified}</span>
+                    <span>{stats.total ? ((stats.qualified / stats.total) * 100).toFixed(1) : "0.0"}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Converted: {stats.converted}</span>
+                    <span>{stats.total ? ((stats.converted / stats.total) * 100).toFixed(1) : "0.0"}%</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Converted: {stats.converted}</span>
-                  <span>{((stats.converted / stats.total) * 100).toFixed(1)}%</span>
-                </div>
-              </div>
+              )}
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <h3 className="text-lg font-semibold mb-4">Lead Performance</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Total Pipeline Value:</span>
-                  <span>${stats.totalValue.toLocaleString()}</span>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div
+                    className="h-5 w-5 rounded-full animate-spin"
+                    style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                  />
                 </div>
-                <div className="flex justify-between">
-                  <span>Average Lead Value:</span>
-                  <span>${stats.avgValue.toLocaleString()}</span>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Total Pipeline Value:</span>
+                    <span>${stats.totalValue.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Average Lead Value:</span>
+                    <span>${stats.avgValue.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Conversion Rate:</span>
+                    <span>{stats.conversionRate.toFixed(1)}%</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Conversion Rate:</span>
-                  <span>{stats.conversionRate.toFixed(1)}%</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </TabsContent>

@@ -151,6 +151,7 @@ const CRMCustomersDashboard = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage,setCurrentPage] = useState(()=>{
     const params = new URLSearchParams(window.location.search);
     return Number(params.get('page')) || 1;
@@ -162,6 +163,7 @@ const CRMCustomersDashboard = () => {
 
   useEffect(() => {
     const fetchCustomers = async () => {
+      setLoading(true);
       try {
         const response = await dispatch(
           getCustomerList({ baseUrl, token })
@@ -195,6 +197,8 @@ const CRMCustomersDashboard = () => {
       } catch (error) {
         console.log(error);
         toast.error(error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -382,6 +386,7 @@ const handlePageChange = (page:number)=>{
         pageSize={10}
         currentPage={currentPage}
         onPageChange={handlePageChange}
+        loading={loading}
       />
     </div>
   );

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { SlidersHorizontal, Plus, Filter } from 'lucide-react';
 import { AddGVehicleModal } from '@/components/AddGVehicleModal';
@@ -163,6 +162,25 @@ export const GVehiclesDashboard = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState('history'); // 'history' or 'vehicle-out'
+  const [vehicleData, setVehicleData] = useState<typeof gVehicleData>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const fetchVehicles = async () => {
+      setLoading(true);
+      try {
+        await new Promise((res) => setTimeout(res, 800));
+        if (active) setVehicleData(gVehicleData);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchVehicles();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Render row function for enhanced table
   const renderRow = (vehicle: any) => ({
@@ -214,7 +232,7 @@ export const GVehiclesDashboard = () => {
 
       {/* Enhanced Table */}
       <EnhancedTable
-        data={gVehicleData}
+        data={vehicleData}
         columns={columns}
         renderRow={renderRow}
         enableSearch={true}
@@ -226,6 +244,7 @@ export const GVehiclesDashboard = () => {
         searchPlaceholder="Search by name, vehicle number, or mobile number"
         hideTableExport={false}
         hideColumnsButton={false}
+        loading={loading}
         leftActions={
           <div className="flex gap-3">
             {shouldShow("G Vehicles", "create") && (

@@ -1791,6 +1791,7 @@ const handlePageChange = (page: number) => {
               handleExport={handleExport}
               exportFileName="visitor-history"
               pagination={false}
+               loading={historyLoading}
               storageKey="visitor-history-table"
               emptyMessage="No visitor history available"
               searchPlaceholder="Search visitors..."

@@ -864,13 +864,8 @@ export const AssetAuditDashboard = () => {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">AUDIT LIST</h1>
 
         {/* Statistics Cards */}
-        {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="text-gray-500">Loading audits...</div>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
               <div onClick={() => handleCardClick('scheduled')}>
                 <StatsCard
                   title="Scheduled"
@@ -926,6 +921,8 @@ export const AssetAuditDashboard = () => {
               data={audits}
               columns={columns}
               renderCell={renderCell}
+              loading={loading}
+              loadingMessage="Loading Assets..."
               storageKey="asset-audit-dashboard-table"
               emptyMessage={searchQuery ? "No audits found matching your search" : "No audit records found"}
               enableExport={true}
@@ -981,7 +978,6 @@ export const AssetAuditDashboard = () => {
               </Pagination>
             </div>
           </>
-        )}
 
         {/* Filter Modal */}
         <AssetAuditFilterModal

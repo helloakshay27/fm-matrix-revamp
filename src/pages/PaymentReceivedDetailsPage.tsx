@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft, Edit2 } from "lucide-react";
+import { ArrowLeft, Edit2, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -164,6 +164,7 @@ const mapLockPayment = (lp: LockPaymentAPI): PaymentReceived => {
 export const PaymentReceivedDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
   const pdfRef = React.useRef<HTMLDivElement>(null);
   const lock_account_id = localStorage.getItem("lock_account_id");
   const baseUrl = localStorage.getItem("baseUrl");
@@ -178,7 +179,7 @@ const [showPdfPreview, setShowPdfPreview] = React.useState(false);
     TransactionRecord[]
   >([]);
   const [billPayments, setBillPayments] = React.useState<BillPayment[]>([]);
-const [activeTab, setActiveTab] = React.useState("details");
+const [activeTab, setActiveTab] = React.useState((location.state as any)?.tab === "pdf" ? "pdf" : "details");
   // fetch payment details
   React.useEffect(() => {
     if (!id) return;
@@ -375,6 +376,14 @@ const [activeTab, setActiveTab] = React.useState("details");
   >
     <FileText className="h-4 w-4" />
     PDF
+  </Button>
+
+  <Button
+    variant="outline"
+    onClick={() => navigate("/accounting/payments-received/template", { state: { recordId: id } })}
+  >
+    <Settings2 className="h-4 w-4 mr-2" />
+    Template Edit
   </Button>
 
   <Button

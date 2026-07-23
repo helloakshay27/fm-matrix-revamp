@@ -195,13 +195,12 @@ export const GatePassInwardsDetailPage = () => {
   };
 
 
-  // Defensive fallback for missing fields
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-32">
-        <div className="flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading...</span>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading gate pass details...</p>
         </div>
       </div>
     );

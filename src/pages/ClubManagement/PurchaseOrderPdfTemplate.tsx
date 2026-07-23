@@ -1,5 +1,6 @@
 import React from "react";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
+import { getDocumentTemplateSettings, slugifyDocumentType } from "@/utils/documentTemplate";
 
 export const getAccountingPdfStatusStyle = (status) => {
   const styles = {
@@ -164,6 +165,7 @@ const aggregateTax = (items, type) => {
 
 export const PurchaseDocumentPdf = ({
   documentTitle = "PURCHASE ORDER",
+  documentType,
   documentNumber,
   documentDate,
   status,
@@ -181,6 +183,7 @@ export const PurchaseDocumentPdf = ({
   bankDetail,
 }) => {
   const statusDisplay = formatStatus(data?.status || status);
+  const templateSettings = getDocumentTemplateSettings(documentType || slugifyDocumentType(documentTitle));
 
   const partyName = vendorName || data?.supplier_name || customerName;
 
@@ -256,13 +259,17 @@ export const PurchaseDocumentPdf = ({
           <div className="flex justify-between items-start mb-8 pb-6 border-b border-gray-300">
             {/* COMPANY INFO */}
             <div className="text-[11px] leading-[16px]">
+              {templateSettings.logo && (
+                <img src={templateSettings.logo} alt="Logo" className="mb-2" style={{ maxHeight: "48px", maxWidth: "180px", objectFit: "contain" }} />
+              )}
               <h2 className="text-[18px] font-bold mb-3">
                 {localStorage.getItem("companyName") ||
                   "Lockated"}
               </h2>
 
               <p className="mb-1">
-                {localStorage.getItem("companyAddress") ||
+                {templateSettings.organizationAddress ||
+                  localStorage.getItem("companyAddress") ||
                   "Pune Maharashtra 411006"}
               </p>
 
@@ -300,7 +307,7 @@ export const PurchaseDocumentPdf = ({
               ) : null}
 
               <h1 className="text-[40px] font-serif tracking-wide mb-2">
-                {documentTitle}
+                {templateSettings.templateName ? templateSettings.templateName.toUpperCase() : documentTitle}
               </h1>
 
               <p className="text-[12px] font-semibold">
@@ -676,13 +683,13 @@ export const PurchaseDocumentPdf = ({
 )}
 
           {/* TERMS & CONDITIONS */}
-          {data?.terms_conditions && (
+          {(data?.terms_conditions || templateSettings.termsAndConditions) && (
             <div className="mb-6 text-[11px]">
               <p className="font-bold mb-2">
                 Terms & Conditions
               </p>
               <p className="whitespace-pre-wrap leading-relaxed">
-                {data?.terms_conditions}
+                {data?.terms_conditions || templateSettings.termsAndConditions}
               </p>
             </div>
           )}
@@ -692,11 +699,22 @@ export const PurchaseDocumentPdf = ({
             <div />
 
             <div className="text-right text-[11px]">
-              <p className="font-bold mb-6">
+              <p className="font-bold mb-2">
                 For{" "}
                 {localStorage.getItem("companyName") ||
                   "Lockated"}
               </p>
+
+              {templateSettings.signature ? (
+                <img
+                  src={templateSettings.signature}
+                  alt="Signature"
+                  className="ml-auto mb-2"
+                  style={{ maxHeight: "50px", maxWidth: "180px", objectFit: "contain" }}
+                />
+              ) : (
+                <div className="mb-6" />
+              )}
 
               <div className="border-t border-black w-[180px] pt-2 text-center font-semibold">
                 Authorized Signature
