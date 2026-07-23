@@ -1,7 +1,7 @@
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Eye, Loader2, Package, Info, X } from "lucide-react";
+import { Eye, Loader2, Package, Info, X, Clock, CheckCircle2, XCircle, ClipboardCheck, type LucideIcon } from "lucide-react";
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
 import { exportOrders, fetchRestaurantOrders, fetchRestaurants } from '@/store/slices/f&bSlice';
@@ -110,6 +110,15 @@ const muiTheme = createTheme({
     },
   },
 });
+
+const KPI_STATUS_ORDER = ['pending', 'approved', 'cancelled', 'completed'];
+
+const KPI_STATUS_ICONS: Record<string, LucideIcon> = {
+  pending: Clock,
+  approved: CheckCircle2,
+  cancelled: XCircle,
+  completed: ClipboardCheck,
+};
 
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
@@ -224,6 +233,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
   const [restaurantsList, setRestaurantsList] = useState<{ id: number; name: string }[]>([]);
   const [statusUpdating, setStatusUpdating] = useState<number | null>(null);
   const [loading, setLoading] = useState(true)
+  const resolvedRestaurantId = needPadding ? restoId : id ? Number(id) : undefined;
 
   // Filter modal state
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -276,7 +286,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
     };
 
     fetchRestaurant();
-  }, [dispatch, baseUrl, token]);
+  }, [dispatch, baseUrl, token, needPadding, id]);
 
   useEffect(() => {
     const fetchCreatedByUsers = async () => {
@@ -296,8 +306,11 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
     }
   }, [baseUrl, token]);
 
-  const fetchOrders = async (page = pagination.current_page, selectedStatusId = appliedFilters.statusId) => {
-    if (!restoId) return;
+  const fetchOrders = async (
+    page = pagination.current_page,
+    filters: OrdersFilterState = appliedFilters
+  ) => {
+    if (!resolvedRestaurantId || !baseUrl || !token) return;
 
     setLoading(true);
     try {
@@ -305,19 +318,27 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
         ? {
           baseUrl,
           token,
-          id: Number(restoId),
+          id: Number(resolvedRestaurantId),
           pageSize: 10,
           currentPage: page,
           all: true,
-          statusId: selectedStatusId ? Number(selectedStatusId) : undefined,
+          statusId: filters.statusId ? Number(filters.statusId) : undefined,
+          createdById: filters.createdBy ? Number(filters.createdBy) : undefined,
+          fromDate: filters.createdOnFrom || undefined,
+          toDate: filters.createdOnTo || undefined,
+          restaurantId: filters.restaurantId ? Number(filters.restaurantId) : undefined,
         }
         : {
           baseUrl,
           token,
-          id: Number(restoId),
+          id: Number(resolvedRestaurantId),
           pageSize: 10,
           currentPage: page,
-          statusId: selectedStatusId ? Number(selectedStatusId) : undefined,
+          statusId: filters.statusId ? Number(filters.statusId) : undefined,
+          createdById: filters.createdBy ? Number(filters.createdBy) : undefined,
+          fromDate: filters.createdOnFrom || undefined,
+          toDate: filters.createdOnTo || undefined,
+          restaurantId: filters.restaurantId ? Number(filters.restaurantId) : undefined,
         };
 
       const response = await dispatch(fetchRestaurantOrders(params)).unwrap();
@@ -339,8 +360,9 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
   };
 
   useEffect(() => {
+    if (!resolvedRestaurantId || !baseUrl || !token) return;
     fetchOrders();
-  }, [dispatch, restoId, baseUrl, token, needPadding, appliedFilters.statusId]);
+  }, [dispatch, resolvedRestaurantId, baseUrl, token, needPadding, appliedFilters.statusId, appliedFilters.createdBy, appliedFilters.createdOnFrom, appliedFilters.createdOnTo, appliedFilters.restaurantId]);
 
   const handleStatusUpdate = async (orderId: number, newStatusName: string) => {
     const targetOrder = orders.find((order) => order.id === orderId);
@@ -451,7 +473,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
       ...prev,
       current_page: page,
     }));
-    await fetchOrders(page, appliedFilters.statusId);
+    await fetchOrders(page, appliedFilters);
   };
 
   const renderPaginationItems = () => {
@@ -671,46 +693,55 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
 
   const renderKpiCards = () => {
     if (!orderFilters) return null;
+
+    const matchedStatuses = KPI_STATUS_ORDER
+      .map((target) => orderFilters.statuses.find((s) => s.name.toLowerCase() === target))
+      .filter((s): s is OrderStatusFilter => !!s);
+
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <button
           type="button"
           onClick={() => {
             setAppliedFilters((prev) => ({ ...prev, statusId: '' }));
             setPagination((prev) => ({ ...prev, current_page: 1 }));
           }}
-          className="group relative bg-[#F6F4EE] rounded-lg border border-[#E5E5E5] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4 text-left"
+          className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-all duration-300 text-left"
         >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-[#6B7280] truncate">Total</p>
-              <p className="text-2xl font-semibold text-[#1F2937]">{orderFilters.total}</p>
-            </div>
+          <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded flex-shrink-0">
+            <Package className="w-6 h-6 text-[#C72030]" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-2xl font-semibold text-[#1A1A1A]">{orderFilters.total}</div>
+            <div className="text-sm font-medium text-[#1A1A1A] truncate">Total</div>
           </div>
         </button>
-        {orderFilters.statuses.map((status) => (
-          <button
-            key={status.id}
-            type="button"
-            onClick={() => {
-              setAppliedFilters((prev) => ({ ...prev, statusId: String(status.id) }));
-              setPagination((prev) => ({ ...prev, current_page: 1 }));
-            }}
-            className="group relative bg-[#F6F4EE] rounded-lg border border-[#E5E5E5] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4 pl-5 overflow-hidden text-left"
-          >
-            <div className="absolute top-0 left-0 h-full w-1" />
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-[#6B7280] truncate" title={status.name}>
-                  {status.name}
-                </p>
-                <p className="text-2xl font-semibold" style={{ color: status.color_code }}>
-                  {status.count}
-                </p>
+        {matchedStatuses.map((status) => {
+          const StatusIcon = KPI_STATUS_ICONS[status.name.toLowerCase()] ?? Info;
+          return (
+            <button
+              key={status.id}
+              type="button"
+              onClick={() => {
+                setAppliedFilters((prev) => ({ ...prev, statusId: String(status.id) }));
+                setPagination((prev) => ({ ...prev, current_page: 1 }));
+              }}
+              className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-all duration-300 text-left"
+            >
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center rounded flex-shrink-0">
+                <StatusIcon className="w-6 h-6 text-[#C72030]" />
               </div>
-            </div>
-          </button>
-        ))}
+              <div className="min-w-0">
+                <div className="text-2xl font-semibold" style={{ color: status.color_code }}>
+                  {status.count}
+                </div>
+                <div className="text-sm font-medium text-[#1A1A1A] truncate" title={status.name}>
+                  {status.name}
+                </div>
+              </div>
+            </button>
+          );
+        })}
       </div>
     );
   };
@@ -727,8 +758,6 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
   const handleApplyFilters = () => {
     setAppliedFilters(draftFilters);
     setIsFilterModalOpen(false);
-    // TODO: wire draftFilters (restaurantId, statusId, createdBy, createdOnFrom, createdOnTo) into
-    // the fetchRestaurantOrders query params once the exact backend param names are confirmed.
   };
 
   const handleResetFilters = () => {
@@ -823,18 +852,6 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
             pageSize={10}
             loading={loading}
             onFilterClick={handleOpenFilterModal}
-            filterAdjacentActions={
-              hasAppliedFilters ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleResetFilters}
-                  className="text-xs text-[#C72030] hover:bg-[#C72030]/10 h-8"
-                >
-                  Clear Filters
-                </Button>
-              ) : undefined
-            }
           />
 
           <div className="flex justify-center mt-6">
@@ -980,18 +997,18 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
 
               <div className="flex gap-3 pt-4">
                 <Button
+                  onClick={handleResetFilters}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Reset
+                </Button>
+                <Button
                   onClick={handleApplyFilters}
                   variant="outline"
                   className="fm-button-fix fm-button-brand flex-1"
                 >
                   Apply
-                </Button>
-                <Button
-                  onClick={handleResetFilters}
-                  variant="outline"
-                  className="fm-button-fix fm-button-brand flex-1"
-                >
-                  Reset
                 </Button>
               </div>
             </div>
