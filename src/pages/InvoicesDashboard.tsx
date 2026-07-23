@@ -11,6 +11,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { buildReturnToPath } from "@/utils/listBackNavigation";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useProcurementEvents } from '@/components/PostHogProcurementEvents';
 
 const columns: ColumnConfig[] = [
   {
@@ -195,6 +196,7 @@ export const InvoicesDashboard = () => {
   const location = useLocation();
   const dispatch = useAppDispatch();
   const { shouldShow } = useDynamicPermissions();
+  const procurementEvents = useProcurementEvents();
 
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem("token");
@@ -301,9 +303,9 @@ export const InvoicesDashboard = () => {
           size="sm"
           variant="ghost"
           className="p-1"
-          onClick={() => navigate(`/finance/invoices/${item.id}`, {
-            state: { returnTo: buildReturnToPath(location.pathname, location.search) },
-          })}
+          onClick={() => { try { procurementEvents.onInvoiceOpened(item.approved_status || null); } catch (err) {};
+            navigate(`/finance/invoices/${item.id}`, { state: { returnTo: buildReturnToPath(location.pathname, location.search) }, });
+          }}
         >
           <Eye className="w-4 h-4" />
         </Button>

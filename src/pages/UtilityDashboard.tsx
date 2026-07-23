@@ -10,6 +10,7 @@ import { UtilityFilterDialog } from '../components/UtilityFilterDialog';
 import { BulkUploadDialog } from '../components/BulkUploadDialog';
 import { AssetTable } from '../components/AssetTable';
 import { StatsCard } from '../components/StatsCard';
+import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
 
 export const UtilityDashboard = () => {
   const navigate = useNavigate();
@@ -17,8 +18,11 @@ export const UtilityDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
+  
+  const { onUtilityDashboardAddAssetStarted } = useUtilityEvents();
 
   const handleAdd = () => {
+    onUtilityDashboardAddAssetStarted();
     navigate('/utility/add-asset');
   };
 

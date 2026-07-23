@@ -8,6 +8,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { solarGeneratorAPI, SolarGenerator, SolarGeneratorFilters, SolarGeneratorResponse } from '@/services/solarGeneratorAPI';
 import { useToast } from "@/hooks/use-toast";
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
+import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
 
 const UtilitySolarGeneratorDashboard = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -21,6 +22,12 @@ const UtilitySolarGeneratorDashboard = () => {
   const [pageSize, setPageSize] = useState(15);
   const [totalPages, setTotalPages] = useState(1);
   const { toast } = useToast();
+  
+  const { onUtilityDGDashboardViewed } = useUtilityEvents();
+
+  useEffect(() => {
+    onUtilityDGDashboardViewed();
+  }, [onUtilityDGDashboardViewed]);
 
   // Column visibility state
   const [columns, setColumns] = useState([

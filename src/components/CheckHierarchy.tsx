@@ -1,9 +1,10 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { TextField, MenuItem } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getAuthHeader } from "@/config/apiConfig";
 import { ChevronRight, ChevronDown, User as UserIcon } from "lucide-react";
+import { useMSafeEvents } from "@/components/PostHogMSafeEvents";
 
 type TreeNode = {
   id: number;
@@ -42,7 +43,15 @@ const countDescendants = (node: TreeNode | null): number => {
   return count;
 };
 
+// Number of hierarchy levels the tree spans (root = 1)
+const maxDepth = (node: TreeNode | null): number => {
+  if (!node) return 0;
+  if (!Array.isArray(node.children) || node.children.length === 0) return 1;
+  return 1 + Math.max(...node.children.map((c) => maxDepth(c)));
+};
+
 const CheckHierarchy: React.FC = () => {
+  const msafeEvents = useMSafeEvents();
   const [treeIdentifier, setTreeIdentifier] = useState<string>("");
   const [treeLoading, setTreeLoading] = useState(false);
   const [treeData, setTreeData] = useState<TreeNode | null>(null);
@@ -53,6 +62,12 @@ const CheckHierarchy: React.FC = () => {
   const [submitted, setSubmitted] = useState(false); // show hierarchy only after submit
 
   const descCount = useMemo(() => countDescendants(treeData), [treeData]);
+
+  useEffect(() => {
+    // F2 · Hierarchy Check Opened — form loaded
+    msafeEvents.onHierarchyCheckOpened();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Validation helpers
   const isValidEmail = useCallback((val: string) => {
@@ -202,6 +217,13 @@ const CheckHierarchy: React.FC = () => {
       } catch {
         /* noop */
       }
+      const empty = isTreeEmpty(data);
+      msafeEvents.onHierarchyCheckSubmitted({
+        employee_type: employeeType,
+        lookup_by: identifierType === "mobile" ? "mobile" : "email",
+        levels_returned: empty ? 0 : maxDepth(data as TreeNode),
+        not_found: empty,
+      });
       toast.success("Hierarchy fetched");
     } catch (e: any) {
       console.error("Hierarchy fetch error", e);
@@ -241,11 +263,19 @@ const CheckHierarchy: React.FC = () => {
         uiMessage = serverMsg || "Failed to fetch hierarchy";
       }
 
+      // F2 · submit committed but the lookup returned no hierarchy
+      msafeEvents.onHierarchyCheckSubmitted({
+        employee_type: employeeType,
+        lookup_by: idType === "mobile" ? "mobile" : "email",
+        levels_returned: 0,
+        not_found: true,
+      });
+
       toast.error(uiMessage);
     } finally {
       setTreeLoading(false);
     }
-  }, [treeIdentifier, employeeType, identifierError, identifierType]);
+  }, [treeIdentifier, employeeType, identifierError, identifierType, msafeEvents]);
 
   const onToggleNode = useCallback((id: number) => {
     setExpandedNodes((prev) => {

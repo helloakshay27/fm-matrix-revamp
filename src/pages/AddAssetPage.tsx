@@ -80,6 +80,7 @@ import { MeterMeasureFields } from "@/components/asset/MeterMeasureFields";
 import { FormatShapes } from "@mui/icons-material";
 import { toast } from "sonner";
 import { assetFieldsConfig } from "../config/assetFieldsConfig";
+import { useAssetEvents } from "@/components/PostHogAssetEvents";
 
 // Image compression function
 const compressImage = async (
@@ -266,6 +267,7 @@ const AddAssetPage = () => {
   const currencySymbol = (typeof window !== 'undefined' && window.localStorage.getItem('currencySymbol')) || '';
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const assetEvents = useAssetEvents();
 
   // Location data hook
   const {
@@ -3254,6 +3256,36 @@ const AddAssetPage = () => {
     return [];
   };
 
+  // Fire the "Asset Registered" business event with a best-effort property set
+  // drawn from the current form state. Called from each create-success branch.
+  const captureAssetRegistered = (assetId: string | number | null) => {
+    const isIt = selectedAssetCategory === "IT Equipment" ? true : !!formData.it_asset;
+    const locationDepth = [
+      formData.location_site || (formData as any).site_id,
+      (formData as any).building_id,
+      (formData as any).wing_id,
+      (formData as any).floor_id,
+      (formData as any).area_id,
+      (formData as any).room_id,
+    ].filter(Boolean).length;
+    const assetName = String((formData as any).name || (formData as any).asset_name || "");
+    assetEvents.onAssetRegistered(assetId, {
+      asset_type: isIt ? "it_assets" : "non_it_assets",
+      group: (formData as any).pms_asset_group_id || formData.group_id || null,
+      sub_group: (formData as any).pms_asset_sub_group_id || formData.sub_group_id || null,
+      category: selectedAssetCategory || null,
+      criticality: formData.critical === true || formData.critical === "true" ? "critical" : (formData.critical === false || formData.critical === "false" ? "non_critical" : null),
+      allocation_type: formData.allocation_type || null,
+      amc_category_type: (formData as any).amc_category_type || null,
+      site: formData.location_site || (formData as any).site_id || null,
+      location_depth: locationDepth,
+      has_purchase_cost: Boolean(formData.purchase_cost && parseFloat(String(formData.purchase_cost)) > 0),
+      has_warranty: underWarranty === "yes" || Boolean(formData.warranty),
+      is_test: /test/i.test(assetName),
+      created_via: "web",
+    });
+  };
+
   const handleSaveAndShow = () => {
     setSubmitting(true);
     const validationErrors = validateMandatoryFields();
@@ -3692,6 +3724,7 @@ const AddAssetPage = () => {
         .then((response) => {
           console.log("Asset created successfully:", response.data);
           const assetId = response.data.asset?.id;
+          captureAssetRegistered(assetId ?? null);
           toast.success("Asset Created Successfully", {
             description: "The asset has been created and saved.",
             duration: 3000,
@@ -3749,6 +3782,7 @@ const AddAssetPage = () => {
         .then((response) => {
           console.log("Asset created successfully:", response.data);
           const assetId = response.data.asset?.id;
+          captureAssetRegistered(assetId ?? null);
           toast.success("Asset Created Successfully", {
             description: "The asset has been created and saved.",
             duration: 3000,
@@ -4237,6 +4271,7 @@ const AddAssetPage = () => {
         })
         .then((response) => {
           console.log("Asset created successfully:", response.data);
+          captureAssetRegistered(response.data.asset?.id ?? null);
           toast.success("Asset Created Successfully", {
             description: "The asset has been created and saved.",
             duration: 3000,
@@ -4287,6 +4322,7 @@ const AddAssetPage = () => {
         })
         .then((response) => {
           console.log("Asset created successfully:", response.data);
+          captureAssetRegistered(response.data.asset?.id ?? null);
           // navigate('/maintenance/asset');
           location.reload(); // Reload to show the new asset in the list
           toast.success("Asset Created Successfully", {

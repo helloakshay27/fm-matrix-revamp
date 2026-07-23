@@ -8,7 +8,9 @@ type ScheduleActivityEvent =
   | "Schedule Form Block Completed"
   | "Schedule Saved"
   | "Schedule Create Abandoned"
-  | "Schedule Detail Viewed";
+  | "Schedule Detail Viewed"
+  // Business lifecycle events (Task & PPM catalogue) — curated, not UI-usage
+  | "Maintenance Schedule Defined";
 
 interface PostHogScheduleActivityProps {
   event: ScheduleActivityEvent;
@@ -22,7 +24,7 @@ export function PostHogScheduleActivity({ event, properties }: PostHogScheduleAc
     if (posthog) {
       posthog.capture(event, properties);
     }
-  }, [posthog]);
+  }, [posthog, event, properties]);
 
   return null;
 }

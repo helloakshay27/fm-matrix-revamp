@@ -10,6 +10,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useNavigate } from 'react-router-dom';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useVehicleEvents } from '@/components/PostHogSecurityEvents';
 
 interface Vehicle {
   id: number;
@@ -171,6 +172,7 @@ export const RVehiclesDashboard = () => {
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [vehicleData, setVehicleData] = useState(initialVehicleData);
   const navigate = useNavigate();
+  const { onVehicleStatusToggled } = useVehicleEvents();
 
   const handleHistoryClick = () => {
     navigate('/security/vehicle/r-vehicles/history');
@@ -203,6 +205,10 @@ export const RVehiclesDashboard = () => {
 
   const handleStatusToggle = (vehicleId: number) => {
     console.log(`Toggling status for Vehicle ${vehicleId}`);
+    const vehicle = vehicleData.find(v => v.id === vehicleId);
+    if (vehicle) {
+      onVehicleStatusToggled({ vehicle_id: vehicleId.toString(), to_status: vehicle.statusCode === 'Active' ? 'Inactive' : 'Active' });
+    }
     
     setVehicleData(prev => 
       prev.map(vehicle => 

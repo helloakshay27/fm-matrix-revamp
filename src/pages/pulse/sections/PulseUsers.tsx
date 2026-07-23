@@ -3,6 +3,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
+import { Users as UsersIcon } from "lucide-react";
 import {
   fetchUsersKpi, fetchUsersBySite, fetchPulseUsers,
   type UsersKpi, type UsersBySite, type PulseUsersResponse,
@@ -64,10 +65,24 @@ export function PulseUsers({ filters }: Props) {
   }
 
   const startIdx = users ? (users.pagination.current_page - 1) * users.pagination.per_page : 0;
+  const hasData = !!(kpi || (bySite && bySite.sites.length) || users);
 
   return (
     <div>
-      <div className="pd-section-title">Users</div>
+      <div className="pd-section-header">
+        <div className="pd-section-icon"><UsersIcon className="w-5 h-5" /></div>
+        <div>
+          <h2 className="pd-section-title">Users</h2>
+          <div className="pd-section-subtitle">Admins, occupants and activity across sites</div>
+        </div>
+      </div>
+
+      {!hasData && (
+        <div className="pd-empty">
+          <UsersIcon className="pd-empty-icon" />
+          No user data available for the selected filters.
+        </div>
+      )}
 
       {kpi && (
         <div className="pd-kpi-grid">
@@ -186,14 +201,14 @@ export function PulseUsers({ filters }: Props) {
             <table className="pd-table">
               <thead>
                 <tr>
-                  <th>#</th><th>Name</th><th>Type</th><th>Email</th>
+                  <th className="pd-num">#</th><th>Name</th><th>Type</th><th>Email</th>
                   <th>Mobile</th><th>Alt Mobile</th><th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {users.users.map((u, i) => (
                   <tr key={u.user_id}>
-                    <td>{startIdx + i + 1}</td>
+                    <td className="pd-num">{startIdx + i + 1}</td>
                     <td style={{ fontWeight: 500 }}>{u.user_name}</td>
                     <td><span className="pd-badge pd-badge-pub">{u.user_type}</span></td>
                     <td>{u.email || "—"}</td>

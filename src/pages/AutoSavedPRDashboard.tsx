@@ -7,6 +7,7 @@ import axios from 'axios';
 import { format } from 'date-fns';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useProcurementEvents } from '@/components/PostHogProcurementEvents';
 
 interface PRData {
   id: string;
@@ -57,6 +58,7 @@ export const AutoSavedPRDashboard = () => {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [savedPR, setSavedPR] = useState<PRData[]>([]);
+  const procurementEvents = useProcurementEvents();
 
   useEffect(() => {
     navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
@@ -72,6 +74,7 @@ export const AutoSavedPRDashboard = () => {
         });
 
         setSavedPR(formattedData(response.data.system_logs));
+        try { procurementEvents.onPrDraftReopened(null, null); } catch (err) {}
       } catch (error) {
         console.log(error)
       }
@@ -93,6 +96,7 @@ export const AutoSavedPRDashboard = () => {
           ? `/finance/grn-srn/add?saved_pr_id=${item.id}`
           : "";
 
+    try { procurementEvents.onPrDraftReopened(item.id, null); } catch (err) {}
     navigate(url);
   }
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PostHogScheduleActivity } from '@/components/PostHogScheduleActivity';
-import { usePostHog } from '@posthog/react';
+import { capturePostHogEvent } from '@/utils/posthogHelpers';
 import { toast } from "sonner";
 import { MappingStep } from '@/components/schedule/MappingStep';
 import { TimeSetupStep } from '@/components/schedule/TimeSetupStep'
@@ -225,18 +225,17 @@ type ScheduleEvent = React.ComponentProps<typeof PostHogScheduleActivity>['event
 
 export const AddSchedulePage = () => {
   const navigate = useNavigate();
-  const posthog = usePostHog();
   const stepStartTimeRef = useRef<number>(Date.now());
   const scheduleSavedRef = useRef(false);
   const scheduleEventKeyRef = useRef(0);
-  const [scheduleEvent, setScheduleEvent] = useState<{
+  const [scheduleEvents, setScheduleEvents] = useState<Array<{
     key: number;
     event: ScheduleEvent;
     properties?: Record<string, unknown>;
-  } | null>(null);
+  }>>([]);
 
   const captureScheduleEvent = (event: ScheduleEvent, properties?: Record<string, unknown>) => {
-    setScheduleEvent({ key: ++scheduleEventKeyRef.current, event, properties });
+    setScheduleEvents(prev => [...prev, { key: ++scheduleEventKeyRef.current, event, properties }]);
   };
 
   // Stepper state
@@ -248,12 +247,11 @@ export const AddSchedulePage = () => {
   useEffect(() => {
     return () => {
       if (!scheduleSavedRef.current) {
-        posthog?.capture('Schedule Create Abandoned', {
+        capturePostHogEvent('Schedule Create Abandoned', {
           last_block_reached: activeStepRef.current,
         });
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const steps = ['Basic Configuration', 'Schedule Setup', 'Question Setup', 'Time Setup', 'Mapping'];
@@ -2128,11 +2126,42 @@ export const AddSchedulePage = () => {
       setCustomCode(result.custom_form_code);
 
       scheduleSavedRef.current = true;
+      const checklistStepCount = questionSections.reduce(
+        (acc: number, s: any) => acc + s.tasks.filter((t: any) => (t.task || '').trim()).length,
+        0
+      );
+      const associationCount = formData.scheduleFor === 'Service'
+        ? (formData.service?.length || 0)
+        : (formData.checklistType === 'Individual'
+            ? (formData.asset?.length || 0)
+            : (formData.assetSubGroup?.length || 0));
+      const supervisorCount = String(formData.supervisors || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean).length;
       captureScheduleEvent('Schedule Saved', {
         schedule_id: result.custom_form_code,
         schedule_type: formData.type,
         recurrence_pattern: formData.recurrenceType || '',
-        checklist_step_count: questionSections.reduce((acc: number, s: any) => acc + s.tasks.length, 0),
+        checklist_step_count: checklistStepCount,
+      });
+      captureScheduleEvent('Maintenance Schedule Defined', {
+        schedule_id: result.custom_form_code,
+        schedule_type: (formData.type || '').toLowerCase(),
+        schedule_for: (formData.scheduleFor || '').toLowerCase(),
+        checklist_type: formData.checklistType === 'Individual' ? 'individual' : 'asset_group',
+        association_count: associationCount,
+        recurrence_pattern: formData.frequency || formData.recurrenceType || '',
+        grace_time_value: formData.graceTimeValue || '',
+        grace_time_unit: (formData.graceTime || '').toLowerCase(),
+        lock_overdue: formData.lockOverdueTask === 'true' || formData.lockOverdueTask === true ? 'yes' : 'no',
+        photo_capture: formData.checkInPhotograph || 'inactive',
+        has_auto_ticket: autoTicket || questionSections.some(s => s.autoTicket),
+        supervisor_count: supervisorCount,
+        has_supplier: Boolean(formData.supplier),
+        checklist_step_count: checklistStepCount,
+        category: (formData.category || '').toLowerCase().replace(/\s+/g, '_'),
+        platform: 'web',
       });
       toast.success("Checklist is scheduled successfully!", {
         position: 'top-right',
@@ -6481,9 +6510,9 @@ export const AddSchedulePage = () => {
   return (
     <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50" style={{ fontFamily: 'Work Sans, sans-serif' }}>
       <PostHogScheduleActivity event="Schedule Create Started" />
-      {scheduleEvent && (
-        <PostHogScheduleActivity key={scheduleEvent.key} event={scheduleEvent.event} properties={scheduleEvent.properties} />
-      )}
+      {scheduleEvents.map(evt => (
+        <PostHogScheduleActivity key={evt.key} event={evt.event} properties={evt.properties} />
+      ))}
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">

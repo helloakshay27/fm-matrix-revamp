@@ -13,7 +13,7 @@ export function PostHogTicketActivity({ event, properties }: PostHogTicketActivi
     if (posthog) {
       posthog.capture(event, properties);
     }
-  }, [posthog]);
+  }, [posthog, event, properties]);
 
   return null;
 }

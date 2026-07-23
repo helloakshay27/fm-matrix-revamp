@@ -3,8 +3,10 @@ import { Button } from '@/components/ui/button';
 import { FileText, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 const MsafeReportDownload = () => {
+  const msafeEvents = useMSafeEvents();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [status, setStatus] = useState<'idle' | 'processing' | 'completed' | 'error'>('idle');
   const [message, setMessage] = useState<string>('');
@@ -21,7 +23,10 @@ const MsafeReportDownload = () => {
   };
 
   useEffect(() => {
+    // F1 · Msafe Report Viewed — user-report screen loaded
+    msafeEvents.onMsafeReportViewed('msafe_user_report');
     return () => clearPoll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getBaseUrl = () => {
@@ -119,6 +124,11 @@ const MsafeReportDownload = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       toast.success('File downloaded successfully');
+      msafeEvents.onMsafeReportDownloaded({
+        screen: 'msafe_user_report',
+        report_type: 'user_report',
+        // row_count/date_range unknown client-side (file blob) — server mirror carries these
+      });
     } catch (error) {
 
     }

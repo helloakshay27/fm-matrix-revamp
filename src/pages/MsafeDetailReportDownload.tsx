@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 const MsafeDetailReportDownload: React.FC = () => {
+  const msafeEvents = useMSafeEvents();
+
+  useEffect(() => {
+    // F1 · Msafe Report Viewed — detail-report screen loaded
+    msafeEvents.onMsafeReportViewed('msafe_detail_report');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [reports, setReports] = useState({
     masterSSO: false,
     masterSignin: false,
@@ -78,6 +86,12 @@ const MsafeDetailReportDownload: React.FC = () => {
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
           toast.success('File downloaded successfully');
+          msafeEvents.onMsafeReportDownloaded({
+            screen: 'msafe_detail_report',
+            report_type: 'detail_report',
+            // Detail report is a combined bundle (Master SSO/Sign-in, SMT, LMC, Training);
+            // when per-type selection is re-enabled, pass the specific report_type instead.
+          });
         } else {
           toast.error('Download URL not found in the response.');
         }

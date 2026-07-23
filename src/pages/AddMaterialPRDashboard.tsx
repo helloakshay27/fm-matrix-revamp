@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import axios from "axios";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { useProcurementEvents, type PrSection } from "@/components/PostHogProcurementEvents";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -52,6 +53,34 @@ export const AddMaterialPRDashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const procurementEvents = useProcurementEvents();
+  // F1 funnel tracking
+  const formOpenedAtRef = useRef<number>(Date.now());
+  const sectionsSeenRef = useRef<Set<PrSection>>(new Set());
+  const rowsAddedRef = useRef(0);
+  const hasSubmittedRef = useRef(false);
+  const hasAutoSavedRef = useRef(false);
+  const markSection = (section: PrSection) => {
+    if (sectionsSeenRef.current.has(section)) return;
+    sectionsSeenRef.current.add(section);
+    procurementEvents.onPrSectionCompleted("material", section, sectionsSeenRef.current.size - 1);
+  };
+
+  // F1 · PR Form Opened on mount + PR Form Abandoned on unmount (if not submitted/auto-saved)
+  useEffect(() => {
+    const entrySource = (location.state as { entrySource?: string } | null)?.entrySource ?? "direct";
+    procurementEvents.onPrFormOpened("material", entrySource);
+    return () => {
+      if (hasSubmittedRef.current || hasAutoSavedRef.current) return;
+      const lastSection = Array.from(sectionsSeenRef.current).pop() ?? "supplier";
+      procurementEvents.onPrFormAbandoned("material", {
+        last_section: lastSection,
+        rows_added: rowsAddedRef.current,
+        time_on_form_sec: Math.round((Date.now() - formOpenedAtRef.current) / 1000),
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const { data } = useAppSelector((state) => state.changePlantDetails);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -307,6 +336,9 @@ export const AddMaterialPRDashboard = () => {
           }
         );
         toast.success("Auto saved successfully");
+        hasAutoSavedRef.current = true;
+        const sectionReached = Array.from(sectionsSeenRef.current).pop() ?? "supplier";
+        procurementEvents.onPrDraftAutoSaved("material", slid, sectionReached);
       } catch (error) {
         console.error("Error updating system log:", error);
       }
@@ -432,6 +464,7 @@ export const AddMaterialPRDashboard = () => {
 
   const handleSupplierChange = (e) => {
     const { name, value } = e.target;
+    if (value) markSection("supplier");
     setSupplierDetails((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -531,12 +564,14 @@ export const AddMaterialPRDashboard = () => {
       // Validate file type
       if (!validFileTypes.includes(file.type)) {
         toast.error(`Invalid file type: ${file.name}. Only PDF files are accepted.`);
+        procurementEvents.onPrAttachmentFailed("material", "type");
         return;
       }
 
       // Validate file size
       if (file.size > maxFileSizeBytes) {
         toast.error(`File size exceeded: ${file.name}. Maximum allowed size is 12 MB`);
+        procurementEvents.onPrAttachmentFailed("material", "size");
         return;
       }
 
@@ -544,6 +579,7 @@ export const AddMaterialPRDashboard = () => {
     });
 
     if (validFiles.length > 0) {
+      markSection("attachments");
       setFiles((prevFiles) => [...prevFiles, ...validFiles]);
     }
   };
@@ -557,6 +593,9 @@ export const AddMaterialPRDashboard = () => {
   };
 
   const addItem = () => {
+    markSection("items");
+    rowsAddedRef.current += 1;
+    procurementEvents.onPrItemRowAdded("material", items.length, false);
     setItems([
       ...items,
       {
@@ -776,6 +815,15 @@ export const AddMaterialPRDashboard = () => {
 
     try {
       await dispatch(createMaterialPR({ baseUrl, token, data: payload })).unwrap();
+      hasSubmittedRef.current = true;
+      const totalAmount = items.reduce((sum, it) => sum + (parseFloat(it.amount) || 0), 0);
+      procurementEvents.onPrSubmitted("material", {
+        item_count: items.length,
+        total_amount: totalAmount || null,
+        from_draft: Boolean(savedPrId),
+        draft_id: savedPrId || null,
+        time_on_form_sec: Math.round((Date.now() - formOpenedAtRef.current) / 1000),
+      });
       toast.success("Material PR created successfully");
       cache.invalidatePattern("material_pr*");
       navigate("/finance/material-pr");

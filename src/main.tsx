@@ -29,9 +29,9 @@ if (window.location.hostname === "fm-matrix.lockated.com" || window.location.hos
 // during their own mount effects race against init and events get dropped.
 posthog.init(import.meta.env.VITE_POSTHOG_PROJECT_TOKEN, {
   api_host: import.meta.env.VITE_POSTHOG_HOST,
-  defaults: "2026-01-30",
   autocapture: false,
   capture_pageview: false, // handled manually by PostHogPageView
+  disable_session_recording: true,
 });
 
 createRoot(document.getElementById("root")!).render(

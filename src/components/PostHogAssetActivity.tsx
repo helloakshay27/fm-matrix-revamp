@@ -22,6 +22,6 @@ export function PostHogAssetActivity({ event, properties }: PostHogAssetActivity
     if (posthog) {
       posthog.capture(event, properties);
     }
-  }, [posthog]);
+  }, [posthog, event, properties]);
   return null;
 }

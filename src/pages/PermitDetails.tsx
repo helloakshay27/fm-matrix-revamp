@@ -27,6 +27,7 @@ import {
     Eye,
     FileSpreadsheet,
     File,
+    Play,
 } from "lucide-react";
 import { API_CONFIG } from "@/config/apiConfig";
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { FormControl, InputLabel, Select, MenuItem, OutlinedInput, Chip, Box, SelectChangeEvent, TextField } from '@mui/material';
 import { format } from "date-fns";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { usePermitEvents } from "@/components/PostHogPermitEvents";
 
 // MUI field styles
 const fieldStyles = {
@@ -217,6 +219,11 @@ interface PermitResume {
     };
     assignees: string;
     attachments_count: number;
+    attachments?: {
+        id: number;
+        filename: string;
+        url: string;
+    }[];
     extend_approval_levels: ApprovalLevel[];
     status?: string;
 }
@@ -372,6 +379,16 @@ export const PermitDetails = () => {
     const [openRejectDialog, setOpenRejectDialog] = useState(false);
     const [rejectComment, setRejectComment] = useState("");
     const [extensionId, setExtensionId] = useState<string>("");
+
+    const {
+        onPermitDetailOpened,
+        onApprovalItemOpened,
+        onPermitExtensionRequested,
+        onPermitClosureSubmitted,
+        onPermitFormPrinted,
+        onJSAPrinted,
+        onQRDownloaded
+    } = usePermitEvents();
 
     // Extend permit form states
     const [isExtending, setIsExtending] = useState(false);
@@ -835,7 +852,7 @@ export const PermitDetails = () => {
         }
 
         if (!extendReason.trim()) {
-            toast.error('Please provide a reason for extension');
+            toast.error("Please provide a reason for extension");
             return;
         }
 
@@ -848,6 +865,8 @@ export const PermitDetails = () => {
             toast.error('Please select at least one assignee');
             return;
         }
+
+        onPermitExtensionRequested({ reason_length: extendReason.length, has_attachment: !!extendAttachments });
 
         setIsExtending(true);
         try {
@@ -1097,9 +1116,11 @@ export const PermitDetails = () => {
         }
 
         if (!completionComment.trim()) {
-            toast.error('Please provide a completion comment');
+            toast.error("Please provide a completion comment");
             return;
         }
+
+        onPermitClosureSubmitted({ comment_length: completionComment.length, has_attachment: completeAttachments.length > 0 });
 
         setIsCompleting(true);
         try {
@@ -1184,7 +1205,7 @@ export const PermitDetails = () => {
 
     // Handle removing a file from the list
     const handleRemoveFile = (index: number) => {
-        setJsaAttachments(prev => prev.filter((_, i) => i !== index));
+        setJsaAttachments(prev => jsaAttachments.filter((_, i) => i !== index));
     };
 
     // Fetch permit details on component mount
@@ -1201,6 +1222,19 @@ export const PermitDetails = () => {
                 const response = await fetchPermitDetails(id);
                 console.log(response)
                 setPermitData(response);
+                
+                onPermitDetailOpened({
+                    permit_status: response.permit.status,
+                    open_source: isFromPendingApprovals ? 'approval_queue' : 'direct'
+                });
+
+                if (isFromPendingApprovals) {
+                    onApprovalItemOpened({
+                        approval_type: searchParams.get('resource_type') || 'unknown',
+                        level_id: searchParams.get('level_id') || 'unknown'
+                    });
+                }
+
                 setError(null);
             } catch (err) {
                 setError('Failed to load permit details');
@@ -1245,7 +1279,8 @@ export const PermitDetails = () => {
     // };
 
     const handleDownloadQR = async () => {
-        if (permitData?.qr_code?.id) {
+        if (permitData?.qr_code?.image_url) {
+            onQRDownloaded();
             try {
                 const baseUrl = localStorage.getItem('baseUrl');
                 const token = localStorage.getItem('token');
@@ -1300,11 +1335,8 @@ export const PermitDetails = () => {
 
     // Handle print form
     const handlePrintForm = async () => {
-        if (!id) {
-            toast.error('Permit ID is required');
-            return;
-        }
-
+        if (!id) return;
+        onPermitFormPrinted();
         try {
             const response = await fetch(`${API_CONFIG.BASE_URL}/pms/permits/${id}/download_print_pdf.pdf`, {
                 method: 'GET',
@@ -1336,11 +1368,8 @@ export const PermitDetails = () => {
 
     // Handle print JSA
     const handlePrintJSA = async () => {
-        if (!id) {
-            toast.error('Permit ID is required');
-            return;
-        }
-
+        if (!id) return;
+        onJSAPrinted();
         try {
             let baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
@@ -1581,7 +1610,7 @@ export const PermitDetails = () => {
                                 }}
                                 className="bg-cyan-500 hover:bg-cyan-600 text-white border-cyan-500"
                             >
-                                <RefreshCw className="w-4 h-4 mr-2" />
+                                <Play className="w-4 h-4 mr-2" />
                                 Resume
                             </Button>
                         )}
@@ -3057,7 +3086,7 @@ export const PermitDetails = () => {
 
                     <Section
                         title="PERMIT RESUME"
-                        icon={<RefreshCw />}
+                        icon={<Play />}
                         sectionKey="resume-permit"
                         activeSection={activeSection}
                         setActiveSection={setActiveSection}
@@ -3290,6 +3319,69 @@ export const PermitDetails = () => {
                                         <Field label="Assignees" value={resume.assignees} />
                                         <Field label="Attachments Count" value={resume.attachments_count} />
                                     </div>
+
+                                    {resume.attachments && resume.attachments.length > 0 && (
+                                        <div className="mt-6 pt-4 border-t border-gray-200">
+                                            <h5 className="font-medium text-gray-700 mb-3">Attachments:</h5>
+                                            <div className="flex items-center flex-wrap gap-4">
+                                                {resume.attachments.map((attachment) => {
+                                                    const attachmentUrl = attachment.url;
+                                                    const attachmentName = attachment.filename || `Document_${attachment.id}`;
+                                                    const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl || '');
+                                                    const isPdf = /\.pdf$/i.test(attachmentUrl || '');
+                                                    const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
+                                                    const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
+
+                                                    return (
+                                                        <div
+                                                            key={attachment.id}
+                                                            className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                                        >
+                                                            {isImage ? (
+                                                                <img
+                                                                    src={attachmentUrl}
+                                                                    alt={attachmentName}
+                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                    onClick={() => {
+                                                                        if (attachmentUrl) window.open(attachmentUrl, '_blank');
+                                                                    }}
+                                                                />
+                                                            ) : isPdf ? (
+                                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                                    <FileText className="w-6 h-6" />
+                                                                </div>
+                                                            ) : isExcel ? (
+                                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                                    <FileSpreadsheet className="w-6 h-6" />
+                                                                </div>
+                                                            ) : isWord ? (
+                                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                                    <FileText className="w-6 h-6" />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                                    <File className="w-6 h-6" />
+                                                                </div>
+                                                            )}
+                                                            <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                                {attachmentName}
+                                                            </span>
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                                onClick={() => {
+                                                                    if (attachmentUrl) window.open(attachmentUrl, '_blank');
+                                                                }}
+                                                            >
+                                                                <Download className="w-4 h-4" />
+                                                            </Button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Resume Approval Levels */}
                                     {/* {resume.extend_approval_levels && resume.extend_approval_levels.length > 0 && (

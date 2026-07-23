@@ -12,11 +12,11 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [auditEvent, setAuditEvent] = useState<{ key: number; event: "Master Checklist Import clicked" | "Download Sample Format clicked" } | null>(null);
+  const [auditEvents, setAuditEvents] = useState<Array<{ key: number; event: "Master Checklist Import clicked" | "Download Sample Format clicked" | "Master Checklist Created"; properties?: Record<string, unknown> }>>([]);
   const auditEventKeyRef = useRef(0);
-  const captureAuditEvent = (event: "Master Checklist Import clicked" | "Download Sample Format clicked") => {
+  const captureAuditEvent = (event: "Master Checklist Import clicked" | "Download Sample Format clicked" | "Master Checklist Created", properties?: Record<string, unknown>) => {
     auditEventKeyRef.current += 1;
-    setAuditEvent({ key: auditEventKeyRef.current, event });
+    setAuditEvents(prev => [...prev, { key: auditEventKeyRef.current, event, properties }]);
   };
 
   const handleAddMasterChecklist = () => {
@@ -53,6 +53,7 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
       captureAuditEvent("Master Checklist Import clicked");
       console.log("Importing questions from file:", selectedFile.name);
       // Add import logic here
+      captureAuditEvent("Master Checklist Created", { import_method: "excel" });
     } else {
       alert("Please select a file first");
     }
@@ -126,9 +127,9 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
   return (
     <div className="p-6">
       <PostHogAuditActivity event="Audit Schedule List Viewed" properties={{ list_type: "master_checklist" }} />
-      {auditEvent && (
-        <PostHogAuditActivity key={auditEvent.key} event={auditEvent.event} />
-      )}
+      {auditEvents.map(evt => (
+        <PostHogAuditActivity key={evt.key} event={evt.event} properties={evt.properties} />
+      ))}
       <div className="mb-6">
         <p className="text-[#1a1a1a] opacity-70 mb-2">
           Master Checklist &gt; Master Checklist List

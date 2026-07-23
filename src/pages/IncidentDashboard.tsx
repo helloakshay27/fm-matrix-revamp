@@ -25,6 +25,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { toast } from "sonner";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { useIncidentEvents } from "@/components/PostHogIncidentEvents";
 import { AssetAnalyticsSelector } from "@/components/AssetAnalyticsSelector";
 import { AssetAnalyticsFilterDialog } from "@/components/AssetAnalyticsFilterDialog";
 import { CumulativePowerWidget } from "@/components/charts/CumulativePowerWidget";
@@ -542,6 +543,7 @@ const RcaTable = ({
 export const IncidentDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
   const navigate = useNavigate();
+  const incidentEvents = useIncidentEvents();
 
   // ── List tab state
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -605,6 +607,12 @@ export const IncidentDashboard = () => {
       startDate: formatToDDMMYYYY(startStr),
       endDate: formatToDDMMYYYY(endStr),
     });
+    const startMs = new Date(startStr).getTime();
+    const endMs = new Date(endStr).getTime();
+    const rangeDays = Number.isNaN(startMs) || Number.isNaN(endMs)
+      ? 0
+      : Math.round((endMs - startMs) / (1000 * 60 * 60 * 24));
+    incidentEvents.onIncidentAnalyticsDateRangeChanged(rangeDays);
   };
 
   // ── Analytics API data states
@@ -762,6 +770,10 @@ export const IncidentDashboard = () => {
       setCurrentPage(pagination.current_page || 1);
       setTotalPages(pagination.total_pages || 1);
       setTotalCount(pagination.total_count || incidentsArr.length || 0);
+      incidentEvents.onIncidentListViewed(
+        pagination.total_count || incidentsArr.length || 0,
+        pagination.current_page || page
+      );
     } catch (err) {
       setError("Failed to fetch incidents");
       console.error(err);
@@ -860,6 +872,7 @@ export const IncidentDashboard = () => {
         `https://${baseUrl}/incident_dashboard/rca_data.json?${params}`,
         `rca_data_${new Date().toISOString().split("T")[0]}.xlsx`
       );
+      incidentEvents.onIncidentAnalyticsChartInteracted("rcaTable");
     } catch {
       toast.error("Failed to export RCA data");
     }
@@ -920,6 +933,7 @@ export const IncidentDashboard = () => {
         `https://${baseUrl}/incident_dashboard/status_summary.json?${params}`,
         `incident_status_distribution_${new Date().toISOString().split("T")[0]}.xlsx`
       );
+      incidentEvents.onIncidentAnalyticsChartInteracted("statusWiseChart");
     } catch {
       toast.error("Failed to export incident status distribution");
     }
@@ -989,6 +1003,7 @@ export const IncidentDashboard = () => {
         `https://${baseUrl}/incident_dashboard/level_wise.json?${params}`,
         `level_wise_${new Date().toISOString().split("T")[0]}.xlsx`
       );
+      incidentEvents.onIncidentAnalyticsChartInteracted("levelWiseChart");
     } catch {
       toast.error("Failed to export level wise data");
     }
@@ -1007,6 +1022,7 @@ export const IncidentDashboard = () => {
         `https://${baseUrl}/incident_dashboard/top_categories.json?${params}`,
         `top_categories_${new Date().toISOString().split("T")[0]}.xlsx`
       );
+      incidentEvents.onIncidentAnalyticsChartInteracted("categoryPieChart");
     } catch {
       toast.error("Failed to export top categories");
     }
@@ -1023,6 +1039,7 @@ export const IncidentDashboard = () => {
         `https://${baseUrl}/pms/incidents/export.xlsx?access_token=${token}`,
         `incidents_${new Date().toISOString().split("T")[0]}.xlsx`
       );
+      incidentEvents.onIncidentListExported(totalCount, Boolean(activeFilterQuery));
     } catch {
       toast.error("Failed to export incidents");
     }
@@ -1080,7 +1097,11 @@ export const IncidentDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      <Tabs defaultValue="list" className="w-full">
+      <Tabs
+        defaultValue="list"
+        className="w-full"
+        onValueChange={(v) => incidentEvents.onIncidentTabSwitched(v === "analytics" ? "analytics" : "list")}
+      >
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger
             value="list"
@@ -1173,7 +1194,9 @@ export const IncidentDashboard = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() =>
-                    navigate(`/safety/incident/new-details/${item.id}`)
+                    navigate(`/safety/incident/new-details/${item.id}`, {
+                      state: { openSource: activeFilterQuery ? "filter" : "list" },
+                    })
                   }
                 >
                   <Eye className="w-4 h-4" />
@@ -1183,6 +1206,15 @@ export const IncidentDashboard = () => {
             loading={loading}
             emptyMessage={error ?? "No incidents found"}
             enableSearch
+            onSearchChange={(value: string) => {
+              const q = (value || "").trim();
+              if (!q) return;
+              const matches = incidents.filter((i) =>
+                [i.description, i.site_name, i.building_name, i.category_name, i.inc_level_name]
+                  .some((f) => typeof f === "string" && f.toLowerCase().includes(q.toLowerCase()))
+              );
+              incidentEvents.onIncidentSearchPerformed(q.length, matches.length);
+            }}
             enableExport
             handleExport={handleExportIncidents}
             storageKey="incidents-dashboard"
@@ -1190,7 +1222,7 @@ export const IncidentDashboard = () => {
             leftActions={
               shouldShow("Incident", "create") && (
                 <Button
-                  onClick={() => navigate("/safety/incident/add")}
+                  onClick={() => navigate("/safety/incident/add", { state: { entrySource: "list_button" } })}
                   className="bg-[#C72030] text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" /> Add Incident
@@ -1388,6 +1420,19 @@ export const IncidentDashboard = () => {
           setIncidents(f);
           setActiveFilterQuery(q || "");
           setCurrentPage(1);
+          // Derive filter fields from the ransack-style query string (e.g. q[current_status_eq]=Open)
+          const fields = Array.from(
+            new Set(
+              (q || "")
+                .split("&")
+                .map((pair) => decodeURIComponent(pair.split("=")[0] || ""))
+                .map((key) => key.replace(/^q\[/, "").replace(/\]$/, ""))
+                .filter(Boolean)
+            )
+          );
+          if (fields.length > 0) {
+            incidentEvents.onIncidentFilterApplied(fields, fields.length);
+          }
         }}
         onReset={() => {
           setIncidents(originalIncidents);

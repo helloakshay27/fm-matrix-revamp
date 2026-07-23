@@ -17,6 +17,7 @@ import { TimeSetupStep } from '@/components/schedule/TimeSetupStep';
 import { Autocomplete } from "@mui/material";
 import Select from "react-select";
 import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
+import { useAMCEvents } from "@/components/PostHogAMCEvents";
 // Removed Material-UI checkbox imports - using custom styled components
 
 interface Service {
@@ -90,6 +91,7 @@ const setDropdownCache = (key: string, data: any) => {
 export const AddAMCPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { onAMCCreated, onAMCAssetLinked } = useAMCEvents();
 
   // Redux state
   const inventoryAssetsState = useSelector((state: RootState) => state.inventoryAssets);
@@ -1159,9 +1161,40 @@ export const AddAMCPage = () => {
 
     try {
       const result = await dispatch(createAMC(sendData)).unwrap();
+      const amcId = result?.id;
+
+      if (amcId) {
+          onAMCCreated({
+            amc_id: String(amcId),
+            coverage: formData.details.toLowerCase(),
+            amc_type: formData.amcType,
+            grouping: formData.type.toLowerCase(),
+            associated_count: formData.details === 'Asset' && formData.type === 'Individual' 
+               ? formData.asset_ids.length 
+               : (formData.details === 'Service' && formData.type === 'Individual' ? formData.service_ids.length : 1),
+            supplier_id: String(formData.supplier),
+            cost: Number(formData.cost) || 0,
+            payment_terms: formData.paymentTerms,
+            no_of_visits: Number(formData.noOfVisits) || 0,
+            frequency: selectedFrequencies[0] || 'unassigned',
+            start_date: formData.startDate,
+            end_date: formData.endDate,
+            first_service_date: formData.firstService,
+            critical_assets_covered: 0
+          });
+
+          if (formData.details === 'Asset' && formData.type === 'Individual') {
+              formData.asset_ids.forEach((id: string | number) => {
+                  onAMCAssetLinked({
+                      amc_id: String(amcId),
+                      asset_id: String(id),
+                      is_critical: false
+                  });
+              });
+          }
+      }
 
       if (action === 'show') {
-        const amcId = result?.id;
         if (amcId) {
           navigate(`/maintenance/amc`);
         } else {
@@ -1171,7 +1204,6 @@ export const AddAMCPage = () => {
         }
       }
       else if (action === 'schedule') {
-        const amcId = result?.id;
         if (!amcId) {
           const errorMessage =
             result?.message || result?.error || result?.errors?.[0] || "AMC was not scheduled: no ID returned.";

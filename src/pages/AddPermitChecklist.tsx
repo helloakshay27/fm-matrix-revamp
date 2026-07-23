@@ -5,6 +5,7 @@ import { Plus, X } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { usePermitEvents } from "@/components/PostHogPermitEvents";
 
 interface AnswerOption {
     text: string;
@@ -26,6 +27,12 @@ export const AddPermitChecklist = () => {
     React.useEffect(() => {
         setCurrentSection('Safety');
     }, [setCurrentSection]);
+
+    const { onChecklistCreateOpened, onChecklistSaved } = usePermitEvents();
+
+    React.useEffect(() => {
+        onChecklistCreateOpened();
+    }, []);
 
     const [formData, setFormData] = useState({
         category: '',
@@ -195,6 +202,11 @@ export const AddPermitChecklist = () => {
         }
 
         try {
+            onChecklistSaved({
+                question_count: questions.length,
+                has_mandatory: questions.some(q => q.mandatory)
+            });
+
             setIsSubmitting(true);
 
             let baseUrl = localStorage.getItem('baseUrl') || '';

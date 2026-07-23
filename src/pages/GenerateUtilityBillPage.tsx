@@ -18,6 +18,7 @@ import {
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
 
 interface BillGenerationFormData {
   fromDate: string;
@@ -59,6 +60,13 @@ export const GenerateUtilityBillPage = () => {
     adjustment: '',
     ratePerKWH: ''
   });
+  
+  const { 
+    onUtilityBillWizardOpened, 
+    onUtilityBillScopeSelected, 
+    onUtilityBillAdjustmentGenerated, 
+    onUtilityBillSubmitted 
+  } = useUtilityEvents();
 
   const [kiosks, setKiosks] = useState<[string, number][]>([]);
   const [kiosksLoading, setKiosksLoading] = useState(false);
@@ -72,6 +80,10 @@ export const GenerateUtilityBillPage = () => {
   const [transmissionLoss, setTransmissionLoss] = useState<string>('');
   const [totalLoss, setTotalLoss] = useState<string>('');
   const [consumptionLoss, setConsumptionLoss] = useState<string>('');
+
+  useEffect(() => {
+    onUtilityBillWizardOpened();
+  }, [onUtilityBillWizardOpened]);
 
   useEffect(() => {
     const fetchKiosks = async () => {
@@ -186,6 +198,21 @@ export const GenerateUtilityBillPage = () => {
           setConsumptionLoss(cLoss.toFixed(5));
           setTotalLoss(totalLoss.toFixed(5));
         console.log('Total Consumption:', tc, '| Adjustment Factor:', af, '| Transmission Loss:', tLoss, '| Consumption Loss:', cLoss, '| Total Loss:', totalLoss);
+        
+        onUtilityBillScopeSelected({
+          utility_type: formData.utilityType,
+          has_kiosk: !!formData.kiosk,
+          tower_set: formData.tower,
+          wing_set: formData.wing,
+          total_consumption: tc
+        });
+
+        onUtilityBillAdjustmentGenerated({
+          adjustment_factor: af,
+          transmission_loss: tLoss,
+          consumption_loss: cLoss,
+          total_loss: totalLoss
+        });
       }
     } catch (error) {
       console.error('Error fetching total consumption:', error);
@@ -275,6 +302,13 @@ export const GenerateUtilityBillPage = () => {
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       console.log('Compile utilization response:', data);
+      
+      onUtilityBillSubmitted({
+        rate_per_kwh: parseFloat(formData.ratePerKWH) || 0,
+        amount: data.total_amount || 0, // Fallback if data doesn't have amount
+        client_id: '', // Empty as compile works for multiple clients
+        meter_id: ''
+      });
     } catch (error) {
       console.error('Error compiling utilization:', error);
     }

@@ -29,6 +29,7 @@ import {
 import { useSelector } from 'react-redux';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
+import { useVisitorEvents } from "@/components/PostHogVisitorEvents";
 
 interface Building {
   id: number;
@@ -39,6 +40,7 @@ interface Building {
 export const VisitorFormPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const visitorEvents = useVisitorEvents();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -282,6 +284,8 @@ export const VisitorFormPage = () => {
 
       if (response && response.gatekeeper) {
         console.log('✅ Visitor info found:', response.gatekeeper);
+        // F2 · Visitor Lookup Performed — returning visitor matched
+        visitorEvents.onVisitorLookupPerformed(true);
         setVisitorInfo(response.gatekeeper);
         setShowVisitorInfo(true);
 
@@ -297,6 +301,8 @@ export const VisitorFormPage = () => {
         toast.success("Visitor information found and loaded!");
       } else {
         console.log('❌ No visitor info found in response');
+        // F2 · Visitor Lookup Performed — no returning-visitor match
+        visitorEvents.onVisitorLookupPerformed(false);
         setVisitorInfo(null);
         setShowVisitorInfo(false);
         toast.info("No previous visitor information found for this mobile number.");
@@ -725,6 +731,15 @@ export const VisitorFormPage = () => {
       });
 
       await ticketManagementAPI.createVisitor(visitorApiData, siteId);
+      // F1/F2 · Visitor Created (business lifecycle start)
+      visitorEvents.onVisitorCreated({
+        visitor_type: formData.visitorVisit === "unexpected" ? "unexpected" : "expected",
+        purpose: formData.visitorType === "support"
+          ? (formData.supportCategory ? String(formData.supportCategory) : null)
+          : (formData.visitPurpose ? String(formData.visitPurpose) : null),
+        host_id: formData.host ? String(formData.host) : null,
+        is_returning: Boolean(visitorInfo),
+      });
       toast.success("Visitor created successfully!");
       navigate("/security/visitor");
     } catch (error) {

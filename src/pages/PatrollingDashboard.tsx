@@ -19,6 +19,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { userService, User } from '@/services/userService';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { usePatrolEvents } from '@/components/PostHogSecurityEvents';
 
 // Type definitions for the API response
 interface PatrollingItem {
@@ -147,6 +148,7 @@ export const PatrollingDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { shouldShow } = useDynamicPermissions();
+  const { onPatrolStatusToggled } = usePatrolEvents();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -548,6 +550,7 @@ export const PatrollingDashboard = () => {
       toast.success(`Patrolling ${!currentStatus ? 'activated' : 'deactivated'} successfully!`, {
         duration: 3000,
       });
+      onPatrolStatusToggled({ patrol_id: id, to_status: !currentStatus ? 'active' : 'inactive' });
     } catch (error: any) {
       console.error('Error toggling patrolling status:', error);
       toast.error(`Failed to update status: ${error.message}`, {

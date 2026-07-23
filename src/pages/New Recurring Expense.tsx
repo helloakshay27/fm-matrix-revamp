@@ -1122,6 +1122,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
+  BankRecord,
+  bankMasterListUrl,
+  getBankMasterApiConfig,
+  mapApiBankRecord,
+} from "./ClubManagement/bankMasterUtils";
+import {
   Checkbox,
   CircularProgress,
   FormControl,
@@ -1140,7 +1146,7 @@ import {
 } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { EditOutlined, Close as CloseIcon } from "@mui/icons-material";
-import { Receipt, Calendar, FileText, CreditCard } from "lucide-react";
+import { Receipt, Calendar, FileText, CreditCard, Landmark } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1322,6 +1328,25 @@ const NewRecurringExpensePage: React.FC = () => {
   const [currency, setCurrency] = useState("INR");
   const [amount, setAmount] = useState("");
   const [paidThrough, setPaidThrough] = useState("");
+
+  // Bank Details
+  const [bankOptions, setBankOptions] = useState<BankRecord[]>([]);
+  const [selectedBankId, setSelectedBankId] = useState<string>('');
+
+  useEffect(() => {
+    const fetchBanks = async () => {
+      try {
+        const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(`${bankMasterListUrl(baseUrl, lockAccountId)}&active=true`, { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        setBankOptions(data.map(mapApiBankRecord));
+      } catch (err) {
+        setBankOptions([]);
+      }
+    };
+    fetchBanks();
+  }, []);
+
   const [expenseType, setExpenseType] = useState<"goods" | "services">("goods");
   const [hsnCode, setHsnCode] = useState("");
   const [sacCode, setSacCode] = useState("");
@@ -1682,6 +1707,7 @@ const NewRecurringExpensePage: React.FC = () => {
     if (!expenseAccount) e.expenseAccount = "Expense account is required";
     if (!amount || parseFloat(amount) <= 0) e.amount = "Valid amount required";
     if (!paidThrough) e.paidThrough = "Paid through is required";
+    if (!selectedBankId) e.bank = "Bank is required";
     if (!gstTreatment) e.gstTreatment = "GST treatment is required";
     if (!sourceOfSupply) e.sourceOfSupply = "Source of supply is required";
     if (!destinationOfSupply) e.destinationOfSupply = "Destination is required";
@@ -1761,6 +1787,7 @@ const NewRecurringExpensePage: React.FC = () => {
           // Accounts
           account_id: parseInt(expenseAccount),   // spec: account_id
           paid_through_account_id: parseInt(paidThrough),
+          bank_master_id: selectedBankId ? Number(selectedBankId) : null,
 
           // Parties (omit if empty)
           ...(vendor && { vendor_id: parseInt(vendor) }),
@@ -2115,6 +2142,54 @@ const NewRecurringExpensePage: React.FC = () => {
               </FormControl>
               {errors.paidThrough && (
                 <p className="text-xs text-red-500 mt-1">{errors.paidThrough}</p>
+              )}
+            </div>
+          </div>
+        </Section>
+
+        {/* ══════════════════════════════════════════════════════════════════
+            SECTION 3.5 — Bank Details
+        ══════════════════════════════════════════════════════════════════ */}
+        <Section title="Bank Details" icon={<Landmark className="h-3.5 w-3.5" />}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium mb-2 text-red-500">
+                Bank*
+              </label>
+              <FormControl fullWidth error={!!errors.bank}>
+                <Select
+                  displayEmpty
+                  value={selectedBankId}
+                  onChange={(e) => {
+                    setSelectedBankId(String(e.target.value));
+                    if (errors.bank) {
+                      setErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.bank;
+                        return next;
+                      });
+                    }
+                  }}
+                  renderValue={(val) =>
+                    val
+                      ? (() => {
+                          const bank = bankOptions.find(b => String(b.id) === String(val));
+                          return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
+                        })()
+                      : <span style={{ color: '#aaa' }}>Select Bank</span>
+                  }
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Bank</em></MenuItem>
+                  {bankOptions.map((bank) => (
+                    <MenuItem key={bank.id} value={String(bank.id)}>
+                      {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {errors.bank && (
+                <p className="text-xs text-red-500 mt-1">{errors.bank}</p>
               )}
             </div>
           </div>

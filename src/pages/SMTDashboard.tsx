@@ -11,8 +11,10 @@ import jsPDF from 'jspdf';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { SMTImportModal } from '@/components/SMTImportModal';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 const SMTDashboard = () => {
+  const msafeEvents = useMSafeEvents();
   // simple debounce hook (local)
   function useDebounce<T>(value: T, delay: number) {
     const [debounced, setDebounced] = useState(value);
@@ -102,6 +104,7 @@ const SMTDashboard = () => {
       const pagination: PaginationData = payload.pagination || { current_page: page, total_count: rows.length, total_pages: Math.max(1, Math.ceil((payload.total_count || rows.length) / pageSize)) };
       setServerData(rows);
       setPaginationData(pagination);
+      msafeEvents.onMSafeSubmoduleViewed('smt', pagination.total_count);
     } catch (e: any) {
       console.error('Failed to fetch SMTs:', e);
       setError(e?.message || 'Failed to fetch SMTs');

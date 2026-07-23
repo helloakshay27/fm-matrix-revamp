@@ -48,6 +48,7 @@ interface Question {
   mandatory: boolean;
   answerOptions?: AnswerOption[];
   placeholderText?: string;
+  maxLength?: string;
   additionalFieldOnNegative?: boolean;
   additionalFields?: Array<{
     title: string;
@@ -654,6 +655,10 @@ export const AddSurveyPage = () => {
             `question[][placeholder_text]`,
             question.placeholderText || ""
           );
+          formData.append(
+            `question[][max_length]`,
+            question.maxLength || ""
+          );
         }
 
         // Handle question image upload
@@ -1259,6 +1264,26 @@ export const AddSurveyPage = () => {
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
                       InputProps={{ sx: fieldStyles }}
+                    />
+                  )}
+
+                  {question.answerType === "input-box" && (
+                    <TextField
+                      label="Max Length"
+                      placeholder="Enter max length"
+                      type="number"
+                      value={question.maxLength || ""}
+                      onChange={(e) =>
+                        handleQuestionChange(
+                          question.id,
+                          "maxLength",
+                          e.target.value
+                        )
+                      }
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles, inputProps: { min: 0 } }}
                     />
                   )}
 

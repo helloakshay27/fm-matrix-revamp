@@ -9,7 +9,9 @@ import { toast } from "sonner";
 import { apiClient } from "@/utils/apiClient";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAssetEvents } from "@/components/PostHogAssetEvents";
 export const MoveAssetPage: React.FC = () => {
+  const assetEvents = useAssetEvents();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
@@ -307,6 +309,14 @@ export const MoveAssetPage: React.FC = () => {
       if (response.ok) {
         toast.success("Asset Movement Successful", {
           description: "Assets moved successfully!",
+        });
+        // Asset Moved — one event per moved asset (site/location transfer)
+        selectedAssets.forEach((asset: any) => {
+          assetEvents.onAssetMoved(
+            asset.id,
+            asset.site_id ?? asset.site_name ?? null,
+            siteId
+          );
         });
         navigate("/maintenance/asset", { state: { refreshAssets: true } });
       } else {

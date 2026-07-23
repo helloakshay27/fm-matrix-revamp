@@ -3,6 +3,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
+import { Building2 } from "lucide-react";
 import {
   fetchEntityKpi, fetchEntitiesBySite, fetchEntityList, fetchEntityBreakdown,
   type EntityKpi, type EntitiesBySite, type EntityListResponse, type EntityBreakdown,
@@ -49,10 +50,24 @@ export function PulseCustomers({ filters }: Props) {
   }
 
   const startIdx = list ? (list.pagination.current_page - 1) * list.pagination.per_page : 0;
+  const hasData = !!(kpi || (bySite && bySite.sites.length) || list || (breakdown && breakdown.breakdown.length));
 
   return (
     <div>
-      <div className="pd-section-title">Customers</div>
+      <div className="pd-section-header">
+        <div className="pd-section-icon"><Building2 className="w-5 h-5" /></div>
+        <div>
+          <h2 className="pd-section-title">Customers</h2>
+          <div className="pd-section-subtitle">Entities onboarded across sites</div>
+        </div>
+      </div>
+
+      {!hasData && (
+        <div className="pd-empty">
+          <Building2 className="pd-empty-icon" />
+          No customer data available for the selected filters.
+        </div>
+      )}
 
       {kpi && (
         <div className="pd-kpi-grid">
@@ -148,14 +163,14 @@ export function PulseCustomers({ filters }: Props) {
             <table className="pd-table">
               <thead>
                 <tr>
-                  <th>#</th><th>Name</th><th>Customer Type</th><th>Email</th>
-                  <th>Mobile</th><th>Site</th><th>Active</th><th>Leases</th><th>Domains</th>
+                  <th className="pd-num">#</th><th>Name</th><th>Customer Type</th><th>Email</th>
+                  <th>Mobile</th><th>Site</th><th>Active</th><th className="pd-num">Leases</th><th>Domains</th>
                 </tr>
               </thead>
               <tbody>
                 {list.entities.map((e, i) => (
                   <tr key={e.entity_id}>
-                    <td>{startIdx + i + 1}</td>
+                    <td className="pd-num">{startIdx + i + 1}</td>
                     <td style={{ fontWeight: 500 }}>{e.name}</td>
                     <td>{e.customer_type}</td>
                     <td>{e.email || "—"}</td>
@@ -166,8 +181,8 @@ export function PulseCustomers({ filters }: Props) {
                         {e.active}
                       </span>
                     </td>
-                    <td>{e.leases.length}</td>
-                    <td style={{ color: "#6b7280", fontSize: 12 }}>{e.domains.join(", ") || "—"}</td>
+                    <td className="pd-num">{e.leases.length}</td>
+                    <td style={{ color: "var(--color-text-light)", fontSize: 12 }}>{e.domains.join(", ") || "—"}</td>
                   </tr>
                 ))}
               </tbody>

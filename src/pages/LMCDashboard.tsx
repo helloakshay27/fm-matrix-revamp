@@ -16,6 +16,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import formSchema from './lmc_form.json';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 const columns = [
     { key: 'actions', label: 'Actions', sortable: false },
@@ -66,6 +67,7 @@ const PAGE_SIZE = 20; // rely on API default page size (adjust if backend suppor
 
 
 const LMCDashboard = () => {
+    const msafeEvents = useMSafeEvents();
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -133,8 +135,10 @@ const LMCDashboard = () => {
                 setCurrentPage(json.pagination.current_page);
                 setTotalPages(json.pagination.total_pages);
                 setTotalCount(json.pagination.total_count);
+                msafeEvents.onMSafeSubmoduleViewed('lmc', json.pagination.total_count);
             } else {
                 setTotalPages(1); setTotalCount(apiRows.length); setCurrentPage(1);
+                msafeEvents.onMSafeSubmoduleViewed('lmc', apiRows.length);
             }
         } catch (e: any) {
             setError(e.message || 'Failed to load LMCs');
