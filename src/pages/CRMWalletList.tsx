@@ -110,6 +110,8 @@ const CRMWalletList = () => {
         useState(false);
     const [walletList, setWalletList] = useState([]);
     const [transactionHistory, setTransactionHistory] = useState([]);
+    const [walletLoading, setWalletLoading] = useState(true);
+    const [transactionLoading, setTransactionLoading] = useState(true);
     const [showTopupModal, setShowTopupModal] = useState(false);
     const [walletCardCount, setWalletCardCount] = useState({
         total_users: 0,
@@ -132,6 +134,7 @@ const CRMWalletList = () => {
         };
 
         const fetchWallets = async () => {
+            setWalletLoading(true);
             try {
                 const response = await dispatch(
                     fetchWalletList({ baseUrl, token })
@@ -139,10 +142,13 @@ const CRMWalletList = () => {
                 setWalletList(response.wallets);
             } catch (error) {
                 console.log(error);
+            } finally {
+                setWalletLoading(false);
             }
         };
 
         const fetchTransactions = async () => {
+            setTransactionLoading(true);
             try {
                 const response = await dispatch(
                     fetchTransactionHistory({ baseUrl, token })
@@ -150,6 +156,8 @@ const CRMWalletList = () => {
                 setTransactionHistory(response.transactions);
             } catch (error) {
                 console.log(error);
+            } finally {
+                setTransactionLoading(false);
             }
         };
 
@@ -326,6 +334,7 @@ const CRMWalletList = () => {
                     selectable={false}
                     pagination={true}
                     pageSize={10}
+                    loading={transactionLoading}
                 />
             )}
 
@@ -342,6 +351,7 @@ const CRMWalletList = () => {
                     selectable={false}
                     pagination={true}
                     pageSize={10}
+                    loading={walletLoading}
                 />
             )}
 
