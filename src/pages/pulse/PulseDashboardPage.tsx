@@ -117,7 +117,7 @@ export function PulseDashboardPage() {
 
       <div className="pulse-shell">
         {/* Page nav strip */}
-        <div className="ps-nav">
+        {/* <div className="ps-nav">
           <div className="ps-logo">
             <div className="ps-logo-mark">
               <svg viewBox="0 0 24 24">
@@ -130,7 +130,7 @@ export function PulseDashboardPage() {
             </div>
           </div>
           <div className="ps-date-tag">{todayLabel}</div>
-        </div>
+        </div> */}
 
         <PulseGreeting />
 
