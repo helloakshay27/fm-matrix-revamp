@@ -8,6 +8,8 @@ import { PulseEvents } from "./sections/PulseEvents";
 import { PulseNotices } from "./sections/PulseNotices";
 import { PulseCommunity } from "./sections/PulseCommunity";
 import { PulseCarpool } from "./sections/PulseCarpool";
+import { PulseAiAlerts } from "./PulseAiAlerts";
+import { PulseGreeting } from "./PulseGreeting";
 import "@/styles/pulse-dashboard.css";
 import "@/styles/pulse-shell.css";
 import { DashboardHeader } from "@/components/DashboardHeader";
@@ -130,6 +132,8 @@ export function PulseDashboardPage() {
           <div className="ps-date-tag">{todayLabel}</div>
         </div>
 
+        <PulseGreeting />
+
         {/* Filter bar */}
         <div className="ps-fbar">
           <div className="ps-flbl">
@@ -166,6 +170,8 @@ export function PulseDashboardPage() {
             </button>
           )}
         </div>
+
+        <PulseAiAlerts filters={filters} />
 
         {/* Section tabs */}
         <div className="ps-tabbar">
