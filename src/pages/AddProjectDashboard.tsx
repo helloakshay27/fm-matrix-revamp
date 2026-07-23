@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, X, Plus } from "lucide-react";
+import { Upload, X, Plus, Building2, FolderOpen } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { AddCategoryModal } from '@/components/AddCategoryModal';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
-import { Heading } from '@/components/ui/heading';
 
 interface Category {
   id: number;
@@ -120,12 +119,12 @@ export const AddProjectDashboard = () => {
       {/* Basic Details Section */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-            <span className="text-white text-sm">🏢</span>
+          <div className="w-8 h-8 bg-[#DA7756] rounded-full flex items-center justify-center">
+            <Building2 className="w-4 h-4 text-white" />
           </div>
-          <Heading level="h2" variant="primary" spacing="none" className="text-[#C72030]">
+          <h2 className="text-2xl font-semibold text-[#DA7756]">
             BASIC DETAILS
-          </Heading>
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -295,12 +294,12 @@ export const AddProjectDashboard = () => {
       {/* Category and Attachment Section */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-            <span className="text-white text-sm">📂</span>
+          <div className="w-8 h-8 bg-[#DA7756] rounded-full flex items-center justify-center">
+            <FolderOpen className="w-4 h-4 text-white" />
           </div>
-          <Heading level="h2" variant="primary" spacing="none" className="text-[#C72030]">
+          <h2 className="text-2xl font-semibold text-[#DA7756]">
             CATEGORY AND ATTACHMENT
-          </Heading>
+          </h2>
         </div>
 
         {/* Dynamic Categories */}
