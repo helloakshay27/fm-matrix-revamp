@@ -12,6 +12,13 @@ import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { fetchParkingConfigurations, GroupedParkingConfiguration } from '../services/parkingConfigurationsAPI';
 import { fetchParkingCategories, ParkingCategory } from '../services/parkingConfigAPI';
 
+interface CategoryCounts {
+  totalParkings: number;
+  nonStackParkings: number;
+  stackParkings: number;
+  reservedParkings: number;
+}
+
 interface SlotConfigurationData {
   id: string;
   building_id: number;
@@ -19,20 +26,17 @@ interface SlotConfigurationData {
   location: string;
   floor: string;
   qrcode_needed: boolean;
-  twoWheeler: {
-    totalParkings: number;
-    nonStackParkings: number;
-    stackParkings: number;
-    reservedParkings: number;
-  };
-  fourWheeler: {
-    totalParkings: number;
-    nonStackParkings: number;
-    stackParkings: number;
-    reservedParkings: number;
-  };
+  categories: Record<number, CategoryCounts>;
   createdOn: string;
 }
+
+// Sub-columns rendered per parking category (2 Wheeler, 4 Wheeler, EV, ...)
+const CATEGORY_COLUMN_TYPES: Array<{ suffix: string; label: string }> = [
+  { suffix: 'total', label: 'Total\nParkings' },
+  { suffix: 'nonstack', label: 'Non Stack\nParkings' },
+  { suffix: 'stack', label: 'Stack\nParkings' },
+  { suffix: 'reserved', label: 'Reserved\nParkings' }
+];
 
 export const SlotConfigurationPage = () => {
   const { shouldShow } = useDynamicPermissions();
@@ -41,24 +45,14 @@ export const SlotConfigurationPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [slotConfigurationData, setSlotConfigurationData] = useState<SlotConfigurationData[]>([]);
   const [parkingCategories, setParkingCategories] = useState<ParkingCategory[]>([]);
-  const [twoWheelerCategoryName, setTwoWheelerCategoryName] = useState('2 Wheeler');
-  const [fourWheelerCategoryName, setFourWheelerCategoryName] = useState('4 Wheeler');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
-  const [visibleColumns, setVisibleColumns] = useState({
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
     actions: true,
     location: true,
     floor: true,
-    qrcode_needed: true,
-    twoWheelerTotal: true,
-    twoWheelerNonStack: true,
-    twoWheelerStack: true,
-    twoWheelerReserved: true,
-    fourWheelerTotal: true,
-    fourWheelerNonStack: true,
-    fourWheelerStack: true,
-    fourWheelerReserved: true
+    qrcode_needed: true
   });
 
   const fetchParkingCategoriesData = useCallback(async () => {
@@ -66,35 +60,32 @@ export const SlotConfigurationPage = () => {
       const categoriesData = await fetchParkingCategories();
       setParkingCategories(categoriesData);
       console.log('Fetched parking categories:', categoriesData);
-      
-      // Find and set category names dynamically
-      const twoWheelerCategory = categoriesData.find(cat => 
-        cat.id === 5 || 
-        cat.name.toLowerCase().includes('2') ||
-        cat.name.toLowerCase().includes('two') ||
-        cat.name.toLowerCase().includes('wheeler')
-      );
-      const fourWheelerCategory = categoriesData.find(cat => 
-        cat.id === 6 || 
-        (cat.name.toLowerCase().includes('4') ||
-        cat.name.toLowerCase().includes('four') ||
-        cat.name.toLowerCase().includes('car')) &&
-        cat.id !== twoWheelerCategory?.id
-      );
-      
-      if (twoWheelerCategory) {
-        setTwoWheelerCategoryName(twoWheelerCategory.name);
-        console.log('Two Wheeler Category Name:', twoWheelerCategory.name);
-      }
-      if (fourWheelerCategory) {
-        setFourWheelerCategoryName(fourWheelerCategory.name);
-        console.log('Four Wheeler Category Name:', fourWheelerCategory.name);
-      }
     } catch (error) {
       console.error('Error fetching parking categories:', error);
       toast.error('Failed to fetch parking categories');
     }
   }, []);
+
+  // Ensure every parking category returned by the API has its own set of (togglable) columns,
+  // so any number of categories (2 Wheeler, 4 Wheeler, EV, ...) render dynamically.
+  useEffect(() => {
+    if (parkingCategories.length === 0) return;
+
+    setVisibleColumns(prev => {
+      const next = { ...prev };
+      let changed = false;
+      parkingCategories.forEach(category => {
+        CATEGORY_COLUMN_TYPES.forEach(({ suffix }) => {
+          const key = `cat_${category.id}_${suffix}`;
+          if (next[key] === undefined) {
+            next[key] = true;
+            changed = true;
+          }
+        });
+      });
+      return changed ? next : prev;
+    });
+  }, [parkingCategories]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -123,94 +114,24 @@ export const SlotConfigurationPage = () => {
     console.log('Transform API Data - Input:', apiData);
 
     apiData.forEach((group) => {
-      // Initialize counters for 2W and 4W
-      let twoWheelerData = {
-        totalParkings: 0,
-        nonStackParkings: 0,
-        stackParkings: 0,
-        reservedParkings: 0
-      };
-      let fourWheelerData = {
-        totalParkings: 0,
-        nonStackParkings: 0,
-        stackParkings: 0,
-        reservedParkings: 0
-      };
+      // Build counts per parking_category_id so any number of categories
+      // (2 Wheeler, 4 Wheeler, EV, ...) are captured dynamically.
+      const categoriesData: Record<number, CategoryCounts> = {};
 
-      // Process each parking configuration
       group.parking_configurations.forEach((config) => {
-        console.log('Processing config:', config.category_name, 'ID:', config.parking_category_id);
-        console.log('Config data:', {
-          no_of_parkings: config.no_of_parkings,
-          reserved_parkings: config.reserved_parkings,
-          unstacked_count: config.unstacked_count,
-          stacked_count: config.stacked_count,
-          parking_numbers_length: config.parking_numbers.length
-        });
-        
         // Calculate actual counts from parking_numbers array
         const nonStackCount = config.parking_numbers.filter(p => !p.stacked && !p.reserved).length;
         const stackCount = config.parking_numbers.filter(p => p.stacked && !p.reserved).length;
         const reservedCount = config.parking_numbers.filter(p => p.reserved).length;
         const totalCount = config.parking_numbers.length;
-        
-        console.log('Calculated counts:', {
-          nonStack: nonStackCount,
-          stack: stackCount,
-          reserved: reservedCount,
-          total: totalCount
-        });
-        
-        // Use parking_category_id as primary matching criteria for reliability
-        if (config.parking_category_id === 5) {
-          console.log('Matched as Two Wheeler by ID:', config);
-          twoWheelerData = {
-            totalParkings: totalCount,
-            nonStackParkings: nonStackCount,
-            stackParkings: stackCount,
-            reservedParkings: reservedCount
-          };
-        } else if (config.parking_category_id === 6) {
-          console.log('Matched as Four Wheeler by ID:', config);
-          fourWheelerData = {
-            totalParkings: totalCount,
-            nonStackParkings: nonStackCount,
-            stackParkings: stackCount,
-            reservedParkings: reservedCount
-          };
-        } else {
-          // Fallback to name-based matching only if ID-based matching fails
-          if (config.category_name.toLowerCase().includes('2') ||
-              config.category_name.toLowerCase().includes('two') ||
-              config.category_name.toLowerCase().includes('wheeler') && 
-              !config.category_name.toLowerCase().includes('4') &&
-              !config.category_name.toLowerCase().includes('four')) {
-            console.log('Matched as Two Wheeler by name:', config);
-            twoWheelerData = {
-              totalParkings: totalCount,
-              nonStackParkings: nonStackCount,
-              stackParkings: stackCount,
-              reservedParkings: reservedCount
-            };
-          } else if (config.category_name.toLowerCase().includes('4') ||
-                     config.category_name.toLowerCase().includes('four') ||
-                     config.category_name.toLowerCase().includes('car')) {
-            console.log('Matched as Four Wheeler by name:', config);
-            fourWheelerData = {
-              totalParkings: totalCount,
-              nonStackParkings: nonStackCount,
-              stackParkings: stackCount,
-              reservedParkings: reservedCount
-            };
-          } else {
-            console.log('No match found for config:', config);
-          }
-        }
-      });
 
-      console.log('Final data for building/floor:', group.building_name, group.floor_name);
-      console.log('Two Wheeler Data:', twoWheelerData);
-      console.log('Four Wheeler Data:', fourWheelerData);
+        categoriesData[config.parking_category_id] = {
+          totalParkings: totalCount,
+          nonStackParkings: nonStackCount,
+          stackParkings: stackCount,
+          reservedParkings: reservedCount
+        };
+      });
 
       tableData.push({
         id: `${group.building_id}-${group.floor_id}`, // Use building_id-floor_id as unique identifier for edit navigation
@@ -219,8 +140,7 @@ export const SlotConfigurationPage = () => {
         location: group.building_name,
         floor: group.floor_name,
         qrcode_needed: group.qrcode_needed === 'true' || group.qrcode_needed === true,
-        twoWheeler: twoWheelerData,
-        fourWheeler: fourWheelerData,
+        categories: categoriesData,
         createdOn: new Date().toLocaleDateString() // API doesn't provide this, using current date
       });
     });
@@ -260,21 +180,23 @@ export const SlotConfigurationPage = () => {
     }));
   };
 
-  // Column definitions for visibility control
+  // Column definitions for visibility control - base columns plus one group per parking category
   const columns = [
     { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
     { key: 'location', label: 'Location', visible: visibleColumns.location },
     { key: 'floor', label: 'Floor', visible: visibleColumns.floor },
     { key: 'qrcode_needed', label: 'QR Code Needed', visible: visibleColumns.qrcode_needed },
-    { key: 'twoWheelerTotal', label: '2W Total Parkings', visible: visibleColumns.twoWheelerTotal },
-    { key: 'twoWheelerNonStack', label: '2W Non Stack', visible: visibleColumns.twoWheelerNonStack },
-    { key: 'twoWheelerStack', label: '2W Stack', visible: visibleColumns.twoWheelerStack },
-    { key: 'twoWheelerReserved', label: '2W Reserved', visible: visibleColumns.twoWheelerReserved },
-    { key: 'fourWheelerTotal', label: '4W Total Parkings', visible: visibleColumns.fourWheelerTotal },
-    { key: 'fourWheelerNonStack', label: '4W Non Stack', visible: visibleColumns.fourWheelerNonStack },
-    { key: 'fourWheelerStack', label: '4W Stack', visible: visibleColumns.fourWheelerStack },
-    { key: 'fourWheelerReserved', label: '4W Reserved', visible: visibleColumns.fourWheelerReserved }
+    ...parkingCategories.flatMap((category) =>
+      CATEGORY_COLUMN_TYPES.map(({ suffix, label }) => ({
+        key: `cat_${category.id}_${suffix}`,
+        label: `${category.name} ${label.replace('\n', ' ')}`,
+        visible: visibleColumns[`cat_${category.id}_${suffix}`]
+      }))
+    )
   ];
+
+  // Total number of leaf columns currently visible - used for the empty-state colSpan
+  const totalVisibleColumnsCount = Object.values(visibleColumns).filter(Boolean).length;
 
   return (
     <div className="p-6 min-h-screen">
@@ -339,24 +261,44 @@ export const SlotConfigurationPage = () => {
                 {visibleColumns.location && <TableHead rowSpan={2}>Location</TableHead>}
                 {visibleColumns.floor && <TableHead rowSpan={2}>Floor</TableHead>}
                 {visibleColumns.qrcode_needed && <TableHead className="text-center" rowSpan={2}>QR<br/>Needed</TableHead>}
-                <TableHead className="text-center" colSpan={4}>{twoWheelerCategoryName}</TableHead>
-                <TableHead className="text-center" colSpan={4}>{fourWheelerCategoryName}</TableHead>
+                {parkingCategories.map((category) => {
+                  const visibleTypeCount = CATEGORY_COLUMN_TYPES.filter(
+                    ({ suffix }) => visibleColumns[`cat_${category.id}_${suffix}`]
+                  ).length;
+                  if (visibleTypeCount === 0) return null;
+                  return (
+                    <TableHead key={category.id} className="text-center" colSpan={visibleTypeCount}>
+                      {category.name}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
               <TableRow className="bg-[#f6f4ee]">
-                {visibleColumns.twoWheelerTotal && <TableHead className="text-center">Total<br/>Parkings</TableHead>}
-                {visibleColumns.twoWheelerNonStack && <TableHead className="text-center">Non Stack<br/>Parkings</TableHead>}
-                {visibleColumns.twoWheelerStack && <TableHead className="text-center">Stack<br/>Parkings</TableHead>}
-                {visibleColumns.twoWheelerReserved && <TableHead className="text-center text-red-600">Reserved<br/>Parkings</TableHead>}
-                {visibleColumns.fourWheelerTotal && <TableHead className="text-center">Total<br/>Parkings</TableHead>}
-                {visibleColumns.fourWheelerNonStack && <TableHead className="text-center">Non Stack<br/>Parkings</TableHead>}
-                {visibleColumns.fourWheelerStack && <TableHead className="text-center">Stack<br/>Parkings</TableHead>}
-                {visibleColumns.fourWheelerReserved && <TableHead className="text-center text-red-600">Reserved<br/>Parkings</TableHead>}
+                {parkingCategories.map((category) => (
+                  <React.Fragment key={category.id}>
+                    {CATEGORY_COLUMN_TYPES.map(({ suffix, label }) =>
+                      visibleColumns[`cat_${category.id}_${suffix}`] ? (
+                        <TableHead
+                          key={suffix}
+                          className={suffix === 'reserved' ? 'text-center text-red-600' : 'text-center'}
+                        >
+                          {label.split('\n').map((part, i) => (
+                            <React.Fragment key={i}>
+                              {i > 0 && <br />}
+                              {part}
+                            </React.Fragment>
+                          ))}
+                        </TableHead>
+                      ) : null
+                    )}
+                  </React.Fragment>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={totalVisibleColumnsCount} className="text-center py-8 text-gray-500">
                     No parking configurations found
                   </TableCell>
                 </TableRow>
@@ -390,14 +332,30 @@ export const SlotConfigurationPage = () => {
                         />
                       </TableCell>
                     )}
-                    {visibleColumns.twoWheelerTotal && <TableCell className="text-center">{item.twoWheeler.totalParkings}</TableCell>}
-                    {visibleColumns.twoWheelerNonStack && <TableCell className="text-center">{item.twoWheeler.nonStackParkings}</TableCell>}
-                    {visibleColumns.twoWheelerStack && <TableCell className="text-center">{item.twoWheeler.stackParkings}</TableCell>}
-                    {visibleColumns.twoWheelerReserved && <TableCell className="text-center text-red-600">{item.twoWheeler.reservedParkings}</TableCell>}
-                    {visibleColumns.fourWheelerTotal && <TableCell className="text-center">{item.fourWheeler.totalParkings}</TableCell>}
-                    {visibleColumns.fourWheelerNonStack && <TableCell className="text-center">{item.fourWheeler.nonStackParkings}</TableCell>}
-                    {visibleColumns.fourWheelerStack && <TableCell className="text-center">{item.fourWheeler.stackParkings}</TableCell>}
-                    {visibleColumns.fourWheelerReserved && <TableCell className="text-center text-red-600">{item.fourWheeler.reservedParkings}</TableCell>}
+                    {parkingCategories.map((category) => {
+                      const counts = item.categories[category.id] || {
+                        totalParkings: 0,
+                        nonStackParkings: 0,
+                        stackParkings: 0,
+                        reservedParkings: 0
+                      };
+                      return (
+                        <React.Fragment key={category.id}>
+                          {visibleColumns[`cat_${category.id}_total`] && (
+                            <TableCell className="text-center">{counts.totalParkings}</TableCell>
+                          )}
+                          {visibleColumns[`cat_${category.id}_nonstack`] && (
+                            <TableCell className="text-center">{counts.nonStackParkings}</TableCell>
+                          )}
+                          {visibleColumns[`cat_${category.id}_stack`] && (
+                            <TableCell className="text-center">{counts.stackParkings}</TableCell>
+                          )}
+                          {visibleColumns[`cat_${category.id}_reserved`] && (
+                            <TableCell className="text-center text-red-600">{counts.reservedParkings}</TableCell>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </TableRow>
                 ))
               )}
