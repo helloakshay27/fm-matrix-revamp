@@ -291,6 +291,19 @@
   padding: 0 34px;
 }
 
+.pulse-shell .ps-alerts-skeleton-row {
+  display: flex;
+  gap: 12px;
+  padding: 0 34px;
+  overflow: hidden;
+}
+
+.pulse-shell .ps-alerts-skeleton-row .ps-alert-card {
+  flex: 0 0 auto;
+  width: 300px;
+  gap: 8px;
+}
+
 /* Fades the row's edges so it reads as scrollable, without touching the
    nav buttons — they're absolutely-positioned siblings of this wrapper. */
 .pulse-shell .ps-alerts-carousel > div:first-child {
