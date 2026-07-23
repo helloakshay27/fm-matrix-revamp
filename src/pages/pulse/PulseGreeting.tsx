@@ -30,13 +30,13 @@ export function PulseGreeting() {
   return (
     <div className="ps-greeting">
       <div className="ps-greeting-icon" style={{ color: meta.color, background: `${meta.color}22` }}>
-        <Icon size={16} />
+        <Icon size={18} />
       </div>
       <div className="ps-greeting-copy">
         <div className="ps-greeting-text">
-          Hi {data.user_name}, {data.greeting}
+          {data.greeting}, <span className="ps-greeting-name">{data.user_name}</span>
         </div>
-        <div className="ps-greeting-quote">“{data.quote}”</div>
+        <div className="ps-greeting-quote">{data.quote}</div>
       </div>
     </div>
   );
