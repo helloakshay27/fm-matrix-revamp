@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ import {
   Eye,
   ClipboardList,
   X,
+  Settings2,
 } from "lucide-react";
 import {
   Dialog,
@@ -77,10 +78,11 @@ import {
 export const InvoiceDashboardDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [invoiceData, setInvoiceData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("invoice-details");
+  const [activeTab, setActiveTab] = useState(location.state?.tab === "pdf" ? "pdf" : "invoice-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showApprovalLog, setShowApprovalLog] = useState(false);
   const [hasInvoiceApproval, setHasInvoiceApproval] = useState(false);
@@ -688,6 +690,16 @@ export const InvoiceDashboardDetailsPage = () => {
             >
               <FileText className="h-4 w-4" />
               PDF
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/accounting/invoices/template", { state: { recordId: id } })}
+              className="gap-2"
+            >
+              <Settings2 className="h-4 w-4" />
+              Template Edit
             </Button>
 
             <Button
@@ -1584,6 +1596,7 @@ export const InvoiceDashboardDetailsPage = () => {
                   <div className="mx-auto bg-white" ref={activeTab === "pdf" ? invoicePdfRef : null}>
                     <AccountingDocumentPdf
                       documentTitle="INVOICE"
+                      documentType="invoice"
                       documentNumber={invoiceData.invoice_number}
                       documentDate={invoiceData.date}
                       status={invoiceData.status}
@@ -1831,6 +1844,7 @@ export const InvoiceDashboardDetailsPage = () => {
           <div ref={invoicePdfRef}>
             <AccountingDocumentPdf
               documentTitle="INVOICE"
+              documentType="invoice"
               documentNumber={invoiceData.invoice_number}
               documentDate={invoiceData.date}
               status={invoiceData.status}
