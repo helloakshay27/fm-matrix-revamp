@@ -3,8 +3,11 @@ import { AlertTriangle, Info, RefreshCw, ShieldAlert } from "lucide-react";
 import {
   Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext,
 } from "@/components/ui/carousel";
+import { Skeleton } from "@/components/ui/skeleton";
 import { fetchPulseAiAlerts, type PulseAiAlert, type AlertSeverity } from "@/services/pulseAiAlertsApi";
 import type { PulseFilters } from "@/services/pulseDashboardApi";
+
+const SKELETON_BG = "bg-[var(--color-border-subtle)]";
 
 const SEVERITY_META: Record<AlertSeverity, { label: string; icon: typeof ShieldAlert; color: string }> = {
   critical: { label: "Critical", icon: ShieldAlert, color: "var(--color-error)" },
@@ -31,7 +34,31 @@ export function PulseAiAlerts({ filters }: Props) {
     load(false);
   }, [load]);
 
-  if (loading || alerts.length === 0) return null;
+  if (loading) {
+    return (
+      <div className="ps-alerts">
+        <div className="ps-alerts-header">
+          <div>
+            <Skeleton className={`h-3 w-16 mb-2 ${SKELETON_BG}`} />
+            <Skeleton className={`h-2.5 w-40 ${SKELETON_BG}`} />
+          </div>
+          <Skeleton className={`h-7 w-20 rounded-full ${SKELETON_BG}`} />
+        </div>
+        <div className="ps-alerts-skeleton-row">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="ps-alert-card">
+              <Skeleton className={`h-3 w-16 ${SKELETON_BG}`} />
+              <Skeleton className={`h-3.5 w-full ${SKELETON_BG}`} />
+              <Skeleton className={`h-3 w-full ${SKELETON_BG}`} />
+              <Skeleton className={`h-3 w-2/3 ${SKELETON_BG}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (alerts.length === 0) return null;
 
   return (
     <div className="ps-alerts">
