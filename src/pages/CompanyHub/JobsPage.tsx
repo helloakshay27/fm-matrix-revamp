@@ -5,6 +5,7 @@ import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { StatsCard } from "@/components/StatsCard";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -27,7 +28,7 @@ import {
   Plus,
   ExternalLink,
   ChevronDown,
-  Settings2,
+  Settings,
   FileSearch,
   Copy,
   BrainCircuit,
@@ -278,22 +279,18 @@ const JobStatusTab = ({
       {
         label: "Total Users",
         value: summary?.total_users?.toString() || "0",
-        color: "text-slate-900",
       },
       {
         label: "With JD",
         value: summary?.with_jd?.toString() || "0",
-        color: "text-emerald-500",
       },
       {
         label: "With KPIs",
         value: summary?.with_kpis?.toString() || "0",
-        color: "text-blue-600",
       },
       {
         label: "Setup Complete",
         value: summary?.setup_complete?.toString() || "0",
-        color: "text-violet-600",
       },
     ],
     [summary]
@@ -469,21 +466,14 @@ const JobStatusTab = ({
   return (
     <div className="space-y-6">
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
-          <Card
+          <StatsCard
             key={i}
-            className="border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-all"
-          >
-            <CardContent className="p-6">
-              <p className="text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider font-work-sans">
-                {stat.label}
-              </p>
-              <p className={cn("text-3xl font-bold font-poppins", stat.color)}>
-                {stat.value}
-              </p>
-            </CardContent>
-          </Card>
+            title={stat.label}
+            value={stat.value}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
         ))}
       </div>
 

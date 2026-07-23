@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +41,7 @@ import {
     Eye,
     ClipboardList,
     X,
+    Settings2,
 } from "lucide-react";
 import {
     Dialog,
@@ -63,16 +64,18 @@ import {
     getBankMasterApiConfig,
     mapApiBankRecord,
 } from "./bankMasterUtils";
+import { getDocumentTemplateSettings } from "@/utils/documentTemplate";
 
 
 
 export const QuotesDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [quoteData, setQuoteData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState("quote-details");
+    const [activeTab, setActiveTab] = useState(location.state?.tab === "pdf" ? "pdf" : "quote-details");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [hasQuoteApproval, setHasQuoteApproval] = useState(false);
     const [showDotsMenu, setShowDotsMenu] = useState(false);
@@ -407,6 +410,7 @@ export const QuotesDetails = () => {
     const statusDisplay = statusLabel.replace(/\b\w/g, (char) => char.toUpperCase());
     const quoteNotes = quoteData.customer_notes ?? quoteData.notes ?? quoteData.note ?? "";
     const quoteTerms = quoteData.terms_and_conditions ?? quoteData.terms ?? quoteData.terms_condition ?? "";
+    const templateSettings = getDocumentTemplateSettings('quote');
     const totalInWords =
         quoteData.amount_in_words ||
         quoteData.total_in_words ||
@@ -435,9 +439,12 @@ export const QuotesDetails = () => {
                 <div className="border border-gray-500 bg-white">
                     <div className="grid grid-cols-[1fr_210px] border-b border-gray-500">
                         <div className="p-3 min-h-[96px]">
+                            {templateSettings.logo && (
+                                <img src={templateSettings.logo} alt="Logo" className="mb-2" style={{ maxHeight: "48px", maxWidth: "180px", objectFit: "contain" }} />
+                            )}
                             <h2 className="text-[17px] font-bold mb-2">{localStorage.getItem("companyName") || "Lockated"}</h2>
                             <div className="space-y-1">
-                                <p>{localStorage.getItem("companyAddress") || "pune Maharashtra 411006"}</p>
+                                <p>{templateSettings.organizationAddress || localStorage.getItem("companyAddress") || "pune Maharashtra 411006"}</p>
                                 <p>{localStorage.getItem("companyCountry") || "India"}</p>
                                 <p>{localStorage.getItem("companyEmail") || "ajay.pihulkar@lockated.com"}</p>
                                 <p>GSTIN: {quoteData?.address_detail?.gst_detail?.gstin || localStorage.getItem("gstin") || "27AGOPL6958QABC"}</p>
@@ -450,7 +457,7 @@ export const QuotesDetails = () => {
                             >
                                 {statusDisplay}
                             </span>
-                            <h1 className="text-[32px] font-serif font-normal tracking-wide">QUOTE</h1>
+                            <h1 className="text-[32px] font-serif font-normal tracking-wide">{templateSettings.templateName ? templateSettings.templateName.toUpperCase() : "QUOTE"}</h1>
                         </div>
                     </div>
 
@@ -618,12 +625,22 @@ export const QuotesDetails = () => {
                             </div>
                             <div>
                                 <p className="font-bold">Terms & Conditions</p>
-                                <p className="whitespace-pre-wrap mt-1">{quoteTerms || "—"}</p>
+                                <p className="whitespace-pre-wrap mt-1">{quoteTerms || templateSettings.termsAndConditions || "—"}</p>
                             </div>
                         </div>
                         <div className="p-3 min-h-[190px] flex flex-col justify-end">
                             <div className="text-right">
-                                <p className="font-bold mb-12">For {localStorage.getItem("companyName") || "Lockated"}</p>
+                                <p className="font-bold mb-2">For {localStorage.getItem("companyName") || "Lockated"}</p>
+                                {templateSettings.signature ? (
+                                    <img
+                                        src={templateSettings.signature}
+                                        alt="Signature"
+                                        className="ml-auto mb-2"
+                                        style={{ maxHeight: "50px", maxWidth: "170px", objectFit: "contain" }}
+                                    />
+                                ) : (
+                                    <div className="mb-12" />
+                                )}
                                 <div className="border-t border-gray-500 ml-auto w-[170px] pt-2 text-center font-bold">
                                     Authorized Signature
                                 </div>
@@ -689,6 +706,16 @@ export const QuotesDetails = () => {
                         >
                             <FileText className="h-4 w-4" />
                             PDF
+                        </Button>
+
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate("/accounting/quotes/template", { state: { recordId: id } })}
+                            className="gap-2"
+                        >
+                            <Settings2 className="h-4 w-4" />
+                            Template Edit
                         </Button>
 
                         <Button

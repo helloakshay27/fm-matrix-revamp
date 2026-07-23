@@ -1,5 +1,6 @@
 import React from "react";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
+import { getDocumentTemplateSettings, slugifyDocumentType } from "@/utils/documentTemplate";
 
 export const getAccountingPdfStatusStyle = (status) => {
   const styles = {
@@ -44,6 +45,7 @@ const formatAddressBlock = (address) => {
 
 export const PurchaseDocumentPdf = ({
   documentTitle,
+  documentType,
   documentNumber,
   documentDate,
   status,
@@ -61,6 +63,7 @@ export const PurchaseDocumentPdf = ({
   bankDetail,
 }) => {
   const statusDisplay = formatStatus(status);
+  const templateSettings = getDocumentTemplateSettings(documentType || slugifyDocumentType(documentTitle));
   const partyName = vendorName || customerName;
   const billingAddress = data?.address_detail?.billing_address || data?.billing_address;
   const shippingAddress = data?.address_detail?.shipping_address || data?.shipping_address;
@@ -77,9 +80,12 @@ export const PurchaseDocumentPdf = ({
         <div className="border border-gray-500 bg-white">
           <div className="grid grid-cols-[1fr_230px] border-b border-gray-500">
             <div className="p-3 min-h-[96px]">
+              {templateSettings.logo && (
+                <img src={templateSettings.logo} alt="Logo" className="mb-2" style={{ maxHeight: "48px", maxWidth: "180px", objectFit: "contain" }} />
+              )}
               <h2 className="text-[17px] font-bold mb-2">{localStorage.getItem("companyName") || "Lockated"}</h2>
               <div className="space-y-1">
-                <p>{localStorage.getItem("companyAddress") || "pune Maharashtra 411006"}</p>
+                <p>{templateSettings.organizationAddress || localStorage.getItem("companyAddress") || "pune Maharashtra 411006"}</p>
                 <p>{localStorage.getItem("companyCountry") || "India"}</p>
                 <p>{localStorage.getItem("companyEmail") || "ajay.pihulkar@lockated.com"}</p>
                 <p>GSTIN: {data?.address_detail?.gst_detail?.gstin || localStorage.getItem("gstin") || "27AGOPL6958QABC"}</p>
@@ -89,7 +95,9 @@ export const PurchaseDocumentPdf = ({
               <span className="inline-flex items-center border px-3 py-1 text-[11px] font-bold" style={getAccountingPdfStatusStyle(status)}>
                 {statusDisplay}
               </span>
-              <h1 className="text-[30px] font-serif font-normal tracking-wide text-right">{documentTitle}</h1>
+              <h1 className="text-[30px] font-serif font-normal tracking-wide text-right">
+                {templateSettings.templateName ? templateSettings.templateName.toUpperCase() : documentTitle}
+              </h1>
             </div>
           </div>
 
@@ -265,12 +273,22 @@ export const PurchaseDocumentPdf = ({
               </div>
               <div>
                 <p className="font-bold">Terms & Conditions</p>
-                <p className="whitespace-pre-wrap mt-1">{terms || "-"}</p>
+                <p className="whitespace-pre-wrap mt-1">{terms || templateSettings.termsAndConditions || "-"}</p>
               </div>
             </div>
             <div className="p-3 min-h-[190px] flex flex-col justify-end">
               <div className="text-right">
-                <p className="font-bold mb-12">For {localStorage.getItem("companyName") || "Lockated"}</p>
+                <p className="font-bold mb-2">For {localStorage.getItem("companyName") || "Lockated"}</p>
+                {templateSettings.signature ? (
+                  <img
+                    src={templateSettings.signature}
+                    alt="Signature"
+                    className="ml-auto mb-2"
+                    style={{ maxHeight: "50px", maxWidth: "170px", objectFit: "contain" }}
+                  />
+                ) : (
+                  <div className="mb-12" />
+                )}
                 <div className="border-t border-gray-500 ml-auto w-[170px] pt-2 text-center font-bold">
                   Authorized Signature
                 </div>

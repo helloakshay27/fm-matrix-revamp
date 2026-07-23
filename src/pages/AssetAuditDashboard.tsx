@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { StatsCard } from '@/components/StatsCard';
 import { Plus, Download, Clock, Settings, CheckCircle, AlertTriangle, XCircle, Trash2, Eye, ClipboardList } from 'lucide-react';
 import {
 
@@ -869,102 +870,54 @@ export const AssetAuditDashboard = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
-              <div
-                className={`bg-[#F2F0EB] text-[#da7756] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'scheduled' ? 'ring-2 ring-[#da7756] ring-offset-2' : ''
-                  }`}
-                onClick={() => handleCardClick('scheduled')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center">
-                    <ClipboardList className="w-6 h-6 text-[#da7756]" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-2xl font-bold">{stats.scheduled}</span>
-                    <span className="font-medium text-sm text-black">Scheduled</span>
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+              <div onClick={() => handleCardClick('scheduled')}>
+                <StatsCard
+                  title="Scheduled"
+                  value={stats.scheduled}
+                  icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                  selected={selectedStatusFilter === 'scheduled'}
+                />
               </div>
-
-              <div
-                className={`bg-[#F2F0EB] text-[#da7756] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'in_progress' ? 'ring-2 ring-[#da7756] ring-offset-2' : ''
-                  }`}
-                onClick={() => handleCardClick('in_progress')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center">
-                    <Timer className="w-6 h-6 text-[#da7756]" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-2xl font-bold">{stats.inProgress}</span>
-                    <span className="font-medium text-sm text-black">In Progress</span>
-                  </div>
-                </div>
+              <div onClick={() => handleCardClick('in_progress')}>
+                <StatsCard
+                  title="In Progress"
+                  value={stats.inProgress}
+                  icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                  selected={selectedStatusFilter === 'in_progress'}
+                />
               </div>
-
-              <div
-                className={`bg-[#F2F0EB] text-[#da7756] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'completed' ? 'ring-2 ring-[#da7756] ring-offset-2' : ''
-                  }`}
-                onClick={() => handleCardClick('completed')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-[#da7756]" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-2xl font-bold">{stats.completed}</span>
-                    <span className="font-medium text-sm text-black">Completed</span>
-                  </div>
-                </div>
+              <div onClick={() => handleCardClick('completed')}>
+                <StatsCard
+                  title="Completed"
+                  value={stats.completed}
+                  icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                  selected={selectedStatusFilter === 'completed'}
+                />
               </div>
-
-              <div
-                className={`bg-[#F2F0EB] text-[#da7756] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'overdue' ? 'ring-2 ring-[#da7756] ring-offset-2' : ''
-                  }`}
-                onClick={() => handleCardClick('overdue')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center">
-                    <Hourglass className="w-6 h-6 text-[#da7756]" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-2xl font-bold">{stats.overdue}</span>
-                    <span className="font-medium text-sm text-black">Overdue</span>
-                  </div>
-                </div>
+              <div onClick={() => handleCardClick('overdue')}>
+                <StatsCard
+                  title="Overdue"
+                  value={stats.overdue}
+                  icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                  selected={selectedStatusFilter === 'overdue'}
+                />
               </div>
-
-              <div
-                className={`bg-[#F2F0EB] text-[#da7756] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'paused' ? 'ring-2 ring-[#da7756] ring-offset-2' : ''
-                  }`}
-                onClick={() => handleCardClick('paused')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center">
-                    <Hourglass className="w-6 h-6 text-[#da7756]" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-2xl font-bold">{stats.paused_count}</span>
-                    <span className="font-medium text-sm text-black">Paused</span>
-                  </div>
-                </div>
+              <div onClick={() => handleCardClick('paused')}>
+                <StatsCard
+                  title="Paused"
+                  value={stats.paused_count}
+                  icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                  selected={selectedStatusFilter === 'paused'}
+                />
               </div>
-
-
-              <div
-                className={`bg-[#F2F0EB] text-[#da7756] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'closed' ? 'ring-2 ring-[#da7756] ring-offset-2' : ''
-                  }`}
-                onClick={() => handleCardClick('closed')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center">
-                    <Lock className="w-6 h-6 text-[#da7756]" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-2xl font-bold">{stats.closed}</span>
-                    <span className="font-medium text-sm text-black">Closed</span>
-                  </div>
-                </div>
+              <div onClick={() => handleCardClick('closed')}>
+                <StatsCard
+                  title="Closed"
+                  value={stats.closed}
+                  icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+                  selected={selectedStatusFilter === 'closed'}
+                />
               </div>
             </div>
 

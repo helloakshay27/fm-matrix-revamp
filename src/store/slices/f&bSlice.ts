@@ -529,23 +529,69 @@ export const fetchRestaurantBookings = createAsyncThunk(
 
 export const fetchRestaurantOrders = createAsyncThunk(
     "fetchRestaurantOrders",
-    async ({ baseUrl, token, id, pageSize, currentPage, all, statusId }: { baseUrl: string; token: string; id: number; pageSize: number; currentPage: number, all?: boolean, statusId?: number }, { rejectWithValue }) => {
+    async ({
+        baseUrl,
+        token,
+        id,
+        pageSize,
+        currentPage,
+        all,
+        statusId,
+        createdById,
+        fromDate,
+        toDate,
+        search,
+        restaurantId,
+    }: {
+        baseUrl: string;
+        token: string;
+        id: number;
+        pageSize: number;
+        currentPage: number;
+        all?: boolean;
+        statusId?: number;
+        createdById?: number;
+        fromDate?: string;
+        toDate?: string;
+        search?: string;
+        restaurantId?: number;
+    }, { rejectWithValue }) => {
         try {
             const params = new URLSearchParams({
                 page: String(currentPage),
                 per_page: String(pageSize),
             });
 
-            if (all) {
+            if (all && !restaurantId) {
                 params.append("all", "true");
             }
 
             if (statusId) {
-                params.append("status_id_eq", String(statusId));
+                params.append("status_id", String(statusId));
+            }
+
+            if (createdById) {
+                params.append("created_by_id", String(createdById));
+            }
+
+            if (fromDate) {
+                params.append("from_date", fromDate);
+            }
+
+            if (toDate) {
+                params.append("to_date", toDate);
+            }
+
+            if (restaurantId) {
+                params.append("restuarant_id", String(restaurantId));
+            }
+
+            if (search) {
+                params.append("search", search);
             }
 
             const response = await axios.get(
-                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.json?${params.toString()}`,
+                `https://${baseUrl}/pms/admin/restaurants/${restaurantId ?? id}/food_orders.json?${params.toString()}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
