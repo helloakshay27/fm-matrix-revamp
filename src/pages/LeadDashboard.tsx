@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { StatsCard } from "@/components/StatsCard";
 import {
   Plus,
   Eye,
@@ -118,18 +119,6 @@ export const LeadDashboard = () => {
     navigate(`/crm/lead/details/${leadId}`);
   };
 
-  const StatCard = ({ icon, label, value }: any) => (
-    <div className="bg-[#f6f4ee] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4">
-      <div className="w-14 h-14 bg-[#FBEDEC] rounded-full flex items-center justify-center">
-        {React.cloneElement(icon, { className: `w-6 h-6 text-[#C72030]` })}
-      </div>
-      <div>
-        <div className="text-2xl font-bold text-[#C72030]">{value}</div>
-        <div className="text-sm font-medium text-gray-600">{label}</div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="p-4 sm:p-6">
       <Tabs defaultValue="list" className="w-full">
@@ -152,13 +141,41 @@ export const LeadDashboard = () => {
 
         <TabsContent value="list" className="mt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
-            <StatCard icon={<Target />} label="Total Leads" value={stats.total} />
-            <StatCard icon={<Clock />} label="New" value={stats.new} />
-            <StatCard icon={<CheckCircle />} label="Qualified" value={stats.qualified} />
-            <StatCard icon={<CheckCircle />} label="Converted" value={stats.converted} />
-            <StatCard icon={<Target />} label="Total Value" value={`$${stats.totalValue.toLocaleString()}`} />
-            <StatCard icon={<Target />} label="Avg Value" value={`$${stats.avgValue.toLocaleString()}`} />
-            <StatCard icon={<CheckCircle />} label="Conversion Rate" value={`${stats.conversionRate.toFixed(1)}%`} />
+            <StatsCard
+              title="Total Leads"
+              value={stats.total}
+              icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            />
+            <StatsCard
+              title="New"
+              value={stats.new}
+              icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            />
+            <StatsCard
+              title="Qualified"
+              value={stats.qualified}
+              icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            />
+            <StatsCard
+              title="Converted"
+              value={stats.converted}
+              icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            />
+            <StatsCard
+              title="Total Value"
+              value={`$${stats.totalValue.toLocaleString()}`}
+              icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            />
+            <StatsCard
+              title="Avg Value"
+              value={`$${stats.avgValue.toLocaleString()}`}
+              icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            />
+            <StatsCard
+              title="Conversion Rate"
+              value={`${stats.conversionRate.toFixed(1)}%`}
+              icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+            />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-sm">
