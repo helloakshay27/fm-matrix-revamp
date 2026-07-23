@@ -202,98 +202,91 @@ const UtilityConsumptionDashboard = () => {
       </div>
 
       <div>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
-          </div>
-        ) : (
-          <>
-          <EnhancedTable
-            data={filteredData}
-            columns={columns}
-            renderCell={renderCell}
-            onSelectAll={handleSelectAll}
-            onSelectItem={handleSelectItem}
-            selectedItems={selectedItems}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            enableSearch={false}
-            enableExport={false}
-            hideColumnsButton={false}
-            pagination={false}
-            pageSize={pageSize}
-            emptyMessage="No calculation data found"
-            selectable={true}
-            storageKey="utility-consumption-table"
-          />
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)} to{' '}
-                {Math.min(currentPage * pageSize, totalCount)} of {totalCount} entries
-              </div>
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      className={`cursor-pointer ${currentPage === 1 ? 'pointer-events-none opacity-50' : ''}`}
-                      onClick={() => currentPage > 1 && fetchData(currentPage - 1)}
-                    />
-                  </PaginationItem>
-
-                  {currentPage > 3 && (
-                    <>
-                      <PaginationItem>
-                        <PaginationLink className="cursor-pointer" onClick={() => fetchData(1)} isActive={currentPage === 1}>
-                          1
-                        </PaginationLink>
-                      </PaginationItem>
-                      {currentPage > 4 && (
-                        <PaginationItem><PaginationEllipsis /></PaginationItem>
-                      )}
-                    </>
-                  )}
-
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const pageNumber = Math.max(1, currentPage - 2) + i;
-                    if (pageNumber > totalPages) return null;
-                    return (
-                      <PaginationItem key={pageNumber}>
-                        <PaginationLink
-                          className="cursor-pointer"
-                          onClick={() => fetchData(pageNumber)}
-                          isActive={currentPage === pageNumber}
-                        >
-                          {pageNumber}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  }).filter(Boolean)}
-
-                  {currentPage < totalPages - 2 && (
-                    <>
-                      {currentPage < totalPages - 3 && (
-                        <PaginationItem><PaginationEllipsis /></PaginationItem>
-                      )}
-                      <PaginationItem>
-                        <PaginationLink className="cursor-pointer" onClick={() => fetchData(totalPages)} isActive={currentPage === totalPages}>
-                          {totalPages}
-                        </PaginationLink>
-                      </PaginationItem>
-                    </>
-                  )}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      className={`cursor-pointer ${currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}`}
-                      onClick={() => currentPage < totalPages && fetchData(currentPage + 1)}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+        <EnhancedTable
+          data={filteredData}
+          columns={columns}
+          renderCell={renderCell}
+          onSelectAll={handleSelectAll}
+          onSelectItem={handleSelectItem}
+          selectedItems={selectedItems}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          enableSearch={false}
+          enableExport={false}
+          hideColumnsButton={false}
+          pagination={false}
+          pageSize={pageSize}
+          emptyMessage="No calculation data found"
+          selectable={true}
+          storageKey="utility-consumption-table"
+          loading={isLoading}
+        />
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-gray-700">
+              Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)} to{' '}
+              {Math.min(currentPage * pageSize, totalCount)} of {totalCount} entries
             </div>
-          )}
-          </>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    className={`cursor-pointer ${currentPage === 1 || isLoading ? 'pointer-events-none opacity-50' : ''}`}
+                    onClick={() => currentPage > 1 && !isLoading && fetchData(currentPage - 1)}
+                  />
+                </PaginationItem>
+
+                {currentPage > 3 && (
+                  <>
+                    <PaginationItem>
+                      <PaginationLink className="cursor-pointer" onClick={() => fetchData(1)} isActive={currentPage === 1}>
+                        1
+                      </PaginationLink>
+                    </PaginationItem>
+                    {currentPage > 4 && (
+                      <PaginationItem><PaginationEllipsis /></PaginationItem>
+                    )}
+                  </>
+                )}
+
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const pageNumber = Math.max(1, currentPage - 2) + i;
+                  if (pageNumber > totalPages) return null;
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink
+                        className="cursor-pointer"
+                        onClick={() => fetchData(pageNumber)}
+                        isActive={currentPage === pageNumber}
+                      >
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                }).filter(Boolean)}
+
+                {currentPage < totalPages - 2 && (
+                  <>
+                    {currentPage < totalPages - 3 && (
+                      <PaginationItem><PaginationEllipsis /></PaginationItem>
+                    )}
+                    <PaginationItem>
+                      <PaginationLink className="cursor-pointer" onClick={() => fetchData(totalPages)} isActive={currentPage === totalPages}>
+                        {totalPages}
+                      </PaginationLink>
+                    </PaginationItem>
+                  </>
+                )}
+
+                <PaginationItem>
+                  <PaginationNext
+                    className={`cursor-pointer ${currentPage === totalPages || isLoading ? 'pointer-events-none opacity-50' : ''}`}
+                    onClick={() => currentPage < totalPages && !isLoading && fetchData(currentPage + 1)}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
         )}
       </div>
 

@@ -390,6 +390,7 @@ export const ClubBroadcastDashboard = () => {
                 emptyMessage="No broadcasts found"
                 pagination={true}
                 pageSize={10}
+                loading={loading}
                 onFilterClick={() => setIsFilterModalOpen(true)}
                 leftActions={
                     <>

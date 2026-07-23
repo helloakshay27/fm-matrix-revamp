@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react';
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventDetailsTab } from '@/components/EventDetailsTab';
@@ -10,6 +10,23 @@ import EventParticipantsTab from '@/components/EventParticipantsTab';
 export const CRMEventDetailsPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("details");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading event details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:px-8 py-6 bg-white min-h-screen">

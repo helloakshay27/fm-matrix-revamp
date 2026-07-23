@@ -831,54 +831,45 @@ export const UtilityRequestDashboard = () => {
       {/* Display error message if any */}
       {error && <div className="p-4 bg-red-100 text-red-800 rounded">{error}</div>}
 
-      {/* Loading state */}
-      {loading ? (
-        <div className="flex justify-center items-center p-12">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#C72030]"></div>
-          <span className="ml-2">Loading...</span>
-        </div>
-      ) : (
-        <>
-          {/* Enhanced Data Table */}
-          <div>
-            <EnhancedTable
-              data={filteredData}
-              columns={columns}
-              renderCell={renderCell}
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              enableSearch={false}
-              enableExport={false}
-              hideColumnsButton={false}
-              pagination={false}
-              emptyMessage="No customer consumption data found"
-              storageKey="utility-request-table"
-              leftActions={leftActions}
-            />
-          </div>
+      {/* Enhanced Data Table */}
+      <div>
+        <EnhancedTable
+          data={filteredData}
+          columns={columns}
+          renderCell={renderCell}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          enableSearch={false}
+          enableExport={false}
+          hideColumnsButton={false}
+          pagination={false}
+          emptyMessage="No customer consumption data found"
+          storageKey="utility-request-table"
+          leftActions={leftActions}
+          loading={loading}
+        />
+      </div>
 
-          {/* Custom Pagination */}
-          <div className="flex justify-center mt-6">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                    className={currentPage === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-                {renderPaginationItems()}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                    className={currentPage === totalPages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        </>
-      )}
+      {/* Custom Pagination */}
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            {renderPaginationItems()}
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
     </div>
   );
 };

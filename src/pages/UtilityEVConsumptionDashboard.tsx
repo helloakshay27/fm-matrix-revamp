@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Filter, Loader2 } from 'lucide-react';
@@ -423,126 +422,119 @@ const UtilityEVConsumptionDashboard = () => {
         <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">EV CONSUMPTION LIST</h1>
       </div>
 
-      {/* Loading State */}
-      {isLoading && !searchLoading ? (
-        <div className="flex items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading EV consumption data...</span>
-        </div>
-      ) : (
-        /* Enhanced EV Consumption Table */
-        <div>
-          <EnhancedTable
-            data={evConsumptionData}
-            columns={enhancedTableColumns}
-            selectable={false}
-            renderCell={renderCell}
-            storageKey="utility-ev-consumption-table"
-            // enableExport={true}
-            handleExport={handleExport}
-            exportFileName="ev-consumption-data"
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            searchPlaceholder="Search by Transaction ID..."
-            pagination={false}
-            hideColumnsButton={false}
-            onFilterClick={() => setIsFilterOpen(true)}
-          />
+      {/* Enhanced EV Consumption Table */}
+      <div>
+        <EnhancedTable
+          data={evConsumptionData}
+          columns={enhancedTableColumns}
+          selectable={false}
+          renderCell={renderCell}
+          storageKey="utility-ev-consumption-table"
+          // enableExport={true}
+          handleExport={handleExport}
+          exportFileName="ev-consumption-data"
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search by Transaction ID..."
+          pagination={false}
+          hideColumnsButton={false}
+          onFilterClick={() => setIsFilterOpen(true)}
+          loading={isLoading}
+        />
 
-          {/* Custom Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
+        {/* Custom Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
+            <div className="flex items-center space-x-1">
+              {/* Previous Button */}
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1 || isLoading}
+                className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* Page Numbers */}
               <div className="flex items-center space-x-1">
-                {/* Previous Button */}
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1 || isLoading}
-                  className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
+                {/* First page */}
+                {currentPage > 3 && (
+                  <>
+                    <button
+                      onClick={() => setCurrentPage(1)}
+                      disabled={isLoading}
+                      className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
+                    >
+                      1
+                    </button>
+                    {currentPage > 4 && (
+                      <span className="px-2 text-gray-500">...</span>
+                    )}
+                  </>
+                )}
 
-                {/* Page Numbers */}
-                <div className="flex items-center space-x-1">
-                  {/* First page */}
-                  {currentPage > 3 && (
-                    <>
-                      <button
-                        onClick={() => setCurrentPage(1)}
-                        disabled={isLoading}
-                        className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
-                      >
-                        1
-                      </button>
-                      {currentPage > 4 && (
-                        <span className="px-2 text-gray-500">...</span>
-                      )}
-                    </>
-                  )}
+                {/* Current page and surrounding pages */}
+                {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (currentPage <= 2) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 1) {
+                    pageNum = totalPages - 2 + i;
+                  } else {
+                    pageNum = currentPage - 1 + i;
+                  }
 
-                  {/* Current page and surrounding pages */}
-                  {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (currentPage <= 2) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 1) {
-                      pageNum = totalPages - 2 + i;
-                    } else {
-                      pageNum = currentPage - 1 + i;
-                    }
+                  if (pageNum < 1 || pageNum > totalPages) return null;
 
-                    if (pageNum < 1 || pageNum > totalPages) return null;
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      disabled={isLoading}
+                      className={`w-8 h-8 flex items-center justify-center text-sm rounded disabled:opacity-50 ${
+                        currentPage === pageNum
+                          ? 'bg-[#C72030] text-white'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
 
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        disabled={isLoading}
-                        className={`w-8 h-8 flex items-center justify-center text-sm rounded disabled:opacity-50 ${
-                          currentPage === pageNum
-                            ? 'bg-[#C72030] text-white'
-                            : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-
-                  {/* Last page */}
-                  {currentPage < totalPages - 2 && (
-                    <>
-                      {currentPage < totalPages - 3 && (
-                        <span className="px-2 text-gray-500">...</span>
-                      )}
-                      <button
-                        onClick={() => setCurrentPage(totalPages)}
-                        disabled={isLoading}
-                        className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
-                      >
-                        {totalPages}
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                {/* Next Button */}
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages || isLoading}
-                  className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
+                {/* Last page */}
+                {currentPage < totalPages - 2 && (
+                  <>
+                    {currentPage < totalPages - 3 && (
+                      <span className="px-2 text-gray-500">...</span>
+                    )}
+                    <button
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={isLoading}
+                      className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
+                    >
+                      {totalPages}
+                    </button>
+                  </>
+                )}
               </div>
+
+              {/* Next Button */}
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages || isLoading}
+                className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* Filter Dialog */}
       <UtilityEVConsumptionFilterDialog 

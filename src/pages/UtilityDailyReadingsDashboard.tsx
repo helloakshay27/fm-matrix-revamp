@@ -494,12 +494,7 @@ export default function UtilityDailyReadingsDashboard() {
 
       {/* Enhanced Data Table */}
       <div>
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="w-6 h-6 animate-spin mr-2" />
-            <span>Loading daily readings...</span>
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="text-center py-12">
             <p className="text-red-600 mb-4">{error}</p>
             <Button onClick={handleRefresh} variant="outline">
@@ -527,6 +522,7 @@ export default function UtilityDailyReadingsDashboard() {
               // selectable={true}
               storageKey="daily-readings-table"
               leftActions={leftActions}
+              loading={loading}
             />
 
             {/* Custom Pagination Controls */}

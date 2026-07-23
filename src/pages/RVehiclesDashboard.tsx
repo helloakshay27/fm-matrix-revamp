@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, Edit, Search } from 'lucide-react';
 import { AddVehicleParkingModal } from '@/components/AddVehicleParkingModal';
@@ -170,9 +169,29 @@ export const RVehiclesDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
-  const [vehicleData, setVehicleData] = useState(initialVehicleData);
+  const [vehicleData, setVehicleData] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { onVehicleStatusToggled } = useVehicleEvents();
+
+  
+  useEffect(() => {
+    let active = true;
+    const fetchVehicles = async () => {
+      setLoading(true);
+      try {
+        
+        await new Promise((res) => setTimeout(res, 800));
+        if (active) setVehicleData(initialVehicleData);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchVehicles();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleHistoryClick = () => {
     navigate('/security/vehicle/r-vehicles/history');
@@ -306,6 +325,7 @@ export const RVehiclesDashboard = () => {
         searchPlaceholder="Search by vehicle number"
         hideTableExport={false}
         hideColumnsButton={false}
+        loading={loading}
         leftActions={
           <>
             {shouldShow("R Vehicles", "create") && (

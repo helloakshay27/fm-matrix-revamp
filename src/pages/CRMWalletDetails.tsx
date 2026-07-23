@@ -79,6 +79,7 @@ const CRMWalletDetails = () => {
     const [showNewRuleForm, setShowNewRuleForm] = useState(false);
     const [recurringRules, setRecurringRules] = useState([]);
     const [transactionHistory, setTransactionHistory] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [ruleFormData, setRuleFormData] = useState({
         points: "",
         transaction_note: "",
@@ -150,10 +151,19 @@ const CRMWalletDetails = () => {
     };
 
     useEffect(() => {
-        fetchData();
-        fetchRules();
-        fetchCustomersData();
-        getTransactionHistory();
+        const loadAll = async () => {
+            setLoading(true);
+            const minDelay = new Promise(resolve => setTimeout(resolve, 1200));
+            await Promise.all([
+                fetchData(),
+                fetchRules(),
+                fetchCustomersData(),
+                getTransactionHistory(),
+            ]);
+            await minDelay;
+            setLoading(false);
+        };
+        loadAll();
     }, []);
 
     const changeRuleStatus = async (id, status) => {
@@ -218,6 +228,17 @@ const CRMWalletDetails = () => {
                 return item[columnKey] || "-";
         }
     };
+
+    if (loading) {
+        return (
+            <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <p className="text-gray-700">Loading wallet details...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-[30px] min-h-screen bg-transparent">
