@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
@@ -18,6 +18,7 @@ interface EmployeeData {
 
 export const EmployeesDashboard = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
   const [employees] = useState<EmployeeData[]>([
     {
       id: '220274',
@@ -93,6 +94,11 @@ export const EmployeesDashboard = () => {
     }
   ]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleAddClick = () => {
     navigate('/vas/space-management/setup/employees/add');
   };
@@ -133,6 +139,7 @@ export const EmployeesDashboard = () => {
           pageSize={10}
           hideTableExport={true}
           emptyMessage="No employees found"
+          loading={loading}
           renderCell={(item, columnKey) => {
             switch (columnKey) {
               case "actions":

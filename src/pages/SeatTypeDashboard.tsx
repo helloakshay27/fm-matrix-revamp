@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Edit, Plus } from "lucide-react";
@@ -16,6 +16,7 @@ interface SeatType {
 }
 
 export const SeatTypeDashboard = () => {
+  const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingSeatType, setEditingSeatType] = useState<SeatType | null>(null);
@@ -65,6 +66,11 @@ export const SeatTypeDashboard = () => {
     ));
   };
 
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Main Content */}
@@ -90,6 +96,7 @@ export const SeatTypeDashboard = () => {
           pageSize={10}
           hideTableExport={true}
           emptyMessage="No seat types found"
+          loading={loading}
           renderCell={(item, columnKey) => {
             switch (columnKey) {
               case "actions":
