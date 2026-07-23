@@ -75,16 +75,16 @@ export function PulseAmenities({ filters }: Props) {
       {kpi && (
         <div className="pd-kpi-grid">
           {[
-            { label: "Total Bookings",   value: kpi.total_bookings },
-            { label: "Confirmed",        value: kpi.confirmed },
-            { label: "Pending",          value: kpi.pending },
-            { label: "Cancelled",        value: kpi.cancelled },
-            { label: "Failed",           value: kpi.failed },
-            { label: "Bookable",         value: kpi.bookable },
-            { label: "Request Type",     value: kpi.request_type },
-            { label: "Revenue",          value: kpi.total_revenue, currency: true },
-            { label: "Wallet Payments",  value: kpi.wallet_payments },
-            { label: "Online Payments",  value: kpi.online_payments },
+            { label: "Total Bookings", value: kpi.total_bookings },
+            { label: "Confirmed", value: kpi.confirmed },
+            { label: "Pending", value: kpi.pending },
+            { label: "Cancelled", value: kpi.cancelled },
+            // { label: "Failed",           value: kpi.failed },
+            { label: "Bookable", value: kpi.bookable },
+            { label: "Request Type", value: kpi.request_type },
+            { label: "Revenue", value: kpi.total_revenue, currency: true },
+            { label: "Wallet Payments", value: kpi.wallet_payments },
+            { label: "Online Payments", value: kpi.online_payments },
           ].map((item) => (
             <div key={item.label} className="pd-kpi-card">
               <div className="pd-kpi-value">
@@ -108,9 +108,9 @@ export function PulseAmenities({ filters }: Props) {
                   <Pie
                     data={[
                       { name: "Confirmed", value: kpi.confirmed },
-                      { name: "Pending",   value: kpi.pending },
+                      { name: "Pending", value: kpi.pending },
                       { name: "Cancelled", value: kpi.cancelled },
-                      { name: "Failed",    value: kpi.failed },
+                      { name: "Failed", value: kpi.failed },
                     ]}
                     cx="50%" cy="50%"
                     innerRadius="50%" outerRadius="70%"
@@ -134,7 +134,7 @@ export function PulseAmenities({ filters }: Props) {
                     data={[
                       { name: "Wallet", value: kpi.wallet_payments },
                       { name: "Online", value: kpi.online_payments },
-                      { name: "Other",  value: Math.max(0, kpi.total_bookings - kpi.wallet_payments - kpi.online_payments) },
+                      { name: "Other", value: Math.max(0, kpi.total_bookings - kpi.wallet_payments - kpi.online_payments) },
                     ]}
                     cx="50%" cy="50%"
                     innerRadius="50%" outerRadius="70%"
@@ -157,7 +157,7 @@ export function PulseAmenities({ filters }: Props) {
                   <Pie
                     data={[
                       { name: "Bookable", value: kpi.bookable },
-                      { name: "Request",  value: kpi.request_type },
+                      { name: "Request", value: kpi.request_type },
                     ]}
                     cx="50%" cy="50%"
                     innerRadius="50%" outerRadius="70%"

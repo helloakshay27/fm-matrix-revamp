@@ -7,6 +7,7 @@ import { PulseAmenities } from "./sections/PulseAmenities";
 import { PulseEvents } from "./sections/PulseEvents";
 import { PulseNotices } from "./sections/PulseNotices";
 import { PulseCommunity } from "./sections/PulseCommunity";
+import { PulseCarpool } from "./sections/PulseCarpool";
 import "@/styles/pulse-dashboard.css";
 import "@/styles/pulse-shell.css";
 import { DashboardHeader } from "@/components/DashboardHeader";
@@ -19,7 +20,7 @@ type DateRange = {
   to?: Date;
 };
 
-type Section = "customers" | "users" | "amenities" | "events" | "notices" | "community";
+type Section = "customers" | "users" | "amenities" | "events" | "notices" | "community" | "carpool";
 
 const SECTIONS: { key: Section; label: string }[] = [
   { key: "customers", label: "Customers" },
@@ -28,6 +29,7 @@ const SECTIONS: { key: Section; label: string }[] = [
   { key: "events", label: "Events" },
   { key: "notices", label: "Notices" },
   { key: "community", label: "Community" },
+  { key: "carpool", label: "Carpool" },
 ];
 
 function getDefaultDates() {
@@ -186,6 +188,7 @@ export function PulseDashboardPage() {
           {activeSection === "events" && <PulseEvents filters={filters} />}
           {activeSection === "notices" && <PulseNotices filters={filters} />}
           {activeSection === "community" && <PulseCommunity filters={filters} />}
+          {activeSection === "carpool" && <PulseCarpool filters={filters} />}
         </div>
       </div>
     </>
