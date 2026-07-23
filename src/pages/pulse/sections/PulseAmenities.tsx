@@ -3,6 +3,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
+import { Sparkles } from "lucide-react";
 import {
   fetchAmenitiesKpi, fetchAmenitiesUtilization, fetchAmenitiesList, fetchAmenityBreakdown,
   type AmenitiesKpi, type AmenitiesUtilization, type AmenitiesListResponse, type AmenityBreakdown,
@@ -52,10 +53,24 @@ export function PulseAmenities({ filters }: Props) {
   }
 
   const startIdx = list ? (list.pagination.current_page - 1) * list.pagination.per_page : 0;
+  const hasData = !!(kpi || (util && util.facilities.length) || list || (breakdown && breakdown.breakdown.length));
 
   return (
     <div>
-      <div className="pd-section-title">Amenities</div>
+      <div className="pd-section-header">
+        <div className="pd-section-icon"><Sparkles className="w-5 h-5" /></div>
+        <div>
+          <h2 className="pd-section-title">Amenities</h2>
+          <div className="pd-section-subtitle">Facility bookings, utilization and revenue</div>
+        </div>
+      </div>
+
+      {!hasData && (
+        <div className="pd-empty">
+          <Sparkles className="pd-empty-icon" />
+          No amenities data available for the selected filters.
+        </div>
+      )}
 
       {kpi && (
         <div className="pd-kpi-grid">
@@ -188,8 +203,8 @@ export function PulseAmenities({ filters }: Props) {
             <table className="pd-table">
               <thead>
                 <tr>
-                  <th>Facility</th><th>Site</th><th>Type</th><th>Total</th>
-                  <th>Confirmed</th><th>Pending</th><th>Cancelled</th><th>Revenue</th>
+                  <th>Facility</th><th>Site</th><th>Type</th><th className="pd-num">Total</th>
+                  <th className="pd-num">Confirmed</th><th className="pd-num">Pending</th><th className="pd-num">Cancelled</th><th className="pd-num">Revenue</th>
                 </tr>
               </thead>
               <tbody>
@@ -198,11 +213,11 @@ export function PulseAmenities({ filters }: Props) {
                     <td style={{ fontWeight: 500 }}>{f.facility_name}</td>
                     <td>{f.site_name}</td>
                     <td>{f.fac_type}</td>
-                    <td>{f.total}</td>
-                    <td style={{ color: C.green, fontWeight: 500 }}>{f.confirmed}</td>
-                    <td style={{ color: C.orange }}>{f.pending}</td>
-                    <td style={{ color: C.red }}>{f.cancelled}</td>
-                    <td className="pd-revenue">₹{f.revenue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</td>
+                    <td className="pd-num">{f.total}</td>
+                    <td className="pd-num" style={{ color: C.green, fontWeight: 500 }}>{f.confirmed}</td>
+                    <td className="pd-num" style={{ color: C.orange }}>{f.pending}</td>
+                    <td className="pd-num" style={{ color: C.red }}>{f.cancelled}</td>
+                    <td className="pd-num pd-revenue">₹{f.revenue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</td>
                   </tr>
                 ))}
               </tbody>
@@ -220,18 +235,18 @@ export function PulseAmenities({ filters }: Props) {
             <table className="pd-table">
               <thead>
                 <tr>
-                  <th>#</th><th>Facility</th><th>Type</th><th>Max</th><th>Min</th>
+                  <th className="pd-num">#</th><th>Facility</th><th>Type</th><th className="pd-num">Max</th><th className="pd-num">Min</th>
                   <th>Complementary</th><th>Prepaid</th><th>Postpaid</th><th>Active</th>
                 </tr>
               </thead>
               <tbody>
                 {list.amenities.map((a, i) => (
                   <tr key={a.facility_id}>
-                    <td>{startIdx + i + 1}</td>
+                    <td className="pd-num">{startIdx + i + 1}</td>
                     <td style={{ fontWeight: 500 }}>{a.facility_name}</td>
                     <td>{a.fac_type}</td>
-                    <td>{a.max_people}</td>
-                    <td>{a.min_people}</td>
+                    <td className="pd-num">{a.max_people}</td>
+                    <td className="pd-num">{a.min_people}</td>
                     <td><span className={`pd-badge ${a.complementary === "Yes" ? "pd-badge-yes" : "pd-badge-no"}`}>{a.complementary}</span></td>
                     <td><span className={`pd-badge ${a.prepaid === "Yes" ? "pd-badge-yes" : "pd-badge-no"}`}>{a.prepaid}</span></td>
                     <td><span className={`pd-badge ${a.postpaid === "Yes" ? "pd-badge-yes" : "pd-badge-no"}`}>{a.postpaid}</span></td>

@@ -1,0 +1,200 @@
+/* Pulse Dashboard "shell" theme — the nav strip, filter bar, and tab bar
+   that wrap around the existing pulse-dashboard.css (pd-*) section styles.
+   Uses the same design tokens as the rest of the app (see theme.css), which
+   already match the terra/sage palette used by PATMCeoDashboard's shell, so
+   this file only adds the missing structural pieces (nav, filter bar, tabs)
+   rather than re-defining colors. Everything is scoped under .pulse-shell
+   so it cannot leak into other pages. */
+
+.pulse-shell {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ── Page nav strip ───────────────────────────────────────────────────── */
+.pulse-shell .ps-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 24px;
+  background: var(--color-card-white);
+  border-bottom: 1px solid var(--color-card-border);
+}
+
+.pulse-shell .ps-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pulse-shell .ps-logo-mark {
+  width: 30px;
+  height: 30px;
+  background: var(--color-primary);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pulse-shell .ps-logo-mark svg {
+  width: 16px;
+  height: 16px;
+  fill: #fff;
+}
+
+.pulse-shell .ps-logo-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.25;
+}
+
+.pulse-shell .ps-logo-sub {
+  font-size: 10px;
+  color: #798C5E;
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.pulse-shell .ps-date-tag {
+  font-size: 11px;
+  color: #798C5E;
+  background: var(--color-bg);
+  border: 1px solid var(--color-card-border);
+  padding: 4px 12px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+/* ── Filter bar ───────────────────────────────────────────────────────── */
+.pulse-shell .ps-fbar {
+  background: var(--color-card-white);
+  border-bottom: 2px solid var(--color-card-border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pulse-shell .ps-flbl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #798C5E;
+  white-space: nowrap;
+  padding-right: 12px;
+  border-right: 1px solid var(--color-card-border);
+  flex-shrink: 0;
+}
+
+/* Site select — fixed width so it can't stretch to fill the row
+   (shadcn's SelectTrigger is w-full by default). */
+.pulse-shell .ps-fsel-trigger {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px !important;
+  font-weight: 500;
+  color: var(--color-text) !important;
+  background: var(--color-bg) !important;
+  border: 1px solid var(--color-card-border) !important;
+  border-radius: 100px !important;
+  padding: 0 12px !important;
+  height: 34px !important;
+  width: 210px;
+  flex: 0 0 auto;
+  gap: 8px;
+  transition: border-color .15s, color .15s;
+}
+
+.pulse-shell .ps-fsel-trigger:hover,
+.pulse-shell .ps-fsel-trigger:focus {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+.pulse-shell .ps-fsel-trigger .ps-fsel-icon {
+  color: #798C5E;
+  flex-shrink: 0;
+  transition: color .15s;
+}
+
+.pulse-shell .ps-fsel-trigger:hover .ps-fsel-icon,
+.pulse-shell .ps-fsel-trigger:focus .ps-fsel-icon {
+  color: var(--color-primary);
+}
+
+/* Wraps the shared UnifiedDateRangeFilter so its trigger button lines up
+   with the pill controls either side of it, without touching the shared
+   component's own styling (it's used elsewhere in the app). */
+.pulse-shell .ps-date-wrap button {
+  height: 34px !important;
+  border-radius: 100px !important;
+  font-size: 12px !important;
+  font-family: 'Poppins', sans-serif !important;
+}
+
+.pulse-shell .ps-freset {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: rgba(218, 119, 86, .12);
+  border: 1px solid rgba(218, 119, 86, .3);
+  border-radius: 100px;
+  padding: 0 14px;
+  height: 34px;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-left: auto;
+  transition: background .15s, color .15s;
+}
+
+.pulse-shell .ps-freset:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* ── Tab bar ──────────────────────────────────────────────────────────── */
+.pulse-shell .ps-tabbar {
+  display: flex;
+  gap: 2px;
+  border-bottom: 2px solid var(--color-card-border);
+  overflow-x: auto;
+  padding: 0 24px;
+  background: var(--color-card-white);
+}
+
+.pulse-shell .ps-tabbtn {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 12px 16px;
+  cursor: pointer;
+  color: #798C5E;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: none;
+  white-space: nowrap;
+  margin-bottom: -2px;
+  transition: color .15s, border-color .15s;
+}
+
+.pulse-shell .ps-tabbtn:hover {
+  color: var(--color-text);
+}
+
+.pulse-shell .ps-tabbtn.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}

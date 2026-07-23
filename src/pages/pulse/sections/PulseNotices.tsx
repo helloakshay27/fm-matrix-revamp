@@ -3,6 +3,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
+import { Bell } from "lucide-react";
 import {
   fetchNoticeboardKpi, fetchNoticeboardBySite, fetchNoticeboardList,
   type NoticeboardKpi, type NoticeboardBySite, type NoticeboardListResponse,
@@ -52,10 +53,24 @@ export function PulseNotices({ filters }: Props) {
   }
 
   const startIdx = list ? (list.pagination.current_page - 1) * list.pagination.per_page : 0;
+  const hasData = !!(kpi || (bySite && bySite.sites.length) || list);
 
   return (
     <div>
-      <div className="pd-section-title">Notices</div>
+      <div className="pd-section-header">
+        <div className="pd-section-icon"><Bell className="w-5 h-5" /></div>
+        <div>
+          <h2 className="pd-section-title">Notices</h2>
+          <div className="pd-section-subtitle">Noticeboard status and visibility across sites</div>
+        </div>
+      </div>
+
+      {!hasData && (
+        <div className="pd-empty">
+          <Bell className="pd-empty-icon" />
+          No notice data available for the selected filters.
+        </div>
+      )}
 
       {kpi && (
         <div className="pd-kpi-grid">
@@ -136,14 +151,14 @@ export function PulseNotices({ filters }: Props) {
             <table className="pd-table">
               <thead>
                 <tr>
-                  <th>#</th><th>Heading</th><th>Status</th><th>Important</th><th>Active</th>
+                  <th className="pd-num">#</th><th>Heading</th><th>Status</th><th>Important</th><th>Active</th>
                   <th>Expire Date</th><th>Expired</th><th>Sites</th><th>Created By</th>
                 </tr>
               </thead>
               <tbody>
                 {list.notices.map((n, i) => (
                   <tr key={n.notice_id}>
-                    <td>{startIdx + i + 1}</td>
+                    <td className="pd-num">{startIdx + i + 1}</td>
                     <td style={{ fontWeight: 500, maxWidth: 260 }}>{n.heading}</td>
                     <td><span className="pd-badge pd-badge-pub">{n.status}</span></td>
                     <td>{n.is_important ? <span className="pd-badge pd-badge-warn">Important</span> : "—"}</td>
@@ -155,7 +170,7 @@ export function PulseNotices({ filters }: Props) {
                         : <span className="pd-badge pd-badge-yes">Active</span>
                       }
                     </td>
-                    <td style={{ fontSize: 12, color: "#6b7280" }}>{n.sites.map((s) => s.site_name).join(", ") || "—"}</td>
+                    <td style={{ fontSize: 12, color: "var(--color-text-light)" }}>{n.sites.map((s) => s.site_name).join(", ") || "—"}</td>
                     <td style={{ fontSize: 12 }}>{n.created_by || "—"}</td>
                   </tr>
                 ))}
