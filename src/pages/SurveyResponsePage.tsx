@@ -8,14 +8,9 @@ import {
   Download,
   Search,
   RotateCcw,
-  Activity,
-  ThumbsUp,
-  ClipboardList,
-  HelpCircle,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Pagination,
@@ -27,6 +22,7 @@ import {
   PaginationNext,
 } from "@/components/ui/pagination";
 import { EnhancedTable } from "../components/enhanced-table/EnhancedTable";
+import { StatsCard } from "@/components/StatsCard";
 import { SurveyResponseFilterModal } from "@/components/SurveyResponseFilterModal";
 import { SurveyResponseAnalytics } from "@/components/SurveyResponseAnalytics";
 import { SurveyAnalyticsContent } from "@/components/SurveyAnalyticsContent";
@@ -206,6 +202,7 @@ export const SurveyResponsePage = () => {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null); // null = all, 'active', 'inactive'
+  const [hasExplicitStatusSelection, setHasExplicitStatusSelection] = useState(false);
   const [pagination, setPagination] = useState({
     current_page: 1,
     per_page: 10,
@@ -1219,6 +1216,7 @@ export const SurveyResponsePage = () => {
   // Handle status card click
   const handleStatusCardClick = (status: string | null) => {
     setSelectedStatus(status);
+    setHasExplicitStatusSelection(true);
     setCurrentPage(1); // Reset to first page when filtering by status
   };
 
@@ -1328,78 +1326,45 @@ export const SurveyResponsePage = () => {
         {/* Tab Content */}
         <TabsContent value="list" className="mt-0">
           {/* Survey Statistics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            {/* Total Surveys Card - Click to show all */}
-            <div
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mb-6">
+            <StatsCard
+              title="Total Surveys"
+              value={getSurveyCount()}
+              selected={hasExplicitStatusSelection && selectedStatus === null}
+              icon={
+                <Settings
+                  className="w-6 h-6 sm:w-8 sm:h-8"
+                  style={{ color: "#C72030" }}
+                />
+              }
               onClick={() => handleStatusCardClick(null)}
-              className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${selectedStatus === null
-                ? "shadow-lg transition-shadow shadow-[0px_1px_8px_rgba(45,45,45,0.05)]"
-                : ""
-                }`}
-            >
-              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-                <ClipboardList className="w-6 h-6 text-[#C72030]" />
-              </div>
-              <div>
-                <div className="text-2xl font-semibold text-[#1A1A1A]">
-                  {getSurveyCount()}
-                  {isLoading && (
-                    <span className="ml-1 text-xs animate-pulse">...</span>
-                  )}
-                </div>
-                <div className="text-sm font-medium text-[#1A1A1A]">
-                  Total Surveys
-                </div>
-              </div>
-            </div>
+            />
 
-            {/* Active Surveys Card */}
-            <div
-              onClick={() => handleStatusCardClick('active')}
-              className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${selectedStatus === 'active'
-                ? "shadow-lg transition-shadow shadow-[0px_1px_8px_rgba(45,45,45,0.05)]"
-                : ""
-                }`}
-            >
-              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-                <Activity className="w-6 h-6 text-[#C72030]" />
-              </div>
-              <div>
-                <div className="text-2xl font-semibold text-[#1A1A1A]">
-                  {getTotalActiveCount()}
-                  {isLoading && (
-                    <span className="ml-1 text-xs animate-pulse">...</span>
-                  )}
-                </div>
-                <div className="text-sm font-medium text-[#1A1A1A]">
-                  Active Surveys
-                </div>
-              </div>
-            </div>
+            <StatsCard
+              title="Active Surveys"
+              value={getTotalActiveCount()}
+              selected={selectedStatus === "active"}
+              icon={
+                <Settings
+                  className="w-6 h-6 sm:w-8 sm:h-8"
+                  style={{ color: "#C72030" }}
+                />
+              }
+              onClick={() => handleStatusCardClick("active")}
+            />
 
-            {/* Inactive Surveys Card */}
-            <div
-              onClick={() => handleStatusCardClick('inactive')}
-              className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 cursor-pointer hover:shadow-lg transition-shadow ${selectedStatus === 'inactive'
-                ? "shadow-lg transition-shadow shadow-[0px_1px_8px_rgba(45,45,45,0.05)]"
-                : ""
-                }`}
-            >
-              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-                <HelpCircle className="w-6 h-6 text-[#C72030]" />
-              </div>
-              <div>
-                <div className="text-2xl font-semibold text-[#1A1A1A]">
-                  {getInactiveSurveysCount()}
-                  {isLoading && (
-                    <span className="ml-1 text-xs animate-pulse">...</span>
-                  )}
-                </div>
-                <div className="text-sm font-medium text-[#1A1A1A]">
-                  Inactive Surveys
-                </div>
-              </div>
-            </div>
+            <StatsCard
+              title="Inactive Surveys"
+              value={getInactiveSurveysCount()}
+              selected={selectedStatus === "inactive"}
+              icon={
+                <Settings
+                  className="w-6 h-6 sm:w-8 sm:h-8"
+                  style={{ color: "#C72030" }}
+                />
+              }
+              onClick={() => handleStatusCardClick("inactive")}
+            />
           </div>
 
           {/* Enhanced Data Table */}

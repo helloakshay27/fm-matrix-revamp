@@ -3,9 +3,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { StatsCard } from '@/components/StatsCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ReferSomeoneDialog } from '@/components/ReferSomeoneDialog';
+import { Settings } from 'lucide-react';
 
 export const RedemptionMarketplacePage = () => {
   const [isReferDialogOpen, setIsReferDialogOpen] = useState(false);
@@ -170,42 +172,24 @@ export const RedemptionMarketplacePage = () => {
       </Card>
 
       {/* Points Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="bg-orange-50">
-          <CardContent className="p-6 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-lg">♦</span>
-              </div>
-            </div>
-            <p className="text-gray-600 text-sm mb-2">Loyalty Points</p>
-            <p className="text-2xl font-bold">{loyaltyPoints.toLocaleString()} Points</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <StatsCard
+          title="Loyalty Points"
+          value={`${loyaltyPoints.toLocaleString()} Points`}
+          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+        />
 
-        <Card className="bg-orange-50">
-          <CardContent className="p-6 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-lg">♦</span>
-              </div>
-            </div>
-            <p className="text-gray-600 text-sm mb-2">Earned Points</p>
-            <p className="text-2xl font-bold">{earnedPoints.toLocaleString()} Points</p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Earned Points"
+          value={`${earnedPoints.toLocaleString()} Points`}
+          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+        />
 
-        <Card className="bg-orange-50">
-          <CardContent className="p-6 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-lg">♦</span>
-              </div>
-            </div>
-            <p className="text-gray-600 text-sm mb-2">Redeemed Points</p>
-            <p className="text-2xl font-bold">{redeemedPoints} Points</p>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Redeemed Points"
+          value={`${redeemedPoints.toLocaleString()} Points`}
+          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#C72030' }} />}
+        />
       </div>
 
       {/* Navigation Tabs */}

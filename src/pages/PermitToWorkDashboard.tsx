@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate,useLocation} from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -43,6 +43,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  type DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -519,12 +520,14 @@ export const PermitToWorkDashboard = () => {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
-  const handleChartDragEnd = (event: { active: { id: string }; over: { id: string } | null }) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
+  const handleChartDragEnd = (event: DragEndEvent) => {
+    const activeId = String(event.active.id);
+    const overId = event.over ? String(event.over.id) : null;
+
+    if (overId && activeId !== overId) {
       setChartOrder((items) => {
-        const oldIndex = items.indexOf(active.id);
-        const newIndex = items.indexOf(over.id);
+        const oldIndex = items.indexOf(activeId);
+        const newIndex = items.indexOf(overId);
         return arrayMove(items, oldIndex, newIndex);
       });
     }
@@ -753,7 +756,7 @@ export const PermitToWorkDashboard = () => {
       setPermitCounts(countsResponse);
 
       // Update pagination info
-     if (permitsResponse.pagination) {
+      if (permitsResponse.pagination) {
         setTotalPages(permitsResponse.pagination.total_pages || 1);
         setTotalCount(permitsResponse.pagination.total_count || 0);
       } else {
@@ -888,7 +891,7 @@ export const PermitToWorkDashboard = () => {
       setPermits(permitsResponse.permits || []);
 
       // Update pagination info
-     if (permitsResponse.pagination) {
+      if (permitsResponse.pagination) {
         setTotalPages(permitsResponse.pagination.total_pages || 1);
         setTotalCount(permitsResponse.pagination.total_count || 0);
       } else {
@@ -906,7 +909,7 @@ export const PermitToWorkDashboard = () => {
     }
   };
 
- // Handle page change for pagination
+  // Handle page change for pagination
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages || loading) return;
     setCurrentPage(newPage);
@@ -1468,63 +1471,61 @@ export const PermitToWorkDashboard = () => {
             <div className="flex-1 min-w-0 space-y-6">
               {/* Chart Grid — draggable, only show selected charts */}
               <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleChartDragEnd}
-          >
-            <SortableContext
-              items={chartOrder.filter((k) => selectedAnalyticsTypes.includes(k))}
-              strategy={rectSortingStrategy}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {chartOrder
-                  .filter((key) => selectedAnalyticsTypes.includes(key))
-                  .map((key) => {
-                    if (key === "permitSiteWise") {
-                      return (
-                        <SortableChartItem key="permitSiteWise" id="permitSiteWise">
-                          <AssetAnalyticsCard
-                            title="Permit Site Wise Report"
-                            type="groupWise"
-                            data={siteWisePermitsData}
-                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                            onDownload={handleSiteWisePermitsDownload}
-                            onRefresh={handleRefreshSiteWise}
-                            isLoading={siteWisePermitsLoading}
-                            info={siteWisePermitsInfo}
-                          />
-                        </SortableChartItem>
-                      );
-                    }
-                    if (key === "permitStatus") {
-                      return (
-                        <SortableChartItem key="permitStatus" id="permitStatus">
-                          <AssetAnalyticsCard
-                            title="Permit Status"
-                            type="categoryWise"
-                            data={permitsStatusData}
-                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                            onDownload={handlePermitsStatusDownload}
-                            onRefresh={handleRefreshPermitsStatus}
-                            isLoading={permitsStatusLoading}
-                            info={permitsStatusInfo}
-                          />
-                        </SortableChartItem>
-                      );
-                    }
-                    return null;
-                  })}
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleChartDragEnd}
+              >
+                <SortableContext
+                  items={chartOrder.filter((k) => selectedAnalyticsTypes.includes(k))}
+                  strategy={rectSortingStrategy}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {chartOrder
+                      .filter((key) => selectedAnalyticsTypes.includes(key))
+                      .map((key) => {
+                        if (key === "permitSiteWise") {
+                          return (
+                            <SortableChartItem key="permitSiteWise" id="permitSiteWise">
+                              <AssetAnalyticsCard
+                                title="Permit Site Wise Report"
+                                type="groupWise"
+                                data={siteWisePermitsData}
+                                dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                                onDownload={handleSiteWisePermitsDownload}
+                                onRefresh={handleRefreshSiteWise}
+                                isLoading={siteWisePermitsLoading}
+                              />
+                            </SortableChartItem>
+                          );
+                        }
+                        if (key === "permitStatus") {
+                          return (
+                            <SortableChartItem key="permitStatus" id="permitStatus">
+                              <AssetAnalyticsCard
+                                title="Permit Status"
+                                type="categoryWise"
+                                data={permitsStatusData}
+                                dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                                onDownload={handlePermitsStatusDownload}
+                                onRefresh={handleRefreshPermitsStatus}
+                                isLoading={permitsStatusLoading}
+                              />
+                            </SortableChartItem>
+                          );
+                        }
+                        return null;
+                      })}
 
-                {selectedAnalyticsTypes.length === 0 && (
-                  <div className="col-span-2 flex flex-col items-center justify-center py-16 text-gray-400">
-                    <Settings className="w-12 h-12 mb-4 opacity-30" />
-                    <p className="text-lg font-medium">No analytics selected</p>
-                    <p className="text-sm mt-1">Use the selector above to choose which charts to display.</p>
+                    {selectedAnalyticsTypes.length === 0 && (
+                      <div className="col-span-2 flex flex-col items-center justify-center py-16 text-gray-400">
+                        <Settings className="w-12 h-12 mb-4 opacity-30" />
+                        <p className="text-lg font-medium">No analytics selected</p>
+                        <p className="text-sm mt-1">Use the selector above to choose which charts to display.</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </SortableContext>
-          </DndContext>
+                </SortableContext>
+              </DndContext>
             </div>{/* end xl:col-span-8 */}
 
             {/* Recent Permits Sidebar */}

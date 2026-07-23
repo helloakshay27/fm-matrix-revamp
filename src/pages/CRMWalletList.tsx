@@ -12,7 +12,7 @@ import {
 } from "@/store/slices/walletListSlice";
 import axios from "axios";
 import { format } from "date-fns";
-import { Coins, Download, Eye, Plus, Star, Users, Wallet } from "lucide-react";
+import { Download, Eye, Plus, Settings, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -283,37 +283,27 @@ const CRMWalletList = () => {
                 <StatsCard
                     title="Total Wallet Users"
                     value={formatCardValue(walletCardCount.total_users)}
-                    icon={<Users className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
                 <StatsCard
                     title="Total Wallet Balance"
                     value={formatCardValue(walletCardCount.total_amount)}
-                    icon={<Wallet className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
                 <StatsCard
                     title="Paid Points"
                     value={formatCardValue(walletCardCount.paid_points)}
-                    icon={<Coins className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
                 <StatsCard
                     title="Complimentary Points"
                     value={formatCardValue(walletCardCount.complimentary_points)}
-                    icon={<Star className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
                 <StatsCard
                     title="Expired Points"
                     value={formatCardValue(walletCardCount.expiry_points)}
-                    icon={<Users className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
             </div>
 

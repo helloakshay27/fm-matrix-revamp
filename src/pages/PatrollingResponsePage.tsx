@@ -6,7 +6,6 @@ import {
   MapPin,
   ExternalLink,
   Shield,
-  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -23,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { TicketPagination } from "@/components/TicketPagination";
+import { PatrollingFilterModal, type PatrollingFilters } from "@/components/PatrollingFilterModal";
 
 interface CheckpointListItem {
   id: number;
@@ -85,8 +85,12 @@ export const PatrollingResponsePage = () => {
   const [qrPreviewUrl, setQrPreviewUrl] = useState("");
   const [qrPreviewName, setQrPreviewName] = useState("");
 
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<PatrollingFilters>({});
+  const activeFilterCount = Object.values(appliedFilters).filter(Boolean).length;
+
   const fetchCheckpoints = useCallback(
-    async (page: number = 1, search?: string) => {
+    async (page: number = 1, search?: string, filters?: PatrollingFilters) => {
       setIsLoading(true);
       try {
         const url = getFullUrl("/patrolling/checkpoints");
@@ -98,6 +102,14 @@ export const PatrollingResponsePage = () => {
         }
         if (search && search.trim()) {
           urlWithParams.searchParams.append("search", search.trim());
+        }
+
+        if (filters) {
+          if (filters.buildingId) urlWithParams.searchParams.append("q[building_id]", String(filters.buildingId));
+          if (filters.wingId) urlWithParams.searchParams.append("q[wing_id]", String(filters.wingId));
+          if (filters.areaId) urlWithParams.searchParams.append("q[area_id]", String(filters.areaId));
+          if (filters.floorId) urlWithParams.searchParams.append("q[floor_id]", String(filters.floorId));
+          if (filters.roomId) urlWithParams.searchParams.append("q[room_id]", String(filters.roomId));
         }
 
         const options = getAuthenticatedFetchOptions();
@@ -128,8 +140,8 @@ export const PatrollingResponsePage = () => {
   );
 
   useEffect(() => {
-    fetchCheckpoints(currentPage, searchTerm);
-  }, [currentPage, searchTerm, fetchCheckpoints]);
+    fetchCheckpoints(currentPage, searchTerm, appliedFilters);
+  }, [currentPage, searchTerm, appliedFilters, fetchCheckpoints]);
 
   const columns = React.useMemo(
     () => [
@@ -215,9 +227,7 @@ export const PatrollingResponsePage = () => {
           <div className="text-sm max-w-[160px]">
             {item.scheduled_times && item.scheduled_times.length > 0 ? (
               item.scheduled_times.map((t, i) => (
-                <div key={i} className="text-gray-700">
-                  {t}
-                </div>
+                <div key={i} className="text-gray-700">{t}</div>
               ))
             ) : (
               <span className="text-gray-400">-</span>
@@ -362,6 +372,14 @@ export const PatrollingResponsePage = () => {
             hideColumnsButton={false}
             hideTableExport={false}
             loading={isLoading}
+            onFilterClick={() => setIsFilterOpen(true)}
+            rightActions={
+              activeFilterCount > 0 ? (
+                <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs font-bold bg-[#C72030] text-white">
+                  {activeFilterCount}
+                </span>
+              ) : null
+            }
           />
           {pagination.total_count > 0 && (
             <TicketPagination
@@ -379,6 +397,16 @@ export const PatrollingResponsePage = () => {
           )}
         </div>
       </div>
+
+      {/* Filter Dialog */}
+      <PatrollingFilterModal
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApply={(filters) => {
+          setAppliedFilters(filters);
+          setCurrentPage(1);
+        }}
+      />
     </div>
   );
 };
