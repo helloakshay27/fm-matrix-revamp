@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, Filter } from 'lucide-react';
+import { Eye, Filter, Loader2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SnaggingFilterDialog } from '@/components/SnaggingFilterDialog';
 import { SearchWithSuggestions } from '@/components/SearchWithSuggestions';
@@ -108,26 +108,32 @@ export const SnaggingDashboard = () => {
           </h2>
         </div>
 
-        {/* Loading state */}
-        {loading ? (
-          <div className="text-center py-8">Loading...</div>
-        ) : (
-          /* Table - Responsive */
-          <div className="overflow-x-auto border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50 text-xs sm:text-sm">
-                  <TableHead>Sr.no.</TableHead>
-                  <TableHead>Survey List</TableHead>
-                  <TableHead>Ticket Category</TableHead>
-                  <TableHead>No. of Association</TableHead>
-                  <TableHead>Check Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>View Detail</TableHead>
+        {/* Table - Responsive */}
+        <div className="overflow-x-auto border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50 text-xs sm:text-sm">
+                <TableHead>Sr.no.</TableHead>
+                <TableHead>Survey List</TableHead>
+                <TableHead>Ticket Category</TableHead>
+                <TableHead>No. of Association</TableHead>
+                <TableHead>Check Type</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>View Detail</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-24 text-center">
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                      <span className="ml-2">Loading...</span>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredData.map((item, index) => (
+              ) : (
+                filteredData.map((item, index) => (
                   <TableRow key={item.id} className="hover:bg-gray-50 text-xs sm:text-sm">
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{item.name}</TableCell>
@@ -150,11 +156,11 @@ export const SnaggingDashboard = () => {
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );

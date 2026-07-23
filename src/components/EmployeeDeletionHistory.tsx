@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Box as BoxIcon, RefreshCcw, Eye, X } from 'lucide-react';
+import { Box as BoxIcon, RefreshCcw, Eye, X, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
@@ -199,17 +199,11 @@ const EmployeeDeletionHistory: React.FC = () => {
                     </div>
                 </div>
                 <div className="px-4 pb-4 pt-0 text-[15px]">
-                    {loading && (
-                        <div className="text-gray-600 text-sm py-6">Loading...</div>
-                    )}
                     {error && (
                         <div className="text-red-600 text-sm py-6">{error}</div>
                     )}
-                    {!loading && !error && rows.length === 0 && (
-                        <div className="text-gray-600 text-sm py-6">No records available.</div>
-                    )}
 
-                    {!loading && !error && rows.length > 0 && (
+                    {!error && (
                         <div className="rounded-lg border border-gray-200 overflow-hidden">
                             <div className="max-h-[60vh] overflow-y-auto relative">
                                 <table className="min-w-full text-sm">
@@ -224,30 +218,45 @@ const EmployeeDeletionHistory: React.FC = () => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
-                                        {rows.map((r, idx) => (
-                                            <tr key={r.id} className="hover:bg-gray-50">
-                                                <td className="p-4 align-middle whitespace-nowrap">{serialBase + idx + 1}</td>
-                                                <td className="p-4 align-middle whitespace-nowrap font-medium">{renderName(r)}</td>
-                                                <td className="p-4 align-middle whitespace-nowrap">{r.detail?.email || r.user_email || '—'}</td>
-                                                <td className="p-4 align-middle whitespace-nowrap">{formatDateTime(r.created_at)}</td>
-                                                <td className="p-4 align-middle whitespace-nowrap">{r.deleted_by_email || '—'}</td>
-                                                <td className="p-4 align-middle">
-                                                    {shouldShow("M Safe", "show") && (
-                                                        <button
-                                                            type="button"
-                                                            aria-label="View employee detail"
-                                                            className="inline-flex items-center gap-2 rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
-                                                            onMouseEnter={() => handleHoverStart(r)}
-                                                            onMouseLeave={handleHoverEnd}
-                                                            onClick={() => openDetails(r)}
-                                                        >
-                                                            <Eye className="w-4 h-4 text-gray-700" />
-                                                            View
-                                                        </button>
-                                                    )}
+                                        {loading ? (
+                                            <tr>
+                                                <td colSpan={6} className="p-8 text-center">
+                                                    <div className="flex items-center justify-center">
+                                                        <Loader2 className="h-8 w-8 animate-spin" />
+                                                        <span className="ml-2">Loading...</span>
+                                                    </div>
                                                 </td>
                                             </tr>
-                                        ))}
+                                        ) : rows.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={6} className="p-8 text-center text-gray-600">No records available.</td>
+                                            </tr>
+                                        ) : (
+                                            rows.map((r, idx) => (
+                                                <tr key={r.id} className="hover:bg-gray-50">
+                                                    <td className="p-4 align-middle whitespace-nowrap">{serialBase + idx + 1}</td>
+                                                    <td className="p-4 align-middle whitespace-nowrap font-medium">{renderName(r)}</td>
+                                                    <td className="p-4 align-middle whitespace-nowrap">{r.detail?.email || r.user_email || '—'}</td>
+                                                    <td className="p-4 align-middle whitespace-nowrap">{formatDateTime(r.created_at)}</td>
+                                                    <td className="p-4 align-middle whitespace-nowrap">{r.deleted_by_email || '—'}</td>
+                                                    <td className="p-4 align-middle">
+                                                        {shouldShow("M Safe", "show") && (
+                                                            <button
+                                                                type="button"
+                                                                aria-label="View employee detail"
+                                                                className="inline-flex items-center gap-2 rounded-md border border-gray-200 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+                                                                onMouseEnter={() => handleHoverStart(r)}
+                                                                onMouseLeave={handleHoverEnd}
+                                                                onClick={() => openDetails(r)}
+                                                            >
+                                                                <Eye className="w-4 h-4 text-gray-700" />
+                                                                View
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </table>
                             </div>

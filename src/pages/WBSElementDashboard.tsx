@@ -41,13 +41,17 @@ export const WBSElementDashboard = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [wbsData, setWbsData] = useState<WBSElement[]>([]);
   const [selectedWBS, setSelectedWBS] = useState<WBSElement | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchWbsData = async () => {
     try {
+      setLoading(true);
       const response = await dispatch(fetchWBSList({ baseUrl, token })).unwrap();
       setWbsData(response.wbs);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -190,6 +194,8 @@ export const WBSElementDashboard = () => {
         leftActions={leftAction}
         storageKey="wbs-table"
         emptyMessage="No WBS elements found"
+        loading={loading}
+        loadingMessage="Loading..."
         pagination={true}
         pageSize={10}
         hideTableExport={true}
