@@ -10,23 +10,33 @@
 
 /* ── KPI grid ─────────────────────────────────────────────────────────── */
 .pulse-db .pd-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  background: linear-gradient(90deg, #E4924F 0%, #DA7756 32%, #C25A3F 64%, #8C3A2E 100%);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
   margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
 }
 
 .pulse-db .pd-kpi-card {
-  background: var(--color-card-white);
-  border: 1px solid var(--color-card-border);
-  border-radius: var(--radius-lg);
-  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 0;
+  padding: 16px 20px;
+  flex: 1 1 150px;
+  min-width: 130px;
+}
+
+.pulse-db .pd-kpi-card:last-child {
+  border-right: none;
 }
 
 .pulse-db .pd-kpi-value {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
-  color: var(--color-text);
+  color: #fff;
   line-height: 1.15;
 }
 
@@ -35,16 +45,16 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .06em;
-  color: #798C5E;
+  color: rgba(255, 255, 255, .85);
   margin-top: 4px;
 }
 
-@media (max-width: 1024px) {
-  .pulse-db .pd-kpi-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
 @media (max-width: 640px) {
-  .pulse-db .pd-kpi-grid { grid-template-columns: 1fr; }
+  .pulse-db .pd-kpi-card {
+    flex: 1 1 45%;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, .22);
+  }
 }
 
 /* ── Charts ───────────────────────────────────────────────────────────── */
@@ -71,13 +81,29 @@
   border: 1px solid var(--color-card-border);
   border-radius: var(--radius-lg);
   padding: 16px;
+  box-shadow: var(--shadow-sm);
 }
 
 .pulse-db .pd-chart-title {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
   color: var(--color-text);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.pulse-db .pd-chart-title::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 11px;
+  background: var(--color-primary);
+  margin-right: 8px;
+  vertical-align: -1px;
+  border-radius: 2px;
 }
 
 .pulse-db .pd-chart-inner {
@@ -195,6 +221,7 @@
   border-radius: var(--radius-lg);
   margin-bottom: 20px;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .pulse-db .pd-tbl-header {
@@ -206,9 +233,22 @@
 }
 
 .pulse-db .pd-tbl-title {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
   color: var(--color-text);
+}
+
+.pulse-db .pd-tbl-title::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 11px;
+  background: var(--color-primary);
+  margin-right: 8px;
+  vertical-align: -1px;
+  border-radius: 2px;
 }
 
 .pulse-db .pd-tbl-wrap {

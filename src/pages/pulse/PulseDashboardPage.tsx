@@ -8,6 +8,8 @@ import { PulseEvents } from "./sections/PulseEvents";
 import { PulseNotices } from "./sections/PulseNotices";
 import { PulseCommunity } from "./sections/PulseCommunity";
 import { PulseCarpool } from "./sections/PulseCarpool";
+import { PulseAiAlerts } from "./PulseAiAlerts";
+import { PulseGreeting } from "./PulseGreeting";
 import "@/styles/pulse-dashboard.css";
 import "@/styles/pulse-shell.css";
 import { DashboardHeader } from "@/components/DashboardHeader";
@@ -115,7 +117,7 @@ export function PulseDashboardPage() {
 
       <div className="pulse-shell">
         {/* Page nav strip */}
-        <div className="ps-nav">
+        {/* <div className="ps-nav">
           <div className="ps-logo">
             <div className="ps-logo-mark">
               <svg viewBox="0 0 24 24">
@@ -128,7 +130,9 @@ export function PulseDashboardPage() {
             </div>
           </div>
           <div className="ps-date-tag">{todayLabel}</div>
-        </div>
+        </div> */}
+
+        <PulseGreeting />
 
         {/* Filter bar */}
         <div className="ps-fbar">
@@ -166,6 +170,8 @@ export function PulseDashboardPage() {
             </button>
           )}
         </div>
+
+        <PulseAiAlerts filters={filters} />
 
         {/* Section tabs */}
         <div className="ps-tabbar">
