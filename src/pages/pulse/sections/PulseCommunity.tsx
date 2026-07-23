@@ -3,6 +3,7 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
+import { MessageCircle } from "lucide-react";
 import {
   fetchCommunityKpis, fetchTopCommunities, fetchCommunityGrowthTrend, fetchCommunityBreakdown,
   type CommunityKpis, type TopCommunities, type CommunityGrowthTrend, type CommunityBreakdown,
@@ -65,9 +66,24 @@ export function PulseCommunity({ filters }: Props) {
       }))
     : [];
 
+  const hasData = !!(kpi || top3.length || trendData.length || breakdownData.length);
+
   return (
     <div>
-      <div className="pd-section-title">Community</div>
+      <div className="pd-section-header">
+        <div className="pd-section-icon"><MessageCircle className="w-5 h-5" /></div>
+        <div>
+          <h2 className="pd-section-title">Community</h2>
+          <div className="pd-section-subtitle">Community membership growth and engagement</div>
+        </div>
+      </div>
+
+      {!hasData && (
+        <div className="pd-empty">
+          <MessageCircle className="pd-empty-icon" />
+          No community data available for the selected filters.
+        </div>
+      )}
 
       {kpi && (
         <div className="pd-kpi-grid">

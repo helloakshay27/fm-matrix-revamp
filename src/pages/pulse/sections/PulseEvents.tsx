@@ -3,6 +3,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
+import { CalendarDays } from "lucide-react";
 import {
   fetchEventsKpi, fetchEventsRegistrationsKpi, fetchEventsByCategory, fetchTopEvents,
   type EventsKpi, type EventsRegistrationsKpi, type EventsByCategory, type TopEvents,
@@ -50,9 +51,24 @@ export function PulseEvents({ filters }: Props) {
     return <div className="pd-loader"><div className="pd-spinner" />Loading events…</div>;
   }
 
+  const hasData = !!(kpi || regKpi || (byCategory && byCategory.categories.length) || (topEvents && topEvents.top_events.length));
+
   return (
     <div>
-      <div className="pd-section-title">Events</div>
+      <div className="pd-section-header">
+        <div className="pd-section-icon"><CalendarDays className="w-5 h-5" /></div>
+        <div>
+          <h2 className="pd-section-title">Events</h2>
+          <div className="pd-section-subtitle">Event schedule, registrations and attendance</div>
+        </div>
+      </div>
+
+      {!hasData && (
+        <div className="pd-empty">
+          <CalendarDays className="pd-empty-icon" />
+          No event data available for the selected filters.
+        </div>
+      )}
 
       {kpi && (
         <>
@@ -162,14 +178,14 @@ export function PulseEvents({ filters }: Props) {
             <table className="pd-table">
               <thead>
                 <tr>
-                  <th>Rank</th><th>Event</th><th>Site</th><th>From</th><th>To</th>
-                  <th>Paid</th><th>Registrations</th><th>Attended</th>
+                  <th className="pd-num">Rank</th><th>Event</th><th>Site</th><th>From</th><th>To</th>
+                  <th>Paid</th><th className="pd-num">Registrations</th><th className="pd-num">Attended</th>
                 </tr>
               </thead>
               <tbody>
                 {topEvents.top_events.map((e, i) => (
                   <tr key={e.event_id}>
-                    <td style={{ fontWeight: 700 }}>{i + 1}</td>
+                    <td className="pd-num" style={{ fontWeight: 700 }}>{i + 1}</td>
                     <td style={{ fontWeight: 500 }}>{e.event_name}</td>
                     <td>{e.site_name}</td>
                     <td style={{ whiteSpace: "nowrap", fontSize: 12 }}>{fmtDateTime(e.from_time)}</td>
@@ -179,8 +195,8 @@ export function PulseEvents({ filters }: Props) {
                         {e.is_paid ? "Paid" : "Free"}
                       </span>
                     </td>
-                    <td>{e.total_registrations}</td>
-                    <td>{e.attended}</td>
+                    <td className="pd-num">{e.total_registrations}</td>
+                    <td className="pd-num">{e.attended}</td>
                   </tr>
                 ))}
               </tbody>
