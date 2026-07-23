@@ -27,6 +27,7 @@ import {
     Eye,
     FileSpreadsheet,
     File,
+    Play,
 } from "lucide-react";
 import { API_CONFIG } from "@/config/apiConfig";
 import { toast } from "sonner";
@@ -218,6 +219,11 @@ interface PermitResume {
     };
     assignees: string;
     attachments_count: number;
+    attachments?: {
+        id: number;
+        filename: string;
+        url: string;
+    }[];
     extend_approval_levels: ApprovalLevel[];
     status?: string;
 }
@@ -1604,7 +1610,7 @@ export const PermitDetails = () => {
                                 }}
                                 className="bg-cyan-500 hover:bg-cyan-600 text-white border-cyan-500"
                             >
-                                <RefreshCw className="w-4 h-4 mr-2" />
+                                <Play className="w-4 h-4 mr-2" />
                                 Resume
                             </Button>
                         )}
@@ -3080,7 +3086,7 @@ export const PermitDetails = () => {
 
                     <Section
                         title="PERMIT RESUME"
-                        icon={<RefreshCw />}
+                        icon={<Play />}
                         sectionKey="resume-permit"
                         activeSection={activeSection}
                         setActiveSection={setActiveSection}
@@ -3313,6 +3319,69 @@ export const PermitDetails = () => {
                                         <Field label="Assignees" value={resume.assignees} />
                                         <Field label="Attachments Count" value={resume.attachments_count} />
                                     </div>
+
+                                    {resume.attachments && resume.attachments.length > 0 && (
+                                        <div className="mt-6 pt-4 border-t border-gray-200">
+                                            <h5 className="font-medium text-gray-700 mb-3">Attachments:</h5>
+                                            <div className="flex items-center flex-wrap gap-4">
+                                                {resume.attachments.map((attachment) => {
+                                                    const attachmentUrl = attachment.url;
+                                                    const attachmentName = attachment.filename || `Document_${attachment.id}`;
+                                                    const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl || '');
+                                                    const isPdf = /\.pdf$/i.test(attachmentUrl || '');
+                                                    const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
+                                                    const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
+
+                                                    return (
+                                                        <div
+                                                            key={attachment.id}
+                                                            className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                                        >
+                                                            {isImage ? (
+                                                                <img
+                                                                    src={attachmentUrl}
+                                                                    alt={attachmentName}
+                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                    onClick={() => {
+                                                                        if (attachmentUrl) window.open(attachmentUrl, '_blank');
+                                                                    }}
+                                                                />
+                                                            ) : isPdf ? (
+                                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                                    <FileText className="w-6 h-6" />
+                                                                </div>
+                                                            ) : isExcel ? (
+                                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                                    <FileSpreadsheet className="w-6 h-6" />
+                                                                </div>
+                                                            ) : isWord ? (
+                                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                                    <FileText className="w-6 h-6" />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                                    <File className="w-6 h-6" />
+                                                                </div>
+                                                            )}
+                                                            <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                                {attachmentName}
+                                                            </span>
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                                onClick={() => {
+                                                                    if (attachmentUrl) window.open(attachmentUrl, '_blank');
+                                                                }}
+                                                            >
+                                                                <Download className="w-4 h-4" />
+                                                            </Button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Resume Approval Levels */}
                                     {/* {resume.extend_approval_levels && resume.extend_approval_levels.length > 0 && (
