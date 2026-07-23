@@ -17,6 +17,7 @@ import { PostHogPageView } from "./components/PostHogPageView.tsx";
 if (
   window.location.hostname === "fm-matrix.lockated.com" ||
   window.location.hostname === "lockated.gophygital.work" ||
+  window.location.hostname === "pulse-uat.panchshil.com" ||
   window.location.hostname === "localhost"
 ) {
   import("./styles/theme.css"); // Lockated Brand Theme - Edit this file for global color changes
