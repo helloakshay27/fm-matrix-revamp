@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Clock, Users } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Users, Settings } from "lucide-react";
+import { StatsCard } from "@/components/StatsCard";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 export const SpaceManagementSeatRequestsDashboard = () => {
@@ -139,51 +140,28 @@ export const SpaceManagementSeatRequestsDashboard = () => {
         <h1 className="text-2xl font-bold text-[#1a1a1a] mb-6 uppercase">SEAT APPROVAL REQUEST</h1>
         
         {/* Statistics Cards */}
-       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-  {/* All */}
-  <div className="bg-[#f6f4ee] p-4 rounded-lg flex items-center gap-4 md:h-[132px]">
-    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
-      <Users className="w-5 h-5 text-[#D92818]" />
-    </div>
-    <div>
-      <div className="text-[#D92818] text-lg font-bold">{statistics.total}</div>
-      <div className="text-sm text-gray-500">All</div>
-    </div>
-  </div>
-
-  {/* Pending */}
-  <div className="bg-[#f6f4ee] p-4 rounded-lg flex items-center gap-4 md:h-[132px]">
-    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
-      <Clock className="w-5 h-5 text-[#D92818]" />
-    </div>
-    <div>
-      <div className="text-[#D92818] text-lg font-bold">{statistics.pending}</div>
-      <div className="text-sm text-gray-500">Pending</div>
-    </div>
-  </div>
-
-  {/* Approved */}
-  <div className="bg-[#f6f4ee] p-4 rounded-lg flex items-center gap-4 md:h-[132px]">
-    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
-      <CheckCircle className="w-5 h-5 text-[#D92818]" />
-    </div>
-    <div>
-      <div className="text-[#D92818] text-lg font-bold">{statistics.approved}</div>
-      <div className="text-sm text-gray-500">Approved</div>
-    </div>
-  </div>
-
-  {/* Rejected */}
-  <div className="bg-[#f6f4ee] p-4 rounded-lg flex items-center gap-4 md:h-[132px]">
-    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
-      <XCircle className="w-5 h-5 text-[#D92818]" />
-    </div>
-    <div>
-      <div className="text-[#D92818] text-lg font-bold">{statistics.rejected}</div>
-      <div className="text-sm text-gray-500">Rejected</div>
-    </div>
-  </div>
-      </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <StatsCard
+            title="All"
+            value={statistics.total}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Pending"
+            value={statistics.pending}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Approved"
+            value={statistics.approved}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Rejected"
+            value={statistics.rejected}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+        </div>
 
 
         {/* Table */}
