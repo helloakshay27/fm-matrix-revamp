@@ -730,10 +730,9 @@ export default function UtilityDailyReadingsDashboard() {
               </Button>
               <Button
                 onClick={() => handleFilterApply(filterFormData)}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-8 py-2"
+                className="!bg-brand hover:!bg-brand-hover !text-white px-8 py-2"
               >
-                Submit
+                Apply
               </Button>
             </div>
           </div>
