@@ -8,7 +8,7 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
 import { Button } from '@/components/ui/button';
-import Switch from '@mui/material/Switch';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Upload, Filter, Download, Eye, Edit, Copy, Calendar, BarChart3, Clock, Settings, Wrench, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -535,15 +535,11 @@ export const ScheduleListDashboard = () => {
           );
       return (
         <div className="flex items-center justify-center">
-          <div
-            className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}
-            onClick={() => handleToggleActive(item.custom_form_code)}
-            aria-label={isActive ? 'Deactivate schedule' : 'Activate schedule'}
-          >
-            <span
-              className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'}`}
-            />
-          </div>
+          <Switch
+            checked={isActive}
+            onCheckedChange={() => handleToggleActive(item.custom_form_code)}
+            className="data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756] data-[state=unchecked]:bg-gray-300"
+          />
         </div>
       );
     }

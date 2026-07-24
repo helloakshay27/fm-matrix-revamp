@@ -29,6 +29,7 @@ import {
 import { InventoryBulkUploadDialog } from "@/components/InventoryBulkUploaddialogbox";
 import { InventoryFilterDialog } from "@/components/InventoryFilterDialog";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InventorySelector } from "@/components/InventorySelector";
 import { InventoryAnalyticsSelector } from "@/components/InventoryAnalyticsSelector";
@@ -834,18 +835,11 @@ export const InventoryDashboard = () => {
           className="flex items-center justify-center w-full"
           onClick={(e) => e.stopPropagation()}
         >
-          <div
-            className={`relative inline-flex items-center h-6 w-12 rounded-full cursor-pointer transition-colors ${
-              item.active === "Active" ? "bg-green-500" : "bg-gray-300"
-            }`}
-            onClick={() => handleStatusToggle(item.id)}
-          >
-            <span
-              className={`inline-block w-5 h-5 transform bg-white rounded-full shadow transition-transform ${
-                item.active === "Active" ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </div>
+          <Switch
+            checked={item.active === "Active"}
+            onCheckedChange={() => handleStatusToggle(item.id)}
+            className="data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756] data-[state=unchecked]:bg-gray-300"
+          />
         </div>
       );
     }

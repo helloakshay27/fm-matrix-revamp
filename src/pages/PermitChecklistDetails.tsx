@@ -338,7 +338,7 @@ export const PermitChecklistDetails = () => {
                 {shouldShow("Permit Checklist", "update") && (
                     <Button
                         onClick={handleEdit}
-                        className="border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-3 py-2 h-8 text-sm flex items-center gap-2 rounded-md transition-all"
+                        className="!bg-white border border-[#C72030] text-[#C72030] px-3 py-2 h-8 text-sm flex items-center gap-2 rounded-md !shadow-none hover:!bg-white [&_svg]:!text-[#C72030]"
                     >
                         <Edit className="w-4 h-4" />
                     </Button>

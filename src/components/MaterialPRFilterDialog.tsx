@@ -163,8 +163,7 @@ export const MaterialPRFilterDialog: React.FC<MaterialPRFilterDialogProps> = ({
         <div className="flex gap-3 pt-4">
           <Button
             onClick={handleApply}
-            className="flex-1 text-white"
-            style={{ backgroundColor: '#C72030' }}
+            className="flex-1 !bg-[#DA7756] !text-white hover:!bg-[#DA7756]/85 [&_svg]:!text-white"
           >
             Apply
           </Button>
