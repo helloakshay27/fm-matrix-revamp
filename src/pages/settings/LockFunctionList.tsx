@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate,useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
@@ -455,14 +456,44 @@ export const LockFunctionList = () => {
           </div>
         </div>
       </header>
-
-      {loading && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+{loading ? (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">Actions</TableHead>
+                <TableHead className="font-medium">Function Name</TableHead>
+                <TableHead className="font-medium">Description</TableHead>
+                <TableHead className="font-medium">Lock Type</TableHead>
+                <TableHead className="font-medium">Duration</TableHead>
+                <TableHead className="font-medium">Created On</TableHead>
+                <TableHead className="font-medium">Created By</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            
+      
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={8} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{
+                        border: "2px solid #000000",
+                        borderTopColor: "transparent",
+                      }}
+                    />
+                    <span className="text-sm text-black">
+                      Loading ...
+                    </span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
-      )}
-
-      {!loading && (
+      ) : (
         <div className="">
           <EnhancedTable
             data={currentLockFunctionData}
@@ -510,9 +541,8 @@ export const LockFunctionList = () => {
                 />
               </div>
             }
-            pagination={false} // Disable built-in pagination since we're adding custom
-            loading={loading}
-            emptyMessage="No lock functions found. Create your first lock function to get started."
+            pagination={false}
+            emptyMessage=""
           />
 
           {/* Pagination Controls - matching ShiftDashboard style */}

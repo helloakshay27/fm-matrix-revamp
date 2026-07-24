@@ -56,13 +56,20 @@ const DetailPageSacHsn: React.FC = () => {
     return '-';
   };
 
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading SAC/HSN details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
-        {/* <div>
-          <div className="text-sm text-muted-foreground">SAC/HSN Setup &gt; SAC/HSN Details</div>
-          <h1 className="text-2xl font-bold">SAC/HSN DETAILS</h1>
-        </div> */}
         <div className="flex gap-2">
           <Button variant="ghost" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -79,7 +86,6 @@ const DetailPageSacHsn: React.FC = () => {
           <h2 className="text-lg font-semibold text-red-600">SAC/HSN INFORMATION</h2>
         </div>
 
-        {loading && <div>Loading...</div>}
         {error && <div className="text-red-600">Error: {error}</div>}
 
         {!loading && !error && (

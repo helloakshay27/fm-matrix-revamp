@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
@@ -204,7 +205,37 @@ export const DepartmentDashboard = () => {
           </div>
         )}
 
-        {!loading && (
+        {loading ? (
+          <div className="bg-white rounded-lg border border-gray-200">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#f6f4ee]">
+                  <TableHead className="font-medium">Actions</TableHead>
+                  <TableHead className="font-medium">Department</TableHead>
+                  <TableHead className="font-medium">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={3} className="pt-4 pb-16">
+                    <div className="w-full flex items-center justify-start gap-3 pl-4">
+                      <div
+                        className="h-5 w-5 rounded-full animate-spin"
+                        style={{
+                          border: "2px solid #000000",
+                          borderTopColor: "transparent",
+                        }}
+                      />
+                      <span className="text-sm text-black">
+                        Loading ...
+                      </span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
           <>
             {/* Header with Add Department button */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -292,9 +323,8 @@ export const DepartmentDashboard = () => {
                 enableExport={false} // Set to true if you want to enable export
                 pagination={true}
                 pageSize={10}
-                loading={loading}
                 leftActions={leftActions}
-                emptyMessage="No departments found"
+                emptyMessage=""
                 storageKey="department-table"
                 className="w-full"
               />

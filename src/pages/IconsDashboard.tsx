@@ -76,7 +76,7 @@ export const IconsDashboard = () => {
   const [editingIcon, setEditingIcon] = useState<IconItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [iconsData, setIconsData] = useState<IconItem[]>([]);
   
@@ -666,19 +666,19 @@ export const IconsDashboard = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={12} className="text-center py-8">
-                  <div className="flex items-center justify-center">
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Loading icons...
+                <TableCell colSpan={12} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                    />
+                    <span className="text-sm text-black">Loading ...</span>
                   </div>
                 </TableCell>
               </TableRow>
             ) : currentPageData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={12} className="text-center py-8 text-gray-500">
-                  {searchTerm ? `No icons found matching "${searchTerm}"` : 'No icons found'}
-                  <br />
-                  <span className="text-sm">Click "Add" to create your first icon</span>
                 </TableCell>
               </TableRow>
             ) : (

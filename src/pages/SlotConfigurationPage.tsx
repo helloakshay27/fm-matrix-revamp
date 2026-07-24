@@ -241,8 +241,30 @@ export const SlotConfigurationPage = () => {
       {/* Table */}
       <div className="bg-white rounded-lg border overflow-hidden">
         {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="text-gray-500">Loading parking configurations...</div>
+          <div className="bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#f6f4ee]">
+                  <TableHead className="font-medium">Actions</TableHead>
+                  <TableHead className="font-medium">Location</TableHead>
+                  <TableHead className="font-medium">Floor</TableHead>
+                  <TableHead className="font-medium">QR Code Needed</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={10} className="pt-4 pb-16">
+                    <div className="w-full flex items-center justify-start gap-3 pl-4">
+                      <div
+                        className="h-5 w-5 rounded-full animate-spin"
+                        style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                      />
+                      <span className="text-sm text-black">Loading ...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
           </div>
         ) : error ? (
           <div className="flex justify-center items-center py-8">
@@ -300,7 +322,6 @@ export const SlotConfigurationPage = () => {
               {filteredData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={totalVisibleColumnsCount} className="text-center py-8 text-gray-500">
-                    No parking configurations found
                   </TableCell>
                 </TableRow>
               ) : (

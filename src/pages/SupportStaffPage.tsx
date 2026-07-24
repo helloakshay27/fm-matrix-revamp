@@ -54,7 +54,7 @@ export const SupportStaffPage = () => {
   const [editingStaff, setEditingStaff] = useState<SupportStaffCategory | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [supportStaffData, setSupportStaffData] = useState<SupportStaffCategory[]>([]);
   const [iconsData, setIconsData] = useState<ApiIconResponse[]>([]);
@@ -576,19 +576,19 @@ export const SupportStaffPage = () => {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    <div className="flex items-center justify-center">
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Loading support staff categories...
+                  <TableCell colSpan={6} className="pt-4 pb-16">
+                    <div className="w-full flex items-center justify-start gap-3 pl-4">
+                      <div
+                        className="h-5 w-5 rounded-full animate-spin"
+                        style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                      />
+                      <span className="text-sm text-black">Loading ...</span>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : currentPageData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                    {searchTerm ? `No support staff categories found matching "${searchTerm}"` : 'No support staff categories found'}
-                    <br />
-                    <span className="text-sm">Click "Add" to create your first category</span>
                   </TableCell>
                 </TableRow>
               ) : (

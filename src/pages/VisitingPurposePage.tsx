@@ -115,7 +115,7 @@ export const VisitingPurposePage = () => {
   const [loadingSites, setLoadingSites] = useState(false);
   
   // Visitor setup data loading state
-  const [loadingVisitorSetup, setLoadingVisitorSetup] = useState(false);
+  const [loadingVisitorSetup, setLoadingVisitorSetup] = useState(true);
   const [staffTypes, setStaffTypes] = useState<StaffType[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmittingMoveInOut, setIsSubmittingMoveInOut] = useState(false);
@@ -937,6 +937,33 @@ export const VisitingPurposePage = () => {
             </div>
           )} */}
           
+          {loadingVisitorSetup ? (
+            <div className="bg-white rounded-lg border border-gray-200">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-[#f6f4ee]">
+                    <TableHead className="font-medium">Actions</TableHead>
+                    <TableHead className="font-medium">Visit Purpose</TableHead>
+                    <TableHead className="font-medium">Status</TableHead>
+                    <TableHead className="font-medium">Created On</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell colSpan={4} className="pt-4 pb-16">
+                      <div className="w-full flex items-center justify-start gap-3 pl-4">
+                        <div
+                          className="h-5 w-5 rounded-full animate-spin"
+                          style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                        />
+                        <span className="text-sm text-black">Loading ...</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
           <div className="bg-white rounded-lg border border-gray-200">
             {/* Tab Navigation */}
             <div className="flex border-b border-gray-200">
@@ -1198,6 +1225,7 @@ export const VisitingPurposePage = () => {
               )}
             </div>
           </div>
+          )}
         </div>
 
       </div>

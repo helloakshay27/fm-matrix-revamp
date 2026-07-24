@@ -349,6 +349,37 @@ export const GroupsPageTemplate = ({
           />
         )}
 
+        {loading ? (
+          <div className="bg-white rounded-lg border border-gray-200">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#f6f4ee]">
+                  <TableHead className="font-medium">Sr.No</TableHead>
+                  <TableHead className="font-medium">Group Name</TableHead>
+                  <TableHead className="font-medium">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={3} className="pt-4 pb-16">
+                    <div className="w-full flex items-center justify-start gap-3 pl-4">
+                      <div
+                        className="h-5 w-5 rounded-full animate-spin"
+                        style={{
+                          border: "2px solid #000000",
+                          borderTopColor: "transparent",
+                        }}
+                      />
+                      <span className="text-sm text-black">
+                        Loading ...
+                      </span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           {/* Groups Table */}
           <div className="bg-white rounded-lg border border-gray-200">
@@ -426,6 +457,7 @@ export const GroupsPageTemplate = ({
             </div>
           </div>
         </div>
+        )}
 
         {/* Add Group Modal */}
         <ThemeProvider theme={theme}>
