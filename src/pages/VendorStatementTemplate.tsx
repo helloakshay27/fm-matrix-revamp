@@ -1,4 +1,5 @@
 import React from "react";
+import { getDocumentTemplateSettings } from "@/utils/documentTemplate";
 
 export const getVendorStatementStatusStyle = (status) => {
     const styles = {
@@ -52,6 +53,7 @@ export const VendorStatementPdf = ({
     formatCurrency,
 }) => {
     const statusDisplay = formatStatus(status);
+    const templateSettings = getDocumentTemplateSettings("vendor_statement");
 
     return (
         <div
@@ -74,8 +76,16 @@ export const VendorStatementPdf = ({
                     <div className="flex justify-between items-start mb-8">
                         {/* LEFT */}
                         <div>
+                            {templateSettings.logo && (
+                                <img
+                                    src={templateSettings.logo}
+                                    alt="Logo"
+                                    className="mb-2"
+                                    style={{ maxHeight: "48px", maxWidth: "180px", objectFit: "contain" }}
+                                />
+                            )}
                             <h1 className="text-[26px] font-serif tracking-wide">
-                                Vendor Statement
+                                {templateSettings.templateName || "Vendor Statement"}
                             </h1>
 
                             {/* <p className="text-[12px] text-gray-600 mt-2">
@@ -105,7 +115,8 @@ export const VendorStatementPdf = ({
                             </h2>
 
                             <p className="text-[11px] leading-[18px]">
-                                {localStorage.getItem("companyAddress") ||
+                                {templateSettings.organizationAddress ||
+                                    localStorage.getItem("companyAddress") ||
                                     "Pune Maharashtra 411006"}
                             </p>
 
@@ -453,14 +464,35 @@ export const VendorStatementPdf = ({
                         </div>
                     </div>
 
+                    {/* TERMS & CONDITIONS */}
+                    {templateSettings.termsAndConditions && (
+                        <div className="mt-6 text-[11px]">
+                            <p className="font-bold mb-2">Terms & Conditions</p>
+                            <p className="whitespace-pre-wrap leading-relaxed">
+                                {templateSettings.termsAndConditions}
+                            </p>
+                        </div>
+                    )}
+
                     {/* SIGNATURE */}
                     <div className="mt-16 flex justify-end">
                         <div className="text-center text-[11px]">
-                            <p className="font-bold mb-10">
+                            <p className="font-bold mb-2">
                                 For{" "}
                                 {localStorage.getItem("companyName") ||
                                     "Lockated"}
                             </p>
+
+                            {templateSettings.signature ? (
+                                <img
+                                    src={templateSettings.signature}
+                                    alt="Signature"
+                                    className="mx-auto mb-2"
+                                    style={{ maxHeight: "50px", maxWidth: "180px", objectFit: "contain" }}
+                                />
+                            ) : (
+                                <div className="mb-8" />
+                            )}
 
                             <div className="border-t border-black w-[180px] pt-2">
                                 Authorized Signature
