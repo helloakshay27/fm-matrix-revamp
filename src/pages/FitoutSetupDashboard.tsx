@@ -124,10 +124,9 @@ export const FitoutSetupDashboard = () => {
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <Button
           onClick={() => setIsAddCategoryOpen(true)}
-          className="hover:bg-[#C72030]/90 text-white"
-          style={{ backgroundColor: 'rgb(199 32 48 / var(--tw-text-opacity, 1))' }}
+          className="!bg-[#DA7756] !text-white hover:!bg-[#DA7756]/90"
         >
-          <Plus className="w-4 h-4 mr-2 stroke-[#ffffff] text-white" />
+          <Plus className="w-4 h-4 mr-2 !text-white" />
           Add
         </Button>
       </div>
