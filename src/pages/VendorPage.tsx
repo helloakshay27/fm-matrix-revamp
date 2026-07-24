@@ -898,7 +898,7 @@ export const VendorPage = () => {
           searchPlaceholder="Search vendors (company, code, GST, PAN, email, mobile)..."
           leftActions={renderCustomActions()}
           loading={isSearching || loading}
-          loadingMessage={isSearching ? "Searching vendors..." : "Loading vendors..."}
+          loadingMessage={isSearching ? "Searching vendors..." : "Loading ..."}
         />
 
         {!searchTerm && totalPages > 1 && (

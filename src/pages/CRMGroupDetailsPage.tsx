@@ -13,7 +13,7 @@ const CRMGroupDetailsPage = () => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
 
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [groupDetails, setGroupDetails] = useState({
     name: '',
@@ -22,7 +22,6 @@ const CRMGroupDetailsPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true)
       try {
         const response = await dispatch(fetchUserGroupId({ baseUrl, token, id: Number(id) })).unwrap();
         setGroupDetails(response)
@@ -37,6 +36,17 @@ const CRMGroupDetailsPage = () => {
 
     fetchData()
   }, [])
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading group details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
 
@@ -57,10 +67,6 @@ const CRMGroupDetailsPage = () => {
           <h1 className="text-2xl font-bold text-[#1a1a1a]">GROUP DETAILS</h1>
         </div>
       </div>
-
-      {loading && <div className="flex justify-center items-center py-8">
-        <div className="text-lg">Loading attendance data...</div>
-      </div>}
 
       {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
         Error: {error}
