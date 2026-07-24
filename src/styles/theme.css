@@ -3017,7 +3017,7 @@ svg.lucide-eye {
 
 button[title*="View"]:hover svg,
 button[title*="view"]:hover svg {
-  color: var(--color-primary) !important;
+  color: var(--color-text) !important;
 }
 
 /* ===========================================

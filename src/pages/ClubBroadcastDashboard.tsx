@@ -368,9 +368,9 @@ export const ClubBroadcastDashboard = () => {
             variant="ghost"
             onClick={() => handleView(item.id)}
             title="View"
-            className="p-0"
+            className="p-1 rounded transition-colors !text-[#1A1A1A] hover:!text-[#1A1A1A] hover:!bg-gray-100"
         >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-4 h-4 text-[#1A1A1A]" />
         </Button>
         )
     );
