@@ -37,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useLayout } from "@/contexts/LayoutContext";
 import { usePermissions } from "@/contexts/PermissionsContext";
@@ -592,18 +593,20 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                 className="flex items-center gap-1.5 cursor-pointer group"
               >
                 <span
-                  className={`text-[13px] font-medium tracking-wider transition-colors ${activeNavMenu === item
-                    ? "text-[#DA7756]"
-                    : "text-[rgba(16,24,40,1)] group-hover:text-gray-900"
-                    }`}
+                  className={`text-[13px] font-medium tracking-wider transition-colors ${
+                    activeNavMenu === item
+                      ? "text-[#DA7756]"
+                      : "text-[rgba(16,24,40,1)] group-hover:text-gray-900"
+                  }`}
                 >
                   {item}
                 </span>
                 <ChevronRight
-                  className={`w-3.5 h-3.5 transition-transform ${activeNavMenu === item
-                    ? "-rotate-90 text-[#DA7756]"
-                    : "rotate-90 text-[rgba(16,24,40,1)]"
-                    }`}
+                  className={`w-3.5 h-3.5 transition-transform ${
+                    activeNavMenu === item
+                      ? "-rotate-90 text-[#DA7756]"
+                      : "rotate-90 text-[rgba(16,24,40,1)]"
+                  }`}
                 />
               </div>
             ))}
@@ -650,17 +653,20 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
             onOpenChange={setIsNotificationOpen}
           >
             <DropdownMenuTrigger asChild>
-              <button className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                <Bell className="w-5 h-5 text-gray-600" />
+              <Button
+                variant="ghost"
+                className="fm-button-fix relative !bg-transparent !text-[#DA7756] hover:!bg-[#fdf0ea] rounded-full [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
+              >
+                <Bell className="w-5 h-5" />
                 {notificationCount > 0 && (
                   <Badge
                     variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    className="absolute -top-1 -right-1 !h-5 !w-5 !min-w-5 !rounded-full flex items-center justify-center !p-0 text-xs"
                   >
                     {notificationCount}
                   </Badge>
                 )}
-              </button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
@@ -733,8 +739,8 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
           {/* User Profile Dropdown */}
           <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 p-1.5 hover:bg-gray-50 rounded-lg transition-colors">
-                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center flex-shrink-0">
+              <button className="flex h-9 w-9 items-center justify-center rounded-full p-0 transition-colors hover:bg-[#fdf0ea]">
+                <div className="h-8 w-8 rounded-full bg-[#DA7756] flex items-center justify-center flex-shrink-0">
                   <User className="w-4 h-4 text-white" />
                 </div>
               </button>
@@ -838,10 +844,11 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                   setActiveNavMenu(activeNavMenu === item ? null : item);
                   setIsMobileNavOpen(false);
                 }}
-                className={`text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-colors flex items-center justify-between ${activeNavMenu === item
-                  ? "text-[#DA7756] bg-[#f0ede6]"
-                  : "text-gray-800 hover:bg-[#f0ede6]"
-                  }`}
+                className={`text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-colors flex items-center justify-between ${
+                  activeNavMenu === item
+                    ? "text-[#DA7756] bg-[#f0ede6]"
+                    : "text-gray-800 hover:bg-[#f0ede6]"
+                }`}
               >
                 {item}
                 <ChevronRight
