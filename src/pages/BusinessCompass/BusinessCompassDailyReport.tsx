@@ -8548,7 +8548,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             <div className="p-1 bg-blue-50 rounded-md shrink-0">
               <CheckSquare size={13} className="text-blue-600" />
             </div>
-            <span className="font-semibold text-gray-800 text-xs">Convert to Task</span>
+            <span className="font-semibold text-gray-800 text-xs">Task</span>
           </div>
         </MenuItem>
         <MenuItem
@@ -8575,7 +8575,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             <div className="p-1 bg-red-50 rounded-md shrink-0">
               <AlertCircle size={13} className="text-red-600" />
             </div>
-            <span className="font-semibold text-gray-800 text-xs">Convert to Issue</span>
+            <span className="font-semibold text-gray-800 text-xs">Issue</span>
           </div>
         </MenuItem>
         <MenuItem
@@ -8602,7 +8602,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             <div className="p-1 bg-amber-50 rounded-md shrink-0">
               <ListTodo size={13} className="text-amber-600" />
             </div>
-            <span className="font-semibold text-gray-800 text-xs">Convert to Todo</span>
+            <span className="font-semibold text-gray-800 text-xs">Todo</span>
           </div>
         </MenuItem>
       </Menu>
