@@ -579,10 +579,21 @@ export function BuildingPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {buildings.loading ? (
+               {buildings.loading ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-4">
-                      Loading buildings...
+                    <TableCell colSpan={10} className="pt-4 pb-16">
+                      <div className="w-full flex items-center justify-start gap-3 pl-4">
+                        <div
+                          className="h-5 w-5 rounded-full animate-spin"
+                          style={{
+                            border: "2px solid #000000",
+                            borderTopColor: "transparent",
+                          }}
+                        />
+                        <span className="text-sm" style={{ color: "#000000" }}>
+                          Loading ...
+                        </span>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : filteredBuildings.length === 0 ? (

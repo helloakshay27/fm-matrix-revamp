@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Users, Clock, Filter } from "lucide-react";
+import { CalendarDays, Users, Clock, Filter, Settings } from "lucide-react";
+import { StatsCard } from "@/components/StatsCard";
 import { RosterCalendarFilterDialog } from "@/components/RosterCalendarFilterDialog";
 
 export const RosterCalendarDashboard = () => {
@@ -96,21 +97,31 @@ export const RosterCalendarDashboard = () => {
       <div className="p-6">
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-          {stats.map((stat, index) => (
-            <Card key={index} className={`${stat.color} text-white`}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                    <Users className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stat.value}</p>
-                    <p className="text-sm opacity-90">{stat.title}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          <StatsCard
+            title="Total No. of Seats"
+            value={stats[0].value}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Employee Schedules"
+            value={stats[1].value}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Employee Check In"
+            value={stats[2].value}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="No of Requests"
+            value={stats[3].value}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="No of Waiting List"
+            value={stats[4].value}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
         </div>
 
         {/* Filter Button */}

@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit } from "lucide-react";
+import { Plus, Edit, Loader2 } from "lucide-react";
 import { CreateShiftDialog } from "@/components/CreateShiftDialog";
 import { EditShiftDialog } from "@/components/EditShiftDialog";
 
@@ -16,6 +16,7 @@ interface ShiftData {
 }
 
 export const ShiftDashboard = () => {
+  const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedShift, setSelectedShift] = useState<ShiftData | null>(null);
@@ -103,6 +104,11 @@ export const ShiftDashboard = () => {
     }
   ]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleAddClick = () => {
     setIsCreateDialogOpen(true);
   };
@@ -144,7 +150,16 @@ export const ShiftDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {shifts.map((shift) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin text-black" />
+                      <span>Loading...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : shifts.map((shift) => (
                 <TableRow key={shift.id} className="border-b">
                   <TableCell>
                     <Button 

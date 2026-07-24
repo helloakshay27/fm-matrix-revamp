@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate,useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -587,15 +586,6 @@ useEffect(() => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* <h1 className="text-2xl font-bold text-gray-900 mb-6">Society Staffs</h1> */}
-      
-      {/* Loading State */}
-      {loading && (
-        <div className="flex items-center justify-center py-8">
-          <div className="text-lg text-gray-600">
-            {isSearching ? 'Searching staffs...' : 'Loading staffs data...'}
-          </div>
-        </div>
-      )}
 
       {/* Error State */}
       {error && (
@@ -613,7 +603,7 @@ useEffect(() => {
       )}
 
       {/* Main Content */}
-      {!loading && !error && (
+      {!error && (
         <Tabs defaultValue="all" className="w-full">
         {/* Tab Navigation */}
         {/* <div className="mb-4 pb-4">
@@ -698,6 +688,7 @@ useEffect(() => {
             getItemId={(staff) => staff.id}
             onSelectItem={handleStaffSelection}
             onSelectAll={handleSelectAll}
+            loading={loading}
             leftActions={
               <div className="flex gap-3">
                 {shouldShow("Staff", "create") && (
@@ -791,7 +782,7 @@ useEffect(() => {
       )}
       
       {/* Pagination Controls */}
-      {!loading && !error && pagination.total_pages > 1 && (
+      {!error && pagination.total_pages > 1 && (
         <div className="flex justify-center mt-6">
           <Pagination>
             <PaginationContent>
@@ -799,7 +790,7 @@ useEffect(() => {
                 <PaginationPrevious
                   onClick={handlePreviousPage}
                   className={
-                    currentPage === 1 
+                    currentPage === 1 || loading
                       ? "pointer-events-none opacity-50" 
                       : "cursor-pointer"
                   }
@@ -812,7 +803,7 @@ useEffect(() => {
                 <PaginationNext
                   onClick={handleNextPage}
                   className={
-                    currentPage === pagination.total_pages 
+                    currentPage === pagination.total_pages || loading
                       ? "pointer-events-none opacity-50" 
                       : "cursor-pointer"
                   }

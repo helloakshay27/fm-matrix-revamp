@@ -359,8 +359,6 @@ useEffect(() => {
 
   const handleView = (id: number) => navigate(`/maintenance/waste/generation/${id}`);
 
-  if (isLoading && wasteGenerations.length === 0) return <div className="flex items-center justify-center h-screen"><Loader2 className="animate-spin" /></div>;
-
   return (
     <>
       <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
@@ -426,6 +424,8 @@ useEffect(() => {
             {/* Table */}
             <EnhancedTable
               data={wasteGenerations}
+              loading={isLoading}
+              loadingMessage="Loading..."
               columns={[
                 { key: 'actions', label: 'Actions' },
                 { key: 'id', label: 'ID' },

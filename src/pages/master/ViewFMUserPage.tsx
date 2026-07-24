@@ -206,6 +206,7 @@ export const ViewFMUserPage = () => {
     getUsers();
   }, [dispatch]);
 
+  const [userLoading, setUserLoading] = useState(true);
   const [userData, setUserData] = useState({
     firstname: '',
     lastname: '',
@@ -242,11 +243,14 @@ export const ViewFMUserPage = () => {
 
   useEffect(() => {
     const fetchUser = async () => {
+      setUserLoading(true);
       try {
         const response = await dispatch(getUserDetails({ baseUrl, token, id: Number(id) })).unwrap()
         setUserData(response)
       } catch (error) {
         console.log(error)
+      } finally {
+        setUserLoading(false);
       }
     }
     fetchUser();
@@ -301,11 +305,12 @@ export const ViewFMUserPage = () => {
     }));
   };
 
-  if (entitiesLoading || suppliersLoading || unitsLoading || departmentLoading || roleLoading) {
+  if (entitiesLoading || suppliersLoading || unitsLoading || departmentLoading || roleLoading || userLoading) {
     return (
-      <div className="w-full p-6 space-y-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading user details...</div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading user details...</p>
         </div>
       </div>
     );

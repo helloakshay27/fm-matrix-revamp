@@ -465,6 +465,7 @@ export const ParkingCategoryPage = () => {
                 <SelectContent>
                   <SelectItem value="2 Wheeler">2 Wheeler</SelectItem>
                   <SelectItem value="4 Wheeler">4 Wheeler</SelectItem>
+                  <SelectItem value="EV">EV</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -549,6 +550,7 @@ export const ParkingCategoryPage = () => {
                 <SelectContent>
                   <SelectItem value="2 Wheeler">2 Wheeler</SelectItem>
                   <SelectItem value="4 Wheeler">4 Wheeler</SelectItem>
+                  <SelectItem value="EV">EV</SelectItem>
                   {/* <SelectItem value="Heavy Vehicle">Heavy Vehicle</SelectItem>
                   <SelectItem value="Bicycle">Bicycle</SelectItem>
                   <SelectItem value="Electric Vehicle">Electric Vehicle</SelectItem>

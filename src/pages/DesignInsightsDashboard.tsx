@@ -166,41 +166,39 @@ export const DesignInsightsDashboard = () => {
 
 
 
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        <EnhancedTable
-          data={filteredData}
-          columns={columns}
-          renderCell={renderCell}
-          onRowClick={handleRowClick}
-          storageKey="design-insights-table"
-          emptyMessage={hasActiveFilters ? 'No results found for the selected filters.' : 'No data available.'}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          searchPlaceholder="Search design insights..."
-          enableExport
-          handleExport={handleExportCSV}
-          pagination
-          pageSize={10}
-          enableSearch
-          hideTableExport={false}
-          onFilterClick={() => setIsFilterOpen(true)}
-          leftActions={
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={handleAddClick} className="bg-[#C72030] hover:bg-[#A61B28] text-white">
-                <Plus className="w-4 h-4 mr-2" /> Add
-              </Button>
-              <Button variant="outline" className="border-[#C72030] text-[#C72030]">
-                <Download className="w-4 h-4 mr-2" /> Download Report With Picture
-              </Button>
-              <Button variant="outline" className="border-[#C72030] text-[#C72030]">
-                <Download className="w-4 h-4 mr-2" /> Download Report Without Picture
-              </Button>
-            </div>
-          }
-        />
-      )}
+      <EnhancedTable
+        data={filteredData}
+        columns={columns}
+        renderCell={renderCell}
+        onRowClick={handleRowClick}
+        storageKey="design-insights-table"
+        emptyMessage={hasActiveFilters ? 'No results found for the selected filters.' : 'No data available.'}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search design insights..."
+        enableExport
+        handleExport={handleExportCSV}
+        pagination
+        pageSize={10}
+        enableSearch
+        loading={loading}
+        loadingMessage="Loading..."
+        hideTableExport={false}
+        onFilterClick={() => setIsFilterOpen(true)}
+        leftActions={
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={handleAddClick} className="bg-[#C72030] hover:bg-[#A61B28] text-white">
+              <Plus className="w-4 h-4 mr-2" /> Add
+            </Button>
+            <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+              <Download className="w-4 h-4 mr-2" /> Download Report With Picture
+            </Button>
+            <Button variant="outline" className="border-[#C72030] text-[#C72030]">
+              <Download className="w-4 h-4 mr-2" /> Download Report Without Picture
+            </Button>
+          </div>
+        }
+      />
 
       <DesignInsightFilterModal
         isOpen={isFilterOpen}

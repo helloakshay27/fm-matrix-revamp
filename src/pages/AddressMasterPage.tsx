@@ -83,14 +83,18 @@ export const AddressMasterPage = () => {
   const baseUrl = localStorage.getItem("baseUrl");
 
   const [addresses, setAddresses] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const getAddresses = async () => {
+      setLoading(true)
       try {
         const response = await dispatch(fetchAddresses({ token, baseUrl })).unwrap();
         setAddresses(response)
       } catch (error) {
         console.log(error)
+      } finally {
+        setLoading(false)
       }
     }
 
@@ -149,6 +153,7 @@ export const AddressMasterPage = () => {
         storageKey="address-master-table"
         className="min-w-[1000px]"
         emptyMessage="No addressed found"
+        loading={loading}
       />
     </div>
   )

@@ -55,10 +55,13 @@ export const fetchAllowedSites = createAsyncThunk(
 
 export const changeSite = createAsyncThunk(
   "site/changeSite",
-  async (siteId: number, { rejectWithValue, dispatch }) => {
+  async (siteId: number | number[], { rejectWithValue, dispatch }) => {
     try {
+      const siteIdQuery = Array.isArray(siteId)
+        ? siteId.map((id) => `site_id[]=${id}`).join("&")
+        : `site_id=${siteId}`;
       const response = await apiClient.get(
-        `${ENDPOINTS.CHANGE_SITE}?site_id=${siteId}`
+        `${ENDPOINTS.CHANGE_SITE}?${siteIdQuery}`
       );
 
       // Call allowed_sites API after changing site

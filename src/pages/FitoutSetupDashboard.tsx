@@ -127,7 +127,7 @@ export const FitoutSetupDashboard = () => {
           className="hover:bg-[#C72030]/90 text-white"
           style={{ backgroundColor: 'rgb(199 32 48 / var(--tw-text-opacity, 1))' }}
         >
-          <Plus className="w-4 h-4 mr-2 stroke-[#C72030] text-white" />
+          <Plus className="w-4 h-4 mr-2 stroke-[#ffffff] text-white" />
           Add
         </Button>
       </div>

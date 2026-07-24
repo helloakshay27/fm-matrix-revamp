@@ -1701,6 +1701,17 @@ export const ProjectTaskDetails = () => {
     }
   }, [activeTab, taskDetails?.parent_id]);
 
+  if (isLoading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading task details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="my-4 m-8">
       {location.pathname.includes("projects") && (
@@ -1754,49 +1765,7 @@ export const ProjectTaskDetails = () => {
       )}
 
       <div className="pt-1">
-        {isLoading ? (
           <>
-            {/* Loading Skeleton for Title */}
-            <div className="p-3 px-0">
-              <Skeleton className="h-[30px] w-1/3 mb-4" />
-            </div>
-            <Skeleton className="h-[3px] w-full mb-4" />
-
-            {/* Loading Skeleton for Header Info */}
-            <div className="space-y-3 my-3">
-              <Skeleton className="h-[20px] w-full" />
-              <Skeleton className="h-[20px] w-4/5" />
-            </div>
-            <Skeleton className="h-[3px] w-full mb-4" />
-
-            {/* Loading Skeleton for Description Section */}
-            <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6 mt-4">
-              <Skeleton className="h-[30px] w-1/4 mb-4" />
-              <div className="space-y-3">
-                <Skeleton className="h-[20px] w-full" />
-                <Skeleton className="h-[20px] w-full" />
-                <Skeleton className="h-[20px] w-3/4" />
-              </div>
-            </div>
-
-            {/* Loading Skeleton for Details Section */}
-            <div className="bg-white rounded-[10px] shadow-md border border-gray-200 mb-6 p-6">
-              <Skeleton className="h-[30px] w-1/4 mb-6" />
-              <div className="grid grid-cols-2 gap-6">
-                {Array(8)
-                  .fill(0)
-                  .map((_, i) => (
-                    <div key={i} className="flex items-start">
-                      <Skeleton className="h-[20px] w-[200px] mr-4" />
-                      <Skeleton className="h-[20px] flex-1" />
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <h2 className="cursor-pointer text-[15px] p-3 px-0">
               <span className="mr-3 text-[#C72030]">Task-{taskDetails.id}</span>
               <span>
                 {taskDetails.title}
@@ -1814,7 +1783,6 @@ export const ProjectTaskDetails = () => {
                   <Copy size={15} />
                 </Button>
               </span>
-            </h2>
             <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
             <div className="flex items-center justify-between my-3 text-[12px]">
               <div className="flex items-center gap-3 text-[#323232]">
@@ -2245,7 +2213,6 @@ export const ProjectTaskDetails = () => {
               </div>
             </div>
           </>
-        )}
       </div>
 
       <AddSubtaskModal

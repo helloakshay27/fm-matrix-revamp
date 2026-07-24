@@ -113,9 +113,12 @@ export const CrmCustomerDetails = () => {
     const [customer, setCustomer] = useState<Customer | null>(null);
     const [lease, setLease] = useState<Lease[]>([]);
     const [domains, setDomains] = useState<Domain[]>([]);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const fetchCustomer = async () => {
+            setLoading(true);
+            const minDelay = new Promise(resolve => setTimeout(resolve, 1200));
             try {
                 const response = await dispatch(getCustomerById({ id: Number(id), baseUrl, token })).unwrap() as CustomerResponse;
                 setCustomer(response.entity);
@@ -125,6 +128,9 @@ export const CrmCustomerDetails = () => {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to fetch customer';
                 console.error(errorMessage);
                 toast.error(errorMessage);
+            } finally {
+                await minDelay;
+                setLoading(false);
             }
         };
 
@@ -147,6 +153,17 @@ export const CrmCustomerDetails = () => {
     const renderCell = (item: Lease, columnKey: keyof Lease) => {
         return item[columnKey] || '-';
     };
+
+    if (loading) {
+        return (
+            <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <p className="text-gray-700">Loading customer details...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 min-h-screen bg-gray-50">
