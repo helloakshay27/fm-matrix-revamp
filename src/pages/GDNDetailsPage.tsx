@@ -105,7 +105,7 @@ const normalizeDispatchUsers = (items: DispatchUserApi[]): DispatchUser[] =>
 export const GDNDetailsPage = () => {
   const { id } = useParams();
   const [gdnDetails, setGdnDetails] = useState<GDNDetails | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [dispatchDialogOpen, setDispatchDialogOpen] = useState(false);
   const [handOverUsers, setHandOverUsers] = useState<DispatchUser[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -302,8 +302,11 @@ export const GDNDetailsPage = () => {
 
   if (loading && !gdnDetails) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-6 h-6 animate-spin text-[#C72030]" />
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading GDN details...</p>
+        </div>
       </div>
     );
   }
@@ -334,7 +337,7 @@ export const GDNDetailsPage = () => {
         </div>
 
         <Button
-          className="gap-2 bg-[#6B2C65] px-4 py-2 text-white hover:bg-[#5a2455]"
+          className="gap-2 !bg-[#DA7756] px-4 py-2 !text-white hover:!bg-[#DA7756]/85 [&_svg]:!text-white"
           disabled={loading || dispatchSubmitting || !id}
           onClick={() => setDispatchDialogOpen(true)}
         >
