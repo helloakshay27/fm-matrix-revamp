@@ -461,10 +461,21 @@ export function WingPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {wings.loading ? (
+               {wings.loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4">
-                      Loading wings...
+                    <TableCell colSpan={5} className="pt-4 pb-16">
+                      <div className="w-full flex items-center justify-start gap-3 pl-4">
+                        <div
+                          className="h-5 w-5 rounded-full animate-spin"
+                          style={{
+                            border: "2px solid #000000",
+                            borderTopColor: "transparent",
+                          }}
+                        />
+                        <span className="text-sm" style={{ color: "#000000" }}>
+                          Loading ...
+                        </span>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : filteredWings.length === 0 ? (

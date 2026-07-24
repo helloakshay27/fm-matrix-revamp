@@ -289,20 +289,12 @@ export const ViewChecklistMasterPage = () => {
     });
   };
 
-  if (!checklistData) {
+  if (!checklistData || isLoadingAssetTypes) {
     return (
-      <div className="p-6">
-        <div className="text-center py-8">
-          {loading ? (
-            <div className="flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="ml-2">Loading checklist details...</span>
-            </div>
-          ) : error ? (
-            <p className="text-red-500">{error}</p>
-          ) : (
-            <p className="text-gray-500">No checklist details found.</p>
-          )}
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading checklist details...</p>
         </div>
       </div>
     );

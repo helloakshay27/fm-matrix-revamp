@@ -800,8 +800,11 @@ export const RoomPage = () => {
               <TableBody>
                 {rooms.loading ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-4">
-                      Loading rooms...
+                    <TableCell colSpan={10} className="text-center py-8">
+                      <div className="flex items-center justify-center gap-2 text-black">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Loading ...
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : rooms.error ? (

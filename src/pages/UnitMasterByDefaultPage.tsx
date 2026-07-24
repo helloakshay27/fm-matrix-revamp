@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Edit, Plus } from 'lucide-react';
+import { Edit, Plus, Loader2 } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useAppDispatch } from '@/store/hooks';
 import { createMasterUnit, fetchMasterUnits, fetchMeterType, updateMeterUnitType, updateMeterType } from '@/store/slices/unitMaster';
@@ -294,13 +294,17 @@ export const UnitMasterByDefaultPage = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [selectedMeter, setSelectedMeter] = useState(null);
   const [meters, setMeters] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchMeters = async () => {
+    setLoading(true);
     try {
       const response = await dispatch(fetchMasterUnits({ baseUrl, token })).unwrap();
       setMeters(response);
     } catch (error) {
       console.log(error)
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -360,7 +364,22 @@ export const UnitMasterByDefaultPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {meters.map((meter) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    <div className="flex items-center justify-center gap-2 text-black">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Loading ...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : meters.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                    No units found
+                  </TableCell>
+                </TableRow>
+              ) : meters.map((meter) => (
                 <TableRow key={meter.id} className="hover:bg-gray-50">
                   <TableCell className="font-medium">{meter.name}</TableCell>
                   <TableCell>

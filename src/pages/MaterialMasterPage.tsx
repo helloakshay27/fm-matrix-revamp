@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Edit, Plus, Trash2, Search } from 'lucide-react';
+import { Edit, Plus, Trash2, Search, Loader2 } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useToast } from '@/hooks/use-toast';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
@@ -88,8 +88,17 @@ export const MaterialMasterPage = () => {
     setCurrentSection('Master');
   }, [setCurrentSection]);
 
-  const [materials, setMaterials] = useState(materialData);
+  const [materials, setMaterials] = useState<typeof materialData>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMaterials(materialData);
+      setLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleDelete = (id: number) => {
     setMaterials(prev => prev.filter(material => material.id !== id));
@@ -156,7 +165,22 @@ export const MaterialMasterPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredMaterials.map((material) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={11} className="text-center py-8">
+                    <div className="flex items-center justify-center gap-2 text-black">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Loading ...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : filteredMaterials.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={11} className="text-center py-4 text-muted-foreground">
+                    No materials found
+                  </TableCell>
+                </TableRow>
+              ) : filteredMaterials.map((material) => (
                 <TableRow key={material.id} className="hover:bg-gray-50">
                   <TableCell className="font-medium">{material.componentName}</TableCell>
                   <TableCell>{material.category}</TableCell>

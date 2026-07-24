@@ -34,7 +34,7 @@ export const PlantDetailSetupPage = () => {
 
   const [plantDetails, setPlantDetails] = useState<PlantDetail[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedPlant, setSelectedPlant] = useState<PlantDetail | null>(null);
@@ -173,8 +173,9 @@ export const PlantDetailSetupPage = () => {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="w-6 h-6 animate-spin text-[#C72030]" />
+            <div className="flex items-center justify-start gap-2 p-8 text-black">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Loading ...
             </div>
           ) : (
             <Table>

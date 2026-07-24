@@ -408,8 +408,11 @@ export function FloorPage() {
               <TableBody>
                 {floors.loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-4">
-                      Loading floors...
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <div className="flex items-center justify-center gap-2 text-black">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Loading ...
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : filteredFloors.length === 0 ? (
