@@ -785,16 +785,16 @@ export const AddBroadcastPage = () => {
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="disabled:!bg-[#DF808B] !bg-[#DA7756] hover:!bg-[#C45F40] min-w-[150px] h-10"
+            className="min-w-[150px] h-10 !bg-brand hover:!bg-brand-hover !text-white disabled:!bg-brand disabled:!text-white disabled:opacity-100"
           >
-            <span className="!text-white font-medium">
+            <span className="font-medium">
               {isSubmitting ? "Submitting..." : "Submit"}
             </span>
           </Button>
           <Button
             onClick={() => navigate(-1)}
             variant="outline"
-            className="border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white min-w-[150px] h-10"
+            className="min-w-[150px] h-10 !border-brand !text-brand hover:!bg-brand hover:!text-white"
           >
             Cancel
           </Button>

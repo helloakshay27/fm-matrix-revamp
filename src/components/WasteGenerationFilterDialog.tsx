@@ -353,8 +353,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
           <div className="mt-8 flex justify-center gap-4 border-t border-gray-200 pt-6">
             <Button
               onClick={handleSubmit}
-              style={{ backgroundColor: '#C72030' }}
-              className="rounded-none px-8 text-white shadow-none hover:bg-[#A01B26]"
+              className="rounded-none px-8 !bg-brand hover:!bg-brand-hover !text-white shadow-none"
             >
               Submit
             </Button>

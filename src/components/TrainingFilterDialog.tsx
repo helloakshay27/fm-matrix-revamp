@@ -85,8 +85,7 @@ const TrainingFilterDialog: React.FC<TrainingFilterDialogProps> = ({
       <DialogActions sx={{ px: 3, pb: 2, pt: 2 }}>
         <Button
           onClick={handleApply}
-          className="flex-1 text-white cursor-pointer disabled:opacity-60"
-          style={{ backgroundColor: '#C72030' }}
+          className="flex-1 cursor-pointer !bg-brand hover:!bg-brand-hover !text-white disabled:!bg-brand disabled:!text-white disabled:opacity-100"
           disabled={!provided}
         >
           Apply

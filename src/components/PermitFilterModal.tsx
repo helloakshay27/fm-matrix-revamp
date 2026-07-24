@@ -172,8 +172,7 @@ export const PermitFilterModal: React.FC<PermitFilterModalProps> = ({
             <Button
               onClick={handleApply}
               disabled={isLoading}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:opacity-90 px-8"
+              className="px-8 !bg-brand hover:!bg-brand-hover !text-white disabled:!bg-brand disabled:!text-white disabled:opacity-100"
             >
               {isLoading ? 'Applying...' : 'Apply'}
             </Button>

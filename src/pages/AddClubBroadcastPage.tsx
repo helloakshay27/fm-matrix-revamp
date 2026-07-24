@@ -561,10 +561,18 @@ export const AddClubBroadcastPage = () => {
 
                 {/* Submit Button */}
                 <Box sx={{ display: "flex", justifyContent: "center", mt: 4, gap: 2 }}>
-                    <Button onClick={() => navigate(-1)} className="px-8 py-3 text-base">
+                    <Button
+                        onClick={() => navigate(-1)}
+                        variant="outline"
+                        className="px-8 py-3 text-base !border-brand !text-brand hover:!bg-brand hover:!text-white"
+                    >
                         Cancel
                     </Button>
-                    <Button onClick={handleSubmit} className="px-8 py-3 text-base" disabled={isSubmitting}>
+                    <Button
+                        onClick={handleSubmit}
+                        className="px-8 py-3 text-base !bg-brand hover:!bg-brand-hover !text-white disabled:!bg-brand disabled:!text-white disabled:opacity-100"
+                        disabled={isSubmitting}
+                    >
                         Submit
                     </Button>
                 </Box>

@@ -578,37 +578,37 @@ export const BroadcastDashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex items-center justify-center gap-1">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="!h-7 !w-7 !min-h-7 !p-0 !bg-transparent !text-[#DA7756] hover:!bg-[#DA7756]/10 hover:!text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
+      <button
+        type="button"
+        className="p-1 rounded hover:bg-gray-100 transition-colors text-brand disabled:opacity-50"
         onClick={() => handleImportantClick(item)}
         disabled={updatingStatus[`important_${item.id}`]}
+        title="Mark important"
       >
         <Star
-          className="w-4 h-4"
-          fill={item.is_important ? "#DA7756" : "none"}
+          className="w-4 h-4 text-brand"
+          fill={item.is_important ? "currentColor" : "none"}
         />
-      </Button>
+      </button>
       {shouldShow("Broadcast", "show") && (
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
+          type="button"
           onClick={() => handleView(item.id)}
-          className="!h-7 !w-7 !min-h-7 !p-0 !bg-transparent !text-[#DA7756] hover:!bg-[#DA7756]/10 hover:!text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
+          className="p-1 text-black hover:bg-gray-100 rounded transition-colors"
+          title="View"
         >
           <Eye className="w-4 h-4" />
-        </Button>
+        </button>
       )}
       {shouldShow("Broadcast", "update") && (
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
+          type="button"
           onClick={() => handleEdit(item.id)}
-          className="!h-7 !w-7 !min-h-7 !p-0 !bg-transparent !text-[#DA7756] hover:!bg-[#DA7756]/10 hover:!text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
+          className="p-1 text-black hover:bg-gray-100 rounded transition-colors"
+          title="Edit"
         >
           <Edit className="w-4 h-4" />
-        </Button>
+        </button>
       )}
     </div>
   );
