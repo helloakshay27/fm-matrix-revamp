@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Clock, Users, Settings } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-export const SpaceManagementSeatRequestsDashboard = () => {
-  const [seatRequests, setSeatRequests] = useState([{
+
+const initialSeatRequests = [{
     id: "48823",
     name: "Robert Day2",
     requestedDate: "14/08/2024",
@@ -95,7 +95,29 @@ export const SpaceManagementSeatRequestsDashboard = () => {
     allocationType: "",
     count: 1,
     status: "Pending"
-  }]);
+  }];
+
+export const SpaceManagementSeatRequestsDashboard = () => {
+  const [seatRequests, setSeatRequests] = useState<typeof initialSeatRequests>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const fetchSeatRequests = async () => {
+      setLoading(true);
+      try {
+       
+        await new Promise((res) => setTimeout(res, 800));
+        if (active) setSeatRequests(initialSeatRequests);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchSeatRequests();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Calculate statistics dynamically based on current data
   const statistics = useMemo(() => {
@@ -184,6 +206,7 @@ export const SpaceManagementSeatRequestsDashboard = () => {
           pageSize={10}
           hideTableExport={true}
           emptyMessage="No seat requests found"
+          loading={loading}
           renderCell={(item, columnKey) => {
             switch (columnKey) {
               case "name":
