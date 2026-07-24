@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Ticket, FileText, IndianRupee, Clock, CheckCircle } from "lucide-react";
+import { ClipboardList, CheckCircle, XCircle, FileText, IndianRupee, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { StatsCard } from "@/components/StatsCard";
 
 export const VendorDashboard = () => {
   const [stats, setStats] = useState({
@@ -71,82 +72,49 @@ export const VendorDashboard = () => {
       {/* Permits Section */}
       <section>
         <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Permit</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0 border border-[rgba(199,32,48,0.2)]">
-              <Ticket className="w-7 h-7 text-[#D92818]" />
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-[#D92818] leading-none mb-1">{stats.permits.total}</p>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Permits</p>
-            </div>
-          </div>
-          
-          <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0 border border-[rgba(199,32,48,0.2)]">
-              <Ticket className="w-7 h-7 text-[#D92818]" />
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-[#D92818] leading-none mb-1">{stats.permits.approved}</p>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Approved Permits</p>
-            </div>
-          </div>
-
-          <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0 border border-[rgba(199,32,48,0.2)]">
-              <Ticket className="w-7 h-7 text-[#D92818]" />
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-[#D92818] leading-none mb-1">{stats.permits.rejected}</p>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Rejected Permits</p>
-            </div>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
+          <StatsCard
+            title="Total Permits"
+            value={stats.permits.total}
+            icon={<ClipboardList className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Approved Permits"
+            value={stats.permits.approved}
+            icon={<CheckCircle className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Rejected Permits"
+            value={stats.permits.rejected}
+            icon={<XCircle className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
         </div>
       </section>
 
       {/* Bills Section */}
       <section>
         <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Bills</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0 border border-[rgba(199,32,48,0.2)]">
-              <FileText className="w-7 h-7 text-[#D92818]" />
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-[#D92818] leading-none mb-1">{stats.bills.totalBills}</p>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Bills</p>
-            </div>
-          </div>
-          
-          <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0 border border-[rgba(199,32,48,0.2)]">
-              <IndianRupee className="w-7 h-7 text-[#D92818]" />
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-[#D92818] leading-none mb-1">₹ {stats.bills.totalAmount}</p>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Amount</p>
-            </div>
-          </div>
-
-          <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0 border border-[rgba(199,32,48,0.2)]">
-              <Clock className="w-7 h-7 text-[#D92818]" />
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-[#D92818] leading-none mb-1">₹ {stats.bills.pendingAmount}</p>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Pending Amount</p>
-            </div>
-          </div>
-
-          <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0 border border-[rgba(199,32,48,0.2)]">
-              <CheckCircle className="w-7 h-7 text-[#D92818]" />
-            </div>
-            <div>
-              <p className="text-3xl font-bold text-[#D92818] leading-none mb-1">₹ {stats.bills.paidAmount}</p>
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Paid Amount</p>
-            </div>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+          <StatsCard
+            title="Total Bills"
+            value={stats.bills.totalBills}
+            icon={<FileText className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Total Amount"
+            value={`₹ ${Number(stats.bills.totalAmount).toLocaleString()}`}
+            icon={<IndianRupee className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Pending Amount"
+            value={`₹ ${Number(stats.bills.pendingAmount).toLocaleString()}`}
+            icon={<Clock className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Paid Amount"
+            value={`₹ ${Number(stats.bills.paidAmount).toLocaleString()}`}
+            icon={<CheckCircle className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
         </div>
       </section>
     </div>
