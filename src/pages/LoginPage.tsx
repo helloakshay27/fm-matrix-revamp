@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import React, { useState, useRef } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
 import posthog from "posthog-js";
 import { TextField, IconButton, InputAdornment } from "@mui/material";
 import { Button } from "@/components/ui/button";
@@ -57,8 +57,7 @@ const muiFieldStyles = {
   },
 };
 
-const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) => void; setToken: (token: string) => void }) => {
-  const { executeRecaptcha } = useGoogleReCaptcha();
+export const LoginPage = ({ setBaseUrl, setToken }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { userRole } = usePermissions();
@@ -73,6 +72,7 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
   const [orgsFetched, setOrgsFetched] = useState(false);
   const [lastFetchedEmail, setLastFetchedEmail] = useState("");
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const hostname = window.location.hostname;
 
@@ -290,16 +290,12 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
       const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`;
       const organizationId = selectedOrganization.id;
 
-      // reCAPTCHA v3 — silent, no user interaction required
-      const token = (await executeRecaptcha?.("login")) ?? null;
-      setCaptchaToken(token);
-
       const response = await loginUser(
         email,
         password,
         baseUrl,
         organizationId,
-        token ?? undefined
+        captchaToken ?? undefined
       );
 
       if (!response || !response.access_token) {
@@ -336,12 +332,7 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
-          is_vendor: response.is_vendor,
-          supplier_id: response.supplier_id,
         });
-        if (response.supplier_id) {
-          localStorage.setItem("vendor_id", response.supplier_id.toString());
-        }
 
         saveBaseUrl(baseUrl);
         localStorage.setItem("userId", response.id?.toString() || "");
@@ -386,12 +377,7 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
           user_type: response.user_type || "",
           // spree_api_key: response.spree_api_key,
           lock_role: response.lock_role,
-          is_vendor: response.is_vendor,
-          supplier_id: response.supplier_id,
         });
-        if (response.supplier_id) {
-          localStorage.setItem("vendor_id", response.supplier_id.toString());
-        }
 
         saveBaseUrl(baseUrl);
         localStorage.setItem("userId", response.id?.toString() || "");
@@ -430,6 +416,7 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
         is_vendor: response.is_vendor,
         supplier_id: response.supplier_id,
       });
+      // Store vendor/supplier ID for vendor portal routing
       if (response.supplier_id) {
         localStorage.setItem("vendor_id", response.supplier_id.toString());
       }
@@ -555,6 +542,7 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
       }
     } finally {
       setLoginLoading(false);
+      recaptchaRef.current?.reset();
       setCaptchaToken(null);
     }
   };
@@ -709,6 +697,18 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
             }}
           />
 
+          {/* CAPTCHA */}
+          {import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY && (
+            <div className="flex justify-center mb-4">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY}
+                onChange={(token) => setCaptchaToken(token)}
+                onExpired={() => setCaptchaToken(null)}
+              />
+            </div>
+          )}
+
           <div className="text-center text-sm text-gray-300 mb-4">
             By clicking Log in you are accepting our{" "}
             <span className="text-blue-300 hover:underline cursor-pointer">Privacy Policy</span>{" "}
@@ -718,7 +718,7 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
 
           <Button
             onClick={handleLogin}
-            disabled={!password || loginLoading}
+            disabled={!password || !captchaToken || loginLoading}
             className="w-full h-12 bg-[#C72030] hover:bg-[#a81c29] text-white font-semibold rounded-lg text-base transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loginLoading ? (
@@ -911,9 +911,3 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
     </div>
   );
 };
-
-export const LoginPage = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) => void; setToken: (token: string) => void }) => (
-  <GoogleReCaptchaProvider reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || ""}>
-    <LoginPageContent setBaseUrl={setBaseUrl} setToken={setToken} />
-  </GoogleReCaptchaProvider>
-);
