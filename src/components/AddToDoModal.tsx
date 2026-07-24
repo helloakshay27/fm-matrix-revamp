@@ -77,16 +77,18 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                 setSelectedResponsiblePerson(editingTodo.user_id || '');
                 setPriority(editingTodo.priority || '');
             } else {
-                setTitle('');
+                setTitle(prefillData?.title || '');
                 setDescription('');
-                setDate(null);
+                setDate(prefillData?.start_date || null);
                 setSelectedResponsiblePerson(defaultResponsiblePerson);
                 setPriority('');
             }
 
             setIsEditorReady(true);
+        } else {
+            setIsEditorReady(false);
         }
-    }, [isModalOpen, isEditMode, editingTodo, defaultResponsiblePerson]);
+    }, [isModalOpen, isEditMode, editingTodo, defaultResponsiblePerson, prefillData]);
 
     useEffect(() => {
         if (!isModalOpen || !isEditorReady || !quillRef.current) return;
@@ -95,8 +97,13 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
         if (quillEditorRef.current) {
             quillEditorRef.current.off('text-change');
             quillEditorRef.current = null;
-            quillRef.current.innerHTML = ""; // VERY IMPORTANT
         }
+        // Quill inserts the toolbar as a sibling before the container, so innerHTML="" alone leaves it orphaned.
+        const previousToolbar = quillRef.current.previousElementSibling;
+        if (previousToolbar?.classList.contains("ql-toolbar")) {
+            previousToolbar.remove();
+        }
+        quillRef.current.innerHTML = ""; // VERY IMPORTANT
 
         const quill = new Quill(quillRef.current, {
             theme: "snow",

@@ -1,4 +1,5 @@
 import React, { useState, useRef, forwardRef, useEffect, useMemo } from "react";
+import { flushSync } from "react-dom";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import {
   Lightbulb,
@@ -175,6 +176,9 @@ interface DailyReportDraft {
 
 interface ApplyDraftOptions {
   allowEmptyLists?: boolean;
+  // Union with whatever's already in state instead of replacing it, so a stale
+  // draft can't silently drop items (e.g. yesterday's carry-over) set moments earlier.
+  mergeWithCurrent?: boolean;
 }
 
 const taskIssueGroupKeys = [
@@ -433,7 +437,24 @@ const BusinessCompassDailyReport: React.FC = () => {
     useState<null | HTMLElement>(null);
   const [planningMenuAnchor, setPlanningMenuAnchor] =
     useState<null | HTMLElement>(null);
+  const [convertMenuAnchor, setConvertMenuAnchor] =
+    useState<null | HTMLElement>(null);
+  const [convertMenuItem, setConvertMenuItem] =
+    useState<AccomplishmentItem | null>(null);
+  const [convertTitle, setConvertTitle] = useState("");
+  const pendingConvertItemRef = useRef<AccomplishmentItem | null>(null);
   const [preFillDate, setPreFillDate] = useState<string | null>(null);
+
+  // Scroll events don't bubble, so listen on window in the capture phase to catch nested scrolls too.
+  useEffect(() => {
+    if (!convertMenuAnchor) return;
+    const handleScroll = () => {
+      setConvertMenuAnchor(null);
+      setConvertMenuItem(null);
+    };
+    window.addEventListener("scroll", handleScroll, true);
+    return () => window.removeEventListener("scroll", handleScroll, true);
+  }, [convertMenuAnchor]);
   const [showClosureModal, setShowClosureModal] = useState(false);
   const [closureItem, setClosureItem] = useState<any>(null);
   const [closureRemarks, setClosureRemarks] = useState("");
@@ -786,12 +807,25 @@ const BusinessCompassDailyReport: React.FC = () => {
       if (!draft) return;
       if (!hasMeaningfulDraftData(draft)) return;
       const allowEmptyLists = options.allowEmptyLists ?? false;
+      const mergeWithCurrent = options.mergeWithCurrent ?? false;
       if (Array.isArray(draft.accomplishments)) {
         const cleanAccomplishments = draft.accomplishments
           .filter((a) => cleanReportText(a.text) !== "")
           .map((a) => ({ ...a, text: cleanReportText(a.text) }));
         if (cleanAccomplishments.length || allowEmptyLists) {
-          setAccomplishments(cleanAccomplishments);
+          if (mergeWithCurrent) {
+            const draftTexts = new Set(
+              cleanAccomplishments.map((a) => a.text.toLowerCase())
+            );
+            setAccomplishments((prev) => [
+              ...cleanAccomplishments,
+              ...prev.filter(
+                (a) => !draftTexts.has(cleanReportText(a.text).toLowerCase())
+              ),
+            ]);
+          } else {
+            setAccomplishments(cleanAccomplishments);
+          }
         }
       }
       if (Array.isArray(draft.planningItems)) {
@@ -799,7 +833,19 @@ const BusinessCompassDailyReport: React.FC = () => {
           .filter((p) => cleanReportText(p.text) !== "")
           .map((p) => ({ ...p, text: cleanReportText(p.text) }));
         if (cleanPlanningItems.length || allowEmptyLists) {
-          setPlanningItems(cleanPlanningItems);
+          if (mergeWithCurrent) {
+            const draftTexts = new Set(
+              cleanPlanningItems.map((p) => p.text.toLowerCase())
+            );
+            setPlanningItems((prev) => [
+              ...cleanPlanningItems,
+              ...prev.filter(
+                (p) => !draftTexts.has(cleanReportText(p.text).toLowerCase())
+              ),
+            ]);
+          } else {
+            setPlanningItems(cleanPlanningItems);
+          }
         }
       }
       if (Array.isArray(draft.selfRating)) setSelfRating(draft.selfRating);
@@ -828,7 +874,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       clearStoredDraft();
       return;
     }
-    applyStoredDraft(draft, { allowEmptyLists: true });
+    applyStoredDraft(draft, { allowEmptyLists: true, mergeWithCurrent: true });
   }, [applyStoredDraft, clearStoredDraft, getStoredDraft]);
 
   const myIssuesFilter = `
@@ -1103,26 +1149,50 @@ const BusinessCompassDailyReport: React.FC = () => {
     );
   }, [mergedTasksIssues, startDate, hiddenAutoIds, addedToTomorrowIds]);
 
-  // Filter manual accomplishments to exclude items already shown in the auto-added section.
-  // This prevents duplicates when a saved report's payload (which merged auto+manual) is reloaded.
+  // Today's task/issue/todo records (any status) whose title exactly matches a manually-typed
+  // note — used to hide the duplicate note and to surface the matching record under "Plan for Today".
+  const noteMatchedTaskIssues = useMemo(() => {
+    const noteTexts = new Set(
+      accomplishments
+        .map((a) => cleanReportText(a.text).toLowerCase())
+        .filter((text) => text !== "")
+    );
+    if (!noteTexts.size) return [];
+    return mergedTasksIssues.filter((item) => {
+      const title = cleanReportText(item.title || "").toLowerCase();
+      return title !== "" && noteTexts.has(title);
+    });
+  }, [accomplishments, mergedTasksIssues]);
+
+  const noteMatchedTaskIssueIds = useMemo(
+    () => new Set(noteMatchedTaskIssues.map((item) => item.id)),
+    [noteMatchedTaskIssues]
+  );
+
+  // Filter manual accomplishments to exclude items already shown in the auto-added section,
+  // and items that duplicate an existing today's task/issue/todo by title (any status) —
+  // those already show up in the Tasks & Issues panel, so the note would just be a duplicate.
   // Unchecked items appear first, then completed items.
   const visibleAccomplishments = useMemo(() => {
-    let filtered = accomplishments;
-    if (autoAddedAccomplishments.length > 0) {
-      const autoTitles = new Set(
-        autoAddedAccomplishments.map((item) =>
-          cleanReportText(item.title || "").toLowerCase()
-        )
-      );
-      filtered = accomplishments.filter(
-        (a) => !autoTitles.has(cleanReportText(a.text).toLowerCase())
-      );
-    }
+    const autoTitles = new Set(
+      autoAddedAccomplishments.map((item) =>
+        cleanReportText(item.title || "").toLowerCase()
+      )
+    );
+    const taskIssueTitles = new Set(
+      noteMatchedTaskIssues.map((item) =>
+        cleanReportText(item.title || "").toLowerCase()
+      )
+    );
+    const filtered = accomplishments.filter((a) => {
+      const text = cleanReportText(a.text).toLowerCase();
+      return !autoTitles.has(text) && !taskIssueTitles.has(text);
+    });
     return [...filtered].sort((a, b) => {
       if (a.completed === b.completed) return 0;
       return a.completed ? 1 : -1;
     });
-  }, [accomplishments, autoAddedAccomplishments]);
+  }, [accomplishments, autoAddedAccomplishments, noteMatchedTaskIssues]);
 
   // Next-day scheduled items shown as lightweight rows; starred selections live in planningItems.
   const dedupedTomorrowItems = useMemo(() => {
@@ -1250,6 +1320,24 @@ const BusinessCompassDailyReport: React.FC = () => {
     markDraftDirty();
     setAccomplishments(accomplishments.filter((a) => a.id !== id));
   };
+
+  // Runs flushSync so the removal commits before the create modals' own window.location.reload().
+  const completeAccomplishmentConversion = React.useCallback(() => {
+    const item = pendingConvertItemRef.current;
+    if (!item) return;
+    pendingConvertItemRef.current = null;
+    markDraftDirty();
+    flushSync(() => {
+      setAccomplishments((prev) => prev.filter((a) => a.id !== item.id));
+    });
+  }, [markDraftDirty]);
+
+  // AddIssueModal has no onSuccess prop; it dispatches this event synchronously right before its own reload.
+  useEffect(() => {
+    const handleIssueCreated = () => completeAccomplishmentConversion();
+    window.addEventListener("issues:created", handleIssueCreated);
+    return () => window.removeEventListener("issues:created", handleIssueCreated);
+  }, [completeAccomplishmentConversion]);
 
   const toggleAccomplishment = (id: string) => {
     markDraftDirty();
@@ -2468,7 +2556,7 @@ const BusinessCompassDailyReport: React.FC = () => {
               if (existingReport.self_rating !== undefined)
                 setSelfRating([existingReport.self_rating]);
               setSelectedTasksIssues({});
-              applyStoredDraft(getStoredDraft());
+              applyStoredDraft(getStoredDraft(), { mergeWithCurrent: true });
             }
           } else {
             setCurrentReportId(null);
@@ -3719,7 +3807,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 </p>
                               </div>
                             )}
-
+                          {console.log(visibleAccomplishments)}
                           {/* ── Manual accomplishment items ── */}
                           {visibleAccomplishments.map((item) => (
                             <div
@@ -3740,7 +3828,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 <div className="flex items-center gap-2">
                                   <div
                                     className={cn(
-                                      "h-6 w-6 rounded-[6px] flex items-center justify-center cursor-pointer transition-colors border-2 shrink-0",
+                                      "h-4 w-4 rounded-[4px] flex items-center justify-center cursor-pointer transition-colors border-2 shrink-0",
                                       item.completed
                                         ? "bg-[#DA7756] border-[#DA7756]"
                                         : "bg-white border-gray-300"
@@ -3765,9 +3853,33 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     onClick={() => toggleStar(item.id)}
                                   />
 
-                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
-                                    Note
-                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      setConvertMenuAnchor(e.currentTarget);
+                                      setConvertMenuItem(item);
+                                    }}
+                                    title="Convert to Task, Issue or Todo"
+                                    className="relative h-5 w-[42px] group-hover:w-8 shrink-0 rounded-full bg-gray-500 overflow-hidden cursor-pointer transition-[width] duration-300 ease-out"
+                                  >
+                                    <span
+                                      className="absolute inset-0 flex items-center justify-center text-[10px] font-bold uppercase text-white transition-all duration-300 ease-out opacity-100 scale-100 group-hover:opacity-0 group-hover:scale-50"
+                                    >
+                                      Note
+                                    </span>
+                                    <span
+                                      className="absolute inset-0 flex items-center justify-center text-white transition-all duration-300 ease-out opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100"
+                                    >
+                                      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M5.13086 6.93352V4.60019C5.13086 3.80686 5.73766 3.2002 6.53117 3.2002H6.99794" stroke="white" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M3.73438 5.5332L5.13468 6.9332L6.53499 5.5332" stroke="white" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M10.3332 6.93352C11.144 6.93352 11.8012 6.09779 11.8012 5.06686C11.8012 4.03593 11.144 3.2002 10.3332 3.2002C9.52248 3.2002 8.86523 4.03593 8.86523 5.06686C8.86523 6.09779 9.52248 6.93352 10.3332 6.93352Z" stroke="white" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M10.7323 8.7998V11.1331C10.7323 11.9265 10.1255 12.5331 9.332 12.5331H8.86523" stroke="white" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M12.1346 10.1998L10.7343 8.7998L9.33398 10.1998" stroke="white" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M5.53441 12.5331C6.34516 12.5331 7.00241 11.6974 7.00241 10.6665C7.00241 9.63554 6.34516 8.7998 5.53441 8.7998C4.72365 8.7998 4.06641 9.63554 4.06641 10.6665C4.06641 11.6974 4.72365 12.5331 5.53441 12.5331Z" stroke="white" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                    </span>
+                                  </button>
 
                                   <input
                                     type="text"
@@ -3790,7 +3902,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   {!item.completed && (() => {
                                     const planItemId = `from-accom-${item.id}`;
                                     const inPlan = planningItems.some(p => p.id === planItemId);
-                                    return (
+                                    const button = (
                                       <button
                                         type="button"
                                         onClick={() => {
@@ -3816,28 +3928,39 @@ const BusinessCompassDailyReport: React.FC = () => {
                                           markDraftDirty();
                                         }}
                                         className={cn(
-                                          "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                          "text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
                                           inPlan
                                             ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                            : "opacity-0 group-hover:opacity-100 bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5"
+                                            : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5"
                                         )}
                                         title={inPlan ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
                                       >
                                         {inPlan ? "Added ✓" : "+ Tomorrow"}
                                       </button>
                                     );
+                                    // Reserve no width until hover, so the note text can use the full row while idle.
+                                    if (inPlan) {
+                                      return <div className="shrink-0">{button}</div>;
+                                    }
+                                    return (
+                                      <div className="shrink-0 max-w-0 group-hover:max-w-[100px] overflow-hidden transition-[max-width] duration-300 ease-out">
+                                        {button}
+                                      </div>
+                                    );
                                   })()}
 
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full border-none opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                                    onClick={() =>
-                                      removeAccomplishment(item.id)
-                                    }
-                                  >
-                                    <X size={16} className="text-red-500" />
-                                  </Button>
+                                  <div className="shrink-0 max-w-0 group-hover:max-w-[40px] overflow-hidden transition-[max-width] duration-300 ease-out">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full border-none"
+                                      onClick={() =>
+                                        removeAccomplishment(item.id)
+                                      }
+                                    >
+                                      <X size={16} className="text-red-500" />
+                                    </Button>
+                                  </div>
                                 </div>
 
                                 {/* {item.fromYesterday && (
@@ -5008,11 +5131,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                     ) : (
                       <div className="space-y-3 pr-1" ref={scrollContainerRef}>
                         {/* ── From Yesterday section ── */}
-                        {yesterdaySourceIds.size > 0 &&
+                        {(yesterdaySourceIds.size > 0 ||
+                          noteMatchedTaskIssueIds.size > 0) &&
                           (() => {
                             const yItems = mergedTasksIssues.filter(
                               (item: any) =>
-                                yesterdaySourceIds.has(item.id) &&
+                                (yesterdaySourceIds.has(item.id) ||
+                                  noteMatchedTaskIssueIds.has(item.id)) &&
                                 item.status !== "completed" &&
                                 item.status !== "closed" &&
                                 !(
@@ -7831,7 +7956,12 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       <Dialog
         open={openTaskModal}
-        onClose={() => setOpenTaskModal(false)}
+        onClose={() => {
+          setOpenTaskModal(false);
+          setPreFillDate(null);
+          setConvertTitle("");
+          pendingConvertItemRef.current = null;
+        }}
         TransitionComponent={Transition}
         maxWidth={false}
         PaperProps={{
@@ -7864,7 +7994,12 @@ const BusinessCompassDailyReport: React.FC = () => {
             </h3>
             <X
               className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
-              onClick={() => setOpenTaskModal(false)}
+              onClick={() => {
+                setOpenTaskModal(false);
+                setPreFillDate(null);
+                setConvertTitle("");
+                pendingConvertItemRef.current = null;
+              }}
             />
             <hr className="border border-[#E95420] mt-4" />
           </div>
@@ -7874,9 +8009,12 @@ const BusinessCompassDailyReport: React.FC = () => {
               onCloseModal={() => {
                 setOpenTaskModal(false);
                 setPreFillDate(null);
+                setConvertTitle("");
+                pendingConvertItemRef.current = null;
               }}
+              onSuccess={completeAccomplishmentConversion}
               prefillData={{
-                title: "",
+                title: convertTitle,
                 description: "",
                 responsible_person: {
                   id: localStorage.getItem("user")
@@ -7897,9 +8035,11 @@ const BusinessCompassDailyReport: React.FC = () => {
         handleCloseDialog={() => {
           setOpenIssueModal(false);
           setPreFillDate(null);
+          setConvertTitle("");
+          pendingConvertItemRef.current = null;
         }}
         prefillData={{
-          title: "",
+          title: convertTitle,
           description: "",
           responsible_person: {
             id: localStorage.getItem("user")
@@ -7917,13 +8057,16 @@ const BusinessCompassDailyReport: React.FC = () => {
         setIsModalOpen={() => {
           setOpenTodoModal(false);
           setPreFillDate(null);
+          setConvertTitle("");
+          pendingConvertItemRef.current = null;
         }}
         getTodos={() => {
           fetchTodos();
           fetchTomorrowScheduled(startDate);
+          completeAccomplishmentConversion();
         }}
         prefillData={{
-          title: "",
+          title: convertTitle,
           description: "",
           responsible_person: {
             id: localStorage.getItem("user")
@@ -8344,6 +8487,122 @@ const BusinessCompassDailyReport: React.FC = () => {
                 For {nextDayLabel || "tomorrow"}
               </span>
             </div>
+          </div>
+        </MenuItem>
+      </Menu>
+
+      <Menu
+        anchorEl={convertMenuAnchor}
+        open={Boolean(convertMenuAnchor)}
+        onClose={() => {
+          setConvertMenuAnchor(null);
+          setConvertMenuItem(null);
+        }}
+        sx={{
+          "& .MuiPaper-root": {
+            borderRadius: "10px",
+            boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+            minWidth: "150px",
+            maxWidth: "180px",
+            overflowX: "hidden",
+            overflowY: "visible",
+            "&::before": {
+              content: '""',
+              display: "block",
+              position: "absolute",
+              top: -6,
+              right: 20,
+              width: 10,
+              height: 10,
+              backgroundColor: "#ffffff",
+              transform: "translateY(-50%) rotate(45deg)",
+              zIndex: 0,
+              boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
+            },
+          },
+        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem
+          onClick={() => {
+            pendingConvertItemRef.current = convertMenuItem;
+            setConvertTitle(cleanReportText(convertMenuItem?.text || ""));
+            setPreFillDate(startDate);
+            setOpenTaskModal(true);
+            setConvertMenuAnchor(null);
+            setConvertMenuItem(null);
+          }}
+          sx={{
+            py: 0.75,
+            px: 1,
+            margin: "6px 6px 2px 6px",
+            borderRadius: "8px",
+            minHeight: 0,
+            "&:hover": {
+              backgroundColor: "#f0f4ff",
+            },
+          }}
+        >
+          <div className="flex items-center gap-2 w-full">
+            <div className="p-1 bg-blue-50 rounded-md shrink-0">
+              <CheckSquare size={13} className="text-blue-600" />
+            </div>
+            <span className="font-semibold text-gray-800 text-xs">Convert to Task</span>
+          </div>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            pendingConvertItemRef.current = convertMenuItem;
+            setConvertTitle(cleanReportText(convertMenuItem?.text || ""));
+            setPreFillDate(startDate);
+            setOpenIssueModal(true);
+            setConvertMenuAnchor(null);
+            setConvertMenuItem(null);
+          }}
+          sx={{
+            py: 0.75,
+            px: 1,
+            margin: "2px 6px",
+            borderRadius: "8px",
+            minHeight: 0,
+            "&:hover": {
+              backgroundColor: "#fef2f2",
+            },
+          }}
+        >
+          <div className="flex items-center gap-2 w-full">
+            <div className="p-1 bg-red-50 rounded-md shrink-0">
+              <AlertCircle size={13} className="text-red-600" />
+            </div>
+            <span className="font-semibold text-gray-800 text-xs">Convert to Issue</span>
+          </div>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            pendingConvertItemRef.current = convertMenuItem;
+            setConvertTitle(cleanReportText(convertMenuItem?.text || ""));
+            setPreFillDate(startDate);
+            setOpenTodoModal(true);
+            setConvertMenuAnchor(null);
+            setConvertMenuItem(null);
+          }}
+          sx={{
+            py: 0.75,
+            px: 1,
+            margin: "2px 6px 6px 6px",
+            borderRadius: "8px",
+            minHeight: 0,
+            "&:hover": {
+              backgroundColor: "#fef9f0",
+            },
+          }}
+        >
+          <div className="flex items-center gap-2 w-full">
+            <div className="p-1 bg-amber-50 rounded-md shrink-0">
+              <ListTodo size={13} className="text-amber-600" />
+            </div>
+            <span className="font-semibold text-gray-800 text-xs">Convert to Todo</span>
           </div>
         </MenuItem>
       </Menu>

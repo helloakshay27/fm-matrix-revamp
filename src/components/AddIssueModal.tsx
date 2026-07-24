@@ -270,6 +270,12 @@ const AddIssueModal = ({
   const [endDate, setEndDate] = useState(null);
 
   useEffect(() => {
+    if (openDialog) {
+      setTitle(prefillData?.title || "");
+    }
+  }, [openDialog, prefillData]);
+
+  useEffect(() => {
     const targetDate = prefillData?.target_date;
 
     if (!targetDate) {
