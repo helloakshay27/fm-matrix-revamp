@@ -202,8 +202,7 @@ export const AddWBSDialog: React.FC<AddWBSDialogProps> = ({
         <div className="flex gap-3 pt-4">
           <Button
             onClick={handleSubmit}
-            className="flex-1 text-white"
-            style={{ backgroundColor: '#C72030' }}
+            className="flex-1 !bg-brand hover:!bg-brand-hover !text-white"
           >
             Add WBS
           </Button>

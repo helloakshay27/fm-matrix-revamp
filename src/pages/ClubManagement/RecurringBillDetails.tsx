@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ import {
   ClipboardList,
   Eye,
   X,
+  Settings2,
 } from "lucide-react";
 import {
   Dialog,
@@ -226,10 +227,11 @@ const mockSalesOrder = {
 export const RecurringBillDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [salesOrder, setSalesOrder] = useState<SalesOrder>(mockSalesOrder);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("order-details");
+  const [activeTab, setActiveTab] = useState((location.state as any)?.tab === "pdf" ? "pdf" : "order-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showApprovalLog, setShowApprovalLog] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
@@ -516,6 +518,15 @@ export const RecurringBillDetails = () => {
             >
               <FileText className="h-4 w-4" />
               PDF
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/accounting/recurring-bills/template", { state: { recordId: id } })}
+              className="gap-2"
+            >
+              <Settings2 className="h-4 w-4" />
+              Template Edit
             </Button>
             <Button
               size="sm"
@@ -1290,6 +1301,7 @@ export const RecurringBillDetails = () => {
                     <div className="mx-auto bg-white" ref={activeTab === "pdf" ? recurringBillPdfRef : null}>
                       <PurchaseDocumentPdf
                         documentTitle="RECURRING BILL"
+                        documentType="recurring_bill"
                         documentNumber={salesOrder.bill_number}
                         documentDate={(salesOrder as any)?.bill_date || (salesOrder as any)?.recurring_detail?.start_date}
                         status={salesOrder.status}
@@ -1319,6 +1331,7 @@ export const RecurringBillDetails = () => {
           <div ref={recurringBillPdfRef}>
             <PurchaseDocumentPdf
               documentTitle="RECURRING BILL"
+              documentType="recurring_bill"
               documentNumber={salesOrder.bill_number}
               documentDate={(salesOrder as any)?.bill_date || (salesOrder as any)?.recurring_detail?.start_date}
               status={salesOrder.status}

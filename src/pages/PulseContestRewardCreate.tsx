@@ -246,8 +246,8 @@ const PulseContestRewardCreate = () => {
 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-[#C72030]/10 flex items-center justify-center">
-                            <Gift className="w-6 h-6 text-[#C72030]" />
+                        <div className="w-12 h-12 rounded-xl bg-brand flex items-center justify-center shadow-sm">
+                            <Gift className="w-6 h-6 text-white" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-[#1a1a1a]">

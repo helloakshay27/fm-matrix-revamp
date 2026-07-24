@@ -102,7 +102,7 @@ export const CRMEventsFilterModal = ({ open, onOpenChange, onApply }: CRMEventsF
         <>
             <div className="fixed inset-0 bg-black/50 z-[9998]" onClick={() => onOpenChange(false)} />
             <div className="fixed inset-0 flex items-center justify-center z-[9999] p-4">
-                <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full overflow-hidden flex flex-col border-l-[6px] border-[#C72030]">
+                <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full overflow-hidden flex flex-col">
                     <div className="flex items-center justify-between p-6 border-b">
                         <h2 className="text-xl font-semibold text-gray-900 tracking-wide">FILTER BY</h2>
                         <button onClick={() => onOpenChange(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -174,7 +174,7 @@ export const CRMEventsFilterModal = ({ open, onOpenChange, onApply }: CRMEventsF
                         <Button variant="outline" onClick={handleReset} className="px-8">
                             Reset
                         </Button>
-                        <Button onClick={handleApply} className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white px-8">
+                        <Button onClick={handleApply} className="px-8 !bg-brand hover:!bg-brand-hover !text-white">
                             Apply
                         </Button>
                     </div>

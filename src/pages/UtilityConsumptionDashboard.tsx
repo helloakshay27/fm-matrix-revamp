@@ -338,7 +338,7 @@ const UtilityConsumptionDashboard = () => {
               </Button>
               <Button
                 onClick={handleApplyFilters}
-                className="px-8 py-2 h-10 rounded-md bg-purple-600 text-white hover:bg-purple-700"
+                className="px-8 py-2 h-10 rounded-md !bg-brand hover:!bg-brand-hover !text-white"
               >
                 Apply
               </Button>

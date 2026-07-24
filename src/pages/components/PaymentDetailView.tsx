@@ -5,7 +5,7 @@
 ========================================= */}
 
 import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
 import {
   ArrowLeft,
@@ -13,6 +13,7 @@ import {
   Download,
   Printer,
   FileText,
+  Settings2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -235,6 +236,7 @@ export const PaymentMadeDetailsPage: React.FC<PaymentMadeDetailsPageProps> = ({
 }) => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
   const detailsId = id;
   // selectedPaymentId || 
 
@@ -248,7 +250,7 @@ export const PaymentMadeDetailsPage: React.FC<PaymentMadeDetailsPageProps> = ({
   };
 
   const [activeTab, setActiveTab] =
-    React.useState("details");
+    React.useState((location.state as any)?.tab === "pdf" ? "pdf" : "details");
 
   const [payment, setPayment] =
     React.useState<PaymentMade | null>(null);
@@ -515,6 +517,16 @@ export const PaymentMadeDetailsPage: React.FC<PaymentMadeDetailsPageProps> = ({
             >
               <FileText className="h-4 w-4 mr-2" />
               PDF
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() =>
+                navigate("/accounting/payments-made/template", { state: { recordId: id } })
+              }
+            >
+              <Settings2 className="h-4 w-4 mr-2" />
+              Template Edit
             </Button>
 
             <Button

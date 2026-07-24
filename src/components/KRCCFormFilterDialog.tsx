@@ -217,8 +217,7 @@ export const KRCCFormFilterDialog = ({ isOpen, onClose, onApplyFilters }: KRCCFo
       <DialogActions sx={{ px: 3, pb: 2, pt: 2 }}>
         <Button 
           onClick={handleSubmit}
-          className="flex-1 text-white cursor-pointer"
-          style={{ backgroundColor: '#C72030' }}
+          className="flex-1 cursor-pointer !bg-brand hover:!bg-brand-hover !text-white disabled:!bg-brand disabled:!text-white disabled:opacity-100"
           disabled={!emailProvided}
         >
           Submit
