@@ -1394,6 +1394,7 @@ const PulseContests = lazy(() => import("./pages/PulseContests.tsx"));
 const PulseContestRewards = lazy(() => import("./pages/PulseContestRewards.tsx"));
 const PulseContestRewardsDetails = lazy(() => import("./pages/PulseContestRewardsDetails.tsx"));
 const PulseContestRewardCreate = lazy(() => import("./pages/PulseContestRewardCreate.tsx"));
+const PosthogDashboardPage = lazy(() => import("./features/posthog-dashboard/PosthogDashboardPage").then(m => ({ default: m.PosthogDashboardPage })));
 
 const queryClient = new QueryClient();
 
@@ -1719,6 +1720,10 @@ function App() {
                           <Route
                             path="/documents/editor/:documentId"
                             element={<OnlyOfficePublicEditorPage />}
+                          />
+                          <Route
+                            path="/posthog-dashboard"
+                            element={<PosthogDashboardPage />}
                           />
 
                           {/* Backend Routes */}
