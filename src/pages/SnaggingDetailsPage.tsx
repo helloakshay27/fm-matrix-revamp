@@ -63,8 +63,7 @@ export const SnaggingDetailsPage = () => {
         <div className="w-full md:flex-1 flex md:justify-end">
           <Button
             onClick={() => setIsUserModalOpen(true)}
-            style={{ backgroundColor: '#C72030' }}
-            className="hover:bg-[#C72030]/90 text-white w-full md:w-auto px-6 py-2"
+            className="bg-brand hover:bg-brand-hover text-white w-full md:w-auto px-6 py-2"
           >
             Users Associated
           </Button>
