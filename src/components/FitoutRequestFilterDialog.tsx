@@ -37,8 +37,28 @@ export const FitoutRequestFilterDialog = ({ isOpen, onClose }: FitoutRequestFilt
 
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
+    '& .MuiSelect-select': {
       padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
+
+  const selectMenuProps = {
+    disableScrollLock: true,
+    anchorOrigin: {
+      vertical: 'bottom' as const,
+      horizontal: 'left' as const,
+    },
+    transformOrigin: {
+      vertical: 'top' as const,
+      horizontal: 'left' as const,
+    },
+    PaperProps: {
+      sx: {
+        mt: 1,
+        maxHeight: 300,
+        overflow: 'auto',
+        zIndex: 99999,
+      },
     },
   };
 
@@ -50,7 +70,6 @@ export const FitoutRequestFilterDialog = ({ isOpen, onClose }: FitoutRequestFilt
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Category Options */}
           <div className="space-y-3">
             <label className="text-sm font-medium">Type</label>
             <RadioGroup value={selectedType} onValueChange={setSelectedType} className="flex flex-wrap gap-6">
@@ -77,7 +96,6 @@ export const FitoutRequestFilterDialog = ({ isOpen, onClose }: FitoutRequestFilt
             </RadioGroup>
           </div>
 
-          {/* Additional Filter Options */}
           <div className="space-y-4">
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
               <InputLabel id="category-label" shrink>Category</InputLabel>
@@ -88,6 +106,7 @@ export const FitoutRequestFilterDialog = ({ isOpen, onClose }: FitoutRequestFilt
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 sx={fieldStyles}
+                MenuProps={selectMenuProps}
               >
                 <MenuItem value=""><em>Select Category</em></MenuItem>
                 <MenuItem value="renovation">Renovation</MenuItem>
@@ -106,6 +125,7 @@ export const FitoutRequestFilterDialog = ({ isOpen, onClose }: FitoutRequestFilt
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
                 sx={fieldStyles}
+                MenuProps={selectMenuProps}
               >
                 <MenuItem value=""><em>Select Unit</em></MenuItem>
                 <MenuItem value="unit-101">Unit 101</MenuItem>
@@ -123,6 +143,7 @@ export const FitoutRequestFilterDialog = ({ isOpen, onClose }: FitoutRequestFilt
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 sx={fieldStyles}
+                MenuProps={selectMenuProps}
               >
                 <MenuItem value=""><em>Select Status</em></MenuItem>
                 <MenuItem value="pending">Pending</MenuItem>
@@ -137,14 +158,14 @@ export const FitoutRequestFilterDialog = ({ isOpen, onClose }: FitoutRequestFilt
         <div className="flex justify-center gap-4 pt-4">
           <Button 
             onClick={handleApply}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
+            className="bg-brand hover:bg-brand-hover text-white px-8"
           >
             Apply
           </Button>
           <Button 
             variant="outline"
             onClick={handleReset}
-            className="px-8 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+            className="px-8 border-brand text-brand hover:bg-brand hover:text-white"
           >
             Reset
           </Button>
