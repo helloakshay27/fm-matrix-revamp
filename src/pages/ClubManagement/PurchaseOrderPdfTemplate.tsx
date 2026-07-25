@@ -165,7 +165,7 @@ const aggregateTax = (items, type) => {
 
 export const PurchaseDocumentPdf = ({
   documentTitle = "PURCHASE ORDER",
-  documentType,
+  documentType = "",
   documentNumber,
   documentDate,
   status,

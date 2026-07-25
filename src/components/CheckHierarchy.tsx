@@ -374,7 +374,7 @@ const CheckHierarchy: React.FC = () => {
                   treeLoading ||
                   Boolean(identifierError)
                 }
-                className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-6"
+                className="px-6 !bg-brand hover:!bg-brand-hover !text-white disabled:!bg-brand disabled:!text-white disabled:opacity-100"
               >
                 {treeLoading ? "Fetching..." : "Submit"}
               </Button>

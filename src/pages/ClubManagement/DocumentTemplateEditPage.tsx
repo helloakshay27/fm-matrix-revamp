@@ -25,6 +25,8 @@ interface DocumentTemplateEditPageProps {
   backRoute: string;
   /** Prefix used to build the redirect-to-PDF route: `${detailsRoutePrefix}/${recordId}`. */
   detailsRoutePrefix: string;
+  /** The tab value the details page uses for its PDF view, e.g. "pdf", "pdf-view", "statement". Defaults to "pdf". */
+  pdfTabValue?: string;
 }
 
 export const DocumentTemplateEditPage: React.FC<DocumentTemplateEditPageProps> = ({
@@ -34,6 +36,7 @@ export const DocumentTemplateEditPage: React.FC<DocumentTemplateEditPageProps> =
   sampleDocumentNumber,
   backRoute,
   detailsRoutePrefix,
+  pdfTabValue = 'pdf',
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -52,7 +55,7 @@ export const DocumentTemplateEditPage: React.FC<DocumentTemplateEditPageProps> =
       saveDocumentTemplateSettings(documentType, settings);
       sonnerToast.success('Template saved');
       if (recordId) {
-        navigate(`${detailsRoutePrefix}/${recordId}`, { state: { tab: 'pdf' } });
+        navigate(`${detailsRoutePrefix}/${recordId}`, { state: { tab: pdfTabValue } });
       } else {
         navigate(backRoute);
       }

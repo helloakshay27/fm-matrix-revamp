@@ -45,7 +45,7 @@ const formatAddressBlock = (address) => {
 
 export const PurchaseDocumentPdf = ({
   documentTitle,
-  documentType,
+  documentType = "",
   documentNumber,
   documentDate,
   status,

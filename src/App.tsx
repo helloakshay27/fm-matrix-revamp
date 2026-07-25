@@ -1155,6 +1155,12 @@ const InvoiceTemplateEditPage = lazy(() => import("./pages/ClubManagement/Invoic
 const RecurringInvoiceTemplateEditPage = lazy(() => import("./pages/ClubManagement/RecurringInvoiceTemplateEditPage"));
 const PaymentReceivedTemplateEditPage = lazy(() => import("./pages/ClubManagement/PaymentReceivedTemplateEditPage"));
 const CreditNoteTemplateEditPage = lazy(() => import("./pages/ClubManagement/CreditNoteTemplateEditPage"));
+const PurchaseOrderTemplateEditPage = lazy(() => import("./pages/ClubManagement/PurchaseOrderTemplateEditPage"));
+const BillTemplateEditPage = lazy(() => import("./pages/ClubManagement/BillTemplateEditPage"));
+const RecurringBillTemplateEditPage = lazy(() => import("./pages/ClubManagement/RecurringBillTemplateEditPage"));
+const VendorCreditTemplateEditPage = lazy(() => import("./pages/ClubManagement/VendorCreditTemplateEditPage"));
+const PaymentMadeTemplateEditPage = lazy(() => import("./pages/ClubManagement/PaymentMadeTemplateEditPage"));
+const VendorStatementTemplateEditPage = lazy(() => import("./pages/ClubManagement/VendorStatementTemplateEditPage"));
 const SalesOrderListPage = lazy(() => import("./pages/SalesOrderListPage").then(m => ({ default: m.SalesOrderListPage })));
 const TransactionsDetails = lazy(() => import("./pages/ClubManagement/TransationsDetails").then(m => ({ default: m.TransactionsDetails })));
 const ViewClubOccupantUser = lazy(() => import("./pages/master/ViewClubOccupantUser").then(m => ({ default: m.ViewClubOccupantUser })));
@@ -2566,6 +2572,10 @@ function App() {
                               path="/accounting/payments-made/edit/:id"
                               element={<EditPaymentPage />}
                             />
+                            <Route
+                              path="/accounting/payments-made/template"
+                              element={<PaymentMadeTemplateEditPage />}
+                            />
                             -{/* Settings Checklist Setup Routes */}
                             <Route
                               path="/settings/checklist-setup/groups"
@@ -2954,6 +2964,10 @@ function App() {
                             <Route
                               path="/accounting/vendor-credits/edit/:id"
                               element={<VendorCreditsEdit />}
+                            />
+                            <Route
+                              path="/accounting/vendor-credits/template"
+                              element={<VendorCreditTemplateEditPage />}
                             />
                             <Route
                               path="/accounting/chart-journal"
@@ -3648,6 +3662,10 @@ function App() {
                               path="/accounting/purchase-order/edit/:id"
                               element={<PurchaseOrderEditPage />}
                             />
+                            <Route
+                              path="/accounting/purchase-order/template"
+                              element={<PurchaseOrderTemplateEditPage />}
+                            />
                             {/* Bills Routes */}
                             <Route
                               path="/accounting/bills"
@@ -3673,6 +3691,10 @@ function App() {
                               path="/accounting/bills/edit/:id"
                               element={<BillEdit />}
                             />
+                            <Route
+                              path="/accounting/bills/template"
+                              element={<BillTemplateEditPage />}
+                            />
                             {/* Recurring Bills Routes */}
                             <Route
                               path="/accounting/recurring-bills"
@@ -3689,6 +3711,10 @@ function App() {
                             <Route
                               path="/accounting/recurring-bills/edit/:id"
                               element={<RecurringBillEdit />}
+                            />
+                            <Route
+                              path="/accounting/recurring-bills/template"
+                              element={<RecurringBillTemplateEditPage />}
                             />
                             <Route
                               path="/accounting/recurring-expenses"
@@ -4874,6 +4900,10 @@ function App() {
                               path="/accounting/vendor/edit/:id"
                               element={<EditVendorPage />}
                             ></Route>
+                            <Route
+                              path="/accounting/vendor/template"
+                              element={<VendorStatementTemplateEditPage />}
+                            />
                             <Route
                               path="/vas/ceo-dashboard"
                               element={<PATMCeoDashboard />}

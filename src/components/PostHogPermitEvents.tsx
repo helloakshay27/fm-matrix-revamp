@@ -8,9 +8,15 @@ const getBaseProperties = () => {
   const role = localStorage.getItem('role') || 'unknown';
 
   return {
+    project_id: "P-223",
+    project_code: "FM-01",
     platform: 'web',
     company_id: companyId,
+    company_name: localStorage.getItem('selectedCompany') || localStorage.getItem('company_name') || undefined,
     site_id: siteId,
+    site_name: localStorage.getItem('selectedSiteName') || localStorage.getItem('site_name') || undefined,
+    organization_id: localStorage.getItem('selectedOrgId') || localStorage.getItem('organization_id') || undefined,
+    organization_name: localStorage.getItem('selectedOrg') || localStorage.getItem('organization_name') || undefined,
     user_id: userId,
     role: role,
     release_version: '1.0',

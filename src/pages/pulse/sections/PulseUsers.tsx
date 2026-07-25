@@ -1,29 +1,48 @@
 import { useState, useEffect } from "react";
 import {
-  PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, CartesianGrid, Legend,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Legend,
 } from "recharts";
 import { Users as UsersIcon } from "lucide-react";
 import {
-  fetchUsersKpi, fetchUsersBySite, fetchPulseUsers,
-  type UsersKpi, type UsersBySite, type PulseUsersResponse,
+  fetchUsersKpi,
+  fetchUsersBySite,
+  fetchPulseUsers,
+  type UsersKpi,
+  type UsersBySite,
+  type PulseUsersResponse,
   type PulseFilters,
 } from "@/services/pulseDashboardApi";
 
 const C = {
-  green: "#798C5E", blue: "#6B9BCC", orange: "#EDC488",
-  purple: "#CECBF6", teal: "#9EC8BA", pink: "#E7848E",
+  green: "#798C5E",
+  blue: "#6B9BCC",
+  orange: "#EDC488",
+  purple: "#CECBF6",
+  teal: "#9EC8BA",
+  pink: "#E7848E",
 };
 
 const USER_TABS = [
-  { label: "All",      value: undefined   },
-  { label: "Admin",    value: "Admin"     },
-  { label: "Occupant", value: "Occupant"  },
+  { label: "All", value: undefined },
+  { label: "Admin", value: "Admin" },
+  { label: "Occupant", value: "Occupant" },
 ] as const;
 
-type TabValue = typeof USER_TABS[number]["value"];
+type TabValue = (typeof USER_TABS)[number]["value"];
 
-interface Props { filters: PulseFilters }
+interface Props {
+  filters: PulseFilters;
+}
 
 export function PulseUsers({ filters }: Props) {
   const [kpi, setKpi] = useState<UsersKpi | null>(null);
@@ -39,7 +58,8 @@ export function PulseUsers({ filters }: Props) {
   }, [filters]);
 
   useEffect(() => {
-    if (!loading) fetchPulseUsers(filters, page, tab).then(setUsers).catch(console.error);
+    if (!loading)
+      fetchPulseUsers(filters, page, tab).then(setUsers).catch(console.error);
   }, [page]);
 
   useEffect(() => {
@@ -55,25 +75,40 @@ export function PulseUsers({ filters }: Props) {
         fetchUsersBySite(filters),
         fetchPulseUsers(filters, p, t),
       ]);
-      setKpi(k); setBySite(s); setUsers(u);
-    } catch (e) { console.error(e); }
+      setKpi(k);
+      setBySite(s);
+      setUsers(u);
+    } catch (e) {
+      console.error(e);
+    }
     setLoading(false);
   }
 
   if (loading) {
-    return <div className="pd-loader"><div className="pd-spinner" />Loading users…</div>;
+    return (
+      <div className="pd-loader">
+        <div className="pd-spinner" />
+        Loading users…
+      </div>
+    );
   }
 
-  const startIdx = users ? (users.pagination.current_page - 1) * users.pagination.per_page : 0;
+  const startIdx = users
+    ? (users.pagination.current_page - 1) * users.pagination.per_page
+    : 0;
   const hasData = !!(kpi || (bySite && bySite.sites.length) || users);
 
   return (
     <div>
       <div className="pd-section-header">
-        <div className="pd-section-icon"><UsersIcon className="w-5 h-5" /></div>
+        <div className="pd-section-icon">
+          <UsersIcon className="w-5 h-5" />
+        </div>
         <div>
           <h2 className="pd-section-title">Users</h2>
-          <div className="pd-section-subtitle">Admins, occupants and activity across sites</div>
+          <div className="pd-section-subtitle">
+            Admins, occupants and activity across sites
+          </div>
         </div>
       </div>
 
@@ -87,14 +122,14 @@ export function PulseUsers({ filters }: Props) {
       {kpi && (
         <div className="pd-kpi-grid">
           {[
-            { label: "Total Users",      value: kpi.total_users },
-            { label: "Admins",           value: kpi.admins },
-            { label: "Occupants",        value: kpi.occupants },
-            { label: "Occupant Admins",  value: kpi.occupant_admins },
-            { label: "Org Admins",       value: kpi.org_admins },
-            { label: "Male",             value: kpi.male },
-            { label: "Female",           value: kpi.female },
-            { label: "New Users",        value: kpi.new_users },
+            { label: "Total Users", value: kpi.total_users },
+            { label: "Admins", value: kpi.admins },
+            { label: "Occupants", value: kpi.occupants },
+            { label: "Occupant Admins", value: kpi.occupant_admins },
+            // { label: "Org Admins", value: kpi.org_admins },
+            { label: "Male", value: kpi.male },
+            { label: "Female", value: kpi.female },
+            { label: "New Users", value: kpi.new_users },
           ].map((item) => (
             <div key={item.label} className="pd-kpi-card">
               <div className="pd-kpi-value">{item.value.toLocaleString()}</div>
@@ -113,13 +148,15 @@ export function PulseUsers({ filters }: Props) {
                 <PieChart>
                   <Pie
                     data={[
-                      { name: "Admins",         value: kpi.admins },
-                      { name: "Occupants",      value: kpi.occupants },
-                      { name: "Occupant Admins",value: kpi.occupant_admins },
-                      { name: "Org Admins",     value: kpi.org_admins },
+                      { name: "Admins", value: kpi.admins },
+                      { name: "Occupants", value: kpi.occupants },
+                      { name: "Occupant Admins", value: kpi.occupant_admins },
+                      { name: "Org Admins", value: kpi.org_admins },
                     ]}
-                    cx="50%" cy="50%"
-                    innerRadius="55%" outerRadius="75%"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="55%"
+                    outerRadius="75%"
                     dataKey="value"
                   >
                     {[C.purple, C.green, C.orange, C.teal].map((color, i) => (
@@ -143,8 +180,10 @@ export function PulseUsers({ filters }: Props) {
                       { name: "Male", value: kpi.male },
                       { name: "Female", value: kpi.female },
                     ]}
-                    cx="50%" cy="50%"
-                    innerRadius="55%" outerRadius="75%"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="55%"
+                    outerRadius="75%"
                     dataKey="value"
                   >
                     <Cell fill={C.blue} />
@@ -167,12 +206,28 @@ export function PulseUsers({ filters }: Props) {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={bySite.sites} margin={{ bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="site_name" tick={{ fontSize: 11 }} angle={-25} textAnchor="end" interval={0} />
+                  <XAxis
+                    dataKey="site_name"
+                    tick={{ fontSize: 11 }}
+                    angle={-25}
+                    textAnchor="end"
+                    interval={0}
+                  />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
                   <Legend verticalAlign="top" />
-                  <Bar dataKey="admins"    name="Admins"    fill={C.purple} radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="occupants" name="Occupants" fill={C.green}  radius={[3, 3, 0, 0]} />
+                  <Bar
+                    dataKey="admins"
+                    name="Admins"
+                    fill={C.purple}
+                    radius={[3, 3, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="occupants"
+                    name="Occupants"
+                    fill={C.green}
+                    radius={[3, 3, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -201,8 +256,13 @@ export function PulseUsers({ filters }: Props) {
             <table className="pd-table">
               <thead>
                 <tr>
-                  <th className="pd-num">#</th><th>Name</th><th>Type</th><th>Email</th>
-                  <th>Mobile</th><th>Alt Mobile</th><th>Status</th>
+                  <th className="pd-num">#</th>
+                  <th>Name</th>
+                  <th>Type</th>
+                  {/* <th>Email</th> */}
+                  {/* <th>Mobile</th> */}
+                  {/* <th>Alt Mobile</th> */}
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -210,12 +270,18 @@ export function PulseUsers({ filters }: Props) {
                   <tr key={u.user_id}>
                     <td className="pd-num">{startIdx + i + 1}</td>
                     <td style={{ fontWeight: 500 }}>{u.user_name}</td>
-                    <td><span className="pd-badge pd-badge-pub">{u.user_type}</span></td>
-                    <td>{u.email || "—"}</td>
-                    <td>{u.mobile || "—"}</td>
-                    <td>{u.alternate_mobile || "—"}</td>
                     <td>
-                      <span className={`pd-badge ${u.status === "Yes" ? "pd-badge-yes" : "pd-badge-no"}`}>
+                      <span className="pd-badge pd-badge-pub">
+                        {u.user_type}
+                      </span>
+                    </td>
+                    {/* <td>{u.email || "—"}</td> */}
+                    {/* <td>{u.mobile || "—"}</td> */}
+                    {/* <td>{u.alternate_mobile || "—"}</td> */}
+                    <td>
+                      <span
+                        className={`pd-badge ${u.status === "Yes" ? "pd-badge-yes" : "pd-badge-no"}`}
+                      >
                         {u.status}
                       </span>
                     </td>
@@ -227,12 +293,29 @@ export function PulseUsers({ filters }: Props) {
           {users.pagination.total_pages > 1 && (
             <div className="pd-pagination">
               <span>
-                {startIdx + 1}–{Math.min(startIdx + users.pagination.per_page, users.pagination.total_count)} of {users.pagination.total_count}
+                {startIdx + 1}–
+                {Math.min(
+                  startIdx + users.pagination.per_page,
+                  users.pagination.total_count
+                )}{" "}
+                of {users.pagination.total_count}
               </span>
               <div className="pd-pagination-btns">
-                <button className="pd-page-btn" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>‹ Prev</button>
+                <button
+                  className="pd-page-btn"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  ‹ Prev
+                </button>
                 <button className="pd-page-btn active">{page}</button>
-                <button className="pd-page-btn" disabled={page >= users.pagination.total_pages} onClick={() => setPage((p) => p + 1)}>Next ›</button>
+                <button
+                  className="pd-page-btn"
+                  disabled={page >= users.pagination.total_pages}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Next ›
+                </button>
               </div>
             </div>
           )}

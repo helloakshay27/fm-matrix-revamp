@@ -2,8 +2,9 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
 import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const columns: ColumnConfig[] = [
     {
@@ -38,6 +39,7 @@ const columns: ColumnConfig[] = [
 
 const ProjectTemplates = () => {
     const { shouldShow } = useDynamicPermissions();
+    const [loading, setLoading] = useState(true);
     const [templates, setTemplates] = useState([
         {
             id: 1,
@@ -90,6 +92,11 @@ const ProjectTemplates = () => {
         },
     ]);
 
+    useEffect(() => {
+        const timer = setTimeout(() => setLoading(false), 300);
+        return () => clearTimeout(timer);
+    }, []);
+
     const handleDelete = (id: number) => {
         if (confirm('Are you sure you want to delete this template?')) {
             setTemplates(templates.filter(template => template.id !== id));
@@ -132,6 +139,33 @@ const ProjectTemplates = () => {
 
     return (
         <div className="p-6">
+            {loading ? (
+                <div className="bg-white rounded-lg border border-gray-200">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-[#f6f4ee]">
+                                <TableHead className="font-medium">Project Template</TableHead>
+                                <TableHead className="font-medium">Owner Name</TableHead>
+                                <TableHead className="font-medium">Priority</TableHead>
+                                <TableHead className="font-medium">Project Members</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell colSpan={4} className="pt-4 pb-16">
+                                    <div className="w-full flex items-center justify-start gap-3 pl-4">
+                                        <div
+                                            className="h-5 w-5 rounded-full animate-spin"
+                                            style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                                        />
+                                        <span className="text-sm text-black">Loading ...</span>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </div>
+            ) : (
             <EnhancedTable
                 data={templates}
                 columns={columns}
@@ -140,6 +174,7 @@ const ProjectTemplates = () => {
                 pagination={true}
                 pageSize={10}
             />
+            )}
         </div>
     )
 }

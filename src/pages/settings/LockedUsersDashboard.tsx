@@ -14,6 +14,7 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import {
   Search,
   RefreshCw,
+  Loader2,
   UnlockIcon,
   Calendar,
   User,
@@ -493,9 +494,9 @@ export const LockedUsersDashboard = () => {
       <Card>
         <CardContent className="pt-6">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <RefreshCw className="w-8 h-8 animate-spin text-[#C72030]" />
-              <span className="ml-3 text-gray-600">Loading locked users...</span>
+            <div className="flex items-center justify-start py-12 text-black">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span className="ml-2">Loading ...</span>
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">

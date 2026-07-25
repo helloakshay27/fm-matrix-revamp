@@ -2778,7 +2778,7 @@ export const PermitSetupDashboard = () => {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow><TableCell colSpan={2} className="text-center py-8 text-gray-500">Loading permit types...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={2} className="pt-4 pb-16"><div className="w-full flex items-center justify-start gap-3 pl-4"><div className="h-5 w-5 rounded-full animate-spin" style={{ border: "2px solid #000000", borderTopColor: "transparent" }} /><span className="text-sm text-black">Loading ...</span></div></TableCell></TableRow>
                   ) : permitTypes.length === 0 ? (
                     <TableRow><TableCell colSpan={2} className="text-center py-8 text-gray-500">No permit types found</TableCell></TableRow>
                   ) : permitTypes.map((type) => (
@@ -2876,7 +2876,7 @@ export const PermitSetupDashboard = () => {
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow><TableCell colSpan={3} className="text-center py-8 text-gray-500">Loading permit activities...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={3} className="pt-4 pb-16"><div className="w-full flex items-center justify-start gap-3 pl-4"><div className="h-5 w-5 rounded-full animate-spin" style={{ border: "2px solid #000000", borderTopColor: "transparent" }} /><span className="text-sm text-black">Loading ...</span></div></TableCell></TableRow>
                   ) : activitiesTable.length === 0 ? (
                     <TableRow><TableCell colSpan={3} className="text-center py-8 text-gray-500">No permit activities found</TableCell></TableRow>
                   ) : activitiesTable.map((row) => (

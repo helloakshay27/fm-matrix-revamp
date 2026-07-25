@@ -366,11 +366,11 @@ export const ClubBroadcastDashboard = () => {
         shouldShow("Broadcast", "show") && (
         <Button
             variant="ghost"
-            size="sm"
             onClick={() => handleView(item.id)}
-            className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
+            title="View"
+            className="p-1 rounded transition-colors !text-[#1A1A1A] hover:!text-[#1A1A1A] hover:!bg-gray-100"
         >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-4 h-4 text-[#1A1A1A]" />
         </Button>
         )
     );

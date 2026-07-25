@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,7 @@ import {
   Share2,
   ShoppingCart,
   ClipboardList,
+  Settings2,
 } from "lucide-react";
 import {
   Dialog,
@@ -198,6 +199,7 @@ const aggregateTax = (
 export const PurchaseOrderDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const pdfRef = React.useRef<HTMLDivElement>(null);
 
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(
@@ -205,7 +207,7 @@ export const PurchaseOrderDetailPage = () => {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("order-details");
+  const [activeTab, setActiveTab] = useState((location.state as any)?.tab === "pdf-view" ? "pdf-view" : "order-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [bankDetail, setBankDetail] = useState<any>(null);
@@ -613,6 +615,14 @@ export const PurchaseOrderDetailPage = () => {
             >
               <FileText className="h-4 w-4 mr-2" />
               PDF
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => navigate("/accounting/purchase-order/template", { state: { recordId: id } })}
+            >
+              <Settings2 className="h-4 w-4 mr-2" />
+              Template Edit
             </Button>
 
             <Button
@@ -1341,6 +1351,7 @@ export const PurchaseOrderDetailPage = () => {
                   <div className="bg-gray-100 p-6 overflow-auto rounded-lg">
                     <div ref={pdfRef} className="flex justify-center">
                       <PurchaseOrderPdfTemplate
+                        documentType="purchase_order"
                         data={{
                           po_number: `PO-${String(purchaseOrder?.id).padStart(5, "0")}`,
                           po_date: purchaseOrder?.po_date,

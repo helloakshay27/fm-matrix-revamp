@@ -80,7 +80,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
   const [landlords, setLandlords] = useState<LandlordData[]>([]);
   
   // Loading states
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   // Load data on component mount and when tab changes
@@ -466,14 +466,19 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                     <TableBody>
                       {loading ? (
                         <TableRow>
-                          <TableCell colSpan={3} className="px-4 py-8 text-center text-gray-500">
-                            Loading...
+                          <TableCell colSpan={3} className="pt-4 pb-16">
+                            <div className="w-full flex items-center justify-start gap-3 pl-4">
+                              <div
+                                className="h-5 w-5 rounded-full animate-spin"
+                                style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                              />
+                              <span className="text-sm text-black">Loading ...</span>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ) : (getFilteredData() as CommodityData[]).length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={3} className="px-4 py-8 text-center text-gray-500">
-                            No data available
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -541,14 +546,19 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                     <TableBody>
                       {loading ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                            Loading...
+                          <TableCell colSpan={5} className="pt-4 pb-16">
+                            <div className="w-full flex items-center justify-start gap-3 pl-4">
+                              <div
+                                className="h-5 w-5 rounded-full animate-spin"
+                                style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                              />
+                              <span className="text-sm text-black">Loading ...</span>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ) : (getFilteredData() as CategoryData[]).length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                            No data available
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -616,14 +626,19 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                     <TableBody>
                       {loading ? (
                         <TableRow>
-                          <TableCell colSpan={3} className="px-4 py-8 text-center text-gray-500">
-                            Loading...
+                          <TableCell colSpan={3} className="pt-4 pb-16">
+                            <div className="w-full flex items-center justify-start gap-3 pl-4">
+                              <div
+                                className="h-5 w-5 rounded-full animate-spin"
+                                style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                              />
+                              <span className="text-sm text-black">Loading ...</span>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ) : (getFilteredData() as LandlordData[]).length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={3} className="px-4 py-8 text-center text-gray-500">
-                            No data available
                           </TableCell>
                         </TableRow>
                       ) : (

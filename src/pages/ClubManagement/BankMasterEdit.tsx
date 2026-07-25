@@ -14,9 +14,28 @@ import {
   bankMasterListUrl,
   buildBankMasterPayload,
   getBankMasterApiConfig,
+  guessBankFieldFromMessage,
   mapApiBankRecord,
+  parseBankMasterApiErrors,
+  sanitizeCodeInput,
+  sanitizeDigitsInput,
+  sanitizeNameLikeInput,
+  validateBankField,
   validateBankRecord,
 } from './bankMasterUtils';
+
+const SANITIZERS: Partial<Record<keyof BankRecord, (value: string) => string>> = {
+  beneficiaryName: sanitizeNameLikeInput,
+  bankName: sanitizeNameLikeInput,
+  branch: sanitizeNameLikeInput,
+  accountNo: (value) => sanitizeDigitsInput(value, 18),
+  ifscCode: (value) => sanitizeCodeInput(value, 11),
+  swiftCode: (value) => sanitizeCodeInput(value, 11),
+};
+
+// These have an objective, checkable format (digits-only length, fixed-format codes), so they
+// validate on every keystroke instead of waiting for blur — invalid input is flagged immediately.
+const LIVE_VALIDATE_FIELDS: (keyof BankRecord)[] = ['accountNo', 'ifscCode', 'swiftCode'];
 
 const BankMasterEdit = () => {
   const navigate = useNavigate();
@@ -25,6 +44,7 @@ const BankMasterEdit = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [otherAccountNumbers, setOtherAccountNumbers] = useState<string[]>([]);
 
   useEffect(() => {
     // No single-record GET endpoint is available, so the list is fetched and filtered by id.
@@ -33,10 +53,14 @@ const BankMasterEdit = () => {
         const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
         const res = await axios.get(bankMasterListUrl(baseUrl, lockAccountId), { headers });
         const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
-        const found = data.map(mapApiBankRecord).find((b: BankRecord) => String(b.id) === String(id));
+        const allBanks = data.map(mapApiBankRecord);
+        const found = allBanks.find((b: BankRecord) => String(b.id) === String(id));
 
         if (found) {
           setBank(found);
+          setOtherAccountNumbers(
+            allBanks.filter((b: BankRecord) => String(b.id) !== String(id)).map((b: BankRecord) => b.accountNo)
+          );
         } else {
           setNotFound(true);
         }
@@ -49,12 +73,33 @@ const BankMasterEdit = () => {
     loadBank();
   }, [id]);
 
-  const updateField = (field: keyof BankRecord, value: string) => {
-    setBank((prev) => (prev ? { ...prev, [field]: value } : prev));
-    setErrors((prev) => {
-      if (!prev[field]) return prev;
-      return { ...prev, [field]: '' };
+  const updateField = (field: keyof BankRecord, rawValue: string) => {
+    const value = SANITIZERS[field] ? SANITIZERS[field]!(rawValue) : rawValue;
+
+    setBank((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, [field]: value };
+
+      if (LIVE_VALIDATE_FIELDS.includes(field)) {
+        const message = value ? validateBankField(next, field, otherAccountNumbers) : '';
+        setErrors((prevErrors) => ({ ...prevErrors, [field]: message || '' }));
+      }
+
+      return next;
     });
+
+    if (!LIVE_VALIDATE_FIELDS.includes(field)) {
+      setErrors((prev) => {
+        if (!prev[field]) return prev;
+        return { ...prev, [field]: '' };
+      });
+    }
+  };
+
+  const handleFieldBlur = (field: keyof BankRecord) => {
+    if (!bank) return;
+    const message = validateBankField(bank, field, otherAccountNumbers);
+    setErrors((prev) => ({ ...prev, [field]: message || '' }));
   };
 
   const handleSave = async () => {
@@ -71,7 +116,7 @@ const BankMasterEdit = () => {
       branch: bank.branch.trim(),
     };
 
-    const rowErrors = validateBankRecord(normalized);
+    const rowErrors = validateBankRecord(normalized, otherAccountNumbers);
 
     if (Object.keys(rowErrors).length > 0) {
       setErrors(rowErrors);
@@ -92,8 +137,26 @@ const BankMasterEdit = () => {
 
       toast.success('Bank details updated successfully');
       navigate('/accounting/bank-master');
-    } catch {
-      toast.error('Failed to update bank details');
+    } catch (error) {
+      const rowErrors = parseBankMasterApiErrors(error);
+
+      if (rowErrors.length > 0) {
+        const inlineErrors: Record<string, string> = {};
+
+        rowErrors.forEach((row) => {
+          toast.error(row.errors.join(', '));
+          row.errors.forEach((message) => {
+            const field = guessBankFieldFromMessage(message);
+            if (field) inlineErrors[field] = message;
+          });
+        });
+
+        if (Object.keys(inlineErrors).length > 0) {
+          setErrors((prev) => ({ ...prev, ...inlineErrors }));
+        }
+      } else {
+        toast.error('Failed to update bank details');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -105,7 +168,8 @@ const BankMasterEdit = () => {
     value: string,
     required = true,
     placeholder = '',
-    type: 'text' | 'number' = 'text'
+    inputMode?: 'numeric',
+    maxLength?: number
   ) => {
     const fieldError = errors[field];
 
@@ -116,10 +180,13 @@ const BankMasterEdit = () => {
           {required && <span className="text-red-500"> *</span>}
         </Label>
         <Input
-          type={type}
+          type="text"
+          inputMode={inputMode}
+          maxLength={maxLength}
           placeholder={placeholder}
           value={value}
           onChange={(e) => updateField(field, e.target.value)}
+          onBlur={() => handleFieldBlur(field)}
           className={`mt-1 rounded-none ${fieldError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
         />
         {fieldError && <p className="text-xs text-red-500">{fieldError}</p>}
@@ -160,7 +227,7 @@ const BankMasterEdit = () => {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {renderField('Beneficiary / Account Name', 'beneficiaryName', bank.beneficiaryName, true, 'Enter beneficiary or account name')}
           {renderField('Bank Name', 'bankName', bank.bankName, true, 'Enter bank name')}
-          {renderField('A/c No.', 'accountNo', bank.accountNo, true, 'Enter account number', 'number')}
+          {renderField('A/c No.', 'accountNo', bank.accountNo, true, 'Enter account number', 'numeric', 18)}
 
           <div className="space-y-1.5">
             <Label>
@@ -198,8 +265,8 @@ const BankMasterEdit = () => {
             {errors.accountType && <p className="text-xs text-red-500">{errors.accountType}</p>}
           </div>
 
-          {renderField('IFSC Code', 'ifscCode', bank.ifscCode, true, 'Enter IFSC Code')}
-          {renderField('Swift Code', 'swiftCode', bank.swiftCode, false, 'Enter SWIFT/BIC code')}
+          {renderField('IFSC Code', 'ifscCode', bank.ifscCode, true, 'Enter IFSC Code', undefined, 11)}
+          {renderField('Swift Code', 'swiftCode', bank.swiftCode, false, 'Enter SWIFT/BIC code', undefined, 11)}
           {renderField('Branch', 'branch', bank.branch, true, 'Enter branch name')}
         </div>
       </div>

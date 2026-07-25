@@ -2,15 +2,21 @@ import posthog from 'posthog-js';
 
 export const useAMCEvents = () => {
     const getBaseProperties = () => {
-        return {
-            company_id: localStorage.getItem('companyId') || localStorage.getItem('company_id'),
-            site_id: localStorage.getItem('selectedSiteId') || localStorage.getItem('site_id'),
-            user_id: localStorage.getItem('userId') || localStorage.getItem('user_id'),
-            role: localStorage.getItem('role') || localStorage.getItem('userRole'),
-            release_version: '1.0',
-            is_test: false,
-            timestamp: new Date().toISOString()
-        };
+            return {
+                project_id: "P-223",
+                project_code: "FM-01",
+                company_id: localStorage.getItem('companyId') || localStorage.getItem('company_id'),
+                company_name: localStorage.getItem('selectedCompany') || localStorage.getItem('company_name') || undefined,
+                site_id: localStorage.getItem('selectedSiteId') || localStorage.getItem('site_id'),
+                site_name: localStorage.getItem('selectedSiteName') || localStorage.getItem('site_name') || undefined,
+                organization_id: localStorage.getItem('selectedOrgId') || localStorage.getItem('organization_id') || undefined,
+                organization_name: localStorage.getItem('selectedOrg') || localStorage.getItem('organization_name') || undefined,
+                user_id: localStorage.getItem('userId') || localStorage.getItem('user_id'),
+                role: localStorage.getItem('role') || localStorage.getItem('userRole'),
+                release_version: '1.0',
+                is_test: false,
+                timestamp: new Date().toISOString()
+            };
     };
 
     const safeCapture = (eventName: string, properties: any = {}) => {

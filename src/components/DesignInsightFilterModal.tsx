@@ -216,7 +216,7 @@ export const DesignInsightFilterModal: React.FC<DesignInsightFilterModalProps> =
             Reset
           </Button>
           <Button 
-            className="bg-green-600 hover:bg-green-700 text-white px-8"
+            className="!bg-[#DA7756] !text-white hover:!bg-[#DA7756]/90 px-8"
             onClick={handleApply}
           >
             Apply

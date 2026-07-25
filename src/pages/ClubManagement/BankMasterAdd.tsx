@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FormControl, MenuItem, Select as MuiSelect } from '@mui/material';
@@ -14,25 +14,84 @@ import {
   buildBankMastersPayload,
   createBlankBank,
   getBankMasterApiConfig,
+  guessBankFieldFromMessage,
+  mapApiBankRecord,
+  parseBankMasterApiErrors,
+  sanitizeCodeInput,
+  sanitizeDigitsInput,
+  sanitizeNameLikeInput,
+  validateBankField,
   validateBankRecord,
 } from './bankMasterUtils';
+
+const SANITIZERS: Partial<Record<keyof BankRecord, (value: string) => string>> = {
+  beneficiaryName: sanitizeNameLikeInput,
+  bankName: sanitizeNameLikeInput,
+  branch: sanitizeNameLikeInput,
+  accountNo: (value) => sanitizeDigitsInput(value, 18),
+  ifscCode: (value) => sanitizeCodeInput(value, 11),
+  swiftCode: (value) => sanitizeCodeInput(value, 11),
+};
+
+// These have an objective, checkable format (digits-only length, fixed-format codes), so they
+// validate on every keystroke instead of waiting for blur — invalid input is flagged immediately.
+const LIVE_VALIDATE_FIELDS: (keyof BankRecord)[] = ['accountNo', 'ifscCode', 'swiftCode'];
 
 const BankMasterAdd = () => {
   const navigate = useNavigate();
   const [draftBanks, setDraftBanks] = useState<BankRecord[]>([createBlankBank()]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [existingAccountNumbers, setExistingAccountNumbers] = useState<string[]>([]);
 
-  const updateDraftRow = (index: number, field: keyof BankRecord, value: string) => {
-    setDraftBanks((prev) =>
-      prev.map((record, idx) => (idx === index ? { ...record, [field]: value } : record))
-    );
+  useEffect(() => {
+    const loadExistingBanks = async () => {
+      try {
+        const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(bankMasterListUrl(baseUrl, lockAccountId), { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        setExistingAccountNumbers(data.map(mapApiBankRecord).map((b: BankRecord) => b.accountNo));
+      } catch {
+        // Non-fatal: duplicate-account-number check simply won't have existing data to compare against.
+      }
+    };
 
+    loadExistingBanks();
+  }, []);
+
+  const computeOtherAccountNumbers = (rows: BankRecord[], index: number) => [
+    ...existingAccountNumbers,
+    ...rows.filter((_, idx) => idx !== index).map((row) => row.accountNo.trim()),
+  ];
+
+  const updateDraftRow = (index: number, field: keyof BankRecord, rawValue: string) => {
+    const value = SANITIZERS[field] ? SANITIZERS[field]!(rawValue) : rawValue;
     const key = `${index}-${field}`;
-    setErrors((prev) => {
-      if (!prev[key]) return prev;
-      return { ...prev, [key]: '' };
+
+    setDraftBanks((prev) => {
+      const next = prev.map((record, idx) => (idx === index ? { ...record, [field]: value } : record));
+
+      if (LIVE_VALIDATE_FIELDS.includes(field)) {
+        const message = value ? validateBankField(next[index], field, computeOtherAccountNumbers(next, index)) : '';
+        setErrors((prevErrors) => ({ ...prevErrors, [key]: message || '' }));
+      }
+
+      return next;
     });
+
+    if (!LIVE_VALIDATE_FIELDS.includes(field)) {
+      setErrors((prev) => {
+        if (!prev[key]) return prev;
+        return { ...prev, [key]: '' };
+      });
+    }
+  };
+
+  const handleFieldBlur = (index: number, field: keyof BankRecord) => {
+    const record = draftBanks[index];
+    const message = validateBankField(record, field, computeOtherAccountNumbers(draftBanks, index));
+    const key = `${index}-${field}`;
+    setErrors((prev) => ({ ...prev, [key]: message || '' }));
   };
 
   const addAnotherBankRow = () => {
@@ -63,7 +122,11 @@ const BankMasterAdd = () => {
     const allErrors: Record<string, string> = {};
 
     normalizedRows.forEach((row, index) => {
-      const rowErrors = validateBankRecord(row);
+      const otherNumbers = [
+        ...existingAccountNumbers,
+        ...normalizedRows.filter((_, idx) => idx !== index).map((r) => r.accountNo),
+      ];
+      const rowErrors = validateBankRecord(row, otherNumbers);
       Object.entries(rowErrors).forEach(([field, message]) => {
         allErrors[`${index}-${field}`] = message;
       });
@@ -88,8 +151,32 @@ const BankMasterAdd = () => {
 
       toast.success(`${normalizedRows.length} bank detail${normalizedRows.length > 1 ? 's' : ''} added successfully`);
       navigate('/accounting/bank-master');
-    } catch {
-      toast.error('Failed to save bank details');
+    } catch (error) {
+      const rowErrors = parseBankMasterApiErrors(error);
+
+      if (rowErrors.length > 0) {
+        const inlineErrors: Record<string, string> = {};
+
+        rowErrors.forEach((row) => {
+          const label = typeof row.index === 'number' && normalizedRows.length > 1
+            ? `Bank Record ${row.index + 1}: `
+            : '';
+          toast.error(`${label}${row.errors.join(', ')}`);
+
+          if (typeof row.index === 'number') {
+            row.errors.forEach((message) => {
+              const field = guessBankFieldFromMessage(message);
+              if (field) inlineErrors[`${row.index}-${field}`] = message;
+            });
+          }
+        });
+
+        if (Object.keys(inlineErrors).length > 0) {
+          setErrors((prev) => ({ ...prev, ...inlineErrors }));
+        }
+      } else {
+        toast.error('Failed to save bank details');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -102,7 +189,8 @@ const BankMasterAdd = () => {
     index: number,
     required = true,
     placeholder = '',
-    type: 'text' | 'number' = 'text'
+    inputMode?: 'numeric',
+    maxLength?: number
   ) => {
     const errorKey = `${index}-${field}`;
     const fieldError = errors[errorKey];
@@ -114,10 +202,13 @@ const BankMasterAdd = () => {
           {required && <span className="text-red-500"> *</span>}
         </Label>
         <Input
-          type={type}
+          type="text"
+          inputMode={inputMode}
+          maxLength={maxLength}
           placeholder={placeholder}
           value={value}
           onChange={(e) => updateDraftRow(index, field, e.target.value)}
+          onBlur={() => handleFieldBlur(index, field)}
           className={`mt-1 rounded-none ${fieldError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
         />
         {fieldError && <p className="text-xs text-red-500">{fieldError}</p>}
@@ -158,7 +249,7 @@ const BankMasterAdd = () => {
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {renderField('Beneficiary / Account Name', 'beneficiaryName', row.beneficiaryName, index, true, 'Enter beneficiary or account name')}
                 {renderField('Bank Name', 'bankName', row.bankName, index, true, 'Enter bank name')}
-                {renderField('A/c No.', 'accountNo', row.accountNo, index, true, 'Enter account number', 'number')}
+                {renderField('A/c No.', 'accountNo', row.accountNo, index, true, 'Enter account number', 'numeric', 18)}
 
                 <div className="space-y-1.5">
                   <Label>
@@ -196,8 +287,8 @@ const BankMasterAdd = () => {
                   {errors[`${index}-accountType`] && <p className="text-xs text-red-500">{errors[`${index}-accountType`]}</p>}
                 </div>
 
-                {renderField('IFSC Code', 'ifscCode', row.ifscCode, index, true, 'Enter IFSC Code')}
-                {renderField('Swift Code', 'swiftCode', row.swiftCode, index, false, 'Enter SWIFT/BIC code')}
+                {renderField('IFSC Code', 'ifscCode', row.ifscCode, index, true, 'Enter IFSC Code', undefined, 11)}
+                {renderField('Swift Code', 'swiftCode', row.swiftCode, index, false, 'Enter SWIFT/BIC code', undefined, 11)}
                 {renderField('Branch', 'branch', row.branch, index, true, 'Enter branch name')}
               </div>
             </div>

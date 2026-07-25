@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -24,15 +23,6 @@ import {
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreHorizontal } from 'lucide-react';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -46,6 +36,7 @@ import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 export const AreaPage = () => {
   const { shouldShow } = useDynamicPermissions();
   const [areas, setAreas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -74,6 +65,8 @@ export const AreaPage = () => {
     } catch (error) {
       console.error('Error fetching areas:', error);
       toast.error('Failed to fetch areas');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -393,7 +386,8 @@ export const AreaPage = () => {
               {shouldShow("Area", "create") && (
                 <Button
                   onClick={() => setIsAddModalOpen(true)}
-                  className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
+                  className="fm-button-fix fm-button-brand px-4 py-2"
+                  variant="ghost"
                 >
                   <Plus className="w-4 h-4" />
                   Add Area
@@ -433,16 +427,26 @@ export const AreaPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {areas.length === 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="pt-4 pb-16">
+                      <div className="w-full flex items-center justify-start gap-3 pl-4">
+                        <div
+                          className="h-5 w-5 rounded-full animate-spin"
+                          style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                        />
+                        <span className="text-sm text-black">Loading ...</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : areas.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-4">
-                      No areas found
                     </TableCell>
                   </TableRow>
                 ) : filteredAreas.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-4">
-                      No areas match your search
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -451,7 +455,7 @@ export const AreaPage = () => {
                       <TableCell>
                         {shouldShow("Area", "update") && (
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(area)}>
-                            <Edit className="w-4 h-4 text-[#C72030]" />
+                            <Edit className="w-4 h-4 text-brand" />
                           </Button>
                         )}
                       </TableCell>
@@ -467,7 +471,7 @@ export const AreaPage = () => {
                               setSelectedQrCode(area.qr_code_url);
                               setIsQrModalOpen(true);
                             }}
-                            className="text-[#C72030] hover:text-[#C72030]/80"
+                            className="text-brand hover:text-brand/80"
                           >
                             <QrCode className="w-4 h-4" />
                           </Button>
@@ -659,7 +663,8 @@ export const AreaPage = () => {
             <div className="flex justify-end pt-4">
               <Button
                 onClick={handleUpdateArea}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                variant="ghost"
+                className="fm-button-fix fm-button-brand px-8"
                 disabled={!name.trim() || !buildingId}
               >
                 Submit
@@ -701,7 +706,7 @@ export const AreaPage = () => {
                       document.body.removeChild(link);
                       toast.success('QR Code downloaded successfully');
                     }}
-                    className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                    className="fm-button-fix fm-button-brand"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Download QR Code

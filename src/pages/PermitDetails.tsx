@@ -1450,10 +1450,10 @@ export const PermitDetails = () => {
 
     if (loading) {
         return (
-            <div className="p-6 min-h-screen bg-gray-50">
-                <div className="flex items-center justify-center h-64">
-                    <RefreshCw className="w-8 h-8 animate-spin text-[#C72030]" />
-                    <span className="ml-3 text-gray-600">Loading permit details...</span>
+            <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <p className="text-gray-700">Loading permit details...</p>
                 </div>
             </div>
         );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import axios from 'axios';
@@ -58,6 +59,7 @@ export const AutoSavedPRDashboard = () => {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [savedPR, setSavedPR] = useState<PRData[]>([]);
+  const [loading, setLoading] = useState(true);
   const procurementEvents = useProcurementEvents();
 
   useEffect(() => {
@@ -77,6 +79,8 @@ export const AutoSavedPRDashboard = () => {
         try { procurementEvents.onPrDraftReopened(null, null); } catch (err) {}
       } catch (error) {
         console.log(error)
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -133,6 +137,32 @@ export const AutoSavedPRDashboard = () => {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-3">Temp Requests</h1>
 
+      {loading ? (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">Actions</TableHead>
+                <TableHead className="font-medium">Type</TableHead>
+                <TableHead className="font-medium">Last Updated</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={3} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                    />
+                    <span className="text-sm text-black">Loading ...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
       <EnhancedTable
         data={[...savedPR].reverse()}
         columns={columns}
@@ -140,7 +170,7 @@ export const AutoSavedPRDashboard = () => {
         renderActions={renderActions}
         storageKey="auto-saved-pr-dashboard"
         className="bg-white rounded-lg shadow overflow-x-auto"
-        emptyMessage="No temp requests available"
+        emptyMessage=""
         searchPlaceholder="Search temp requests..."
         enableExport={true}
         exportFileName="temp-requests"
@@ -152,6 +182,7 @@ export const AutoSavedPRDashboard = () => {
         currentPage={currentPage}
         onPageChange={handlePageChange}
       />
+      )}
     </div>
   );
 };

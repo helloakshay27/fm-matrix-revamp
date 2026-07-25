@@ -1017,14 +1017,22 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
     };
 
     const removeRow = (index) => {
-        const updated = openingBalances.filter((_, i) => i !== index);
-        setOpeningBalances(updated);
+        const target = openingBalances[index];
+        // Existing backend record: keep it (hidden) and flag it for destruction so the save
+        // payload can send { id, _destroy: true } instead of silently dropping it.
+        if (target?.id) {
+            setOpeningBalances(openingBalances.map((r, i) => i === index ? { ...r, _destroy: true } : r));
+            return;
+        }
+        // Unsaved new row: nothing to destroy on the backend, just remove it locally.
+        setOpeningBalances(openingBalances.filter((_, i) => i !== index));
     };
 
     return (
         <div>
             {openingBalances?.map((row, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-3">
+                row._destroy ? null :
+                <div key={row.id ?? index} className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-3">
 
                     <TextField
                         label="Bill No"
@@ -1096,7 +1104,7 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
                             +
                         </Button>
 
-                        {openingBalances.length > 1 && (
+                        {openingBalances.filter(r => !r._destroy).length > 1 && (
                             <Button
                                 onClick={() => removeRow(index)}
                                 variant="outline"
@@ -1171,11 +1179,22 @@ const ContactPersonsTab = ({ rows, setRows }) => {
     };
 
     const handleAddRow = () => {
-        setRows(prev => [...prev, { salutation: '', firstName: '', lastName: '', email: '', workPhone: '', mobile: '' }]);
+        setRows(prev => [...prev, { id: null, salutation: '', firstName: '', lastName: '', email: '', workPhone: '', mobile: '' }]);
     };
 
     const handleDeleteRow = (idx) => {
-        setRows(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
+        setRows(prev => {
+            const visibleCount = prev.filter(r => !r._destroy).length;
+            if (visibleCount === 1) return prev;
+            const target = prev[idx];
+            // Existing backend record: keep it (hidden) and flag it for destruction so the
+            // save payload can send { id, _destroy: true } instead of silently dropping it.
+            if (target?.id) {
+                return prev.map((r, i) => i === idx ? { ...r, _destroy: true } : r);
+            }
+            // Unsaved new row: nothing to destroy on the backend, just remove it locally.
+            return prev.filter((_, i) => i !== idx);
+        });
         // Clean up errors for deleted row
         setRowErrors(prev => {
             const updated = { ...prev };
@@ -1200,7 +1219,8 @@ const ContactPersonsTab = ({ rows, setRows }) => {
                 </thead>
                 <tbody>
                     {rows.map((row, idx) => (
-                        <tr key={idx}>
+                        row._destroy ? null : (
+                        <tr key={row.id ?? idx}>
                             <td className="border p-2">
                                 <select
                                     className="border rounded px-2 py-1 w-full"
@@ -1277,12 +1297,13 @@ const ContactPersonsTab = ({ rows, setRows }) => {
                                     className="text-red-500 text-lg px-2"
                                     onClick={() => handleDeleteRow(idx)}
                                     title="Delete Row"
-                                    disabled={rows.length === 1}
+                                    disabled={rows.filter(r => !r._destroy).length === 1}
                                 >
                                     &#10005;
                                 </button>
                             </td>
                         </tr>
+                        )
                     ))}
                 </tbody>
             </table>
@@ -1567,7 +1588,7 @@ const CustomersEdit = () => {
 
     // CONTACT PERSONS
     const [contactPersons, setContactPersons] = useState([
-        { salutation: "", firstName: "", lastName: "", email: "", workPhone: "", mobile: "" }
+        { id: null as number | null, salutation: "", firstName: "", lastName: "", email: "", workPhone: "", mobile: "" }
     ]);
 
     const [openingBalances, setOpeningBalances] = useState([
@@ -1802,6 +1823,8 @@ const CustomersEdit = () => {
         };
 
         const contactPersonsPayload = contactPersons.map(row => ({
+            ...(row.id ? { id: row.id } : {}),
+            ...(row._destroy ? { _destroy: true } : {}),
             first_name: row.firstName,
             last_name: row.lastName,
             salutation: row.salutation,
@@ -1811,12 +1834,13 @@ const CustomersEdit = () => {
         }));
 
         const openingBalancePayload = openingBalances
-            .filter(row => row.bill_no || row.amount) // skip empty rows
+            .filter(row => row._destroy || row.bill_no || row.amount) // skip empty unsaved rows, but always keep destroy markers
             .map(row => {
                 const absAmount = row.amount ? Math.abs(Number(row.amount)) : 0;
                 const signedAmount = row.account_type === "Credit note" ? -absAmount : absAmount;
                 return {
                     ...(row.id ? { id: row.id } : {}),
+                    ...(row._destroy ? { _destroy: true } : {}),
                     bill_no: row.bill_no || null,
                     date: row.date || null,
                     due_date: row.due_date || null,

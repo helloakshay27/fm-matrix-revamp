@@ -60,6 +60,11 @@ export const AddMaterialPRDashboard = () => {
   const rowsAddedRef = useRef(0);
   const hasSubmittedRef = useRef(false);
   const hasAutoSavedRef = useRef(false);
+  const pendingTasksRef = useRef(0);
+  const markTaskDone = () => {
+    pendingTasksRef.current -= 1;
+    if (pendingTasksRef.current <= 0) setPageLoading(false);
+  };
   const markSection = (section: PrSection) => {
     if (sectionsSeenRef.current.has(section)) return;
     sectionsSeenRef.current.add(section);
@@ -141,6 +146,7 @@ export const AddMaterialPRDashboard = () => {
   const [selectedWbsCode, setSelectedWbsCode] = useState<string>("");
   const [overallGlCode, setOverallGlCode] = useState<string>("");
   const [slid, setSlid] = useState(null);
+  const [pageLoading, setPageLoading] = useState(true);
 
   // Fetch GL Account options
   const fetchGlAccountOptions = async () => {
@@ -202,6 +208,7 @@ export const AddMaterialPRDashboard = () => {
   // Fetch saved PR details if saved_pr_id is present
   useEffect(() => {
     if (savedPrId) {
+      pendingTasksRef.current += 1;
       setSlid(savedPrId);
       const fetchSavedPRDetails = async () => {
         try {
@@ -259,6 +266,8 @@ export const AddMaterialPRDashboard = () => {
         } catch (error) {
           console.error("Error fetching saved PR details:", error);
           toast.error("Failed to fetch saved PR details");
+        } finally {
+          markTaskDone();
         }
       };
       fetchSavedPRDetails();
@@ -361,6 +370,7 @@ export const AddMaterialPRDashboard = () => {
 
   useEffect(() => {
     if (shouldFetch) {
+      pendingTasksRef.current += 1;
       const cloneData = async () => {
         try {
           const response = await dispatch(getMaterialPRById({ baseUrl, token, id: cloneId })).unwrap();
@@ -402,6 +412,8 @@ export const AddMaterialPRDashboard = () => {
         } catch (error) {
           console.log(error);
           toast.error(error);
+        } finally {
+          markTaskDone();
         }
       };
       cloneData();
@@ -409,57 +421,31 @@ export const AddMaterialPRDashboard = () => {
   }, [shouldFetch]);
 
   useEffect(() => {
-    const fetchSuppliers = async () => {
-      try {
-        const response = await dispatch(getSuppliers({ baseUrl, token })).unwrap();
-        setSuppliers(response.suppliers);
-      } catch (error) {
-        console.log(error);
-        toast.dismiss();
-        toast.error(error);
-      }
+    const initialTask = async (fn) => {
+      pendingTasksRef.current += 1;
+      try { await fn(); } catch (e) { console.error(e); }
+      finally { markTaskDone(); }
     };
 
-    const fetchPlantDetails = async () => {
-      try {
-        const response = await dispatch(getPlantDetails({ baseUrl, token })).unwrap();
-        setPlantDetails(response);
-      } catch (error) {
-        console.log(error);
-        toast.dismiss();
-        toast.error(error);
-      }
-    };
-
-    const fetchAddresses = async () => {
-      try {
-        const response = await dispatch(getAddresses({ baseUrl, token })).unwrap();
-        setAddresses(response.admin_invoice_addresses);
-      } catch (error) {
-        console.log(error);
-        toast.dismiss();
-        toast.error(error);
-      }
-    };
-
-    const fetchInventories = async () => {
-      try {
-        const response = await dispatch(getInventories({ baseUrl, token })).unwrap();
-        setInventories(response.inventories);
-      } catch (error) {
-        console.log(error);
-        toast.dismiss();
-        toast.error(error);
-      }
-    };
-
-    fetchSuppliers();
-    fetchPlantDetails();
-    fetchAddresses();
-    fetchInventories();
-    fetchGlAccountOptions();
-    fetchTaxCodeOptions();
-    fetchStorageLocationOptions();
+    initialTask(async () => {
+      const response = await dispatch(getSuppliers({ baseUrl, token })).unwrap();
+      setSuppliers(response.suppliers);
+    });
+    initialTask(async () => {
+      const response = await dispatch(getPlantDetails({ baseUrl, token })).unwrap();
+      setPlantDetails(response);
+    });
+    initialTask(async () => {
+      const response = await dispatch(getAddresses({ baseUrl, token })).unwrap();
+      setAddresses(response.admin_invoice_addresses);
+    });
+    initialTask(async () => {
+      const response = await dispatch(getInventories({ baseUrl, token })).unwrap();
+      setInventories(response.inventories);
+    });
+    initialTask(fetchGlAccountOptions);
+    initialTask(fetchTaxCodeOptions);
+    initialTask(fetchStorageLocationOptions);
   }, []);
 
   const handleSupplierChange = (e) => {
@@ -833,6 +819,17 @@ export const AddMaterialPRDashboard = () => {
       setSubmitting(false);
     }
   };
+
+  if (pageLoading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading form data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 mx-auto">

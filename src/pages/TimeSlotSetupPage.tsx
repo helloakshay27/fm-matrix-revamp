@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Switch } from '../components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Plus, Search, Edit, X, RefreshCw } from 'lucide-react';
+import { Plus, Search, Edit, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
 import { ColumnVisibilityDropdown } from '../components/ColumnVisibilityDropdown';
@@ -49,7 +49,7 @@ export const TimeSlotSetupPage = () => {
   const [editStartTime, setEditStartTime] = useState('');
   const [editEndTime, setEditEndTime] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
@@ -387,17 +387,19 @@ export const TimeSlotSetupPage = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-center py-8">
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00B4D8]"></div>
-                    <span className="ml-2">Loading time slots...</span>
+                <TableCell colSpan={3} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                    />
+                    <span className="text-sm text-black">Loading ...</span>
                   </div>
                 </TableCell>
               </TableRow>
             ) : filteredData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={3} className="text-center py-8 text-gray-500">
-                  No time slots found
                 </TableCell>
               </TableRow>
             ) : (

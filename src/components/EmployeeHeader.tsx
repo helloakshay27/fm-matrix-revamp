@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -661,10 +662,11 @@ export const EmployeeHeader: React.FC = () => {
                         onDrop={(e) => handleModuleDrop(e, module.name)}
                         onDragOver={handleModuleDragOver}
                         onClick={() => handleModuleClick(module)}
-                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${isActive
+                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${
+                          isActive
                             ? "bg-white text-[#C72030] shadow-sm"
                             : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                          }`}
+                        }`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
                         <span className="hidden lg:inline text-[10px] sm:text-xs">
@@ -725,10 +727,11 @@ export const EmployeeHeader: React.FC = () => {
                                 handleModuleDragStart(e, module.name)
                               }
                               onClick={() => handleModuleClick(module)}
-                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${isActive
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${
+                                isActive
                                   ? "bg-[#DBC2A9] text-[#1a1a1a]"
                                   : "hover:bg-[#f6f4ee] text-gray-700"
-                                }`}
+                              }`}
                             >
                               <Icon className="w-5 h-5 flex-shrink-0" />
                               <span className="text-sm font-medium">
@@ -792,17 +795,17 @@ export const EmployeeHeader: React.FC = () => {
             onOpenChange={setIsNotificationOpen}
           >
             <DropdownMenuTrigger asChild>
-              <button className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                <Bell className="w-5 h-5 text-gray-600" />
+              <Button
+                variant="ghost"
+                className="fm-button-fix relative !bg-transparent !text-[#DA7756] hover:!bg-[#fdf0ea] rounded-full [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
+              >
+                <Bell className="w-5 h-5" />
                 {notificationCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                  >
+                  <Badge className="absolute -top-1 -right-1 !h-5 !w-5 !min-w-5 !rounded-full flex items-center justify-center !p-0 text-xs !bg-[#DA7756] hover:!bg-[#DA7756]/90 !text-white border-none">
                     {notificationCount}
                   </Badge>
                 )}
-              </button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
@@ -848,15 +851,17 @@ export const EmployeeHeader: React.FC = () => {
                       <button
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
-                          }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                          !notification.read ? "bg-blue-50/30" : ""
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                              !notification.read
                                 ? "bg-[#C72030]"
                                 : "bg-gray-300"
-                              }`}
+                            }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -918,13 +923,16 @@ export const EmployeeHeader: React.FC = () => {
           {/* User Profile Dropdown */}
           <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 p-1.5 hover:bg-gray-50 rounded-lg transition-colors">
-                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center flex-shrink-0">
+              <button className="flex h-9 w-9 aspect-square items-center justify-center !rounded-full p-0 transition-colors hover:bg-[#fdf0ea] outline-none">
+                <div className="h-8 w-8 aspect-square !rounded-full bg-[#DA7756] flex items-center justify-center flex-shrink-0">
                   <User className="w-4 h-4 text-white" />
                 </div>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72 p-0">
+            <DropdownMenuContent
+              align="end"
+              className="w-72 p-0 !rounded-xl overflow-hidden"
+            >
               {/* User Info Header */}
               <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                 <p className="text-sm font-semibold text-gray-900">
@@ -936,7 +944,7 @@ export const EmployeeHeader: React.FC = () => {
                 <div className="flex items-center gap-2 mt-3">
                   <Badge
                     variant="outline"
-                    className="text-xs bg-green-50 text-green-700 border-green-200 font-medium"
+                    className="text-xs bg-green-50 text-green-700 border-green-200 font-medium !rounded-full"
                   >
                     <User className="w-3 h-3 mr-1" />
                     {(isViSite && viAccount
@@ -972,7 +980,7 @@ export const EmployeeHeader: React.FC = () => {
                         const adminLink = getFirstAdminLink();
                         window.location.href = adminLink;
                       }}
-                      className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg text-sm font-medium group shadow-sm"
+                      className="fm-button-fix fm-button-brand px-4 py-2 !rounded-full text-sm font-medium group shadow-sm"
                     >
                       <div className="flex items-center gap-2">
                         <Shield className="w-4 h-4" />
@@ -991,14 +999,14 @@ export const EmployeeHeader: React.FC = () => {
               <div className="py-1">
                 <DropdownMenuItem
                   onClick={handleProfileClick}
-                  className="mx-2 my-1 rounded-md"
+                  className="mx-2 my-1 !rounded-full"
                 >
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
                 {/* <DropdownMenuItem
                   onClick={handleSettingsClick}
-                  className="mx-2 my-1 rounded-md"
+                  className="mx-2 my-1 !rounded-full"
                 >
                   <Settings className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">Settings</span>
@@ -1011,7 +1019,7 @@ export const EmployeeHeader: React.FC = () => {
               <div className="p-2">
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md font-medium"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 !rounded-full font-medium"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout

@@ -349,14 +349,14 @@ console.log("Reassign payload:", {
                     <Button
                         onClick={handleFetchReportees}
                         variant="outline"
-                        className="flex items-center"
+                        className="flex items-center !border-brand !text-brand hover:!bg-brand-light disabled:!border-brand disabled:!text-brand disabled:opacity-100"
                         disabled={isFetching || !currentEmail.trim()}
                     >
                         {isFetching ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Fetching...</>) : 'Fetch Reportees'}
                     </Button>
                     <Button
                         onClick={handleReassign}
-                        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 flex items-center"
+                        className="flex items-center !bg-brand hover:!bg-brand-hover !text-white disabled:!bg-brand disabled:!text-white disabled:opacity-100"
                         disabled={isSubmitting || selectedIds.size === 0 || !updatedEmail.trim()}
                     >
                         {isSubmitting ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...</>) : 'Reassign Selected'}

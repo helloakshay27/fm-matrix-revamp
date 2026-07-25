@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { StatsCard } from "@/components/StatsCard";
 import {
   Pagination,
   PaginationContent,
@@ -43,6 +44,7 @@ export const VendorOtherBillsPage = () => {
 
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSummary, setSelectedSummary] = useState<string | null>(null);
   const [billList, setBillList] = useState<any[]>([]);
 
   // Stats for the cards
@@ -182,46 +184,35 @@ export const VendorOtherBillsPage = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <Settings className="w-5 h-5 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-[#D92818] font-bold text-lg leading-tight">{stats.totalBills}</p>
-            <p className="text-xs text-gray-500 font-medium">Total Bills</p>
-          </div>
-        </div>
-        
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <Banknote className="w-5 h-5 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-[#D92818] font-bold text-lg leading-tight">₹ {stats.totalAmount}</p>
-            <p className="text-xs text-gray-500 font-medium">Total Amount</p>
-          </div>
-        </div>
-
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <CreditCard className="w-5 h-5 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-[#D92818] font-bold text-lg leading-tight">₹ {stats.totalPaidAmount}</p>
-            <p className="text-xs text-gray-500 font-medium">Total Paid Amount</p>
-          </div>
-        </div>
-
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 h-[100px]">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <Clock className="w-5 h-5 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-[#D92818] font-bold text-lg leading-tight">₹ {stats.totalPendingAmount}</p>
-            <p className="text-xs text-gray-500 font-medium">Total Pending Amount</p>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6">
+        <StatsCard
+          title="Total Bills"
+          value={stats.totalBills}
+          selected={selectedSummary === "total"}
+          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("total")}
+        />
+        <StatsCard
+          title="Total Amount"
+          value={`₹ ${Number(stats.totalAmount).toLocaleString()}`}
+          selected={selectedSummary === "amount"}
+          icon={<Banknote className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("amount")}
+        />
+        <StatsCard
+          title="Total Paid Amount"
+          value={`₹ ${Number(stats.totalPaidAmount).toLocaleString()}`}
+          selected={selectedSummary === "paid"}
+          icon={<CreditCard className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("paid")}
+        />
+        <StatsCard
+          title="Total Pending Amount"
+          value={`₹ ${Number(stats.totalPendingAmount).toLocaleString()}`}
+          selected={selectedSummary === "pending"}
+          icon={<Clock className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("pending")}
+        />
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">

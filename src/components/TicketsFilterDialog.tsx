@@ -498,7 +498,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
             </Button>
             <Button 
               onClick={handleSubmit}
-              className="bg-[hsl(var(--analytics-primary))] hover:bg-[hsl(var(--analytics-primary))]/90 text-white"
+              className="!bg-brand hover:!bg-brand-hover !text-white"
             >
               Apply Filters
             </Button>

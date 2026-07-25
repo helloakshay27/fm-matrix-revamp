@@ -13,6 +13,7 @@ import {
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CalendarDays, Plus, Eye, Edit, Trash2, Filter, Loader2 } from 'lucide-react';
 import { useApiConfig } from '@/hooks/useApiConfig';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
@@ -144,7 +145,7 @@ export const HolidayCalendarPage = () => {
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [recurringOpen, setRecurringOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadingHolidays, setLoadingHolidays] = useState(false);
+  const [loadingHolidays, setLoadingHolidays] = useState(true);
   const [loadingEditData, setLoadingEditData] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
@@ -766,11 +767,39 @@ export const HolidayCalendarPage = () => {
 
       {/* Loader overlay */}
       {loadingHolidays && (
-        <div className="flex items-center justify-center py-12">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <p className="text-sm text-gray-500">Loading holidays...</p>
-          </div>
+        <div className="bg-white rounded-lg border border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">Action</TableHead>
+                <TableHead className="font-medium">Holiday Name</TableHead>
+                <TableHead className="font-medium">Date</TableHead>
+                <TableHead className="font-medium">Recurring</TableHead>
+                <TableHead className="font-medium">Sites</TableHead>
+                <TableHead className="font-medium">Holiday Type</TableHead>
+                <TableHead className="font-medium">Modules</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={8} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{
+                        border: "2px solid #000000",
+                        borderTopColor: "transparent",
+                      }}
+                    />
+                    <span className="text-sm text-black">
+                      Loading ...
+                    </span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
       )}
 
@@ -785,6 +814,7 @@ export const HolidayCalendarPage = () => {
         enableSearch={true}
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
+        emptyMessage=""
         rightActions={(
           <>
             {activeFilterCount > 0 && (
