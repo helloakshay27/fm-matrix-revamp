@@ -25,11 +25,23 @@ export type AssetConfigDimension =
 export function useAssetEvents() {
   const posthog = usePostHog();
 
+  const getCommonContext = () => ({
+    project_id: "P-223",
+    project_code: "FM-01",
+    site_id: localStorage.getItem("selectedSiteId") ?? undefined,
+    site_name: localStorage.getItem("selectedSiteName") ?? undefined,
+    company_id: localStorage.getItem("selectedCompanyId") ?? undefined,
+    company_name: localStorage.getItem("selectedCompany") ?? undefined,
+    organization_id: localStorage.getItem("selectedOrgId") ?? undefined,
+    organization_name: localStorage.getItem("selectedOrg") ?? undefined,
+  });
+
   const capture = (event: string, assetId: string | number | null, props: Record<string, unknown> = {}) => {
     if (!posthog) return;
     posthog.capture(event, {
       platform: "web",
       release_version: RELEASE_VERSION,
+      ...getCommonContext(),
       asset_id: assetId,
       ...props,
     });
