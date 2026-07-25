@@ -23,7 +23,7 @@ export function PostHogPageView() {
         site_name: localStorage.getItem("selectedSiteName") ?? undefined,
         company_id: companyIdNum,
         company_name: localStorage.getItem("selectedCompany") ?? undefined,
-        organization_id: (() => { const v = localStorage.getItem("selectedOrgId") ?? localStorage.getItem("organization_id"); return v && !isNaN(Number(v)) ? Number(v) : undefined; })(),
+        organization_id: (() => { const v = localStorage.getItem("selectedOrgId") ?? localStorage.getItem("organization_id") ?? localStorage.getItem("org_id"); return v && !isNaN(Number(v)) ? Number(v) : undefined; })(),
         organization_name: localStorage.getItem("selectedOrg") ?? undefined,
         user_id: userIdNum,
       });

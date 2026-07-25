@@ -29,7 +29,7 @@ export function PostHogScheduleActivity({ event, properties }: PostHogScheduleAc
     const companyIdNum = _companyId && !isNaN(Number(_companyId)) ? Number(_companyId) : undefined;
     const _userId = localStorage.getItem("userId") ?? localStorage.getItem("user_id");
     const userIdNum = _userId && !isNaN(Number(_userId)) ? Number(_userId) : undefined;
-    const _orgId = localStorage.getItem("selectedOrgId") ?? localStorage.getItem("organization_id");
+    const _orgId = localStorage.getItem("selectedOrgId") ?? localStorage.getItem("organization_id") ?? localStorage.getItem("org_id");
     const orgIdNum = _orgId && !isNaN(Number(_orgId)) ? Number(_orgId) : undefined;
 
     return {

@@ -9,7 +9,7 @@ export const useAMCEvents = () => {
                 company_name: localStorage.getItem('selectedCompany') || localStorage.getItem('company_name') || undefined,
                 site_id: (() => { const v = localStorage.getItem('selectedSiteId') || localStorage.getItem('site_id'); return v && !isNaN(Number(v)) ? Number(v) : undefined; })(),
                 site_name: localStorage.getItem('selectedSiteName') || localStorage.getItem('site_name') || undefined,
-                organization_id: (() => { const v = localStorage.getItem('selectedOrgId') || localStorage.getItem('organization_id'); return v && !isNaN(Number(v)) ? Number(v) : undefined; })(),
+                organization_id: (() => { const v = localStorage.getItem('selectedOrgId') || localStorage.getItem('organization_id') || localStorage.getItem('org_id'); return v && !isNaN(Number(v)) ? Number(v) : undefined; })(),
                 organization_name: localStorage.getItem('selectedOrg') || localStorage.getItem('organization_name') || undefined,
                 user_id: (() => { const v = localStorage.getItem('userId') || localStorage.getItem('user_id'); return v && !isNaN(Number(v)) ? Number(v) : undefined; })(),
                 role: localStorage.getItem('role') || localStorage.getItem('userRole'),
