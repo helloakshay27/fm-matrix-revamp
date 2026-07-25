@@ -2,10 +2,13 @@ import { usePostHog } from 'posthog-js/react';
 
 // Common base properties for all Permit events
 const getBaseProperties = () => {
-  const companyId = localStorage.getItem('companyId') || 'unknown';
-  const siteId = localStorage.getItem('siteId') || 'unknown';
-  const userId = localStorage.getItem('userId') || 'unknown';
-  const role = localStorage.getItem('role') || 'unknown';
+  const _companyId = localStorage.getItem('companyId') ?? localStorage.getItem('company_id');
+  const companyId = _companyId && !isNaN(Number(_companyId)) ? Number(_companyId) : undefined;
+  const _siteId = localStorage.getItem('siteId') ?? localStorage.getItem('selectedSiteId') ?? localStorage.getItem('site_id');
+  const siteId = _siteId && !isNaN(Number(_siteId)) ? Number(_siteId) : undefined;
+  const _userId = localStorage.getItem('userId') ?? localStorage.getItem('user_id');
+  const userId = _userId && !isNaN(Number(_userId)) ? Number(_userId) : undefined;
+  const role = localStorage.getItem('role') || undefined;
 
   return {
     project_id: "P-223",
@@ -15,7 +18,7 @@ const getBaseProperties = () => {
     company_name: localStorage.getItem('selectedCompany') || localStorage.getItem('company_name') || undefined,
     site_id: siteId,
     site_name: localStorage.getItem('selectedSiteName') || localStorage.getItem('site_name') || undefined,
-    organization_id: localStorage.getItem('selectedOrgId') || localStorage.getItem('organization_id') || undefined,
+    organization_id: (() => { const v = localStorage.getItem('selectedOrgId') ?? localStorage.getItem('organization_id'); return v && !isNaN(Number(v)) ? Number(v) : undefined; })(),
     organization_name: localStorage.getItem('selectedOrg') || localStorage.getItem('organization_name') || undefined,
     user_id: userId,
     role: role,
