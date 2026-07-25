@@ -12,6 +12,8 @@ import {
   fetchRoles,
   type FmAdoptionFilters,
 } from "@/services/fmAdoptionApi";
+import { fetchAllowedSites } from "@/services/sitesAPI";
+import { getUser } from "@/utils/auth";
 import Spinner from "@/components/common/Spinner";
 import ErrorState from "@/components/common/ErrorState";
 import { FilterBar } from "./components/FilterBar";
@@ -31,46 +33,50 @@ function defaultRange(days: number) {
   return { from, to };
 }
 
-const SITE_DIRECTORY_FILTERS: FmAdoptionFilters = {
-  siteIds: [],
-  fromDate: formatDate(subDays(new Date(), 364), "yyyy-MM-dd"),
-  toDate: formatDate(new Date(), "yyyy-MM-dd"),
-};
-
 export function FmAdoptionDashboardPage() {
   const [dateRange, setDateRange] = useState(() => defaultRange(30));
   const [activePresetDays, setActivePresetDays] = useState<number | null>(30);
   const [siteId, setSiteId] = useState("all");
 
-  const filters: FmAdoptionFilters = useMemo(
-    () => ({
-      siteIds: siteId === "all" ? [] : [siteId],
-      fromDate: formatDate(dateRange.from, "yyyy-MM-dd"),
-      toDate: formatDate(dateRange.to, "yyyy-MM-dd"),
-    }),
-    [siteId, dateRange]
-  );
+  const userId = getUser()?.id;
 
-  const { data: siteDirectory } = useQuery({
-    queryKey: ["fm-adoption", "site-directory"],
-    queryFn: () => fetchSites(SITE_DIRECTORY_FILTERS),
+  const { data: allowedSites } = useQuery({
+    queryKey: ["fm-adoption", "allowed-sites", userId],
+    queryFn: () => fetchAllowedSites(String(userId)),
+    enabled: !!userId,
     staleTime: 10 * 60 * 1000,
   });
 
-  const siteOptions = (siteDirectory?.sites ?? [])
+  const siteOptions = (allowedSites?.sites ?? [])
     .slice()
-    .sort((a, b) => a.site_name.localeCompare(b.site_name))
-    .map((s) => ({ value: s.site_id, label: `${s.site_name} — ${s.company_name}` }));
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((s) => ({ value: String(s.id), label: s.name }));
 
-  const overviewQ = useQuery({ queryKey: ["fm-adoption", "overview", filters], queryFn: () => fetchOverview(filters) });
-  const timeseriesQ = useQuery({ queryKey: ["fm-adoption", "timeseries", filters], queryFn: () => fetchTimeseries(filters) });
-  const engagementQ = useQuery({ queryKey: ["fm-adoption", "engagement", filters], queryFn: () => fetchEngagement(filters) });
-  const modulesQ = useQuery({ queryKey: ["fm-adoption", "modules", filters], queryFn: () => fetchModules(filters) });
-  const eventsQ = useQuery({ queryKey: ["fm-adoption", "events", filters], queryFn: () => fetchEvents(filters) });
-  const sitesQ = useQuery({ queryKey: ["fm-adoption", "sites", filters], queryFn: () => fetchSites(filters) });
-  const rolesQ = useQuery({ queryKey: ["fm-adoption", "roles", filters], queryFn: () => fetchRoles(filters) });
+  const allowedSiteIds = (allowedSites?.sites ?? []).map((s) => String(s.id));
 
-  const isInitialLoading = [overviewQ, timeseriesQ, engagementQ, modulesQ, eventsQ, sitesQ, rolesQ].some((q) => q.isLoading);
+  const filters: FmAdoptionFilters = useMemo(
+    () => ({
+      siteIds: siteId === "all" ? allowedSiteIds : [siteId],
+      fromDate: formatDate(dateRange.from, "yyyy-MM-dd"),
+      toDate: formatDate(dateRange.to, "yyyy-MM-dd"),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [siteId, dateRange, allowedSites]
+  );
+
+  // Wait for the allowed-sites lookup to settle before firing any scoped query,
+  // so "All sites" never briefly requests unscoped, cross-tenant data.
+  const allowedSitesReady = !userId || allowedSites !== undefined;
+
+  const overviewQ = useQuery({ queryKey: ["fm-adoption", "overview", filters], queryFn: () => fetchOverview(filters), enabled: allowedSitesReady });
+  const timeseriesQ = useQuery({ queryKey: ["fm-adoption", "timeseries", filters], queryFn: () => fetchTimeseries(filters), enabled: allowedSitesReady });
+  const engagementQ = useQuery({ queryKey: ["fm-adoption", "engagement", filters], queryFn: () => fetchEngagement(filters), enabled: allowedSitesReady });
+  const modulesQ = useQuery({ queryKey: ["fm-adoption", "modules", filters], queryFn: () => fetchModules(filters), enabled: allowedSitesReady });
+  const eventsQ = useQuery({ queryKey: ["fm-adoption", "events", filters], queryFn: () => fetchEvents(filters), enabled: allowedSitesReady });
+  const sitesQ = useQuery({ queryKey: ["fm-adoption", "sites", filters], queryFn: () => fetchSites(filters), enabled: allowedSitesReady });
+  const rolesQ = useQuery({ queryKey: ["fm-adoption", "roles", filters], queryFn: () => fetchRoles(filters), enabled: allowedSitesReady });
+
+  const isInitialLoading = !allowedSitesReady || [overviewQ, timeseriesQ, engagementQ, modulesQ, eventsQ, sitesQ, rolesQ].some((q) => q.isLoading);
   const isAnyFetching = [overviewQ, timeseriesQ, engagementQ, modulesQ, eventsQ, sitesQ, rolesQ].some((q) => q.isFetching);
   const isAnyError = [overviewQ, timeseriesQ, engagementQ, modulesQ, eventsQ, sitesQ, rolesQ].some((q) => q.isError);
 
