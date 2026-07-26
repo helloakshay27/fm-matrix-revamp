@@ -70,7 +70,7 @@ export const VendorBiddingSection: React.FC<VendorBiddingSectionProps> = ({
                 type="button"
                 size="icon"
                 onClick={addVendorBid}
-                className="h-8 w-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full"
+                className="h-8 w-8 bg-brand hover:bg-brand-hover text-white rounded-full [&_svg]:text-white"
               >
                 <Plus className="h-4 w-4" />
               </Button>

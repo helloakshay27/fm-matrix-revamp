@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { CustomTextField } from '@/components/ui/custom-text-field';
+import { TextField } from '@mui/material';
+import { FormSearchSelect, type FormSearchSelectOption } from '@/components/FormSearchSelect';
 import { useToast } from '@/hooks/use-toast';
 
 interface AddDeviationStatusModalProps {
@@ -30,11 +30,38 @@ export const AddDeviationStatusModal = ({ isOpen, onClose }: AddDeviationStatusM
   };
 
   const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '6px',
+      backgroundColor: '#FFFFFF',
+      height: 45,
+      '& fieldset': {
+        borderColor: '#E0E0E0',
+      },
+      '&:hover fieldset': {
+        borderColor: '#1A1A1A',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: 'var(--color-primary)',
+        borderWidth: 2,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: '#1A1A1A',
+      fontWeight: 500,
+      '&.Mui-focused': {
+        color: 'var(--color-primary)',
+      },
+    },
     '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
+      padding: '12px 14px',
+      fontSize: '14px',
     },
   };
+
+  const fixedStateOptions: FormSearchSelectOption[] = [
+    { value: 'state1', label: 'State 1' },
+    { value: 'state2', label: 'State 2' },
+  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -44,48 +71,52 @@ export const AddDeviationStatusModal = ({ isOpen, onClose }: AddDeviationStatusM
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            <CustomTextField
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TextField
+              label="Status"
               placeholder="Enter status"
               value={formData.status}
               onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
 
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="fixed-state-label" shrink>Fixed State</InputLabel>
-              <MuiSelect
-                labelId="fixed-state-label"
+            <div className="pt-1">
+              <FormSearchSelect
                 label="Fixed State"
-                displayEmpty
                 value={formData.fixedState}
-                onChange={(e) => setFormData(prev => ({ ...prev, fixedState: e.target.value }))}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Fixed State</em></MenuItem>
-                <MenuItem value="state1">State 1</MenuItem>
-                <MenuItem value="state2">State 2</MenuItem>
-              </MuiSelect>
-            </FormControl>
+                onChange={(value) => setFormData(prev => ({ ...prev, fixedState: value }))}
+                options={fixedStateOptions}
+                placeholder="Select Fixed State"
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <CustomTextField
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TextField
+              label="Status Order"
               placeholder="Enter status order"
               value={formData.order}
               onChange={(e) => setFormData(prev => ({ ...prev, order: e.target.value }))}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
 
-            <div className="flex items-center gap-2">
-              <CustomTextField
-                type="color"
-                value={formData.color}
-                onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-                sx={{ width: '60px' }}
-              />
-              <div 
-                className="w-10 h-10 border rounded"
-                style={{ backgroundColor: formData.color }}
-              />
+            <div>
+              <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Color</label>
+              <div className="h-[45px] rounded-md border border-[#E0E0E0] px-3 flex items-center gap-3">
+                <input
+                  type="color"
+                  value={formData.color}
+                  onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
+                  className="h-8 w-12 cursor-pointer border-0 bg-transparent p-0"
+                />
+                <span className="text-sm text-gray-600">{formData.color.toUpperCase()}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -93,7 +124,7 @@ export const AddDeviationStatusModal = ({ isOpen, onClose }: AddDeviationStatusM
         <div className="flex justify-center pt-4">
           <Button 
             onClick={handleSubmit}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
+            className="bg-brand hover:bg-brand-hover text-white px-8"
           >
             Submit
           </Button>
