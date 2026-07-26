@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { FormSearchSelect, type FormSearchSelectOption } from '@/components/FormSearchSelect';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from '@/hooks/use-toast';
 
@@ -35,32 +35,25 @@ export const FitoutRequestFilterDialog = ({ isOpen, onClose }: FitoutRequestFilt
     console.log('Resetting filters...');
   };
 
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
-  };
+  const categoryOptions: FormSearchSelectOption[] = [
+    { value: 'renovation', label: 'Renovation' },
+    { value: 'electrical', label: 'Electrical' },
+    { value: 'plumbing', label: 'Plumbing' },
+    { value: 'flooring', label: 'Flooring' },
+  ];
 
-  const selectMenuProps = {
-    disableScrollLock: true,
-    anchorOrigin: {
-      vertical: 'bottom' as const,
-      horizontal: 'left' as const,
-    },
-    transformOrigin: {
-      vertical: 'top' as const,
-      horizontal: 'left' as const,
-    },
-    PaperProps: {
-      sx: {
-        mt: 1,
-        maxHeight: 300,
-        overflow: 'auto',
-        zIndex: 99999,
-      },
-    },
-  };
+  const unitOptions: FormSearchSelectOption[] = [
+    { value: 'unit-101', label: 'Unit 101' },
+    { value: 'unit-102', label: 'Unit 102' },
+    { value: 'unit-103', label: 'Unit 103' },
+  ];
+
+  const statusOptions: FormSearchSelectOption[] = [
+    { value: 'pending', label: 'Pending' },
+    { value: 'approved', label: 'Approved' },
+    { value: 'rejected', label: 'Rejected' },
+    { value: 'completed', label: 'Completed' },
+  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -96,62 +89,38 @@ export const FitoutRequestFilterDialog = ({ isOpen, onClose }: FitoutRequestFilt
             </RadioGroup>
           </div>
 
-          <div className="space-y-4">
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="category-label" shrink>Category</InputLabel>
-              <MuiSelect
-                labelId="category-label"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="pt-1">
+              <FormSearchSelect
                 label="Category"
-                displayEmpty
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                sx={fieldStyles}
-                MenuProps={selectMenuProps}
-              >
-                <MenuItem value=""><em>Select Category</em></MenuItem>
-                <MenuItem value="renovation">Renovation</MenuItem>
-                <MenuItem value="electrical">Electrical</MenuItem>
-                <MenuItem value="plumbing">Plumbing</MenuItem>
-                <MenuItem value="flooring">Flooring</MenuItem>
-              </MuiSelect>
-            </FormControl>
+                onChange={setCategory}
+                options={categoryOptions}
+                placeholder="Select Category"
+              />
+            </div>
 
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="unit-label" shrink>Unit</InputLabel>
-              <MuiSelect
-                labelId="unit-label"
+            <div className="pt-1">
+              <FormSearchSelect
                 label="Unit"
-                displayEmpty
                 value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                sx={fieldStyles}
-                MenuProps={selectMenuProps}
-              >
-                <MenuItem value=""><em>Select Unit</em></MenuItem>
-                <MenuItem value="unit-101">Unit 101</MenuItem>
-                <MenuItem value="unit-102">Unit 102</MenuItem>
-                <MenuItem value="unit-103">Unit 103</MenuItem>
-              </MuiSelect>
-            </FormControl>
+                onChange={setUnit}
+                options={unitOptions}
+                placeholder="Select Unit"
+              />
+            </div>
 
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="status-label" shrink>Status</InputLabel>
-              <MuiSelect
-                labelId="status-label"
+            <div className="pt-1">
+              <FormSearchSelect
                 label="Status"
-                displayEmpty
                 value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                sx={fieldStyles}
-                MenuProps={selectMenuProps}
-              >
-                <MenuItem value=""><em>Select Status</em></MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="approved">Approved</MenuItem>
-                <MenuItem value="rejected">Rejected</MenuItem>
-                <MenuItem value="completed">Completed</MenuItem>
-              </MuiSelect>
-            </FormControl>
+                onChange={setStatus}
+                options={statusOptions}
+                placeholder="Select Status"
+              />
+            </div>
+
+            <div className="hidden md:block" />
           </div>
         </div>
 

@@ -635,8 +635,8 @@ td:last-child {
 }
 
 .mui-search-input:focus {
-  border-color: #1976d2 !important;
-  box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.15), 0 2px 8px rgba(0,0,0,0.15) !important;
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 4px rgba(218, 119, 86, 0.15), 0 2px 8px rgba(0,0,0,0.15) !important;
   background-color: #fafbfc !important;
   transform: translateY(-1px) !important;
 }
