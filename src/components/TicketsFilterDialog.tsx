@@ -492,7 +492,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
             <Button 
               variant="outline" 
               onClick={handleReset}
-              className="text-[hsl(var(--analytics-text))] border-[hsl(var(--analytics-border))]"
+              className="border-brand text-brand hover:bg-brand hover:text-white"
             >
               {filtersCleared ? 'Go to List' : 'Reset'}
             </Button>

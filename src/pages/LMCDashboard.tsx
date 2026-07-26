@@ -593,14 +593,13 @@ const LMCDashboard = () => {
                     <Button
                         variant="outline"
                         onClick={handleResetFilters}
-                        className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="border-brand text-brand hover:bg-brand hover:text-white"
                     >
                         Reset
                     </Button>
                     <Button
                         onClick={handleApplyFilters}
-                        variant="ghost"
-                        className="fm-button-fix fm-button-brand"
+                        className="!bg-brand hover:!bg-brand-hover !text-white"
                     >
                         Apply
                     </Button>
