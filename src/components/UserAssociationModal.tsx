@@ -27,6 +27,7 @@ interface UserAssociationModalProps {
 
 export const UserAssociationModal = ({ isOpen, onClose, checklistName }: UserAssociationModalProps) => {
   const { toast } = useToast();
+  const [isNotesFocused, setIsNotesFocused] = useState(false);
   const [formData, setFormData] = useState({
     userType: '',
     userName: '',
@@ -207,16 +208,20 @@ export const UserAssociationModal = ({ isOpen, onClose, checklistName }: UserAss
             </Box>
           </Box>
 
-          <TextField
-            label="Notes"
-            placeholder="Enter Notes"
-            value={formData.notes}
-            onChange={(e) => handleInputChange('notes', e.target.value)}
-            fullWidth
-            multiline
-            minRows={4}
-            InputLabelProps={{ shrink: true }}
-          />
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-[#1A1A1A]">Notes</label>
+            <textarea
+              placeholder="Enter Notes"
+              value={formData.notes}
+              onChange={(e) => handleInputChange('notes', e.target.value)}
+              onFocus={() => setIsNotesFocused(true)}
+              onBlur={() => setIsNotesFocused(false)}
+              className="w-full min-h-[96px] resize-y rounded-md bg-white px-[14px] py-3 text-sm leading-6 outline-none"
+              style={{
+                border: isNotesFocused ? '2px solid var(--color-primary)' : '1px solid #E0E0E0',
+              }}
+            />
+          </div>
 
           <div className="space-y-2">
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
