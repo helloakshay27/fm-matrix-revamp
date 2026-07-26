@@ -148,6 +148,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
   const [dependenciesLoading, setDependenciesLoading] = useState(false);
 
   const [formData, setFormData] = useState({
+    taskCode: "",
     taskTitle: "",
     description: "",
     responsiblePerson: "",
@@ -431,6 +432,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
       const taskData = task as {
         project_management_id?: string;
         milestone_id?: string;
+        task_code?: string;
         title?: string;
         description?: string;
         responsible_person_id?: string;
@@ -491,6 +493,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
         ) || [];
 
       setFormData({
+        taskCode: taskData.task_code || "",
         taskTitle: taskData.title || "",
         description: taskData.description || "",
         responsiblePerson: taskData.responsible_person_id || "",
@@ -740,6 +743,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
     const payload = {
       task_management: {
+        task_code: formData.taskCode,
         title: formData.taskTitle,
         description: formData.description,
         responsible_person_id: formData.responsiblePerson,
@@ -917,13 +921,28 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
           }
 
           {/* Task Title */}
-          <div className="mb-1">
+          <div className="mb-4">
             <TextField
               fullWidth
               label="Task Title *"
               name="taskTitle"
               placeholder="Enter Task Title"
               value={formData.taskTitle}
+              onChange={handleInputChange}
+              variant="outlined"
+              size="small"
+              sx={fieldStyles}
+            />
+          </div>
+
+          {/* Task Code */}
+          <div className="mb-1">
+            <TextField
+              fullWidth
+              label="Task Code"
+              name="taskCode"
+              placeholder="Enter Task Code"
+              value={formData.taskCode}
               onChange={handleInputChange}
               variant="outlined"
               size="small"
