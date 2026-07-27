@@ -183,7 +183,7 @@ export const OperationalDaysTab: React.FC = () => {
             <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload className="h-4 w-4 mr-2 text-[#C72030]" />
                   Import
                 </Button>
               </DialogTrigger>

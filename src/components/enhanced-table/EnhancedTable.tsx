@@ -987,8 +987,8 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-[#D5DbDB] w-full min-w-0">
-        <div className="table-container overflow-x-auto">
+      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+        <div className="table-container">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -1011,16 +1011,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                         </div>
                       </TableHead>
                     )}
-                    {renderActions && (
-                      <TableHead
-                        className="bg-[#f6f4ee] text-center w-16 min-w-16 sticky top-0"
-                        data-actions
-                      >
-                        <div className="flex justify-center items-center text-center">
-                          Actions
-                        </div>
-                      </TableHead>
-                    )}
                     {selectable && (
                       <TableHead
                         className="bg-[#f6f4ee] w-12 min-w-12 text-center sticky top-0"
@@ -1036,6 +1026,16 @@ export function EnhancedTable<T extends Record<string, any>>({
                               "data-state": "indeterminate",
                             })}
                           />
+                        </div>
+                      </TableHead>
+                    )}
+                    {renderActions && (
+                      <TableHead
+                        className="bg-[#f6f4ee] text-center w-16 min-w-16 sticky top-0"
+                        data-actions
+                      >
+                        <div className="flex justify-center items-center text-center">
+                          Actions
                         </div>
                       </TableHead>
                     )}
@@ -1124,6 +1124,16 @@ export function EnhancedTable<T extends Record<string, any>>({
                         {/* Empty for add row */}
                       </TableCell>
                     )}
+                    {selectable && (
+                      <TableCell
+                        className="p-4 w-12 min-w-12 text-center"
+                        data-checkbox
+                      >
+                        <div className="flex justify-center">
+                          <Checkbox disabled />
+                        </div>
+                      </TableCell>
+                    )}
                     {renderActions && (
                       <TableCell
                         className="p-4 text-center w-16 min-w-16"
@@ -1148,16 +1158,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                           >
                             <X className="w-4 h-4" />
                           </Button>
-                        </div>
-                      </TableCell>
-                    )}
-                    {selectable && (
-                      <TableCell
-                        className="p-4 w-12 min-w-12 text-center"
-                        data-checkbox
-                      >
-                        <div className="flex justify-center">
-                          <Checkbox disabled />
                         </div>
                       </TableCell>
                     )}
@@ -1326,16 +1326,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                               )}
                             </TableCell>
                           )}
-                          {renderActions && (
-                            <TableCell
-                              className="p-4 text-center w-16 min-w-16"
-                              data-actions
-                            >
-                              <div className="flex justify-center items-center gap-2">
-                                {renderActions(item)}
-                              </div>
-                            </TableCell>
-                          )}
                           {selectable && (
                             <TableCell
                               className="p-4 w-12 min-w-12 text-center"
@@ -1352,6 +1342,16 @@ export function EnhancedTable<T extends Record<string, any>>({
                                   aria-label={`Select row ${index + 1}`}
                                   onClick={(e) => e.stopPropagation()}
                                 />
+                              </div>
+                            </TableCell>
+                          )}
+                          {renderActions && (
+                            <TableCell
+                              className="p-4 text-center w-16 min-w-16"
+                              data-actions
+                            >
+                              <div className="flex justify-center items-center gap-2">
+                                {renderActions(item)}
                               </div>
                             </TableCell>
                           )}

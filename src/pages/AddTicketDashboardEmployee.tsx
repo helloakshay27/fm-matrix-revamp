@@ -1185,15 +1185,15 @@ export const AddTicketDashboardEmployee = () => {
             <div className="flex gap-8">
               <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-8">
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="request" id="request" className="text-[#C72030] border-[#C72030]" />
+                  <RadioGroupItem value="request" id="request" />
                   <label htmlFor="request" className="text-sm font-medium">Request</label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="complaint" id="complaint" className="text-[#C72030] border-[#C72030]" />
+                  <RadioGroupItem value="complaint" id="complaint" />
                   <label htmlFor="complaint" className="text-sm font-medium">Complaint</label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="suggestion" id="suggestion" className="text-[#C72030] border-[#C72030]" />
+                  <RadioGroupItem value="suggestion" id="suggestion" />
                   <label htmlFor="suggestion" className="text-sm font-medium">Suggestion</label>
                 </div>
               </RadioGroup>

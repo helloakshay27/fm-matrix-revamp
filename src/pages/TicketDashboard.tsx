@@ -1351,7 +1351,7 @@ export const TicketDashboard = () => {
           <div title="View ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
             {shouldShow("Ticket", "show") && (
               <Eye
-                className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
+                className="w-4 h-4 text-gray-600 cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleViewDetails(item.id);
@@ -1370,7 +1370,7 @@ export const TicketDashboard = () => {
           </div> */}
           <div title={`${item.is_flagged ? 'Unflag' : 'Flag'} ticket`} className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Flag
-              className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:text-[#C72030] hover:scale-110 ${item.is_flagged
+              className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:scale-110 ${item.is_flagged
                 ? 'text-red-500 fill-red-500'
                 : 'text-gray-600'
                 }`}
@@ -1382,7 +1382,7 @@ export const TicketDashboard = () => {
           </div>
           <div title={`${item.is_golden_ticket ? 'Remove' : 'Mark as'} Golden Ticket`} className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Star
-              className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:text-[#C72030] hover:scale-110 ${item.is_golden_ticket
+              className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:scale-110 ${item.is_golden_ticket
                 ? 'text-yellow-500 fill-yellow-500'
                 : 'text-gray-600'
                 }`}
