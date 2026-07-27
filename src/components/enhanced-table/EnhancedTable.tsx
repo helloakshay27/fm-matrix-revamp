@@ -1260,12 +1260,14 @@ export function EnhancedTable<T extends Record<string, any>>({
                           <div>{emptyMessage}</div>
                           <Button
                             onClick={handleAddRowClick}
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-2"
+                            variant="icon"
+                            size="icon"
+                            className="h-8 w-8 !rounded-full bg-brand p-0 text-white hover:bg-brand-hover [&_svg]:text-white"
+                            aria-label={newRowPlaceholder}
+                            title={newRowPlaceholder}
                           >
-                            <Plus className="w-4 h-4" />
-                            {newRowPlaceholder}
+                            <Plus className="h-4 w-4" />
+                            <span className="sr-only">{newRowPlaceholder}</span>
                           </Button>
                         </div>
                       ) : (
@@ -1433,9 +1435,18 @@ export function EnhancedTable<T extends Record<string, any>>({
                         }
                         className="text-center py-4 text-gray-500 hover:text-gray-700"
                       >
-                        <div className="flex items-center justify-start gap-2">
-                          <Plus className="w-4 h-4" />
-                          {newRowPlaceholder}
+                        <div className="flex items-center justify-start">
+                          <Button
+                            onClick={handleAddRowClick}
+                            variant="icon"
+                            size="icon"
+                            className="h-8 w-8 !rounded-full bg-brand p-0 text-white hover:bg-brand-hover [&_svg]:text-white"
+                            aria-label={newRowPlaceholder}
+                            title={newRowPlaceholder}
+                          >
+                            <Plus className="h-4 w-4" />
+                            <span className="sr-only">{newRowPlaceholder}</span>
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
