@@ -281,7 +281,7 @@ export const DepartmentDashboard = () => {
                       <Switch
                         checked={department.status}
                         onCheckedChange={() => toggleStatus(department.id)}
-                        className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                        className="data-[state=unchecked]:bg-gray-300"
                       />
                     </div>
                   </div>
