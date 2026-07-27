@@ -5,6 +5,7 @@ import { AddVehicleParkingModal } from '@/components/AddVehicleParkingModal';
 import { RVehicleImportModal } from '@/components/RVehicleImportModal';
 import { RVehicleFilterModal } from '@/components/RVehicleFilterModal';
 import { EditVehicleDialog } from '@/components/EditVehicleDialog';
+import { Switch } from '@/components/ui/switch';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useNavigate } from 'react-router-dom';
@@ -273,18 +274,11 @@ export const RVehiclesDashboard = () => {
     staffName: vehicle.staffName || '--',
     status: (
       <div className="flex items-center">
-        <div
-          className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-            vehicle.statusCode === 'Active' ? 'bg-green-500' : 'bg-gray-300'
-          }`}
-          onClick={() => handleStatusToggle(vehicle.id)}
-        >
-          <span
-            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-              vehicle.statusCode === 'Active' ? 'translate-x-6' : 'translate-x-1'
-            }`}
-          />
-        </div>
+        <Switch
+          checked={vehicle.statusCode === 'Active'}
+          onCheckedChange={() => handleStatusToggle(vehicle.id)}
+          className="data-[state=checked]:bg-green-500"
+        />
       </div>
     ),
     qrCode: vehicle.qrCode
