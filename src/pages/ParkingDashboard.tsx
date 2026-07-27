@@ -1,27 +1,26 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Plus, Download, Eye, Search, Grid3x3, X, Upload, MoreHorizontal, Car, Bike, MapPin, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { Plus, Eye, X, Upload, Car, Bike, MapPin, CheckCircle, AlertTriangle } from "lucide-react";
 import { BulkUploadModal } from "@/components/BulkUploadModal";
-import { ColumnVisibilityDropdown } from "@/components/ColumnVisibilityDropdown";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useNavigate,useLocation } from "react-router-dom";
 import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
 import { fetchParkingBookings, ParkingBookingClient, ParkingBookingSummary } from '@/services/parkingConfigurationsAPI';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+
+const tableColumns: ColumnConfig[] = [
+  { key: 'name', label: 'Client Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'two_wheeler_count', label: 'No. of 2 Wheeler', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'four_wheeler_count', label: 'No. of 4 Wheeler', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'free_parking', label: 'Free Parking', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'paid_parking', label: 'Paid Parking', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'available_parking_slots', label: 'Available Parking Slots', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+];
+
 const ParkingDashboard = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,17 +44,6 @@ const ParkingDashboard = () => {
   return Number(params.get('page')) || 1;
 });
   const [itemsPerPage] = useState(10);
-
-  // Column visibility state
-  const [columns, setColumns] = useState([
-    { key: 'action', label: 'Action', visible: true },
-    { key: 'clientName', label: 'Client Name', visible: true },
-    { key: 'twoWheeler', label: 'No. of 2 Wheeler', visible: true },
-    { key: 'fourWheeler', label: 'No. of 4 Wheeler', visible: true },
-    { key: 'freeParking', label: 'Free Parking', visible: true },
-    { key: 'paidParking', label: 'Paid Parking', visible: true },
-    { key: 'availableSlots', label: 'Available Parking Slots', visible: true }
-  ]);
   
   useEffect(() => {
   navigate(`${location.pathname}?page=${currentPage}`, {
@@ -220,34 +208,41 @@ const ParkingDashboard = () => {
     );
   }, [searchTerm, parkingData]);
 
-  // Paginated data
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredParkingData.slice(startIndex, endIndex);
-  }, [filteredParkingData, currentPage, itemsPerPage]);
-
-  // Calculate total pages
-  const totalPages = Math.ceil(filteredParkingData.length / itemsPerPage);
-
   // Handle search
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     setCurrentPage(1); // Reset to first page when searching
   };
 
-  // Column visibility functions
-  const handleColumnToggle = (columnKey: string, visible: boolean) => {
-    setColumns(prev => 
-      prev.map(col => 
-        col.key === columnKey ? { ...col, visible } : col
-      )
-    );
+  const renderCell = (row: ParkingBookingClient, columnKey: string) => {
+    switch (columnKey) {
+      case 'name':
+        return <span className="font-medium">{row.name}</span>;
+      case 'two_wheeler_count':
+        return row.two_wheeler_count;
+      case 'four_wheeler_count':
+        return row.four_wheeler_count;
+      case 'free_parking':
+        return row.free_parking;
+      case 'paid_parking':
+        return row.paid_parking;
+      case 'available_parking_slots':
+        return row.available_parking_slots;
+      default:
+        return row[columnKey as keyof ParkingBookingClient] ?? '--';
+    }
   };
 
-  const isColumnVisible = (columnKey: string) => {
-    return columns.find(col => col.key === columnKey)?.visible ?? true;
-  };
+  const renderActions = (row: ParkingBookingClient) =>
+    shouldShow("Parking", "show") ? (
+      <button
+        className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded"
+        onClick={() => handleViewDetails(row.id)}
+        title="View Details"
+      >
+        <Eye className="w-4 h-4" />
+      </button>
+    ) : null;
 
   return (
     <div className="p-6 space-y-6 min-h-screen">
@@ -298,168 +293,43 @@ const ParkingDashboard = () => {
         )}
       </div>
 
-      {/* Controls Section */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        {/* Action Button */}
-        <div className="flex gap-2">
-          {shouldShow("Parking","create")&&(
-          <Button 
-           className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-            onClick={handleActionClick}
-          >
-             <Plus className="w-4 h-4 mr-2" />
-           
-            Action
-          </Button>)}
-        </div>
-
-        {/* Right Side Controls */}
-        <div className="flex items-center gap-2">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#8a7e72] w-4 h-4" />
-            <Input
-              placeholder="Search clients..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 w-64"
-            />
-          </div>
-
-          {/* Column Visibility */}
-          <ColumnVisibilityDropdown
-            columns={columns}
-            onColumnToggle={handleColumnToggle}
-          />
-        </div>
-      </div>
-
-      {/* Data Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              {isColumnVisible('action') && <TableHead className="font-semibold">Action</TableHead>}
-              {isColumnVisible('clientName') && <TableHead className="font-semibold">Client Name</TableHead>}
-              {isColumnVisible('twoWheeler') && <TableHead className="font-semibold text-center">No. of 2 Wheeler</TableHead>}
-              {isColumnVisible('fourWheeler') && <TableHead className="font-semibold text-center">No. of 4 Wheeler</TableHead>}
-              {isColumnVisible('freeParking') && <TableHead className="font-semibold text-center">Free Parking</TableHead>}
-              {isColumnVisible('paidParking') && <TableHead className="font-semibold text-center">Paid Parking</TableHead>}
-              {isColumnVisible('availableSlots') && <TableHead className="font-semibold text-center">Available Parking Slots</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={columns.filter(col => col.visible).length} className="text-center py-8 text-gray-500">
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="w-5 h-5 animate-spin text-black" />
-                    <span>Loading ...</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : paginatedData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.filter(col => col.visible).length} className="text-center py-8 text-gray-500">
-                  {error ? error :
-                   searchTerm.trim() ? `No clients found matching "${searchTerm}"` : 'No parking data available'}
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginatedData.map((row) => (
-                <TableRow key={row.id} className="hover:bg-gray-50">
-                  {isColumnVisible('action') && (
-                    <TableCell>
-                      {shouldShow("Parking","show")&&(
-                      <button 
-                        className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded"
-                        onClick={() => handleViewDetails(row.id)}
-                        title="View Details"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>)}
-                    </TableCell>
-                  )}
-                  {isColumnVisible('clientName') && <TableCell className="font-medium">{row.name}</TableCell>}
-                  {isColumnVisible('twoWheeler') && <TableCell className="text-center">{row.two_wheeler_count}</TableCell>}
-                  {isColumnVisible('fourWheeler') && <TableCell className="text-center">{row.four_wheeler_count}</TableCell>}
-                  {isColumnVisible('freeParking') && <TableCell className="text-center">{row.free_parking}</TableCell>}
-                  {isColumnVisible('paidParking') && <TableCell className="text-center">{row.paid_parking}</TableCell>}
-                  {isColumnVisible('availableSlots') && <TableCell className="text-center">{row.available_parking_slots}</TableCell>}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="mt-6">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => {
-                    if (currentPage > 1) {
-                      setCurrentPage(currentPage - 1);
-                    }
-                  }}
-                  className={
-                    currentPage === 1 || loading
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                  aria-disabled={loading || currentPage === 1}
-                />
-              </PaginationItem>
-
-              {Array.from(
-                { length: Math.min(totalPages, 10) },
-                (_, i) => i + 1
-              ).map((page) => (
-                <PaginationItem key={page} className="cursor-pointer">
-                  <PaginationLink
-                    onClick={() => !loading && setCurrentPage(page)}
-                    isActive={currentPage === page}
-                    aria-disabled={loading}
-                    className={loading ? 'pointer-events-none opacity-50' : ''}
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-
-              {totalPages > 10 && (
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-              )}
-
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => {
-                    if (currentPage < totalPages) {
-                      setCurrentPage(currentPage + 1);
-                    }
-                  }}
-                  className={
-                    currentPage === totalPages || loading
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                  aria-disabled={loading || currentPage === totalPages}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-
-          {/* <div className="text-center mt-2 text-sm text-gray-600">
-            Showing page {currentPage} of {totalPages} ({filteredParkingData.length} total clients)
-          </div> */}
-        </div>
-      )}
+      <EnhancedTable
+        data={filteredParkingData}
+        columns={tableColumns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        enableSearch={true}
+        searchTerm={searchTerm}
+        onSearchChange={handleSearch}
+        disableClientSearch={true}
+        storageKey="parking-allocation-table"
+        emptyMessage={
+          error
+            ? error
+            : searchTerm.trim()
+              ? `No clients found matching "${searchTerm}"`
+              : 'No parking data available'
+        }
+        searchPlaceholder="Search clients..."
+        hideTableExport={true}
+        loading={loading}
+        pagination={true}
+        pageSize={itemsPerPage}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+        leftActions={
+          shouldShow("Parking", "create") ? (
+            <Button
+              className="fm-button-fix fm-button-brand px-4 py-2"
+              variant="ghost"
+              onClick={handleActionClick}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Action
+            </Button>
+          ) : undefined
+        }
+      />
 
       <BulkUploadModal 
         isOpen={isBulkUploadOpen} 

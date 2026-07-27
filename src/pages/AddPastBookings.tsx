@@ -195,7 +195,7 @@ export const AddPastBookings = () => {
             const newSelection = [...selectedSlots, slotId];
 
             // Check if adding this slot maintains consecutive pattern
-            if (!isConsecutiveSelection(newSelection)) return false;
+            // if (!isConsecutiveSelection(newSelection)) return false;
 
             // Check if total doesn't exceed max
             if (newSelection.length > maxSelectableSlots) return false;
@@ -1014,10 +1014,10 @@ export const AddPastBookings = () => {
                                 `You can select multiple consecutive slots. Selected slots must be continuous.`
                             ) : (
                                 <>
-                                    {bookingRuleData?.multiple_bookings
+                                    {/* {bookingRuleData?.multiple_bookings
                                         ? `You can select up to ${maxSelectableSlots} slots. `
                                         : 'You can select only one slot. '}
-                                    {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`}
+                                    {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`} */}
                                 </>
                             )}
                         </div>

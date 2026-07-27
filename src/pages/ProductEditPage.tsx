@@ -89,25 +89,25 @@ export const ProductEditPage = ({ mid, isOpen, onClose, fetchMenuItems }) => {
         setIsLoading(true);
         const response = await dispatch(fetchMenuDetails({ baseUrl, token, id: Number(id), mid })).unwrap();
         setFormData({
-          productName: response.name,
-          sku: response.sku,
-          masterPrice: response.master_price.toString(),
-          displayPrice: response.display_price.toString(),
-          stock: response.stock.toString(),
-          category: response.category_id.toString(),
-          subCategory: response.sub_category_id.toString(),
-          sgstRate: response.sgst_rate.toString(),
-          sgstAmount: response.sgst_amt.toString(),
-          cgstRate: response.cgst_rate.toString(),
-          cgstAmount: response.cgst_amt.toString(),
-          igstRate: response.igst_rate || "",
-          igstAmount: response.igst_amt || "",
-          description: response.description
+          productName: response?.name ?? "",
+          sku: response?.sku ?? "",
+          masterPrice: response?.master_price?.toString() ?? "",
+          displayPrice: response?.display_price?.toString() ?? "",
+          stock: response?.stock?.toString() ?? "",
+          category: response?.category_id?.toString() ?? "",
+          subCategory: response?.sub_category_id?.toString() ?? "",
+          sgstRate: response?.sgst_rate?.toString() ?? "",
+          sgstAmount: response?.sgst_amt?.toString() ?? "",
+          cgstRate: response?.cgst_rate?.toString() ?? "",
+          cgstAmount: response?.cgst_amt?.toString() ?? "",
+          igstRate: response?.igst_rate?.toString() ?? "",
+          igstAmount: response?.igst_amt?.toString() ?? "",
+          description: response?.description ?? ""
         });
-        setAttachments(response.images.map((img: any) => ({
-          id: img.id,
+        setAttachments(response?.images?.map((img: any) => ({
+          id: img?.id,
           document: img?.document
-        })));
+        })) ?? []);
       } catch (error) {
         console.error('Error fetching menu items:', error);
         setError('Failed to load menu details');
