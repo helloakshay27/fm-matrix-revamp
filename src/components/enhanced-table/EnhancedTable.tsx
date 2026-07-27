@@ -688,7 +688,7 @@ export function EnhancedTable<T extends Record<string, any>>({
 
     // Default search input
     return (
-      <div className="relative w-full sm:w-[420px] md:w-[460px] max-w-none">
+      <div className="relative w-[300px] max-w-full">
         {isSearching && (
           <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
         )}
@@ -701,7 +701,7 @@ export function EnhancedTable<T extends Record<string, any>>({
           }
           value={effectiveSearchValue}
           onChange={(e) => handleSearchInputChange(e.target.value)}
-          className="pl-10 pr-10"
+          className="h-9 pl-10 pr-10"
           disabled={isSearching}
         />
         {effectiveSearchValue && (
