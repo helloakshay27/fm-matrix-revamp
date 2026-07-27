@@ -526,7 +526,7 @@ export const WODetailsPage = () => {
             <Button
               size="sm"
               variant="outline"
-              className="border-gray-300 bg-purple-600 text-white sap_button"
+              // className="border-gray-300 bg-purple-600 text-white sap_button"
               onClick={handleSendToSap}
             >
               Send To SAP Team
@@ -587,7 +587,7 @@ export const WODetailsPage = () => {
               <Button
                 size="sm"
                 variant="outline"
-                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                 onClick={() => setOpenInvoiceModal(true)}
               >
                 Add Invoice
@@ -595,7 +595,7 @@ export const WODetailsPage = () => {
               <Button
                 size="sm"
                 variant="outline"
-                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                 onClick={handleOpenDebitCreditModal}
               >
                 Debit/Credit Note
@@ -1030,7 +1030,7 @@ export const WODetailsPage = () => {
           <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Invoices/SES Details</h3>
         </div>
 
-        
+
         <div className="overflow-x-auto">
           <EnhancedTable
             data={invoices}

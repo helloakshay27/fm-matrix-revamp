@@ -8,7 +8,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-[#F2EEE9] text-brand [&_svg]:text-brand",
+        default: "bg-[#C72030] !text-white [&_svg]:!text-white",
         destructive: "bg-[#F2EEE9] text-brand [&_svg]:text-brand",
         outline: "bg-white text-brand border border-brand [&_svg]:text-brand",
         secondary: "bg-[#F2EEE9] text-brand border-none [&_svg]:text-brand",

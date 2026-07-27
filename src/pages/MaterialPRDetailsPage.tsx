@@ -947,7 +947,7 @@ export const MaterialPRDetailsPage = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-gray-300 bg-purple-600 text-white"
+                    // className="border-gray-300 bg-purple-600 text-white"
                     onClick={handleSendToSap}
                     disabled={sapPushDisabled}
                   >

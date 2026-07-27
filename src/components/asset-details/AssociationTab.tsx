@@ -265,7 +265,6 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
               <Button
                 type="submit"
                 disabled={submitting || !assetId || (!parentId && childIds.length === 0)}
-                className="px-6 py-2 bg-purple-600 hover:bg-purple-700"
               >
                 {submitting ? 'Processing...' : 'Done'}
               </Button>
@@ -390,7 +389,8 @@ export const AssociationTab: React.FC<AssociationTabProps> = ({ asset, assetId }
         <h3 className="text-lg font-semibold">Asset Associations</h3>
         <Button
           onClick={openModalForCurrentAsset}
-          className="bg-purple-600 hover:bg-purple-700 text-white"
+          variant="outline"
+        // className="bg-purple-600 hover:bg-purple-700 text-white"
         >
           Associate Asset
         </Button>

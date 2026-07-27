@@ -1222,7 +1222,7 @@ export const PermitDetails = () => {
                 const response = await fetchPermitDetails(id);
                 console.log(response)
                 setPermitData(response);
-                
+
                 onPermitDetailOpened({
                     permit_status: response.permit.status,
                     open_source: isFromPendingApprovals ? 'approval_queue' : 'direct'
@@ -1503,7 +1503,7 @@ export const PermitDetails = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => navigate(`/safety/permit/edit/${id}`)}
-                                className="bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
+                            // className="bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
                             >
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit
