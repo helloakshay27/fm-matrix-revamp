@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Edit } from "lucide-react";
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -61,7 +61,16 @@ export const FitoutSetupDashboard = () => {
   const [isAddDeviationOpen, setIsAddDeviationOpen] = useState(false);
   const [isAddStatusOpen, setIsAddStatusOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Simulate loading data
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
