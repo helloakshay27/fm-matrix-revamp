@@ -253,21 +253,44 @@ const calculateStats = (permits: Permit[]) => {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "Active": return "bg-green-100 text-green-800";
-    case "Pending Approval": return "bg-yellow-100 text-yellow-800";
-    case "Completed": return "bg-blue-100 text-blue-800";
-    case "Expired": return "bg-red-100 text-red-800";
-    default: return "bg-gray-100 text-gray-800";
+    case "Active": return "bg-[#C7EDDA] text-[#2c2c2c]";
+    case "Pending Approval": return "bg-[#F2EBC9] text-[#2c2c2c]";
+    case "Completed": return "bg-[#CECBF6] text-[#2c2c2c]";
+    case "Expired": return "bg-[#F2C8C4] text-[#2c2c2c]";
+    default: return "bg-[#E5E0D8] text-[#2c2c2c]";
   }
 };
 
 const getRiskColor = (risk: string) => {
   switch (risk) {
-    case "High": return "bg-red-100 text-red-800";
-    case "Medium": return "bg-yellow-100 text-yellow-800";
-    case "Low": return "bg-green-100 text-green-800";
-    default: return "bg-gray-100 text-gray-800";
+    case "High": return "bg-[#F2C8C4] text-[#2c2c2c]";
+    case "Medium": return "bg-[#F2EBC9] text-[#2c2c2c]";
+    case "Low": return "bg-[#C7EDDA] text-[#2c2c2c]";
+    default: return "bg-[#E5E0D8] text-[#2c2c2c]";
   }
+};
+
+const PERMIT_TYPE_PALETTE = [
+  { bg: '#F2EBC9', text: '#2c2c2c' },
+  { bg: '#F8E4C7', text: '#2c2c2c' },
+  { bg: '#C7EDDA', text: '#2c2c2c' },
+  { bg: '#F2C8C4', text: '#2c2c2c' },
+  { bg: '#CECBF6', text: '#2c2c2c' },
+  { bg: 'rgba(218, 119, 86, 0.18)', text: '#DA7756' },
+  { bg: '#9EC8BA', text: '#2c2c2c' },
+];
+
+const getPermitTypeStyle = (permitType: string) => {
+  const name = (permitType || '').trim().toLowerCase();
+  if (!name) {
+    return { backgroundColor: '#E5E0D8', color: '#2c2c2c' };
+  }
+  let hash = 0;
+  for (let i = 0; i < name.length; i += 1) {
+    hash = (hash + name.charCodeAt(i) * (i + 1)) % PERMIT_TYPE_PALETTE.length;
+  }
+  const palette = PERMIT_TYPE_PALETTE[hash];
+  return { backgroundColor: palette.bg, color: palette.text };
 };
 
 // Utility: get current site ID from localStorage or URL params
@@ -942,15 +965,12 @@ export const PermitToWorkDashboard = () => {
       case 'reference_number':
         return permit.reference_number;
       case 'permit_type': {
-        const bgColor = permit["color"] || '#E5E7EB';
-        // If color is #6C3483, set text color to white
-        // const textColor = bgColor.toLowerCase() === '#6c3483' ? '#fff' : '#222';
-        const textColor = (bgColor.toLowerCase() === '#6c3483' || bgColor.toLowerCase() === '#008081') ? '#fff' : '#222';
+        const style = getPermitTypeStyle(permit.permit_type);
 
         return (
           <span
-            className="px-2 py-1 rounded text-sm font-semibold"
-            style={{ backgroundColor: bgColor, color: textColor }}
+            className="px-2.5 py-0.5 rounded text-xs font-medium inline-flex items-center"
+            style={style}
           >
             {permit.permit_type}
           </span>
@@ -992,16 +1012,18 @@ export const PermitToWorkDashboard = () => {
   const renderActions = (permit: Permit) => (
     <div className="flex items-center gap-2">
       {shouldShow("Permit", "show") && (
-        <div title="View permit details">
-          <Eye
-            className="w-5 h-5 text-gray-600 cursor-pointer hover:text-[#C72030]"
-            onClick={(e) => {
-              e.stopPropagation();
-              console.log("Eye clicked for permit:", permit.id);
-              handleViewPermit(permit.id);
-            }}
-          />
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 text-[#C72030] hover:bg-[#C72030]/10 hover:text-[#C72030]"
+          title="View permit details"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleViewPermit(permit.id);
+          }}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
       )}
     </div>
   );

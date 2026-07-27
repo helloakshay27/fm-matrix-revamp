@@ -41,6 +41,7 @@ export const OperationalAuditScheduledDashboard = () => {
     total_entries: 0,
   });
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchScheduleData(currentPage);
@@ -144,6 +145,7 @@ export const OperationalAuditScheduledDashboard = () => {
         <Button
           variant="ghost"
           size="sm"
+          className="h-8 w-8 p-0 text-black hover:bg-gray-100"
           onClick={() =>
             navigate(
               `/maintenance/audit/operational/scheduled/view/${item.id}`,
@@ -158,7 +160,7 @@ export const OperationalAuditScheduledDashboard = () => {
       );
     }
     if (columnKey === "id") {
-      return <span className="text-blue-600 font-medium">{item.id}</span>;
+      return <span className="text-gray-900 font-medium">{item.id}</span>;
     }
     if (columnKey === "task_assigned_to") {
       return item.task_assigned_to || "-";
@@ -182,53 +184,69 @@ export const OperationalAuditScheduledDashboard = () => {
     }
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
   return (
-    <div className="p-6">
+    <div className="flex-1 p-6 bg-white min-h-screen">
       <PostHogAuditActivity event="Audit Schedule List Viewed" />
       <div className="mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">SCHEDULE LIST</h1>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          Schedule List
+        </h1>
       </div>
 
-      <div className="overflow-x-auto">
-        <EnhancedTable
-          data={scheduleData}
-          columns={columns}
-          renderCell={renderCell}
-          // selectable={true}
-          // selectedItems={selectedItems}
-          onSelectAll={handleSelectAll}
-          onSelectItem={handleSelectItem}
-          getItemId={(item) => item.id.toString()}
-          storageKey="schedule-list-table"
-          className="w-full"
-          loading={loading}
-          pagination={{
-            currentPage: pagination.current_page,
-            totalPages: pagination.total_pages,
-            totalEntries: pagination.total_entries,
-            perPage: pagination.per_page,
-            onPageChange: handlePageChange,
-          }}
-          leftActions={
-            shouldShow("Audit", "create") && (
+      <EnhancedTable
+        data={scheduleData}
+        columns={columns}
+        renderCell={renderCell}
+        onSelectAll={handleSelectAll}
+        onSelectItem={handleSelectItem}
+        getItemId={(item) => item.id.toString()}
+        storageKey="schedule-list-table"
+        loading={loading}
+        enableSearch
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search schedules..."
+        pagination={false}
+        leftActions={
+          shouldShow("Audit", "create") ? (
+            <div className="flex items-center gap-2">
               <Button
                 onClick={handleAddSchedule}
-                className="fm-button-fix fm-button-brand px-4 py-2"
-                variant="ghost"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 mr-2" />
                 Add
               </Button>
-            )
-          }
-        />
-      </div>
+            </div>
+          ) : undefined
+        }
+      />
+
+      {pagination.total_pages > 1 && (
+        <div className="flex justify-center items-center gap-4 mt-6">
+          <Button
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+            disabled={currentPage === 1 || loading}
+            variant="outline"
+            className="h-9"
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-gray-600">
+            Page {currentPage} of {pagination.total_pages} ({pagination.total_entries} total)
+          </span>
+          <Button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(pagination.total_pages, prev + 1))
+            }
+            disabled={currentPage === pagination.total_pages || loading}
+            variant="outline"
+            className="h-9"
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
