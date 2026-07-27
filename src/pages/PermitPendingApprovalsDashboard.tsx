@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Eye, Loader2 } from "lucide-react";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { usePermitEvents } from "@/components/PostHogPermitEvents";
 
 interface PendingApproval {
   permit_id?: number;
@@ -32,6 +33,7 @@ export const PermitPendingApprovalsDashboard = () => {
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { onApprovalQueueViewed } = usePermitEvents();
 
   useEffect(()=>{
     navigate(`${location.pathname}?page=${currentPage}`,{replace:true});
@@ -68,7 +70,13 @@ export const PermitPendingApprovalsDashboard = () => {
         }
 
         const data: ApiResponse = await response.json();
-        setPendingApprovals(data.pending_approvals || []);
+        const approvals = data.pending_approvals || [];
+        setPendingApprovals(approvals);
+        
+        onApprovalQueueViewed({
+          pending_count: approvals.length,
+          type_mix: Array.from(new Set(approvals.map(a => a.resource_type)))
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
         console.error("Error fetching pending approvals:", err);

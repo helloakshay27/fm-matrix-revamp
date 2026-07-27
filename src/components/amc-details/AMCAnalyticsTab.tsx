@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, Settings } from "lucide-react";
+import { StatsCard } from "@/components/StatsCard";
 import {
   Pagination,
   PaginationContent,
@@ -189,283 +190,38 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
 
       {/* Analytics Cards Section */}
       <div className="space-y-4 p-4">
-
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 pb-4">
-        {/* SLA Achieved */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              SLA Achieved
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {formatValue(analytics?.sla_achieved)}
-            </span>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 px-4 pb-4">
+          <StatsCard
+            title="SLA Achieved"
+            value={formatValue(analytics?.sla_achieved)}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="No. of Critical Assets Covered"
+            value={formatValue(analytics?.critical_assets_covered_number)}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Critical Assets Covered (Value)"
+            value={formatValue(analytics?.critical_assets_covered_value)}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Visits Completed"
+            value={formatValue(analytics?.visits_completed)}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Pending Visits"
+            value={formatValue(analytics?.pending_visits)}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Open Tickets"
+            value={formatValue(analytics?.open_tickets)}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
         </div>
-
-        {/* No. of Critical Assets Covered */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              No. of Critical Assets Covered
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {formatValue(analytics?.critical_assets_covered_number)}
-            </span>
-          </div>
-        </div>
-
-        {/* Critical Assets Covered (Value) */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              Critical Assets Covered (Value)
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {formatValue(analytics?.critical_assets_covered_value)}
-            </span>
-          </div>
-        </div>
-
-        {/* Visits Completed */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center flex-1">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              Visits Completed
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {formatValue(analytics?.visits_completed)}
-            </span>
-            {/* {dashboardSummary?.visits_completed_percentage && (
-              <div className="mt-2">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-red-600 h-2 rounded-full" 
-                    style={{ width: `${dashboardSummary.visits_completed_percentage}%` }}
-                  ></div>
-                </div>
-                <span className="text-xs text-gray-600 mt-1">{dashboardSummary.visits_completed_percentage}%</span>
-              </div>
-            )} */}
-          </div>
-        </div>
-
-        {/* Pending Visits */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center flex-1">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              Pending Visits
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {formatValue(analytics?.pending_visits)}
-            </span>
-            {/* {dashboardSummary?.pending_visits_percentage && (
-              <div className="mt-2">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-orange-500 h-2 rounded-full" 
-                    style={{ width: `${dashboardSummary.pending_visits_percentage}%` }}
-                  ></div>
-                </div>
-                <span className="text-xs text-gray-600 mt-1">{dashboardSummary.pending_visits_percentage}%</span>
-              </div>
-            )} */}
-          </div>
-        </div>
-
-        {/* Open Tickets */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              Open Tickets
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {formatValue(analytics?.open_tickets)}
-            </span>
-          </div>
-        </div>
-      </div>
       </div>
 
       {/* Past AMC Section */}

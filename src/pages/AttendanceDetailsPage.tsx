@@ -39,7 +39,6 @@ export const AttendanceDetailsPage = () => {
   useEffect(() => {
     const fetchAttendanceData = async () => {
       try {
-        setLoading(true);
         const response = await fetch(getFullUrl(`/pms/attendances/${id}.json`), {
           method: 'GET',
           headers: {
@@ -63,6 +62,17 @@ export const AttendanceDetailsPage = () => {
     }
   }, [id]);
 
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading attendance data...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Derived records
   const allRecords = attendanceData?.attendances || [];
   return <div className="p-6">
@@ -85,10 +95,6 @@ export const AttendanceDetailsPage = () => {
         <h1 className="text-2xl font-bold text-[#1a1a1a]">ATTENDANCE DETAILS</h1>
       </div>
     </div>
-
-    {loading && <div className="flex justify-center items-center py-8">
-      <div className="text-lg">Loading attendance data...</div>
-    </div>}
 
     {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
       Error: {error}

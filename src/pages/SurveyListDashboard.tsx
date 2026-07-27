@@ -445,14 +445,6 @@ export const SurveyListDashboard = () => {
   console.log("Filtered surveys:", filteredSurveys);
   console.log("Columns:", columns);
 
-  if (loading) {
-    return (
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <div className="text-center py-8">Loading surveys...</div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -478,6 +470,7 @@ export const SurveyListDashboard = () => {
           searchPlaceholder="Search surveys..."
           pagination={true}
           pageSize={10}
+          loading={loading}
           leftActions={
             <div className="flex flex-wrap items-center gap-2 md:gap-4">
               {shouldShow("Survey List", "create") && (

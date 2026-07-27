@@ -47,6 +47,8 @@ interface Question {
   answerType: string;
   mandatory: boolean;
   answerOptions?: AnswerOption[];
+  placeholderText?: string;
+  maxLength?: string;
   rating?: number;
   selectedEmoji?: string;
   additionalFieldOnNegative?: boolean;
@@ -464,6 +466,8 @@ export const EditSurveyPage = () => {
                                 ? "description"
                                 : "description",
             mandatory: q.quest_mandatory,
+            placeholderText: q.placeholder_text || "",
+            maxLength: q.max_length ? String(q.max_length) : "",
             answerOptions:
               q.snag_quest_options?.map((option: any) => ({
                 id: option.id,
@@ -1136,6 +1140,17 @@ export const EditSurveyPage = () => {
         );
         formData.append(`question[][image_mandatory]`, "false");
 
+        if (question.answerType === "input-box") {
+          formData.append(
+            `question[][placeholder_text]`,
+            question.placeholderText || ""
+          );
+          formData.append(
+            `question[][max_length]`,
+            question.maxLength || ""
+          );
+        }
+
         // Add rating
         if (question.answerType === "rating" && question.rating) {
           formData.append(`question[][rating]`, question.rating.toString());
@@ -1744,6 +1759,42 @@ export const EditSurveyPage = () => {
                           </SelectContent>
                         </Select>
                       </div>
+
+                      {question.answerType === "input-box" && (
+                        <div className="space-y-2">
+                          <Label>Placeholder</Label>
+                          <Input
+                            value={question.placeholderText || ""}
+                            onChange={(e) =>
+                              handleQuestionChange(
+                                question.id!,
+                                "placeholderText",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Enter placeholder"
+                          />
+                        </div>
+                      )}
+
+                      {question.answerType === "input-box" && (
+                        <div className="space-y-2">
+                          <Label>Max Length</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={question.maxLength || ""}
+                            onChange={(e) =>
+                              handleQuestionChange(
+                                question.id!,
+                                "maxLength",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Enter max length"
+                          />
+                        </div>
+                      )}
 
                       {/* Multiple Choice, Rating, and Emoji Options */}
       {["multiple-choice", "rating", "emojis", "checkbox"].includes(

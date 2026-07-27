@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, Users, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Users, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BulkUploadModal } from '@/components/BulkUploadModal';
 import { ExportModal } from '@/components/ExportModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -593,13 +594,41 @@ export const RosterDashboard = () => {
         </div>
       </header>
 
-      {loading && (
-        <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+      {loading ? (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">Actions</TableHead>
+                <TableHead className="font-medium">Template</TableHead>
+                <TableHead className="font-medium">Location</TableHead>
+                <TableHead className="font-medium">Department</TableHead>
+                <TableHead className="font-medium">Shift</TableHead>
+                <TableHead className="font-medium">Roster Type</TableHead>
+                <TableHead className="font-medium">Created On</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={7} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{
+                        border: "2px solid #000000",
+                        borderTopColor: "transparent",
+                      }}
+                    />
+                    <span className="text-sm text-black">
+                      Loading ...
+                    </span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
-      )}
-
-      {!loading && (
+      ) : (
         <div className=" ">
           <EnhancedTable
             data={currentRosterData}
@@ -622,9 +651,8 @@ export const RosterDashboard = () => {
               </Button>
         )  
       }
-            pagination={false} // Disable built-in pagination since we're adding custom
-            loading={loading}
-            emptyMessage="No rosters found. Create your first roster to get started."
+            pagination={false}
+            emptyMessage=""
           />
 
           {/* Pagination Controls - matching BuildingPage style */}

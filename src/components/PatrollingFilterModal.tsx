@@ -63,11 +63,11 @@ export const PatrollingFilterModal = ({ isOpen, onClose, onApply }: PatrollingFi
   useEffect(() => {
     if (isOpen) {
       const siteId = localStorage.getItem('selectedSiteId');
-      if (siteId && buildings.length === 0) {
+      if (siteId) {
         dispatch(fetchAllBuildings(parseInt(siteId)));
       }
     }
-  }, [isOpen, dispatch, buildings.length]);
+  }, [isOpen, dispatch]);
 
   const handleInputChange = (field: keyof PatrollingFilters, value: string | number | null) => {
     setFilters(prev => {
@@ -91,7 +91,7 @@ export const PatrollingFilterModal = ({ isOpen, onClose, onApply }: PatrollingFi
         updated.roomId = null;
         
         if (value) {
-          dispatch(fetchAreas(value as number));
+          dispatch(fetchAreas({ buildingId: updated.buildingId as number, wingId: value as number }));
         }
       }
 

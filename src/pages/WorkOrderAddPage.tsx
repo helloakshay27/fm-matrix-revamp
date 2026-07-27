@@ -21,6 +21,7 @@ import { fetchServicePR, getWorkOrderById } from "@/store/slices/workOrderSlice"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import axios from "axios";
+import { useProcurementEvents } from "@/components/PostHogProcurementEvents";
 
 interface Attachment {
   id: number;
@@ -52,6 +53,7 @@ export const WorkOrderAddPage: React.FC = () => {
   const [servicePR, setServicePR] = useState([])
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const procurementEvents = useProcurementEvents();
 
   const [formData, setFormData] = useState({
     servicePr: "",
@@ -502,6 +504,7 @@ export const WorkOrderAddPage: React.FC = () => {
       setSubmitting(true);
       await dispatch(createServicePR({ data: payload, baseUrl, token })).unwrap();
       toast.success("Work Order created successfully");
+      try { procurementEvents.onWoSubmitted(detailsForms.length); } catch (err) {}
       navigate('/finance/wo');
     } catch (error) {
       console.log(error);

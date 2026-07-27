@@ -64,17 +64,17 @@ export const TaskDetailsPage = () => {
   const location = useLocation();
   const { shouldShow } = useDynamicPermissions();
   const taskEventKeyRef = useRef(0);
-  const [taskEvent, setTaskEvent] = useState<{
+  const [taskEvents, setTaskEvents] = useState<Array<{
     key: number;
     event: React.ComponentProps<typeof PostHogTaskActivity>['event'];
     properties?: Record<string, unknown>;
-  } | null>(null);
+  }>>([]);
 
   const captureTaskEvent = (
     event: React.ComponentProps<typeof PostHogTaskActivity>['event'],
     properties?: Record<string, unknown>
   ) => {
-    setTaskEvent({ key: ++taskEventKeyRef.current, event, properties });
+    setTaskEvents(prev => [...prev, { key: ++taskEventKeyRef.current, event, properties }]);
   };
   const [taskDetails, setTaskDetails] = useState<TaskOccurrence | null>(null);
   const [loading, setLoading] = useState(true);
@@ -537,7 +537,15 @@ export const TaskDetailsPage = () => {
       sonnerToast.dismiss(loadingToastId);
       sonnerToast.success("Task rescheduled successfully!");
 
+      // Usage/interaction plane
       captureTaskEvent('Task Rescheduled (UI)', { task_id: id });
+      // Business lifecycle plane (Task & PPM catalogue)
+      captureTaskEvent('Maintenance Task Rescheduled', {
+        task_id: id,
+        old_due: taskDetails?.task_details?.scheduled_on ?? null,
+        new_due: dateTimeString,
+        platform: 'web',
+      });
 
       // Refresh task details after successful reschedule
       const updatedDetails = await taskService.getTaskDetails(id!);
@@ -1300,9 +1308,9 @@ export const TaskDetailsPage = () => {
   return (
     <>
       <PostHogTaskActivity event="Task Detail Opened" />
-      {taskEvent && (
-        <PostHogTaskActivity key={taskEvent.key} event={taskEvent.event} properties={taskEvent.properties} />
-      )}
+      {taskEvents.map(evt => (
+        <PostHogTaskActivity key={evt.key} event={evt.event} properties={evt.properties} />
+      ))}
       <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
         {/* Header */}
         <div className="mb-6">
@@ -1336,7 +1344,7 @@ export const TaskDetailsPage = () => {
                         taskDetails?.actions?.can_edit) && (
                           <Button
                             onClick={handleTaskReschedule}
-                            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                            className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                           >
                             Task Reschedule
                           </Button>
@@ -1345,7 +1353,7 @@ export const TaskDetailsPage = () => {
                         taskDetails?.actions?.can_edit) && (
                           <Button
                             onClick={handleSubmitTask}
-                            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                            className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                           >
                             Submit Task
                           </Button>
@@ -1359,7 +1367,7 @@ export const TaskDetailsPage = () => {
                         taskDetails?.actions?.can_edit) && (
                           <Button
                             onClick={handleTaskReschedule}
-                            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                            className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                           >
                             Task Reschedule
                           </Button>
@@ -1381,7 +1389,7 @@ export const TaskDetailsPage = () => {
                           <Button
                             onClick={handleJobSheetModalClick}
                             variant="outline"
-                            className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
+                            className="border-brand text-brand hover:bg-brand-light px-4 py-2"
                           >
                             Job Sheet
                           </Button>
@@ -1396,7 +1404,7 @@ export const TaskDetailsPage = () => {
                     <>
                       <Button
                         onClick={handleSubmitTask}
-                        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                        className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                       >
                         Submit Task
                       </Button>
@@ -1414,7 +1422,7 @@ export const TaskDetailsPage = () => {
                         <Button
                           onClick={handleJobSheetModalClick}
                           variant="outline"
-                          className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
+                          className="border-brand text-brand hover:bg-brand-light px-4 py-2"
                         >
                           Job Sheet
                         </Button>
@@ -1422,7 +1430,7 @@ export const TaskDetailsPage = () => {
                     {taskDetails?.actions?.can_submit_task && (
                       <Button
                         onClick={handleSubmitTask}
-                        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                        className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                       >
                         Submit Task
                       </Button>

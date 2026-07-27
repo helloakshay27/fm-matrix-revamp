@@ -167,6 +167,12 @@ import axios from 'axios';
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import ItemSearchInput from '@/components/ItemSearchInput';
+import {
+    BankRecord,
+    bankMasterListUrl,
+    getBankMasterApiConfig,
+    mapApiBankRecord,
+} from './bankMasterUtils';
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -737,6 +743,24 @@ export const BillsAdd: React.FC = () => {
     const [customerNotes, setCustomerNotes] = useState('');
     const [termsAndConditions, setTermsAndConditions] = useState('');
     const [attachments, setAttachments] = useState<File[]>([]);
+
+    // Bank Details
+    const [bankOptions, setBankOptions] = useState<BankRecord[]>([]);
+    const [selectedBankId, setSelectedBankId] = useState<string>('');
+
+    useEffect(() => {
+        const fetchBanks = async () => {
+            try {
+                const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+                const res = await axios.get(`${bankMasterListUrl(baseUrl, lockAccountId)}&active=true`, { headers });
+                const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+                setBankOptions(data.map(mapApiBankRecord));
+            } catch (err) {
+                setBankOptions([]);
+            }
+        };
+        fetchBanks();
+    }, []);
     const [displayAttachmentsInPortal, setDisplayAttachmentsInPortal] = useState(false);
 
     // Email Communications
@@ -1421,6 +1445,13 @@ export const BillsAdd: React.FC = () => {
             return false;
         }
 
+        if (!selectedBankId) {
+            newErrors.bank = 'Bank is required';
+            setErrors(newErrors);
+            toast.error('Please select a bank');
+            return false;
+        }
+
         const hasValidItems = items.some(
             item => item.name && item.quantity > 0 && item.rate > 0
         );
@@ -1569,6 +1600,7 @@ export const BillsAdd: React.FC = () => {
             // formData.append('sale_order[delivery_method]', deliveryMethod);
             // formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
             formData.append('lock_account_bill[notes]', customerNotes);
+            formData.append('lock_account_bill[bank_master_id]', selectedBankId || '');
             // formData.append('lock_account_bill[terms_and_conditions]', termsAndConditions);
             // formData.append('lock_account_bill[status]', 'draft');
             formData.append(
@@ -2762,6 +2794,45 @@ export const BillsAdd: React.FC = () => {
                         placeholder="Enter any notes for the bill"
                     />
                     <p className="text-xs text-gray-400 text-right mt-1">{customerNotes.length}/500</p>
+
+                    <div className="mt-4 w-1/2">
+                        <label className="block text-sm font-medium mb-2">
+                            Bank<span className="text-red-500">*</span>
+                        </label>
+                        <FormControl fullWidth size="small" error={!!errors.bank}>
+                            <Select
+                                displayEmpty
+                                value={selectedBankId}
+                                onChange={(e) => {
+                                    setSelectedBankId(String(e.target.value));
+                                    if (errors.bank) {
+                                        setErrors((prev) => {
+                                            const next = { ...prev };
+                                            delete next.bank;
+                                            return next;
+                                        });
+                                    }
+                                }}
+                                renderValue={(val) =>
+                                    val
+                                        ? (() => {
+                                            const bank = bankOptions.find(b => String(b.id) === String(val));
+                                            return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
+                                        })()
+                                        : <span style={{ color: '#aaa' }}>Select Bank</span>
+                                }
+                                sx={fieldStyles}
+                            >
+                                <MenuItem value=""><em>Select Bank</em></MenuItem>
+                                {bankOptions.map((bank) => (
+                                    <MenuItem key={bank.id} value={String(bank.id)}>
+                                        {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        {errors.bank && <p className="text-xs text-red-500 mt-1">{errors.bank}</p>}
+                    </div>
                 </Section>
 
                 {/* Terms & Conditions */}

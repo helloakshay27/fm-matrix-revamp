@@ -105,6 +105,7 @@ function mapRecurringBillToBill(recurringBill, customers, itemOptions) {
         // || recurringBill?.shipping_address?.state || '',
         customerNotes: recurringBill?.notes || recurringBill?.customer_notes || '',
         termsAndConditions: recurringBill?.terms_and_conditions || '',
+        bankMasterId: recurringBill?.bank_master_id ? String(recurringBill.bank_master_id) : (recurringBill?.bank_master?.id ? String(recurringBill.bank_master.id) : ''),
         discountOnTotal: Number(recurringBill?.discount_per ?? recurringBill?.discount_amount ?? 0),
         discountTypeOnTotal: recurringBill?.discount_per ? 'percentage' : 'amount',
         adjustment: Number(recurringBill?.charge_amount || 0),
@@ -178,6 +179,7 @@ function mapLockAccountBillToBill(bill, customers, itemOptions) {
         destinationOfSupply: bill?.destination_of_supply || '',
         customerNotes: bill?.notes || bill?.customer_notes || '',
         termsAndConditions: bill?.terms_and_conditions || '',
+        bankMasterId: bill?.bank_master_id ? String(bill.bank_master_id) : (bill?.bank_master?.id ? String(bill.bank_master.id) : ''),
         discountOnTotal: Number(bill?.discount_per ?? bill?.discount_amount ?? 0),
         discountTypeOnTotal: bill?.discount_per ? 'percentage' : 'amount',
         adjustment: Number(bill?.charge_amount || 0),
@@ -225,6 +227,12 @@ import {
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
+import {
+    BankRecord,
+    bankMasterListUrl,
+    getBankMasterApiConfig,
+    mapApiBankRecord,
+} from './bankMasterUtils';
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import ItemSearchInput from '@/components/ItemSearchInput';
@@ -801,6 +809,24 @@ export const BillEdit: React.FC = () => {
     const [customerNotes, setCustomerNotes] = useState('');
     const [termsAndConditions, setTermsAndConditions] = useState('');
     const [attachments, setAttachments] = useState<File[]>([]);
+
+    // Bank Details
+    const [bankOptions, setBankOptions] = useState<BankRecord[]>([]);
+    const [selectedBankId, setSelectedBankId] = useState<string>('');
+
+    useEffect(() => {
+        const fetchBanks = async () => {
+            try {
+                const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+                const res = await axios.get(`${bankMasterListUrl(baseUrl, lockAccountId)}&active=true`, { headers });
+                const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+                setBankOptions(data.map(mapApiBankRecord));
+            } catch (err) {
+                setBankOptions([]);
+            }
+        };
+        fetchBanks();
+    }, []);
     const [displayAttachmentsInPortal, setDisplayAttachmentsInPortal] = useState(false);
 
     // Email Communications
@@ -1102,6 +1128,7 @@ export const BillEdit: React.FC = () => {
             if (recurringBillPrefill.destinationOfSupply) setDestinationOfSupply(recurringBillPrefill.destinationOfSupply);
             if (recurringBillPrefill.customerNotes) setCustomerNotes(recurringBillPrefill.customerNotes);
             if (recurringBillPrefill.termsAndConditions) setTermsAndConditions(recurringBillPrefill.termsAndConditions);
+            if (recurringBillPrefill.bankMasterId) setSelectedBankId(recurringBillPrefill.bankMasterId);
             setDiscountOnTotal(recurringBillPrefill.discountOnTotal || 0);
             setDiscountTypeOnTotal(recurringBillPrefill.discountTypeOnTotal || 'percentage');
             setAdjustment(recurringBillPrefill.adjustment || 0);
@@ -1130,6 +1157,7 @@ export const BillEdit: React.FC = () => {
             setDestinationOfSupply(normalizeIndianState(billPrefill.destinationOfSupply));
             setCustomerNotes(billPrefill.customerNotes || '');
             setTermsAndConditions(billPrefill.termsAndConditions || '');
+            setSelectedBankId(billPrefill.bankMasterId || '');
             setDiscountOnTotal(billPrefill.discountOnTotal || 0);
             setDiscountTypeOnTotal(billPrefill.discountTypeOnTotal || 'percentage');
             setAdjustment(billPrefill.adjustment || 0);
@@ -1540,6 +1568,13 @@ export const BillEdit: React.FC = () => {
             return false;
         }
 
+        if (!selectedBankId) {
+            newErrors.bank = 'Bank is required';
+            setErrors(newErrors);
+            toast.error('Please select a bank');
+            return false;
+        }
+
         const hasValidItems = items.some(
             item => item.name && item.quantity > 0 && item.rate > 0
         );
@@ -1693,6 +1728,7 @@ export const BillEdit: React.FC = () => {
             // formData.append('sale_order[delivery_method]', deliveryMethod);
             // formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
             formData.append('lock_account_bill[notes]', customerNotes);
+            formData.append('lock_account_bill[bank_master_id]', selectedBankId || '');
             // formData.append('lock_account_bill[terms_and_conditions]', termsAndConditions);
             formData.append('lock_account_bill[subject]', subject || '');
             formData.append(
@@ -2886,6 +2922,45 @@ export const BillEdit: React.FC = () => {
                         placeholder="Enter any notes for the bill"
                     />
                     <p className="text-xs text-gray-400 text-right mt-1">{customerNotes.length}/500</p>
+
+                    <div className="mt-4 w-1/2">
+                        <label className="block text-sm font-medium mb-2">
+                            Bank<span className="text-red-500">*</span>
+                        </label>
+                        <FormControl fullWidth size="small" error={!!errors.bank}>
+                            <Select
+                                displayEmpty
+                                value={selectedBankId}
+                                onChange={(e) => {
+                                    setSelectedBankId(String(e.target.value));
+                                    if (errors.bank) {
+                                        setErrors((prev) => {
+                                            const next = { ...prev };
+                                            delete next.bank;
+                                            return next;
+                                        });
+                                    }
+                                }}
+                                renderValue={(val) =>
+                                    val
+                                        ? (() => {
+                                            const bank = bankOptions.find(b => String(b.id) === String(val));
+                                            return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
+                                        })()
+                                        : <span style={{ color: '#aaa' }}>Select Bank</span>
+                                }
+                                sx={fieldStyles}
+                            >
+                                <MenuItem value=""><em>Select Bank</em></MenuItem>
+                                {bankOptions.map((bank) => (
+                                    <MenuItem key={bank.id} value={String(bank.id)}>
+                                        {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        {errors.bank && <p className="text-xs text-red-500 mt-1">{errors.bank}</p>}
+                    </div>
                 </Section>
 
                 {/* Terms & Conditions */}

@@ -23,6 +23,7 @@ import Select, { components } from "react-select";
 import { min } from 'lodash';
 import { getReturnToFromState } from "@/utils/listBackNavigation";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useHelpdeskEvents } from '@/components/PostHogHelpdeskEvents';
 
 // Utility function to format date to DD/MM/YYYY
 const formatDateToDDMMYYYY = (dateString: string) => {
@@ -550,6 +551,7 @@ export const TicketDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
+  const helpdeskEvents = useHelpdeskEvents();
    const location = useLocation();
   const [ticketData, setTicketData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -2319,6 +2321,22 @@ export const TicketDetailsPage = () => {
 
       toast.success('Comment submitted successfully!');
 
+      // Business lifecycle event — Ticket Comment Added (one per channel submitted)
+      if (commentText.trim()) {
+        helpdeskEvents.onTicketCommentAdded(id, {
+          comment_channel: 'customer',
+          used_template: Boolean(selectedCustomerTemplate),
+          has_attachment: customerAttachments.length > 0,
+        });
+      }
+      if (internalCommentText.trim()) {
+        helpdeskEvents.onTicketCommentAdded(id, {
+          comment_channel: 'internal',
+          used_template: Boolean(selectedInternalTemplate),
+          has_attachment: internalAttachments.length > 0,
+        });
+      }
+
       // Clear form
       setCommentText('');
       setInternalCommentText('');
@@ -2420,6 +2438,13 @@ export const TicketDetailsPage = () => {
       console.log('Cost approval submitted successfully:', data);
 
       toast.success('Cost approval submitted successfully!');
+
+      // Business lifecycle event — Ticket Cost Flagged (cost raised for approval)
+      const totalEstimatedCost = costRows.reduce((sum, r) => sum + (parseFloat(r.cost) || 0), 0);
+      helpdeskEvents.onTicketCostFlagged(id, {
+        estimated_cost: totalEstimatedCost || null,
+        category: (ticketData as any)?.category_type || (ticketData as any)?.category || null,
+      });
 
       // Reset cost rows to initial state
       setCostRows([
@@ -2944,6 +2969,44 @@ export const TicketDetailsPage = () => {
 
       const data = await response.json();
       console.log('✅ Ticket management updated successfully:', data);
+
+      // Business lifecycle events — capture the prior status BEFORE refreshing
+      const fromStatus = (ticketData as any)?.issue_status ?? null;
+      const toStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
+      const toStatus = toStatusObj?.name ?? null;
+      const toFixedState = toStatusObj?.fixed_state ?? '';
+      const changedByRole = localStorage.getItem('role') || null;
+      if (ticketMgmtFormData.selectedStatus) {
+        helpdeskEvents.onTicketStatusChanged(id, {
+          from_status: fromStatus,
+          to_status: toStatus,
+          changed_by_role: changedByRole,
+        });
+        // Ticket Resolution Recorded — reached a completed/closed state
+        if (toFixedState === 'closed' || toFixedState === 'completed') {
+          helpdeskEvents.onTicketResolutionRecorded(id, {
+            resolution_outcome: toStatus,
+            closure_completeness_score: null,
+            has_root_cause: Boolean(
+              (ticketMgmtFormData.rca_text && ticketMgmtFormData.rca_text.trim()) ||
+              (ticketMgmtFormData.rca_template_ids && ticketMgmtFormData.rca_template_ids.length > 0)
+            ),
+            has_corrective_action: Boolean(
+              (ticketMgmtFormData.corrective_action_text && ticketMgmtFormData.corrective_action_text.trim()) ||
+              (ticketMgmtFormData.corrective_action_template_ids && ticketMgmtFormData.corrective_action_template_ids.length > 0)
+            ),
+            has_preventive_action: Boolean(
+              (ticketMgmtFormData.preventive_action_text && ticketMgmtFormData.preventive_action_text.trim()) ||
+              (ticketMgmtFormData.preventive_action_template_ids && ticketMgmtFormData.preventive_action_template_ids.length > 0)
+            ),
+            review_date_set: Boolean((ticketMgmtFormData as any).review_tracking_date || (ticketMgmtFormData as any).review_date),
+          });
+        }
+        // Ticket Reopened — transition into a reopen state
+        if (toFixedState === 'reopen') {
+          helpdeskEvents.onTicketReopened(id, { reopened_by_role: changedByRole });
+        }
+      }
 
       // Refresh ticket data
       const ticketDetails = await ticketManagementAPI.getTicketDetails(id);

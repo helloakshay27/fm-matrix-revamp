@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, Filter, AlertTriangle } from "lucide-react";
+import { Plus, Filter, AlertTriangle, Settings } from "lucide-react";
+import { StatsCard } from "@/components/StatsCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
@@ -33,23 +34,27 @@ export const FitoutViolationDashboard = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-  <div className="bg-[#F2F0EB] p-4  shadow-[0px_2px_18px_rgba(45,45,45,0.1)]  md:h-[132px] flex items-center justify-between">
-    <p className="text-2xl font-bold text-[#D92818]">0</p>
-    <h3 className="text-sm font-medium text-gray-600 text-right">Total Violations</h3>
-  </div>
-  <div className="bg-[#F2F0EB] p-4  shadow-[0px_2px_18px_rgba(45,45,45,0.1)] border-l-4  md:h-[132px] flex items-center justify-between">
-    <p className="text-2xl font-bold text-[#D92818]">0</p>
-    <h3 className="text-sm font-medium text-gray-600 text-right">Pending</h3>
-  </div>
-  <div className="bg-[#F2F0EB] p-4  shadow-[0px_2px_18px_rgba(45,45,45,0.1)] border-l-4  md:h-[132px] flex items-center justify-between">
-    <p className="text-2xl font-bold text-[#D92818]">0</p>
-    <h3 className="text-sm font-medium text-gray-600 text-right">In Progress</h3>
-  </div>
-  <div className="bg-[#F2F0EB] p-4  shadow-[0px_2px_18px_rgba(45,45,45,0.1)] border-l-4  md:h-[132px] flex items-center justify-between">
-    <p className="text-2xl font-bold text-[#D92818]">0</p>
-    <h3 className="text-sm font-medium text-gray-600 text-right">Resolved</h3>
-  </div>
-</div>
+        <StatsCard
+          title="Total Violations"
+          value={0}
+          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+        />
+        <StatsCard
+          title="Pending"
+          value={0}
+          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+        />
+        <StatsCard
+          title="In Progress"
+          value={0}
+          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+        />
+        <StatsCard
+          title="Resolved"
+          value={0}
+          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+        />
+      </div>
 
 
       {/* Table */}

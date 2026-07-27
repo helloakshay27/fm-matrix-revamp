@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Upload } from "lucide-react";
+import { Plus, Edit } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AddCategoryModal } from "@/components/AddCategoryModal";
 import { EditCategoryModal } from "@/components/EditCategoryModal";
@@ -124,10 +124,9 @@ export const FitoutSetupDashboard = () => {
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <Button
           onClick={() => setIsAddCategoryOpen(true)}
-          className="hover:bg-[#C72030]/90 text-white"
-          style={{ backgroundColor: 'rgb(199 32 48 / var(--tw-text-opacity, 1))' }}
+          className="!bg-[#DA7756] !text-white hover:!bg-[#DA7756]/90"
         >
-          <Plus className="w-4 h-4 mr-2 stroke-[#C72030] text-white" />
+          <Plus className="w-4 h-4 mr-2 !text-white" />
           Add
         </Button>
       </div>
@@ -267,15 +266,15 @@ export const FitoutSetupDashboard = () => {
   const renderFitoutGuideTab = () => (
     <div>
       <div className="mb-6">
-        <div className="border-2 border-dashed rounded-lg p-8 text-center" style={{ borderColor: '#C72030' }}>
+        <div className="border-2 border-dashed border-brand rounded-lg p-8 text-center">
           <div className="mb-4">
-            <span className="font-medium" style={{ color: '#C72030' }}>Choose File</span>
+            <span className="font-medium text-brand">Choose File</span>
             <span className="text-gray-500 ml-2">No file chosen</span>
           </div>
           <label htmlFor="file-upload">
-            <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white cursor-pointer" asChild>
-              <span>
-                <Upload className="w-4 h-4 mr-2 stroke-[#C72030] text-white" />
+            <Button className="bg-brand hover:bg-brand-hover text-white cursor-pointer [&_svg]:!text-white" asChild>
+              <span className="inline-flex items-center justify-center gap-2">
+                <Plus className="w-4 h-4 !text-white" />
                 Upload
               </span>
             </Button>

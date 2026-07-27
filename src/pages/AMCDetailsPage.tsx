@@ -56,6 +56,7 @@ import { AMCDetailsPreviewTab } from "@/components/amc-details/AMCDetailsPreview
 import { getReturnToFromState } from "@/utils/listBackNavigation";
 import { toast } from "sonner";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { useAMCEvents } from "@/components/PostHogAMCEvents";
 
 interface AMCDetailsData {
   id: number;
@@ -176,6 +177,7 @@ export const AMCDetailsPage = () => {
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
+  const { onAMCVisitCompleted, onAMCVisitMissed } = useAMCEvents();
   const {
     data: amcData,
     loading,
@@ -416,6 +418,25 @@ export const AMCDetailsPage = () => {
         { method: "POST", body: formData }
       );
       if (!res.ok) throw new Error(`Update failed: ${res.status}`);
+      
+      const statusLower = visitEditStatus.toLowerCase();
+      if (statusLower === 'completed' || statusLower === 'done') {
+        onAMCVisitCompleted({
+          amc_id: String(id),
+          visit_no: Number(visitEditVisitNumber) || 0,
+          attendant_id: visitEditTechnicianId,
+          visit_date: visitEditActualVisitDate || visitEditVisitDate,
+          on_time: visitEditActualVisitDate <= visitEditVisitDate,
+          has_attachment: visitEditDocuments.length > 0
+        });
+      } else if (statusLower === 'missed' || statusLower === 'cancelled') {
+        onAMCVisitMissed({
+          amc_id: String(id),
+          visit_no: Number(visitEditVisitNumber) || 0,
+          days_overdue: 0
+        });
+      }
+
       setShowVisitEditModal(false);
       setSelectedVisitId(null);
       if (id) dispatch(fetchAMCDetails(id));

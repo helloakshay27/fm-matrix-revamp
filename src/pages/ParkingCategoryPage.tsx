@@ -4,10 +4,10 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Switch } from '../components/ui/switch';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Plus, Search, Edit, Trash2, X, RefreshCw } from 'lucide-react';
+import { Plus, Search, Edit, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
 import { ColumnVisibilityDropdown } from '../components/ColumnVisibilityDropdown';
@@ -50,7 +50,7 @@ export const ParkingCategoryPage = () => {
   const [categoryImage, setCategoryImage] = useState<File | null>(null);
   const [editCategoryImage, setEditCategoryImage] = useState<File | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
@@ -390,17 +390,19 @@ export const ParkingCategoryPage = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8">
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00B4D8]"></div>
-                    <span className="ml-2">Loading parking categories...</span>
+                <TableCell colSpan={4} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                    />
+                    <span className="text-sm text-black">Loading ...</span>
                   </div>
                 </TableCell>
               </TableRow>
             ) : filteredData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                  No parking categories found
                 </TableCell>
               </TableRow>
             ) : (
@@ -415,7 +417,7 @@ export const ParkingCategoryPage = () => {
                         className="p-1 hover:bg-gray-100 rounded"
                         title="Edit"
                       >
-                        <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                        <Edit className="w-4 h-4 text-black" />
                       </button>
                       )}
                     </div>
@@ -465,6 +467,7 @@ export const ParkingCategoryPage = () => {
                 <SelectContent>
                   <SelectItem value="2 Wheeler">2 Wheeler</SelectItem>
                   <SelectItem value="4 Wheeler">4 Wheeler</SelectItem>
+                  <SelectItem value="EV">EV</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -549,6 +552,7 @@ export const ParkingCategoryPage = () => {
                 <SelectContent>
                   <SelectItem value="2 Wheeler">2 Wheeler</SelectItem>
                   <SelectItem value="4 Wheeler">4 Wheeler</SelectItem>
+                  <SelectItem value="EV">EV</SelectItem>
                   {/* <SelectItem value="Heavy Vehicle">Heavy Vehicle</SelectItem>
                   <SelectItem value="Bicycle">Bicycle</SelectItem>
                   <SelectItem value="Electric Vehicle">Electric Vehicle</SelectItem>

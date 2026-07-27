@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Filter, Eye, Pencil } from "lucide-react";
 import { BookingSetupFilterModal } from "@/components/BookingSetupFilterModal";
 import { apiClient } from "@/utils/apiClient";
@@ -354,6 +355,37 @@ export const BookingSetupDashboard = () => {
           onClearSelection={() => setShowActionPanel(false)}
         />
       )}
+      {loading ? (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">ID</TableHead>
+                <TableHead className="font-medium">Name</TableHead>
+                <TableHead className="font-medium">Type</TableHead>
+                <TableHead className="font-medium">Location</TableHead>
+                <TableHead className="font-medium">Book before</TableHead>
+                <TableHead className="font-medium">Advance Booking</TableHead>
+                <TableHead className="font-medium">Created On</TableHead>
+                <TableHead className="font-medium">Created by</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={8} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                    />
+                    <span className="text-sm text-black">Loading ...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
       <div className="rounded-lg shadow-sm p-1 bg-transparent">
         <EnhancedTable
           data={bookingSetupData}
@@ -362,10 +394,9 @@ export const BookingSetupDashboard = () => {
           renderActions={renderActions}
           storageKey="booking-setup-table"
           className="min-w-full"
-          emptyMessage={loading ? "Loading booking data..." : "No booking data found"}
+          emptyMessage=""
           leftActions={leftActions}
           enableSearch={true}
-          // onFilterClick={() => setIsFilterOpen(true)}
           enableSelection={false}
           hideTableExport={true}
           pagination={false}
@@ -413,6 +444,7 @@ export const BookingSetupDashboard = () => {
           onApply={handleFilterApply}
         />
       </div>
+      )}
     </div>
   );
 };

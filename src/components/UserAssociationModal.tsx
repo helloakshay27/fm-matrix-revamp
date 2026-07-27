@@ -1,11 +1,22 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { X, Upload } from 'lucide-react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  Box,
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import { Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import TextareaAutosize from '@mui/material/TextareaAutosize';
 
 
 interface UserAssociationModalProps {
@@ -16,6 +27,7 @@ interface UserAssociationModalProps {
 
 export const UserAssociationModal = ({ isOpen, onClose, checklistName }: UserAssociationModalProps) => {
   const { toast } = useToast();
+  const [isNotesFocused, setIsNotesFocused] = useState(false);
   const [formData, setFormData] = useState({
     userType: '',
     userName: '',
@@ -69,171 +81,184 @@ export const UserAssociationModal = ({ isOpen, onClose, checklistName }: UserAss
     });
   };
 
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
+  const fieldHeightSx = {
+    height: 48,
+    '& .MuiInputBase-input': {
+      padding: '12px 14px',
+    },
+    '& .MuiSelect-select': {
+      padding: '12px 14px',
     },
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
-          <DialogTitle className="text-lg font-semibold">
-            User Association - {checklistName}
-          </DialogTitle>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="w-4 h-4" />
-          </Button>
-        </DialogHeader>
+    <Dialog open={isOpen} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        User Association - {checklistName}
+        <IconButton size="small" onClick={onClose}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
 
-        <div className="space-y-4 py-6">
-          <div className="grid grid-cols-2 gap-4">
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="user-type-label" shrink>User Type</InputLabel>
-              <MuiSelect
-                labelId="user-type-label"
-                label="User Type"
-                displayEmpty
-                value={formData.userType}
-                onChange={(e) => handleInputChange('userType', e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select User Type</em></MenuItem>
-                <MenuItem value="occupant">Occupant</MenuItem>
-                <MenuItem value="fm">FM User</MenuItem>
-                <MenuItem value="admin">Admin</MenuItem>
-              </MuiSelect>
-            </FormControl>
+      <DialogContent dividers>
+        <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ flex: '1 1 300px', minWidth: { xs: '100%', sm: '48%' } }}>
+              <FormControl fullWidth>
+                <InputLabel shrink id="user-type-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  User Type
+                </InputLabel>
+                <Select
+                  labelId="user-type-label"
+                  value={formData.userType}
+                  onChange={(e) => handleInputChange('userType', e.target.value)}
+                  displayEmpty
+                  sx={fieldHeightSx}
+                >
+                  <MenuItem value=""><em>Select User Type</em></MenuItem>
+                  <MenuItem value="occupant">Occupant</MenuItem>
+                  <MenuItem value="fm">FM User</MenuItem>
+                  <MenuItem value="admin">Admin</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
 
-            <TextField
-              placeholder="Enter User Name"
-              value={formData.userName}
-              onChange={(e) => handleInputChange('userName', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
+            <Box sx={{ flex: '1 1 300px', minWidth: { xs: '100%', sm: '48%' } }}>
+              <TextField
+                label="User Name"
+                placeholder="Enter User Name"
+                value={formData.userName}
+                onChange={(e) => handleInputChange('userName', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldHeightSx }}
+              />
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ flex: '1 1 300px', minWidth: { xs: '100%', sm: '48%' } }}>
+              <TextField
+                label="Email"
+                placeholder="Enter Email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldHeightSx }}
+              />
+            </Box>
+
+            <Box sx={{ flex: '1 1 300px', minWidth: { xs: '100%', sm: '48%' } }}>
+              <TextField
+                label="Phone"
+                placeholder="Enter Phone"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldHeightSx }}
+              />
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ flex: '1 1 300px', minWidth: { xs: '100%', sm: '48%' } }}>
+              <FormControl fullWidth>
+                <InputLabel shrink id="role-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Role
+                </InputLabel>
+                <Select
+                  labelId="role-label"
+                  value={formData.role}
+                  onChange={(e) => handleInputChange('role', e.target.value)}
+                  displayEmpty
+                  sx={fieldHeightSx}
+                >
+                  <MenuItem value=""><em>Select Role</em></MenuItem>
+                  <MenuItem value="manager">Manager</MenuItem>
+                  <MenuItem value="technician">Technician</MenuItem>
+                  <MenuItem value="supervisor">Supervisor</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            <Box sx={{ flex: '1 1 300px', minWidth: { xs: '100%', sm: '48%' } }}>
+              <FormControl fullWidth>
+                <InputLabel shrink id="department-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Department
+                </InputLabel>
+                <Select
+                  labelId="department-label"
+                  value={formData.department}
+                  onChange={(e) => handleInputChange('department', e.target.value)}
+                  displayEmpty
+                  sx={fieldHeightSx}
+                >
+                  <MenuItem value=""><em>Select Department</em></MenuItem>
+                  <MenuItem value="maintenance">Maintenance</MenuItem>
+                  <MenuItem value="facility">Facility</MenuItem>
+                  <MenuItem value="security">Security</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-[#1A1A1A]">Notes</label>
+            <textarea
+              placeholder="Enter Notes"
+              value={formData.notes}
+              onChange={(e) => handleInputChange('notes', e.target.value)}
+              onFocus={() => setIsNotesFocused(true)}
+              onBlur={() => setIsNotesFocused(false)}
+              className="w-full min-h-[96px] resize-y rounded-md bg-white px-[14px] py-3 text-sm leading-6 outline-none"
+              style={{
+                border: isNotesFocused ? '2px solid var(--color-primary)' : '1px solid #E0E0E0',
+              }}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <TextField
-              placeholder="Enter Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              placeholder="Enter Phone"
-              value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="role-label" shrink>Role</InputLabel>
-              <MuiSelect
-                labelId="role-label"
-                label="Role"
-                displayEmpty
-                value={formData.role}
-                onChange={(e) => handleInputChange('role', e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Role</em></MenuItem>
-                <MenuItem value="manager">Manager</MenuItem>
-                <MenuItem value="technician">Technician</MenuItem>
-                <MenuItem value="supervisor">Supervisor</MenuItem>
-              </MuiSelect>
-            </FormControl>
-
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="department-label" shrink>Department</InputLabel>
-              <MuiSelect
-                labelId="department-label"
-                label="Department"
-                displayEmpty
-                value={formData.department}
-                onChange={(e) => handleInputChange('department', e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Department</em></MenuItem>
-                <MenuItem value="maintenance">Maintenance</MenuItem>
-                <MenuItem value="facility">Facility</MenuItem>
-                <MenuItem value="security">Security</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
-
-          <div className="space-y-4">
-            <TextareaAutosize
-  minRows={4}
-  placeholder="Enter Notes"
-  value={formData.notes}
-  onChange={(e) => handleInputChange('notes', e.target.value)}
-  style={{
-    width: '100%',
-    padding: '12px',
-    borderColor: '#ccc',
-    borderRadius: 6,
-    fontSize: 14,
-    borderWidth: 1,
-    fontFamily: 'inherit',
-  }}
-/>
-
-
-            <div className="space-y-2">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <input
-                  type="file"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="attachment-upload"
-                  accept="image/*,.pdf,.doc,.docx"
-                />
-                <label htmlFor="attachment-upload" className="cursor-pointer">
-                  <Upload className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                  <div className="text-sm text-gray-500">
-                    {formData.attachments ? formData.attachments.name : 'Click to upload attachment'}
-                  </div>
-                </label>
-              </div>
+          <div className="space-y-2">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <input
+                type="file"
+                onChange={handleFileUpload}
+                className="hidden"
+                id="attachment-upload"
+                accept="image/*,.pdf,.doc,.docx"
+              />
+              <label htmlFor="attachment-upload" className="cursor-pointer">
+                <Upload className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                <div className="text-sm text-gray-500">
+                  {formData.attachments ? formData.attachments.name : 'Click to upload attachment'}
+                </div>
+              </label>
             </div>
           </div>
-        </div>
-
-        <div className="flex justify-center gap-4 pt-4 border-t">
-          <Button 
-            onClick={handleSubmit}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
-          >
-            Submit
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={handleReset}
-            className="px-8"
-          >
-            Reset
-          </Button>
-        </div>
+        </Box>
       </DialogContent>
+
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button
+          onClick={handleSubmit}
+          className="fm-button-fix fm-button-brand h-[45px] px-5 font-medium text-[16px]"
+          disableElevation
+        >
+          Submit
+        </Button>
+        <Button
+          onClick={handleReset}
+          className="fm-button-fix fm-button-brand h-[45px] px-5 font-medium text-[16px]"
+          disableElevation
+        >
+          Reset
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };

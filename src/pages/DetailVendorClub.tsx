@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { vendorService } from '@/services/vendorService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TextField } from '@mui/material';
-import { Building, FileText, Landmark, ShieldCheck, User, ArrowLeft, Loader2, Eye, Download, FileSpreadsheet, File, Printer } from 'lucide-react';
+import { Building, FileText, Landmark, ShieldCheck, User, ArrowLeft, Loader2, Eye, Download, FileSpreadsheet, File, Printer, Settings2 } from 'lucide-react';
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -170,11 +170,12 @@ interface Vendor {
 const DetailVendorClub = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const [vendor, setVendor] = useState<Vendor | null>(null);
     const [allAttachments, setAllAttachments] = useState<Attachment[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState("basic");
+    const [activeTab, setActiveTab] = useState((location.state as any)?.tab === "statement" ? "statement" : "basic");
     const [selectedDoc, setSelectedDoc] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [statementDownloading, setStatementDownloading] = useState(false);
@@ -908,6 +909,14 @@ const DetailVendorClub = () => {
                                         >
                                             <Printer className="h-4 w-4 mr-2" />
                                             Print Statement
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => navigate("/accounting/vendor/template", { state: { recordId: id } })}
+                                        >
+                                            <Settings2 className="h-4 w-4 mr-2" />
+                                            Template Edit
                                         </Button>
                                         <Button
                                             size="sm"

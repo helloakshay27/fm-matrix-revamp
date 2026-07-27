@@ -111,7 +111,7 @@ export const InvoiceApprovalsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [invoiceApprovals, setInvoiceApprovals] = useState<InvoiceApproval[]>([]);
   const [filteredData, setFilteredData] = useState<InvoiceApproval[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Fetch invoice approvals data from API
   useEffect(() => {
@@ -231,8 +231,19 @@ export const InvoiceApprovalsPage = () => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
-                  Loading invoice approvals...
+                <TableCell colSpan={6} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{
+                        border: "2px solid #000000",
+                        borderTopColor: "transparent",
+                      }}
+                    />
+                    <span className="text-sm text-black">
+                      Loading ...
+                    </span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : filteredData.length > 0 ? (
@@ -269,13 +280,7 @@ export const InvoiceApprovalsPage = () => {
                   </TableCell>
                 </TableRow>
               ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  No invoice approvals found
-                </TableCell>
-              </TableRow>
-            )}
+            ) : null}
           </TableBody>
         </Table>
       </div>

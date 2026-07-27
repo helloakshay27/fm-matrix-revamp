@@ -12,7 +12,7 @@ import {
 } from "@/store/slices/walletListSlice";
 import axios from "axios";
 import { format } from "date-fns";
-import { Coins, Download, Eye, Plus, Star, Users, Wallet } from "lucide-react";
+import { Download, Eye, Plus, Settings, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -110,6 +110,8 @@ const CRMWalletList = () => {
         useState(false);
     const [walletList, setWalletList] = useState([]);
     const [transactionHistory, setTransactionHistory] = useState([]);
+    const [walletLoading, setWalletLoading] = useState(true);
+    const [transactionLoading, setTransactionLoading] = useState(true);
     const [showTopupModal, setShowTopupModal] = useState(false);
     const [walletCardCount, setWalletCardCount] = useState({
         total_users: 0,
@@ -132,6 +134,7 @@ const CRMWalletList = () => {
         };
 
         const fetchWallets = async () => {
+            setWalletLoading(true);
             try {
                 const response = await dispatch(
                     fetchWalletList({ baseUrl, token })
@@ -139,10 +142,13 @@ const CRMWalletList = () => {
                 setWalletList(response.wallets);
             } catch (error) {
                 console.log(error);
+            } finally {
+                setWalletLoading(false);
             }
         };
 
         const fetchTransactions = async () => {
+            setTransactionLoading(true);
             try {
                 const response = await dispatch(
                     fetchTransactionHistory({ baseUrl, token })
@@ -150,6 +156,8 @@ const CRMWalletList = () => {
                 setTransactionHistory(response.transactions);
             } catch (error) {
                 console.log(error);
+            } finally {
+                setTransactionLoading(false);
             }
         };
 
@@ -283,37 +291,27 @@ const CRMWalletList = () => {
                 <StatsCard
                     title="Total Wallet Users"
                     value={formatCardValue(walletCardCount.total_users)}
-                    icon={<Users className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
                 <StatsCard
                     title="Total Wallet Balance"
                     value={formatCardValue(walletCardCount.total_amount)}
-                    icon={<Wallet className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
                 <StatsCard
                     title="Paid Points"
                     value={formatCardValue(walletCardCount.paid_points)}
-                    icon={<Coins className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
                 <StatsCard
                     title="Complimentary Points"
                     value={formatCardValue(walletCardCount.complimentary_points)}
-                    icon={<Star className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
                 <StatsCard
                     title="Expired Points"
                     value={formatCardValue(walletCardCount.expiry_points)}
-                    icon={<Users className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
             </div>
 
@@ -336,6 +334,7 @@ const CRMWalletList = () => {
                     selectable={false}
                     pagination={true}
                     pageSize={10}
+                    loading={transactionLoading}
                 />
             )}
 
@@ -352,6 +351,7 @@ const CRMWalletList = () => {
                     selectable={false}
                     pagination={true}
                     pageSize={10}
+                    loading={walletLoading}
                 />
             )}
 

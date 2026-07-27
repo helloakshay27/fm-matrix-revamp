@@ -212,8 +212,9 @@ export const StorageLocationTab = () => {
       {/* Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         {isLoading && paginated.length === 0 ? (
-          <div className="flex justify-center p-8">
-            <Loader2 className="w-6 h-6 animate-spin" />
+          <div className="flex items-center justify-start gap-2 p-8 text-black">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Loading ...
           </div>
         ) : paginated.length === 0 ? (
           <div className="flex justify-center p-8 text-gray-500">

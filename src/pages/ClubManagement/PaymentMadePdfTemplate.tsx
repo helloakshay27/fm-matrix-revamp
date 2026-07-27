@@ -1,5 +1,6 @@
 import React from "react";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
+import { getDocumentTemplateSettings } from "@/utils/documentTemplate";
 
 export const getAccountingPdfStatusStyle = (status) => {
   const styles = {
@@ -82,7 +83,10 @@ const PaymentMadePdf = ({
     localStorage.getItem("companyName") ||
     "Lockated";
 
+  const templateSettings = getDocumentTemplateSettings('payment_made');
+
   const companyAddress =
+    templateSettings.organizationAddress ||
     localStorage.getItem("companyAddress") ||
     "Pune Maharashtra 411006";
 
@@ -147,6 +151,9 @@ const PaymentMadePdf = ({
           <div className="flex justify-between items-start">
             {/* Company */}
             <div>
+              {templateSettings.logo && (
+                <img src={templateSettings.logo} alt="Logo" className="mb-2" style={{ maxHeight: "48px", maxWidth: "180px", objectFit: "contain" }} />
+              )}
               <h1 className="text-[22px] font-bold mb-2">
                 {companyName}
               </h1>
@@ -292,9 +299,20 @@ const PaymentMadePdf = ({
             {/* Right */}
             <div className="flex items-end justify-end">
               <div className="text-right">
-                <p className="font-bold mb-16">
+                <p className="font-bold mb-2">
                   For {companyName}
                 </p>
+
+                {templateSettings.signature ? (
+                  <img
+                    src={templateSettings.signature}
+                    alt="Signature"
+                    className="ml-auto mb-2"
+                    style={{ maxHeight: "50px", maxWidth: "180px", objectFit: "contain" }}
+                  />
+                ) : (
+                  <div className="mb-14" />
+                )}
 
                 <div className="border-t border-gray-500 w-[180px] pt-2 text-center font-bold text-[11px]">
                   Authorized Signature

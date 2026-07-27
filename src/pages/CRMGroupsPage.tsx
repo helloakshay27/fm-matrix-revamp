@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchUserGroups, updateUserGroup } from "@/store/slices/userGroupSlice";
 import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface Group {
   id: number;
@@ -70,6 +71,7 @@ const CRMGroupsPage = () => {
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [isEditing, setIsEditing] = useState(false)
   const [groups, setGroups] = useState<Group[]>([]);
+  const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
 
   const fetchData = async () => {
@@ -82,6 +84,8 @@ const CRMGroupsPage = () => {
     } catch (error) {
       console.error(error);
       toast.error("Failed to fetch groups");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -183,6 +187,33 @@ const CRMGroupsPage = () => {
 
   return (
     <div className="space-y-6 p-6">
+      {loading ? (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">Id</TableHead>
+                <TableHead className="font-medium">Group Name</TableHead>
+                <TableHead className="font-medium">Members</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={4} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                    />
+                    <span className="text-sm text-black">Loading ...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
       <EnhancedTable
         data={[...groups].reverse() || []}
         columns={columns}
@@ -190,7 +221,7 @@ const CRMGroupsPage = () => {
         renderActions={renderActions}
         storageKey="crm-groups-table"
         className="bg-white rounded-lg border border-gray-200"
-        emptyMessage="No groups available"
+        emptyMessage=""
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search groups..."
@@ -198,7 +229,8 @@ const CRMGroupsPage = () => {
         pageSize={10}
         leftActions={
           <Button
-            className="bg-[#C72030] hover:bg-[#B01E2A] text-white"
+            className="fm-button-fix fm-button-brand px-4 py-2"
+            variant="ghost"
             onClick={() => setShowAddModal(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -206,6 +238,7 @@ const CRMGroupsPage = () => {
           </Button>
         }
       />
+      )}
 
       <AddGroupModal
         isOpen={showAddModal}

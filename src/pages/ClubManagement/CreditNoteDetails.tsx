@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import {
   Copy,
   Share2,
   ShoppingCart,
+  Settings2,
 } from "lucide-react";
 import {
   Dialog,
@@ -214,10 +215,11 @@ const mockSalesOrder = {
 export const CreditNoteDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [salesOrder, setSalesOrder] = useState<SalesOrder>(mockSalesOrder);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("order-details");
+  const [activeTab, setActiveTab] = useState((location.state as any)?.tab === "pdf" ? "pdf" : "order-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
@@ -460,6 +462,16 @@ export const CreditNoteDetails = () => {
             >
               <FileText className="h-4 w-4" />
               PDF
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/accounting/credit-note/template", { state: { recordId: id } })}
+              className="gap-2"
+            >
+              <Settings2 className="h-4 w-4" />
+              Template Edit
             </Button>
 
             <Button
@@ -1050,6 +1062,7 @@ export const CreditNoteDetails = () => {
                     <div className="mx-auto bg-white" ref={activeTab === "pdf" ? creditNotePdfRef : null}>
                       <AccountingDocumentPdf
                         documentTitle="CREDIT NOTE"
+                        documentType="credit_note"
                         documentNumber={salesOrder.credit_note_number}
                         documentDate={salesOrder.date || salesOrder.credit_note_date}
                         status={salesOrder.status}
@@ -1077,6 +1090,7 @@ export const CreditNoteDetails = () => {
           <div ref={creditNotePdfRef}>
             <AccountingDocumentPdf
               documentTitle="CREDIT NOTE"
+              documentType="credit_note"
               documentNumber={salesOrder.credit_note_number}
               documentDate={salesOrder.date || salesOrder.credit_note_date}
               status={salesOrder.status}

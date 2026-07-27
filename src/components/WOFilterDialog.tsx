@@ -135,9 +135,8 @@ export const WOFilterDialog: React.FC<POFilterDialogProps> = ({
 
         <div className="flex gap-3 pt-4">
           <Button
-            variant="secondary"
             onClick={handleApply}
-            className="flex-1"
+            className="flex-1 !bg-brand hover:!bg-brand-hover !text-white"
           >
             Apply
           </Button>

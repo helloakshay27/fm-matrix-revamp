@@ -1156,10 +1156,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
 import { Heading } from '@/components/ui/heading';
+import { useIncidentEvents, type IncidentCreateStepKey } from '@/components/PostHogIncidentEvents';
 
 const fieldStyles = {
   height: {
@@ -1239,7 +1240,58 @@ const getCurrentDateTime = () => {
 
 export const AddIncidentPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const incidentEvents = useIncidentEvents();
   const currentDateTime = getCurrentDateTime();
+
+  // PostHog F1 funnel tracking
+  const formOpenedAtRef = useRef<number>(Date.now());
+  const stepStartAtRef = useRef<number>(Date.now());
+  const stepsSeenRef = useRef<Set<IncidentCreateStepKey>>(new Set());
+  const lastFieldFocusedRef = useRef<string | null>(null);
+  const hasSubmittedRef = useRef(false);
+  // Mirror of incidentData so the unmount cleanup reads the latest values, not the mount-time snapshot
+  const incidentDataRef = useRef<any>(null);
+
+  useEffect(() => {
+    const entrySource = (location.state as { entrySource?: string } | null)?.entrySource ?? 'direct';
+    incidentEvents.onIncidentCreateFormOpened(entrySource);
+    return () => {
+      // Fire F1 drop-off attribution on unmount if the form was never submitted
+      if (hasSubmittedRef.current) return;
+      const snapshot = incidentDataRef.current;
+      const filledFields = Object.entries(snapshot).filter(([, v]) => {
+        if (typeof v === 'boolean') return v;
+        if (Array.isArray(v)) return v.length > 0;
+        return Boolean(v);
+      }).length;
+      const primaryLevels = [
+        snapshot.primaryCategory,
+        snapshot.subCategory,
+        snapshot.subSubCategory,
+        snapshot.subSubSubCategory,
+      ];
+      incidentEvents.onIncidentCreateFormAbandoned({
+        last_field_focused: lastFieldFocusedRef.current,
+        fields_completed_count: filledFields,
+        category_depth_reached: primaryLevels.filter(Boolean).length,
+        time_on_form_sec: Math.round((Date.now() - formOpenedAtRef.current) / 1000),
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fire an F1 step-completion once, when a step's key field is first filled.
+  // Steps: time_building (step 0) → categorise (1) → assess (2) → describe_disclaim (3)
+  const markStepCompleted = (stepKey: IncidentCreateStepKey) => {
+    if (stepsSeenRef.current.has(stepKey)) return;
+    const order: IncidentCreateStepKey[] = ['time_building', 'categorise', 'assess', 'describe_disclaim'];
+    stepsSeenRef.current.add(stepKey);
+    const now = Date.now();
+    const stepDurationSec = Math.round((now - stepStartAtRef.current) / 1000);
+    stepStartAtRef.current = now;
+    incidentEvents.onIncidentCreateStepCompleted(stepKey, order.indexOf(stepKey), stepDurationSec);
+  };
 
   const [incidentData, setIncidentData] = useState({
     year: currentDateTime.year,
@@ -1269,6 +1321,11 @@ export const AddIncidentPage = () => {
     factsCorrect: false,
     attachments: [] as File[]
   });
+
+  // Keep a ref mirror of incidentData for the unmount abandon handler
+  useEffect(() => {
+    incidentDataRef.current = incidentData;
+  }, [incidentData]);
 
 
   // State for buildings
@@ -1535,10 +1592,24 @@ export const AddIncidentPage = () => {
     return '';
   };
 
+  // Map a form field to its F1 funnel step
+  const stepForField = (field: string): IncidentCreateStepKey | null => {
+    if (['year', 'month', 'day', 'hour', 'minute', 'building'].includes(field)) return 'time_building';
+    if (field.toLowerCase().includes('category') || field.toLowerCase().includes('categor')) return 'categorise';
+    if (['severity', 'probability', 'incidentLevel'].includes(field)) return 'assess';
+    if (['description'].includes(field)) return 'describe_disclaim';
+    return null;
+  };
+
   const handleInputChange = (field: string, value: string) => {
     // Character limit for description field
     if (field === 'description' && value.length > 240) {
       return; // Don't update state if exceeds 240 characters
+    }
+    lastFieldFocusedRef.current = field;
+    if (value) {
+      const step = stepForField(field);
+      if (step) markStepCompleted(step);
     }
     setIncidentData(prev => ({ ...prev, [field]: value }));
   };
@@ -1575,6 +1646,10 @@ export const AddIncidentPage = () => {
   };
 
   const handleCheckboxChange = (field: string, checked: boolean) => {
+    lastFieldFocusedRef.current = field;
+    if (field === 'factsCorrect' && checked) {
+      markStepCompleted('describe_disclaim');
+    }
     setIncidentData(prev => ({
       ...prev,
       [field]: checked
@@ -1592,6 +1667,22 @@ export const AddIncidentPage = () => {
   };
 
   const handleSubmit = async () => {
+    // Collect all missing required fields up-front for the validation-friction event
+    const failedFields: string[] = [];
+    if (!incidentData.year || !incidentData.month || !incidentData.day) failedFields.push('date');
+    if (!incidentData.hour || !incidentData.minute) failedFields.push('time');
+    if (!incidentData.building) failedFields.push('building');
+    if (!incidentData.primaryCategory) failedFields.push('primaryCategory');
+    if (!incidentData.subCategory) failedFields.push('subCategory');
+    if (!incidentData.subSubCategory) failedFields.push('subSubCategory');
+    if (!incidentData.severity) failedFields.push('severity');
+    if (!incidentData.probability) failedFields.push('probability');
+    if (!incidentData.description || incidentData.description.trim() === '') failedFields.push('description');
+    if (!incidentData.factsCorrect) failedFields.push('disclaimer');
+    if (failedFields.length > 0) {
+      incidentEvents.onIncidentFormValidationFailed(failedFields);
+    }
+
     // Time validation
     if (!incidentData.year || !incidentData.month || !incidentData.day) {
       toast.error('Please select complete date (day, month, year)');
@@ -1719,6 +1810,32 @@ export const AddIncidentPage = () => {
         const errText = await resp.text();
         throw new Error(errText || 'Failed to create incident');
       }
+
+      // F1 funnel end (= business Incident Reported)
+      hasSubmittedRef.current = true;
+      const primaryLevels = [
+        incidentData.primaryCategory,
+        incidentData.subCategory,
+        incidentData.subSubCategory,
+        incidentData.subSubSubCategory,
+      ];
+      const categoryDepthReached = primaryLevels.filter(Boolean).length;
+      const secondaryUsed = Boolean(
+        incidentData.secondaryCategory ||
+        incidentData.secondarySubCategory ||
+        incidentData.secondarySubSubCategory ||
+        incidentData.secondarySubSubSubCategory
+      );
+      incidentEvents.onIncidentCreateFormSubmitted({
+        category_depth_reached: categoryDepthReached,
+        secondary_used: secondaryUsed,
+        severity: incidentData.severity,
+        probability: incidentData.probability,
+        incident_level: incidentData.incidentLevel,
+        support_required: incidentData.supportRequired,
+        has_attachments: incidentData.attachments.length > 0,
+        time_on_form_sec: Math.round((Date.now() - formOpenedAtRef.current) / 1000),
+      });
 
       toast.success('Incident reported successfully!');
       navigate('/safety/incident');

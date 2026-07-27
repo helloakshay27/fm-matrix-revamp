@@ -23,8 +23,14 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Close, CloudUpload, Search, EditOutlined } from '@mui/icons-material';
-import { Receipt, FileText } from 'lucide-react';
+import { Receipt, FileText, Landmark } from 'lucide-react';
 import { toast as sonnerToast } from 'sonner';
+import {
+  BankRecord,
+  bankMasterListUrl,
+  getBankMasterApiConfig,
+  mapApiBankRecord,
+} from './ClubManagement/bankMasterUtils';
 
 // ── Section wrapper ──────────────────────────────────────────────────────────
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({
@@ -191,6 +197,25 @@ export const ExpenseCreatePage: React.FC = () => {
   // ── Shared header fields (both modes) ────────────────────────────────────
   const [date, setDate] = useState('');
   const [paidThrough, setPaidThrough] = useState('');
+
+  // Bank Details
+  const [bankOptions, setBankOptions] = useState<BankRecord[]>([]);
+  const [selectedBankId, setSelectedBankId] = useState<string>('');
+
+  useEffect(() => {
+    const fetchBanks = async () => {
+      try {
+        const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(`${bankMasterListUrl(baseUrl, lockAccountId)}&active=true`, { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        setBankOptions(data.map(mapApiBankRecord));
+      } catch (err) {
+        setBankOptions([]);
+      }
+    };
+    fetchBanks();
+  }, []);
+
   const [vendor, setVendor] = useState('');
   const [customer, setCustomer] = useState('');
   const [billedOn, setBilledOn] = useState(false);
@@ -510,6 +535,7 @@ export const ExpenseCreatePage: React.FC = () => {
     const e: Record<string, string> = {};
     if (!date) e.date = 'Date is required';
     if (!paidThrough) e.paidThrough = 'Paid through is required';
+    if (!selectedBankId) e.bank = 'Bank is required';
     if (!gstTreatment) e.gstTreatment = 'GST treatment is required';
     if (!sourceOfSupply) e.sourceOfSupply = 'Source of supply is required';
     if (!destinationOfSupply) e.destinationOfSupply = 'Destination is required';
@@ -727,6 +753,7 @@ export const ExpenseCreatePage: React.FC = () => {
       const payload = {
         expense: {
           paid_through_account_id: parseInt(paidThrough),
+          bank_master_id: selectedBankId ? Number(selectedBankId) : null,
           ...(vendor && { vendor_id: parseInt(vendor) }),
           ...(customer && { customer_id: parseInt(customer) }),
           date,
@@ -1809,6 +1836,50 @@ export const ExpenseCreatePage: React.FC = () => {
               </div>
             </div>
           )}
+        </Section>
+
+        {/* Bank Details */}
+        <Section title="Bank Details" icon={<Landmark className="w-5 h-5" />}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Bank <span className="text-red-500">*</span>
+              </label>
+              <FormControl fullWidth error={!!errors.bank}>
+                <Select
+                  displayEmpty
+                  value={selectedBankId}
+                  onChange={(e) => {
+                    setSelectedBankId(String(e.target.value));
+                    if (errors.bank) {
+                      setErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.bank;
+                        return next;
+                      });
+                    }
+                  }}
+                  renderValue={(val) =>
+                    val
+                      ? (() => {
+                          const bank = bankOptions.find(b => String(b.id) === String(val));
+                          return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
+                        })()
+                      : <span style={{ color: '#aaa' }}>Select Bank</span>
+                  }
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Bank</em></MenuItem>
+                  {bankOptions.map((bank) => (
+                    <MenuItem key={bank.id} value={String(bank.id)}>
+                      {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {errors.bank && <p className="text-xs text-red-500 mt-1">{errors.bank}</p>}
+            </div>
+          </div>
         </Section>
 
         {/* Receipts section — single view only */}

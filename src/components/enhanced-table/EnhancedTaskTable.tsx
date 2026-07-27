@@ -133,6 +133,7 @@ interface EnhancedTableProps<T> {
   pagination?: boolean;
   pageSize?: number;
   loading?: boolean;
+  loadingMessage?: string;
   enableSearch?: boolean;
   enableSelection?: boolean;
   hideTableExport?: boolean;
@@ -180,6 +181,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
   pagination = false,
   pageSize = 10,
   loading = false,
+  loadingMessage = "Loading...",
   enableSearch = false,
   enableSelection = false,
   hideTableExport = false,
@@ -667,7 +669,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                     >
                       <div className="flex items-center justify-center">
                         <Loader2 className="h-8 w-8 animate-spin" />
-                        <span className="ml-2">Loading...</span>
+                        <span className="ml-2">{loadingMessage}</span>
                       </div>
                     </TableCell>
                   </TableRow>

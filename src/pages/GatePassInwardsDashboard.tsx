@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate,useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Filter, Eye, Plus, Flag, Upload, Download, FileText, FileSpreadsheet, File } from 'lucide-react';
+import { useGatePassEvents } from '@/components/PostHogGatePassEvents';
 import { GatePassInwardsFilterModal } from '@/components/GatePassInwardsFilterModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -44,6 +45,8 @@ export const GatePassInwardsDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { shouldShow } = useDynamicPermissions();
+  const gatePassEvents = useGatePassEvents();
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [inwardData, setInwardData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,7 +148,8 @@ useEffect(() => {
         setInwardData(gatePasses);
         setTotalPages(data.pagination?.total_pages || 1);
         setTotalCount(data.pagination?.total_count || (gatePasses.length || 0));
-        
+        gatePassEvents.onGatePassListViewed('inward', data.pagination?.total_count ?? gatePasses.length ?? 0);
+
         // COMMENTED: API-based handover data merge (using localStorage instead)
         // setHandoverData(prev => {
         //   const updatedHandoverData = { ...prev };
@@ -293,7 +297,8 @@ useEffect(() => {
       });
       if (!res.ok) throw new Error('Failed to update flag');
       toast.success(`Flag ${!isCurrentlyFlagged ? 'activated' : 'removed'} for Gate Pass ${id}`);
-      
+      gatePassEvents.onGatePassFlagToggled('inward', !isCurrentlyFlagged);
+
       // Refresh data by refetching list after flag change
       const params = buildQueryParams();
       params['page'] = currentPage.toString();
@@ -342,11 +347,11 @@ useEffect(() => {
   }, [togglingIds, currentPage, filters]);
 
   const handleViewDetails = (id: string) => {
-    navigate(`/security/gate-pass/inwards/detail/${id}`);
+    navigate(`/security/gate-pass/inwards/detail/${id}`, { state: { openSource: 'list' } });
   };
 
   const handleAddInward = () => {
-    navigate('/security/gate-pass/inwards/add');
+    navigate('/security/gate-pass/inwards/add', { state: { entrySource: 'list_button' } });
   };
 
   // COMMENTED: Receive handlers (moved to detail page)
@@ -402,6 +407,11 @@ useEffect(() => {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
       toast.success('Exported successfully');
+      gatePassEvents.onGatePassRegisterExported(
+        'inward',
+        totalCount,
+        Object.values(filters).some(v => v !== '' && v !== undefined)
+      );
     } catch (error) {
       toast.error('Failed to export data');
     }
@@ -514,6 +524,17 @@ useEffect(() => {
         enableExport={true}
         handleExport={handleExport}
         onFilterClick={() => setIsFilterModalOpen(true)}
+        onSearchChange={(value) => {
+          clearTimeout(searchDebounceRef.current);
+          if (value.trim()) {
+            searchDebounceRef.current = setTimeout(() => {
+              const matches = dataWithIndex.filter(row =>
+                Object.values(row).some(v => typeof v === 'string' && v.toLowerCase().includes(value.toLowerCase()))
+              );
+              gatePassEvents.onGatePassSearchPerformed('inward', value.length, matches.length);
+            }, 600);
+          }
+        }}
         searchPlaceholder="Search inward entries..."
         exportFileName="inward-gate-pass-entries"
         leftActions={renderActionButton()}

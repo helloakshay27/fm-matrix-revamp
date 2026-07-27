@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useGatePassEvents } from '@/components/PostHogGatePassEvents';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Typography, IconButton, Button as MuiButton, Autocomplete } from '@mui/material';
 import { ArrowLeft, Trash2, Plus } from 'lucide-react';
 import { AttachFile, Close } from '@mui/icons-material';
@@ -69,8 +70,28 @@ interface MaterialRow {
 
 export const AddGatePassInwardPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const gatePassEvents = useGatePassEvents();
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // PostHog: form funnel tracking (F1 · Inward Pass Creation)
+  const formOpenedAtRef = useRef<number>(Date.now());
+  const sectionsSeenRef = useRef<Set<string>>(new Set());
+  const rowsAddedCountRef = useRef(0);
+  const hasSubmittedRef = useRef(false);
+
+  useEffect(() => {
+    const entrySource = (location.state as { entrySource?: string } | null)?.entrySource ?? 'direct';
+    gatePassEvents.onGatePassFormOpened('inward', entrySource);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const markSectionSeen = (section: 'visitor' | 'pass' | 'items') => {
+    if (sectionsSeenRef.current.has(section)) return;
+    sectionsSeenRef.current.add(section);
+    gatePassEvents.onGatePassSectionCompleted(section, sectionsSeenRef.current.size - 1);
+  };
 
   const [materialRows, setMaterialRows] = useState<MaterialRow[]>([
     { id: 1, itemTypeId: null, itemCategoryId: null, itemNameId: null, quantity: '', unit: '', description: '', maxQuantity: null, otherMaterialName: '' }
@@ -179,10 +200,12 @@ export const AddGatePassInwardPage = () => {
   }, [gatePassDetails.buildingId]);
 
   const handleVisitorChange = (field: keyof typeof visitorDetails, value: any) => {
+    markSectionSeen('visitor');
     setVisitorDetails(prev => ({ ...prev, [field]: value }));
   };
 
   const handleGatePassChange = (field: keyof typeof gatePassDetails, value: any) => {
+    markSectionSeen('pass');
     if (field === 'siteId') {
       setGatePassDetails(prev => ({ ...prev, siteId: value, buildingId: null }));
     } else {
@@ -191,7 +214,10 @@ export const AddGatePassInwardPage = () => {
   };
 
   const handleAddRow = () => {
+    markSectionSeen('items');
     const newId = materialRows.length > 0 ? Math.max(...materialRows.map(r => r.id)) + 1 : 1;
+    rowsAddedCountRef.current += 1;
+    gatePassEvents.onGatePassItemRowAdded(rowsAddedCountRef.current, null);
     setMaterialRows([...materialRows, { id: newId, itemTypeId: null, itemCategoryId: null, itemNameId: null, quantity: '', unit: '', description: '', maxQuantity: null, otherMaterialName: '' }]);
   };
 
@@ -209,6 +235,7 @@ export const AddGatePassInwardPage = () => {
   };
 
   const handleRowChange = async (id: number, field: keyof Omit<MaterialRow, 'id'>, value: any) => {
+    markSectionSeen('items');
     const newRows = materialRows.map(row => row.id === id ? { ...row, [field]: value } : row);
 
     if (field === 'itemTypeId') {
@@ -480,6 +507,13 @@ export const AddGatePassInwardPage = () => {
     try {
       await gatePassInwardService.createGatePassInward(formData);
       toast.success("Gate pass inward entry created successfully!");
+      hasSubmittedRef.current = true;
+      gatePassEvents.onGatePassSubmitted('inward', {
+        gate_pass_type: gatePassDetails.gatePassTypeId,
+        item_count: materialRows.length,
+        has_invoice: Boolean(gatePassDetails.invoiceId || gatePassDetails.invoiceAmount),
+        gate_number: gatePassDetails.gateNumberId,
+      });
       navigate('/security/gate-pass/inwards');
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -489,7 +523,15 @@ export const AddGatePassInwardPage = () => {
     }
   };
 
+  const captureFormAbandoned = () => {
+    if (hasSubmittedRef.current) return;
+    const lastSection = Array.from(sectionsSeenRef.current).pop() ?? 'visitor';
+    const timeOnFormSec = Math.round((Date.now() - formOpenedAtRef.current) / 1000);
+    gatePassEvents.onGatePassFormAbandoned('inward', lastSection, rowsAddedCountRef.current, timeOnFormSec);
+  };
+
   const handleGoBack = () => {
+    captureFormAbandoned();
     navigate('/security/gate-pass/inwards');
   };
 
@@ -1098,7 +1140,7 @@ export const AddGatePassInwardPage = () => {
           <Button type="submit" className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2" disabled={isSubmitting}>
             {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
-          <Button type="button" variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-8 py-2" onClick={() => navigate('/security/gate-pass/inwards')}>Cancel</Button>
+          <Button type="button" variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-8 py-2" onClick={() => { captureFormAbandoned(); navigate('/security/gate-pass/inwards'); }}>Cancel</Button>
         </div>
       </form>
 

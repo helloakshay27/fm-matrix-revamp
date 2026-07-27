@@ -26,6 +26,7 @@ import {
 import { userService, User } from '@/services/userService';
 import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { TimeSetupStep } from '@/components/schedule/TimeSetupStep';
+import { usePatrolEvents } from '@/components/PostHogSecurityEvents';
 
 // Section component defined outside to prevent re-creation on every render
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -226,7 +227,12 @@ const CheckpointLocationSelector: React.FC<{
 
 export const PatrollingCreatePage: React.FC = () => {
   const navigate = useNavigate();
-  useEffect(() => { document.title = 'Create Patrolling'; }, []);
+  const { onPatrolFormOpened, onPatrolSubmitted } = usePatrolEvents();
+
+  useEffect(() => { 
+    document.title = 'Create Patrolling';
+    onPatrolFormOpened();
+  }, []);
 
   type Question = {
     id: string;
@@ -1210,6 +1216,16 @@ export const PatrollingCreatePage: React.FC = () => {
 
       const result = await response.json();
       console.log('✅ API Response:', result);
+
+      const validityDays = Math.ceil(Math.abs(new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+      
+      onPatrolSubmitted({
+        checkpoint_count: checkpoints.filter(c => c.name.trim() !== '').length,
+        has_checklist: !!selectedChecklist,
+        schedule_slots_per_day: shifts.length,
+        grace_minutes: graceType === 'hours' ? (parseInt(estimatedDuration) || 0) * 60 : (parseInt(estimatedDuration) || 0),
+        validity_days: validityDays || 0
+      });
 
       toast.success('Patrolling created successfully!', {
         duration: 3000,

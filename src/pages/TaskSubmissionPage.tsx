@@ -52,17 +52,17 @@ export const TaskSubmissionPage: React.FC = () => {
   const navigate = useNavigate();
   const checklistStartedRef = useRef(false);
   const taskEventKeyRef = useRef(0);
-  const [taskEvent, setTaskEvent] = useState<{
+  const [taskEvents, setTaskEvents] = useState<Array<{
     key: number;
     event: React.ComponentProps<typeof PostHogTaskActivity>['event'];
     properties?: Record<string, unknown>;
-  } | null>(null);
+  }>>([]);
 
   const captureTaskEvent = (
     event: React.ComponentProps<typeof PostHogTaskActivity>['event'],
     properties?: Record<string, unknown>
   ) => {
-    setTaskEvent({ key: ++taskEventKeyRef.current, event, properties });
+    setTaskEvents(prev => [...prev, { key: ++taskEventKeyRef.current, event, properties }]);
   };
 
   const [taskDetails, setTaskDetails] = useState<TaskOccurrence | null>(null);
@@ -679,9 +679,17 @@ export const TaskSubmissionPage: React.FC = () => {
   ) => {
     if (!checklistStartedRef.current) {
       checklistStartedRef.current = true;
+      // Usage/interaction plane
       captureTaskEvent('Checklist Execution Started', {
         task_id: id,
         platform: 'web',
+        step_count: dynamicChecklist.length,
+      });
+      // Business lifecycle plane (Task & PPM catalogue)
+      captureTaskEvent('Checklist Started', {
+        task_id: id,
+        platform: 'web',
+        checklist_template_id: taskDetails?.activity?.id ?? taskDetails?.task_details?.task_id ?? null,
         step_count: dynamicChecklist.length,
       });
     }
@@ -696,11 +704,33 @@ export const TaskSubmissionPage: React.FC = () => {
       };
       if (field === 'value') {
         const item = updated.checklist[itemId];
+        const checklistDef = dynamicChecklist.find(c => c.id === itemId);
+        const hasReading = typeof value === 'number' || checklistDef?.type === 'text';
+        // Derive canonical item_result (pass/fail/na/reading) from the answer
+        const normalized = typeof value === 'string' ? value.toLowerCase() : value;
+        let itemResult: 'pass' | 'fail' | 'na' | 'reading' = 'na';
+        if (hasReading && (typeof value === 'number' || (value !== '' && value != null))) {
+          itemResult = 'reading';
+        } else if (normalized === 'yes' || normalized === 'pass' || normalized === 'good') {
+          itemResult = 'pass';
+        } else if (normalized === 'no' || normalized === 'fail' || normalized === 'poor' || normalized === 'bad') {
+          itemResult = 'fail';
+        }
+        // Usage/interaction plane
         captureTaskEvent('Checklist Item Answered', {
           task_id: id,
           has_reading: typeof value === 'number',
           has_photo: !!item?.attachment,
           has_comment: !!item?.comment,
+        });
+        // Business lifecycle plane (Task & PPM catalogue)
+        captureTaskEvent('Checklist Item Completed', {
+          task_id: id,
+          item_result: itemResult,
+          has_reading: hasReading,
+          has_photo: !!item?.attachment,
+          has_comment: !!item?.comment,
+          platform: 'web',
         });
       }
       return updated;
@@ -957,12 +987,37 @@ export const TaskSubmissionPage: React.FC = () => {
         sonnerToast.dismiss(loadingToastId);
         sonnerToast.success("Task submitted successfully!");
 
+        const completenessScore = response.question_attended_count
+          ? Math.round((response.question_attended_count / dynamicChecklist.length) * 100)
+          : 0;
+        // Usage/interaction plane
         captureTaskEvent('Task Submitted (UI)', {
           task_id: id,
           platform: 'web',
-          completeness_score: response.question_attended_count
-            ? Math.round((response.question_attended_count / dynamicChecklist.length) * 100)
-            : 0,
+          completeness_score: completenessScore,
+        });
+        // Business lifecycle plane (Task & PPM catalogue)
+        const dueRaw = taskDetails?.task_details?.scheduled_date
+          || (taskDetails as any)?.due_date
+          || (taskDetails as any)?.due_datetime
+          || null;
+        let onTime: boolean | null = null;
+        let completionLagVsDueMin: number | null = null;
+        if (dueRaw) {
+          const dueMs = new Date(dueRaw).getTime();
+          if (!Number.isNaN(dueMs)) {
+            const lagMs = Date.now() - dueMs;
+            completionLagVsDueMin = Math.round(lagMs / 60000);
+            onTime = lagMs <= 0;
+          }
+        }
+        captureTaskEvent('Maintenance Task Submitted', {
+          task_id: id,
+          platform: 'web',
+          on_time: onTime,
+          completion_lag_vs_due_min: completionLagVsDueMin,
+          fail_item_count: response.negative_answers_count ?? 0,
+          completeness_score: completenessScore,
         });
 
         setShowSuccessModal(true);
@@ -3258,9 +3313,9 @@ export const TaskSubmissionPage: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 min-h-screen bg-gray-50">
-      {taskEvent && (
-        <PostHogTaskActivity key={taskEvent.key} event={taskEvent.event} properties={taskEvent.properties} />
-      )}
+      {taskEvents.map(evt => (
+        <PostHogTaskActivity key={evt.key} event={evt.event} properties={evt.properties} />
+      ))}
       {/* Header */}
       <div className="mb-4">
         <button

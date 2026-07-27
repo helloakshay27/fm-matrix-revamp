@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, Key, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Key, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate,useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
@@ -399,13 +400,38 @@ useEffect(() => {
         </div>
       </header>
 
-      {loading && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+      {loading ? (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">Actions</TableHead>
+                <TableHead className="font-medium">Sub Function Name</TableHead>
+                <TableHead className="font-medium">Parent Function</TableHead>
+                <TableHead className="font-medium">Description</TableHead>
+                <TableHead className="font-medium">Priority</TableHead>
+                <TableHead className="font-medium">Conditions</TableHead>
+                <TableHead className="font-medium">Created On</TableHead>
+                <TableHead className="font-medium">Created By</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={9} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                    />
+                    <span className="text-sm text-black">Loading ...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
-      )}
-
-      {!loading && (
+      ) : (
         <div className="">
           <EnhancedTable
             data={currentLockSubFunctionData}
@@ -421,15 +447,15 @@ useEffect(() => {
               shouldShow("Lock Sub Function","create")&&(
               <Button 
                 onClick={handleAdd} 
-                className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                className="fm-button-fix fm-button-brand px-4 py-2"
+                variant="ghost"
               >
                 <Plus className="w-4 h-4" />
                 Add
               </Button>
        )}
-            pagination={false} // Disable built-in pagination since we're adding custom
-            loading={loading}
-            emptyMessage="No lock sub functions found. Create your first lock sub function to get started."
+            pagination={false}
+            emptyMessage=""
           />
 
           {/* Pagination Controls - matching ShiftDashboard style */}

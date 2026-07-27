@@ -9,6 +9,7 @@ import { staffService, StaffFormData, ScheduleData, StaffAttachments, Unit, Depa
 import { toast } from 'sonner';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { getUser } from '@/utils/auth';
+import { useVisitorEvents } from '@/components/PostHogVisitorEvents';
 
 // Field styles for Material-UI components
 const fieldStyles = {
@@ -36,7 +37,14 @@ const fieldStyles = {
 
 export const AddStaffPage = () => {
   const navigate = useNavigate();
-  
+  const visitorEvents = useVisitorEvents();
+
+  // F5 · Staff Form Opened
+  useEffect(() => {
+    visitorEvents.onStaffFormOpened();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -160,6 +168,22 @@ export const AddStaffPage = () => {
         documents: documents
       });
       toast.success('Society staff created successfully!');
+      // F5 · Staff Submitted — onboarding completion + schedule coverage
+      const scheduleDaysSet = Object.values(schedule).filter((d: any) => d.checked).length;
+      let validityDays: number | null = null;
+      if (formData.validFrom && validTill) {
+        const from = new Date(formData.validFrom).getTime();
+        const to = new Date(validTill).getTime();
+        if (!Number.isNaN(from) && !Number.isNaN(to)) {
+          validityDays = Math.round((to - from) / (1000 * 60 * 60 * 24));
+        }
+      }
+      visitorEvents.onStaffSubmitted({
+        has_photo: Boolean(attachments.profilePicture),
+        has_documents: documents.length > 0,
+        schedule_days_set: scheduleDaysSet,
+        validity_days: validityDays,
+      });
       navigate('/security/staff'); // Navigate back to staff dashboard
     } catch (error) {
       console.error('Failed to create staff:', error);

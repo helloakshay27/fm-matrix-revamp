@@ -20,6 +20,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
 
 // STP Asset response interface
 interface STPAssetResponse {
@@ -74,6 +75,12 @@ const UtilitySTPDashboard = () => {
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [uploadType, setUploadType] = useState<'import' | 'update'>('import');
+
+  const { onUtilitySTPDashboardViewed } = useUtilityEvents();
+
+  useEffect(() => {
+    onUtilitySTPDashboardViewed();
+  }, [onUtilitySTPDashboardViewed]);
 
   // Visible columns configuration for STP assets
   const [visibleColumns] = useState({

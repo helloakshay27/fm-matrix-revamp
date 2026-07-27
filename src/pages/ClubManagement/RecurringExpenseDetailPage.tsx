@@ -21,6 +21,12 @@ import {
   MenuItem,
 } from "@mui/material";
 import { toast } from "sonner";
+import axios from "axios";
+import {
+  bankMasterListUrl,
+  getBankMasterApiConfig,
+  mapApiBankRecord,
+} from "./bankMasterUtils";
 
 // ─── API Config ────────────────────────────────────────────────────────────────
 // The component automatically fetches baseUrl and token from localStorage
@@ -122,6 +128,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
   const navigate = useNavigate();
 
   const [item, setItem] = useState<RecurringExpenseAPI | null>(null);
+  const [bankDetail, setBankDetail] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("expense-details");
@@ -174,6 +181,31 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
 
     fetchExpense();
   }, [id, propBaseUrl, propToken]);
+
+  // Resolve the bank selected on the recurring expense, if any
+  useEffect(() => {
+    const fetchBankDetail = async () => {
+      const bankId = (item as any)?.bank_master_id || (item as any)?.bank_master?.id;
+      if (!bankId) {
+        setBankDetail(null);
+        return;
+      }
+      if ((item as any)?.bank_master) {
+        setBankDetail(mapApiBankRecord((item as any).bank_master));
+        return;
+      }
+      try {
+        const { baseUrl: bmBaseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(bankMasterListUrl(bmBaseUrl, lockAccountId), { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        const found = data.map(mapApiBankRecord).find((b: any) => String(b.id) === String(bankId));
+        setBankDetail(found || null);
+      } catch (err) {
+        setBankDetail(null);
+      }
+    };
+    fetchBankDetail();
+  }, [item]);
 
   // ── Menu handlers ───────────────────────────────────────────────────────────
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -558,6 +590,43 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Bank Details */}
+              {bankDetail && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base font-semibold">Bank Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
+                      <p className="text-sm mt-1">{bankDetail.bankName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Account Number</p>
+                      <p className="text-sm mt-1">{bankDetail.accountNo}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Beneficiary / Account Name</p>
+                      <p className="text-sm mt-1">{bankDetail.beneficiaryName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">IFSC Code</p>
+                      <p className="text-sm mt-1">{bankDetail.ifscCode}</p>
+                    </div>
+                    {bankDetail.swiftCode && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Swift Code</p>
+                        <p className="text-sm mt-1">{bankDetail.swiftCode}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Branch</p>
+                      <p className="text-sm mt-1">{bankDetail.branch}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Description / Notes */}
               <Card>

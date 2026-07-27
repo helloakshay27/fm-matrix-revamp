@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ import {
     Eye,
     ClipboardList,
     X,
+    Settings2,
 } from "lucide-react";
 import {
     Dialog,
@@ -217,10 +218,11 @@ const mockSalesOrder = {
 export const SalesOrderDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [salesOrder, setSalesOrder] = useState<SalesOrder>(mockSalesOrder);
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState("order-details");
+    const [activeTab, setActiveTab] = useState((location.state as any)?.tab === "pdf" ? "pdf" : "order-details");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showApprovalLog, setShowApprovalLog] = useState(false);
     const [hasSaleOrderApproval, setHasSaleOrderApproval] = useState(false);
@@ -568,6 +570,16 @@ export const SalesOrderDetailPage = () => {
                         >
                             <FileText className="h-4 w-4" />
                             PDF
+                        </Button>
+
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate("/accounting/sales-order/template", { state: { recordId: id } })}
+                            className="gap-2"
+                        >
+                            <Settings2 className="h-4 w-4" />
+                            Template Edit
                         </Button>
 
                         <Button
@@ -1226,6 +1238,7 @@ export const SalesOrderDetailPage = () => {
                                     <div className="mx-auto bg-white" ref={activeTab === "pdf" ? salesOrderPdfRef : null}>
                                         <AccountingDocumentPdf
                                             documentTitle="SALES ORDER"
+                                            documentType="sales_order"
                                             documentNumber={salesOrder.sale_order_number}
                                             documentDate={salesOrder.date}
                                             status={salesOrder.status}
@@ -1253,6 +1266,7 @@ export const SalesOrderDetailPage = () => {
                     <div ref={salesOrderPdfRef}>
                         <AccountingDocumentPdf
                             documentTitle="SALES ORDER"
+                            documentType="sales_order"
                             documentNumber={salesOrder.sale_order_number}
                             documentDate={salesOrder.date}
                             status={salesOrder.status}

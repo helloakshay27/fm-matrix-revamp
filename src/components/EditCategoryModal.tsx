@@ -154,7 +154,7 @@ export const EditCategoryModal = ({
           <div className="flex justify-center pt-4">
             <Button
               onClick={handleSubmit}
-              className="bg-green-600 hover:bg-green-700 text-white px-8"
+              className="bg-brand hover:bg-brand-hover text-white px-8"
             >
               Submit
             </Button>

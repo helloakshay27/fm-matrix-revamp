@@ -602,9 +602,10 @@ export const InboundDetailPage = () => {
 
     if (loading) {
         return (
-            <div className="p-6 bg-white min-h-screen">
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-lg">Loading inbound details...</div>
+            <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <p className="text-gray-700">Loading inbound details...</p>
                 </div>
             </div>
         );

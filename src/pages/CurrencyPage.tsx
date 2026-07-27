@@ -11,10 +11,11 @@ import {
     Select,
     TextField,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { toast } from "sonner";
 import { addCurrency, getCurrency, updateCurrency } from "@/store/slices/currencySlice";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const columns: ColumnConfig[] = [
     { key: "id", label: "ID", sortable: true, draggable: true, defaultVisible: true },
@@ -47,11 +48,17 @@ const CurrencyPage = () => {
 
     const [isOpen, setIsOpen] = useState(false);
     const [editingCurrency, setEditingCurrency] = useState<any | null>(null);
+    const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState<FormData>({
         currency: "",
         symbol: "",
         sites: [],
     });
+
+    useEffect(() => {
+        const timer = setTimeout(() => setLoading(false), 300);
+        return () => clearTimeout(timer);
+    }, []);
 
     const tableData = useMemo(() => {
         const arr = Array.isArray(currencyData) ? currencyData : [];
@@ -130,7 +137,8 @@ const CurrencyPage = () => {
         <>
             {tableData?.length === 0 && (
                 <Button
-                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                    className="fm-button-fix fm-button-brand px-4 py-2"
+                    variant="ghost"
                     onClick={() => setIsOpen(true)}
                 >
                     <Plus className="w-4 h-4 mr-2" />
@@ -157,6 +165,33 @@ const CurrencyPage = () => {
 
     return (
         <div className="p-6">
+            {loading ? (
+                <div className="bg-white rounded-lg border border-gray-200">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-[#f6f4ee]">
+                                <TableHead className="font-medium">ID</TableHead>
+                                <TableHead className="font-medium">Name</TableHead>
+                                <TableHead className="font-medium">Symbol</TableHead>
+                                <TableHead className="font-medium">Created By</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell colSpan={4} className="pt-4 pb-16">
+                                    <div className="w-full flex items-center justify-start gap-3 pl-4">
+                                        <div
+                                            className="h-5 w-5 rounded-full animate-spin"
+                                            style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                                        />
+                                        <span className="text-sm text-black">Loading ...</span>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </div>
+            ) : (
             <EnhancedTable
                 data={tableData}
                 columns={columns}
@@ -164,7 +199,9 @@ const CurrencyPage = () => {
                 leftActions={leftActions}
                 renderActions={renderActions}
                 storageKey="currency-table-columns"
+                emptyMessage=""
             />
+            )}
 
             <Dialog
                 open={isOpen}
@@ -237,7 +274,8 @@ const CurrencyPage = () => {
 
                         <Button
                             type="submit"
-                            className="bg-purple-600 hover:bg-purple-700 text-white w-full"
+                            variant="ghost"
+                            className="fm-button-fix fm-button-brand w-full"
                         >
                             {editingCurrency ? "Update" : "Submit"}
                         </Button>

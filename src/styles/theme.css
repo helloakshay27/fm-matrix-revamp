@@ -2925,19 +2925,20 @@ table tbody tr:hover,
    (No component-level edits required)
    =========================================== */
 
-/* Primary CTA buttons using legacy red shades */
+/* Primary CTA buttons using legacy red shades
+   Use ~= / exact class so hover:bg-[#C72030]/10 action icons stay ghost. */
 button.bg-\[\#C62828\],
 button.bg-\[\#c62828\],
 button.bg-\[\#C72030\],
 button.bg-\[\#c72030\],
-button[class*="bg-[#C62828]"],
-button[class*="bg-[#c62828]"],
-button[class*="bg-[#C72030]"],
-button[class*="bg-[#c72030]"],
+button[class~="bg-[#C62828]"],
+button[class~="bg-[#c62828]"],
+button[class~="bg-[#C72030]"],
+button[class~="bg-[#c72030]"],
 input[type="submit"].bg-\[\#C62828\],
 input[type="submit"].bg-\[\#C72030\],
-input[type="submit"][class*="bg-[#C62828]"],
-input[type="submit"][class*="bg-[#C72030]"] {
+input[type="submit"][class~="bg-[#C62828]"],
+input[type="submit"][class~="bg-[#C72030]"] {
   background-color: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
   color: #fff !important;
@@ -3016,7 +3017,7 @@ svg.lucide-eye {
 
 button[title*="View"]:hover svg,
 button[title*="view"]:hover svg {
-  color: var(--color-primary) !important;
+  color: var(--color-text) !important;
 }
 
 /* ===========================================
@@ -3090,11 +3091,12 @@ button[class*="hover:text-red-700"]:not([aria-label*="delete"]):not(
 }
 
 /* IssueFilterModal Apply (bg-[#C62828]) and Reset (border-[#C62828]) buttons
-   — attribute substring selectors are the most reliable for arbitrary values */
-[class*="bg-[#C62828]"],
-[class*="bg-[#c62828]"],
-[class*="bg-[#C72030]"],
-[class*="bg-[#c72030]"] {
+   — use ~= so hover:bg-[#C72030]/10 is NOT matched (that was painting
+   ghost Eye/action icons as solid brand squares) */
+[class~="bg-[#C62828]"],
+[class~="bg-[#c62828]"],
+[class~="bg-[#C72030]"],
+[class~="bg-[#c72030]"] {
   background-color: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
   color: #ffffff !important;
@@ -3174,7 +3176,7 @@ button[class*="hover:text-red-700"]:not([aria-label*="delete"]):not(
 
 /* Primary action buttons on login page */
 button.bg-\[\#C72030\],
-button[class*="bg-[#C72030]"] {
+button[class~="bg-[#C72030]"] {
   background-color: #da7756 !important;
 }
 button.hover\:bg-\[\#a81c29\]:hover,

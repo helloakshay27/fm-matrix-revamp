@@ -1190,7 +1190,7 @@
 
 
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Printer, Eye, File } from 'lucide-react';
@@ -1199,6 +1199,7 @@ import { toast } from 'sonner';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent } from '@mui/material';
 import StatusDropdown from '@/components/StatusDropdown';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { PostHogAuditActivity } from '@/components/PostHogAuditActivity';
 
 // Helper Functions
 const formatDate = (dateString: string): string => {
@@ -1235,6 +1236,13 @@ export const AssetAuditDetailsPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [auditData, setAuditData] = useState<any>(null);
+
+  const [auditEvent, setAuditEvent] = useState<{ key: number; event: "Audit Started" | "Audit Completed"; properties?: Record<string, unknown> } | null>(null);
+  const auditEventKeyRef = useRef(0);
+  const captureAuditEvent = (event: "Audit Started" | "Audit Completed", properties?: Record<string, unknown>) => {
+    auditEventKeyRef.current += 1;
+    setAuditEvent({ key: auditEventKeyRef.current, event, properties });
+  };
 
   const [auditDetails, setAuditDetails] = useState({
     name: '',
@@ -1507,6 +1515,22 @@ export const AssetAuditDetailsPage = () => {
       });
 
       toast.success(`Status changed to ${newStatus}`);
+      if (newStatus === 'in_progress') {
+        captureAuditEvent('Audit Started', {
+          audit_id: auditId,
+          audit_subject: 'asset',
+          platform: 'web',
+        });
+      } else if (newStatus === 'completed') {
+        const totalAssets = scannedAssets.length + unscannedAssets.length;
+        captureAuditEvent('Audit Completed', {
+          audit_id: auditId,
+          audit_subject: 'asset',
+          score_pct: totalAssets > 0 ? Math.round((scannedAssets.length / totalAssets) * 100) : null,
+          fail_item_count: unscannedAssets.length,
+          platform: 'web',
+        });
+      }
       fetchAuditDetails();
     } catch (error) {
       console.error(error);
@@ -1585,11 +1609,21 @@ export const AssetAuditDetailsPage = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading audit details...</div>;
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading audit details...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {auditEvent && (
+        <PostHogAuditActivity key={auditEvent.key} event={auditEvent.event} properties={auditEvent.properties} />
+      )}
       <div className="p-6">
         {/* Breadcrumb */}
         <div className="mb-4 flex items-center">

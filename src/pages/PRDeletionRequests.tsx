@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { toast } from "sonner";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { useProcurementEvents } from "@/components/PostHogProcurementEvents";
 
 const columns: ColumnConfig[] = [
     {
@@ -69,6 +70,7 @@ export const PRDeletionRequests = () => {
         total_count: 0,
         total_pages: 0,
     });
+    const procurementEvents = useProcurementEvents();
 
     const getDeletionRequests = async (page = 1) => {
         try {
@@ -104,6 +106,7 @@ export const PRDeletionRequests = () => {
 
     useEffect(() => {
         getDeletionRequests()
+        try { procurementEvents.onProcurementListViewed("deletion_requests", { list_type: "deletion_requests", row_count: deletionRequests.length }); } catch (err) {}
     }, [])
 
     const renderCell = (item: any, columnKey: string) => {

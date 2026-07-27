@@ -1,15 +1,16 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, Edit, Search } from 'lucide-react';
 import { AddVehicleParkingModal } from '@/components/AddVehicleParkingModal';
 import { RVehicleImportModal } from '@/components/RVehicleImportModal';
 import { RVehicleFilterModal } from '@/components/RVehicleFilterModal';
 import { EditVehicleDialog } from '@/components/EditVehicleDialog';
+import { Switch } from '@/components/ui/switch';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useNavigate } from 'react-router-dom';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useVehicleEvents } from '@/components/PostHogSecurityEvents';
 
 interface Vehicle {
   id: number;
@@ -169,8 +170,29 @@ export const RVehiclesDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
-  const [vehicleData, setVehicleData] = useState(initialVehicleData);
+  const [vehicleData, setVehicleData] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { onVehicleStatusToggled } = useVehicleEvents();
+
+  
+  useEffect(() => {
+    let active = true;
+    const fetchVehicles = async () => {
+      setLoading(true);
+      try {
+        
+        await new Promise((res) => setTimeout(res, 800));
+        if (active) setVehicleData(initialVehicleData);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchVehicles();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleHistoryClick = () => {
     navigate('/security/vehicle/r-vehicles/history');
@@ -203,6 +225,10 @@ export const RVehiclesDashboard = () => {
 
   const handleStatusToggle = (vehicleId: number) => {
     console.log(`Toggling status for Vehicle ${vehicleId}`);
+    const vehicle = vehicleData.find(v => v.id === vehicleId);
+    if (vehicle) {
+      onVehicleStatusToggled({ vehicle_id: vehicleId.toString(), to_status: vehicle.statusCode === 'Active' ? 'Inactive' : 'Active' });
+    }
     
     setVehicleData(prev => 
       prev.map(vehicle => 
@@ -248,18 +274,11 @@ export const RVehiclesDashboard = () => {
     staffName: vehicle.staffName || '--',
     status: (
       <div className="flex items-center">
-        <div
-          className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-            vehicle.statusCode === 'Active' ? 'bg-green-500' : 'bg-gray-300'
-          }`}
-          onClick={() => handleStatusToggle(vehicle.id)}
-        >
-          <span
-            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-              vehicle.statusCode === 'Active' ? 'translate-x-6' : 'translate-x-1'
-            }`}
-          />
-        </div>
+        <Switch
+          checked={vehicle.statusCode === 'Active'}
+          onCheckedChange={() => handleStatusToggle(vehicle.id)}
+          className="data-[state=checked]:bg-green-500"
+        />
       </div>
     ),
     qrCode: vehicle.qrCode
@@ -300,6 +319,7 @@ export const RVehiclesDashboard = () => {
         searchPlaceholder="Search by vehicle number"
         hideTableExport={false}
         hideColumnsButton={false}
+        loading={loading}
         leftActions={
           <>
             {shouldShow("R Vehicles", "create") && (

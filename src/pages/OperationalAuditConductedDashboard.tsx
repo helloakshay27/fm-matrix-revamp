@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, Fragment } from "react";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
@@ -278,13 +279,39 @@ export const OperationalAuditConductedDashboard = () => {
         </div>
       </div>
 
-      {loading && (
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      {loading ? (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">Report</TableHead>
+                <TableHead className="font-medium">ID</TableHead>
+                <TableHead className="font-medium">Audit Name</TableHead>
+                <TableHead className="font-medium">Start Date & Time</TableHead>
+                <TableHead className="font-medium">Conducted By</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
+                <TableHead className="font-medium">Site</TableHead>
+                <TableHead className="font-medium">Duration</TableHead>
+                <TableHead className="font-medium">%</TableHead>
+                <TableHead className="font-medium">Delete</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={11} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                    />
+                    <span className="text-sm text-black">Loading ...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
-      )}
-
-      {!loading && (
+      ) : (
         <>
           <div className="overflow-x-auto">
             <EnhancedTable
@@ -299,6 +326,7 @@ export const OperationalAuditConductedDashboard = () => {
               storageKey="conducted-audit-table"
               className="w-full"
               pagination={false}
+              emptyMessage=""
             />
           </div>
 

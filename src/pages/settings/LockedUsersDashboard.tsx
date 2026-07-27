@@ -14,13 +14,14 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import {
   Search,
   RefreshCw,
+  Loader2,
   UnlockIcon,
-  Lock,
   Calendar,
   User,
   Mail,
   Phone,
   AlertCircle,
+  Settings,
   Check,
 } from "lucide-react";
 import {
@@ -32,7 +33,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { StatsCard } from "@/components/StatsCard";
 import { API_CONFIG, getAuthHeader, getFullUrl } from "@/config/apiConfig";
 
 interface LockedUser {
@@ -454,47 +456,23 @@ export const LockedUsersDashboard = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Total Locked Users
-            </CardTitle>
-            <Lock className="w-4 h-4 text-[#DA7756]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">
-              {pagination.total_count}
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Total Locked Users"
+          value={pagination.total_count}
+          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Filtered Results
-            </CardTitle>
-            <Search className="w-4 h-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">
-              {filteredUsers.length}
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Filtered Results"
+          value={filteredUsers.length}
+          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+        />
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Status
-            </CardTitle>
-            <AlertCircle className="w-4 h-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">
-              {loading ? "Loading..." : "Active"}
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Status"
+          value={loading ? "Loading..." : "Active"}
+          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+        />
       </div>
 
       {/* Search Bar */}
@@ -516,9 +494,9 @@ export const LockedUsersDashboard = () => {
       <Card>
         <CardContent className="pt-6">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <RefreshCw className="w-8 h-8 animate-spin text-[#C72030]" />
-              <span className="ml-3 text-gray-600">Loading locked users...</span>
+            <div className="flex items-center justify-start py-12 text-black">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span className="ml-2">Loading ...</span>
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">

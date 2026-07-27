@@ -21,6 +21,7 @@ import { getInventories, getSuppliers } from "@/store/slices/materialPRSlice";
 import { ArrowLeft, Upload, File, FileText, FileSpreadsheet, Eye, X } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+import { useProcurementEvents } from "@/components/PostHogProcurementEvents";
 
 interface GRNDetails {
   purchaseOrder: number;
@@ -102,6 +103,7 @@ export const AddGRNDashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const procurementEvents = useProcurementEvents();
 
   const [grnDetails, setGrnDetails] = useState<GRNDetails>({
     purchaseOrder: 0,
@@ -531,6 +533,7 @@ export const AddGRNDashboard = () => {
     try {
       await dispatch(createGRN({ data: payload, baseUrl, token })).unwrap();
       toast.success("GRN submitted successfully!");
+      try { procurementEvents.onGrnSubmitted({ item_count: inventoryDetails.length, batch_count: inventoryDetails.reduce((acc, it) => acc + (it.batch?.length||0), 0), has_invoice: Boolean(grnDetails.invoiceNumber), partial_receipt: false }); } catch (err) {}
       navigate("/finance/grn-srn");
     } catch (error: any) {
       toast.error(error.message || "Failed to submit GRN.");

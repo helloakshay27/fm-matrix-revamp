@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Plus, Download, Eye, Search, Grid3x3, X, Upload, MoreHorizontal, Car, Bike, MapPin, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Download, Eye, Search, Grid3x3, X, Upload, MoreHorizontal, Car, Bike, MapPin, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -350,11 +350,19 @@ const ParkingDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedData.length === 0 ? (
+            {loading ? (
               <TableRow>
                 <TableCell colSpan={columns.filter(col => col.visible).length} className="text-center py-8 text-gray-500">
-                  {loading ? 'Loading parking data...' : 
-                   error ? error :
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin text-black" />
+                    <span>Loading ...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : paginatedData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.filter(col => col.visible).length} className="text-center py-8 text-gray-500">
+                  {error ? error :
                    searchTerm.trim() ? `No clients found matching "${searchTerm}"` : 'No parking data available'}
                 </TableCell>
               </TableRow>
@@ -399,10 +407,11 @@ const ParkingDashboard = () => {
                     }
                   }}
                   className={
-                    currentPage === 1
+                    currentPage === 1 || loading
                       ? "pointer-events-none opacity-50"
-                      : ""
+                      : "cursor-pointer"
                   }
+                  aria-disabled={loading || currentPage === 1}
                 />
               </PaginationItem>
 
@@ -410,10 +419,12 @@ const ParkingDashboard = () => {
                 { length: Math.min(totalPages, 10) },
                 (_, i) => i + 1
               ).map((page) => (
-                <PaginationItem key={page}>
+                <PaginationItem key={page} className="cursor-pointer">
                   <PaginationLink
-                    onClick={() => setCurrentPage(page)}
+                    onClick={() => !loading && setCurrentPage(page)}
                     isActive={currentPage === page}
+                    aria-disabled={loading}
+                    className={loading ? 'pointer-events-none opacity-50' : ''}
                   >
                     {page}
                   </PaginationLink>
@@ -434,10 +445,11 @@ const ParkingDashboard = () => {
                     }
                   }}
                   className={
-                    currentPage === totalPages
+                    currentPage === totalPages || loading
                       ? "pointer-events-none opacity-50"
-                      : ""
+                      : "cursor-pointer"
                   }
+                  aria-disabled={loading || currentPage === totalPages}
                 />
               </PaginationItem>
             </PaginationContent>

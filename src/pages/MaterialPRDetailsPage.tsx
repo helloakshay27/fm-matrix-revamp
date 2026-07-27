@@ -873,6 +873,17 @@ export const MaterialPRDetailsPage = () => {
     return value;
   };
 
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading material PR details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 mx-auto">
       <Button variant="ghost" onClick={() => {
@@ -891,7 +902,7 @@ export const MaterialPRDetailsPage = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-gray-300 !bg-[#C72030] !text-white cursor-default"
+                  className="border-gray-300 !bg-[#DA7756] !text-white cursor-default"
                 >
                   Deleted
                 </Button>

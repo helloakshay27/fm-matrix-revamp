@@ -53,7 +53,7 @@ export const HOTODashboard: React.FC = () => {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => history.back()}>Discard</Button>
-          <Button variant="default">Save</Button>
+          <Button variant="default" className="!bg-[#DA7756] !text-white [&_svg]:text-white">Save</Button>
         </div>
       </header>
 

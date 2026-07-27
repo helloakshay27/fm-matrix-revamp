@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -100,6 +99,8 @@ export const CRMCampaignPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [leads, setLeads] = useState<typeof leadsData>([]);
   const [visibleColumns, setVisibleColumns] = useState({
     actions: true,
     id: true,
@@ -112,6 +113,23 @@ export const CRMCampaignPage = () => {
     createdOn: true
   });
 
+  useEffect(() => {
+    let active = true;
+    const fetchLeads = async () => {
+      setLoading(true);
+      try {
+        await new Promise((res) => setTimeout(res, 800));
+        if (active) setLeads(leadsData);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchLeads();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const handleLeadSelection = (leadId: string) => {
     setSelectedLeads(prev => 
       prev.includes(leadId) 
@@ -121,10 +139,10 @@ export const CRMCampaignPage = () => {
   };
 
   const handleSelectAll = () => {
-    if (selectedLeads.length === leadsData.length) {
+    if (selectedLeads.length === leads.length) {
       setSelectedLeads([]);
     } else {
-      setSelectedLeads(leadsData.map(lead => lead.id));
+      setSelectedLeads(leads.map(lead => lead.id));
     }
   };
 
@@ -147,11 +165,14 @@ export const CRMCampaignPage = () => {
     );
   };
 
-  const filteredLeads = leadsData.filter(lead =>
+  const filteredLeads = leads.filter(lead =>
     lead.lead.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.project.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const colSpanCount =
+    1 + Object.values(visibleColumns).filter(Boolean).length;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -209,9 +230,10 @@ export const CRMCampaignPage = () => {
               <TableHead className="w-12">
                 <input
                   type="checkbox"
-                  checked={selectedLeads.length === leadsData.length}
+                  checked={leads.length > 0 && selectedLeads.length === leads.length}
                   onChange={handleSelectAll}
                   className="rounded border-gray-300"
+                  disabled={loading}
                 />
               </TableHead>
               {visibleColumns.actions && <TableHead className="text-gray-700 font-medium">Actions</TableHead>}
@@ -226,47 +248,74 @@ export const CRMCampaignPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredLeads.map((lead) => (
-              <TableRow key={lead.id} className="hover:bg-gray-50">
-                <TableCell>
-                  <input
-                    type="checkbox"
-                    checked={selectedLeads.includes(lead.id)}
-                    onChange={() => handleLeadSelection(lead.id)}
-                    className="rounded border-gray-300"
-                  />
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={colSpanCount} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{
+                        border: "2px solid #000000",
+                        borderTopColor: "transparent",
+                      }}
+                    />
+                    <span className="text-sm" style={{ color: "#000000" }}>
+                      Loading ...
+                    </span>
+                  </div>
                 </TableCell>
-                {visibleColumns.actions && (
-                  <TableCell>
-                    {shouldShow("Campaign", "show") && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 text-blue-600"
-                      onClick={() => handleViewLead(lead.id)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    )}
-                  </TableCell>
-                )}
-                {visibleColumns.id && <TableCell className="font-medium text-blue-600">{lead.id}</TableCell>}
-                {visibleColumns.createdBy && <TableCell>{lead.createdBy}</TableCell>}
-                {visibleColumns.uniqueId && <TableCell className="text-gray-600">{lead.uniqueId}</TableCell>}
-                {visibleColumns.project && <TableCell className="font-medium">{lead.project}</TableCell>}
-                {visibleColumns.lead && <TableCell>{lead.lead}</TableCell>}
-                {visibleColumns.mobile && <TableCell>{lead.mobile}</TableCell>}
-                {visibleColumns.status && <TableCell>{getStatusBadge(lead.status)}</TableCell>}
-                {visibleColumns.createdOn && <TableCell className="text-gray-600">{lead.createdOn}</TableCell>}
               </TableRow>
-            ))}
+            ) : filteredLeads.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={colSpanCount} className="py-12 text-center text-gray-500">
+                  No leads found
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredLeads.map((lead) => (
+                <TableRow key={lead.id} className="hover:bg-gray-50">
+                  <TableCell>
+                    <input
+                      type="checkbox"
+                      checked={selectedLeads.includes(lead.id)}
+                      onChange={() => handleLeadSelection(lead.id)}
+                      className="rounded border-gray-300"
+                    />
+                  </TableCell>
+                  {visibleColumns.actions && (
+                    <TableCell>
+                      {shouldShow("Campaign", "show") && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-blue-600"
+                        onClick={() => handleViewLead(lead.id)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      )}
+                    </TableCell>
+                  )}
+                  {visibleColumns.id && <TableCell className="font-medium text-blue-600">{lead.id}</TableCell>}
+                  {visibleColumns.createdBy && <TableCell>{lead.createdBy}</TableCell>}
+                  {visibleColumns.uniqueId && <TableCell className="text-gray-600">{lead.uniqueId}</TableCell>}
+                  {visibleColumns.project && <TableCell className="font-medium">{lead.project}</TableCell>}
+                  {visibleColumns.lead && <TableCell>{lead.lead}</TableCell>}
+                  {visibleColumns.mobile && <TableCell>{lead.mobile}</TableCell>}
+                  {visibleColumns.status && <TableCell>{getStatusBadge(lead.status)}</TableCell>}
+                  {visibleColumns.createdOn && <TableCell className="text-gray-600">{lead.createdOn}</TableCell>}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t bg-gray-50 text-sm text-gray-600">
-          Showing 1 to 8 of 8 rows
-        </div>
+        {/* <div className="px-4 py-3 border-t bg-gray-50 text-sm text-gray-600">
+          {loading
+            ? "Loading..."
+            : `Showing 1 to ${filteredLeads.length} of ${filteredLeads.length} rows`}
+        </div> */}
       </div>
 
       {/* Filter Modal */}
@@ -278,7 +327,8 @@ export const CRMCampaignPage = () => {
           setIsFilterModalOpen(false);
         }}
         onReset={() => {
-          console.log('Reset filters');
+                  console.log('Reset filters');
+
         }}
       />
     </div>

@@ -20,7 +20,7 @@ import {
   Shield,
   Menu,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -86,7 +86,8 @@ export const Header = () => {
     handleNotificationClick: handleNotificationClickContext,
   } = useNotification();
 
-  const currentPath = window.location.pathname;
+  const location = useLocation();
+  const currentPath = location.pathname;
 
   // Redux state
   const {
@@ -314,10 +315,29 @@ export const Header = () => {
     }
   };
 
+  // Pages where an "All" option should be shown in the site dropdown,
+  // allowing the user to select every allowed site at once.
+  const showAllSitesOption =
+    currentPath === "/master/user/fm-users" ||
+    currentPath === "/master/user/occupant-users";
+
+  const [isAllSitesSelected, setIsAllSitesSelected] = useState(
+    () => localStorage.getItem("isAllSitesSelected") === "true"
+  );
+
   // Handle site change
-  const handleSiteChange = async (siteId: number) => {
+  const handleSiteChange = async (siteId: number | "all") => {
     try {
-      await dispatch(changeSite(siteId)).unwrap();
+      const payload =
+        siteId === "all" ? sites.map((site) => site.id) : siteId;
+      await dispatch(changeSite(payload)).unwrap();
+      if (siteId === "all") {
+        localStorage.setItem("isAllSitesSelected", "true");
+        setIsAllSitesSelected(true);
+      } else {
+        localStorage.removeItem("isAllSitesSelected");
+        setIsAllSitesSelected(false);
+      }
       // Re-fetch lock_account_id for the new site
       localStorage.removeItem("lock_account_id");
       await fetchLockAccount();
@@ -658,7 +678,9 @@ export const Header = () => {
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <span className="hidden lg:inline text-sm font-medium max-w-[120px] truncate">
-                    {selectedSite?.name || "Select Site"}
+                    {isAllSitesSelected
+                      ? "All"
+                      : selectedSite?.name || "Select Site"}
                   </span>
                 )}
                 <ChevronDown className="hidden w-3 h-3 lg:block" />
@@ -667,13 +689,23 @@ export const Header = () => {
                 align="end"
                 className="!w-[calc(100vw-1rem)] max-w-[18rem] bg-white border border-[#D5DbDB] shadow-lg max-h-[60vh] overflow-y-auto sm:!w-56"
               >
+                {showAllSitesOption && sites.length > 0 && (
+                  <DropdownMenuItem
+                    onClick={() => handleSiteChange("all")}
+                    className={
+                      isAllSitesSelected ? "bg-[#f6f4ee] text-[#C72030]" : ""
+                    }
+                  >
+                    All
+                  </DropdownMenuItem>
+                )}
                 {sites.length > 0 ? (
                   sites.map((site) => (
                     <DropdownMenuItem
                       key={site.id}
                       onClick={() => handleSiteChange(site.id)}
                       className={
-                        selectedSite?.id === site.id
+                        !isAllSitesSelected && selectedSite?.id === site.id
                           ? "bg-[#f6f4ee] text-[#C72030]"
                           : ""
                       }

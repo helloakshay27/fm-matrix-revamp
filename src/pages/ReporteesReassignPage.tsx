@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Loader2, ArrowLeft, Users, Repeat, ClipboardList } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 type ReassignResult = {
     message?: string;
@@ -17,6 +18,7 @@ type ReassignResult = {
 
 const ReporteesReassignPage = () => {
     const navigate = useNavigate();
+    const msafeEvents = useMSafeEvents();
     const [currentEmail, setCurrentEmail] = useState('');
     const [updatedEmail, setUpdatedEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,6 +45,11 @@ const ReporteesReassignPage = () => {
             if (fromQ && !currentEmail) setCurrentEmail(fromQ.toLowerCase());
         } catch { }
     }, []); // run once
+
+    React.useEffect(() => {
+        msafeEvents.onReporteesReassignOpened();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleFetchReportees = async () => {
         if (isFetching) return;
@@ -139,6 +146,7 @@ const ReporteesReassignPage = () => {
 
             setTotalPages(data?.pagination?.total_pages || 1);
             setTotalCount(data?.pagination?.total_count || listRaw2.length);
+            msafeEvents.onReporteesFetched(data?.pagination?.total_count || list.length);
 
         } catch (e: any) {
             toast.error(e?.message || 'Failed to fetch reportees');
@@ -191,6 +199,7 @@ console.log("Reassign payload:", {
         }
         if (current === updated) {
             toast.info('Current and updated emails cannot be the same.');
+            msafeEvents.onReporteesReassigned(selectedIds.size, true);
             return;
         }
         setIsSubmitting(true);
@@ -247,6 +256,7 @@ console.log("Reassign payload:", {
 
             const resultData = data as ReassignResult;
             toast.success(resultData?.message || 'Reportees reassigned successfully');
+            msafeEvents.onReporteesReassigned(resultData?.total_reassigned ?? selectedIds.size, false);
             setResults(prev => [...prev, resultData || {}]);
             setUpdatedEmail('');
             // Refresh the reportees list so the table reflects the latest state
@@ -339,14 +349,14 @@ console.log("Reassign payload:", {
                     <Button
                         onClick={handleFetchReportees}
                         variant="outline"
-                        className="flex items-center"
+                        className="flex items-center !border-brand !text-brand hover:!bg-brand-light disabled:!border-brand disabled:!text-brand disabled:opacity-100"
                         disabled={isFetching || !currentEmail.trim()}
                     >
                         {isFetching ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Fetching...</>) : 'Fetch Reportees'}
                     </Button>
                     <Button
                         onClick={handleReassign}
-                        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 flex items-center"
+                        className="flex items-center !bg-brand hover:!bg-brand-hover !text-white disabled:!bg-brand disabled:!text-white disabled:opacity-100"
                         disabled={isSubmitting || selectedIds.size === 0 || !updatedEmail.trim()}
                     >
                         {isSubmitting ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...</>) : 'Reassign Selected'}

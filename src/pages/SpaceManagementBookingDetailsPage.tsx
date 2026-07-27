@@ -200,13 +200,19 @@ export const SpaceManagementBookingDetailsPage = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading booking details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 min-h-screen" style={{ backgroundColor: 'white' }}>
-      {loading ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="h-12 w-12 rounded-full border-4 border-gray-300 border-t-gray-600 animate-spin" />
-        </div>
-      ) : (
       <div className="mb-6">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm mb-4" style={{ color: '#6B7280' }}>
@@ -463,7 +469,6 @@ export const SpaceManagementBookingDetailsPage = () => {
           </Button>
         </div>
       </div>
-      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { format } from "date-fns";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ import {
   ClipboardList,
   Eye,
   X,
+  Settings2,
 } from "lucide-react";
 import {
   Dialog,
@@ -56,6 +57,11 @@ import {
 import axios from "axios";
 import { CloudUpload } from "@mui/icons-material";
 import PurchaseDocumentPdf from "./purchasepdftamplate";
+import {
+  bankMasterListUrl,
+  getBankMasterApiConfig,
+  mapApiBankRecord,
+} from "./bankMasterUtils";
 
 // Types
 interface SalesOrderItem {
@@ -251,10 +257,11 @@ const mockSalesOrder = {
 export const BillDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [salesOrder, setSalesOrder] = useState<SalesOrder>(mockSalesOrder);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("order-details");
+  const [activeTab, setActiveTab] = useState((location.state as any)?.tab === "pdf" ? "pdf" : "order-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showApprovalLog, setShowApprovalLog] = useState(false);
   const [transactionRecords, setTransactionRecords] = useState<
@@ -280,6 +287,7 @@ export const BillDetails = () => {
   const [paymentAttachments, setPaymentAttachments] = useState<File[]>([]);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+  const [bankDetail, setBankDetail] = useState<any>(null);
   const billPdfRef = useRef<HTMLDivElement | null>(null);
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -323,6 +331,31 @@ export const BillDetails = () => {
   useEffect(() => {
     if (id) fetchSalesOrder();
   }, [id, fetchSalesOrder]);
+
+  // Resolve the bank selected on the bill, if any
+  useEffect(() => {
+    const fetchBankDetail = async () => {
+      const bankId = (salesOrder as any)?.bank_master_id || (salesOrder as any)?.bank_master?.id;
+      if (!bankId) {
+        setBankDetail(null);
+        return;
+      }
+      if ((salesOrder as any)?.bank_master) {
+        setBankDetail(mapApiBankRecord((salesOrder as any).bank_master));
+        return;
+      }
+      try {
+        const { baseUrl: bmBaseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(bankMasterListUrl(bmBaseUrl, lockAccountId), { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        const found = data.map(mapApiBankRecord).find((b: any) => String(b.id) === String(bankId));
+        setBankDetail(found || null);
+      } catch (err) {
+        setBankDetail(null);
+      }
+    };
+    fetchBankDetail();
+  }, [salesOrder]);
 
   useEffect(() => {
     if (!baseUrl || !token || !lock_account_id) return;
@@ -924,6 +957,15 @@ const totalReverseTax = groupedReverseTax.reduce(
             <Button
               size="sm"
               variant="outline"
+              onClick={() => navigate("/accounting/bills/template", { state: { recordId: id } })}
+              className="gap-2"
+            >
+              <Settings2 className="h-4 w-4" />
+              Template Edit
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
               onClick={handleDownload}
               disabled={pdfGenerating}
               className="gap-2"
@@ -1422,6 +1464,43 @@ const totalReverseTax = groupedReverseTax.reduce(
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Bank Details */}
+              {bankDetail && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base font-semibold">Bank Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
+                      <p className="text-sm mt-1">{bankDetail.bankName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Account Number</p>
+                      <p className="text-sm mt-1">{bankDetail.accountNo}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Beneficiary / Account Name</p>
+                      <p className="text-sm mt-1">{bankDetail.beneficiaryName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">IFSC Code</p>
+                      <p className="text-sm mt-1">{bankDetail.ifscCode}</p>
+                    </div>
+                    {bankDetail.swiftCode && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Swift Code</p>
+                        <p className="text-sm mt-1">{bankDetail.swiftCode}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Branch</p>
+                      <p className="text-sm mt-1">{bankDetail.branch}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Notes and Terms */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -2047,6 +2126,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                     <div className="mx-auto bg-white" ref={activeTab === "pdf" ? billPdfRef : null}>
                       <PurchaseDocumentPdf
                         documentTitle="BILL"
+                        documentType="bill"
                         documentNumber={salesOrder.bill_number}
                         documentDate={salesOrder.bill_date}
                         status={salesOrder.status}
@@ -2060,6 +2140,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                         secondaryDateLabel="Due Date"
                         secondaryDate={salesOrder.due_date}
                         referenceNumber={salesOrder.order_number}
+                        bankDetail={bankDetail}
                       />
                     </div>
                   </div>
@@ -2075,6 +2156,7 @@ const totalReverseTax = groupedReverseTax.reduce(
           <div ref={billPdfRef}>
             <PurchaseDocumentPdf
               documentTitle="BILL"
+              documentType="bill"
               documentNumber={salesOrder.bill_number}
               documentDate={salesOrder.bill_date}
               status={salesOrder.status}
@@ -2088,6 +2170,7 @@ const totalReverseTax = groupedReverseTax.reduce(
               secondaryDateLabel="Due Date"
               secondaryDate={salesOrder.due_date}
               referenceNumber={salesOrder.order_number}
+              bankDetail={bankDetail}
             />
           </div>
         </div>

@@ -36,15 +36,21 @@ export const ClubBroadcastDetailsPage = () => {
     const [broadcastStatus, setBroadcastStatus] = useState('Published');
     const [broadcastDetails, setBroadcastDetails] = useState<BroadcastDetails>({})
     const [isPrinting, setIsPrinting] = useState(false)
+    const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true);
+            const minDelay = new Promise(resolve => setTimeout(resolve, 1200));
             try {
                 const response = await dispatch(fetchBroadcastById({ id, baseUrl, token })).unwrap();
                 setBroadcastDetails(response)
             } catch (error) {
                 console.log(error)
                 toast.error("Failed to fetch broadcast details")
+            } finally {
+                await minDelay;
+                setLoading(false);
             }
         }
 
@@ -85,6 +91,17 @@ export const ClubBroadcastDetailsPage = () => {
         } finally {
             setIsPrinting(false)
         }
+    }
+
+    if (loading) {
+        return (
+            <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <p className="text-gray-700">Loading broadcast details...</p>
+                </div>
+            </div>
+        );
     }
 
     return (

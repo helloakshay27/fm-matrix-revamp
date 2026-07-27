@@ -10,6 +10,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { KRCCFormFilterDialog } from '@/components/KRCCFormFilterDialog';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -51,6 +52,7 @@ interface KRCCApiResponse {
 export const KRCCFormListDashboard = () => {
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
+  const msafeEvents = useMSafeEvents();
 
   // Remote data state
   const [krccForms, setKrccForms] = useState<KRCCForm[]>([]);
@@ -159,9 +161,11 @@ export const KRCCFormListDashboard = () => {
         setCurrentPage(data.pagination.current_page);
         setTotalPages(data.pagination.total_pages);
         setTotalCount(data.pagination.total_count);
+        msafeEvents.onMSafeSubmoduleViewed('krcc', data.pagination.total_count);
       } else {
         setTotalPages(1);
         setTotalCount(mapped.length);
+        msafeEvents.onMSafeSubmoduleViewed('krcc', mapped.length);
       }
       if (searchActive && mapped.length === 0) {
         toast.info('No results found');

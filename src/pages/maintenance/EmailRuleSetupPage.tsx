@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Plus } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -220,12 +221,52 @@ export const EmailRuleSetupPage: React.FC = () => {
         </div>
 
         {/* Table */}
+        {loading ? (
+          <div className="bg-white rounded-lg border border-gray-200">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#f6f4ee]">
+                  <TableHead className="font-medium">Edit</TableHead>
+                  <TableHead className="font-medium">Sr.No.</TableHead>
+                  <TableHead className="font-medium">ID</TableHead>
+                  <TableHead className="font-medium">Rule Name</TableHead>
+                  <TableHead className="font-medium">Trigger Type</TableHead>
+                  <TableHead className="font-medium">Trigger To</TableHead>
+                  <TableHead className="font-medium">Role</TableHead>
+                  <TableHead className="font-medium">Period Value</TableHead>
+                  <TableHead className="font-medium">Period Type</TableHead>
+                  <TableHead className="font-medium">Created On</TableHead>
+                  <TableHead className="font-medium">Created By</TableHead>
+                  <TableHead className="font-medium">Active</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={12} className="pt-4 pb-16">
+                    <div className="w-full flex items-center justify-start gap-3 pl-4">
+                      <div
+                        className="h-5 w-5 rounded-full animate-spin"
+                        style={{
+                          border: "2px solid #000000",
+                          borderTopColor: "transparent",
+                        }}
+                      />
+                      <span className="text-sm text-black">
+                        Loading ...
+                      </span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
         <EnhancedTable
           data={emailRules}
           columns={columns}
           renderCell={renderCell}
           storageKey="email-rule-setup-table"
-          emptyMessage="No email rules found"
+          emptyMessage=""
           selectable={true}
           selectedItems={selectedRules}
           onSelectAll={handleSelectAll}
@@ -233,6 +274,7 @@ export const EmailRuleSetupPage: React.FC = () => {
           getItemId={(rule) => rule.id}
           selectAllLabel="Select all email rules"
         />
+        )}
 
         {/* Dialogs */}
         <CreateEmailRuleDialogNew

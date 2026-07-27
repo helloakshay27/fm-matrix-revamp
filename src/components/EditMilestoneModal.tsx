@@ -21,6 +21,7 @@ interface EditMilestoneModalProps {
     owners: any[];
     milestoneData: {
         id?: string;
+        milestone_code?: string;
         title?: string;
         responsible_person?: string;
         start_date?: string;

@@ -118,6 +118,7 @@ export const BookingSetupDetailPage = () => {
   const [premiumPercentage, setPremiumPercentage] = useState<{ [key: string]: string }>({});
   const [isPremiumSlots, setIsPremiumSlots] = useState<{ [key: string]: boolean }>({});
   const [inventories, setInventories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [loadingInventories, setLoadingInventories] = useState(false);
   const [blockDaySlots, setBlockDaySlots] = useState<{ [key: number]: any[] }>({});
   const [formData, setFormData] = useState({
@@ -324,10 +325,12 @@ export const BookingSetupDetailPage = () => {
   }
 
   const fetchFacilityBookingDetails = async () => {
+    setLoading(true);
     try {
       const response = await dispatch(
         facilityBookingSetupDetails({ baseUrl, token, id })
       ).unwrap();
+      setLoading(false);
       console.log(response.cover_image?.document)
       setFormData({
         facilityName: response.fac_name,
@@ -524,6 +527,7 @@ export const BookingSetupDetailPage = () => {
     } catch (error) {
       console.error("Error fetching facility details:", error);
       console.error("Error details:", error?.response?.data || error.message);
+      setLoading(false);
     }
   };
 
@@ -585,6 +589,17 @@ export const BookingSetupDetailPage = () => {
     fetchInventories();
     fetchFacilityBookingDetails();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading booking setup details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ThemeProvider theme={muiTheme}>

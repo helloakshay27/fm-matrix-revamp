@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Switch } from '@/components/ui/switch';
 import { Plus, X, Edit, Check, ChevronLeft, ChevronRight, Download, Upload, Loader2, QrCode } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import {
@@ -461,10 +462,21 @@ export function WingPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {wings.loading ? (
+               {wings.loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4">
-                      Loading wings...
+                    <TableCell colSpan={5} className="pt-4 pb-16">
+                      <div className="w-full flex items-center justify-start gap-3 pl-4">
+                        <div
+                          className="h-5 w-5 rounded-full animate-spin"
+                          style={{
+                            border: "2px solid #000000",
+                            borderTopColor: "transparent",
+                          }}
+                        />
+                        <span className="text-sm" style={{ color: "#000000" }}>
+                          Loading ...
+                        </span>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : filteredWings.length === 0 ? (
@@ -503,17 +515,10 @@ export function WingPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <button onClick={() => handleToggleStatus(wing.id, wing.active)} className="cursor-pointer">
-                          {wing.active ? (
-                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
-                              <Check className="w-3 h-3 text-white" />
-                            </div>
-                          ) : (
-                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
-                              <span className="text-white text-xs">✗</span>
-                            </div>
-                          )}
-                        </button>
+                        <Switch
+                          checked={wing.active}
+                          onCheckedChange={() => handleToggleStatus(wing.id, wing.active)}
+                        />
                       </TableCell>
                     </TableRow>
                   ))
