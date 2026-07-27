@@ -682,7 +682,7 @@ export function GoldenQrSetupPage() {
                 size="sm"
                 onClick={handleDownloadSample}
                 disabled={isDownloadingSample}
-                className="border-green-600 text-green-600 hover:bg-green-50"
+                className="border-[#C72030] text-[#C72030] hover:bg-green-50"
               >
                 {isDownloadingSample ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
