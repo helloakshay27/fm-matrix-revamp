@@ -195,7 +195,7 @@ export const AddFacilityBookingPage = () => {
       const newSelection = [...selectedSlots, slotId];
 
       // Check if adding this slot maintains consecutive pattern
-      if (!isConsecutiveSelection(newSelection)) return false;
+      // if (!isConsecutiveSelection(newSelection)) return false;
 
       // Check if total doesn't exceed max
       if (newSelection.length > maxSelectableSlots) return false;
@@ -253,7 +253,7 @@ export const AddFacilityBookingPage = () => {
         }
       })
 
-      
+
       setUsers(reseponse.data.users)
     } catch (error) {
       console.log(error)
@@ -1006,10 +1006,10 @@ export const AddFacilityBookingPage = () => {
                 `You can select multiple consecutive slots. Selected slots must be continuous.`
               ) : (
                 <>
-                  {bookingRuleData?.multiple_bookings
+                  {/* {bookingRuleData?.multiple_bookings
                     ? `You can select up to ${maxSelectableSlots} slots. `
                     : 'You can select only one slot. '}
-                  {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`}
+                  {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`} */}
                 </>
               )}
             </div>
@@ -1432,8 +1432,8 @@ export const AddFacilityBookingPage = () => {
         <div className="flex justify-center">
           <Button
             type="submit"
-           className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
+            className="fm-button-fix fm-button-brand px-4 py-2"
+            variant="ghost"
           >
             Submit
           </Button>
