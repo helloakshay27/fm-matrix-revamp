@@ -510,6 +510,7 @@ input[type="radio"] {
 [role="radio"] {
   border-color: var(--color-primary) !important;
   color: var(--color-primary) !important;
+  border-radius: 9999px !important;
 }
 [role="radio"][data-state="checked"] {
   border-color: var(--color-primary) !important;
@@ -524,16 +525,20 @@ input[type="radio"] {
   border-color: var(--color-primary) !important;
 }
 
-/* Radio inner indicator circle fill */
+/* Radio inner indicator circle fill — force a true circle regardless of the
+   indicator's own border-radius classes, so it never renders as a square */
 [role="radio"] span,
-[role="radio"] > span {
+[role="radio"] > span,
+[role="radio"] div {
   background-color: var(--color-primary) !important;
+  border-radius: 9999px !important;
 }
 [role="radio"] svg,
 [role="radio"] svg[class*="fill-[#C72030]"],
 [role="radio"] svg[class*="text-[#C72030]"] {
   fill: var(--color-primary) !important;
   color: var(--color-primary) !important;
+  border-radius: 9999px !important;
 }
 
 /* Flag / bookmark SVG icons using Tailwind red-500 as brand action colour */
@@ -945,58 +950,6 @@ button[class*="text-[#C72030]"] svg,
 button[class*="border-[#C72030]"] svg,
 button.text-\[\#C72030\] svg {
   color: var(--color-primary) !important;
-}
-
-/* ===========================================
-   BUTTON PURPLE COLOR OVERRIDES
-   Legacy Tailwind purple-* utility classes (bg-purple-500/600/700/800, etc.)
-   applied directly on buttons — render as brand primary instead.
-   [class*="bg-purple-"] substring-matches any shade without enumerating each one.
-   =========================================== */
-
-button[class*="bg-purple-"],
-[type="button"][class*="bg-purple-"],
-[type="submit"][class*="bg-purple-"],
-a[class*="bg-purple-"],
-.btn[class*="bg-purple-"] {
-  background-color: var(--color-primary) !important;
-  border-color: var(--color-primary) !important;
-  color: white !important;
-}
-
-/* Icons inside purple-background buttons should be white */
-button[class*="bg-purple-"] svg,
-button[class*="bg-purple-"] .lucide {
-  color: white !important;
-  stroke: white !important;
-}
-
-button[class*="hover:bg-purple-"]:hover,
-[type="button"][class*="hover:bg-purple-"]:hover,
-[type="submit"][class*="hover:bg-purple-"]:hover,
-a[class*="hover:bg-purple-"]:hover,
-.btn[class*="hover:bg-purple-"]:hover {
-  background-color: var(--color-primary-hover) !important;
-}
-
-/* Outline/text buttons with purple text or border */
-button[class*="text-purple-"],
-a[class*="text-purple-"],
-.btn[class*="text-purple-"],
-button[class*="border-purple-"],
-a[class*="border-purple-"] {
-  color: var(--color-primary) !important;
-  border-color: var(--color-primary) !important;
-}
-
-button[class*="text-purple-"] svg,
-button[class*="border-purple-"] svg {
-  color: var(--color-primary) !important;
-}
-
-button[class*="hover:text-purple-"]:hover,
-a[class*="hover:text-purple-"]:hover {
-  color: var(--color-primary-hover) !important;
 }
 
 /* ===========================================

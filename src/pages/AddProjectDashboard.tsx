@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, X, Plus, Building2, FolderOpen } from "lucide-react";
+import { ArrowLeft, Upload, X, Plus, Building2, FolderOpen } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { AddCategoryModal } from '@/components/AddCategoryModal';
@@ -114,20 +114,46 @@ export const AddProjectDashboard = () => {
     });
   };
 
-  return (
-    <div className="p-6 max-w-4xl">
-      {/* Basic Details Section */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 bg-[#DA7756] rounded-full flex items-center justify-center">
-            <Building2 className="w-4 h-4 text-white" />
-          </div>
-          <h2 className="text-2xl font-semibold text-[#DA7756]">
-            BASIC DETAILS
-          </h2>
-        </div>
+  const handleGoBack = () => {
+    navigate('/transitioning/fitout/request');
+  };
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+  const handleCancel = () => {
+    navigate('/transitioning/fitout/request');
+  };
+
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+          <button
+            onClick={handleGoBack}
+            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-600" />
+          </button>
+          <span>Fitout Request List</span>
+          <span>{">"}</span>
+          <span className="text-gray-900 font-medium">Create New Project</span>
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900">NEW PROJECT</h1>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Section 1: Basic Details */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <Building2 size={16} color="#C72030" />
+              </span>
+              Basic Details
+            </h2>
+          </div>
+          <div className="p-6 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div>
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
               <InputLabel id="building-label" shrink>Building*</InputLabel>
@@ -206,54 +232,32 @@ export const AddProjectDashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1">
-            <TextField
-              label="Description"
-              placeholder="Enter description"
+          <div className="md:col-span-1 relative w-full">
+            <textarea
+              id="description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
-              fullWidth
-              variant="outlined"
-              multiline
-              rows={1}
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ 
-                sx: {
-                  padding: '0',
-                  '& .MuiInputBase-inputMultiline': {
-                    padding: '12px',
-                    minHeight: '32px',
-                    maxHeight: '120px',
-                    resize: 'vertical',
-                    boxSizing: 'border-box',
-                    overflow: 'auto',
-                  },
-                }
-              }}
-              sx={{ 
-                mt: 1,
-                height: fieldStyles.height,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '4px',
-                  height: fieldStyles.height,
-                  '& fieldset': {
-                    borderColor: '#e5e7eb',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#9ca3af',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#C72030',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#6b7280',
-                  '&.Mui-focused': {
-                    color: '#C72030',
-                  },
-                },
-              }}
+              rows={3}
+              placeholder=" "
+              className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent
+      focus:outline-none
+      focus:border-[2px]
+      focus:border-[rgb(25,118,210)]
+      resize-vertical"
             />
+
+            <label
+              htmlFor="description"
+              className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+      peer-placeholder-shown:top-4
+      peer-placeholder-shown:text-base
+      peer-placeholder-shown:text-gray-400
+      peer-focus:-top-[10px]
+      peer-focus:text-sm
+      peer-focus:text-[rgb(25,118,210)]"
+            >
+              Description
+            </label>
           </div>
 
           <div className="md:col-span-1">
@@ -289,19 +293,20 @@ export const AddProjectDashboard = () => {
             </FormControl>
           </div>
         </div>
-      </div>
-
-      {/* Category and Attachment Section */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 bg-[#DA7756] rounded-full flex items-center justify-center">
-            <FolderOpen className="w-4 h-4 text-white" />
           </div>
-          <h2 className="text-2xl font-semibold text-[#DA7756]">
-            CATEGORY AND ATTACHMENT
-          </h2>
         </div>
 
+        {/* Section 2: Category and Attachment */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <FolderOpen size={16} color="#C72030" />
+              </span>
+              Category and Attachment
+            </h2>
+          </div>
+          <div className="p-6 space-y-6">
         {/* Dynamic Categories */}
         <div className="space-y-4 mb-6">
           {categories.map((category) => (
@@ -391,17 +396,28 @@ export const AddProjectDashboard = () => {
           <Plus className="w-4 h-4 mr-2" />
           Add Category
         </Button>
-      </div>
+          </div>
+        </div>
 
-      {/* Submit Button */}
-      <div className="flex justify-end">
-        <Button
-          onClick={handleSubmit}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
-        >
-          Create
-        </Button>
-      </div>
+        {/* Action Buttons */}
+        <div className="flex gap-4 justify-center pt-6">
+          <Button
+            type="submit"
+            variant="ghost"
+            className="fm-button-fix fm-button-brand px-8 py-2"
+          >
+            Create
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            className="fm-button-fix border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
 
       {/* Add Category Modal */}
       <AddCategoryModal

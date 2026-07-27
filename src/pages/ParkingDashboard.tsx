@@ -1,26 +1,24 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, X, Upload, Car, Bike, MapPin, CheckCircle, AlertTriangle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Plus, Download, Eye, Grid3x3, X, Upload, MoreHorizontal, Car, Bike, MapPin, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { BulkUploadModal } from "@/components/BulkUploadModal";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
-import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useNavigate,useLocation } from "react-router-dom";
-import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
 import { fetchParkingBookings, ParkingBookingClient, ParkingBookingSummary } from '@/services/parkingConfigurationsAPI';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
-
-const tableColumns: ColumnConfig[] = [
-  { key: 'name', label: 'Client Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
-  { key: 'two_wheeler_count', label: 'No. of 2 Wheeler', sortable: true, hideable: true, draggable: true, defaultVisible: true },
-  { key: 'four_wheeler_count', label: 'No. of 4 Wheeler', sortable: true, hideable: true, draggable: true, defaultVisible: true },
-  { key: 'free_parking', label: 'Free Parking', sortable: true, hideable: true, draggable: true, defaultVisible: true },
-  { key: 'paid_parking', label: 'Paid Parking', sortable: true, hideable: true, draggable: true, defaultVisible: true },
-  { key: 'available_parking_slots', label: 'Available Parking Slots', sortable: true, hideable: true, draggable: true, defaultVisible: true },
-];
-
 const ParkingDashboard = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,7 +27,6 @@ const ParkingDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
 
   const location = useLocation();
-  const { isSidebarCollapsed } = useLayout();
   const panelRef = useRef<HTMLDivElement>(null);
 
   // API state
@@ -44,6 +41,17 @@ const ParkingDashboard = () => {
   return Number(params.get('page')) || 1;
 });
   const [itemsPerPage] = useState(10);
+
+  // Table column config
+  const columns = [
+    { key: 'action', label: 'Action', sortable: false },
+    { key: 'clientName', label: 'Client Name', sortable: true },
+    { key: 'twoWheeler', label: 'No. of 2 Wheeler', sortable: true },
+    { key: 'fourWheeler', label: 'No. of 4 Wheeler', sortable: true },
+    { key: 'freeParking', label: 'Free Parking', sortable: true },
+    { key: 'paidParking', label: 'Paid Parking', sortable: true },
+    { key: 'availableSlots', label: 'Available Parking Slots', sortable: true }
+  ];
   
   useEffect(() => {
   navigate(`${location.pathname}?page=${currentPage}`, {
@@ -208,41 +216,61 @@ const ParkingDashboard = () => {
     );
   }, [searchTerm, parkingData]);
 
+  // Paginated data
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredParkingData.slice(startIndex, endIndex);
+  }, [filteredParkingData, currentPage, itemsPerPage]);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredParkingData.length / itemsPerPage);
+
   // Handle search
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     setCurrentPage(1); // Reset to first page when searching
   };
 
-  const renderCell = (row: ParkingBookingClient, columnKey: string) => {
-    switch (columnKey) {
-      case 'name':
-        return <span className="font-medium">{row.name}</span>;
-      case 'two_wheeler_count':
-        return row.two_wheeler_count;
-      case 'four_wheeler_count':
-        return row.four_wheeler_count;
-      case 'free_parking':
-        return row.free_parking;
-      case 'paid_parking':
-        return row.paid_parking;
-      case 'available_parking_slots':
-        return row.available_parking_slots;
-      default:
-        return row[columnKey as keyof ParkingBookingClient] ?? '--';
+  // Render cell content per column
+  const renderCell = (item: ParkingBookingClient, columnKey: string) => {
+    if (columnKey === 'action') {
+      return (
+        shouldShow("Parking", "show") && (
+          <button
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewDetails(item.id);
+            }}
+            title="View Details"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+        )
+      );
     }
+    if (columnKey === 'clientName') return item.name;
+    if (columnKey === 'twoWheeler') return item.two_wheeler_count;
+    if (columnKey === 'fourWheeler') return item.four_wheeler_count;
+    if (columnKey === 'freeParking') return item.free_parking;
+    if (columnKey === 'paidParking') return item.paid_parking;
+    if (columnKey === 'availableSlots') return item.available_parking_slots;
+    return null;
   };
 
-  const renderActions = (row: ParkingBookingClient) =>
-    shouldShow("Parking", "show") ? (
-      <button
-        className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded"
-        onClick={() => handleViewDetails(row.id)}
-        title="View Details"
+  const renderActionButton = () => (
+    shouldShow("Parking", "create") && (
+      <Button
+        className="fm-button-fix fm-button-brand px-4 py-2"
+        variant="ghost"
+        onClick={handleActionClick}
       >
-        <Eye className="w-4 h-4" />
-      </button>
-    ) : null;
+        <Plus className="w-4 h-4 mr-2" />
+        Action
+      </Button>
+    )
+  );
 
   return (
     <div className="p-6 space-y-6 min-h-screen">
@@ -252,19 +280,19 @@ const ParkingDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
         {loading ? (
           Array.from({ length: 7 }).map((_, index) => (
             <div
               key={index}
-              className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 animate-pulse bg-[#f6f4ee]"
+              className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 animate-pulse"
             >
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-gray-300 rounded"></div>
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                <div className="w-6 h-6 bg-gray-300 rounded"></div>
               </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate text-gray-400">0</div>
-                <div className="text-xs sm:text-sm font-medium leading-tight text-gray-400">Loading...</div>
+              <div>
+                <div className="text-2xl font-semibold text-gray-400">0</div>
+                <div className="text-sm font-medium text-gray-400">Loading...</div>
               </div>
             </div>
           ))
@@ -272,19 +300,16 @@ const ParkingDashboard = () => {
           parkingStats.map((stat, index) => (
             <div
               key={index}
-              className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] hover:bg-[#e6e2da] transition-all duration-200"
+              className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4"
             >
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <stat.icon
-                  className="w-4 h-4 sm:w-6 sm:h-6"
-                  style={{ color: '#DA7756' }}
-                />
+              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
+                <stat.icon className="w-6 h-6 text-[#C72030]" />
               </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+              <div>
+                <div className="text-2xl font-semibold text-[#1A1A1A]">
                   {stat.count}
                 </div>
-                <div className="text-xs sm:text-sm font-medium leading-tight text-muted-foreground">
+                <div className="text-sm font-medium text-[#1A1A1A]">
                   {stat.title}
                 </div>
               </div>
@@ -293,43 +318,93 @@ const ParkingDashboard = () => {
         )}
       </div>
 
+      {/* Data Table */}
       <EnhancedTable
-        data={filteredParkingData}
-        columns={tableColumns}
+        data={paginatedData}
+        columns={columns}
         renderCell={renderCell}
-        renderActions={renderActions}
+        storageKey="parking-bookings-table"
+        emptyMessage={
+          error ? error :
+          searchTerm.trim() ? `No clients found matching "${searchTerm}"` : 'No parking data available'
+        }
         enableSearch={true}
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
         disableClientSearch={true}
-        storageKey="parking-allocation-table"
-        emptyMessage={
-          error
-            ? error
-            : searchTerm.trim()
-              ? `No clients found matching "${searchTerm}"`
-              : 'No parking data available'
-        }
         searchPlaceholder="Search clients..."
-        hideTableExport={true}
+        leftActions={renderActionButton()}
         loading={loading}
-        pagination={true}
-        pageSize={itemsPerPage}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        leftActions={
-          shouldShow("Parking", "create") ? (
-            <Button
-              className="fm-button-fix fm-button-brand px-4 py-2"
-              variant="ghost"
-              onClick={handleActionClick}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Action
-            </Button>
-          ) : undefined
-        }
+        loadingMessage="Loading..."
+        className="transition-all duration-500 ease-in-out"
       />
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => {
+                    if (currentPage > 1) {
+                      setCurrentPage(currentPage - 1);
+                    }
+                  }}
+                  className={
+                    currentPage === 1 || loading
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                  aria-disabled={loading || currentPage === 1}
+                />
+              </PaginationItem>
+
+              {Array.from(
+                { length: Math.min(totalPages, 10) },
+                (_, i) => i + 1
+              ).map((page) => (
+                <PaginationItem key={page} className="cursor-pointer">
+                  <PaginationLink
+                    onClick={() => !loading && setCurrentPage(page)}
+                    isActive={currentPage === page}
+                    aria-disabled={loading}
+                    className={loading ? 'pointer-events-none opacity-50' : ''}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+              {totalPages > 10 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => {
+                    if (currentPage < totalPages) {
+                      setCurrentPage(currentPage + 1);
+                    }
+                  }}
+                  className={
+                    currentPage === totalPages || loading
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                  aria-disabled={loading || currentPage === totalPages}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+
+          {/* <div className="text-center mt-2 text-sm text-gray-600">
+            Showing page {currentPage} of {totalPages} ({filteredParkingData.length} total clients)
+          </div> */}
+        </div>
+      )}
 
       <BulkUploadModal 
         isOpen={isBulkUploadOpen} 
@@ -342,59 +417,51 @@ const ParkingDashboard = () => {
       {/* Action Panel */}
       {showActionPanel && (
         <div
-          className={`fixed z-50 flex items-end justify-center pb-8 sm:pb-[16rem] pointer-events-none transition-all duration-300 ${
-            isSidebarCollapsed ? 'left-16' : 'left-64'
-          } right-0 bottom-0`}
+          ref={panelRef}
+          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px]"
         >
-          {/* Main panel + right bar container */}
-          <div className="flex max-w-full pointer-events-auto bg-white border border-gray-200 rounded-lg shadow-lg mx-4 overflow-hidden">
-            {/* Right vertical bar */}
-            <div className="hidden sm:flex w-8 bg-[#C4B89D54] items-center justify-center text-red-600 font-semibold text-sm">
+          {/* Beige left strip */}
+          <div className="w-[44px] bg-[#C4B59A] rounded-l-lg flex flex-col items-center justify-center" />
+
+          {/* Main content */}
+          <div className="flex items-center justify-between gap-4 px-6 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-[#1a1a1a]">Action</span>
             </div>
 
-            {/* Main content */}
-            <div ref={panelRef} className="p-4 sm:p-6 w-full sm:w-auto">
-              <div className="flex flex-wrap justify-center sm:justify-start items-center gap-6 sm:gap-12">
-                {/* Add Booking */}
-                {/* <button
-                  onClick={handleAddBooking}
-                  className="flex flex-col items-center justify-center cursor-pointer text-[#374151] hover:text-black w-16 sm:w-auto"
-                >
-                  <Plus className="w-6 h-6 mb-1" />
-                  <span className="text-sm font-medium text-center">Add Booking</span>
-                </button> */}
+            <div className="flex items-center gap-2">
+              {/* Import */}
+              <Button
+                onClick={handleExport}
+                variant="ghost"
+                size="sm"
+                className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+              >
+                <Upload className="w-6 h-6 text-black" />
+                <span className="text-xs text-gray-600">Import</span>
+              </Button>
 
-                {/* Import */}
-                <button
-                  onClick={handleExport}
-                  className="flex flex-col items-center justify-center cursor-pointer text-[#374151] hover:text-black w-16 sm:w-auto"
-                >
-                  <Upload className="w-6 h-6 mb-1" />
-                  <span className="text-sm font-medium text-center">Import</span>
-                </button>
-
-                {/* View Bookings */}
-                <button
-                  onClick={handleViewBookings}
-                  className="flex flex-col items-center justify-center cursor-pointer text-[#374151] hover:text-black w-16 sm:w-auto"
-                >
-                  <Eye className="w-6 h-6 mb-1" />
-                  <span className="text-sm font-medium text-center">View Bookings</span>
-                </button>
-
-                {/* Vertical divider */}
-                <div className="w-px h-8 bg-black opacity-20 mx-2 sm:mx-4" />
-
-                {/* Close icon */}
-                <div
-                  onClick={handleClearSelection}
-                  className="flex flex-col items-center justify-center cursor-pointer text-gray-400 hover:text-gray-600 w-16 sm:w-auto"
-                >
-                  <X className="w-6 h-6 mb-1" />
-                  <span className="text-sm font-medium text-center">Close</span>
-                </div>
-              </div>
+              {/* View Bookings */}
+              <Button
+                onClick={handleViewBookings}
+                variant="ghost"
+                size="sm"
+                className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+              >
+                <Eye className="w-6 h-6 text-black" />
+                <span className="text-xs text-gray-600">View Bookings</span>
+              </Button>
             </div>
+          </div>
+
+          {/* Close strip */}
+          <div className="w-[44px] flex items-center justify-center border-l border-gray-200">
+            <button
+              onClick={handleClearSelection}
+              className="w-full h-full flex items-center justify-center hover:bg-gray-50 transition-colors duration-200"
+            >
+              <X className="w-4 h-4 text-black" />
+            </button>
           </div>
         </div>
       )}

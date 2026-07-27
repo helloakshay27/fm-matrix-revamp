@@ -492,7 +492,7 @@ export const AddSlotConfigurationPage = () => {
           {/* 2 Wheeler Section */}
           {/* Dynamic Parking Categories */}
           {parkingCategories.map((category, index) => (
-            <div key={category.id} className={`${index % 2 === 0 ? 'bg-pink-50' : 'bg-blue-50'} rounded-lg p-6 mb-6`}>
+            <div key={category.id} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-gray-50'} rounded-lg p-6 mb-6`}>
               <h3 className="text-lg font-semibold mb-6">
                 {category.name}
               </h3>
@@ -502,14 +502,14 @@ export const AddSlotConfigurationPage = () => {
                   categoryId={category.id}
                   type="nonStack"
                   count={formData.categories[category.id]?.nonStack || 0}
-                  buttonColorClass="bg-purple-600 hover:bg-purple-700"
+                  buttonColorClass="bg-[#C72030] hover:bg-[#C72030]/90"
                 />
                 <ParkingSlotCategory
                   title="Stack Parking"
                   categoryId={category.id}
                   type="stack"
                   count={formData.categories[category.id]?.stack || 0}
-                  buttonColorClass="bg-cyan-500 hover:bg-cyan-600"
+                  buttonColorClass="bg-[#C72030] hover:bg-[#C72030]/90"
                   isStack
                 />
                 <ParkingSlotCategory
@@ -517,7 +517,7 @@ export const AddSlotConfigurationPage = () => {
                   categoryId={category.id}
                   type="reserved"
                   count={formData.categories[category.id]?.reserved || 0}
-                  buttonColorClass={index % 2 === 0 ? "bg-purple-600 hover:bg-purple-700" : "bg-cyan-500 hover:bg-cyan-600"}
+                  buttonColorClass="bg-[#C72030] hover:bg-[#C72030]/90"
                 />
               </div>
             </div>

@@ -897,7 +897,7 @@ export const VisitorsDashboard = () => {
             )}
             <div title={`${visitor.is_flagged ? 'Unflag' : 'Flag'} visitor`} className="p-1 hover:bg-gray-100 rounded transition-colors">
               <Flag
-                className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:text-[#C72030] hover:scale-110 ${visitor.is_flagged
+                className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:scale-110 ${visitor.is_flagged
                   ? 'text-red-500 fill-red-500'
                   : 'text-gray-600'
                   }`}
