@@ -987,8 +987,8 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
-        <div className="table-container">
+      <div className="bg-white rounded-lg border border-[#D5DbDB] w-full min-w-0">
+        <div className="table-container overflow-x-auto">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
