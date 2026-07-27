@@ -136,6 +136,10 @@ export const AddFacilityBookingPage = () => {
     multiple_booking_count?: number;
     concurrent_slots?: number;
   } | null>(null);
+  // True only when booking_rule_for_user errored out — used to lift slot-selection
+  // restrictions entirely, as opposed to bookingRuleData being null simply because
+  // nothing has been fetched yet (which keeps the default single-slot restriction).
+  const [bookingRuleFetchFailed, setBookingRuleFetchFailed] = useState(false);
   const [flexiblePriceData, setFlexiblePriceData] = useState<{
     success: boolean;
     total_minutes: number;
@@ -159,11 +163,15 @@ export const AddFacilityBookingPage = () => {
   // Helper: Max slots user can select
   const maxSelectableSlots = isRequestableType
     ? Infinity // For requestable, allow unlimited consecutive slots
-    : (bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1);
+    : bookingRuleFetchFailed
+      ? Infinity // Booking rule lookup failed — don't restrict slot selection
+      : (bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1);
   // Helper: Max concurrent slots
   const maxConcurrentSlots = isRequestableType
     ? (facilityDetails?.max_people || 10) // For requestable, enforce consecutive slots up to max_people
-    : (bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1);
+    : bookingRuleFetchFailed
+      ? (facilityDetails?.max_people || 10) // Booking rule lookup failed — don't restrict slot selection
+      : (bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1);
 
   // Helper: Check if consecutive selection is valid
   const isConsecutiveSelection = (slots: number[]) => {
@@ -463,6 +471,7 @@ export const AddFacilityBookingPage = () => {
           });
           console.log('Booking Rule for User Response:', bookingRuleResponse.data);
           // Store booking rule data in state
+          setBookingRuleFetchFailed(false);
           if (bookingRuleResponse.data) {
             setBookingRuleData(bookingRuleResponse.data);
             console.log('Booking rule rate:', bookingRuleResponse.data.rate);
@@ -479,11 +488,16 @@ export const AddFacilityBookingPage = () => {
               console.warn('Server error (500): The API encountered an internal error. Check if user_id and facility_setup_id are valid.');
             }
           }
+          // Clear any stale booking rule data (e.g. from a previous facility/user) and mark the
+          // lookup as failed so slot selection is never left restricted because of it.
+          setBookingRuleData(null);
+          setBookingRuleFetchFailed(true);
         }
       };
       fetchAmenityBooking();
     } else {
       console.log('❌ Amenity API not called - condition not met');
+      setBookingRuleFetchFailed(false);
     }
   }, [userType, selectedUser, selectedFacility]);
 
