@@ -157,7 +157,15 @@ export const FitoutSetupDashboard = () => {
   };
 
   const renderCategoryActions = (item: Category) => (
-    <Edit className="w-4 h-4 stroke-[#C72030] cursor-pointer" onClick={() => handleEditCategory(item)} />
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => handleEditCategory(item)}
+      className="h-8 w-8 p-0 text-black hover:bg-gray-100 [&_svg]:!text-black [&_svg]:!stroke-black"
+      title="Edit"
+    >
+      <Edit className="w-4 h-4" />
+    </Button>
   );
 
   const renderCategoryTab = () => (
@@ -195,7 +203,14 @@ export const FitoutSetupDashboard = () => {
   };
 
   const renderStatusActions = () => (
-    <Edit className="w-4 h-4 stroke-[#C72030] cursor-pointer" />
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-8 w-8 p-0 text-black hover:bg-gray-100 [&_svg]:!text-black [&_svg]:!stroke-black"
+      title="Edit"
+    >
+      <Edit className="w-4 h-4" />
+    </Button>
   );
 
   const renderStatusTab = () => (
@@ -281,7 +296,14 @@ export const FitoutSetupDashboard = () => {
   };
 
   const renderFitoutGuideActions = () => (
-    <Edit className="w-4 h-4 stroke-[#C72030] cursor-pointer" />
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-8 w-8 p-0 text-black hover:bg-gray-100 [&_svg]:!text-black [&_svg]:!stroke-black"
+      title="Edit"
+    >
+      <Edit className="w-4 h-4" />
+    </Button>
   );
 
   const renderFitoutGuideTab = () => (
