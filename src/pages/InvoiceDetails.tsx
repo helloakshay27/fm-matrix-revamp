@@ -434,7 +434,7 @@ export const InvoiceDetails = () => {
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                                // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                                 onClick={() => setOpenDebitModal(true)}
                             >
                                 Debit Note
@@ -445,7 +445,7 @@ export const InvoiceDetails = () => {
                         <Button
                             size="sm"
                             variant="outline"
-                            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                            // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                             onClick={handleSendToSap}
                             disabled={sapPushDisabled}
                         >
@@ -455,7 +455,7 @@ export const InvoiceDetails = () => {
                     <Button
                         size="sm"
                         variant="outline"
-                        className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                        // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                         onClick={handleFeeds}
                     >
                         <Rss className="w-4 h-4 mr-1" />

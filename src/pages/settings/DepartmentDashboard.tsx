@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-// import { Switch } from '@/components/ui/switch';
+import { Switch } from '@/components/ui/switch';
 import { Edit, Plus } from 'lucide-react';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Department } from '@/services/departmentService';
@@ -17,7 +17,6 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchDepartmentData, addDepartment, updateDepartment } from '@/store/slices/departmentSlice';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { Switch } from '@mui/material';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface LocalDepartment extends Department {
@@ -135,29 +134,9 @@ export const DepartmentDashboard = () => {
     switch (columnKey) {
       case 'status':
         return (
-          // <Switch
-          //   checked={item.status}
-          //   onCheckedChange={() => toggleStatus(item.id)}
-          //   className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
-          // />
           <Switch
             checked={item.status}
-            onChange={() => toggleStatus(item.id)}
-            size='small'
-            sx={{
-              '& .MuiSwitch-switchBase.Mui-checked': {
-                color: '#04A231',
-              },
-              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                backgroundColor: '#04A231',
-              },
-              '& .MuiSwitch-switchBase:not(.Mui-checked)': {
-                color: '#C72030',
-              },
-              '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
-                backgroundColor: 'rgba(199, 32, 48, 0.5)',
-              },
-            }}
+            onCheckedChange={() => toggleStatus(item.id)}
           />
         );
       default:

@@ -359,7 +359,7 @@ export const AddPermitChecklist = () => {
                             <Button
                                 type="button"
                                 onClick={addQuestion}
-                                className="bg-[#C72030] hover:bg-[#B8252F] text-white h-8 w-8 rounded-full p-0"
+                                className="bg-brand hover:bg-brand-hover text-white h-8 w-8 rounded-full p-0 [&_svg]:text-white"
                             >
                                 <Plus className="w-4 h-4" />
                             </Button>
@@ -494,7 +494,7 @@ export const AddPermitChecklist = () => {
                                         type="button"
                                         variant="outline"
                                         onClick={() => addOption(question.id)}
-                                        className="mt-2 h-9 w-9 p-0 border-2 border-dashed border-gray-300 hover:border-gray-400"
+                                        className="mt-2 h-9 w-9 p-0 border-2 border-dashed border-brand text-brand hover:bg-brand-light hover:border-brand"
                                     >
                                         <Plus className="w-4 h-4" />
                                     </Button>

@@ -249,7 +249,7 @@ export const AssetDetailsPage = () => {
               </Button> */}
               <Button
                 onClick={() => { setIsQRModalOpen(true); captureAssetDetailEvent("Asset QR Viewed"); }}
-                className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+              // className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
               >
                 <svg
                   width="14"
@@ -270,7 +270,7 @@ export const AssetDetailsPage = () => {
                 <Button
                   onClick={handleEditDetails}
                   variant="outline"
-                  className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
+                // className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
                 >
                   <svg
                     width="21"

@@ -3,7 +3,13 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from "@/components/ui/button";
-import { Plus, Download } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, Download, ChevronDown } from "lucide-react";
 import { DesignInsightFilterModal } from '@/components/DesignInsightFilterModal';
 import { ExportModal } from '@/components/ExportModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -153,18 +159,14 @@ export const DesignInsightsDashboard = () => {
 
   return (
     <div className="flex-1 p-6 bg-white min-h-screen">
-      <div className="mb-6 flex items-center justify-between">
-  <div>
-    <p className="text-sm text-gray-500 mb-1">
-      Design Insights &gt; Design Insights List
-    </p>
-    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-      Design Insights
-    </h1>
-  </div>
-</div>
-
-
+      <div className="mb-6">
+        <p className="text-sm text-gray-500 mb-1">
+          Design Insights &gt; Design Insights List
+        </p>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          Design Insights
+        </h1>
+      </div>
 
       <EnhancedTable
         data={filteredData}
@@ -186,16 +188,39 @@ export const DesignInsightsDashboard = () => {
         hideTableExport={false}
         onFilterClick={() => setIsFilterOpen(true)}
         leftActions={
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={handleAddClick} className="bg-[#C72030] hover:bg-[#A61B28] text-white">
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleAddClick}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
+            >
               <Plus className="w-4 h-4 mr-2" /> Add
             </Button>
-            <Button variant="outline" className="border-[#C72030] text-[#C72030]">
-              <Download className="w-4 h-4 mr-2" /> Download Report With Picture
-            </Button>
-            <Button variant="outline" className="border-[#C72030] text-[#C72030]">
-              <Download className="w-4 h-4 mr-2" /> Download Report Without Picture
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 h-9 px-4 text-sm font-medium whitespace-nowrap"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Report
+                  <ChevronDown className="w-4 h-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="bg-white border shadow-lg z-50">
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => setIsExportOpen(true)}
+                >
+                  With Picture
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => setIsExportOpen(true)}
+                >
+                  Without Picture
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         }
       />

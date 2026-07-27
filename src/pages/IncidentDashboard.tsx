@@ -160,46 +160,48 @@ const getLevelColor = (level: string) => {
   switch (level) {
     case "High Risk":
     case "Extreme Risk":
-      return "bg-red-100 text-red-800";
+      return "bg-[#F2C8C4] text-[#2c2c2c]";
     case "Medium Risk":
     case "Moderate Risk":
-      return "bg-yellow-100 text-yellow-800";
+      return "bg-[#F2EBC9] text-[#2c2c2c]";
     case "Low Risk":
-      return "bg-green-100 text-green-800";
+      return "bg-[#C7EDDA] text-[#2c2c2c]";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-[#E5E0D8] text-[#2c2c2c]";
   }
 };
 
 const getStatusColor = (status: string) => {
   switch (status) {
     case "Open":
-      return "bg-blue-100 text-blue-800";
+      return "bg-[#C7EDDA] text-[#2c2c2c]";
     case "Closed":
-      return "bg-green-100 text-green-800";
+      return "bg-[#F2C8C4] text-[#2c2c2c]";
     case "Under Observation":
-      return "bg-yellow-100 text-yellow-800";
+      return "bg-[#F2EBC9] text-[#2c2c2c]";
     case "final_closure":
-      return "bg-purple-100 text-purple-800";
+      return "bg-[#CECBF6] text-[#2c2c2c]";
     case "provisional_closure":
-      return "bg-orange-100 text-orange-800";
+      return "bg-[#F8E4C7] text-[#2c2c2c]";
     case "Draft":
-      return "bg-gray-100 text-gray-600";
+      return "bg-[#E5E0D8] text-[#2c2c2c]";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-[#E5E0D8] text-[#2c2c2c]";
   }
 };
 
 const getIncidentStatusColor = (status: string) => {
   switch (status) {
     case "Open":
-      return "bg-blue-100 text-blue-800";
+      return "bg-[#C7EDDA] text-[#2c2c2c]";
     case "Under Observation":
-      return "bg-yellow-100 text-yellow-800";
+    case "Under Investigation":
+    case "Pending":
+      return "bg-[#F2EBC9] text-[#2c2c2c]";
     case "Closed":
-      return "bg-green-100 text-green-800";
+      return "bg-[#F2C8C4] text-[#2c2c2c]";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-[#E5E0D8] text-[#2c2c2c]";
   }
 };
 
@@ -1050,10 +1052,12 @@ export const IncidentDashboard = () => {
     switch (columnKey) {
       case "srNo":
         return (
-          <span className="font-medium">
+          <span className="font-medium text-gray-900">
             {(currentPage - 1) * 20 + index + 1}
           </span>
         );
+      case "id":
+        return <span className="text-gray-900 font-medium">{item.id}</span>;
       case "site_name":
         return <span>{item.site_name || item.building_name || "-"}</span>;
       case "inc_time":
@@ -1075,7 +1079,7 @@ export const IncidentDashboard = () => {
           </Badge>
         );
       default:
-        return <span>{String(item[columnKey as keyof Incident] ?? "-")}</span>;
+        return <span className="text-gray-900">{String(item[columnKey as keyof Incident] ?? "-")}</span>;
     }
   };
 
@@ -1193,6 +1197,7 @@ export const IncidentDashboard = () => {
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="h-8 w-8 p-0 text-black hover:bg-gray-100"
                   onClick={() =>
                     navigate(`/safety/incident/new-details/${item.id}`, {
                       state: { openSource: activeFilterQuery ? "filter" : "list" },
@@ -1221,12 +1226,14 @@ export const IncidentDashboard = () => {
             pagination={false}
             leftActions={
               shouldShow("Incident", "create") && (
-                <Button
-                  onClick={() => navigate("/safety/incident/add", { state: { entrySource: "list_button" } })}
-                  className="bg-[#C72030] text-white"
-                >
-                  <Plus className="w-4 h-4 mr-2" /> Add Incident
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => navigate("/safety/incident/add", { state: { entrySource: "list_button" } })}
+                    className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Add Incident
+                  </Button>
+                </div>
               )
             }
             onFilterClick={() => setIsFilterModalOpen(true)}
@@ -1236,6 +1243,7 @@ export const IncidentDashboard = () => {
             <div className="mt-6 flex justify-center items-center gap-4 text-sm text-gray-600">
               <Button
                 variant="outline"
+                className="h-9"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => p - 1)}
               >
@@ -1246,6 +1254,7 @@ export const IncidentDashboard = () => {
               </span>
               <Button
                 variant="outline"
+                className="h-9"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => p + 1)}
               >

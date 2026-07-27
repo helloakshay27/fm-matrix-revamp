@@ -2780,12 +2780,15 @@ const DailyTab = ({
                               </div>
 
                               <div className="flex flex-wrap items-center gap-2 shrink-0">
-                                {isPending && !hasDraft && (
-                                  <span className="text-red-500 text-xs font-semibold">
-                                    Not submitted
+                                {/* Not submitted → "Missed", never Absent/Present */}
+                                {isRawPending && (
+                                  <span className="border border-red-100 bg-red-50 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                    Missed
                                   </span>
                                 )}
-                                {!isPending && (
+                                {/* Attendance is only meaningful for a submitted report —
+                                    never tag a non-submitted member as Absent/Present */}
+                                {!isRawPending && (
                                   <>
                                     <span className="text-[10px] font-bold text-white bg-[#10B981] border border-[#10B981] px-2 py-0.5 rounded-full shrink-0">
                                       Submitted
@@ -2815,23 +2818,6 @@ const DailyTab = ({
                                 )}
                               </div>
                             </div>
-
-                            {canExpand && (
-                              <div className="flex flex-wrap items-center gap-2 mb-1">
-                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                  KPI: {kpiStr}
-                                </span>
-                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                  Task, Issues & To-do's: {tasksIssuesStr}
-                                </span>
-                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                  Planning: {planStr}
-                                </span>
-                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                  Timing: {timeStr}
-                                </span>
-                              </div>
-                            )}
 
                             {canExpand && reportCalendarRow.length > 0 && (
                               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
@@ -2877,21 +2863,27 @@ const DailyTab = ({
                         {isExpanded && canExpand && (
                           <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
                             <div className="p-5 space-y-5">
+                              <div className="flex flex-wrap items-center gap-2 mb-3">
+                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                  KPI: {kpiStr}
+                                </span>
+                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                  Task, Issues & To-do's: {tasksIssuesStr}
+                                </span>
+                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                  Planning: {planStr}
+                                </span>
+                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                  Timing: {timeStr}
+                                </span>
+                              </div>
+
                               <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm mb-4">
                                 <span>
                                   ⭐ Self rating {selfRatingText || "0/10"}
                                 </span>
                                 <span className="text-gray-400">
                                   Total Score: {totalScoreStr}
-                                </span>
-                                <span
-                                  className={cn(
-                                    "font-semibold",
-                                    isAbsentReport ? "text-red-600" : "text-green-600"
-                                  )}
-                                >
-                                  {attendanceLabel}
-                                  {absentReasonText ? `: ${absentReasonText}` : ""}
                                 </span>
                               </div>
 
@@ -3366,6 +3358,28 @@ const DailyTab = ({
                                       const reporteeIsPending =
                                         reporteeStatus === "pending" && !hasReporteeDraft;
 
+                                      // Mirror the manager card's score chips / summary line
+                                      const reporteeKpiStr = `${reporteeAbsent ? 0 : reporteeGetScore(reporteeSections.kpi_achievement)}/20`;
+                                      const reporteeTasksIssuesStr = `${reporteeAbsent
+                                        ? 0
+                                        : reporteeGetScore(
+                                          reporteeSections.tasks_issues_todos ??
+                                          reporteeSections.tasks_issues
+                                        )
+                                        }/20`;
+                                      const reporteePlanStr = `${reporteeAbsent ? 0 : reporteeGetScore(reporteeSections.planning)}/20`;
+                                      const reporteeTimeStr = `${reporteeGetScore(reporteeSections.timing)}/20`;
+                                      const reporteeSelfRatingText =
+                                        formatSelfRating(reporteeSelfRating);
+                                      const reporteeTotalScoreValue = getReportTotalScore(
+                                        reportee,
+                                        reporteeRaw
+                                      );
+                                      const reporteeTotalScoreStr =
+                                        reporteeTotalScoreValue === null
+                                          ? "0"
+                                          : String(Math.round(reporteeTotalScoreValue));
+
                                       return (
                                         <div
                                           key={reporteeId}
@@ -3385,16 +3399,12 @@ const DailyTab = ({
                                                     {reportee.department}
                                                   </span>
                                                 )}
-                                                <span
-                                                  className={cn(
-                                                    "text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0",
-                                                    reporteeIsPending
-                                                      ? "bg-red-50 text-red-700 border-red-100"
-                                                      : "bg-green-50 text-green-700 border-green-100"
-                                                  )}
-                                                >
-                                                  {reporteeIsPending ? "Not Submitted" : "Submitted"}
-                                                </span>
+                                                {/* Pending reportees get the "Missed" tag on the right instead */}
+                                                {!reporteeIsPending && (
+                                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 bg-green-50 text-green-700 border-green-100">
+                                                    Submitted
+                                                  </span>
+                                                )}
                                               </div>
                                               <p className="text-[11px] text-neutral-400 truncate">
                                                 {reportee.email || "Reportee report"}
@@ -3407,20 +3417,28 @@ const DailyTab = ({
                                             </div>
 
                                             <div className="flex items-center gap-2 shrink-0 self-start sm:self-center ml-auto">
-                                              <span
-                                                className={cn(
-                                                  "px-2.5 py-0.5 rounded-full border text-[10px] font-bold shrink-0",
-                                                  reporteeAbsent
-                                                    ? "bg-red-50 text-red-700 border-red-100"
-                                                    : "bg-green-50 text-green-700 border-green-100"
-                                                )}
-                                              >
-                                                {reporteeAbsent ? "Absent" : "Present"}
-                                                {reporteeAbsent &&
-                                                  reporteeAbsentReason.toLowerCase() !== "absent"
-                                                  ? `: ${reporteeAbsentReason}`
-                                                  : ""}
-                                              </span>
+                                              {/* Not submitted → "Missed"; attendance only applies to a submitted report */}
+                                              {reporteeIsPending && (
+                                                <span className="px-2.5 py-0.5 rounded-full border border-red-100 bg-red-50 text-red-700 text-[10px] font-bold shrink-0">
+                                                  Missed
+                                                </span>
+                                              )}
+                                              {!reporteeIsPending && (
+                                                <span
+                                                  className={cn(
+                                                    "px-2.5 py-0.5 rounded-full border text-[10px] font-bold shrink-0",
+                                                    reporteeAbsent
+                                                      ? "bg-red-50 text-red-700 border-red-100"
+                                                      : "bg-green-50 text-green-700 border-green-100"
+                                                  )}
+                                                >
+                                                  {reporteeAbsent ? "Absent" : "Present"}
+                                                  {reporteeAbsent &&
+                                                    reporteeAbsentReason.toLowerCase() !== "absent"
+                                                    ? `: ${reporteeAbsentReason}`
+                                                    : ""}
+                                                </span>
+                                              )}
 
                                               <button
                                                 type="button"
@@ -3448,24 +3466,28 @@ const DailyTab = ({
                                                 </p>
                                               ) : (
                                                 <>
-                                                  <div className="flex flex-nowrap items-center gap-2 mb-3 overflow-x-auto whitespace-nowrap max-w-full pb-1">
-                                                    <span className="px-2.5 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-600 text-[10px] font-bold">
-                                                      KPI: {reporteeGetScore(reporteeSections.kpi_achievement)}/20
+                                                  {/* Same score chips + summary line as the manager card */}
+                                                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                                                    <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                                      KPI: {reporteeKpiStr}
                                                     </span>
-                                                    <span className="px-2.5 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-600 text-[10px] font-bold">
-                                                      Score: {Math.round(getReportTotalScore(reportee, reporteeRaw) ?? 0)}
+                                                    <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                                      Task, Issues &amp; To-do's: {reporteeTasksIssuesStr}
                                                     </span>
-                                                    <span className="px-2.5 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-600 text-[10px] font-bold">
-                                                      Self Rating: {formatSelfRating(reporteeSelfRating) || "0/10"}
+                                                    <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                                      Planning: {reporteePlanStr}
                                                     </span>
-                                                    <span className="px-2.5 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-600 text-[10px] font-bold">
-                                                      Planning: {reporteeGetScore(reporteeSections.planning)}/20
+                                                    <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                                      Timing: {reporteeTimeStr}
                                                     </span>
-                                                    <span className="px-2.5 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-600 text-[10px] font-bold">
-                                                      Tasks: {reporteeGetScore(reporteeSections.tasks_issues_todos ?? reporteeSections.tasks_issues)}/20
+                                                  </div>
+
+                                                  <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm mb-4">
+                                                    <span>
+                                                      ⭐ Self rating {reporteeSelfRatingText || "0/10"}
                                                     </span>
-                                                    <span className="px-2.5 py-0.5 rounded-full border border-gray-200 bg-white text-neutral-600 text-[10px] font-bold">
-                                                      Timing: {reporteeGetScore(reporteeSections.timing)}/20
+                                                    <span className="text-gray-400">
+                                                      Total Score: {reporteeTotalScoreStr}
                                                     </span>
                                                   </div>
 

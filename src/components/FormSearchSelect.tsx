@@ -37,12 +37,16 @@ const buildScheduleSelectStyles = (
     width: '100%',
     fontSize: 14,
     borderRadius: 4,
-    borderColor: hasError ? '#d32f2f' : state.isFocused ? '#1976d2' : '#999',
+    borderColor: hasError
+      ? '#d32f2f'
+      : state.isFocused
+      ? 'var(--color-primary)'
+      : '#999',
     boxShadow: 'none',
     backgroundColor: '#fff',
     cursor: 'pointer',
     '&:hover': {
-      borderColor: hasError ? '#d32f2f' : '#1976d2',
+      borderColor: hasError ? '#d32f2f' : 'var(--color-primary)',
     },
   }),
   indicatorSeparator: () => ({ display: 'none' }),
@@ -82,7 +86,7 @@ const buildScheduleSelectStyles = (
   }),
   option: (base, state) => ({
     ...base,
-    backgroundColor: state.isFocused ? '#eff6ff' : '#fff',
+    backgroundColor: state.isFocused ? 'var(--color-primary-selected)' : '#fff',
     color: '#000',
     cursor: 'pointer',
     padding: '8px 12px',
@@ -276,7 +280,7 @@ export const FormSearchSelect: React.FC<FormSearchSelectProps> = ({
       sx={{
         position: 'relative',
         height: '45px',
-        '& .MuiInputLabel-root.Mui-focused': { color: '#1976d2' },
+        '& .MuiInputLabel-root.Mui-focused': { color: 'var(--color-primary)' },
       }}
     >
       {label ? (
@@ -293,7 +297,7 @@ export const FormSearchSelect: React.FC<FormSearchSelectProps> = ({
             backgroundColor: '#fff',
             px: 0.5,
             pointerEvents: 'none',
-            '&.Mui-focused': { color: '#1976d2' },
+            '&.Mui-focused': { color: 'var(--color-primary)' },
           }}
         >
           {label}
