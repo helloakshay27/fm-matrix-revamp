@@ -712,8 +712,8 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
             <Package className="w-6 h-6 text-[#C72030]" />
           </div>
           <div className="min-w-0">
-            <div className="text-2xl font-semibold text-[#1A1A1A]">{orderFilters.total}</div>
-            <div className="text-sm font-medium text-[#1A1A1A] truncate">Total</div>
+            <div className="text-2xl font-semibold !text-[#1A1A1A]">{orderFilters.total}</div>
+            <div className="text-sm font-medium !text-[#1A1A1A] truncate">Total</div>
           </div>
         </button>
         {matchedStatuses.map((status) => {
@@ -735,7 +735,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
                 <div className="text-2xl font-semibold" style={{ color: status.color_code }}>
                   {status.count}
                 </div>
-                <div className="text-sm font-medium text-[#1A1A1A] truncate" title={status.name}>
+                <div className="text-sm font-medium !text-[#1A1A1A] truncate" title={status.name}>
                   {status.name}
                 </div>
               </div>
