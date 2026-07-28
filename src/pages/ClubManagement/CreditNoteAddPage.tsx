@@ -2028,11 +2028,11 @@ export const CreditNoteAddPage: React.FC = () => {
 
                         <div className="flex gap-3 pt-4">
                             <Button
-                                variant="outlined"
+                                variant="outline"
                                 onClick={addItem}
-                                sx={{ textTransform: 'none' }}
+                                className="fm-button-fix px-8 py-2"
                             >
-                                <span className="flex items-center gap-2"><Add /> Add New Row</span>
+                                <span className="flex items-center gap-2"><Add fontSize="small" /> Add New Row</span>
                             </Button>
                             {/* <Button
                                 variant="outlined"

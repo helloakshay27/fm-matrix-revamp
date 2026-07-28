@@ -2586,6 +2586,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                                 <Checkbox
                                     checked={displayAttachmentsInPortal}
                                     onChange={(e) => setDisplayAttachmentsInPortal(e.target.checked)}
+                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                 />
                             }
                             label="Display attachments in customer portal and emails"
@@ -2601,6 +2602,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                                 <Checkbox
                                     checked={sendEmailToCustomer}
                                     onChange={(e) => setSendEmailToCustomer(e.target.checked)}
+                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                 />
                             }
                             label="Send email to selected customer above"

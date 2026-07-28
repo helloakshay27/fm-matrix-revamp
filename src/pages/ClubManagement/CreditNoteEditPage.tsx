@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import ItemSearchInput from '@/components/ItemSearchInput';
 import {
     CircularProgress,
     Dialog,
@@ -102,6 +103,77 @@ export const CreditNoteEditPage: React.FC = () => {
     const [taxOptions, setTaxOptions] = useState<any[]>([]);
     const [invoiceList, setInvoiceList] = useState<any[]>([]);
     const [accountGroups, setAccountGroups] = useState<any[]>([]);
+
+    const taxTypeOptions = [
+        { value: "non_taxable", label: "Non-Taxable" },
+        { value: "out_of_scope", label: "Out of Scope" },
+        { value: "non_gst_supply", label: "Non-GST Supply" },
+    ];
+    const [orgState, setOrgState] = useState<string>("");
+    const [taxGroups, setTaxGroups] = useState<any[]>([]);
+    const [taxRates, setTaxRates] = useState<any[]>([]);
+    const [exemptionModalOpen, setExemptionModalOpen] = useState(false);
+    const [selectedExemption, setSelectedExemption] = useState("");
+    const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null);
+    const [customerExemptions, setCustomerExemptions] = useState<any[]>([]);
+
+    // Fetch organisation state on mount from organisation detail API
+    useEffect(() => {
+        const fetchOrgState = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            const organisation_id = localStorage.getItem('org_id') || localStorage.getItem('organisation_id');
+            if (!organisation_id || !baseUrl || !token) return;
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/organizations/${organisation_id}.json?lock_account_id=${lock_account_id}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const org = res.data?.organization || res.data;
+                setOrgState(org?.address?.state || '');
+            } catch (err) {
+                console.error('[CreditNote Edit] Failed to fetch org state:', err);
+            }
+        };
+        fetchOrgState();
+    }, []);
+
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        axios
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, "Content-Type": "application/json" }
+            })
+            .then((res) => setTaxGroups(res.data || []))
+            .catch((error) => console.error("Error fetching tax groups:", error));
+    }, []);
+
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        axios
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, "Content-Type": "application/json" }
+            })
+            .then((res) => setTaxRates(res.data || []))
+            .catch((error) => console.error("Error fetching tax rates:", error));
+    }, []);
+
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        axios
+            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`, {
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, "Content-Type": "application/json" }
+            })
+            .then((res) => setCustomerExemptions(res.data || []))
+            .catch((error) => console.error("Error fetching tax exemptions:", error));
+    }, []);
 
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [customerDetail, setCustomerDetail] = useState<any>(null);
@@ -280,13 +352,24 @@ export const CreditNoteEditPage: React.FC = () => {
         const fetchBaseData = async () => {
             const [customerRes, itemRes, salespersonRes, accountGroupRes] = await Promise.allSettled([
                 axios.get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`, { headers }),
-                axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}&q[can_be_sold_eq]=1`, { headers }),
+                axios.get(`https://${baseUrl}/lock_account_items/select_list.json?lock_account_id=${lock_account_id}&q[can_be_sold_eq]=1&active=true`, { headers }),
                 axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=${lock_account_id}&q[active_eq]=1`, { headers }),
                 axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat&q[group_type_in][]=sales&q[group_type_in][]=both`, { headers })
             ]);
 
             if (customerRes.status === 'fulfilled') setCustomers(customerRes.value.data || []);
-            if (itemRes.status === 'fulfilled') setItemOptions(itemRes.value.data || []);
+            if (itemRes.status === 'fulfilled') {
+                setItemOptions((itemRes.value.data || []).map((item: any) => ({
+                    id: item.id,
+                    name: item.name,
+                    rate: item.sale_rate,
+                    description: item.sale_description,
+                    tax_preference: item.tax_preference,
+                    tax_exemption_id: item.tax_exemption_id,
+                    tax_group_id: item.intra_state_tax_rate_id,
+                    inter_state_tax_rate_id: item.inter_state_tax_rate_id
+                })));
+            }
             if (salespersonRes.status === 'fulfilled') setSalespersons(salespersonRes.value.data || []);
             if (accountGroupRes.status === 'fulfilled') setAccountGroups(accountGroupRes.value.data?.data || accountGroupRes.value.data || []);
         };
@@ -467,7 +550,52 @@ export const CreditNoteEditPage: React.FC = () => {
     const afterDiscount = subTotal - totalDiscount;
     const selectedTaxOption = taxOptions.find(t => String(t.id) === selectedTax || t.name === selectedTax);
     const tdsTcsAmount = selectedTaxOption?.percentage ? (afterDiscount * selectedTaxOption.percentage) / 100 : 0;
-    const totalAmount = afterDiscount + adjustment - tdsTcsAmount;
+
+    // Re-preselect tax on all taxable items when place of supply or orgState changes
+    useEffect(() => {
+        if (!placeOfSupply) return;
+        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+        setItems(prev => prev.map(item => {
+            if (!["tax_group", "tax_rate"].includes(item.item_tax_type || '')) return item;
+            const matched = itemOptions.find((opt: any) => opt.name === item.name);
+            if (!matched) return item;
+            return {
+                ...item,
+                item_tax_type: isSameState ? "tax_group" : "tax_rate",
+                tax_group_id: isSameState ? matched.tax_group_id : matched.inter_state_tax_rate_id,
+            };
+        }));
+    }, [placeOfSupply, orgState]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const selectedTaxGroups = items
+        .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
+        .map(item => {
+            const group = taxGroups.find((g: any) => g.id === item.tax_group_id);
+            return { itemAmount: item.amount, taxRates: group?.tax_rates || [] };
+        });
+    const taxBreakdown: { name: string; rate: number; amount: number }[] = [];
+    selectedTaxGroups.forEach(group => {
+        group.taxRates.forEach((rate: any) => {
+            const taxAmount = (group.itemAmount * rate.rate) / 100;
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+            if (existing) existing.amount += taxAmount;
+            else taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmount });
+        });
+    });
+    items
+        .filter(item => item.item_tax_type === "tax_rate" && item.tax_group_id)
+        .forEach(item => {
+            const rate = taxRates.find((r: any) => r.id === item.tax_group_id);
+            if (!rate) return;
+            const rateValue = rate.rate ?? rate.percentage ?? 0;
+            const taxAmount = (item.amount * rateValue) / 100;
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+            if (existing) existing.amount += taxAmount;
+            else taxBreakdown.push({ name: rate.name, rate: rateValue, amount: taxAmount });
+        });
+    const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+
+    const totalAmount = afterDiscount + totalTax - tdsTcsAmount + (Number(adjustment) || 0);
     const customerOptionsForSelect = selectedCustomer && !customers.some(customer => String(customer.id) === String(selectedCustomer.id))
         ? [selectedCustomer, ...customers]
         : customers;
@@ -816,14 +944,15 @@ export const CreditNoteEditPage: React.FC = () => {
                 </Section>
 
                 <Section title="Item Table" icon={<Package className="w-5 h-5" />}>
-                    <div className="border border-border rounded-lg overflow-hidden">
-                        <table className="w-full">
+                    <div className="border border-border rounded-lg overflow-x-auto">
+                        <table className="w-full min-w-[900px]">
                             <thead className="bg-muted/50">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
                                     <th className="px-4 py-3 text-left text-sm font-medium">Account</th>
                                     <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
                                     <th className="px-4 py-3 text-right text-sm font-medium">Rate</th>
+                                    <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
                                     <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
                                     <th className="px-4 py-3 text-center text-sm font-medium"></th>
                                 </tr>
@@ -832,30 +961,44 @@ export const CreditNoteEditPage: React.FC = () => {
                                 {items.map((item, index) => (
                                     <tr key={`${item.id}-${index}`}>
                                         <td className="px-4 py-3">
-                                            <FormControl fullWidth sx={{ minWidth: 220 }}>
-                                                <Select
-                                                    value={item.name}
-                                                    onChange={e => {
-                                                        const selected = itemOptions.find(opt => opt.name === e.target.value);
-                                                        updateItem(index, {
-                                                            name: e.target.value,
-                                                            item_id: selected?.id ? String(selected.id) : item.item_id,
-                                                            rate: selected?.sale_rate ?? selected?.rate ?? item.rate,
-                                                            description: selected?.sale_description ?? item.description,
-                                                            item_tax_type: selected?.tax_preference || item.item_tax_type,
-                                                            tax_group_id: selected?.intra_state_tax_rate_id || item.tax_group_id,
-                                                            tax_exemption_id: selected?.tax_exemption_id || item.tax_exemption_id
-                                                        });
-                                                    }}
-                                                    displayEmpty
-                                                    readOnly
-                                                    size="small"
-                                                >
-                                                    <MenuItem value="">Type or click to select an item.</MenuItem>
-                                                    {itemOptions.map(option => <MenuItem key={option.id} value={option.name}>{option.name}</MenuItem>)}
-                                                </Select>
-                                            </FormControl>
-                                            <TextField fullWidth size="small" className="mt-2" value={item.description} onChange={e => updateItem(index, { description: e.target.value })} placeholder="Description" />
+                                            <ItemSearchInput
+                                                value={item.name}
+                                                itemOptions={itemOptions}
+                                                onSelect={(selected) => {
+                                                    const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                    let taxFields: Partial<Item> = {};
+                                                    if (selected.tax_preference === 'non_taxable') {
+                                                        taxFields = { item_tax_type: 'non_taxable', tax_exemption_id: selected.tax_exemption_id };
+                                                    } else if (selected.tax_preference === 'taxable') {
+                                                        taxFields = {
+                                                            item_tax_type: isSameState ? 'tax_group' : 'tax_rate',
+                                                            tax_group_id: isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id
+                                                        };
+                                                    } else if (selected.tax_preference === 'out_of_scope') {
+                                                        taxFields = { item_tax_type: 'out_of_scope' };
+                                                    } else if (selected.tax_preference === 'non_gst_supply') {
+                                                        taxFields = { item_tax_type: 'non_gst_supply' };
+                                                    }
+                                                    updateItem(index, {
+                                                        item_id: String(selected.id),
+                                                        name: selected.name,
+                                                        rate: selected.rate || 0,
+                                                        description: selected.description || '',
+                                                        ...taxFields
+                                                    });
+                                                }}
+                                                onType={(typed) => updateItem(index, { item_id: null, name: typed })}
+                                            />
+                                            <TextField
+                                                fullWidth
+                                                label="Item Description"
+                                                size="small"
+                                                placeholder="Description"
+                                                value={item.description}
+                                                onChange={e => updateItem(index, { description: e.target.value })}
+                                                sx={{ mt: 2 }}
+                                                InputLabelProps={{ shrink: true }}
+                                            />
                                         </td>
                                         <td className="px-4 py-3">
                                             <FormControl fullWidth size="small" sx={{ minWidth: 180 }}>
@@ -896,6 +1039,50 @@ export const CreditNoteEditPage: React.FC = () => {
                                         <td className="px-4 py-3 text-right">
                                             <TextField type="number" size="small" value={item.rate} onChange={e => updateItem(index, { rate: toNumber(e.target.value) })} sx={{ width: 110 }} />
                                         </td>
+                                        <td className="px-4 py-3">
+                                            <FormControl size="small" sx={{ width: 200 }}>
+                                                <Select
+                                                    value={["tax_group", "tax_rate"].includes(item.item_tax_type || '') ? item.tax_group_id : item.item_tax_type || ""}
+                                                    displayEmpty
+                                                    onChange={(e) => {
+                                                        const value = String(e.target.value);
+                                                        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                        if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
+                                                            updateItem(index, { item_tax_type: value, tax_group_id: null });
+                                                            if (value === "non_taxable") {
+                                                                setCurrentItemIndex(index);
+                                                                setExemptionModalOpen(true);
+                                                            }
+                                                        } else {
+                                                            updateItem(index, { item_tax_type: isSameState ? "tax_group" : "tax_rate", tax_group_id: Number(value) });
+                                                        }
+                                                    }}
+                                                >
+                                                    <MenuItem value="">Select Tax</MenuItem>
+                                                    {taxTypeOptions.map((opt) => (
+                                                        <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                                                    ))}
+                                                    {(() => {
+                                                        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                        return isSameState ? (
+                                                            [
+                                                                <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
+                                                                ...taxGroups.map((group: any) => (
+                                                                    <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                                                                ))
+                                                            ]
+                                                        ) : (
+                                                            [
+                                                                <MenuItem key="__divider__" disabled>Tax Rates (IGST)</MenuItem>,
+                                                                ...taxRates.map((rate: any) => (
+                                                                    <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
+                                                                ))
+                                                            ]
+                                                        );
+                                                    })()}
+                                                </Select>
+                                            </FormControl>
+                                        </td>
                                         <td className="px-4 py-3 text-right font-semibold">{item.amount.toFixed(2)}</td>
                                         <td className="px-4 py-3 text-center">
                                             <IconButton size="small" onClick={() => items.length > 1 && setItems(prev => prev.filter((_, i) => i !== index))} disabled={items.length === 1} color="error">
@@ -907,10 +1094,9 @@ export const CreditNoteEditPage: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
-                    <div className="pt-4">
-                        <Button onClick={() => setItems(prev => [...prev, emptyItem()])} variant="outline" className="gap-2">
-                            <Add fontSize="small" />
-                            Add New Row
+                    <div className="flex gap-3 pt-4">
+                        <Button onClick={() => setItems(prev => [...prev, emptyItem()])} variant="outline" className="fm-button-fix px-8 py-2">
+                            <span className="flex items-center gap-2"><Add fontSize="small" /> Add New Row</span>
                         </Button>
                     </div>
 
@@ -931,6 +1117,12 @@ export const CreditNoteEditPage: React.FC = () => {
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
+                            {taxBreakdown.map((tax, idx) => (
+                                <div key={idx} className="flex justify-between items-center py-2">
+                                    <span className="text-sm font-medium text-muted-foreground">{tax.name} ({tax.rate}%)</span>
+                                    <span className="font-semibold text-base">₹{tax.amount.toFixed(2)}</span>
+                                </div>
+                            ))}
                             <Divider />
                             <div className="flex flex-wrap items-center gap-3 py-2">
                                 <RadioGroup row value={taxType} onChange={e => setTaxType(e.target.value as 'TDS' | 'TCS')}>
@@ -1081,6 +1273,44 @@ export const CreditNoteEditPage: React.FC = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button variant="outline" onClick={() => setGstPickerModalOpen(false)}>Cancel</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={exemptionModalOpen} onClose={() => setExemptionModalOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Exemption Reason</DialogTitle>
+                <DialogContent>
+                    <FormControl fullWidth>
+                        <Select
+                            value={selectedExemption}
+                            onChange={(e) => setSelectedExemption(e.target.value)}
+                        >
+                            <MenuItem value="">Select Reason</MenuItem>
+                            {customerExemptions.map((ex: any) => (
+                                <MenuItem key={ex.id} value={ex.id}>{ex.reason}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </DialogContent>
+                <DialogActions>
+                    <button
+                        className="bg-gray-200 px-4 py-2 rounded"
+                        onClick={() => setExemptionModalOpen(false)}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
+                        onClick={() => {
+                            if (currentItemIndex !== null) {
+                                updateItem(currentItemIndex, { tax_exemption_id: selectedExemption });
+                            }
+                            setSelectedExemption("");
+                            setCurrentItemIndex(null);
+                            setExemptionModalOpen(false);
+                        }}
+                    >
+                        Update
+                    </button>
                 </DialogActions>
             </Dialog>
         </div>
