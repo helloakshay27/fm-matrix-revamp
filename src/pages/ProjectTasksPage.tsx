@@ -17,6 +17,7 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
 import {
@@ -48,6 +49,7 @@ import {
     Play,
     Pause,
     ArrowLeft,
+    Calendar as CalendarIcon,
 } from "lucide-react";
 import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
 import { cache } from "@/utils/cacheUtils";
@@ -357,6 +359,27 @@ const validateDateRange = (
     }
 
     return { valid: true };
+};
+
+// Date <-> "YYYY-MM-DD" helpers for the date range filter
+const formatDateToYMD = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+
+const parseYMDToDate = (value: string): Date | null => {
+    if (!value) return null;
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+};
+
+// "yyyy-MM-dd" -> "MM/DD/YYYY" for the date range input display
+const formatYMDToDisplay = (value: string): string => {
+    if (!value) return "";
+    const [year, month, day] = value.split("-");
+    return `${day}/${month}/${year}`;
 };
 
 const statusOptions = [
@@ -797,6 +820,11 @@ const ProjectTasksPage = () => {
         endDate: "",
         completedAt: "",
     });
+    const [dateRangeFilter, setDateRangeFilter] = useState({
+        startDate: "",
+        endDate: "",
+    });
+    const [isDateRangePickerOpen, setIsDateRangePickerOpen] = useState(false);
     const [projectOptions, setProjectOptions] = useState<any[]>([]);
     const [tags, setTags] = useState<any[]>([]);
     const [dropdowns, setDropdowns] = useState({
@@ -809,6 +837,7 @@ const ProjectTasksPage = () => {
         startDate: false,
         endDate: false,
         completedAt: false,
+        dateRange: false,
     });
     const [searchTerms, setSearchTerms] = useState({
         status: "",
@@ -983,6 +1012,8 @@ const ProjectTasksPage = () => {
         const urlStartDate = searchParams.get("start_date") || "";
         const urlEndDate = searchParams.get("end_date") || "";
         const urlCompletedAt = searchParams.get("completed_at") || "";
+        const urlDateRangeStart = searchParams.get("date_range_start") || "";
+        const urlDateRangeEnd = searchParams.get("date_range_end") || "";
 
         if (urlStatuses.length > 0) {
             setSelectedStatuses(urlStatuses);
@@ -1007,6 +1038,12 @@ const ProjectTasksPage = () => {
                 startDate: urlStartDate,
                 endDate: urlEndDate,
                 completedAt: urlCompletedAt,
+            });
+        }
+        if (urlDateRangeStart || urlDateRangeEnd) {
+            setDateRangeFilter({
+                startDate: urlDateRangeStart,
+                endDate: urlDateRangeEnd,
             });
         }
 
@@ -1219,6 +1256,7 @@ const ProjectTasksPage = () => {
             selectedWorkflowStatus,
             selectedTags,
             dates,
+            dateRangeFilter,
             statusSearch: searchTerms.status,
             workflowStatusSearch: searchTerms.workflowStatus,
             ResponsiblePersonSearch: searchTerms.responsiblePerson,
@@ -1235,7 +1273,9 @@ const ProjectTasksPage = () => {
             selectedTags?.length > 0 ||
             dates.startDate ||
             dates.endDate ||
-            dates.completedAt
+            dates.completedAt ||
+            dateRangeFilter.startDate ||
+            dateRangeFilter.endDate
         ) {
             localStorage.setItem("taskFilters", JSON.stringify(filters));
         }
@@ -1247,6 +1287,7 @@ const ProjectTasksPage = () => {
         selectedWorkflowStatus,
         selectedTags,
         dates,
+        dateRangeFilter,
         searchTerms,
     ]);
 
@@ -1265,6 +1306,7 @@ const ProjectTasksPage = () => {
                 startDate: false,
                 endDate: false,
                 completedAt: false,
+                dateRange: false,
                 tags: false,
                 [key]: true,
             };
@@ -1357,6 +1399,12 @@ const ProjectTasksPage = () => {
                 params["q[completed_at_gteq]"] = `${dates.completedAt}T00:00:00`;
                 params["q[completed_at_lteq]"] = `${dates.completedAt}T23:59:59`;
             }
+            if (dateRangeFilter.startDate && dateRangeFilter.endDate) {
+                params["q[expected_start_date_gteq]"] = dateRangeFilter.startDate;
+                params["q[expected_start_date_lteq]"] = dateRangeFilter.endDate;
+                params["q[target_date_gteq]"] = dateRangeFilter.startDate;
+                params["q[target_date_lteq]"] = dateRangeFilter.endDate;
+            }
             if (mid) {
                 params["q[milestone_id_eq]"] = mid;
             }
@@ -1378,6 +1426,8 @@ const ProjectTasksPage = () => {
                     start_date: dates.startDate || undefined,
                     end_date: dates.endDate || undefined,
                     completed_at: dates.completedAt || undefined,
+                    date_range_start: dateRangeFilter.startDate || undefined,
+                    date_range_end: dateRangeFilter.endDate || undefined,
                 },
                 true
             );
@@ -1437,6 +1487,12 @@ const ProjectTasksPage = () => {
             filters["q[completed_at_gteq]"] = `${dates.completedAt}T00:00:00`;
             filters["q[completed_at_lteq]"] = `${dates.completedAt}T23:59:59`;
         }
+        if (dateRangeFilter.startDate && dateRangeFilter.endDate) {
+            filters["q[expected_start_date_gteq]"] = dateRangeFilter.startDate;
+            filters["q[expected_start_date_lteq]"] = dateRangeFilter.endDate;
+            filters["q[target_date_gteq]"] = dateRangeFilter.startDate;
+            filters["q[target_date_lteq]"] = dateRangeFilter.endDate;
+        }
 
         // Add global search filter (searches in title, task_code, and description)
         if (debouncedSearchTerm.trim()) {
@@ -1486,6 +1542,7 @@ const ProjectTasksPage = () => {
         setSelectedWorkflowStatus([]);
         setSelectedTags([]);
         setDates({ startDate: "", endDate: "", completedAt: "" });
+        setDateRangeFilter({ startDate: "", endDate: "" });
         setSearchTerms({
             status: "",
             workflowStatus: "",
@@ -1508,6 +1565,8 @@ const ProjectTasksPage = () => {
                 start_date: undefined,
                 end_date: undefined,
                 completed_at: undefined,
+                date_range_start: undefined,
+                date_range_end: undefined,
             },
             true
         );
@@ -3806,6 +3865,76 @@ const ProjectTasksPage = () => {
                                         }
                                         className="w-full p-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-red-600"
                                     />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Date Range */}
+                        <div className="p-6 py-3">
+                            <div
+                                className="flex items-center justify-between cursor-pointer"
+                                onClick={() => toggleDropdown("dateRange")}
+                            >
+                                <span className="font-medium text-sm select-none">
+                                    Date Range
+                                </span>
+                                {dropdowns.dateRange ? (
+                                    <ChevronDown className="text-gray-400" />
+                                ) : (
+                                    <ChevronRight className="text-gray-400" />
+                                )}
+                            </div>
+                            {dropdowns.dateRange && (
+                                <div className="mt-4">
+                                    <div className="relative mb-3">
+                                        <input
+                                            type="text"
+                                            readOnly
+                                            placeholder="MM/DD/YYYY – MM/DD/YYYY"
+                                            onClick={() => setIsDateRangePickerOpen(true)}
+                                            value={
+                                                dateRangeFilter.startDate
+                                                    ? `${formatYMDToDisplay(dateRangeFilter.startDate)} – ${dateRangeFilter.endDate
+                                                        ? formatYMDToDisplay(dateRangeFilter.endDate)
+                                                        : "MM/DD/YYYY"
+                                                    }`
+                                                    : ""
+                                            }
+                                            className="w-full rounded-md border border-gray-300 px-3 py-2 pr-9 text-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-red-600"
+                                        />
+                                        {dateRangeFilter.startDate ? (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setDateRangeFilter({ startDate: "", endDate: "" })
+                                                }
+                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                aria-label="Clear date range"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        ) : (
+                                            <CalendarIcon
+                                                size={14}
+                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                                            />
+                                        )}
+                                    </div>
+                                    {isDateRangePickerOpen && (
+                                        <DateRangePicker
+                                            startDate={parseYMDToDate(dateRangeFilter.startDate)}
+                                            endDate={parseYMDToDate(dateRangeFilter.endDate)}
+                                            onChange={({ startDate, endDate }) => {
+                                                setDateRangeFilter({
+                                                    startDate: startDate ? formatDateToYMD(startDate) : "",
+                                                    endDate: endDate ? formatDateToYMD(endDate) : "",
+                                                });
+                                                if (startDate && endDate) {
+                                                    setIsDateRangePickerOpen(false);
+                                                }
+                                            }}
+                                        />
+                                    )}
                                 </div>
                             )}
                         </div>
