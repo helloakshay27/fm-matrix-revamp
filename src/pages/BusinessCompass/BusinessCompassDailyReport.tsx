@@ -6372,17 +6372,20 @@ const BusinessCompassDailyReport: React.FC = () => {
                             )}
                             {/* Score chips — only when report is submitted and sections have data */}
                             {isMemberSubmitted && hasSubmittedData && (
-                              <div className="mb-3 flex flex-wrap items-center gap-2">
+                              <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1.5">
                                 {scoreChips.map((chip) => (
                                   <span
                                     key={chip.label}
-                                    className="inline-flex h-[21px] items-center rounded-full border border-[#DA7756] bg-white px-[10px] text-[10px] font-bold text-[#DA7756]"
+                                    className="inline-flex h-[22px] items-center rounded-full bg-[#FFF3EE] px-2.5 text-[10px] font-semibold text-[#c2664a]"
                                   >
-                                    {chip.label}: {chip.value}/20
+                                    {chip.label}
+                                    <span className="ml-1 font-bold">
+                                      {chip.value}/20
+                                    </span>
                                   </span>
                                 ))}
-                                <span className="ml-auto text-[11px] font-bold text-neutral-400">
-                                  Total Score: {totalScore}
+                                <span className="inline-flex h-[22px] items-center rounded-full bg-neutral-100 px-2.5 text-[10px] font-bold text-neutral-600">
+                                  Total {totalScore}
                                 </span>
                               </div>
                             )}
@@ -6403,11 +6406,14 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       size={15}
                                       className={cn("shrink-0", column.iconClass)}
                                     />
-                                    <h5 className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#3E342F]">
-                                      {column.title} ({column.items.length})
+                                    <h5 className="min-w-0 flex-1 truncate text-[11px] font-extrabold uppercase tracking-[0.1em] text-[#3E342F]">
+                                      {column.title}
                                     </h5>
+                                    <span className="shrink-0 rounded-full bg-neutral-100 px-1.5 text-[10px] font-bold leading-[18px] text-neutral-500">
+                                      {column.items.length}
+                                    </span>
                                   </div>
-                                  <div className="space-y-1.5 p-2">
+                                  <div className="space-y-2 p-2.5">
                                     {column.items.length === 0 ? (
                                       <p className="px-1 py-2 text-[11px] italic text-slate-300">
                                         {isMemberSubmitted ? "None recorded." : "Not submitted."}
@@ -6428,17 +6434,27 @@ const BusinessCompassDailyReport: React.FC = () => {
                                           const itemStatus = String(
                                             item?.status || original?.status || ""
                                           ).toLowerCase();
+                                          // Accomplishments = completed task/issue/todo,
+                                          // so nothing here is overdue and status reads "completed"
+                                          const isAccomplishment =
+                                            column.key === "accomplishments";
                                           const isItemDone =
+                                            isAccomplishment ||
                                             COMPLETED_STATUSES.has(itemStatus);
                                           const overdueLabel = isItemDone
                                             ? null
                                             : getOverdueLabel(dueRaw);
+                                          const statusLabel = isAccomplishment
+                                            ? "completed"
+                                            : itemStatus;
+                                          // Accomplishments + Tasks/Issues columns don't
+                                          // repeat the status (buckets already show it)
+                                          const showStatusTag =
+                                            column.key === "tomorrow_plan";
                                           const effortEst = fmtHours(
                                             original?.total_allocated_hours ||
                                             original?.estimated_hour
                                           );
-                                          const activeTime =
-                                            original?.active_time_till_now;
                                           const projectName =
                                             original?.project_management_title ||
                                             original?.project_management_name;
@@ -6448,95 +6464,78 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               key={`${itemType}-${itemIndex}`}
                                               onClick={isClickable ? () => handleViewReportItem(item) : undefined}
                                               className={cn(
-                                                "rounded-[10px] border border-[#ECEFF3] bg-white px-2.5 py-2",
-                                                isClickable && "cursor-pointer hover:bg-slate-50 transition-colors"
+                                                "rounded-[10px] border border-[#EEF1F4] bg-white p-2.5",
+                                                isClickable &&
+                                                "cursor-pointer transition-colors hover:border-[#DA7756]/30 hover:bg-[#FFFAF8]"
                                               )}
                                             >
-                                              <div className="flex items-center gap-2">
-                                                <FileText
-                                                  size={14}
-                                                  className={cn(
-                                                    "shrink-0",
-                                                    itemType === "issue"
-                                                      ? "text-[#e7848e]"
-                                                      : itemType === "todo"
-                                                        ? "text-[#8b7fd4]"
-                                                        : "text-[#4BA3F2]"
-                                                  )}
-                                                />
-                                                <span className="min-w-0 flex-1 break-words text-[12px] font-medium leading-snug text-[#2B2F38]">
-                                                  {typeof item === "string"
-                                                    ? item
-                                                    : item?.title ||
-                                                    item?.text ||
-                                                    item?.name ||
-                                                    "—"}
-                                                </span>
+                                              {/* Type + status */}
+                                              <div className="mb-1.5 flex items-center gap-1.5">
                                                 {itemType && (
                                                   <span
                                                     className={cn(
-                                                      "shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase text-white",
+                                                      "shrink-0 rounded-[4px] px-1.5 text-[9px] font-bold uppercase leading-[16px] tracking-wide",
                                                       itemType === "task"
-                                                        ? "bg-[#DA7756]"
+                                                        ? "bg-[#FFF3EE] text-[#c2664a]"
                                                         : itemType === "issue"
-                                                          ? "bg-violet-600"
+                                                          ? "bg-violet-50 text-violet-600"
                                                           : itemType === "todo"
-                                                            ? "bg-amber-500"
-                                                            : "bg-gray-500"
+                                                            ? "bg-amber-50 text-amber-600"
+                                                            : "bg-neutral-100 text-neutral-500"
                                                     )}
                                                   >
                                                     {itemType}
                                                   </span>
                                                 )}
-                                                {item?.status && (
-                                                  <span className="shrink-0 rounded-full bg-[#f6f4ee] px-2 py-0.5 text-[9px] font-bold uppercase text-[#8a7d63]">
-                                                    {String(item.status).replace(
-                                                      /_/g,
-                                                      " "
-                                                    )}
+                                                {/* Status tag only for Tomorrow's Plan —
+                                                    accomplishments/tasks columns skip it */}
+                                                {statusLabel && showStatusTag && (
+                                                  <span className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-neutral-400">
+                                                    {statusLabel.replace(/_/g, " ")}
                                                   </span>
                                                 )}
                                               </div>
+
+                                              {/* Title */}
+                                              <p className="break-words text-[12px] font-semibold leading-[17px] text-[#2B2F38]">
+                                                {typeof item === "string"
+                                                  ? item
+                                                  : item?.title ||
+                                                  item?.text ||
+                                                  item?.name ||
+                                                  "—"}
+                                              </p>
+
+                                              {/* Meta — date, estimate, overdue */}
                                               {(dueDate ||
                                                 overdueLabel ||
-                                                effortEst ||
-                                                activeTime ||
-                                                projectName) && (
-                                                  <div className="mt-1 flex flex-wrap items-center gap-3 pl-[22px]">
+                                                effortEst) && (
+                                                  <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
                                                     {dueDate && (
                                                       <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                                                        <Calendar size={11} className="shrink-0" />
+                                                        <Calendar size={10} className="shrink-0" />
                                                         {dueDate}
-                                                      </span>
-                                                    )}
-                                                    {overdueLabel && (
-                                                      <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
-                                                        <AlertCircle size={11} className="shrink-0" />
-                                                        {overdueLabel}
                                                       </span>
                                                     )}
                                                     {effortEst && (
                                                       <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                                                        <Clock size={11} className="shrink-0" />
-                                                        Est: {effortEst}
+                                                        <Clock size={10} className="shrink-0" />
+                                                        Est {effortEst}
                                                       </span>
                                                     )}
-                                                    {activeTime && (
-                                                      <span className="flex items-center gap-1 text-[10px] text-green-600">
-                                                        <Zap size={11} className="shrink-0" />
-                                                        <ActiveTimer
-                                                          activeTimeTillNow={activeTime}
-                                                          isStarted={original?.is_started}
-                                                        />
-                                                      </span>
-                                                    )}
-                                                    {projectName && (
-                                                      <span className="text-[10px] font-semibold text-slate-400">
-                                                        {projectName}
+                                                    {overdueLabel && (
+                                                      <span className="flex items-center gap-1 text-[10px] font-semibold text-red-500">
+                                                        <AlertCircle size={10} className="shrink-0" />
+                                                        {overdueLabel}
                                                       </span>
                                                     )}
                                                   </div>
                                                 )}
+                                              {projectName && (
+                                                <p className="mt-1 truncate text-[10px] font-medium text-slate-400">
+                                                  {projectName}
+                                                </p>
+                                              )}
                                             </div>
                                           );
                                         };
@@ -6565,31 +6564,31 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             <div className="space-y-4">
                                               {overdue.length > 0 && (
                                                 <div className="space-y-1.5">
-                                                  <h6 className="text-[10px] font-bold uppercase text-red-600 pl-1.5 border-l-[2px] border-red-500 bg-red-50/70 py-0.5 rounded-r">Overdue ({overdue.length})</h6>
+                                                  <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-red-500"><span className="h-1.5 w-1.5 rounded-full bg-current" />Overdue<span className="font-semibold text-neutral-400">({overdue.length})</span></h6>
                                                   {overdue.map(renderItem)}
                                                 </div>
                                               )}
                                               {inProgress.length > 0 && (
                                                 <div className="space-y-1.5">
-                                                  <h6 className="text-[10px] font-bold uppercase text-blue-600 pl-1.5 border-l-[2px] border-blue-500 bg-blue-50/70 py-0.5 rounded-r">In Progress ({inProgress.length})</h6>
+                                                  <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-sky-600"><span className="h-1.5 w-1.5 rounded-full bg-current" />In Progress<span className="font-semibold text-neutral-400">({inProgress.length})</span></h6>
                                                   {inProgress.map(renderItem)}
                                                 </div>
                                               )}
                                               {onHold.length > 0 && (
                                                 <div className="space-y-1.5">
-                                                  <h6 className="text-[10px] font-bold uppercase text-amber-600 pl-1.5 border-l-[2px] border-amber-500 bg-amber-50/70 py-0.5 rounded-r">On Hold ({onHold.length})</h6>
+                                                  <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-amber-600"><span className="h-1.5 w-1.5 rounded-full bg-current" />On Hold<span className="font-semibold text-neutral-400">({onHold.length})</span></h6>
                                                   {onHold.map(renderItem)}
                                                 </div>
                                               )}
                                               {openItems.length > 0 && (
                                                 <div className="space-y-1.5">
-                                                  <h6 className="text-[10px] font-bold uppercase text-slate-600 pl-1.5 border-l-[2px] border-slate-400 bg-slate-50/70 py-0.5 rounded-r">Open ({openItems.length})</h6>
+                                                  <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500"><span className="h-1.5 w-1.5 rounded-full bg-current" />Open<span className="font-semibold text-neutral-400">({openItems.length})</span></h6>
                                                   {openItems.map(renderItem)}
                                                 </div>
                                               )}
                                               {others.length > 0 && (
                                                 <div className="space-y-1.5">
-                                                  <h6 className="text-[10px] font-bold uppercase text-neutral-500 pl-1.5 border-l-[2px] border-neutral-300 bg-neutral-50/70 py-0.5 rounded-r">Other ({others.length})</h6>
+                                                  <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-neutral-400"><span className="h-1.5 w-1.5 rounded-full bg-current" />Other<span className="font-semibold text-neutral-400">({others.length})</span></h6>
                                                   {others.map(renderItem)}
                                                 </div>
                                               )}
