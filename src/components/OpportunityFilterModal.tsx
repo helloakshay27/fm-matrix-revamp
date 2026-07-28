@@ -2,6 +2,7 @@ import React, { forwardRef } from 'react';
 import { Dialog, DialogContent, Slide } from '@mui/material';
 import { X, Search, ChevronDown, ChevronRight } from 'lucide-react';
 import { TransitionProps } from '@mui/material/transitions';
+import { renderGroupedUserCheckboxList } from '@/components/GroupedUserCheckboxList';
 
 const Transition = forwardRef(function Transition(
     props: TransitionProps & { children: React.ReactElement },
@@ -180,8 +181,8 @@ const OpportunityFilterModal: React.FC<OpportunityFilterModalProps> = ({
                                         onChange={(e) => setSearchTerms({ ...searchTerms, responsiblePerson: e.target.value })}
                                     />
                                 </div>
-                                {renderCheckboxList(
-                                    users.map((u) => ({ ...u, label: u.full_name, value: u.id })),
+                                {renderGroupedUserCheckboxList(
+                                    users,
                                     selectedResponsible,
                                     setSelectedResponsible,
                                     searchTerms.responsiblePerson
@@ -215,8 +216,8 @@ const OpportunityFilterModal: React.FC<OpportunityFilterModalProps> = ({
                                         onChange={(e) => setSearchTerms({ ...searchTerms, createdBy: e.target.value })}
                                     />
                                 </div>
-                                {renderCheckboxList(
-                                    users.map((u) => ({ ...u, label: u.full_name, value: u.id })),
+                                {renderGroupedUserCheckboxList(
+                                    users,
                                     selectedCreatedBy,
                                     setSelectedCreatedBy,
                                     searchTerms.createdBy
