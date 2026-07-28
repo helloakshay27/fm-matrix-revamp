@@ -190,13 +190,6 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
-    key: "started_time",
-    label: "Actual Efforts Taken",
-    sortable: false,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
     key: "comment",
     label: "Comment",
     sortable: true,
@@ -1019,6 +1012,22 @@ const IssuesListPage = ({
     }
   };
 
+  function formatHours(hours: number): string {
+    if (hours < 1) {
+      const minutes = Math.round(hours * 60);
+      return `${minutes} min${minutes !== 1 ? "s" : ""}`;
+    }
+
+    const wholeHours = Math.floor(hours);
+    const remainingMinutes = Math.round((hours - wholeHours) * 60);
+
+    if (remainingMinutes === 0) {
+      return `${wholeHours} hr${wholeHours !== 1 ? "s" : ""}`;
+    }
+
+    return `${wholeHours} hr${wholeHours !== 1 ? "s" : ""} ${remainingMinutes} min${remainingMinutes !== 1 ? "s" : ""}`;
+  }
+
   const renderCell = (item: any, columnKey: string) => {
     if (columnKey === "actions") {
       return (
@@ -1082,6 +1091,19 @@ const IssuesListPage = ({
                 </button>
               ))}
           </div>
+          <div className="flex items-center gap-3 text-[11px] text-gray-500 font-medium">
+            <span className="flex items-center gap-1">
+              Effort taken:
+              <ActiveTimer
+                activeTimeTillNow={item?.active_time_till_now}
+                isStarted={item?.is_started}
+              />
+            </span>
+            <span>•</span>
+            <span>
+              Duration: {formatHours(item?.total_allocated_hours || 0)}
+            </span>
+          </div>
           <div className="flex flex-wrap gap-2">
             {item.milestone_name && (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -1100,14 +1122,6 @@ const IssuesListPage = ({
             )}
           </div>
         </div>
-      );
-    }
-    if (columnKey === "started_time") {
-      return (
-        <ActiveTimer
-          activeTimeTillNow={item?.active_time_till_now}
-          isStarted={item?.is_started}
-        />
       );
     }
     if (columnKey === "priority") {
