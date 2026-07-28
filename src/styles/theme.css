@@ -510,6 +510,7 @@ input[type="radio"] {
 [role="radio"] {
   border-color: var(--color-primary) !important;
   color: var(--color-primary) !important;
+  border-radius: 9999px !important;
 }
 [role="radio"][data-state="checked"] {
   border-color: var(--color-primary) !important;
@@ -524,16 +525,20 @@ input[type="radio"] {
   border-color: var(--color-primary) !important;
 }
 
-/* Radio inner indicator circle fill */
+/* Radio inner indicator circle fill — force a true circle regardless of the
+   indicator's own border-radius classes, so it never renders as a square */
 [role="radio"] span,
-[role="radio"] > span {
+[role="radio"] > span,
+[role="radio"] div {
   background-color: var(--color-primary) !important;
+  border-radius: 9999px !important;
 }
 [role="radio"] svg,
 [role="radio"] svg[class*="fill-[#C72030]"],
 [role="radio"] svg[class*="text-[#C72030]"] {
   fill: var(--color-primary) !important;
   color: var(--color-primary) !important;
+  border-radius: 9999px !important;
 }
 
 /* Flag / bookmark SVG icons using Tailwind red-500 as brand action colour */
@@ -945,6 +950,187 @@ button[class*="text-[#C72030]"] svg,
 button[class*="border-[#C72030]"] svg,
 button.text-\[\#C72030\] svg {
   color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   BUTTON PURPLE COLOR OVERRIDES
+   Legacy Tailwind purple- and violet- utility classes (bg-purple-500/600/700/800,
+   bg-violet-600, etc.) applied directly on buttons — render as brand primary
+   instead. [class*="bg-purple-"] substring-matches any shade without
+   enumerating each one.
+   =========================================== */
+
+button[class*="bg-purple-"],
+[type="button"][class*="bg-purple-"],
+[type="submit"][class*="bg-purple-"],
+a[class*="bg-purple-"],
+.btn[class*="bg-purple-"],
+button[class*="bg-violet-"],
+[type="button"][class*="bg-violet-"],
+[type="submit"][class*="bg-violet-"],
+a[class*="bg-violet-"],
+.btn[class*="bg-violet-"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: white !important;
+}
+
+/* Icons inside purple-background buttons should be white */
+button[class*="bg-purple-"] svg,
+button[class*="bg-purple-"] .lucide,
+button[class*="bg-violet-"] svg,
+button[class*="bg-violet-"] .lucide {
+  color: white !important;
+  stroke: white !important;
+}
+
+button[class*="hover:bg-purple-"]:hover,
+[type="button"][class*="hover:bg-purple-"]:hover,
+[type="submit"][class*="hover:bg-purple-"]:hover,
+a[class*="hover:bg-purple-"]:hover,
+.btn[class*="hover:bg-purple-"]:hover,
+button[class*="hover:bg-violet-"]:hover,
+[type="button"][class*="hover:bg-violet-"]:hover,
+[type="submit"][class*="hover:bg-violet-"]:hover,
+a[class*="hover:bg-violet-"]:hover,
+.btn[class*="hover:bg-violet-"]:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+/* Outline/text buttons with purple text or border */
+button[class*="text-purple-"],
+a[class*="text-purple-"],
+.btn[class*="text-purple-"],
+button[class*="border-purple-"],
+a[class*="border-purple-"],
+button[class*="text-violet-"],
+a[class*="text-violet-"],
+.btn[class*="text-violet-"],
+button[class*="border-violet-"],
+a[class*="border-violet-"] {
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+button[class*="text-purple-"] svg,
+button[class*="border-purple-"] svg,
+button[class*="text-violet-"] svg,
+button[class*="border-violet-"] svg {
+  color: var(--color-primary) !important;
+}
+
+button[class*="hover:text-purple-"]:hover,
+a[class*="hover:text-purple-"]:hover,
+button[class*="hover:text-violet-"]:hover,
+a[class*="hover:text-violet-"]:hover {
+  color: var(--color-primary-hover) !important;
+}
+
+/* ===========================================
+   BUTTON ARBITRARY-HEX PURPLE OVERRIDES
+   One-off hardcoded purple hexes (Tailwind bg-[#......] arbitrary values)
+   scattered across dozens of Add/Edit/List pages — every distinct shade
+   found in the codebase is enumerated here and mapped to brand primary.
+   Do not add a new one-off purple hex; migrate the component to bg-brand instead.
+   =========================================== */
+
+button[class*="bg-[#8B4B8C]"],
+[type="button"][class*="bg-[#8B4B8C]"],
+[type="submit"][class*="bg-[#8B4B8C]"],
+a[class*="bg-[#8B4B8C]"],
+button[class*="bg-[#8b4b8c]"],
+a[class*="bg-[#8b4b8c]"],
+button[class*="bg-[#8B5CF6]"],
+a[class*="bg-[#8B5CF6]"],
+button[class*="bg-[#532D5F]"],
+a[class*="bg-[#532D5F]"],
+button[class*="bg-[#5B2D66]"],
+a[class*="bg-[#5B2D66]"],
+button[class*="bg-[#6B2C65]"],
+a[class*="bg-[#6B2C65]"],
+button[class*="bg-[#6B2C91]"],
+a[class*="bg-[#6B2C91]"],
+button[class*="bg-[#6B3FA0]"],
+a[class*="bg-[#6B3FA0]"],
+button[class*="bg-[#8B4A9C]"],
+a[class*="bg-[#8B4A9C]"],
+button[class*="bg-[#8B4B6B]"],
+a[class*="bg-[#8B4B6B]"],
+button[class*="bg-[#8B5A99]"],
+a[class*="bg-[#8B5A99]"],
+button[class*="bg-[#6B2245]"],
+a[class*="bg-[#6B2245]"],
+button[class*="bg-[#4B003F]"],
+a[class*="bg-[#4B003F]"],
+button[class*="bg-[#C1A5FF]"],
+a[class*="bg-[#C1A5FF]"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: white !important;
+}
+
+button[class*="bg-[#8B4B8C]"] svg,
+button[class*="bg-[#8B5CF6]"] svg,
+button[class*="bg-[#532D5F]"] svg,
+button[class*="bg-[#5B2D66]"] svg,
+button[class*="bg-[#6B2C65]"] svg,
+button[class*="bg-[#6B2C91]"] svg,
+button[class*="bg-[#6B3FA0]"] svg,
+button[class*="bg-[#8B4A9C]"] svg,
+button[class*="bg-[#8B4B6B]"] svg,
+button[class*="bg-[#8B5A99]"] svg,
+button[class*="bg-[#6B2245]"] svg,
+button[class*="bg-[#4B003F]"] svg,
+button[class*="bg-[#C1A5FF]"] svg {
+  color: white !important;
+  stroke: white !important;
+}
+
+/* Hover variants — every hover hex paired with the base colors above,
+   plus each base color's own /opacity hover (e.g. hover:bg-[#532D5F]/90) */
+button[class*="hover:bg-[#7A3F7B]"]:hover,
+a[class*="hover:bg-[#7A3F7B]"]:hover,
+button[class*="hover:bg-[#7A4077]"]:hover,
+a[class*="hover:bg-[#7A4077]"]:hover,
+button[class*="hover:bg-[#7A427B]"]:hover,
+a[class*="hover:bg-[#7A427B]"]:hover,
+button[class*="hover:bg-[#7C3AED]"]:hover,
+a[class*="hover:bg-[#7C3AED]"]:hover,
+button[class*="hover:bg-[#5a2455]"]:hover,
+a[class*="hover:bg-[#5a2455]"]:hover,
+button[class*="hover:bg-[#5A2478]"]:hover,
+a[class*="hover:bg-[#5A2478]"]:hover,
+button[class*="hover:bg-[#5A2579]"]:hover,
+a[class*="hover:bg-[#5A2579]"]:hover,
+button[class*="hover:bg-[#7A4089]"]:hover,
+a[class*="hover:bg-[#7A4089]"]:hover,
+button[class*="hover:bg-[#7A4260]"]:hover,
+a[class*="hover:bg-[#7A4260]"]:hover,
+button[class*="hover:bg-[#B195FF]"]:hover,
+a[class*="hover:bg-[#B195FF]"]:hover,
+button[class*="hover:bg-[#8B4B8C]"]:hover,
+a[class*="hover:bg-[#8B4B8C]"]:hover,
+button[class*="hover:bg-[#532D5F]"]:hover,
+a[class*="hover:bg-[#532D5F]"]:hover,
+button[class*="hover:bg-[#6B2245]"]:hover,
+a[class*="hover:bg-[#6B2245]"]:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+/* Outline/ghost buttons with an arbitrary purple hex as text/border */
+button[class*="text-[#8B4B8C]"],
+a[class*="text-[#8B4B8C]"],
+button[class*="border-[#8B4B8C]"],
+button[class*="text-[#6B2C91]"],
+a[class*="text-[#6B2C91]"],
+button[class*="border-[#8B5CF6]"] {
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+button[class*="hover:text-[#7A4077]"]:hover,
+a[class*="hover:text-[#7A4077]"]:hover {
+  color: var(--color-primary-hover) !important;
 }
 
 /* ===========================================

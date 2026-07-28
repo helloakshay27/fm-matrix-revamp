@@ -813,7 +813,7 @@ export const VisitorsDashboard = () => {
       case 'visitor_image':
         return (
           <div className="flex justify-center">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-[rgba(218,119,86,0.15)] flex items-center justify-center">
               {visitor.visitor_image && visitor.visitor_image !== 'person.png' ? (
                 <img
                   src={visitor.visitor_image.startsWith('http') ? visitor.visitor_image : '/placeholder.svg'}
@@ -825,8 +825,8 @@ export const VisitorsDashboard = () => {
                   }}
                 />
               ) : (
-                <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                <div className="w-full h-full bg-[rgba(218,119,86,0.15)] rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-[#DA7756]" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                   </svg>
                 </div>
@@ -880,21 +880,24 @@ export const VisitorsDashboard = () => {
         );
       case 'action':
         return (
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-1">
             {shouldShow("visitor", "show") && (
-              <div title="View visitor details" className="p-1 hover:bg-gray-100 rounded transition-colors">
-                <Eye
-                  className="w-4 h-4 cursor-pointer text-gray-600 hover:text-[#C72030] hover:scale-110 transition-all duration-200"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleVisitorDetails(visitor.id);
-                  }}
-                />
-              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-[#C72030] hover:bg-[#C72030]/10 hover:text-[#C72030]"
+                title="View visitor details"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleVisitorDetails(visitor.id);
+                }}
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
             )}
             <div title={`${visitor.is_flagged ? 'Unflag' : 'Flag'} visitor`} className="p-1 hover:bg-gray-100 rounded transition-colors">
               <Flag
-                className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:text-[#C72030] hover:scale-110 ${visitor.is_flagged
+                className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:scale-110 ${visitor.is_flagged
                   ? 'text-red-500 fill-red-500'
                   : 'text-gray-600'
                   }`}

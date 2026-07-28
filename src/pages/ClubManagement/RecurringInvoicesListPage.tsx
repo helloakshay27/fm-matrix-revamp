@@ -357,18 +357,9 @@ export const RecurringInvoicesListPage: React.FC = () => {
 
   // Helper function to get status badge
   const getStatusBadge = (status: string) => {
-    const statusColors: Record<string, string> = {
-      draft: "bg-yellow-100 text-yellow-800",
-      confirmed: "bg-blue-100 text-blue-800",
-      shipped: "bg-purple-100 text-purple-800",
-      delivered: "bg-green-100 text-green-800",
-      cancelled: "bg-red-100 text-red-800",
-      closed: "bg-gray-100 text-gray-800",
-    };
-
     return (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || "bg-gray-100 text-gray-800"}`}
+        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
       >
         {status.replace(/_/g, " ").toUpperCase()}
       </span>
@@ -402,7 +393,7 @@ export const RecurringInvoicesListPage: React.FC = () => {
             setSelectedDeleteId(order.id);
             setDeleteDialogOpen(true);
           }}
-          className="p-1 text-red-600 hover:text-red-700 hover:bg-gray-100 rounded"
+          className="p-1 text-black-600 hover:text-red-700 hover:bg-gray-100 rounded"
           title="Delete"
         >
           <Trash2 className="w-4 h-4" />
@@ -411,7 +402,7 @@ export const RecurringInvoicesListPage: React.FC = () => {
     ),
     order_number: (
       <div
-        className="font-medium text-blue-600 cursor-pointer"
+        className="font-medium text-brand cursor-pointer"
         onClick={() => navigate(`/accounting/dashboard/invoices/${order.id}`)}
       >
         {order.order_number}
@@ -475,7 +466,7 @@ export const RecurringInvoicesListPage: React.FC = () => {
           <button
             type="button"
             onClick={() => handleToggleStatus(order)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-red-500" : "bg-gray-300"
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-brand" : "bg-gray-300"
               }`}
           >
             <span
@@ -484,11 +475,7 @@ export const RecurringInvoicesListPage: React.FC = () => {
             />
           </button>
 
-          <span
-            className={`text-sm font-medium ${isActive ? "text-red-600" : "text-red-600"
-              }`}
-          >
-          </span>
+          <span className="text-sm font-medium"></span>
         </div>
       );
     })()

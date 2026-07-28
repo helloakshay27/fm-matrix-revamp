@@ -10,6 +10,7 @@ import qs from "qs";
 import { fetchProjectTypes } from "@/store/slices/projectTypeSlice";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
 import { toast } from "sonner";
+import { renderGroupedUserCheckboxList } from "@/components/GroupedUserCheckboxList";
 
 const statusOptions = [
   { label: "Active", value: "active", color: "bg-green-500" },
@@ -58,14 +59,6 @@ const ProjectFilterModal = ({
       dispatch(fetchFMUsers() as any);
     }
   }, [dispatch, token]);
-
-  const firstNames =
-    users && users.length > 0
-      ? users.map((user: any) => ({
-          label: user.full_name,
-          value: user.id || `${user.firstname}-${user.lastname}`,
-        }))
-      : [];
 
   const projectTypeOptions =
     projectTypes && projectTypes.length > 0
@@ -509,8 +502,10 @@ const ProjectFilterModal = ({
                     Failed to load managers: {fetchUsersError}
                   </div>
                 ) : (
-                  renderCheckboxList(
-                    firstNames,
+                  renderGroupedUserCheckboxList(
+                    // selectedManagers is kept as strings elsewhere in this file
+                    // (synced from URL via .map(String)), so ids are stringified here too.
+                    users.map((u: any) => ({ ...u, id: String(u.id) })),
                     selectedManagers,
                     setSelectedManagers,
                     managerSearch
@@ -589,8 +584,10 @@ const ProjectFilterModal = ({
                     onChange={(e) => setCreatorSearch(e.target.value)}
                   />
                 </div>
-                {renderCheckboxList(
-                  firstNames,
+                {renderGroupedUserCheckboxList(
+                  // selectedCreators is kept as strings elsewhere in this file
+                  // (synced from URL via .map(String)), so ids are stringified here too.
+                  users.map((u: any) => ({ ...u, id: String(u.id) })),
                   selectedCreators,
                   setSelectedCreators,
                   creatorSearch

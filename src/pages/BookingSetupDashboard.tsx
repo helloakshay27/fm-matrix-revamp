@@ -330,7 +330,7 @@ export const BookingSetupDashboard = () => {
       <Button
         onClick={() => setShowActionPanel(true)}
         className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
+        variant="ghost"
       >
         <Plus className="w-4 h-4" />
         Action
@@ -355,37 +355,6 @@ export const BookingSetupDashboard = () => {
           onClearSelection={() => setShowActionPanel(false)}
         />
       )}
-      {loading ? (
-        <div className="bg-white rounded-lg border border-gray-200">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#f6f4ee]">
-                <TableHead className="font-medium">ID</TableHead>
-                <TableHead className="font-medium">Name</TableHead>
-                <TableHead className="font-medium">Type</TableHead>
-                <TableHead className="font-medium">Location</TableHead>
-                <TableHead className="font-medium">Book before</TableHead>
-                <TableHead className="font-medium">Advance Booking</TableHead>
-                <TableHead className="font-medium">Created On</TableHead>
-                <TableHead className="font-medium">Created by</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell colSpan={8} className="pt-4 pb-16">
-                  <div className="w-full flex items-center justify-start gap-3 pl-4">
-                    <div
-                      className="h-5 w-5 rounded-full animate-spin"
-                      style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
-                    />
-                    <span className="text-sm text-black">Loading ...</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-      ) : (
       <div className="rounded-lg shadow-sm p-1 bg-transparent">
         <EnhancedTable
           data={bookingSetupData}
@@ -395,6 +364,7 @@ export const BookingSetupDashboard = () => {
           storageKey="booking-setup-table"
           className="min-w-full"
           emptyMessage=""
+          loading={loading}
           leftActions={leftActions}
           enableSearch={true}
           enableSelection={false}
@@ -444,7 +414,6 @@ export const BookingSetupDashboard = () => {
           onApply={handleFilterApply}
         />
       </div>
-      )}
     </div>
   );
 };

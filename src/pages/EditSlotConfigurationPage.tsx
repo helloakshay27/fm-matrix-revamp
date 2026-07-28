@@ -609,7 +609,7 @@ export const EditSlotConfigurationPage = () => {
 
           {/* Dynamic Parking Categories - renders every category returned by the API (2 Wheeler, 4 Wheeler, EV, ...) */}
           {parkingCategories.map((category, index) => (
-            <div key={category.id} className={`${index % 2 === 0 ? 'bg-pink-50' : 'bg-blue-50'} rounded-lg p-6 mb-6`}>
+            <div key={category.id} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-gray-50'} rounded-lg p-6 mb-6`}>
               <h3 className="text-lg font-semibold mb-6">
                 {category.name}
               </h3>

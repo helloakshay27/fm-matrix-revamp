@@ -2,14 +2,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import type { Building } from '@/store/slices/locationSlice';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Plus, Search, Edit, X, Check, ChevronLeft, ChevronRight, Download, Upload, QrCode } from 'lucide-react';
+import { Loader2, Plus, Edit, X, Check, Download, Upload, QrCode } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { fetchSites, fetchBuildings, createBuilding, updateBuilding } from '@/store/slices/locationSlice';
 import { useForm } from 'react-hook-form';
@@ -89,27 +89,9 @@ export function BuildingPage() {
     });
   }, [buildings.data, search, selectedSiteFilter]);
 
-  // Pagination calculations
-  const totalItems = filteredBuildings.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentBuildings = filteredBuildings.slice(startIndex, endIndex);
-
-  const goToPage = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const goToPrevious = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const goToNext = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setCurrentPage(1);
   };
 
   const handleCreateBuilding = async (data: BuildingFormData) => {
@@ -298,6 +280,100 @@ export function BuildingPage() {
     }
   };
 
+  const columns: ColumnConfig[] = [
+    { key: 'site', label: 'Site', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'name', label: 'Building Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'other_detail', label: 'Other Details', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'has_wing', label: 'Has Wing', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'has_area', label: 'Has Area', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'has_floor', label: 'Has Floor', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'has_room', label: 'Has Room', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'qr_code', label: 'QR Code', sortable: false, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'active', label: 'Status', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  ];
+
+  type BuildingRow = Building & { qr_code_url?: string };
+
+  const renderBooleanToggle = (
+    building: BuildingRow,
+    field: 'has_wing' | 'has_area' | 'has_floor' | 'has_room'
+  ) => (
+    <button
+      type="button"
+      onClick={() => handleToggleStatus(building.id, field)}
+      className="cursor-pointer"
+    >
+      {building[field] ? (
+        <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
+          <Check className="w-3 h-3 text-white" />
+        </div>
+      ) : (
+        <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
+          <span className="text-white text-xs">✗</span>
+        </div>
+      )}
+    </button>
+  );
+
+  const renderCell = (building: BuildingRow, columnKey: string) => {
+    switch (columnKey) {
+      case 'site':
+        return getSiteName(building.site_id);
+      case 'name':
+        return <span className="font-medium text-gray-900">{building.name}</span>;
+      case 'other_detail':
+        return building.other_detail || '-';
+      case 'has_wing':
+        return renderBooleanToggle(building, 'has_wing');
+      case 'has_area':
+        return renderBooleanToggle(building, 'has_area');
+      case 'has_floor':
+        return renderBooleanToggle(building, 'has_floor');
+      case 'has_room':
+        return renderBooleanToggle(building, 'has_room');
+      case 'qr_code':
+        return building.qr_code_url ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSelectedQrCode(building.qr_code_url!);
+              setIsQrModalOpen(true);
+            }}
+            className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+            title="QR Code"
+          >
+            <QrCode className="w-4 h-4" />
+          </Button>
+        ) : (
+          <span className="text-gray-400 text-sm">-</span>
+        );
+      case 'active':
+        return (
+          <Switch
+            checked={building.active}
+            onCheckedChange={() => handleToggleStatus(building.id, 'active')}
+            className="data-[state=checked]:bg-[#C72030]"
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  const renderActions = (building: BuildingRow) =>
+    shouldShow('Building', 'update') ? (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => openEditDialog(building)}
+        className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+        title="Edit"
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+    ) : null;
+
   return (
     <div className="w-full min-h-screen bg-gray-50">
       <div className="w-full">
@@ -310,17 +386,19 @@ export function BuildingPage() {
               <Button
                 variant="outline"
                 onClick={handleDownloadTemplate}
-                className="flex items-center gap-2"
+                  className="h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
               >
-                <Download className="h-4 w-4" />
-
+                <Download className="h-4 w-4 mr-2" />
                 Download Sample Format
               </Button>
 
               <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Upload className="h-4 w-4" />
+                  <Button
+                    variant="outline"
+                      className="h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
                     Import Buildings
                   </Button>
                 </DialogTrigger>
@@ -368,6 +446,7 @@ export function BuildingPage() {
                       <Button
                         onClick={handleImportBuildings}
                         disabled={!importFile || isImporting}
+                        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 [&_svg]:text-white"
                       >
                         {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Import
@@ -380,7 +459,7 @@ export function BuildingPage() {
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 {shouldShow("Building", "create") && (
                   <DialogTrigger asChild>
-                    <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">
+                    <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg [&_svg]:text-white">
                       <Plus className="mr-2 h-4 w-4" />
                       Add Building
                     </Button>
@@ -532,7 +611,7 @@ export function BuildingPage() {
                         <Button type="button" variant="outline" onClick={resetCreateForm}>
                           Cancel
                         </Button>
-                        <Button type="submit" disabled={createForm.formState.isSubmitting}>
+                        <Button type="submit" disabled={createForm.formState.isSubmitting} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 [&_svg]:text-white">
                           {createForm.formState.isSubmitting && (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           )}
@@ -546,233 +625,31 @@ export function BuildingPage() {
             </div>
           </div>
 
-          {/* Controls */}
-          <div className="flex items-center justify-end mb-4">
-
-
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Search:</span>
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-64"
-                placeholder="Search buildings..."
-              />
-            </div>
+          <div className="w-full min-w-0 max-w-full">
+            <EnhancedTable
+              data={filteredBuildings as BuildingRow[]}
+              columns={columns}
+              renderCell={renderCell}
+              renderActions={renderActions}
+              storageKey="buildings-table"
+              enableSearch
+              searchTerm={search}
+              onSearchChange={handleSearchChange}
+              disableClientSearch
+              searchPlaceholder="Search buildings..."
+              hideTableExport
+              loading={buildings.loading}
+              emptyMessage={
+                buildings.data.length === 0
+                  ? 'No buildings available'
+                  : 'No buildings match your search'
+              }
+              pagination
+              pageSize={itemsPerPage}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
           </div>
-
-          {/* Table */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Actions</TableHead>
-                  <TableHead>Site</TableHead>
-                  <TableHead>Building Name</TableHead>
-                  <TableHead>Other Details</TableHead>
-                  <TableHead>Has Wing</TableHead>
-                  <TableHead>Has Area</TableHead>
-                  <TableHead>Has Floor</TableHead>
-                  <TableHead>Has Room</TableHead>
-                  <TableHead>QR Code</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-               {buildings.loading ? (
-                  <TableRow>
-                    <TableCell colSpan={10} className="pt-4 pb-16">
-                      <div className="w-full flex items-center justify-start gap-3 pl-4">
-                        <div
-                          className="h-5 w-5 rounded-full animate-spin"
-                          style={{
-                            border: "2px solid #000000",
-                            borderTopColor: "transparent",
-                          }}
-                        />
-                        <span className="text-sm" style={{ color: "#000000" }}>
-                          Loading ...
-                        </span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : filteredBuildings.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={10} className="text-center py-4">
-                      {buildings.data.length === 0 ? 'No buildings available' : 'No buildings match your search'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  currentBuildings.map((building, index) => (
-                    <TableRow key={building.id}>
-                      <TableCell>
-                        {shouldShow("Building", "update") && (
-                          <Button variant="ghost" size="sm" onClick={() => openEditDialog(building)}>
-                            <Edit className="w-4 h-4 text-[#C72030]" />
-                          </Button>
-                        )}
-                      </TableCell>
-                      <TableCell>{getSiteName(building.site_id)}</TableCell>
-                      <TableCell>{building.name}</TableCell>
-                      <TableCell>{building.other_detail || '-'}</TableCell>
-                      <TableCell>
-                        <button onClick={() => handleToggleStatus(building.id, 'has_wing')} className="cursor-pointer">
-                          {building.has_wing ? (
-                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
-                              <Check className="w-3 h-3 text-white" />
-                            </div>
-                          ) : (
-                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
-                              <span className="text-white text-xs">✗</span>
-                            </div>
-                          )}
-                        </button>
-                      </TableCell>
-                      <TableCell>
-                        <button onClick={() => handleToggleStatus(building.id, 'has_area')} className="cursor-pointer">
-                          {building.has_area ? (
-                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
-                              <Check className="w-3 h-3 text-white" />
-                            </div>
-                          ) : (
-                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
-                              <span className="text-white text-xs">✗</span>
-                            </div>
-                          )}
-                        </button>
-                      </TableCell>
-                      <TableCell>
-                        <button onClick={() => handleToggleStatus(building.id, 'has_floor')} className="cursor-pointer">
-                          {building.has_floor ? (
-                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
-                              <Check className="w-3 h-3 text-white" />
-                            </div>
-                          ) : (
-                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
-                              <span className="text-white text-xs">✗</span>
-                            </div>
-                          )}
-                        </button>
-                      </TableCell>
-                      <TableCell>
-                        <button onClick={() => handleToggleStatus(building.id, 'has_room')} className="cursor-pointer">
-                          {building.has_room ? (
-                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
-                              <Check className="w-3 h-3 text-white" />
-                            </div>
-                          ) : (
-                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
-                              <span className="text-white text-xs">✗</span>
-                            </div>
-                          )}
-                        </button>
-                      </TableCell>
-                      <TableCell>
-                        {building.qr_code_url ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedQrCode(building.qr_code_url);
-                              setIsQrModalOpen(true);
-                            }}
-                            className="text-[#C72030] hover:text-[#C72030]/80"
-                          >
-                            <QrCode className="w-4 h-4" />
-                          </Button>
-                        ) : (
-                          <span className="text-gray-400 text-sm">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={building.active}
-                          onCheckedChange={() => handleToggleStatus(building.id, 'active')}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Pagination Controls */}
-          {buildings.data.length > 0 && (
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-muted-foreground">
-                Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} buildings
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToPrevious}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
-
-                <div className="flex items-center space-x-1">
-                  {/* Show first page */}
-                  {currentPage > 3 && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goToPage(1)}
-                        className="w-8 h-8 p-0"
-                      >
-                        1
-                      </Button>
-                      {currentPage > 4 && <span className="px-2">...</span>}
-                    </>
-                  )}
-
-                  {/* Show pages around current page */}
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(page => page >= currentPage - 2 && page <= currentPage + 2)
-                    .map((page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => goToPage(page)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {page}
-                      </Button>
-                    ))}
-
-                  {/* Show last page */}
-                  {currentPage < totalPages - 2 && (
-                    <>
-                      {currentPage < totalPages - 3 && <span className="px-2">...</span>}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goToPage(totalPages)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {totalPages}
-                      </Button>
-                    </>
-                  )}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToNext}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
 
           {/* Edit Dialog */}
           <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
@@ -933,6 +810,7 @@ export function BuildingPage() {
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-[#C72030]"
                           />
                         </FormControl>
                       </FormItem>
@@ -943,7 +821,7 @@ export function BuildingPage() {
                     <Button type="button" variant="outline" onClick={resetEditForm}>
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={editForm.formState.isSubmitting}>
+                    <Button type="submit" disabled={editForm.formState.isSubmitting} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 [&_svg]:text-white">
                       {editForm.formState.isSubmitting && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}

@@ -627,7 +627,6 @@ export const BookingSetupDetailPage = () => {
               </Button>
               <Button
                 onClick={() => setShowQr(true)}
-                className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
               >
                 <svg
                   width="14"
@@ -1033,10 +1032,10 @@ export const BookingSetupDetailPage = () => {
                           <span className="font-medium text-gray-800">
                             {blockDay.startDate
                               ? new Date(blockDay.startDate).toLocaleDateString("en-GB", {
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                  year: "numeric",
-                                })
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              })
                               : "-"}
                           </span>
                         </td>

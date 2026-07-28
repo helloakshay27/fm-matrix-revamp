@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { SlidersHorizontal, Plus, Filter } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { AddGVehicleModal } from '@/components/AddGVehicleModal';
 import { GVehicleFilterModal } from '@/components/GVehicleFilterModal';
 import { GVehicleOutDashboard } from './GVehicleOutDashboard';
@@ -8,7 +8,20 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
-const gVehicleData = [
+interface GVehicle {
+  id: number;
+  type: string;
+  name: string;
+  vehicleNumber: string;
+  mobileNumber: string;
+  purpose: string;
+  inDate: string;
+  inTime: string;
+  outDate: string;
+  outTime: string;
+}
+
+const gVehicleData: GVehicle[] = [
   {
     id: 1,
     type: 'Host',
@@ -19,7 +32,7 @@ const gVehicleData = [
     inDate: '',
     inTime: '',
     outDate: '09/12/2024',
-    outTime: '12:21 PM'
+    outTime: '12:21 PM',
   },
   {
     id: 2,
@@ -31,7 +44,7 @@ const gVehicleData = [
     inDate: '',
     inTime: '',
     outDate: '09/12/2024',
-    outTime: '12:21 PM'
+    outTime: '12:21 PM',
   },
   {
     id: 3,
@@ -43,7 +56,7 @@ const gVehicleData = [
     inDate: '',
     inTime: '',
     outDate: '09/12/2024',
-    outTime: '12:21 PM'
+    outTime: '12:21 PM',
   },
   {
     id: 4,
@@ -55,7 +68,7 @@ const gVehicleData = [
     inDate: '',
     inTime: '',
     outDate: '09/12/2024',
-    outTime: '12:19 PM'
+    outTime: '12:19 PM',
   },
   {
     id: 5,
@@ -67,7 +80,7 @@ const gVehicleData = [
     inDate: '',
     inTime: '',
     outDate: '30/08/2024',
-    outTime: '11:09 AM'
+    outTime: '11:09 AM',
   },
   {
     id: 6,
@@ -79,7 +92,7 @@ const gVehicleData = [
     inDate: '11/04/2024',
     inTime: '04:02 PM',
     outDate: '11/04/2024',
-    outTime: '04:10 PM'
+    outTime: '04:10 PM',
   },
   {
     id: 7,
@@ -91,7 +104,7 @@ const gVehicleData = [
     inDate: '11/04/2024',
     inTime: '04:00 PM',
     outDate: '09/12/2024',
-    outTime: '12:20 PM'
+    outTime: '12:20 PM',
   },
   {
     id: 8,
@@ -103,7 +116,7 @@ const gVehicleData = [
     inDate: '10/04/2024',
     inTime: '05:38 PM',
     outDate: '09/12/2024',
-    outTime: '12:20 PM'
+    outTime: '12:20 PM',
   },
   {
     id: 9,
@@ -115,7 +128,7 @@ const gVehicleData = [
     inDate: '06/04/2024',
     inTime: '02:24 PM',
     outDate: '09/12/2024',
-    outTime: '12:20 PM'
+    outTime: '12:20 PM',
   },
   {
     id: 10,
@@ -127,7 +140,7 @@ const gVehicleData = [
     inDate: '06/04/2024',
     inTime: '02:15 PM',
     outDate: '09/12/2024',
-    outTime: '12:20 PM'
+    outTime: '12:20 PM',
   },
   {
     id: 11,
@@ -139,31 +152,33 @@ const gVehicleData = [
     inDate: '05/04/2024',
     inTime: '05:16 PM',
     outDate: '09/12/2024',
-    outTime: '12:20 PM'
-  }
+    outTime: '12:20 PM',
+  },
 ];
 
-// Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
-  { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
-  { key: 'name', label: 'Name', sortable: true, hideable: true, draggable: true },
-  { key: 'vehicleNumber', label: 'Vehicle Number', sortable: true, hideable: true, draggable: true },
-  { key: 'mobileNumber', label: 'Mobile Number', sortable: true, hideable: true, draggable: true },
-  { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
-  { key: 'inDate', label: 'In Date', sortable: true, hideable: true, draggable: true },
-  { key: 'inTime', label: 'In Time', sortable: true, hideable: true, draggable: true },
-  { key: 'outDate', label: 'Out Date', sortable: true, hideable: true, draggable: true },
-  { key: 'outTime', label: 'Out Time', sortable: true, hideable: true, draggable: true }
+  { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'name', label: 'Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'vehicleNumber', label: 'Vehicle Number', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'mobileNumber', label: 'Mobile Number', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'inDate', label: 'In Date', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'inTime', label: 'In Time', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'outDate', label: 'Out Date', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'outTime', label: 'Out Time', sortable: true, hideable: true, draggable: true, defaultVisible: true },
 ];
+
+const brandButtonClass =
+  'bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap';
 
 export const GVehiclesDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
-  const [activeTab, setActiveTab] = useState('History');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [currentView, setCurrentView] = useState('history'); // 'history' or 'vehicle-out'
-  const [vehicleData, setVehicleData] = useState<typeof gVehicleData>([]);
+  const [currentView, setCurrentView] = useState<'history' | 'vehicle-out'>('history');
+  const [vehicleData, setVehicleData] = useState<GVehicle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -182,62 +197,75 @@ export const GVehiclesDashboard = () => {
     };
   }, []);
 
-  // Render row function for enhanced table
-  const renderRow = (vehicle: any) => ({
-    type: vehicle.type,
-    name: vehicle.name,
-    vehicleNumber: <span className="text-blue-600 font-medium">{vehicle.vehicleNumber}</span>,
-    mobileNumber: <span className="text-blue-600">{vehicle.mobileNumber}</span>,
-    purpose: vehicle.purpose || '--',
-    inDate: vehicle.inDate || '--',
-    inTime: vehicle.inTime ? <span className="text-blue-600">{vehicle.inTime}</span> : '--',
-    outDate: vehicle.outDate || '--',
-    outTime: vehicle.outTime ? <span className="text-blue-600">{vehicle.outTime}</span> : '--'
-  });
+  const filteredData = useMemo(() => {
+    if (!searchTerm) return vehicleData;
+    const q = searchTerm.toLowerCase();
+    return vehicleData.filter((item) =>
+      Object.values(item).some((value) =>
+        String(value ?? '').toLowerCase().includes(q)
+      )
+    );
+  }, [vehicleData, searchTerm]);
 
   const handleHistoryClick = () => {
     setCurrentView('history');
-    setActiveTab('History');
   };
 
   const handleVehicleOutClick = () => {
     setCurrentView('vehicle-out');
-    setActiveTab('Vehicle Out');
   };
 
-  // If Vehicle Out view is active, render the Vehicle Out component
+  const renderCell = (vehicle: GVehicle, columnKey: string) => {
+    switch (columnKey) {
+      case 'type':
+        return vehicle.type || '--';
+      case 'name':
+        return <span className="font-medium text-gray-900">{vehicle.name}</span>;
+      case 'vehicleNumber':
+        return <span className="font-medium text-gray-900">{vehicle.vehicleNumber}</span>;
+      case 'mobileNumber':
+        return <span className="text-gray-900">{vehicle.mobileNumber}</span>;
+      case 'purpose':
+        return vehicle.purpose || '--';
+      case 'inDate':
+        return vehicle.inDate || '--';
+      case 'inTime':
+        return vehicle.inTime ? (
+          <span className="text-gray-900">{vehicle.inTime}</span>
+        ) : (
+          '--'
+        );
+      case 'outDate':
+        return vehicle.outDate || '--';
+      case 'outTime':
+        return vehicle.outTime ? (
+          <span className="text-gray-900">{vehicle.outTime}</span>
+        ) : (
+          '--'
+        );
+      default:
+        return vehicle[columnKey as keyof GVehicle] ?? '--';
+    }
+  };
+
   if (currentView === 'vehicle-out') {
     return <GVehicleOutDashboard onHistoryClick={handleHistoryClick} />;
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900 mb-6 uppercase">G VEHICLES LIST</h1>
-      
-      {/* Tab Navigation */}
-      <div className="flex gap-3 mb-6">
-        <Button 
-          onClick={handleHistoryClick}
-          className="fm-button-fix fm-button-brand px-4 py-2"
-        >
-          History
-        </Button>
-        <Button 
-          onClick={handleVehicleOutClick}
-          className="fm-button-fix fm-button-brand px-4 py-2"
-        >
-          Vehicle Out
-        </Button>
-      </div>
+    <div className="flex-1 p-6 bg-white min-h-screen">
+      <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-6">
+        G Vehicles List
+      </h1>
 
-      {/* Enhanced Table */}
       <EnhancedTable
-        data={vehicleData}
+        data={filteredData}
         columns={columns}
-        renderRow={renderRow}
-        enableSearch={true}
-        enableSelection={false}
-        enableExport={true}
+        renderCell={renderCell}
+        enableSearch
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        enableExport
         storageKey="g-vehicles-table"
         emptyMessage="No vehicles available"
         exportFileName="g-vehicles"
@@ -245,28 +273,36 @@ export const GVehiclesDashboard = () => {
         hideTableExport={false}
         hideColumnsButton={false}
         loading={loading}
+        pagination
+        pageSize={10}
+        onFilterClick={() => setIsFilterModalOpen(true)}
         leftActions={
-          <div className="flex gap-3">
-            {shouldShow("G Vehicles", "create") && (
+          <div className="flex items-center gap-2">
+            <Button onClick={handleHistoryClick} className={brandButtonClass}>
+              History
+            </Button>
+            <Button onClick={handleVehicleOutClick} className={brandButtonClass}>
+              Vehicle Out
+            </Button>
+            {shouldShow('G Vehicles', 'create') && (
               <Button
                 onClick={() => setIsAddModalOpen(true)}
-                className="fm-button-fix fm-button-brand px-4 py-2"
+                className={brandButtonClass}
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 mr-2" />
                 Add
               </Button>
             )}
           </div>
         }
-        onFilterClick={() => setIsFilterModalOpen(true)}
       />
 
-      <AddGVehicleModal 
+      <AddGVehicleModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
       />
-      
-      <GVehicleFilterModal 
+
+      <GVehicleFilterModal
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
       />
