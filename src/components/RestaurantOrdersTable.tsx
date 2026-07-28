@@ -732,7 +732,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
                 <StatusIcon className="w-6 h-6 text-[#C72030]" />
               </div>
               <div className="min-w-0">
-                <div className="text-2xl font-semibold" style={{ color: status.color_code }}>
+                <div className="text-2xl font-semibold !text-[#1A1A1A]">
                   {status.count}
                 </div>
                 <div className="text-sm font-medium !text-[#1A1A1A] truncate" title={status.name}>
