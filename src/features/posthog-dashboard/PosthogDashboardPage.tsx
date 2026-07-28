@@ -18,8 +18,8 @@ export function PosthogDashboardPage() {
         <Header />
         <ControlBar />
         <div className="phg-wrap">
-          <TierNote />
-          <BenchmarkNote />
+          {/* <TierNote /> */}
+          {/* <BenchmarkNote /> */}
           <Reveal><TrafficSection /></Reveal>
           <Reveal><AdoptionSection /></Reveal>
           <Reveal><WorkflowSection /></Reveal>

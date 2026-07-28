@@ -1,5 +1,5 @@
 import { rngFor } from './rng';
-import { SITES, REGIONS, MODULES, ROLES, type Site, type Tier, type Device, type DateRange } from './constants';
+import { MODULES, ROLES, type Site, type Tier, type Device, type DateRange } from './constants';
 import { fmtC, fmtDur, pct } from './format';
 
 export interface DashboardState {
@@ -13,36 +13,41 @@ export interface DashboardState {
 }
 
 export const DEFAULT_STATE: DashboardState = {
-  tier: 't3', scope: 'org', date: 30, dev: 'all', mod: 'helpdesk', sessTab: 'sessions', prev: true,
+  tier: 't1', scope: 'bkc', date: 30, dev: 'all', mod: 'helpdesk', sessTab: 'sessions', prev: true,
 };
 
-/** Keeps `scope` valid whenever the tier changes (mirrors the wireframe's fillScope()). */
-export function normalizeScope(tier: Tier, scope: string): string {
-  if (tier === 't1') return SITES.some((s) => s.id === scope) ? scope : 'bkc';
-  if (tier === 't2') return REGIONS.includes(scope) ? scope : 'West';
-  if (scope !== 'org' && !REGIONS.includes(scope)) return 'org';
+/** Keeps `scope` valid whenever the tier or the allowed-sites list changes (mirrors the wireframe's fillScope()). */
+export function normalizeScope(tier: Tier, scope: string, sites: Site[], regions: string[], preferredSiteId?: string): string {
+  if (tier === 't1') {
+    if (scope === 'all' || sites.some((s) => s.id === scope)) return scope;
+    if (preferredSiteId && sites.some((s) => s.id === preferredSiteId)) return preferredSiteId;
+    return sites[0]?.id ?? scope;
+  }
+  if (tier === 't2') return regions.includes(scope) ? scope : (regions[0] ?? scope);
+  if (scope !== 'org' && !regions.includes(scope)) return 'org';
   return scope;
 }
 
-export function scopeSites(state: DashboardState): Site[] {
-  if (state.tier === 't1') return SITES.filter((s) => s.id === state.scope);
-  if (state.tier === 't2') return SITES.filter((s) => s.region === state.scope);
-  if (state.scope === 'org') return SITES.slice();
-  return SITES.filter((s) => s.region === state.scope);
+export function scopeSites(state: DashboardState, sites: Site[]): Site[] {
+  if (state.tier === 't1') return state.scope === 'all' ? sites.slice() : sites.filter((s) => s.id === state.scope);
+  if (state.tier === 't2') return sites.filter((s) => s.region === state.scope);
+  if (state.scope === 'org') return sites.slice();
+  return sites.filter((s) => s.region === state.scope);
 }
 
 export function scopeKey(state: DashboardState): string {
   return `${state.tier}|${state.scope}|${state.date}|${state.dev}`;
 }
 
-export function scopeLabel(state: DashboardState): string {
-  const s = scopeSites(state);
+export function scopeLabel(state: DashboardState, sites: Site[], regions: string[]): string {
+  const s = scopeSites(state, sites);
   if (state.tier === 't1') {
+    if (state.scope === 'all') return `All sites · ${s.length} sites · Site Manager view`;
     const site = s[0];
-    return `${site.name} · ${site.region} region · Site Manager view`;
+    return site ? `${site.name} · ${site.region} region · Site Manager view` : 'No site available · Site Manager view';
   }
   if (state.tier === 't2') return `${state.scope} region · ${s.length} sites · Regional view`;
-  if (state.scope === 'org') return `All sites · ${s.length} sites · ${REGIONS.join(' / ')} · Management view`;
+  if (state.scope === 'org') return `All sites · ${s.length} sites · ${regions.join(' / ')} · Management view`;
   return `${state.scope} region · ${s.length} sites · Management (drilled)`;
 }
 
@@ -87,8 +92,8 @@ export interface Core {
   dAct: number;
 }
 
-export function core(state: DashboardState): Core {
-  const sites = scopeSites(state);
+export function core(state: DashboardState, allSites: Site[]): Core {
+  const sites = scopeSites(state, allSites);
   const key = scopeKey(state);
   const r = rngFor(key);
   const S = seats(sites);
@@ -286,9 +291,9 @@ export interface SiteHealthData { tierBadge: string; rows: SiteHealthRow[] }
 export interface RegionRow { reg: string; sites: number; wau: number; util: number; trend: number }
 export interface RegionData { rows: RegionRow[] }
 
-export function buildSiteHealth(state: DashboardState): SiteHealthData | null {
-  if (state.tier === 't1') return null;
-  const sites = scopeSites(state);
+export function buildSiteHealth(state: DashboardState, allSites: Site[]): SiteHealthData | null {
+  if (state.tier === 't1' && state.scope !== 'all') return null;
+  const sites = scopeSites(state, allSites);
   const rows: SiteHealthRow[] = sites
     .map((s) => {
       const rr = rngFor(`site|${s.id}|${state.date}`);
@@ -299,13 +304,13 @@ export function buildSiteHealth(state: DashboardState): SiteHealthData | null {
       return { name: s.name, region: s.region, util, trend, comp, drop };
     })
     .sort((a, b) => a.util - b.util);
-  return { tierBadge: state.tier === 't2' ? 'Regional' : 'Management', rows };
+  return { tierBadge: state.tier === 't1' ? 'Site Manager' : state.tier === 't2' ? 'Regional' : 'Management', rows };
 }
 
-export function buildRegion(state: DashboardState): RegionData | null {
+export function buildRegion(state: DashboardState, allSites: Site[], regions: string[]): RegionData | null {
   if (!(state.tier === 't3' && state.scope === 'org')) return null;
-  const rows: RegionRow[] = REGIONS.map((reg) => {
-    const rsites = SITES.filter((s) => s.region === reg);
+  const rows: RegionRow[] = regions.map((reg) => {
+    const rsites = allSites.filter((s) => s.region === reg);
     const rr = rngFor(`region|${reg}|${state.date}`);
     const util = 0.45 + rr() * 0.42;
     const wau = Math.round(seats(rsites) * util);
