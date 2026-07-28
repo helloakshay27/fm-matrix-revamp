@@ -1,5 +1,7 @@
 ﻿import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { renderGroupedUserCheckboxList } from "@/components/GroupedUserCheckboxList";
 import {
     Tooltip,
     TooltipContent,
@@ -106,13 +108,6 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
-        key: "task_code",
-        label: "Task Code",
-        sortable: true,
-        draggable: true,
-        defaultVisible: true,
-    },
-    {
         key: "title",
         label: "Task Title",
         sortable: true,
@@ -176,22 +171,8 @@ const columns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
-        key: "started_time",
-        label: "Actual Efforts Taken",
-        sortable: false,
-        draggable: true,
-        defaultVisible: true,
-    },
-    {
         key: "duration",
         label: "Time Left",
-        sortable: true,
-        draggable: true,
-        defaultVisible: true,
-    },
-    {
-        key: "efforts_duration",
-        label: "Efforts Duration",
         sortable: true,
         draggable: true,
         defaultVisible: true,
@@ -275,7 +256,6 @@ const STATUS_OPTIONS = [
 // Map frontend column keys to backend field names
 const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
     id: "id",
-    task_code: "task_code",
     title: "title",
     status: "status",
     workflowStatus: "project_status_id",
@@ -284,7 +264,6 @@ const COLUMN_TO_BACKEND_MAP: Record<string, string> = {
     expected_start_date: "expected_start_date",
     target_date: "target_date",
     duration: "target_date",
-    efforts_duration: "estimated_hour",
     subtasks: "total_sub_tasks",
     issues: "total_issues",
     priority: "priority",
@@ -900,7 +879,8 @@ const ProjectTasksPage = () => {
 
     const fetchSprintsList = useCallback(async () => {
         try {
-            const result = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
+            const user_id = localStorage.getItem("userId")
+            const result = await dispatch(fetchSprints({ token, baseUrl, filters: { "q[owner_id_eq]": user_id } })).unwrap();
             const list =
                 result?.sprints ||
                 result?.data?.sprints ||
@@ -2405,10 +2385,17 @@ const ProjectTasksPage = () => {
                 );
             case "id":
                 return (
-                    <span className="w-[80px]">
-                        {isSubtask ? "S-" : "T-"}
-                        {item.id}
-                    </span>
+                    <div className="flex flex-col w-[100px]">
+                        <span>
+                            {isSubtask ? "S-" : "T-"}
+                            {item.id}
+                        </span>
+                        {item.task_code && (
+                            <span className="text-[11px] text-gray-500 font-medium">
+                                {item.task_code}
+                            </span>
+                        )}
+                    </div>
                 );
             case "title":
                 const isCompleted = item.status === "completed";
@@ -2416,41 +2403,56 @@ const ProjectTasksPage = () => {
                 const hasSubtasks = item.total_sub_tasks > 0;
 
                 return (
-                    <div className="flex items-center gap-2 w-[20rem]">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <span className="w-full truncate">{item.title}</span>
-                                </TooltipTrigger>
-                                <TooltipContent className="rounded-[5px]">
-                                    <p>{item.title}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        {!hasSubtasks &&
-                            !isCompleted &&
-                            (isTaskStarted ? (
-                                <button
-                                    onClick={() => {
-                                        setPauseTaskId(item.id);
-                                        setIsPauseModalOpen(true);
-                                    }}
-                                    disabled={isCompleted}
-                                    className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
-                                    title="Pause task"
-                                >
-                                    <Pause size={13} className="text-orange-500" />
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={() => handlePlayTask(item.id)}
-                                    disabled={isCompleted}
-                                    className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
-                                    title="Play task"
-                                >
-                                    <Play size={13} color="#22c55e" />
-                                </button>
-                            ))}
+                    <div className="flex flex-col gap-1 w-[20rem]">
+                        <div className="flex items-center gap-2">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="w-full truncate">{item.title}</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="rounded-[5px]">
+                                        <p>{item.title}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            {!hasSubtasks &&
+                                !isCompleted &&
+                                (isTaskStarted ? (
+                                    <button
+                                        onClick={() => {
+                                            setPauseTaskId(item.id);
+                                            setIsPauseModalOpen(true);
+                                        }}
+                                        disabled={isCompleted}
+                                        className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                                        title="Pause task"
+                                    >
+                                        <Pause size={13} className="text-orange-500" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => handlePlayTask(item.id)}
+                                        disabled={isCompleted}
+                                        className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                                        title="Play task"
+                                    >
+                                        <Play size={13} color="#22c55e" />
+                                    </button>
+                                ))}
+                        </div>
+                        <div className="flex items-center gap-3 text-[11px] text-gray-500 font-medium">
+                            <span className="flex items-center gap-1">
+                                Effort taken:
+                                <ActiveTimer
+                                    activeTimeTillNow={item?.active_time_till_now}
+                                    isStarted={item?.is_started}
+                                />
+                            </span>
+                            <span>•</span>
+                            <span>
+                                Duration: {formatHours(item?.total_allocated_hours || 0)}
+                            </span>
+                        </div>
                     </div>
                 );
             case "status": {
@@ -2612,20 +2614,9 @@ const ProjectTasksPage = () => {
                     />
                 );
             }
-            case "efforts_duration": {
-                return `${formatHours(item?.total_allocated_hours || 0)}`;
-            }
             case "priority": {
                 return (
                     item.priority.charAt(0).toUpperCase() + item.priority.slice(1) || "-"
-                );
-            }
-            case "started_time": {
-                return (
-                    <ActiveTimer
-                        activeTimeTillNow={item?.active_time_till_now}
-                        isStarted={item?.is_started}
-                    />
                 );
             }
             case "predecessor": {
@@ -3223,19 +3214,18 @@ const ProjectTasksPage = () => {
                         {/* Collapse column (empty for subtasks) */}
                         <td className="p-4 text-center w-12 min-w-12"></td>
 
-                        {/* Indented actions cell */}
-                        <td className="p-4 text-center w-16 min-w-16">
-                            {/* <div className="flex justify-center items-center gap-2 ml-4">
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="p-1"
-                                    onClick={() => handleView(subtask.id)}
-                                    title="View Subtask Details"
-                                >
-                                    <Eye className="w-4 h-4" />
-                                </Button>
-                            </div> */}
+                        {/* Checkbox to add this subtask to a sprint, same as parent tasks */}
+                        <td className="p-4 w-12 min-w-12 text-center">
+                            <div className="flex justify-center">
+                                <Checkbox
+                                    checked={selectedItems.includes(String(subtask.id))}
+                                    onCheckedChange={(checked) =>
+                                        handleSelectItem(String(subtask.id), !!checked)
+                                    }
+                                    aria-label={`Select subtask ${subtask.id}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            </div>
                         </td>
 
                         {/* Subtask data in same columns */}
@@ -3637,12 +3627,8 @@ const ProjectTasksPage = () => {
                                             }
                                         />
                                     </div>
-                                    {renderCheckboxList(
-                                        users.map((u) => ({
-                                            ...u,
-                                            label: u.full_name,
-                                            value: u.id,
-                                        })),
+                                    {renderGroupedUserCheckboxList(
+                                        users,
                                         selectedResponsible,
                                         setSelectedResponsible,
                                         searchTerms.responsiblePerson
@@ -3686,12 +3672,8 @@ const ProjectTasksPage = () => {
                                             }
                                         />
                                     </div>
-                                    {renderCheckboxList(
-                                        users.map((u) => ({
-                                            ...u,
-                                            label: u.full_name,
-                                            value: u.id,
-                                        })),
+                                    {renderGroupedUserCheckboxList(
+                                        users,
                                         selectedCreators,
                                         setSelectedCreators,
                                         searchTerms.createdBy
