@@ -2,27 +2,8 @@ import React from "react";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import { getDocumentTemplateSettings, slugifyDocumentType } from "@/utils/documentTemplate";
 
-export const getAccountingPdfStatusStyle = (status) => {
-  const styles = {
-    draft: { backgroundColor: "#f3f4f6", color: "#1f2937", borderColor: "#e5e7eb" },
-    sent: { backgroundColor: "#dbeafe", color: "#1e40af", borderColor: "#bfdbfe" },
-    open: { backgroundColor: "#dbeafe", color: "#1e40af", borderColor: "#bfdbfe" },
-    accepted: { backgroundColor: "#dcfce7", color: "#166534", borderColor: "#bbf7d0" },
-    approved: { backgroundColor: "#dcfce7", color: "#166534", borderColor: "#bbf7d0" },
-    paid: { backgroundColor: "#dcfce7", color: "#166534", borderColor: "#bbf7d0" },
-    delivered: { backgroundColor: "#dcfce7", color: "#166534", borderColor: "#bbf7d0" },
-    confirmed: { backgroundColor: "#dbeafe", color: "#1d4ed8", borderColor: "#bfdbfe" },
-    processing: { backgroundColor: "#fef9c3", color: "#854d0e", borderColor: "#fde68a" },
-    pending_approval: { backgroundColor: "#ffedd5", color: "#9a3412", borderColor: "#fed7aa" },
-    overdue: { backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" },
-    declined: { backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" },
-    rejected: { backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" },
-    cancelled: { backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" },
-    expired: { backgroundColor: "#ffedd5", color: "#9a3412", borderColor: "#fed7aa" },
-    shipped: { backgroundColor: "#f3e8ff", color: "#6b21a8", borderColor: "#e9d5ff" },
-    converted: { backgroundColor: "#f3e8ff", color: "#6b21a8", borderColor: "#e9d5ff" },
-  };
-  return styles[String(status || "").toLowerCase()] || styles.draft;
+export const getAccountingPdfStatusStyle = () => {
+  return { backgroundColor: "#f3f4f6", color: "#1f2937", borderColor: "#e5e7eb" };
 };
 
 const formatStatus = (status) => {
@@ -139,13 +120,13 @@ export const AccountingDocumentPdf = ({
           </div>
           <div className="grid grid-cols-2 border-b border-gray-500 min-h-[30px]">
             <div className="px-2 py-2 border-r border-gray-500">
-              <p className="font-bold text-blue-700">{customerName || "N/A"}</p>
+              <p className="font-bold">{customerName || "N/A"}</p>
               {formatAddressBlock(billingAddress).map((line, index) => (
                 <p key={index}>{line}</p>
               ))}
             </div>
             <div className="px-2 py-2">
-              <p className="font-bold text-blue-700">{customerName || "N/A"}</p>
+              <p className="font-bold">{customerName || "N/A"}</p>
               {formatAddressBlock(shippingAddress || billingAddress).map((line, index) => (
                 <p key={index}>{line}</p>
               ))}
@@ -205,7 +186,7 @@ export const AccountingDocumentPdf = ({
                 {data?.lock_account_tax_amount ? (
                   <div className="flex justify-between">
                     <span>Amount Withheld</span>
-                    <span className="text-red-600">(-) {Number(data?.lock_account_tax_amount || 0).toFixed(2)}</span>
+                    <span>(-) {Number(data?.lock_account_tax_amount || 0).toFixed(2)}</span>
                   </div>
                 ) : null}
                 {taxRows.map(([name, tax], index) => (

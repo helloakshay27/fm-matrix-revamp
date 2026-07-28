@@ -36,7 +36,7 @@ import {
     PersonAdd,
     ChevronRight
 } from '@mui/icons-material';
-import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -579,15 +579,15 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
         },
     };
     const modalPrimaryButtonSx = {
-        backgroundColor: '#C72030',
+        backgroundColor: '#DA7756',
         textTransform: 'none',
-        '&:hover': { backgroundColor: '#A01926' }
+        '&:hover': { backgroundColor: '#C45F40' }
     };
     const modalSecondaryButtonSx = {
-        color: '#C72030',
-        borderColor: '#C72030',
+        color: '#DA7756',
+        borderColor: '#DA7756',
         textTransform: 'none',
-        '&:hover': { borderColor: '#C72030', backgroundColor: 'rgba(199, 32, 48, 0.06)' }
+        '&:hover': { borderColor: '#DA7756', backgroundColor: 'rgba(218, 119, 86, 0.06)' }
     };
     const gstTreatmentOptions = [
         { value: 'registered_regular', label: 'Registered Business - Regular' },
@@ -1481,6 +1481,16 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                 </div>
             )}
 
+            <div className="mb-2">
+                <button
+                    onClick={() => navigate('/accounting/recurring-invoices')}
+                    className="flex items-center gap-2 text-gray-900 hover:text-gray-700 font-medium tracking-wide"
+                >
+                    <ArrowLeft className="w-5 h-5" />
+                    Back to Recurring Invoices List
+                </button>
+            </div>
+
             <header className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">New Recurring Invoice</h1>
             </header>
@@ -1578,7 +1588,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Billing Address
                                             <IconButton size="small" onClick={() => openAddressListModal('billing')}>
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedBillingAddress?.address ? (
@@ -1592,14 +1602,14 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                                 {selectedBillingAddress.country && (<div>{selectedBillingAddress.country}</div>)}
                                             </div>
                                         ) : (
-                                            <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">New Address</button>
+                                            <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">New Address</button>
                                         )}
                                     </div>
                                     <div>
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Shipping Address
                                             <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedShippingAddress?.address ? (
@@ -1613,7 +1623,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                                 {selectedShippingAddress.country && (<div>{selectedShippingAddress.country}</div>)}
                                             </div>
                                         ) : (
-                                            <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">New Address</button>
+                                            <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">New Address</button>
                                         )}
                                     </div>
                                 </div>
@@ -1622,14 +1632,14 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                         <span className="text-gray-500">GST Treatment:</span>
                                         <span className="text-gray-800">{getGstTreatmentLabel(customerDetail.gst_preference || customerDetail.gst_treatment)}</span>
                                         <IconButton size="small" onClick={openGstModal}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500">GSTIN:</span>
                                         <span className="text-gray-800 font-medium">{selectedGstDetail?.gstin || customerDetail.gstin || "—"}</span>
                                         <IconButton size="small" onClick={openGstPickerModal}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                 </div>
@@ -1662,7 +1672,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                 Billing Address
                             </label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${selectedCustomer?.billing_address?.address ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y ${selectedCustomer?.billing_address?.address ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
                                 value={selectedCustomer?.billing_address?.address
                                     ? `${selectedCustomer.billing_address.address}${selectedCustomer.billing_address.address_line_two ? ', ' + selectedCustomer.billing_address.address_line_two : ''}${selectedCustomer.billing_address.city ? ', ' + selectedCustomer.billing_address.city : ''}${selectedCustomer.billing_address.state ? ', ' + selectedCustomer.billing_address.state : ''}${selectedCustomer.billing_address.pin_code ? ' - ' + selectedCustomer.billing_address.pin_code : ''}`
@@ -1684,7 +1694,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                 Shipping Address
                             </label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer?.shipping_address?.address || sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y ${!!selectedCustomer?.shipping_address?.address || sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
                                 value={selectedCustomer?.shipping_address?.address
                                     ? `${selectedCustomer.shipping_address.address}${selectedCustomer.shipping_address.address_line_two ? ', ' + selectedCustomer.shipping_address.address_line_two : ''}${selectedCustomer.shipping_address.city ? ', ' + selectedCustomer.shipping_address.city : ''}${selectedCustomer.shipping_address.state ? ', ' + selectedCustomer.shipping_address.state : ''}${selectedCustomer.shipping_address.pin_code ? ' - ' + selectedCustomer.shipping_address.pin_code : ''}`
@@ -1974,7 +1984,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                         </table>
                                         <div className="flex gap-2 mb-2">
                                             <button
-                                                className="text-blue-600 text-sm"
+                                                className="text-brand text-sm"
                                                 onClick={handleAddNewTerm}
                                             >
                                                 + Add New
@@ -1982,7 +1992,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                         </div>
                                         <div className="flex gap-2">
                                             <button
-                                                className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                                                className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                                                 onClick={handleSaveTerms}
                                             >
                                                 Save
@@ -2007,7 +2017,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                 Subject
                             </label>
                             <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                                 rows={4}
                                 value={subject}
                                 onChange={(e) => {
@@ -2329,12 +2339,12 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                 >
                                     <FormControlLabel
                                         value="TDS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                                         label={<span className="text-sm">TDS</span>}
                                     />
                                     <FormControlLabel
                                         value="TCS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                                         label={<span className="text-sm">TCS</span>}
                                     />
                                 </RadioGroup>
@@ -2400,7 +2410,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                 {/* Customer Notes */}
                 <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
                     <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                         rows={3}
                         value={customerNotes}
                         onChange={(e) => {
@@ -2456,7 +2466,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                 {/* Terms & Conditions */}
                 <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
                     <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                         rows={4}
                         value={termsAndConditions}
                         onChange={(e) => {
@@ -2617,17 +2627,8 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                     variant="text"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        bgcolor: '#f8f1f1',
-                        color: '#C72030',
-                        fontWeight: 600,
-                        '&:hover': {
-                            bgcolor: '#f1e8e8',
-                            color: '#A01020'
-                        }
-                    }}
+                    className="fm-button-fix fm-button-brand px-8 py-2"
+                    sx={{ textTransform: 'none', fontWeight: 600 }}
                 >
                     Save as Draft
                 </Button>
@@ -2635,17 +2636,8 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                     variant="text"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
-                    sx={{
-                        bgcolor: '#f8f1f1',
-                        color: '#C72030',
-                        fontWeight: 600,
-                        px: 4,
-                        '&:hover': {
-                            bgcolor: '#f1e8e8',
-                            color: '#A01020'
-                        },
-                        textTransform: 'none'
-                    }}
+                    className="fm-button-fix fm-button-brand px-8 py-2"
+                    sx={{ textTransform: 'none', fontWeight: 600 }}
                 >
                     {isSubmitting ? 'Submitting...' : 'Submit'}
                 </Button>
@@ -2653,16 +2645,16 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                     variant="outlined"
                     onClick={() => navigate('/accounting/recurring-invoices')}
                     disabled={isSubmitting}
+                    className="fm-button-fix px-8 py-2"
                     sx={{
                         textTransform: 'none',
-                        px: 4,
-                        borderColor: '#C72030',
-                        color: '#C72030',
                         fontWeight: 600,
+                        borderColor: '#DA7756',
+                        color: '#DA7756',
                         '&:hover': {
-                            borderColor: '#A01020',
-                            bgcolor: '#f8f1f1',
-                            color: '#A01020'
+                            borderColor: '#C45F40',
+                            bgcolor: '#F2EEE9',
+                            color: '#C45F40'
                         }
                     }}
                 >
@@ -2682,7 +2674,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <span className="text-xl font-bold text-blue-600">
+                                    <span className="text-xl font-bold text-brand">
                                         {selectedCustomer.name.charAt(0)}
                                     </span>
                                 </div>
@@ -2842,7 +2834,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                         {getAddressBookByType(activeAddressType).map((addr) => (
                             <div
                                 key={addr.id}
-                                className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id) ? 'border-[#C72030] bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}
+                                className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id) ? 'border-[#DA7756] bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}
                                 onClick={() => {
                                     if (activeAddressType === 'billing') setSelectedBillingAddressId(addr.id);
                                     else setSelectedShippingAddressId(addr.id);
@@ -2859,7 +2851,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                         {(addr.telephone_number || addr.fax_number) && (<div>{addr.telephone_number}{addr.fax_number ? ` Fax Number : ${addr.fax_number}` : ''}</div>)}
                                     </div>
                                     <IconButton size="small" onClick={(e) => { e.stopPropagation(); openAddressFormModal('edit', activeAddressType, addr); }}>
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 </div>
                             </div>
@@ -2867,7 +2859,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions className="!justify-between !px-4">
-                    <button type="button" className="text-[#1d4ed8] text-sm font-medium" onClick={() => openAddressFormModal('new', activeAddressType)}>
+                    <button type="button" className="text-[#DA7756] text-sm font-medium" onClick={() => openAddressFormModal('new', activeAddressType)}>
                         + New address
                     </button>
                     <Button onClick={() => setAddressListModalOpen(false)} variant="outlined" size="small" sx={modalSecondaryButtonSx}>Close</Button>
@@ -2937,7 +2929,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                         inputProps={{ maxLength: 15 }}
                                         size="small"
                                     />
-                                    <button type="button" className="text-blue-600 text-sm mt-1">Validate</button>
+                                    <button type="button" className="text-brand text-sm mt-1">Validate</button>
                                 </div>
                                 <TextField label="Place of Supply*" select fullWidth value={newGstForm.place_of_supply} onChange={(e) => setNewGstForm(prev => ({ ...prev, place_of_supply: e.target.value }))} size="small">
                                     <MenuItem value="">Select</MenuItem>
@@ -2991,7 +2983,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                         ))}
                     </div>
                     <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
-                        <button type="button" className="text-blue-600 text-sm flex items-center gap-1" onClick={() => { setGstPickerModalOpen(false); openGstManageModal(); }}>
+                        <button type="button" className="text-brand text-sm flex items-center gap-1" onClick={() => { setGstPickerModalOpen(false); openGstManageModal(); }}>
                             <span>⚙</span> Manage Tax Informations
                         </button>
                     </div>
@@ -3123,7 +3115,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                         Cancel
                     </button>
                     <button
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                         onClick={() => {
                             if (currentItemIndex !== null) {
                                 updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
@@ -3157,11 +3149,11 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                         onClick={() => setDeleteConfirmOpen(false)}
                         variant="outlined"
                         sx={{
-                            color: '#C72030',
-                            borderColor: '#C72030',
+                            color: '#DA7756',
+                            borderColor: '#DA7756',
                             '&:hover': {
-                                borderColor: '#C72030',
-                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                borderColor: '#DA7756',
+                                backgroundColor: 'rgba(218, 119, 86, 0.04)'
                             }
                         }}
                     >
@@ -3171,9 +3163,9 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                         onClick={handleDeleteConfirm}
                         variant="contained"
                         sx={{
-                            backgroundColor: '#C72030',
+                            backgroundColor: '#dc2626',
                             '&:hover': {
-                                backgroundColor: '#A01926'
+                                backgroundColor: '#b91c1c'
                             }
                         }}
                     >

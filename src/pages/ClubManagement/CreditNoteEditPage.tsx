@@ -586,7 +586,7 @@ export const CreditNoteEditPage: React.FC = () => {
         return (
             <div className="flex items-center justify-center h-96">
                 <div className="flex flex-col items-center gap-3">
-                    <CircularProgress size={48} />
+                    <CircularProgress size={48} sx={{ color: '#DA7756' }} />
                     <p className="text-muted-foreground text-sm">Loading credit note...</p>
                 </div>
             </div>
@@ -597,7 +597,7 @@ export const CreditNoteEditPage: React.FC = () => {
         <div className="p-6 space-y-6 relative">
             {isSubmitting && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <CircularProgress size={60} />
+                    <CircularProgress size={60} sx={{ color: '#DA7756' }} />
                 </div>
             )}
 
@@ -695,7 +695,7 @@ export const CreditNoteEditPage: React.FC = () => {
                                                     setAddressListModalOpen(true);
                                                 }}
                                             >
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedBillingAddress?.address || billingAddress ? (
@@ -708,7 +708,7 @@ export const CreditNoteEditPage: React.FC = () => {
                                             <button type="button" onClick={() => {
                                                 setActiveAddressType('billing');
                                                 setAddressListModalOpen(true);
-                                            }} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                            }} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
                                                 New Address
                                             </button>
                                         )}
@@ -723,7 +723,7 @@ export const CreditNoteEditPage: React.FC = () => {
                                                     setAddressListModalOpen(true);
                                                 }}
                                             >
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedShippingAddress?.address || shippingAddress ? (
@@ -736,7 +736,7 @@ export const CreditNoteEditPage: React.FC = () => {
                                             <button type="button" onClick={() => {
                                                 setActiveAddressType('shipping');
                                                 setAddressListModalOpen(true);
-                                            }} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                            }} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
                                                 New Address
                                             </button>
                                         )}
@@ -753,14 +753,14 @@ export const CreditNoteEditPage: React.FC = () => {
                                                 setGstTreatmentModalOpen(true);
                                             }}
                                         >
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500">GSTIN:</span>
                                         <span className="text-gray-800 font-medium">{selectedGstDetail?.gstin || customerDetail?.gstin || '-'}</span>
                                         <IconButton size="small" onClick={() => setGstPickerModalOpen(true)}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                 </div>
@@ -778,12 +778,12 @@ export const CreditNoteEditPage: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-medium mb-2">Billing Address</label>
-                            <textarea className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y" rows={4} maxLength={500} value={billingAddress} onChange={e => setBillingAddress(e.target.value)} />
+                            <textarea className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y" rows={4} maxLength={500} value={billingAddress} onChange={e => setBillingAddress(e.target.value)} />
                             <p className="text-xs text-gray-400 text-right mt-1">{billingAddress.length}/500</p>
                         </div>
                         <div>
                             <label className="block text-sm font-medium mb-2">Shipping Address</label>
-                            <textarea className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y" rows={4} maxLength={500} value={shippingAddress} onChange={e => setShippingAddress(e.target.value)} />
+                            <textarea className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y" rows={4} maxLength={500} value={shippingAddress} onChange={e => setShippingAddress(e.target.value)} />
                             <p className="text-xs text-gray-400 text-right mt-1">{shippingAddress.length}/500</p>
                         </div>
                     </div>
@@ -934,8 +934,8 @@ export const CreditNoteEditPage: React.FC = () => {
                             <Divider />
                             <div className="flex flex-wrap items-center gap-3 py-2">
                                 <RadioGroup row value={taxType} onChange={e => setTaxType(e.target.value as 'TDS' | 'TCS')}>
-                                    <FormControlLabel value="TDS" control={<Radio size="small" />} label={<span className="text-sm">TDS</span>} />
-                                    <FormControlLabel value="TCS" control={<Radio size="small" />} label={<span className="text-sm">TCS</span>} />
+                                    <FormControlLabel value="TDS" control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />} label={<span className="text-sm">TDS</span>} />
+                                    <FormControlLabel value="TCS" control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />} label={<span className="text-sm">TCS</span>} />
                                 </RadioGroup>
                                 <FormControl size="small" sx={{ minWidth: 150 }}>
                                     <Select value={selectedTax} onChange={e => setSelectedTax(e.target.value)} displayEmpty>
@@ -961,24 +961,23 @@ export const CreditNoteEditPage: React.FC = () => {
                 </Section>
 
                 <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
-                    <textarea className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y" rows={3} maxLength={500} value={customerNotes} onChange={e => setCustomerNotes(e.target.value)} placeholder="Enter notes" />
+                    <textarea className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y" rows={3} maxLength={500} value={customerNotes} onChange={e => setCustomerNotes(e.target.value)} placeholder="Enter notes" />
                     <p className="text-xs text-gray-400 text-right mt-1">{customerNotes.length}/500</p>
                 </Section>
 
                 <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
-                    <textarea className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y" rows={4} maxLength={500} value={termsAndConditions} onChange={e => setTermsAndConditions(e.target.value)} placeholder="Enter the terms and conditions of your business to be displayed in your transaction" />
+                    <textarea className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y" rows={4} maxLength={500} value={termsAndConditions} onChange={e => setTermsAndConditions(e.target.value)} placeholder="Enter the terms and conditions of your business to be displayed in your transaction" />
                     <p className="text-xs text-gray-400 text-right mt-1">{termsAndConditions.length}/500</p>
                 </Section>
             </div>
 
             <div className="flex items-center gap-3 justify-center pt-2">
-                <Button onClick={handleUpdate} disabled={isSubmitting} 
-                // className="px-4 py-2 rounded border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
-                className="px-4 py-2 rounded bg-[#C72030] text-white hover:bg-[#A01020]"
+                <Button onClick={handleUpdate} disabled={isSubmitting}
+                className="fm-button-fix fm-button-brand px-8 py-2"
                 >
                     {isSubmitting ? 'Updating...' : 'Update'}
                 </Button>
-                <Button onClick={() => navigate('/accounting/credit-note')} disabled={isSubmitting} variant="outline">
+                <Button onClick={() => navigate('/accounting/credit-note')} disabled={isSubmitting} variant="outline" className="fm-button-fix px-8 py-2">
                     Cancel
                 </Button>
             </div>
@@ -1001,9 +1000,9 @@ export const CreditNoteEditPage: React.FC = () => {
                                     }
                                     setAddressListModalOpen(false);
                                 }}
-                                className={`w-full rounded border p-3 text-left text-sm hover:border-[#C72030] ${
+                                className={`w-full rounded border p-3 text-left text-sm hover:border-[#DA7756] ${
                                     String(activeAddressType === 'billing' ? billingAddressId : shippingAddressId) === String(address.id)
-                                        ? 'border-[#C72030] bg-red-50'
+                                        ? 'border-[#DA7756] bg-red-50'
                                         : 'border-gray-200'
                                 }`}
                             >
@@ -1047,7 +1046,7 @@ export const CreditNoteEditPage: React.FC = () => {
                             setCustomerDetail((prev) => prev ? { ...prev, gst_preference: gstTreatmentDraft, gst_treatment: gstTreatmentDraft } : prev);
                             setGstTreatmentModalOpen(false);
                         }}
-                        className="px-4 py-2 rounded border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                        className="px-4 py-2 rounded border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white"
                     >
                         Update
                     </Button>
@@ -1067,8 +1066,8 @@ export const CreditNoteEditPage: React.FC = () => {
                                     if (gst.place_of_supply) setPlaceOfSupply(gst.place_of_supply);
                                     setGstPickerModalOpen(false);
                                 }}
-                                className={`w-full rounded border p-3 text-left text-sm hover:border-[#C72030] ${
-                                    String(gstDetailId) === String(gst.id) ? 'border-[#C72030] bg-red-50' : 'border-gray-200'
+                                className={`w-full rounded border p-3 text-left text-sm hover:border-[#DA7756] ${
+                                    String(gstDetailId) === String(gst.id) ? 'border-[#DA7756] bg-red-50' : 'border-gray-200'
                                 }`}
                             >
                                 <div className="font-medium text-gray-800">{gst.gstin || '-'}</div>

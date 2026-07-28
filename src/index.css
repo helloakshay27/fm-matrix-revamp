@@ -2056,6 +2056,7 @@ a.fm-button-fix,
   text-overflow: clip !important;
   box-sizing: border-box !important;
   flex-shrink: 0 !important;
+  border-radius: 0 !important;
 }
 
 .fm-button-fix svg,

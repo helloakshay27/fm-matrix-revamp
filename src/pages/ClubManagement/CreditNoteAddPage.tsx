@@ -1625,7 +1625,7 @@ export const CreditNoteAddPage: React.FC = () => {
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Billing Address
                                             <IconButton size="small" onClick={() => openAddressListModal('billing')}>
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedBillingAddress?.address ? (
@@ -1636,7 +1636,7 @@ export const CreditNoteAddPage: React.FC = () => {
                                                 {selectedBillingAddress.country && <div>{selectedBillingAddress.country}</div>}
                                             </div>
                                         ) : (
-                                            <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                            <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
                                                 New Address
                                             </button>
                                         )}
@@ -1645,7 +1645,7 @@ export const CreditNoteAddPage: React.FC = () => {
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Shipping Address
                                             <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedShippingAddress?.address ? (
@@ -1656,7 +1656,7 @@ export const CreditNoteAddPage: React.FC = () => {
                                                 {selectedShippingAddress.country && <div>{selectedShippingAddress.country}</div>}
                                             </div>
                                         ) : (
-                                            <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                            <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
                                                 New Address
                                             </button>
                                         )}
@@ -1667,14 +1667,14 @@ export const CreditNoteAddPage: React.FC = () => {
                                         <span className="text-gray-500">GST Treatment:</span>
                                         <span className="text-gray-800">{getGstTreatmentLabel(customerDetail.gst_preference || customerDetail.gst_treatment)}</span>
                                         <IconButton size="small" onClick={openGstModal}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500">GSTIN:</span>
                                         <span className="text-gray-800 font-medium">{selectedGstDetail?.gstin || customerDetail.gstin || '—'}</span>
                                         <IconButton size="small" onClick={openGstPickerModal}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                 </div>
@@ -1696,7 +1696,7 @@ export const CreditNoteAddPage: React.FC = () => {
                                 Billing Address
                             </label>
                             <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                                 rows={4}
                                 maxLength={500}
                                 value={billingAddress || ''}
@@ -1711,7 +1711,7 @@ export const CreditNoteAddPage: React.FC = () => {
                                 Shipping Address
                             </label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
                                 maxLength={500}
                                 value={shippingAddress || ''}
@@ -1791,7 +1791,7 @@ export const CreditNoteAddPage: React.FC = () => {
                                 Subject
                             </label>
                             <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                                 rows={3}
                                 maxLength={500}
                                 value={subject}
@@ -2028,12 +2028,11 @@ export const CreditNoteAddPage: React.FC = () => {
 
                         <div className="flex gap-3 pt-4">
                             <Button
-                                startIcon={<Add />}
-                                onClick={addItem}
                                 variant="outlined"
+                                onClick={addItem}
                                 sx={{ textTransform: 'none' }}
                             >
-                                Add New Row
+                                <span className="flex items-center gap-2"><Add /> Add New Row</span>
                             </Button>
                             {/* <Button
                                 variant="outlined"
@@ -2099,12 +2098,12 @@ export const CreditNoteAddPage: React.FC = () => {
                                 >
                                     <FormControlLabel
                                         value="TDS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                                         label={<span className="text-sm">TDS</span>}
                                     />
                                     <FormControlLabel
                                         value="TCS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                                         label={<span className="text-sm">TCS</span>}
                                     />
                                 </RadioGroup>
@@ -2170,7 +2169,7 @@ export const CreditNoteAddPage: React.FC = () => {
                 {/* Customer Notes */}
                 <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
                     <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                         rows={3}
                         maxLength={500}
                         value={customerNotes}
@@ -2183,7 +2182,7 @@ export const CreditNoteAddPage: React.FC = () => {
                 {/* Terms & Conditions */}
                 <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
                     <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                         rows={4}
                         maxLength={500}
                         value={termsAndConditions}
@@ -2334,60 +2333,24 @@ export const CreditNoteAddPage: React.FC = () => {
             <div className="flex items-center gap-3 justify-center pt-2">
 
                 <Button
-                    // variant="outlined"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
-                    // sx={{
-                    //     textTransform: 'none',
-                    //     px: 4,
-                    //     borderColor: 'primary.main',
-                    //     color: 'primary.main',
-                    //     '&:hover': {
-                    //         borderColor: 'primary.dark',
-                    //         bgcolor: 'primary.main',
-                    //         color: 'white'
-                    //     }
-                    // }}
-                    // className="px-4 py-2 rounded border-[#C72030] text-white hover:bg-[#C72030] hover:text-white"
-                    className="px-4 py-2 rounded bg-[#C72030] text-white hover:bg-[#A01020]"
+                    className="fm-button-fix fm-button-brand px-8 py-2"
                 >
                     Save as Draft
                 </Button>
                 <Button
-                    // variant="contained"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
-                    // sx={{
-                    //     bgcolor: 'primary.main',
-                    //     color: 'white',
-                    //     px: 4,
-                    //     '&:hover': {
-                    //         bgcolor: 'primary.dark'
-                    //     },
-                    //     textTransform: 'none'
-                    // }}
-                    // className="px-4 py-2 rounded border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
-                    className="px-4 py-2 rounded bg-[#C72030] text-white hover:bg-[#A01020]"
+                    className="fm-button-fix fm-button-brand px-8 py-2"
                 >
                     {isSubmitting ? 'Submitting...' : 'Save as Open'}
                 </Button>
                 <Button
-                    // variant="outlined"
                     onClick={() => navigate('/accounting/credit-note')}
                     disabled={isSubmitting}
-                    // sx={{
-                    //     textTransform: 'none',
-                    //     px: 4,
-                    //     borderColor: 'divider',
-                    //     color: 'text.secondary',
-                    //     '&:hover': {
-                    //         borderColor: 'primary.main',
-                    //         bgcolor: 'primary.main',
-                    //         color: 'white'
-                    //     }
-                    // }}
-                    //  className="px-4 py-2 rounded"
                     variant="outline"
+                    className="fm-button-fix px-8 py-2"
                 >
                     Cancel
                 </Button>
@@ -2405,7 +2368,7 @@ export const CreditNoteAddPage: React.FC = () => {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <span className="text-xl font-bold text-blue-600">
+                                    <span className="text-xl font-bold text-brand">
                                         {/* {selectedCustomer.contacts.charAt(0)} */}
                                     </span>
                                 </div>
@@ -2566,7 +2529,7 @@ export const CreditNoteAddPage: React.FC = () => {
                             <div
                                 key={addr.id}
                                 className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
-                                    ? 'border-[#C72030] bg-red-50'
+                                    ? 'border-[#DA7756] bg-red-50'
                                     : 'border-gray-200 hover:border-gray-300'}`}
                                 onClick={() => {
                                     if (activeAddressType === 'billing') setSelectedBillingAddressId(addr.id);
@@ -2590,7 +2553,7 @@ export const CreditNoteAddPage: React.FC = () => {
                                             openAddressFormModal('edit', activeAddressType, addr);
                                         }}
                                     >
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 </div>
                             </div>
@@ -2598,10 +2561,10 @@ export const CreditNoteAddPage: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions className="!justify-between !px-4">
-                    <button type="button" className="text-[#1d4ed8] text-sm font-medium" onClick={() => openAddressFormModal('new', activeAddressType)}>
+                    <button type="button" className="text-[#DA7756] text-sm font-medium" onClick={() => openAddressFormModal('new', activeAddressType)}>
                         + New address
                     </button>
-                    <button type="button" onClick={() => setAddressListModalOpen(false)} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">Close</button>
+                    <button type="button" onClick={() => setAddressListModalOpen(false)} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Close</button>
                 </DialogActions>
             </Dialog>
 
@@ -2630,8 +2593,8 @@ export const CreditNoteAddPage: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions className="!justify-start !px-6 !py-3">
-                    <button type="button" onClick={handleSaveAddressForm} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">Save</button>
-                    <button type="button" onClick={() => setAddressFormModalOpen(false)} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">Cancel</button>
+                    <button type="button" onClick={handleSaveAddressForm} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Save</button>
+                    <button type="button" onClick={() => setAddressFormModalOpen(false)} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Cancel</button>
                 </DialogActions>
             </Dialog>
 
@@ -2643,7 +2606,7 @@ export const CreditNoteAddPage: React.FC = () => {
                     </TextField>
                 </DialogContent>
                 <DialogActions className="!justify-start !px-6 !pb-4">
-                    <button type="button" onClick={handleUpdateGstConfig} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">Update</button>
+                    <button type="button" onClick={handleUpdateGstConfig} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Update</button>
                 </DialogActions>
             </Dialog>
 
@@ -2654,7 +2617,7 @@ export const CreditNoteAddPage: React.FC = () => {
                 </DialogTitle>
                 <DialogContent className="!pt-4">
                     <div className="space-y-4">
-                        <button type="button" onClick={() => { setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setShowNewGstForm(true); }} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">
+                        <button type="button" onClick={() => { setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setShowNewGstForm(true); }} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">
                             Add New Tax Information
                         </button>
                         {showNewGstForm && (
@@ -2670,7 +2633,7 @@ export const CreditNoteAddPage: React.FC = () => {
                                         inputProps={{ maxLength: 15 }}
                                         size="small"
                                     />
-                                    <button type="button" className="text-blue-600 text-sm mt-1">Validate</button>
+                                    <button type="button" className="text-brand text-sm mt-1">Validate</button>
                                 </div>
                                 <TextField label="Place of Supply*" select fullWidth value={newGstForm.place_of_supply} onChange={(e) => setNewGstForm((prev) => ({ ...prev, place_of_supply: e.target.value }))} size="small">
                                     <MenuItem value="">Select</MenuItem>
@@ -2679,8 +2642,8 @@ export const CreditNoteAddPage: React.FC = () => {
                                 <TextField label="Business Legal Name" fullWidth value={newGstForm.business_legal_name} onChange={(e) => setNewGstForm((prev) => ({ ...prev, business_legal_name: e.target.value }))} size="small" />
                                 <TextField label="Business Trade Name" fullWidth value={newGstForm.business_trade_name} onChange={(e) => setNewGstForm((prev) => ({ ...prev, business_trade_name: e.target.value }))} size="small" />
                                 <div className="md:col-span-3 flex items-center gap-2">
-                                    <button type="button" onClick={handleSaveAndSelectGst} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">{editingGstDetailId ? 'Save' : 'Save and Select'}</button>
-                                    <button type="button" onClick={() => { setShowNewGstForm(false); setEditingGstDetailId(null); }} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">Cancel</button>
+                                    <button type="button" onClick={handleSaveAndSelectGst} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">{editingGstDetailId ? 'Save' : 'Save and Select'}</button>
+                                    <button type="button" onClick={() => { setShowNewGstForm(false); setEditingGstDetailId(null); }} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Cancel</button>
                                 </div>
                             </div>
                         )}
@@ -2710,7 +2673,7 @@ export const CreditNoteAddPage: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions className="!px-5 !pb-4">
-                    <button type="button" onClick={() => setGstManageModalOpen(false)} className="px-4 py-2 rounded border border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white text-sm">Close</button>
+                    <button type="button" onClick={() => setGstManageModalOpen(false)} className="px-4 py-2 rounded border border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756] hover:text-white text-sm">Close</button>
                 </DialogActions>
             </Dialog>
 
@@ -2724,7 +2687,7 @@ export const CreditNoteAddPage: React.FC = () => {
                         ))}
                     </div>
                     <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
-                        <button type="button" className="text-blue-600 text-sm flex items-center gap-1" onClick={() => { setGstPickerModalOpen(false); openGstManageModal(); }}>
+                        <button type="button" className="text-brand text-sm flex items-center gap-1" onClick={() => { setGstPickerModalOpen(false); openGstManageModal(); }}>
                             <span>⚙</span> Manage Tax Informations
                         </button>
                     </div>
@@ -2856,7 +2819,7 @@ export const CreditNoteAddPage: React.FC = () => {
                         Cancel
                     </button>
                     <button
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                         onClick={() => {
                             if (currentItemIndex !== null) {
                                 updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);

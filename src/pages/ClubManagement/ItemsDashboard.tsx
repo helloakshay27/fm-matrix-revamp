@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import axios from 'axios';
-import { Eye, Plus, Download, Upload, Filter, QrCode, Edit, Trash2, Users, CreditCard, FileText, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Eye, Plus, Download, Upload, Filter, QrCode, Edit, Trash2, Users, CreditCard, FileText, X, CheckCircle, AlertCircle, Loader2, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -13,6 +13,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { API_CONFIG } from '@/config/apiConfig';
 import { ClubMembershipFilterDialog, ClubMembershipFilters } from '@/components/ClubMembershipFilterDialog';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import {
   Dialog,
   DialogContent,
@@ -76,6 +77,7 @@ export const ItemsDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [showActionPanel, setShowActionPanel] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMembershipTypeModalOpen, setIsMembershipTypeModalOpen] = useState(false);
   const [membershipType, setMembershipType] = useState<'individual' | 'group'>('individual');
@@ -630,7 +632,7 @@ export const ItemsDashboard = () => {
   const renderStatusBadge = (startDate: string | null, endDate: string | null, accessCardEnabled: boolean) => {
     if (!startDate && !endDate) {
       return (
-        <Badge className="bg-red-100 text-red-800 border-0">
+        <Badge className="bg-gray-100 text-gray-800 border-0">
           Pending Dates
         </Badge>
       );
@@ -638,14 +640,14 @@ export const ItemsDashboard = () => {
 
     if (!endDate && startDate) {
       return (
-        <Badge className="bg-red-100 text-red-800 border-0">
+        <Badge className="bg-gray-100 text-gray-800 border-0">
           Pending EndDate
         </Badge>
       );
     }
 
     return (
-      <Badge className="bg-green-100 text-green-800 border-0">
+      <Badge className="bg-gray-100 text-gray-800 border-0">
         Approved
       </Badge>
     );
@@ -655,7 +657,7 @@ export const ItemsDashboard = () => {
   const renderCardAllocated = (allocated: boolean) => {
     return (
       <div className="flex items-center justify-center">
-        <div className={`w-10 h-5 rounded-full relative transition-colors ${allocated ? 'bg-green-500' : 'bg-gray-300'}`}>
+        <div className={`w-10 h-5 rounded-full relative transition-colors ${allocated ? 'bg-brand' : 'bg-gray-300'}`}>
           <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform ${allocated ? 'right-0.5' : 'left-0.5'}`} />
         </div>
       </div>
@@ -828,7 +830,7 @@ export const ItemsDashboard = () => {
           <button
             type="button"
             onClick={() => handleToggleStatus(item)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.active ? "bg-red-500" : "bg-gray-300"
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${item.active ? "bg-brand" : "bg-gray-300"
               }`}
           >
             <span
@@ -837,10 +839,7 @@ export const ItemsDashboard = () => {
             />
           </button>
 
-          <span
-            className={`text-sm font-medium ${item.active ? "text-red-600" : "text-red-600"
-              }`}
-          >
+          <span className="text-sm font-medium text-gray-600">
             {/* {item.active ? "Active" : "Inactive"} */}
           </span>
         </div>
@@ -915,42 +914,38 @@ export const ItemsDashboard = () => {
 
               {/* ADD BUTTON */}
               <Button
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={handleAddMembership}
+                variant="ghost"
+                className="fm-button-fix fm-button-brand px-8 py-2"
+                onClick={() => setShowActionPanel((prev) => !prev)}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add
               </Button>
-            
+
             </div>
           }
           // onFilterClick={() => setIsFilterOpen(true)}
-          rightActions={
-            <div>
-            {/* renderRightActions() */}
-               <Button
-                variant="outline"
-                className="border-[#1D4ED8] text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white"
-                onClick={handleDownloadSample}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download Sample
-              </Button>
-
-              {/* BULK UPLOAD BUTTON */}
-              <Button
-                variant="outline"
-                // className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
-                className="border-[#1D4ED8] text-[#1D4ED8] hover:bg-[#1D4ED8] hover:text-white ms-2"
-                onClick={() => { setBulkUploadOpen(true); setBulkUploadStatus('idle'); setBulkUploadMessage(''); }}
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Bulk Upload
-              </Button>
-              </div>
-          }
           searchPlaceholder="Search "
           onSearchChange={handleSearch}
+          customSearchInput={
+            <div className="relative w-[300px] max-w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search "
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="h-9 pl-10 pr-10 rounded-lg border-gray-300 bg-white text-[#2D2A26] placeholder:text-[#8a7e72]"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => handleSearch('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          }
           hideTableExport={true}
           hideColumnsButton={false}
           className="transition-all duration-500 ease-in-out"
@@ -987,6 +982,15 @@ export const ItemsDashboard = () => {
           </div>
         )}
       </div>
+
+      {showActionPanel && (
+        <SelectionPanel
+          onAdd={handleAddMembership}
+          onImport={() => { setBulkUploadOpen(true); setBulkUploadStatus('idle'); setBulkUploadMessage(''); }}
+          onClearSelection={() => setShowActionPanel(false)}
+          actions={[{ label: 'Sample Format', icon: Download, onClick: handleDownloadSample }]}
+        />
+      )}
 
       {/* Filter Dialog */}
       {/* <ClubMembershipFilterDialog
@@ -1122,11 +1126,7 @@ export const ItemsDashboard = () => {
                         <tr key={idx}>
                           <td className="px-3 py-2 text-gray-700">{result.row}</td>
                           <td className="px-3 py-2">
-                            <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${
-                              result.status === 'success' ? 'bg-green-100 text-green-700' :
-                              result.status === 'skipped' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-red-100 text-red-700'
-                            }`}>
+                            <span className="inline-block px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
                               {result.status}
                             </span>
                           </td>
@@ -1185,17 +1185,7 @@ export const ItemsDashboard = () => {
                 handleDeleteItem();
               }}
               disabled={deleteLoading}
-              style={{
-                backgroundColor: "#dc2626",
-                color: "#ffffff",
-                border: "none",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#b91c1c";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#dc2626";
-              }}
+              className="!bg-red-600 hover:!bg-red-700 !text-white !border-none"
             >
               {deleteLoading ? "Deleting..." : "OK"}
             </AlertDialogAction>

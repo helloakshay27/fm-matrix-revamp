@@ -468,16 +468,18 @@ export const EditSalesOrderPage: React.FC = () => {
 
     const modalPrimaryButtonSx = {
         textTransform: 'none',
-        bgcolor: '#C72030',
+        fontWeight: 600,
+        bgcolor: '#DA7756',
         color: '#fff',
-        '&:hover': { bgcolor: '#A01020' }
+        '&:hover': { bgcolor: '#C45F40' }
     };
 
     const modalSecondaryButtonSx = {
         textTransform: 'none',
-        borderColor: '#C72030',
-        color: '#C72030',
-        '&:hover': { borderColor: '#A01020', bgcolor: '#f8f1f1', color: '#A01020' }
+        fontWeight: 600,
+        borderColor: '#DA7756',
+        color: '#DA7756',
+        '&:hover': { borderColor: '#C45F40', bgcolor: '#F2EEE9', color: '#C45F40' }
     };
 
     // Load active settings and dropdown resources
@@ -486,7 +488,7 @@ export const EditSalesOrderPage: React.FC = () => {
 
         const fetchItems = async () => {
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}&q[can_be_sold_eq]=1`, {
+                const res = await axios.get(`https://${baseUrl}/lock_account_items/select_list.json?lock_account_id=${lock_account_id}&q[can_be_sold_eq]=1&active=true`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -1505,7 +1507,7 @@ export const EditSalesOrderPage: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-medium mb-2">
-                                    Customer Name<span className="text-red-500">*</span>
+                                    Customer Name<span className="text-brand">*</span>
                                 </label>
                                 <FormControl fullWidth error={!!errors.customer}>
                                     <Select
@@ -1586,7 +1588,7 @@ export const EditSalesOrderPage: React.FC = () => {
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Billing Address
                                             <IconButton size="small" onClick={() => openAddressListModal('billing')}>
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedBillingAddress?.address ? (
@@ -1609,7 +1611,7 @@ export const EditSalesOrderPage: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => openAddressFormModal('new', 'billing')}
-                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                                className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
                                             >
                                                 New Address
                                             </button>
@@ -1621,7 +1623,7 @@ export const EditSalesOrderPage: React.FC = () => {
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Shipping Address
                                             <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedShippingAddress?.address ? (
@@ -1644,7 +1646,7 @@ export const EditSalesOrderPage: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => openAddressFormModal('new', 'shipping')}
-                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                                className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
                                             >
                                                 New Address
                                             </button>
@@ -1658,14 +1660,14 @@ export const EditSalesOrderPage: React.FC = () => {
                                         <span className="text-gray-500">GST Treatment:</span>
                                         <span className="text-gray-800">{getGstTreatmentLabel(customerDetail.gst_preference || customerDetail.gst_treatment)}</span>
                                         <IconButton size="small" onClick={openGstModal}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500">GSTIN:</span>
                                         <span className="text-gray-800 font-medium">{selectedGstDetail?.gstin || customerDetail.gstin || "—"}</span>
                                         <IconButton size="small" onClick={openGstPickerModal}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                 </div>
@@ -1674,7 +1676,7 @@ export const EditSalesOrderPage: React.FC = () => {
                                     <button
                                         type="button"
                                         onClick={openCustomerDrawer}
-                                        className="text-[#C72030] text-sm font-medium hover:underline flex items-center gap-1"
+                                        className="text-[#DA7756] text-sm font-medium hover:underline flex items-center gap-1"
                                     >
                                         View Customer Details <ChevronRight className="w-4 h-4" />
                                     </button>
@@ -1763,7 +1765,7 @@ export const EditSalesOrderPage: React.FC = () => {
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
-                                Sales Order Date<span className="text-red-500">*</span>
+                                Sales Order Date<span className="text-brand">*</span>
                             </label>
                             <TextField
                                 fullWidth
@@ -1791,7 +1793,7 @@ export const EditSalesOrderPage: React.FC = () => {
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
-                                Expected Shipment Date<span className="text-red-500">*</span>
+                                Expected Shipment Date<span className="text-brand">*</span>
                             </label>
                             <TextField
                                 fullWidth
@@ -1820,7 +1822,7 @@ export const EditSalesOrderPage: React.FC = () => {
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
-                                Payment Terms<span className="text-red-500">*</span>
+                                Payment Terms<span className="text-brand">*</span>
                             </label>
                             <FormControl fullWidth error={!!errors.paymentTerms}>
                                 <Select
@@ -1890,11 +1892,11 @@ export const EditSalesOrderPage: React.FC = () => {
                 <Section title="Item Table" icon={<Package className="w-5 h-5" />}>
                     <div className="space-y-4">
                         {errors.items && (
-                            <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
+                            <div className="text-brand text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
                         )}
 
-                        <div className="border border-border rounded-lg overflow-hidden">
-                            <table className="w-full">
+                        <div className="border border-border rounded-lg overflow-x-auto">
+                            <table className="w-full min-w-[900px]">
                                 <thead className="bg-muted/50">
                                     <tr>
                                         <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
@@ -1909,34 +1911,34 @@ export const EditSalesOrderPage: React.FC = () => {
                                     {items.map((item, index) => (
                                         <tr key={item.id} className="hover:bg-muted/30 transition-colors">
                                             <td className="px-4 py-3">
-                                                <FormControl fullWidth sx={{ minWidth: 250 }}>
-                                                    <ItemSearchInput
-                                                        value={item.name}
-                                                        itemOptions={itemOptions}
-                                                        onSelect={(selected) => {
-                                                            const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
-                                                            let taxFields: Partial<Item> = {};
-                                                            if (selected.tax_preference === "non_taxable") {
-                                                                taxFields = { item_tax_type: "non_taxable", tax_exemption_id: selected.tax_exemption_id };
-                                                            } else if (selected.tax_preference === "taxable") {
-                                                                taxFields = { item_tax_type: isSameState ? "tax_group" : "tax_rate", tax_group_id: isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id };
-                                                            } else if (selected.tax_preference === "out_of_scope") {
-                                                                taxFields = { item_tax_type: "out_of_scope" };
-                                                            } else if (selected.tax_preference === "non_gst_supply") {
-                                                                taxFields = { item_tax_type: "non_gst_supply" };
-                                                            }
-                                                            updateItemFields(index, { item_id: String(selected.id), name: selected.name, rate: selected.rate || 0, description: selected.description || '', ...taxFields });
-                                                        }}
-                                                        onType={(typed) => updateItemFields(index, { item_id: null, name: typed })}
-                                                    />
-                                                </FormControl>
+                                                <ItemSearchInput
+                                                    value={item.name}
+                                                    itemOptions={itemOptions}
+                                                    onSelect={(selected) => {
+                                                        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                        let taxFields: Partial<Item> = {};
+                                                        if (selected.tax_preference === "non_taxable") {
+                                                            taxFields = { item_tax_type: "non_taxable", tax_exemption_id: selected.tax_exemption_id };
+                                                        } else if (selected.tax_preference === "taxable") {
+                                                            taxFields = { item_tax_type: isSameState ? "tax_group" : "tax_rate", tax_group_id: isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id };
+                                                        } else if (selected.tax_preference === "out_of_scope") {
+                                                            taxFields = { item_tax_type: "out_of_scope" };
+                                                        } else if (selected.tax_preference === "non_gst_supply") {
+                                                            taxFields = { item_tax_type: "non_gst_supply" };
+                                                        }
+                                                        updateItemFields(index, { item_id: String(selected.id), name: selected.name, rate: selected.rate || 0, description: selected.description || '', ...taxFields });
+                                                    }}
+                                                    onType={(typed) => updateItemFields(index, { item_id: null, name: typed })}
+                                                />
                                                 <TextField
                                                     fullWidth
+                                                    label="Item Description"
                                                     size="small"
                                                     placeholder="Description"
                                                     value={item.description}
                                                     onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                    sx={{ mt: 1 }}
+                                                    sx={{ mt: 2 }}
+                                                    InputLabelProps={{ shrink: true }}
                                                 />
                                             </td>
                                             <td className="px-4 py-3">
@@ -2046,82 +2048,113 @@ export const EditSalesOrderPage: React.FC = () => {
                             </table>
                         </div>
 
-                        <Button
-                            variant="outlined"
-                            onClick={addItem}
-                            className="w-full py-2 hover:bg-gray-50 border-dashed"
-                            startIcon={<Add />}
-                        >
-                            Add New Line
-                        </Button>
+                        <div className="flex gap-3 pt-4">
+                            <Button
+                                startIcon={<Add />}
+                                onClick={addItem}
+                                variant="outlined"
+                                sx={{ textTransform: 'none' }}
+                            >
+                                Add New Row
+                            </Button>
+                        </div>
                     </div>
                 </Section>
 
-                {/* Sub Total, Adjustments, and pricing */}
-                <Section title="Pricing Summary" icon={<ShoppingCart className="w-5 h-5" />}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                        {/* Adjustments details */}
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-2">TDS/TCS Section</label>
-                                <div className="flex gap-4 mb-3">
-                                    <RadioGroup
-                                        row
-                                        value={taxType}
-                                        onChange={(e) => setTaxType(e.target.value as 'TDS' | 'TCS')}
+                {/* Summary Section */}
+                <Section title="Summary" icon={<ShoppingCart className="w-5 h-5" />}>
+                    <div className="flex justify-end">
+                        <div className="w-full md:w-1/2 space-y-4">
+                            <div className="flex justify-between items-center py-2">
+                                <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
+                                <span className="font-semibold text-base">₹{subTotal.toFixed(2)}</span>
+                            </div>
+
+                            <div className="flex justify-between items-center py-2">
+                                <span className="text-sm font-medium text-muted-foreground">Discount</span>
+                                <div className="flex items-center gap-2">
+                                    <Select
+                                        size="small"
+                                        value={discountTypeOnTotal}
+                                        onChange={e => setDiscountTypeOnTotal(e.target.value as 'percentage' | 'amount')}
+                                        sx={{ width: 100 }}
                                     >
-                                        <FormControlLabel value="TDS" control={<Radio size="small" />} label="TDS" />
-                                        <FormControlLabel value="TCS" control={<Radio size="small" />} label="TCS" />
-                                    </RadioGroup>
+                                        <MenuItem value="percentage">%</MenuItem>
+                                        <MenuItem value="amount">Amount</MenuItem>
+                                    </Select>
+                                    <TextField
+                                        type="number"
+                                        size="small"
+                                        value={discountOnTotal}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value);
+                                            if (val < 0) {
+                                                toast.error('Discount cannot be negative');
+                                                setDiscountOnTotal(0);
+                                            } else if (discountTypeOnTotal === 'percentage' && val > 100) {
+                                                toast.error('Discount percentage cannot exceed 100%');
+                                                setDiscountOnTotal(100);
+                                            } else {
+                                                setDiscountOnTotal(isNaN(val) ? 0 : val);
+                                            }
+                                        }}
+                                        inputProps={{ min: 0, step: 0.01 }}
+                                        sx={{ width: 80 }}
+                                    />
+                                    <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
-                                <FormControl fullWidth>
+                            </div>
+
+                            {taxBreakdown.map((tax, idx) => (
+                                <div key={idx} className="flex justify-between items-center py-2">
+                                    <span className="text-sm font-medium text-muted-foreground">{tax.name} ({tax.rate}%)</span>
+                                    <span className="font-semibold text-base">₹{tax.amount.toFixed(2)}</span>
+                                </div>
+                            ))}
+
+                            <Divider />
+
+                            <div className="flex flex-wrap items-center gap-3 py-2">
+                                <RadioGroup
+                                    row
+                                    value={taxType}
+                                    onChange={(e) => setTaxType(e.target.value as 'TDS' | 'TCS')}
+                                >
+                                    <FormControlLabel
+                                        value="TDS"
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
+                                        label={<span className="text-sm">TDS</span>}
+                                    />
+                                    <FormControlLabel
+                                        value="TCS"
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
+                                        label={<span className="text-sm">TCS</span>}
+                                    />
+                                </RadioGroup>
+                                <FormControl size="small" sx={{ minWidth: 150 }}>
                                     <Select
                                         value={selectedTax}
                                         onChange={(e) => setSelectedTax(e.target.value)}
                                         displayEmpty
-                                        sx={fieldStyles}
                                     >
-                                        <MenuItem value="">Select Tax Section</MenuItem>
-                                        {taxOptions.map((tax) => (
-                                            <MenuItem key={tax.id || tax.name} value={tax.name}>
-                                                {tax.name} ({tax.percentage}%)
-                                            </MenuItem>
+                                        <MenuItem value="">Select a Tax</MenuItem>
+                                        {taxOptions.map(tax => (
+                                            <MenuItem key={tax.id || tax.name} value={tax.name}>{tax.name}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
-                            </div>
-                        </div>
-
-                        {/* Calculations */}
-                        <div className="space-y-3 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-500">Sub Total</span>
-                                <span className="font-semibold">₹{subTotal.toFixed(2)}</span>
+                                <span className="font-semibold text-base text-red-600">-₹{taxAmount2.toFixed(2)}</span>
                             </div>
 
-                            {taxBreakdown.map((tax, idx) => (
-                                <div key={idx} className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500">{tax.name} ({tax.rate}%)</span>
-                                    <span className="font-semibold">₹{tax.amount.toFixed(2)}</span>
-                                </div>
-                            ))}
-
-                            {taxAmount2 > 0 && (
-                                <div className="flex justify-between items-center text-sm text-red-600">
-                                    <span>(-) {taxType} Amount</span>
-                                    <span className="font-semibold">-₹{taxAmount2.toFixed(2)}</span>
-                                </div>
-                            )}
-
-                            <div className="flex justify-between items-center text-sm">
+                            <div className="flex justify-between items-center py-2">
                                 <div className="flex items-center gap-2">
-                                    <input
-                                        className="border rounded px-2 py-1 text-xs w-[120px]"
+                                    <TextField
+                                        size="small"
                                         value={adjustmentLabel}
-                                        onChange={(e) => setAdjustmentLabel(e.target.value)}
+                                        onChange={e => setAdjustmentLabel(e.target.value)}
+                                        sx={{ width: 120 }}
+                                        placeholder="Adjustment Name"
                                     />
-                                </div>
-                                <div className="flex items-center gap-2">
                                     <TextField
                                         type="number"
                                         size="small"
@@ -2161,7 +2194,7 @@ export const EditSalesOrderPage: React.FC = () => {
 
                     <div className="mt-4 w-1/2">
                         <label className="block text-sm font-medium mb-2">
-                            Bank<span className="text-red-500">*</span>
+                            Bank<span className="text-brand">*</span>
                         </label>
                         <FormControl fullWidth size="small" error={!!errors.bank}>
                             <Select
@@ -2195,7 +2228,7 @@ export const EditSalesOrderPage: React.FC = () => {
                                 ))}
                             </Select>
                         </FormControl>
-                        {errors.bank && <p className="text-xs text-red-500 mt-1">{errors.bank}</p>}
+                        {errors.bank && <p className="text-xs text-brand mt-1">{errors.bank}</p>}
                     </div>
                 </Section>
 
@@ -2227,8 +2260,8 @@ export const EditSalesOrderPage: React.FC = () => {
                                 {existingAttachments.map((file) => (
                                     <div key={file.id} className="flex items-center justify-between bg-gray-50 p-3 rounded">
                                         <div className="flex items-center gap-2">
-                                            <AttachFile fontSize="small" className="text-blue-500" />
-                                            <a href={file.url} target="_blank" rel="noreferrer" className="text-sm hover:underline text-blue-600">
+                                            <AttachFile fontSize="small" className="text-brand" />
+                                            <a href={file.url} target="_blank" rel="noreferrer" className="text-sm hover:underline text-brand">
                                                 {file.name || 'Attachment'}
                                             </a>
                                         </div>
@@ -2346,55 +2379,33 @@ export const EditSalesOrderPage: React.FC = () => {
             <div className="flex items-center gap-3 justify-center pt-2">
                 <Button
                     variant="text"
+                    className="fm-button-fix fm-button-brand px-8 py-2"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        bgcolor: '#f8f1f1',
-                        color: '#C72030',
-                        fontWeight: 600,
-                        '&:hover': {
-                            bgcolor: '#f1e8e8',
-                            color: '#A01020'
-                        }
-                    }}
+                    sx={{ textTransform: 'none', fontWeight: 600 }}
                 >
                     Save as Draft
                 </Button>
                 <Button
                     variant="text"
+                    className="fm-button-fix fm-button-brand px-8 py-2"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
-                    sx={{
-                        bgcolor: '#f8f1f1',
-                        color: '#C72030',
-                        fontWeight: 600,
-                        px: 4,
-                        '&:hover': {
-                            bgcolor: '#f1e8e8',
-                            color: '#A01020'
-                        },
-                        textTransform: 'none'
-                    }}
+                    sx={{ textTransform: 'none', fontWeight: 600 }}
                 >
                     {isSubmitting ? 'Updating...' : 'Update Sales Order'}
                 </Button>
                 <Button
                     variant="outlined"
+                    className="fm-button-fix px-8 py-2"
                     onClick={() => navigate(`/accounting/sales-order/${id}`)}
                     disabled={isSubmitting}
                     sx={{
                         textTransform: 'none',
-                        px: 4,
-                        borderColor: '#C72030',
-                        color: '#C72030',
                         fontWeight: 600,
-                        '&:hover': {
-                            borderColor: '#A01020',
-                            bgcolor: '#f8f1f1',
-                            color: '#A01020'
-                        }
+                        borderColor: '#DA7756',
+                        color: '#DA7756',
+                        '&:hover': { borderColor: '#C45F40', bgcolor: '#F2EEE9', color: '#C45F40' }
                     }}
                 >
                     Cancel
@@ -2418,11 +2429,13 @@ export const EditSalesOrderPage: React.FC = () => {
                     <Button
                         onClick={() => setDeleteConfirmOpen(false)}
                         variant="outlined"
+                        className="fm-button-fix px-8 py-2"
                         sx={{
                             textTransform: 'none',
-                            borderColor: '#C72030',
-                            color: '#C72030',
-                            '&:hover': { borderColor: '#A01020', bgcolor: '#f8f1f1' }
+                            fontWeight: 600,
+                            borderColor: '#DA7756',
+                            color: '#DA7756',
+                            '&:hover': { borderColor: '#C45F40', bgcolor: '#F2EEE9', color: '#C45F40' }
                         }}
                     >
                         Cancel
@@ -2432,8 +2445,8 @@ export const EditSalesOrderPage: React.FC = () => {
                         variant="contained"
                         sx={{
                             textTransform: 'none',
-                            bgcolor: '#C72030',
-                            '&:hover': { bgcolor: '#A01020' }
+                            bgcolor: '#dc2626',
+                            '&:hover': { bgcolor: '#b91c1c' }
                         }}
                     >
                         Delete
@@ -2452,7 +2465,7 @@ export const EditSalesOrderPage: React.FC = () => {
                             <div
                                 key={addr.id}
                                 className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
-                                    ? 'border-[#C72030] bg-red-50'
+                                    ? 'border-[#DA7756] bg-red-50'
                                     : 'border-gray-200 hover:border-gray-300'
                                     }`}
                                 onClick={() => {
@@ -2476,7 +2489,7 @@ export const EditSalesOrderPage: React.FC = () => {
                                             openAddressFormModal('edit', activeAddressType, addr);
                                         }}
                                     >
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 </div>
                             </div>
@@ -2486,7 +2499,7 @@ export const EditSalesOrderPage: React.FC = () => {
                 <DialogActions className="!justify-between !px-4">
                     <button
                         type="button"
-                        className="text-[#1d4ed8] text-sm font-medium"
+                        className="text-[#DA7756] text-sm font-medium"
                         onClick={() => openAddressFormModal('new', activeAddressType)}
                     >
                         + New address
@@ -2544,7 +2557,7 @@ export const EditSalesOrderPage: React.FC = () => {
             <Dialog open={gstManageModalOpen} onClose={() => setGstManageModalOpen(false)} maxWidth="md" fullWidth>
                 <DialogTitle className="!text-base !font-semibold !border-b !border-gray-200 !flex !items-center !justify-between !py-3">
                     <span>Manage Tax Informations</span>
-                    <IconButton size="small" onClick={() => setGstManageModalOpen(false)}><Close fontSize="small" className="text-red-500" /></IconButton>
+                    <IconButton size="small" onClick={() => setGstManageModalOpen(false)}><Close fontSize="small" className="text-brand" /></IconButton>
                 </DialogTitle>
                 <DialogContent className="!pt-4">
                     <div className="space-y-4">
@@ -2619,7 +2632,7 @@ export const EditSalesOrderPage: React.FC = () => {
                         ))}
                     </div>
                     <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
-                        <button type="button" className="text-blue-600 text-sm flex items-center gap-1" onClick={() => { setGstPickerModalOpen(false); openGstManageModal(); }}>
+                        <button type="button" className="text-brand text-sm flex items-center gap-1" onClick={() => { setGstPickerModalOpen(false); openGstManageModal(); }}>
                             <span>⚙</span> Manage Tax Informations
                         </button>
                     </div>
@@ -2651,7 +2664,7 @@ export const EditSalesOrderPage: React.FC = () => {
                         Cancel
                     </button>
                     <button
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                         onClick={() => {
                             if (currentItemIndex !== null) {
                                 updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
@@ -2705,7 +2718,7 @@ export const EditSalesOrderPage: React.FC = () => {
                                             <div className="text-sm text-gray-500">{customerDetail.company_name}</div>
                                         )}
                                         {customerDetail.email && (
-                                            <div className="text-xs text-blue-500">{customerDetail.email}</div>
+                                            <div className="text-xs text-brand">{customerDetail.email}</div>
                                         )}
                                     </div>
                                 </div>
@@ -2716,7 +2729,7 @@ export const EditSalesOrderPage: React.FC = () => {
                                             key={t}
                                             onClick={() => setDrawerActiveTab(i)}
                                             className={`py-2 px-3 text-sm font-medium border-b-2 transition-colors ${drawerActiveTab === i
-                                                ? "border-[#C72030] text-[#C72030]"
+                                                ? "border-[#DA7756] text-[#DA7756]"
                                                 : "border-transparent text-gray-500 hover:text-gray-700"
                                                 }`}
                                         >
