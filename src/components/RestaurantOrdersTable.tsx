@@ -32,7 +32,7 @@ interface OrderFilters {
 
 interface RestaurantOrderStatus {
   id: number;
-  status_name: string;
+  name: string;
   color_code: string;
   active?: boolean;
 }
@@ -366,7 +366,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
 
   const handleStatusUpdate = async (orderId: number, newStatusName: string) => {
     const targetOrder = orders.find((order) => order.id === orderId);
-    const nextStatus = targetOrder?.statuses.find((status) => status.status_name === newStatusName);
+    const nextStatus = targetOrder?.statuses.find((status) => status.name === newStatusName);
 
     if (!targetOrder || !nextStatus) {
       toast.error('Failed to update order status');
@@ -393,11 +393,11 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
 
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
-          order.id === orderId ? { ...order, status_name: nextStatus.status_name } : order
+          order.id === orderId ? { ...order, status_name: nextStatus.name } : order
         )
       );
 
-      toast.success(`Order ${orderId} status updated to ${nextStatus.status_name}`);
+      toast.success(`Order ${orderId} status updated to ${nextStatus.name}`);
     } catch (error) {
       console.error('Error updating order status:', error);
       toast.error('Failed to update order status');
@@ -649,7 +649,7 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
           >
             <SelectTrigger className="w-max border-none bg-transparent flex items-center [&>svg]:hidden">
               <SelectValue asChild>
-                <span className={`text-gray-900 pl-0 px-[5px] py-[3px] flex items-start gap-2 text-sm`} style={{ borderRadius: "4px", backgroundColor: item.statuses.find(status => status.status_name === item.status_name)?.color_code }}>
+                <span className={`text-gray-900 pl-0 px-[5px] py-[3px] flex items-start gap-2 text-sm`}>
                   {item.status_name}
                 </span>
               </SelectValue>
@@ -658,9 +658,9 @@ export const RestaurantOrdersTable = ({ needPadding }: { needPadding?: boolean }
               {item.statuses
                 .filter(status => status.active !== false)
                 .map((status) => (
-                  <SelectItem key={status.id} value={status.status_name}>
-                    <span className={`text-gray-900 px-[5px] py-[3px] flex items-start gap-2 text-sm`} style={{ borderRadius: "4px", backgroundColor: status.color_code }}>
-                      {status.status_name}
+                  <SelectItem key={status.id} value={status.name}>
+                    <span className={`text-gray-900 px-[5px] py-[3px] flex items-start gap-2 text-sm`}>
+                      {status.name}
                     </span>
                   </SelectItem>
                 ))}
