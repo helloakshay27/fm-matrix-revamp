@@ -37,6 +37,7 @@ import {
   AlertTriangle,
   Send,
   LayoutGrid,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -2850,6 +2851,126 @@ const BusinessCompassDailyReport: React.FC = () => {
   const badgePoints =
     "bc-points-badge border-0 shadow-none !bg-[#CECBF6] !text-[#5c5a8a] hover:!bg-[#c4c1f0]";
 
+  // ── Reportee Reports ──
+  // GET /user_journals/reportee_daily_report.json?date=<startDate>&user_id=<userId>
+  // Response shape: { success, data: { manager, date, date_iso, total_reportees, submitted, missed, departments[] } }
+  // Each department: { department, department_id, total_members, submitted, missed, section_totals, members[], accomplishments[], tasks_issues[], tomorrow_plan[] }
+  // Each member: { user_id, name, email, department, department_id, status, is_absent, absent_reason, submitted_at, score, sections:{}, journal_id }
+  const [reporteeSummary, setReporteeSummary] = useState<{
+    total: number;
+    submitted: number;
+    missed: number;
+  }>({ total: 0, submitted: 0, missed: 0 });
+  const [reporteeDepartments, setReporteeDepartments] = useState<any[]>([]);
+  const [reporteeManagerName, setReporteeManagerName] = useState("");
+  const [isReporteeLoading, setIsReporteeLoading] = useState(false);
+  const [reporteeError, setReporteeError] = useState<string | null>(null);
+  const [expandedReportees, setExpandedReportees] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Use the userId already parsed from localStorage (line ~576) or fall back to parsing again
+    const reporteeUserId = userId ?? JSON.parse(localStorage.getItem("user") || "{}")?.id;
+    if (!startDate || !reporteeUserId) {
+      setReporteeDepartments([]);
+      setReporteeSummary({ total: 0, submitted: 0, missed: 0 });
+      return;
+    }
+
+    let active = true;
+    const fetchReporteeReports = async () => {
+      setIsReporteeLoading(true);
+      setReporteeError(null);
+      try {
+        const urlBase =
+          getBaseUrl() ?? (baseUrl ? `https://${baseUrl}` : "");
+        const res = await axios.get(
+          `${urlBase}/user_journals/reportee_daily_report.json`,
+          {
+            // date param is ISO format (YYYY-MM-DD) matching date_iso in response
+            params: { date: startDate, user_id: reporteeUserId },
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        // Support both { success, data: {...} } and flat payload
+        const payload = res.data?.data ?? res.data ?? {};
+        const departments = Array.isArray(payload?.departments)
+          ? payload.departments
+          : [];
+        if (active) {
+          setReporteeDepartments(departments);
+          setReporteeManagerName(
+            String(payload?.manager?.name || "").trim()
+          );
+          setReporteeSummary({
+            total: Number(payload?.total_reportees ?? 0),
+            submitted: Number(payload?.submitted ?? 0),
+            missed: Number(payload?.missed ?? 0),
+          });
+        }
+      } catch (error: any) {
+        console.error("Error fetching reportee reports:", error);
+        if (active) {
+          setReporteeDepartments([]);
+          setReporteeSummary({ total: 0, submitted: 0, missed: 0 });
+          setReporteeError(
+            error?.response?.status === 404
+              ? null
+              : "Could not load reportee reports."
+          );
+        }
+      } finally {
+        if (active) setIsReporteeLoading(false);
+      }
+    };
+
+    fetchReporteeReports();
+    return () => {
+      active = false;
+    };
+  }, [startDate, userId, baseUrl, token]);
+
+  // Department-grouped response → flat member-wise list.
+  // Each member gets their own accomplishments/tasks_issues/tomorrow_plan
+  // filtered by user_id from the department-level arrays.
+  // When status === "missed", sections is {} and content arrays are empty.
+  const reporteeMembers = useMemo(() => {
+    const forMember = (items: any[], memberId: any) =>
+      (Array.isArray(items) ? items : []).filter(
+        (item: any) => String(item?.user_id) === String(memberId)
+      );
+
+    return reporteeDepartments.flatMap((dept: any) =>
+      (Array.isArray(dept?.members) ? dept.members : []).map((member: any) => {
+        const memberId = member?.user_id;
+        // sections may be empty object {} (missed) or contain score values (submitted)
+        const sections = member?.sections && typeof member.sections === "object"
+          ? member.sections
+          : {};
+        return {
+          ...member,
+          department: member?.department || dept?.department || "No Department",
+          department_id: member?.department_id ?? dept?.department_id ?? null,
+          sections,
+          // Filter dept-level content lists to items belonging to this member
+          accomplishments: forMember(dept?.accomplishments, memberId),
+          tasks_issues: forMember(dept?.tasks_issues, memberId),
+          tomorrow_plan: forMember(dept?.tomorrow_plan, memberId),
+          // Preserve section_totals from dept for reference
+          _dept_section_totals: dept?.section_totals ?? {},
+        };
+      })
+    );
+  }, [reporteeDepartments]);
+
+  const toggleReportee = (id: string) =>
+    setExpandedReportees((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+
+
   const formattedSelectedDate = useMemo(() => {
     const d = new Date(`${startDate}T00:00:00`);
     if (isNaN(d.getTime()))
@@ -3431,7 +3552,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               );
                             }
 
-                            // Points this KPI contributes out of 20 (equal share per KPI × achievement)
+                            // Points this KPI contributes out of 20 (equal share per KPI Ã— achievement)
                             const kpiPts =
                               (20 / kpis.length) * (achievementPct / 100);
 
@@ -6033,6 +6154,466 @@ const BusinessCompassDailyReport: React.FC = () => {
               </div>
             </div>
 
+            {/* ═ ═  Reportee Reports — member wise ═ ═  */}
+            {(!isReporteeLoading && reporteeSummary.total === 0 && !reporteeError) ? null : (
+              <div className="bc-daily-card">
+                <div className="bc-daily-card-header">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
+                      <Users className="h-4 w-4 text-indigo-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="min-w-0 text-xs font-extrabold uppercase tracking-wider text-neutral-700">
+                        Reportee Reports
+                      </h3>
+                      <p className="text-[10px] font-medium text-neutral-400">
+                        Reports submitted under{" "}
+                        {reporteeManagerName || "your team"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                    {reporteeSummary.total > 0 && (
+                      <>
+                        <span className="shrink-0 rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-0.5 text-[10px] font-bold text-indigo-600">
+                          {reporteeSummary.total} Reportee
+                          {reporteeSummary.total === 1 ? "" : "s"}
+                        </span>
+                        {reporteeSummary.submitted > 0 && (
+                          <span className="shrink-0 rounded-full border border-green-100 bg-green-50 px-2.5 py-0.5 text-[10px] font-bold text-green-700">
+                            {reporteeSummary.submitted} Submitted
+                          </span>
+                        )}
+                        {reporteeSummary.missed > 0 && (
+                          <span className="shrink-0 rounded-full border border-red-100 bg-red-50 px-2.5 py-0.5 text-[10px] font-bold text-red-600">
+                            {reporteeSummary.missed} Missed
+                          </span>
+                        )}
+                      </>
+                    )}
+                    {reporteeSummary.total === 0 && !isReporteeLoading && (
+                      <span className="shrink-0 rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-0.5 text-[10px] font-bold text-indigo-600">
+                        0 Reportees
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+              <div className="space-y-3 p-3">
+                {isReporteeLoading ? (
+                  <div className="flex items-center justify-center gap-2 py-6 text-xs font-semibold text-slate-400">
+                    <Loader2 size={14} className="animate-spin" />
+                    Loading reportee reports...
+                  </div>
+                ) : reporteeError ? (
+                  <p className="py-6 text-center text-xs font-semibold text-red-500">
+                    {reporteeError}
+                  </p>
+                ) : reporteeMembers.length === 0 ? (
+                  <p className="py-6 text-center text-xs font-semibold italic text-slate-400">
+                    No reportee reports for {formattedSelectedDate}.
+                  </p>
+                ) : (
+                  reporteeMembers.map((member: any, memberIndex: number) => {
+                    const memberKey = String(member?.user_id ?? memberIndex);
+                    const isMemberExpanded =
+                      expandedReportees.includes(memberKey);
+                    const memberStatus = String(member?.status || "").toLowerCase();
+                    const isMemberSubmitted =
+                      memberStatus !== "missed" && memberStatus !== "pending";
+                    // sections is {} when missed, has score values when submitted
+                    const sections = member?.sections || {};
+                    const hasSubmittedData = Object.keys(sections).length > 0;
+                    // score from API member.score (null when missed) or sum of sections
+                    const totalScore = member?.score != null
+                      ? Number(member.score)
+                      : hasSubmittedData
+                        ? Object.values(sections).reduce((sum: number, v: any) => sum + (Number(v) || 0), 0)
+                        : 0;
+                    const scoreChips = [
+                      { label: "KPI", value: Number(sections.kpi_achievement ?? 0) },
+                      {
+                        label: "Tasks & Todos",
+                        value: Number(sections.tasks_issues_todos ?? 0),
+                      },
+                      {
+                        label: "Accomplishments",
+                        value: Number(sections.accomplishments ?? 0),
+                      },
+                      { label: "Planning", value: Number(sections.planning ?? 0) },
+                      { label: "Timing", value: Number(sections.timing ?? 0) },
+                    ];
+                    const columns = [
+                      {
+                        key: "accomplishments",
+                        title: "Accomplishments",
+                        Icon: CheckCircle2,
+                        iconClass: "text-[#798c5e]",
+                        items: member.accomplishments as any[],
+                      },
+                      {
+                        key: "tasks_issues",
+                        title: "Tasks, Issues & To Do",
+                        Icon: ListTodo,
+                        iconClass: "text-[#DA7756]",
+                        items: (member.tasks_issues as any[]).filter(
+                          (item: any) => 
+                            String(item?.status).toLowerCase() !== "completed" &&
+                            String(item?.status).toLowerCase() !== "closed"
+                        ),
+                      },
+                      {
+                        key: "tomorrow_plan",
+                        title: "Tomorrow's Plan",
+                        Icon: CalendarCheck,
+                        iconClass: "text-[#6b9bcc]",
+                        items: member.tomorrow_plan as any[],
+                      },
+                    ];
+                    const submittedStamp = member?.submitted_at
+                      ? new Date(member.submitted_at).toLocaleString("en-GB", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        hour12: false,
+                      })
+                      : null;
+
+                    return (
+                      <div
+                        key={memberKey}
+                        className="overflow-hidden rounded-xl border border-indigo-100 bg-indigo-50/30"
+                      >
+                        <div
+                          className="flex cursor-pointer flex-col gap-3 p-4 transition-colors hover:bg-indigo-50/60 sm:flex-row sm:items-start sm:justify-between"
+                          onClick={() => toggleReportee(memberKey)}
+                        >
+                          <div className="min-w-0">
+                            <div className="mb-1 flex flex-wrap items-center gap-2">
+                              <h4 className="truncate text-sm font-bold text-neutral-900">
+                                {member?.name?.trim() || "Member"}
+                              </h4>
+                              {member?.department && (
+                                <span className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
+                                  {member.department}
+                                </span>
+                              )}
+                              {isMemberSubmitted && (
+                                <span className="shrink-0 rounded-full border border-green-100 bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">
+                                  Submitted
+                                </span>
+                              )}
+                            </div>
+                            <p className="truncate text-[11px] text-neutral-400">
+                              {member?.email || "—"}
+                              {submittedStamp && (
+                                <span className="ml-1">- {submittedStamp}</span>
+                              )}
+                            </p>
+                          </div>
+
+                          <div className="ml-auto flex shrink-0 items-center gap-2 self-start sm:self-center">
+                            {!isMemberSubmitted ? (
+                              <span className="shrink-0 rounded-full border border-red-100 bg-red-50 px-2.5 py-0.5 text-[10px] font-bold text-red-700">
+                                Missed
+                              </span>
+                            ) : (
+                              <span
+                                className={cn(
+                                  "shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold",
+                                  member?.is_absent
+                                    ? "border-red-100 bg-red-50 text-red-700"
+                                    : "border-green-100 bg-green-50 text-green-700"
+                                )}
+                              >
+                                {member?.is_absent
+                                  ? `Absent${member?.absent_reason
+                                    ? `: ${member.absent_reason}`
+                                    : ""
+                                  }`
+                                  : "Present"}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                toggleReportee(memberKey);
+                              }}
+                              className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-blue-500"
+                            >
+                              <ChevronDown
+                                size={15}
+                                className={cn(
+                                  "transition-transform",
+                                  isMemberExpanded && "rotate-180"
+                                )}
+                              />
+                            </button>
+                          </div>
+                        </div>
+
+                        {isMemberExpanded && (
+                          <div className="border-t border-indigo-100 bg-white p-3">
+                            {/* Absent notice */}
+                            {member?.is_absent && (
+                              <div className="mb-3 flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2">
+                                <span className="mt-0.5 shrink-0 text-red-500">✕</span>
+                                <div>
+                                  <p className="text-[11px] font-bold text-red-700">Absent</p>
+                                  {member?.absent_reason && (
+                                    <p className="text-[11px] text-red-500 font-medium">{member.absent_reason}</p>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                            {/* Score chips — only when report is submitted and sections have data */}
+                            {isMemberSubmitted && hasSubmittedData && (
+                              <div className="mb-3 flex flex-wrap items-center gap-2">
+                                {scoreChips.map((chip) => (
+                                  <span
+                                    key={chip.label}
+                                    className="inline-flex h-[21px] items-center rounded-full border border-[#DA7756] bg-white px-[10px] text-[10px] font-bold text-[#DA7756]"
+                                  >
+                                    {chip.label}: {chip.value}/20
+                                  </span>
+                                ))}
+                                <span className="ml-auto text-[11px] font-bold text-neutral-400">
+                                  Total Score: {totalScore}
+                                </span>
+                              </div>
+                            )}
+                            {/* Missed notice */}
+                            {!isMemberSubmitted && !member?.is_absent && (
+                              <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2">
+                                <span className="text-[11px] font-semibold text-amber-700">Report not yet submitted for this date.</span>
+                              </div>
+                            )}
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                              {columns.map((column) => (
+                                <div
+                                  key={column.key}
+                                  className="overflow-hidden rounded-[12px] border border-[#E8E2DE] bg-white"
+                                >
+                                  <div className="flex items-center gap-2 border-b border-[#EFE7E2] px-3 py-2.5">
+                                    <column.Icon
+                                      size={15}
+                                      className={cn("shrink-0", column.iconClass)}
+                                    />
+                                    <h5 className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#3E342F]">
+                                      {column.title} ({column.items.length})
+                                    </h5>
+                                  </div>
+                                  <div className="space-y-1.5 p-2">
+                                    {column.items.length === 0 ? (
+                                      <p className="px-1 py-2 text-[11px] italic text-slate-300">
+                                        {isMemberSubmitted ? "None recorded." : "Not submitted."}
+                                      </p>
+                                    ) : (
+                                      (() => {
+                                        const renderItem = (item: any, itemIndex: number) => {
+                                          const itemType = String(
+                                            item?.source_type || item?.type || "note"
+                                          ).toLowerCase();
+                                          const original =
+                                            item?.originalData || {};
+                                          const dueRaw =
+                                            original?.target_date ||
+                                            original?.end_date ||
+                                            original?.due_date;
+                                          const dueDate = fmtDate(dueRaw);
+                                          const itemStatus = String(
+                                            item?.status || original?.status || ""
+                                          ).toLowerCase();
+                                          const isItemDone =
+                                            COMPLETED_STATUSES.has(itemStatus);
+                                          const overdueLabel = isItemDone
+                                            ? null
+                                            : getOverdueLabel(dueRaw);
+                                          const effortEst = fmtHours(
+                                            original?.total_allocated_hours ||
+                                            original?.estimated_hour
+                                          );
+                                          const activeTime =
+                                            original?.active_time_till_now;
+                                          const projectName =
+                                            original?.project_management_title ||
+                                            original?.project_management_name;
+                                          const isClickable = ["task", "issue", "todo"].includes(itemType);
+                                          return (
+                                            <div
+                                              key={`${itemType}-${itemIndex}`}
+                                              onClick={isClickable ? () => handleViewReportItem(item) : undefined}
+                                              className={cn(
+                                                "rounded-[10px] border border-[#ECEFF3] bg-white px-2.5 py-2",
+                                                isClickable && "cursor-pointer hover:bg-slate-50 transition-colors"
+                                              )}
+                                            >
+                                              <div className="flex items-center gap-2">
+                                                <FileText
+                                                  size={14}
+                                                  className={cn(
+                                                    "shrink-0",
+                                                    itemType === "issue"
+                                                      ? "text-[#e7848e]"
+                                                      : itemType === "todo"
+                                                        ? "text-[#8b7fd4]"
+                                                        : "text-[#4BA3F2]"
+                                                  )}
+                                                />
+                                                <span className="min-w-0 flex-1 break-words text-[12px] font-medium leading-snug text-[#2B2F38]">
+                                                  {typeof item === "string"
+                                                    ? item
+                                                    : item?.title ||
+                                                    item?.text ||
+                                                    item?.name ||
+                                                    "—"}
+                                                </span>
+                                                {itemType && (
+                                                  <span
+                                                    className={cn(
+                                                      "shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase text-white",
+                                                      itemType === "task"
+                                                        ? "bg-[#DA7756]"
+                                                        : itemType === "issue"
+                                                          ? "bg-violet-600"
+                                                          : itemType === "todo"
+                                                            ? "bg-amber-500"
+                                                            : "bg-gray-500"
+                                                    )}
+                                                  >
+                                                    {itemType}
+                                                  </span>
+                                                )}
+                                                {item?.status && (
+                                                  <span className="shrink-0 rounded-full bg-[#f6f4ee] px-2 py-0.5 text-[9px] font-bold uppercase text-[#8a7d63]">
+                                                    {String(item.status).replace(
+                                                      /_/g,
+                                                      " "
+                                                    )}
+                                                  </span>
+                                                )}
+                                              </div>
+                                              {(dueDate ||
+                                                overdueLabel ||
+                                                effortEst ||
+                                                activeTime ||
+                                                projectName) && (
+                                                  <div className="mt-1 flex flex-wrap items-center gap-3 pl-[22px]">
+                                                    {dueDate && (
+                                                      <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                                                        <Calendar size={11} className="shrink-0" />
+                                                        {dueDate}
+                                                      </span>
+                                                    )}
+                                                    {overdueLabel && (
+                                                      <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                        <AlertCircle size={11} className="shrink-0" />
+                                                        {overdueLabel}
+                                                      </span>
+                                                    )}
+                                                    {effortEst && (
+                                                      <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                                                        <Clock size={11} className="shrink-0" />
+                                                        Est: {effortEst}
+                                                      </span>
+                                                    )}
+                                                    {activeTime && (
+                                                      <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                        <Zap size={11} className="shrink-0" />
+                                                        <ActiveTimer
+                                                          activeTimeTillNow={activeTime}
+                                                          isStarted={original?.is_started}
+                                                        />
+                                                      </span>
+                                                    )}
+                                                    {projectName && (
+                                                      <span className="text-[10px] font-semibold text-slate-400">
+                                                        {projectName}
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                )}
+                                            </div>
+                                          );
+                                        };
+
+                                        if (column.key === "tasks_issues") {
+                                          // Overdue = explicit status, or a past due date on a not-done item
+                                          const isOverdueItem = (i: any) => {
+                                            const s = String(i?.status || "").toLowerCase();
+                                            if (COMPLETED_STATUSES.has(s)) return false;
+                                            if (s.includes("overdue")) return true;
+                                            const d = i?.originalData || {};
+                                            return !!getOverdueLabel(
+                                              d?.target_date || d?.end_date || d?.due_date
+                                            );
+                                          };
+                                          const overdue = column.items.filter(isOverdueItem);
+                                          const rest = column.items.filter((i: any) => !isOverdueItem(i));
+                                          const inProgress = rest.filter((i: any) => ["in_progress", "in progress", "started", "wip"].includes(String(i?.status).toLowerCase()));
+                                          const onHold = rest.filter((i: any) => ["on_hold", "hold"].includes(String(i?.status).toLowerCase()));
+                                          const openItems = rest.filter((i: any) => ["open", "pending", "reopen", "reopened", "new", "to_do", "todo"].includes(String(i?.status).toLowerCase()));
+                                          // Anything with an unexpected status still has to show up
+                                          const bucketed = new Set([...overdue, ...inProgress, ...onHold, ...openItems]);
+                                          const others = column.items.filter((i: any) => !bucketed.has(i));
+
+                                          return (
+                                            <div className="space-y-4">
+                                              {overdue.length > 0 && (
+                                                <div className="space-y-1.5">
+                                                  <h6 className="text-[10px] font-bold uppercase text-red-600 pl-1.5 border-l-[2px] border-red-500 bg-red-50/70 py-0.5 rounded-r">Overdue ({overdue.length})</h6>
+                                                  {overdue.map(renderItem)}
+                                                </div>
+                                              )}
+                                              {inProgress.length > 0 && (
+                                                <div className="space-y-1.5">
+                                                  <h6 className="text-[10px] font-bold uppercase text-blue-600 pl-1.5 border-l-[2px] border-blue-500 bg-blue-50/70 py-0.5 rounded-r">In Progress ({inProgress.length})</h6>
+                                                  {inProgress.map(renderItem)}
+                                                </div>
+                                              )}
+                                              {onHold.length > 0 && (
+                                                <div className="space-y-1.5">
+                                                  <h6 className="text-[10px] font-bold uppercase text-amber-600 pl-1.5 border-l-[2px] border-amber-500 bg-amber-50/70 py-0.5 rounded-r">On Hold ({onHold.length})</h6>
+                                                  {onHold.map(renderItem)}
+                                                </div>
+                                              )}
+                                              {openItems.length > 0 && (
+                                                <div className="space-y-1.5">
+                                                  <h6 className="text-[10px] font-bold uppercase text-slate-600 pl-1.5 border-l-[2px] border-slate-400 bg-slate-50/70 py-0.5 rounded-r">Open ({openItems.length})</h6>
+                                                  {openItems.map(renderItem)}
+                                                </div>
+                                              )}
+                                              {others.length > 0 && (
+                                                <div className="space-y-1.5">
+                                                  <h6 className="text-[10px] font-bold uppercase text-neutral-500 pl-1.5 border-l-[2px] border-neutral-300 bg-neutral-50/70 py-0.5 rounded-r">Other ({others.length})</h6>
+                                                  {others.map(renderItem)}
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
+                                        }
+
+                                        return column.items.map(renderItem);
+                                      })()
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+            )}
+
             {isAbsent && (
               <div className="bc-daily-card">
                 <div className="bc-daily-card-body space-y-4">
@@ -6134,7 +6715,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             <>
                               Calculated as:{" "}
                               <span className="font-bold text-slate-700">
-                                Max Points × (Average Achievement % ÷ 100)
+                                Max Points Ã— (Average Achievement % Ã· 100)
                               </span>
                             </>
                           ),
