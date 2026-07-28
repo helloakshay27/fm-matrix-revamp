@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { Plus, Edit } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { AddCategoryModal } from '@/components/AddCategoryModal';
-import { EditCategoryModal } from '@/components/EditCategoryModal';
-import { AddDeviationStatusModal } from '@/components/AddDeviationStatusModal';
-import { AddStatusModal } from '@/components/AddStatusModal';
+import { Button } from "@/components/ui/button";
+import { Plus, Edit } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AddCategoryModal } from "@/components/AddCategoryModal";
+import { EditCategoryModal } from "@/components/EditCategoryModal";
+import { AddDeviationStatusModal } from "@/components/AddDeviationStatusModal";
+import { AddStatusModal } from "@/components/AddStatusModal";
+import { Checkbox } from "@/components/ui/checkbox";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
 
@@ -30,35 +29,6 @@ interface UploadedFile {
   id: number;
   fileName: string;
 }
-
-interface DeviationStatus {
-  id: number;
-  category: string;
-  active: boolean;
-}
-
-const categoryColumns: ColumnConfig[] = [
-  { key: 'category', label: 'Category', sortable: true, hideable: true, defaultVisible: true },
-  { key: 'amount', label: 'Amount', sortable: true, hideable: true, defaultVisible: true },
-  { key: 'active', label: 'Active/Inactive', sortable: true, hideable: true, defaultVisible: true },
-];
-
-const statusColumns: ColumnConfig[] = [
-  { key: 'order', label: 'Order', sortable: true, hideable: true, defaultVisible: true },
-  { key: 'status', label: 'Status', sortable: true, hideable: true, defaultVisible: true },
-  { key: 'fixedState', label: 'Fixed State', sortable: true, hideable: true, defaultVisible: true },
-  { key: 'color', label: 'Color', sortable: false, hideable: true, defaultVisible: true },
-];
-
-const guideColumns: ColumnConfig[] = [
-  { key: 'sr_no', label: 'SR No.', sortable: true, hideable: true, defaultVisible: true },
-  { key: 'fileName', label: 'File Name', sortable: true, hideable: true, defaultVisible: true },
-];
-
-const deviationColumns: ColumnConfig[] = [
-  { key: 'category', label: 'Category', sortable: true, hideable: true, defaultVisible: true },
-  { key: 'status', label: 'Active/Inactive', sortable: false, hideable: true, defaultVisible: true },
-];
 
 export const FitoutSetupDashboard = () => {
   const [activeTab, setActiveTab] = useState('Category');
@@ -164,103 +134,48 @@ export const FitoutSetupDashboard = () => {
     }
   };
 
-  const renderCategoryCell = (item: Category, columnKey: string) => {
-    if (columnKey === 'active') {
-      return (
-        <Checkbox
-          checked={item.active}
-          onCheckedChange={() => handleToggleActive(item.id)}
-        />
-      );
-    }
-    return item[columnKey as keyof Category];
-  };
-
-  const renderCategoryActions = (item: Category) => (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => handleEditCategory(item)}
-      className="h-8 w-8 p-0 text-black hover:bg-gray-100"
-      title="Edit"
-    >
-      <Edit className="w-4 h-4" />
-    </Button>
-  );
-
-  const addButton = (onClick: () => void, label = 'Add') => (
-    <Button
-      onClick={onClick}
-      className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg"
-    >
-      <Plus className="w-4 h-4 mr-2" />
-      {label}
-    </Button>
-  );
-
-  const filteredCategories = categories.filter((item) => {
-    const q = searchTerm.toLowerCase();
-    return !q || item.category.toLowerCase().includes(q) || item.amount.toLowerCase().includes(q);
-  });
-
-  const filteredStatuses = statuses.filter((item) => {
-    const q = searchTerm.toLowerCase();
-    return (
-      !q ||
-      item.status.toLowerCase().includes(q) ||
-      item.fixedState.toLowerCase().includes(q) ||
-      String(item.order).includes(q)
-    );
-  });
-
-  const filteredFiles = uploadedFiles
-    .map((file, index) => ({ ...file, sr_no: index + 1 }))
-    .filter((item) => {
-      const q = searchTerm.toLowerCase();
-      return !q || item.fileName.toLowerCase().includes(q);
-    });
-
-  const filteredDeviations = deviationStatuses.filter((item) => {
-    const q = searchTerm.toLowerCase();
-    return !q || item.category.toLowerCase().includes(q);
-  });
-
   const renderCategoryTab = () => (
-    <div className="w-full min-w-0 max-w-full">
-      <EnhancedTable
-        data={filteredCategories}
-        columns={categoryColumns}
-        renderCell={(item: Category, columnKey: string) => {
-          switch (columnKey) {
-            case 'category':
-              return <span className="font-medium text-gray-900">{item.category}</span>;
-            case 'amount':
-              return item.amount || '—';
-            case 'active':
-              return <Checkbox checked={item.active} onCheckedChange={() => handleToggleActive(item.id)} />;
-            default:
-              return '—';
-          }
-        }}
-        renderActions={(item: Category) => renderCategoryActions(item)}
-        storageKey="fitout-setup-category-table"
-        enableSearch
-        searchTerm={searchTerm}
-        onSearchChange={(value) => {
-          setSearchTerm(value);
-          setCurrentPage(1);
-        }}
-        disableClientSearch
-        searchPlaceholder="Search categories..."
-        leftActions={addButton(() => setIsAddCategoryOpen(true))}
-        hideTableExport
-        emptyMessage="No categories found"
-        pagination
-        pageSize={15}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        getItemId={(item) => String(item.id)}
-      />
+    <div>
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <Button
+          onClick={() => setIsAddCategoryOpen(true)}
+          className="!bg-[#DA7756] !text-white hover:!bg-[#DA7756]/90"
+        >
+          <Plus className="w-4 h-4 mr-2 !text-white" />
+          Add
+        </Button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50">
+              <TableHead className="font-semibold">Actions</TableHead>
+              <TableHead className="font-semibold">Category</TableHead>
+              <TableHead className="font-semibold">Amount</TableHead>
+              <TableHead className="font-semibold">Active/Inactive</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {categories.map((category) => (
+              <TableRow key={category.id}>
+                <TableCell>
+                  <Edit className="w-4 h-4 stroke-[#C72030] cursor-pointer" onClick={() => handleEditCategory(category)} />
+                </TableCell>
+                <TableCell>{category.category}</TableCell>
+                <TableCell>{category.amount}</TableCell>
+                <TableCell>
+                  <Checkbox
+                    checked={category.active}
+                    onCheckedChange={() => handleToggleActive(category.id)}
+                    className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] border-[#C72030]"
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 
@@ -314,52 +229,51 @@ export const FitoutSetupDashboard = () => {
         </div>
       </div>
 
-      <div className="w-full min-w-0 max-w-full">
-        <EnhancedTable
-          data={filteredStatuses}
-          columns={statusColumns}
-          renderCell={(item: Status, columnKey: string) => {
-            switch (columnKey) {
-              case 'order':
-                return item.order;
-              case 'status':
-                return <span className="font-medium text-gray-900">{item.status}</span>;
-              case 'fixedState':
-                return item.fixedState;
-              case 'color':
-                return <div className="w-6 h-6 rounded border" style={{ backgroundColor: item.color }} />;
-              default:
-                return '—';
-            }
-          }}
-          renderActions={() => (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-black hover:bg-gray-100"
-              title="Edit"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
-          )}
-          storageKey="fitout-setup-status-table"
-          enableSearch
-          searchTerm={searchTerm}
-          onSearchChange={(value) => {
-            setSearchTerm(value);
-            setCurrentPage(1);
-          }}
-          disableClientSearch
-          searchPlaceholder="Search statuses..."
-          leftActions={addButton(() => setIsAddStatusOpen(true))}
-          hideTableExport
-          emptyMessage="No data available"
-          pagination
-          pageSize={15}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-          getItemId={(item) => String(item.id)}
-        />
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <Button
+          onClick={() => setIsAddStatusOpen(true)}
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+        >
+          <Plus className="w-4 h-4 mr-2 stroke-[#C72030] text-white" />
+          Add
+        </Button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50">
+              <TableHead>Actions</TableHead>
+              <TableHead>Order</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Fixed State</TableHead>
+              <TableHead>Color</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {statuses.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                  No data available
+                </TableCell>
+              </TableRow>
+            ) : (
+              statuses.map((status) => (
+                <TableRow key={status.id}>
+                  <TableCell>
+                    <Edit className="w-4 h-4 stroke-[#C72030] cursor-pointer" />
+                  </TableCell>
+                  <TableCell>{status.order}</TableCell>
+                  <TableCell>{status.status}</TableCell>
+                  <TableCell>{status.fixedState}</TableCell>
+                  <TableCell>
+                    <div className="w-6 h-6 rounded border" style={{ backgroundColor: status.color }} />
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
@@ -367,13 +281,13 @@ export const FitoutSetupDashboard = () => {
   const renderFitoutGuideTab = () => (
     <div>
       <div className="mb-6">
-        <div className="border-2 border-dashed border-brand rounded-lg p-8 text-center">
+        <div className="border-2 border-dashed border-[#C72030] rounded-lg p-8 text-center">
           <div className="mb-4">
-            <span className="font-medium text-brand">Choose File</span>
+            <span className="font-medium text-[#C72030]">Choose File</span>
             <span className="text-gray-500 ml-2">No file chosen</span>
           </div>
           <label htmlFor="file-upload">
-            <Button className="bg-brand hover:bg-brand-hover text-white h-9 px-4 cursor-pointer" asChild>
+            <Button className="bg-brand hover:bg-brand-hover text-white cursor-pointer [&_svg]:!text-white" asChild>
               <span className="inline-flex items-center justify-center gap-2">
                 <Plus className="w-4 h-4" />
                 Upload
@@ -430,48 +344,35 @@ export const FitoutSetupDashboard = () => {
   );
 
   const renderDeviationStatusTab = () => (
-    <div className="w-full min-w-0 max-w-full">
-      <EnhancedTable
-        data={filteredDeviations}
-        columns={deviationColumns}
-        renderCell={(item: DeviationStatus, columnKey: string) => {
-          switch (columnKey) {
-            case 'category':
-              return <span className="font-medium text-gray-900">{item.category}</span>;
-            case 'status':
-              return <Checkbox checked={item.active} onCheckedChange={() => handleToggleDeviationActive(item.id)} />;
-            default:
-              return '—';
-          }
-        }}
-        renderActions={() => (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 text-black hover:bg-gray-100"
-            title="Edit"
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
-        )}
-        storageKey="fitout-setup-deviation-table"
-        enableSearch
-        searchTerm={searchTerm}
-        onSearchChange={(value) => {
-          setSearchTerm(value);
-          setCurrentPage(1);
-        }}
-        disableClientSearch
-        searchPlaceholder="Search deviation status..."
-        leftActions={addButton(() => setIsAddDeviationOpen(true))}
-        hideTableExport
-        emptyMessage="No deviation status found"
-        pagination
-        pageSize={15}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        getItemId={(item) => String(item.id)}
-      />
+    <div>
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <Button
+          onClick={() => setIsAddDeviationOpen(true)}
+          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+        >
+          <Plus className="w-4 h-4 mr-2 stroke-[#C72030] text-white" />
+          Add
+        </Button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50">
+              <TableHead>Actions</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Active/Inactive</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                No deviation status found
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 
