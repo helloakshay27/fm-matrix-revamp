@@ -530,7 +530,7 @@ export const AddPastBookings = () => {
                 return prev.filter(id => id !== slotId);
             } else {
                 // Enforce selection rules
-                if (!isSlotSelectable(slotId)) return prev;
+                // if (!isSlotSelectable(slotId)) return prev;
                 return [...prev, slotId];
             }
         });
@@ -969,18 +969,18 @@ export const AddPastBookings = () => {
                             {slots.map((slot) => {
                                 const disabled = !isSlotSelectable(slot.id);
                                 return (
-                                    <div key={slot.id} className={`flex items-center space-x-2 p-3 border rounded-lg ${disabled ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'}`}>
+                                    <div key={slot.id} className={`flex items-center space-x-2 p-3 border rounded-lg ${false ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'}`}>
                                         <input
                                             type="checkbox"
                                             id={`slot-${slot.id}`}
                                             checked={selectedSlots.includes(slot.id)}
                                             onChange={() => handleSlotSelection(slot.id)}
                                             className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                                            disabled={!canSelectSlots || disabled}
+                                        // disabled={!canSelectSlots || disabled}
                                         />
                                         <Label
                                             htmlFor={`slot-${slot.id}`}
-                                            className={`cursor-pointer text-sm font-medium flex items-center gap-2 ${disabled ? 'text-gray-400' : ''}`}
+                                            className={`cursor-pointer text-sm font-medium flex items-center gap-2 ${false ? 'text-gray-400' : ''}`}
                                         >
                                             {slot.ampm}
                                             {slot.is_premium && slot.premium_percentage && (
