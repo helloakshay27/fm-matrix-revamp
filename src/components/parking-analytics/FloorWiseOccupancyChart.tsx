@@ -11,20 +11,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const CHART_COLORS = {
   twoWheeler: '#8B7355',      // Darker brown for 2W (matching openAchieved)
   fourWheeler: '#C4B99D',     // Original primary for 4W (matching openBreached)
+  electricVehicle: '#6FAF97', // Distinct green accent for EV
 };
 
 // Colors used for last-year bars (lighter shades)
 const LAST_YEAR_COLORS = {
   twoWheeler: '#DAD6CA',
   fourWheeler: '#E8E5DD',
+  electricVehicle: '#C9E6DA',
 };
 
 interface FloorOccupancyData {
   floor: string;
   twoWheeler: number;
   fourWheeler: number;
+  electricVehicle?: number;
   lastYearTwoWheeler?: number;
   lastYearFourWheeler?: number;
+  lastYearElectricVehicle?: number;
   percentage?: number;
 }
 
@@ -210,6 +214,7 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
             floor: `${floor.floor_name}`,
             twoWheeler: floor.two_wheeler?.total_occupied || 0,
             fourWheeler: floor.four_wheeler?.total_occupied || 0,
+            electricVehicle: floor.electric_vehicle?.total_occupied || 0,
             percentage: floor.occupancy_pct || 0
           });
         });
@@ -218,21 +223,24 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
       // Add previous year data to matching floors
       filteredPreviousBuildings.forEach((building: any) => {
         building.floors?.forEach((floor: any) => {
-          const existingFloor = allFloors.find(f => 
+          const existingFloor = allFloors.find(f =>
             f.floor === `${floor.floor_name}`
           );
-          
+
           if (existingFloor) {
             existingFloor.lastYearTwoWheeler = floor.two_wheeler?.total_occupied || 0;
             existingFloor.lastYearFourWheeler = floor.four_wheeler?.total_occupied || 0;
+            existingFloor.lastYearElectricVehicle = floor.electric_vehicle?.total_occupied || 0;
           } else if (floor.total_capacity > 0) {
             // Add floor that only exists in previous year
             allFloors.push({
               floor: `${floor.floor_name}`,
               twoWheeler: 0,
               fourWheeler: 0,
+              electricVehicle: 0,
               lastYearTwoWheeler: floor.two_wheeler?.total_occupied || 0,
               lastYearFourWheeler: floor.four_wheeler?.total_occupied || 0,
+              lastYearElectricVehicle: floor.electric_vehicle?.total_occupied || 0,
               percentage: 0
             });
           }
@@ -247,11 +255,12 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
       filteredCurrentBuildings.forEach((building: any) => {
         building.floors?.forEach((floor: any) => {
           if (floor.total_capacity === 0) return; // Skip empty floors
-          
+
           allFloors.push({
             floor: `${floor.floor_name}`,
             twoWheeler: floor.two_wheeler?.total_occupied || 0,
             fourWheeler: floor.four_wheeler?.total_occupied || 0,
+            electricVehicle: floor.electric_vehicle?.total_occupied || 0,
             percentage: floor.occupancy_pct || 0
           });
         });
@@ -324,7 +333,7 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
     if (active && payload && payload.length) {
       const floorName = payload[0].payload?.floor || '';
       const datum = payload[0].payload as FloorOccupancyData;
-      const hasPrev = typeof datum.lastYearTwoWheeler === 'number' || typeof datum.lastYearFourWheeler === 'number';
+      const hasPrev = typeof datum.lastYearTwoWheeler === 'number' || typeof datum.lastYearFourWheeler === 'number' || typeof datum.lastYearElectricVehicle === 'number';
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-bold text-gray-800 mb-2 text-lg">{floorName}</p>
@@ -339,6 +348,10 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
                   <span className="font-medium" style={{ color: LAST_YEAR_COLORS.fourWheeler }}>{seriesLabels.compare} 4W:</span>
                   <span className="text-gray-700 font-semibold">{(datum.lastYearFourWheeler ?? 0)}</span>
                 </div>
+                <div className="flex justify-between items-center gap-4">
+                  <span className="font-medium" style={{ color: LAST_YEAR_COLORS.electricVehicle }}>{seriesLabels.compare} EV:</span>
+                  <span className="text-gray-700 font-semibold">{(datum.lastYearElectricVehicle ?? 0)}</span>
+                </div>
               </>
             )}
             <div className="flex justify-between items-center gap-4">
@@ -349,6 +362,10 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
               <span className="font-medium" style={{ color: CHART_COLORS.fourWheeler }}>This Year 4W:</span>
               <span className="text-gray-700 font-semibold">{datum.fourWheeler}</span>
             </div>
+            <div className="flex justify-between items-center gap-4">
+              <span className="font-medium" style={{ color: CHART_COLORS.electricVehicle }}>This Year EV:</span>
+              <span className="text-gray-700 font-semibold">{datum.electricVehicle ?? 0}</span>
+            </div>
           </div>
         </div>
       );
@@ -357,7 +374,7 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
   };
 
   // Calculate max value for Y-axis
-  const maxValue = Math.max(...chartData.map(d => d.twoWheeler + d.fourWheeler));
+  const maxValue = Math.max(...chartData.map(d => d.twoWheeler + d.fourWheeler + (d.electricVehicle ?? 0)));
   const yAxisMax = Math.ceil(maxValue / 5) * 5; // Round up to nearest 5
 
   return (
@@ -365,7 +382,7 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CardTitle className="text-lg font-bold text-[#1A1A1A]">Floor-wise Occupancy (2W vs 4W)</CardTitle>
+            <CardTitle className="text-lg font-bold text-[#1A1A1A]">Floor-wise Occupancy (2W vs 4W vs EV)</CardTitle>
             {loading && <div className="h-4 w-4 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />}
           </div>
           <div className="flex items-center gap-2">
@@ -459,57 +476,80 @@ export const FloorWiseOccupancyChart: React.FC<FloorWiseOccupancyChartProps> = (
                       const labels: { [key: string]: string } = {
                         'lastYearTwoWheeler': `${seriesLabels.compare} 2W`,
                         'lastYearFourWheeler': `${seriesLabels.compare} 4W`,
+                        'lastYearElectricVehicle': `${seriesLabels.compare} EV`,
                         'twoWheeler': `${seriesLabels.current} 2W`,
                         'fourWheeler': `${seriesLabels.current} 4W`,
+                        'electricVehicle': `${seriesLabels.current} EV`,
                       };
                       return <span style={{ color: '#6b7280', fontSize: '14px' }}>{labels[value] || value}</span>;
                     }}
                   />
                   {occupancyView === 'current' ? (
                     <>
-                      <Bar 
-                        dataKey="twoWheeler" 
+                      <Bar
+                        dataKey="twoWheeler"
                         stackId="stack"
                         fill={CHART_COLORS.twoWheeler}
                         name="twoWheeler"
                         radius={[0, 0, 0, 0]}
                       />
-                      <Bar 
-                        dataKey="fourWheeler" 
+                      <Bar
+                        dataKey="fourWheeler"
                         stackId="stack"
                         fill={CHART_COLORS.fourWheeler}
                         name="fourWheeler"
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="electricVehicle"
+                        stackId="stack"
+                        fill={CHART_COLORS.electricVehicle}
+                        name="electricVehicle"
                         radius={[4, 4, 0, 0]}
                       />
                     </>
                   ) : (
                     <>
-                      <Bar 
-                        dataKey="lastYearTwoWheeler" 
+                      <Bar
+                        dataKey="lastYearTwoWheeler"
                         stackId="lastYear"
                         fill="#DAD6CA"
                         name="lastYearTwoWheeler"
                         radius={[0, 0, 0, 0]}
                       />
-                      <Bar 
-                        dataKey="lastYearFourWheeler" 
+                      <Bar
+                        dataKey="lastYearFourWheeler"
                         stackId="lastYear"
                         fill="#E8E5DD"
                         name="lastYearFourWheeler"
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="lastYearElectricVehicle"
+                        stackId="lastYear"
+                        fill={LAST_YEAR_COLORS.electricVehicle}
+                        name="lastYearElectricVehicle"
                         radius={[4, 4, 0, 0]}
                       />
-                      <Bar 
-                        dataKey="twoWheeler" 
+                      <Bar
+                        dataKey="twoWheeler"
                         stackId="thisYear"
                         fill={CHART_COLORS.twoWheeler}
                         name="twoWheeler"
                         radius={[0, 0, 0, 0]}
                       />
-                      <Bar 
-                        dataKey="fourWheeler" 
+                      <Bar
+                        dataKey="fourWheeler"
                         stackId="thisYear"
                         fill={CHART_COLORS.fourWheeler}
                         name="fourWheeler"
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="electricVehicle"
+                        stackId="thisYear"
+                        fill={CHART_COLORS.electricVehicle}
+                        name="electricVehicle"
                         radius={[4, 4, 0, 0]}
                       />
                     </>
