@@ -902,7 +902,7 @@ export function EnhancedTable<T extends Record<string, any>>({
               <Button
                 variant="outline"
                 size="sm"
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 h-8 px-2"
+                className="border-brand text-brand hover:bg-brand-selected h-8 px-2"
                 onClick={onFilterClick}
                 title="Filter"
               >
@@ -916,7 +916,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                 size="sm"
                 onClick={handleExportClick}
                 disabled={isExporting}
-                className="h-8 px-2"
+                className="border-brand text-brand hover:bg-brand-selected h-8 px-2"
                 title={isExporting ? "Exporting..." : "Export"}
               >
                 {isExporting ? (
@@ -945,7 +945,7 @@ export function EnhancedTable<T extends Record<string, any>>({
               <Button
                 variant="outline"
                 size="sm"
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2 rounded-lg"
+                className="border-brand text-brand hover:bg-brand-selected flex items-center gap-2 rounded-lg"
                 onClick={onFilterClick}
                 title="Filter"
               >
@@ -961,7 +961,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                 size="sm"
                 onClick={handleExportClick}
                 disabled={isExporting}
-                className="flex items-center gap-2 rounded-lg"
+                className="border-brand text-brand hover:bg-brand-selected flex items-center gap-2 rounded-lg"
                 title={isExporting ? "Exporting..." : "Export"}
               >
                 {isExporting ? (
