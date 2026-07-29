@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Edit } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AddCategoryModal } from "@/components/AddCategoryModal";
 import { EditCategoryModal } from "@/components/EditCategoryModal";
 import { AddDeviationStatusModal } from "@/components/AddDeviationStatusModal";
 import { AddStatusModal } from "@/components/AddStatusModal";
 import { Checkbox } from "@/components/ui/checkbox";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,6 +22,7 @@ interface Status {
   id: number;
   order: number;
   status: string;
+  displayName: string;
   fixedState: string;
   color: string;
 }
@@ -30,10 +32,39 @@ interface UploadedFile {
   fileName: string;
 }
 
+interface DeviationStatus {
+  id: number;
+  category: string;
+  active: boolean;
+}
+
+const categoryColumns: ColumnConfig[] = [
+  { key: "category", label: "Category", sortable: true, hideable: true, defaultVisible: true },
+  { key: "amount", label: "Amount", sortable: true, hideable: true, defaultVisible: true },
+  { key: "active", label: "Active/Inactive", sortable: false, hideable: true, defaultVisible: true },
+];
+
+const statusColumns: ColumnConfig[] = [
+  { key: "order", label: "Order", sortable: true, hideable: true, defaultVisible: true },
+  { key: "status", label: "Status", sortable: true, hideable: true, defaultVisible: true },
+  { key: "displayName", label: "Display Name", sortable: true, hideable: true, defaultVisible: true },
+  { key: "fixedState", label: "Fixed State", sortable: true, hideable: true, defaultVisible: true },
+  { key: "color", label: "Color", sortable: false, hideable: true, defaultVisible: true },
+];
+
+const guideColumns: ColumnConfig[] = [
+  { key: "sr_no", label: "Sr. No.", sortable: true, hideable: true, defaultVisible: true },
+  { key: "fileName", label: "File Name", sortable: true, hideable: true, defaultVisible: true },
+];
+
+const deviationColumns: ColumnConfig[] = [
+  { key: "category", label: "Category", sortable: true, hideable: true, defaultVisible: true },
+  { key: "active", label: "Active/Inactive", sortable: false, hideable: true, defaultVisible: true },
+];
+
 export const FitoutSetupDashboard = () => {
   const [activeTab, setActiveTab] = useState('Category');
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
   const [isAddDeviationOpen, setIsAddDeviationOpen] = useState(false);
@@ -63,7 +94,6 @@ export const FitoutSetupDashboard = () => {
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setSearchTerm('');
-    setCurrentPage(1);
   };
 
   const handleAddCategory = (newCategory: { category: string; amount?: string }) => {
@@ -105,11 +135,12 @@ export const FitoutSetupDashboard = () => {
     );
   };
 
-  const handleAddStatus = (newStatus: { status: string; fixedState: string; color: string; order: string }) => {
+  const handleAddStatus = (newStatus: { status: string; displayName: string; fixedState: string; color: string; order: string }) => {
     const status: Status = {
       id: statuses.length + 1,
       order: parseInt(newStatus.order, 10) || statuses.length + 1,
       status: newStatus.status,
+      displayName: newStatus.displayName,
       fixedState: newStatus.fixedState,
       color: newStatus.color,
     };
@@ -119,12 +150,13 @@ export const FitoutSetupDashboard = () => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      Array.from(files).forEach((file) => {
-        const newFile: UploadedFile = {
-          id: uploadedFiles.length + 1,
+      setUploadedFiles((prev) => {
+        const nextId = prev.length > 0 ? Math.max(...prev.map((file) => file.id)) + 1 : 1;
+        const newFiles: UploadedFile[] = Array.from(files).map((file, index) => ({
+          id: nextId + index,
           fileName: file.name,
-        };
-        setUploadedFiles((prev) => [...prev, newFile]);
+        }));
+        return [...prev, ...newFiles];
       });
 
       toast({
@@ -139,42 +171,55 @@ export const FitoutSetupDashboard = () => {
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <Button
           onClick={() => setIsAddCategoryOpen(true)}
-          className="!bg-[#DA7756] !text-white hover:!bg-[#DA7756]/90"
+          className="bg-brand hover:bg-brand-hover text-white [&_svg]:!text-white"
         >
-          <Plus className="w-4 h-4 mr-2 !text-white" />
+          <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Actions</TableHead>
-              <TableHead className="font-semibold">Category</TableHead>
-              <TableHead className="font-semibold">Amount</TableHead>
-              <TableHead className="font-semibold">Active/Inactive</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {categories.map((category) => (
-              <TableRow key={category.id}>
-                <TableCell>
-                  <Edit className="w-4 h-4 stroke-[#C72030] cursor-pointer" onClick={() => handleEditCategory(category)} />
-                </TableCell>
-                <TableCell>{category.category}</TableCell>
-                <TableCell>{category.amount}</TableCell>
-                <TableCell>
+      <div className="w-full min-w-0 max-w-full">
+        <EnhancedTable
+          data={categories}
+          columns={categoryColumns}
+          renderCell={(item: Category, columnKey: string) => {
+            switch (columnKey) {
+              case "amount":
+                return item.amount || "—";
+              case "active":
+                return (
                   <Checkbox
-                    checked={category.active}
-                    onCheckedChange={() => handleToggleActive(category.id)}
-                    className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] border-[#C72030]"
+                    checked={item.active}
+                    onCheckedChange={() => handleToggleActive(item.id)}
+                    className="data-[state=checked]:bg-brand data-[state=checked]:border-brand border-brand"
                   />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                );
+              default:
+                return item[columnKey as keyof Category] as React.ReactNode;
+            }
+          }}
+          renderActions={(item: Category) => (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-brand hover:bg-brand-light"
+              title="Edit"
+              onClick={() => handleEditCategory(item)}
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+          )}
+          storageKey="fitout-setup-category-table"
+          enableSearch
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search categories..."
+          hideTableExport
+          emptyMessage="No categories found"
+          pagination
+          pageSize={10}
+          getItemId={(item) => String(item.id)}
+        />
       </div>
     </div>
   );
@@ -232,48 +277,44 @@ export const FitoutSetupDashboard = () => {
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <Button
           onClick={() => setIsAddStatusOpen(true)}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+          className="bg-brand hover:bg-brand-hover text-white [&_svg]:!text-white"
         >
-          <Plus className="w-4 h-4 mr-2 stroke-[#C72030] text-white" />
+          <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead>Actions</TableHead>
-              <TableHead>Order</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Fixed State</TableHead>
-              <TableHead>Color</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {statuses.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                  No data available
-                </TableCell>
-              </TableRow>
-            ) : (
-              statuses.map((status) => (
-                <TableRow key={status.id}>
-                  <TableCell>
-                    <Edit className="w-4 h-4 stroke-[#C72030] cursor-pointer" />
-                  </TableCell>
-                  <TableCell>{status.order}</TableCell>
-                  <TableCell>{status.status}</TableCell>
-                  <TableCell>{status.fixedState}</TableCell>
-                  <TableCell>
-                    <div className="w-6 h-6 rounded border" style={{ backgroundColor: status.color }} />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+      <div className="w-full min-w-0 max-w-full">
+        <EnhancedTable
+          data={statuses}
+          columns={statusColumns}
+          renderCell={(item: Status, columnKey: string) => {
+            if (columnKey === "color") {
+              return <div className="w-6 h-6 rounded border" style={{ backgroundColor: item.color }} />;
+            }
+            return item[columnKey as keyof Status] as React.ReactNode;
+          }}
+          renderActions={() => (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-brand hover:bg-brand-light"
+              title="Edit"
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+          )}
+          storageKey="fitout-setup-status-table"
+          enableSearch
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search statuses..."
+          hideTableExport
+          emptyMessage="No data available"
+          pagination
+          pageSize={10}
+          getItemId={(item) => String(item.id)}
+        />
       </div>
     </div>
   );
@@ -281,9 +322,9 @@ export const FitoutSetupDashboard = () => {
   const renderFitoutGuideTab = () => (
     <div>
       <div className="mb-6">
-        <div className="border-2 border-dashed border-[#C72030] rounded-lg p-8 text-center">
+        <div className="border-2 border-dashed border-brand rounded-lg p-8 text-center">
           <div className="mb-4">
-            <span className="font-medium text-[#C72030]">Choose File</span>
+            <span className="font-medium text-brand">Choose File</span>
             <span className="text-gray-500 ml-2">No file chosen</span>
           </div>
           <label htmlFor="file-upload">
@@ -300,7 +341,7 @@ export const FitoutSetupDashboard = () => {
 
       <div className="w-full min-w-0 max-w-full">
         <EnhancedTable
-          data={filteredFiles}
+          data={uploadedFiles.map((file, index) => ({ ...file, sr_no: index + 1 }))}
           columns={guideColumns}
           renderCell={(item: UploadedFile & { sr_no: number }, columnKey: string) => {
             switch (columnKey) {
@@ -327,16 +368,12 @@ export const FitoutSetupDashboard = () => {
           searchTerm={searchTerm}
           onSearchChange={(value) => {
             setSearchTerm(value);
-            setCurrentPage(1);
           }}
-          disableClientSearch
           searchPlaceholder="Search files..."
           hideTableExport
           emptyMessage="No files uploaded"
           pagination
           pageSize={15}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
           getItemId={(item) => String(item.id)}
         />
       </div>
@@ -348,30 +385,50 @@ export const FitoutSetupDashboard = () => {
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <Button
           onClick={() => setIsAddDeviationOpen(true)}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+          className="bg-brand hover:bg-brand-hover text-white [&_svg]:!text-white"
         >
-          <Plus className="w-4 h-4 mr-2 stroke-[#C72030] text-white" />
+          <Plus className="w-4 h-4 mr-2" />
           Add
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead>Actions</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Active/Inactive</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              <TableCell colSpan={3} className="text-center py-8 text-gray-500">
-                No deviation status found
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+      <div className="w-full min-w-0 max-w-full">
+        <EnhancedTable
+          data={deviationStatuses}
+          columns={deviationColumns}
+          renderCell={(item: DeviationStatus, columnKey: string) => {
+            if (columnKey === "active") {
+              return (
+                <Checkbox
+                  checked={item.active}
+                  onCheckedChange={() => handleToggleDeviationActive(item.id)}
+                  className="data-[state=checked]:bg-brand data-[state=checked]:border-brand border-brand"
+                />
+              );
+            }
+            return item[columnKey as keyof DeviationStatus] as React.ReactNode;
+          }}
+          renderActions={() => (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-brand hover:bg-brand-light"
+              title="Edit"
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+          )}
+          storageKey="fitout-setup-deviation-table"
+          enableSearch
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search deviation statuses..."
+          hideTableExport
+          emptyMessage="No deviation status found"
+          pagination
+          pageSize={10}
+          getItemId={(item) => String(item.id)}
+        />
       </div>
     </div>
   );
@@ -406,7 +463,7 @@ export const FitoutSetupDashboard = () => {
             onClick={() => handleTabChange(tab)}
             className={`px-6 py-2 font-medium border-b-2 whitespace-nowrap ${
               activeTab === tab
-                ? 'bg-[#EDEAE3] text-[#C72030]'
+                ? 'bg-[#EDEAE3] text-brand'
                 : 'bg-white text-black'
             }`}
           >

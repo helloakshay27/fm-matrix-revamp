@@ -4389,7 +4389,7 @@ export const TicketDetailsPage = () => {
               <>
                 <Button
                   onClick={handleJobSheet}
-                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                  className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                 >
                   Job Sheet
                 </Button>
