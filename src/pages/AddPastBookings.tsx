@@ -599,29 +599,6 @@ export const AddPastBookings = () => {
 
             const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
 
-            // --- Cost calculation based on per_slot_charge and accessories ---
-            const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
-            const slotsCount = selectedSlots.length;
-
-            // Calculate slot total
-            const slotTotal = slotsCount * perSlotCharge;
-
-            // Calculate accessory total with quantities
-            const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
-                const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
-                return total + ((accessory?.price || 0) * (quantity || 0));
-            }, 0);
-
-            // Subtotal includes slots and accessories
-            const subtotalBeforeDiscount = slotTotal + accessoryTotal;
-            const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
-            const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
-            const gstPercentage = facilityDetails?.gst || 0;
-            const sgstPercentage = facilityDetails?.sgst || 0;
-            const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
-            const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
-            const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
-
             // Build booked_members_attributes array from people table
             const bookedMembersAttributes = peopleTable
                 .filter(row => row.role && row.user) // Only include rows with both role and user selected
