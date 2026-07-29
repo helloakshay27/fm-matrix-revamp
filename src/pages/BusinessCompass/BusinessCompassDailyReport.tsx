@@ -4188,7 +4188,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             <Zap size={9} className="shrink-0" />
                                             <ActiveTimer
                                               activeTimeTillNow={d.active_time_till_now}
-                                              isStarted={d.is_started}
+                                              isStarted={false}
                                             />
                                           </span>
                                         )}
