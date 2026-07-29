@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  Plus, Upload, Eye, Trash2, Loader2, X, BarChart3,
+  Plus, Upload, Eye, Trash2, Loader2, BarChart3,
   Calendar, Filter, RefreshCw, Leaf, Activity, Download,
   Droplets, Percent, Package
 } from "lucide-react";
@@ -13,8 +13,8 @@ import { toast } from 'sonner';
 import { WasteGenerationFilterDialog } from '../components/WasteGenerationFilterDialog';
 import { WasteGenerationBulkDialog } from '../components/WasteGenerationBulkDialog';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { fetchWasteGenerations, WasteGeneration, WasteGenerationFilters, WasteGenerationCounts } from '../services/wasteGenerationAPI';
-import { useLayout } from '@/contexts/LayoutContext';
 import { API_CONFIG, getAuthHeader, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
@@ -156,9 +156,7 @@ const SiteDetailModal: React.FC<SiteDetailModalProps> = ({ siteName, siteData, o
 
 const UtilityWasteGenerationDashboard = () => {
   const navigate = useNavigate();
-  const { isSidebarCollapsed } = useLayout();
   const { shouldShow } = useDynamicPermissions();
-  const panelRef = useRef<HTMLDivElement>(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<WasteGenerationFilters>({});
@@ -362,10 +360,10 @@ useEffect(() => {
   return (
     <>
       <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <div className="text-sm text-gray-600 mb-2">Assets &gt; Waste Generation List</div>
           <h1 className="font-semibold text-2xl text-gray-900 uppercase tracking-tight">WASTE GENERATION LIST</h1>
-        </div>
+        </div> */}
 
         <Tabs defaultValue="list" className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
@@ -552,20 +550,11 @@ useEffect(() => {
 
       {/* Action Panel */}
       {showActionPanel && (
-        <div className={`fixed z-50 flex items-end justify-center pb-24 pointer-events-none transition-all duration-300 ${isSidebarCollapsed ? 'left-16' : 'left-64'} right-0 bottom-0`}>
-          <div className="pointer-events-auto bg-white border border-gray-200 rounded-lg shadow-2xl p-6 flex gap-12">
-            <button onClick={() => navigate('/maintenance/waste/generation/add')} className="flex flex-col items-center hover:text-[#C72030] transition-colors">
-              <Plus className="w-6 h-6 mb-1"/><span className="text-xs font-bold uppercase">Add</span>
-            </button>
-            <button onClick={() => setIsBulkUploadOpen(true)} className="flex flex-col items-center hover:text-[#C72030] transition-colors">
-              <Upload className="w-6 h-6 mb-1"/><span className="text-xs font-bold uppercase">Import</span>
-            </button>
-            <div className="w-px h-8 bg-gray-200" />
-            <button onClick={handleClearSelection} className="flex flex-col items-center text-gray-400 hover:text-black transition-colors">
-              <X className="w-6 h-6 mb-1"/><span className="text-xs font-bold uppercase">Close</span>
-            </button>
-          </div>
-        </div>
+        <SelectionPanel
+          onAdd={() => navigate('/maintenance/waste/generation/add')}
+          onImport={() => setIsBulkUploadOpen(true)}
+          onClearSelection={handleClearSelection}
+        />
       )}
 
       <WasteGenerationFilterDialog isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
