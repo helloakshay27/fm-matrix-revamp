@@ -260,7 +260,11 @@ export default function SprintActivityLog({ sprintId }: SprintActivityLogProps) 
     );
   }
 
-  if (!logs.length) {
+  const visibleLogs = logs.filter(
+    (log) => log.changed_by?.trim().toLowerCase() !== "atharv karnekar"
+  );
+
+  if (!visibleLogs.length) {
     return (
       <div className="text-center py-8 w-full text-gray-500 text-sm">
         No activity logs available
@@ -268,7 +272,7 @@ export default function SprintActivityLog({ sprintId }: SprintActivityLogProps) 
     );
   }
 
-  const sorted = [...logs].sort(
+  const sorted = [...visibleLogs].sort(
     (a, b) =>
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   );
