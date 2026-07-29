@@ -281,6 +281,34 @@ export const RosterEditPage: React.FC = () => {
             ? r.approver_ids.map(Number)
             : [];
 
+      // The roster response already carries approver name/email (when returned as objects) —
+      // seed approverUsers with them so the select shows real names immediately, without
+      // waiting on (or being limited to) the separately-fetched, site-scoped approver_users list.
+      if (r.approvers && Array.isArray(r.approvers)) {
+        const approversFromRoster: FMUser[] = r.approvers
+          .filter((a: any) => typeof a === "object" && a !== null)
+          .map((a: any) => ({
+            id: a.id,
+            name: a.name || a.full_name || `${a.firstname || ""} ${a.lastname || ""}`.trim(),
+            email: a.email,
+          }));
+
+        if (approversFromRoster.length > 0) {
+          setApproverUsers((prev) => {
+            const merged = [...prev];
+            approversFromRoster.forEach((approver) => {
+              const existingIndex = merged.findIndex((u) => u.id === approver.id);
+              if (existingIndex === -1) {
+                merged.push(approver);
+              } else if (!merged[existingIndex].name && approver.name) {
+                merged[existingIndex] = { ...merged[existingIndex], name: approver.name };
+              }
+            });
+            return merged;
+          });
+        }
+      }
+
       console.log("🏢 Mapped Departments:", departments);
       console.log("👥 Mapped Employees:", selectedEmployees);
       console.log("✅ Mapped Approvers:", approverIds);
@@ -522,13 +550,26 @@ export const RosterEditPage: React.FC = () => {
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       const users = Array.isArray(data) ? data : data.users || data.fm_users || [];
-      setApproverUsers(
-        users.map((user: { id: number; name?: string; email?: string }) => ({
+      const siteApprovers: FMUser[] = users.map(
+        (user: { id: number; name?: string; email?: string }) => ({
           id: user.id,
           name: user.name || "",
           email: user.email || "",
-        }))
+        })
       );
+
+      // Merge rather than replace: an approver already assigned on this roster (seeded from
+      // the roster response) may not be in the current site's approver list — keep it so its
+      // name doesn't disappear once this site-scoped fetch resolves.
+      setApproverUsers((prev) => {
+        const merged = [...siteApprovers];
+        prev.forEach((existing) => {
+          if (!merged.some((u) => u.id === existing.id)) {
+            merged.push(existing);
+          }
+        });
+        return merged;
+      });
     } catch (error) {
       console.error("Error fetching approver users:", error);
     } finally {
@@ -1546,23 +1587,14 @@ export const RosterEditPage: React.FC = () => {
                   renderValue={(selected) => {
                     const selectedArray = selected as number[];
                     if (selectedArray.length === 0) return "";
-                    if (selectedArray.length === 1) {
-                      const user = approverUsers.find(
-                        (u) => u.id === selectedArray[0]
-                      );
-                      return user?.name || `User ${selectedArray[0]}`;
-                    }
-                    if (selectedArray.length <= 3) {
-                      return selectedArray
-                        .map((value) => {
-                          const user = approverUsers.find(
-                            (u) => u.id === value
-                          );
-                          return user?.name || `User ${value}`;
-                        })
-                        .join(", ");
-                    }
-                    return `${selectedArray.length} approvers selected`;
+                    return selectedArray
+                      .map((value) => {
+                        const user = approverUsers.find(
+                          (u) => u.id === value
+                        );
+                        return user?.name || `User ${value}`;
+                      })
+                      .join(", ");
                   }}
                   displayEmpty
                   disabled={loadingApproverUsers || isSubmitting}
