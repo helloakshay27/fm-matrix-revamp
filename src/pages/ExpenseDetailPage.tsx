@@ -253,7 +253,7 @@ export const ExpenseDetailPage = () => {
   };
 
   const getStatusColor = (status: string) => {
-    return "bg-blue-100 text-blue-800 border-blue-200";
+    return "bg-gray-100 text-gray-800 border-gray-200";
   };
 
   const handleEdit = () => {
@@ -318,7 +318,7 @@ export const ExpenseDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -396,28 +396,12 @@ export const ExpenseDetailPage = () => {
             backgroundColor: "rgba(250, 250, 250, 1)",
           }}
         >
-          <style>{`
-                        .expense-detail-tabs button[data-state="active"] {
-                            background-color: rgba(237, 234, 227, 1) !important;
-                            color: rgba(199, 32, 48, 1) !important;
-                        }
-                    `}</style>
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList
-              className="expense-detail-tabs w-full flex flex-nowrap rounded-t-lg p-0 overflow-x-auto mb-4"
-              style={{
-                gap: "0",
-                padding: "0",
-                backgroundColor: "rgba(246, 247, 247, 1)",
-                height: "50px",
-                marginBottom: "16px",
-                justifyContent: "flex-start",
-              }}
-            >
+            <TabsList className="flex flex-wrap w-full max-w-3xl justify-start">
               {[
                 { label: "Expense Details", value: "expense-details" },
                 { label: "Vendor Info", value: "vendor-info" },
@@ -427,25 +411,7 @@ export const ExpenseDetailPage = () => {
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
-                  style={{
-                    width: "230px",
-                    height: "36px",
-                    paddingTop: "10px",
-                    paddingRight: "20px",
-                    paddingBottom: "10px",
-                    paddingLeft: "20px",
-                    borderRadius: "0",
-                    border: "none",
-                    margin: "0",
-                    fontFamily: "Work Sans",
-                    fontWeight: 500,
-                    fontSize: "14px",
-                    lineHeight: "100%",
-                    letterSpacing: "0%",
-                    color: "rgba(26, 26, 26, 1)",
-                    backgroundColor: "rgba(246, 247, 247, 1)",
-                  }}
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -716,7 +682,7 @@ export const ExpenseDetailPage = () => {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex items-start gap-3 pb-4 border-b">
-                      <div className="w-2 h-2 mt-2 rounded-full bg-blue-500"></div>
+                      <div className="w-2 h-2 mt-2 rounded-full bg-brand"></div>
                       <div className="flex-1">
                         <p className="text-sm font-medium">Expense Created</p>
                         <p className="text-xs text-gray-500 mt-1">
@@ -725,7 +691,7 @@ export const ExpenseDetailPage = () => {
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 mt-2 rounded-full bg-green-500"></div>
+                      <div className="w-2 h-2 mt-2 rounded-full bg-brand"></div>
                       <div className="flex-1">
                         <p className="text-sm font-medium">Last Updated</p>
                         <p className="text-xs text-gray-500 mt-1">
@@ -754,11 +720,16 @@ export const ExpenseDetailPage = () => {
           <div className="flex gap-3 justify-end mt-4">
             <Button
               variant="outline"
+              className="fm-button-fix px-8 py-2"
               onClick={() => setShowDeleteDialog(false)}
             >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button
+              variant="destructive"
+              className="bg-[#dc2626] hover:bg-[#b91c1c] text-white"
+              onClick={handleDelete}
+            >
               Delete
             </Button>
           </div>

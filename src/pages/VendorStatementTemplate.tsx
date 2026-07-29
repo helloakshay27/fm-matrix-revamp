@@ -1,33 +1,12 @@
 import React from "react";
 import { getDocumentTemplateSettings } from "@/utils/documentTemplate";
 
-export const getVendorStatementStatusStyle = (status) => {
-    const styles = {
-        draft: {
-            backgroundColor: "#f3f4f6",
-            color: "#1f2937",
-            borderColor: "#e5e7eb",
-        },
-        paid: {
-            backgroundColor: "#dcfce7",
-            color: "#166534",
-            borderColor: "#bbf7d0",
-        },
-        unpaid: {
-            backgroundColor: "#fee2e2",
-            color: "#991b1b",
-            borderColor: "#fecaca",
-        },
-        overdue: {
-            backgroundColor: "#ffedd5",
-            color: "#9a3412",
-            borderColor: "#fed7aa",
-        },
+export const getVendorStatementStatusStyle = () => {
+    return {
+        backgroundColor: "#f3f4f6",
+        color: "#1f2937",
+        borderColor: "#e5e7eb",
     };
-
-    return (
-        styles[String(status || "").toLowerCase()] || styles.draft
-    );
 };
 
 const formatStatus = (status) => {
@@ -144,7 +123,7 @@ export const VendorStatementPdf = ({
                         <div className="text-[11px]">
                             <p className="mb-2 font-bold">To</p>
 
-                            <p className="font-bold text-blue-700 mb-1">
+                            <p className="font-bold mb-1">
                                 {vendorName}
                             </p>
 

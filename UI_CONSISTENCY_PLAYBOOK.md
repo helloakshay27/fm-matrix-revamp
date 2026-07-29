@@ -186,13 +186,54 @@ WHILE YOU'RE IN THERE — LOOK FOR THESE RELATED BUGS TOO
   should be cleaned up for consistency.
 - Copy-pasted delete-confirmation dialog titles referencing the wrong module name.
 
+CRITICAL: MUI vs shadcn `Button` — check before touching ANY Button
+- This codebase imports a component literally named `Button` from TWO different
+  places: MUI (`@mui/material`) and shadcn (`@/components/ui/button`). Which one a
+  given file uses is NOT consistent across modules — e.g. Quotes/Sales Order/Invoice's
+  Add/Edit pages import the REAL MUI Button, but Credit Note's Add/Edit pages import
+  shadcn's Button instead (with the MUI one literally commented out in the import
+  block: `// Button,`). List/Details pages across most modules use shadcn's Button.
+- BEFORE copying any MUI-flavored JSX onto a Button in a target file (sx={{...}},
+  variant="outlined"/"text"/"contained", startIcon={...}, color="inherit"), grep that
+  file's imports to confirm which Button it actually uses:
+    grep -n "import.*Button" file.tsx
+  and check whether the @mui/material import block includes `Button,` live (not
+  commented out) vs. a separate `import { Button } from '@/components/ui/button'`.
+- If it's shadcn's Button: use `variant="outline"` (no 'd'), `className="fm-button-fix
+  px-8 py-2"` (+ `fm-button-brand` for solid/primary), and NEVER `sx`, `startIcon`, or
+  `color="inherit"` — these are silently accepted as no-op/invalid props (TypeScript in
+  this project does not flag them — see below) and will NOT produce the visual result
+  you expect. Icons go inside the children as a manual `<span className="flex
+  items-center gap-2"><Icon /> Label</span>`, not via `startIcon`.
+- If it's the real MUI Button: `sx`, `variant="outlined"/"text"/"contained"`,
+  `startIcon`, and `color="inherit"` all work as normal MUI props.
+- Other MUI components (TextField, Select, FormControl, Radio, CircularProgress,
+  Divider, Dialog, etc.) are unaffected by this — they're always the real MUI versions
+  in every file observed so far, regardless of which Button is imported. Only `Button`
+  itself is ambiguous.
+
+CRITICAL: the correct `tsc` command for this repo
+- Running `npx tsc --noEmit -p .` against the ROOT `tsconfig.json` is a SILENT NO-OP —
+  that file is a project-references "solution" (`"files": []` + `"references": [...]`)
+  and plain `tsc` does not build/check referenced projects without `--build`. It will
+  always print zero errors regardless of what's actually wrong in your code. Do NOT
+  trust a clean result from this command.
+- The real command that actually type-checks `src/` is:
+    npx tsc --noEmit -p tsconfig.app.json
+- Before relying on "no errors" as your verification signal, first run this against
+  the unmodified repo to see the pre-existing baseline (a handful of syntax errors in
+  known dead/backup files like `*Backup.tsx`, `*Old.tsx` are expected and NOT yours to
+  fix) — then diff your result against that baseline rather than expecting literal zero.
+
 VERIFICATION (do this for every file you touch)
 1. Grep the file afterward for any of the legacy patterns you were supposed to remove,
    to confirm nothing was missed.
-2. Run `npx tsc --noEmit -p .` from the repo root and filter output for the filenames
-   you touched, to confirm no new type errors.
+2. Run `npx tsc --noEmit -p tsconfig.app.json` from the repo root (NOT `-p .`, see
+   above) and filter output for the filenames you touched, to confirm no new type
+   errors were introduced beyond the pre-existing backup-file baseline.
 3. Explicitly double-check you did NOT accidentally recolor any genuine destructive
    Delete/Trash button to orange, and did NOT touch any confirmed-semantic exception.
-4. Report a concise per-file summary of every change made, and flag anything you found
+4. Double-check every Button element you touched against the MUI-vs-shadcn rule above.
+5. Report a concise per-file summary of every change made, and flag anything you found
    ambiguous rather than silently guessing.
 ```

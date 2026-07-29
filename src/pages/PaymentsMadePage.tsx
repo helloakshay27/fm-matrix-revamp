@@ -7,7 +7,6 @@ import {
   ChevronDown,
   X,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { toast as sonnerToast } from "sonner";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -447,7 +446,7 @@ export const PaymentsMadePage: React.FC = () => {
           }
           title="View Details"
         >
-          <Eye className="h-4 w-4 text-blue-600" />
+          <Eye className="h-4 w-4 text-black" />
         </Button>
 
         <button
@@ -472,7 +471,7 @@ export const PaymentsMadePage: React.FC = () => {
     date: <span className="text-sm text-gray-900">{payment.date}</span>,
     payment_number: (
       <div
-        className="font-medium text-blue-500 cursor-pointer hover:underline"
+        className="font-medium text-brand cursor-pointer hover:underline"
         onClick={() => sonnerToast.info(`View payment ${payment.id}`)}
       >
         {payment.payment_number}
@@ -491,12 +490,7 @@ export const PaymentsMadePage: React.FC = () => {
     ),
     mode: <span className="text-sm text-gray-900">{payment.mode}</span>,
     status: (
-      <span
-        className={cn(
-          "text-xs font-semibold uppercase",
-          payment.status === "PAID" ? "text-green-500" : "text-gray-500"
-        )}
-      >
+      <span className="text-xs font-semibold uppercase text-gray-800">
         {payment.status}
       </span>
     ),
@@ -568,7 +562,7 @@ export const PaymentsMadePage: React.FC = () => {
         columns={columns}
         leftActions={
           <Button
-            className="bg-[#C72030] hover:bg-[#b01a28] text-white"
+            className="fm-button-fix fm-button-brand px-8 py-2"
             onClick={() => navigate("/accounting/payments-made/create")}
           >
             <Plus className="h-4 w-4 mr-2" />

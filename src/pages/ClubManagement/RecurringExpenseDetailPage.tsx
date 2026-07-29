@@ -77,8 +77,6 @@ interface Props extends ApiConfig { }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getStatusColor = (active?: boolean) => {
-  if (active === true) return "bg-green-100 text-green-800 border-green-200";
-  if (active === false) return "bg-red-100 text-red-800 border-red-200";
   return "bg-gray-100 text-gray-800 border-gray-200";
 };
 
@@ -325,7 +323,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
   if (error) {
     return (
       <div className="min-h-screen bg-background p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <div className="flex items-center gap-4 mb-6">
             <Button
               variant="ghost"
@@ -352,7 +350,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
   if (!item) {
     return (
       <div className="min-h-screen bg-background p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <div className="flex items-center gap-4 mb-6">
             <Button
               variant="ghost"
@@ -381,7 +379,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
 
         {/* ── Header ── */}
         <div className="flex items-center justify-between">
@@ -464,25 +462,8 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
             backgroundColor: "rgba(250, 250, 250, 1)",
           }}
         >
-          <style>{`
-            .recurring-expense-tabs button[data-state="active"] {
-              background-color: rgba(237, 234, 227, 1) !important;
-              color: rgba(199, 32, 48, 1) !important;
-            }
-          `}</style>
-
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList
-              className="recurring-expense-tabs w-full flex flex-nowrap rounded-t-lg p-0 overflow-x-auto mb-4"
-              style={{
-                gap: "0",
-                padding: "0",
-                backgroundColor: "rgba(246, 247, 247, 1)",
-                height: "50px",
-                marginBottom: "16px",
-                justifyContent: "flex-start",
-              }}
-            >
+            <TabsList className="flex flex-wrap w-full max-w-3xl justify-start">
               {[
                 { label: "Expense Details", value: "expense-details" },
                 { label: "Vendor & GST Info", value: "vendor-info" },
@@ -491,22 +472,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
-                  style={{
-                    width: "230px",
-                    height: "36px",
-                    padding: "10px 20px",
-                    borderRadius: "0",
-                    border: "none",
-                    margin: "0",
-                    fontFamily: "Work Sans",
-                    fontWeight: 500,
-                    fontSize: "14px",
-                    lineHeight: "100%",
-                    letterSpacing: "0%",
-                    color: "rgba(26, 26, 26, 1)",
-                    backgroundColor: "rgba(246, 247, 247, 1)",
-                  }}
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -545,7 +511,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Expense Type</p>
-                      <Badge className="mt-1 bg-blue-100 text-blue-800 border-blue-200 border capitalize">
+                      <Badge className="mt-1 bg-gray-100 text-gray-800 border-gray-200 border capitalize">
                         {item.expense_type || "-"}
                       </Badge>
                     </div>
@@ -816,7 +782,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
                     <div className="flex gap-4 pb-4 border-b items-center justify-between">
                       <div className="flex gap-4">
                         <div className="flex-shrink-0">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2" />
+                          <div className="w-2 h-2 bg-brand rounded-full mt-2" />
                         </div>
                         <div>
                           <p className="font-medium">Created</p>
@@ -825,7 +791,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
                           </p>
                         </div>
                       </div>
-                      <Badge className="bg-blue-100 text-blue-800 border-blue-200 border">
+                      <Badge className="bg-gray-100 text-gray-800 border-gray-200 border">
                         CREATED
                       </Badge>
                     </div>
@@ -833,7 +799,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
                     <div className="flex gap-4 pb-4 border-b items-center justify-between">
                       <div className="flex gap-4">
                         <div className="flex-shrink-0">
-                          <div className="w-2 h-2 bg-purple-500 rounded-full mt-2" />
+                          <div className="w-2 h-2 bg-brand rounded-full mt-2" />
                         </div>
                         <div>
                           <p className="font-medium">Last Updated</p>
@@ -842,7 +808,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
                           </p>
                         </div>
                       </div>
-                      <Badge className="bg-purple-100 text-purple-800 border-purple-200 border">
+                      <Badge className="bg-gray-100 text-gray-800 border-gray-200 border">
                         UPDATED
                       </Badge>
                     </div>
@@ -850,7 +816,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
                     <div className="flex gap-4 pb-4 border-b items-center justify-between">
                       <div className="flex gap-4">
                         <div className="flex-shrink-0">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2" />
+                          <div className="w-2 h-2 bg-brand rounded-full mt-2" />
                         </div>
                         <div>
                           <p className="font-medium">Start Date</p>
@@ -859,7 +825,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
                           </p>
                         </div>
                       </div>
-                      <Badge className="bg-green-100 text-green-800 border-green-200 border">
+                      <Badge className="bg-gray-100 text-gray-800 border-gray-200 border">
                         START
                       </Badge>
                     </div>
@@ -868,7 +834,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
                       <div className="flex gap-4 items-center justify-between">
                         <div className="flex gap-4">
                           <div className="flex-shrink-0">
-                            <div className="w-2 h-2 bg-orange-500 rounded-full mt-2" />
+                            <div className="w-2 h-2 bg-brand rounded-full mt-2" />
                           </div>
                           <div>
                             <p className="font-medium">End Date</p>
@@ -877,7 +843,7 @@ const RecurringExpenseDetailPage: React.FC<Props> = ({ baseUrl: propBaseUrl, tok
                             </p>
                           </div>
                         </div>
-                        <Badge className="bg-orange-100 text-orange-800 border-orange-200 border">
+                        <Badge className="bg-gray-100 text-gray-800 border-gray-200 border">
                           END
                         </Badge>
                       </div>

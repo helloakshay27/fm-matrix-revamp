@@ -3736,6 +3736,10 @@ function App() {
                               element={<NewRecurringExpensePage />}
                             />
                             <Route
+                              path="/accounting/recurring-expenses/edit/:id"
+                              element={<NewRecurringExpensePage />}
+                            />
+                            <Route
                               path="/accounting/recurring-expenses/:id"
                               element={<RecurringExpenseDetailPage />}
                             />
