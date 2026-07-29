@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useState } from "react";
-import { T } from "../constants";
+import { T, COLORS } from "../constants";
+export { COLORS };
 import { I, ico } from "../icons";
 
 /* ── Style helpers ── */

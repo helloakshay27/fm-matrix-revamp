@@ -4,32 +4,15 @@ import { T, COLORS } from '../constants';
 import { I, ico } from '../icons';
 import { card, Btn, StatusPill, FilterSelect, aBtn } from './UI';
 
-export default function MembersSection() {
+function MemberCard({ m }) {
   const {
-    allMembers, setAllMembers,
-    memberSearch, setMemberSearch,
-    memberDeptFilter, setMemberDeptFilter,
-    memberStatusFilter, setMemberStatusFilter,
-    memberGroupView, setMemberGroupView,
-    viewingMember, setViewingMember,
     actionMenuMember, setActionMenuMember,
-    showInviteModal, setShowInviteModal,
-    inviteMode, setInviteMode,
-    inviteRows, setInviteRows,
-    editingMember, setEditingMember,
-    editMemberForm, setEditMemberForm,
-    assignKraMemberModal, setAssignKraMemberModal,
-    assignKraMemberKraId, setAssignKraMemberKraId,
-    assignKpiMemberModal, setAssignKpiMemberModal,
-    assignKpiMemberKpiId, setAssignKpiMemberKpiId,
-    filteredMembers, groupedMembers, ungrouped, memberDepts,
-    initials,
-    openInvite, updateInviteRow, addInviteRow, removeInviteRow, sendInvites,
-    openEditMember, saveEditMember, toggleMemberStatus, deleteMember,
-    allKras, allKpis, allJds,
+    memberDepts, initials,
+    openEditMember,
+    setAssignKraMemberModal, setAssignKpiMemberModal,
+    toggleMemberStatus, deleteMember,
   } = useJobs();
-
-  const MemberCard = ({ m }) => (
+  return (
     <div
       style={{
         display: "flex",
@@ -317,8 +300,17 @@ export default function MembersSection() {
       </div>
     </div>
   );
+}
 
-  const MemberDetail = () => {
+function MemberDetail() {
+  const {
+    viewingMember, setViewingMember,
+    allMembers, allKras, allKpis, allJds,
+    memberDepts, initials,
+    openEditMember,
+    setAssignKraMemberModal, setAssignKpiMemberModal,
+    toggleMemberStatus,
+  } = useJobs();
     const m = allMembers.find((mb) => mb.id === viewingMember);
     if (!m) return null;
     const memberKras = allKras.filter((k) => {
@@ -714,7 +706,9 @@ export default function MembersSection() {
         </div>
       </div>
     );
-  };
+  }
+
+export default function MembersSection() {
 
   if (viewingMember) return <MemberDetail />;
 

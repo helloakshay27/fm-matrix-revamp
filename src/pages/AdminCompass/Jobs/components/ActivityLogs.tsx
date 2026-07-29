@@ -1,20 +1,7 @@
 // @ts-nocheck
-import { useState, useMemo } from "react";
 import { useJobs } from "../JobsContext";
 import { T } from "../constants";
 import { ico } from "../icons";
-import { pill } from "./UI";
-
-const actionTypes = [
-  { key: "all", label: "All" },
-  { key: "create", label: "Created" },
-  { key: "edit", label: "Edited" },
-  { key: "assign", label: "Assigned" },
-  { key: "activate", label: "Activated" },
-  { key: "deactivate", label: "Deactivated" },
-  { key: "progress", label: "Progress" },
-  { key: "achievement", label: "Achieved" },
-];
 
 const actionColors = {
   create: T.growth,
@@ -38,12 +25,6 @@ const actionLabels = {
 
 export default function ActivityLogs() {
   const { activityLogs } = useJobs();
-  const [activityFilter, setActivityFilter] = useState("all");
-
-  const filteredLogs = useMemo(() => {
-    if (activityFilter === "all") return activityLogs;
-    return activityLogs.filter((log) => log.type === activityFilter);
-  }, [activityLogs, activityFilter]);
 
   return (
     <div>
@@ -51,51 +32,27 @@ export default function ActivityLogs() {
         style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          gap: 8,
           marginBottom: 20,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ display: "flex", color: T.orange }}>
-            {ico.clock}
-          </span>
-          <span style={{ fontSize: 14, fontWeight: 700 }}>
-            Activity Logs
-          </span>
-          <div
-            style={{
-              padding: "4px 12px",
-              borderRadius: 999,
-              background: T.orangeSoft,
-              fontSize: 11,
-              fontWeight: 700,
-              color: T.orange,
-            }}
-          >
-            {activityLogs.length} entries
-          </div>
-        </div>
+        <span style={{ display: "flex", color: T.orange }}>
+          {ico.clock}
+        </span>
+        <span style={{ fontSize: 14, fontWeight: 700 }}>
+          Activity Logs
+        </span>
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            padding: 4,
-            background: T.raised,
-            borderRadius: T.rmd,
-            border: `1px solid ${T.borderSoft}`,
-            width: "fit-content",
+            padding: "4px 12px",
+            borderRadius: 999,
+            background: T.orangeSoft,
+            fontSize: 11,
+            fontWeight: 700,
+            color: T.orange,
           }}
         >
-          {actionTypes.map((t) => (
-            <button
-              key={t.key}
-              style={pill(activityFilter === t.key)}
-              onClick={() => setActivityFilter(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
+          {activityLogs.length} entries
         </div>
       </div>
       <div
@@ -127,7 +84,7 @@ export default function ActivityLogs() {
           <span>Detail</span>
           <span>By</span>
         </div>
-        {filteredLogs.length === 0 ? (
+        {activityLogs.length === 0 ? (
           <div
             style={{
               padding: "48px 20px",
@@ -136,10 +93,10 @@ export default function ActivityLogs() {
               color: T.inkMuted,
             }}
           >
-            No activity logs match the selected filter.
+            No activity logs yet.
           </div>
         ) : (
-          filteredLogs.map((log, i) => (
+          activityLogs.map((log, i) => (
             <div
               key={log.id}
               style={{
@@ -149,7 +106,7 @@ export default function ActivityLogs() {
                 padding: "12px 20px",
                 fontSize: 12.5,
                 borderBottom:
-                  i < filteredLogs.length - 1
+                  i < activityLogs.length - 1
                     ? `1px solid ${T.borderSoft}`
                     : "none",
                 alignItems: "center",

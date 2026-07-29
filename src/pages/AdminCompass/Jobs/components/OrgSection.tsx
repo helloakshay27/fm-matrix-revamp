@@ -4,25 +4,11 @@ import { T, COLORS, SETUP_TABS, STATES_INDIA, COUNTRIES, EMPLOYEE_RANGES, INDUST
 import { I, ico } from '../icons';
 import { card, g2, g3, FI, FS, FT, Fld, Btn, StatusPill, pill, secTitle, aBtn } from './UI';
 
-export default function OrgSection() {
-  const {
-    setupTab, setSetupTab,
-    logoPreview, fileRef,
-    deptSearch, setDeptSearch,
-    showDeptModal, setShowDeptModal,
-    editingDept, setEditingDept,
-    deptForm, setDeptForm,
-    filteredDepts,
-    handleLogoUpload,
-    openDeptModal,
-    saveDept,
-    deleteDept,
-    showToast,
-  } = useJobs();
+const divider = { height: 1, background: T.borderSoft, margin: "0 0 28px" };
 
-  const divider = { height: 1, background: T.borderSoft, margin: "0 0 28px" };
-
-  const CompanyDetails = () => (
+function CompanyDetails() {
+  const { logoPreview, fileRef, handleLogoUpload, showToast } = useJobs();
+  return (
     <div style={card}>
       {secTitle(
         ico.layers,
@@ -233,8 +219,11 @@ export default function OrgSection() {
       </div>
     </div>
   );
+}
 
-  const DeptList = () => (
+function DeptList() {
+  const { deptSearch, setDeptSearch, filteredDepts, openDeptModal, deleteDept } = useJobs();
+  return (
     <div>
       <div
         style={{
@@ -395,7 +384,10 @@ export default function OrgSection() {
       )}
     </div>
   );
+}
 
+export default function OrgSection() {
+  const { setupTab, setSetupTab } = useJobs();
   return (
     <div>
       <div style={{ marginBottom: 24 }}>

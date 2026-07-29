@@ -1,8 +1,8 @@
 // @ts-nocheck
 import { useJobs } from "../JobsContext";
-import { T, KPI_UNITS, SETUP_TABS } from "../constants";
-import { I, ico } from "../icons";
-import { card, FI, Btn, SH, aBtn, pill } from "./UI";
+import { T, KPI_UNITS } from "../constants";
+import { ico } from "../icons";
+import { card, FI, Btn, SH, aBtn } from "./UI";
 
 export default function SettingsUnits() {
   const {
@@ -11,36 +11,10 @@ export default function SettingsUnits() {
     setNewUnitInput,
     addCustomUnit,
     removeCustomUnit,
-    setupTab,
-    setSetupTab,
   } = useJobs();
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 4,
-          padding: 4,
-          background: T.raised,
-          borderRadius: T.rmd,
-          border: `1px solid ${T.borderSoft}`,
-          width: "fit-content",
-          marginBottom: 28,
-        }}
-      >
-        {SETUP_TABS.map((t) => (
-          <button
-            key={t.key}
-            style={pill(setupTab === t.key)}
-            onClick={() => setSetupTab(t.key)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
       <div style={{ ...card, maxWidth: 640 }}>
         <SH
           icon={ico.wrench}

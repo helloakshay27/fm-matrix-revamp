@@ -22,15 +22,15 @@ export default function KraList() {
 
   return (
     <div>
-      {!kraAiDone && !aiLoading && (
+      {/* {!kraAiDone && !aiLoading && (
         <AiBar
           text="AI can suggest KRAs based on this role"
           sub="Generated from the job description. You can edit or remove any."
           onClick={simulateAiKras}
           label="Generate KRAs"
         />
-      )}
-      {aiLoading && <Loader text="Analysing role and generating KRAs…" />}
+      )} */}
+      {/* {aiLoading && <Loader text="Analysing role and generating KRAs…" />} */}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
