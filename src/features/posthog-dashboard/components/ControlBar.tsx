@@ -1,4 +1,4 @@
-import { SITES, REGIONS, GOALS } from '../data/constants';
+import { GOALS, type Site } from '../data/constants';
 import { useDashboard } from '../context/DashboardContext';
 import type { Tier, Device, DateRange } from '../data/constants';
 
@@ -8,34 +8,39 @@ const TIER_OPTIONS: { value: Tier; label: string }[] = [
   { value: 't3', label: 'Management' },
 ];
 
-function ScopeOptions({ tier }: { tier: Tier }) {
-  if (tier === 't1') return <>{SITES.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</>;
-  if (tier === 't2') return <>{REGIONS.map((r) => <option key={r} value={r}>{r} region</option>)}</>;
+function ScopeOptions({ tier, sites, regions }: { tier: Tier; sites: Site[]; regions: string[] }) {
+  if (tier === 't1') return (
+    <>
+      <option value="all">All sites</option>
+      {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+    </>
+  );
+  if (tier === 't2') return <>{regions.map((r) => <option key={r} value={r}>{r} region</option>)}</>;
   return (
     <>
       <option value="org">All sites (org)</option>
-      {REGIONS.map((r) => <option key={r} value={r}>↳ {r} region</option>)}
+      {regions.map((r) => <option key={r} value={r}>↳ {r} region</option>)}
     </>
   );
 }
 
 export function ControlBar() {
   const { vm, setTier, setScope, setDate, setDev, togglePrev } = useDashboard();
-  const { state, core } = vm;
+  const { state, core, sites, regions } = vm;
 
   return (
     <div className="phg-controlbar">
       <div className="phg-wrap">
-        <div className="phg-seg phg-tier">
+        {/* <div className="phg-seg phg-tier">
           {TIER_OPTIONS.map((t) => (
             <button key={t.value} className={state.tier === t.value ? 'on' : ''} onClick={() => setTier(t.value)}>{t.label}</button>
           ))}
-        </div>
+        </div> */}
 
         <label className="phg-ctrl">
           <span className="phg-ic">◎</span>
           <select value={state.scope} onChange={(e) => setScope(e.target.value)}>
-            <ScopeOptions tier={state.tier} />
+            <ScopeOptions tier={state.tier} sites={sites} regions={regions} />
           </select>
         </label>
 
@@ -60,7 +65,7 @@ export function ControlBar() {
 
         <div className="phg-spacer" />
 
-        <label className="phg-ctrl">
+        {/* <label className="phg-ctrl">
           <span className="phg-ic">▽</span>
           <select defaultValue={GOALS[0].value}>
             {GOALS.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
@@ -69,7 +74,7 @@ export function ControlBar() {
 
         <label className={`phg-ctrl${state.prev ? ' toggle-on' : ''}`} onClick={togglePrev}>
           <span className="phg-ic">⟲</span> Previous period {state.prev ? '✓' : ''}
-        </label>
+        </label> */}
       </div>
     </div>
   );

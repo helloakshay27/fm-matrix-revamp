@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Eye } from "lucide-react";
+import { Plus, Eye, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
@@ -271,6 +271,15 @@ export const PaymentsReceivedListPage: React.FC = () => {
         >
           <Eye className="w-4 h-4" />
         </button>
+        <button
+          onClick={() =>
+            navigate(`/accounting/payments-received/edit/${payment.id}`)
+          }
+          className="p-1 text-black hover:bg-gray-100 rounded"
+          title="Edit"
+        >
+          <Edit className="w-4 h-4" />
+        </button>
       </div>
     ),
     date: (
@@ -286,7 +295,7 @@ export const PaymentsReceivedListPage: React.FC = () => {
     ),
     payment_number: (
       <div
-        className="font-medium text-blue-600 cursor-pointer"
+        className="font-medium text-brand cursor-pointer"
         onClick={() => navigate(`/accounting/payments-received/${payment.id}`)}
       >
         {payment.payment_number}
@@ -322,15 +331,7 @@ export const PaymentsReceivedListPage: React.FC = () => {
       </span>
     ),
     status: (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          payment.status === "PAID"
-            ? "bg-green-100 text-green-800"
-            : payment.status === "VOID"
-              ? "bg-red-100 text-red-800"
-              : "bg-gray-100 text-gray-800"
-        }`}
-      >
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
         {payment.status}
       </span>
     ),
@@ -428,7 +429,7 @@ export const PaymentsReceivedListPage: React.FC = () => {
         loading={loading}
         leftActions={
           <Button
-            className="bg-[#C72030] hover:bg-[#b01a28] text-white"
+            className="fm-button-fix fm-button-brand px-8 py-2"
             onClick={() => navigate("/accounting/payments-received/create")}
           >
             <Plus className="w-4 h-4 mr-2" /> New

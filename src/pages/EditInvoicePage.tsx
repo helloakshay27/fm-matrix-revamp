@@ -325,15 +325,15 @@ export const EditInvoicePage: React.FC = () => {
         },
     };
     const modalPrimaryButtonSx = {
-        backgroundColor: '#C72030',
+        backgroundColor: '#DA7756',
         textTransform: 'none',
-        '&:hover': { backgroundColor: '#A01926' }
+        '&:hover': { backgroundColor: '#C45F40' }
     };
     const modalSecondaryButtonSx = {
-        color: '#C72030',
-        borderColor: '#C72030',
+        color: '#DA7756',
+        borderColor: '#DA7756',
         textTransform: 'none',
-        '&:hover': { borderColor: '#C72030', backgroundColor: 'rgba(199, 32, 48, 0.06)' }
+        '&:hover': { borderColor: '#DA7756', backgroundColor: 'rgba(218, 119, 86, 0.06)' }
     };
     const gstTreatmentOptions = [
         { value: 'registered_regular', label: 'Registered Business - Regular' },
@@ -1402,7 +1402,7 @@ export const EditInvoicePage: React.FC = () => {
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Billing Address
                                             <IconButton size="small" onClick={() => openAddressListModal('billing')}>
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedBillingAddress?.address ? (
@@ -1425,7 +1425,7 @@ export const EditInvoicePage: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => openAddressFormModal('new', 'billing')}
-                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                                className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
                                             >
                                                 New Address
                                             </button>
@@ -1437,7 +1437,7 @@ export const EditInvoicePage: React.FC = () => {
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Shipping Address
                                             <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedShippingAddress?.address ? (
@@ -1460,7 +1460,7 @@ export const EditInvoicePage: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => openAddressFormModal('new', 'shipping')}
-                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                                className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
                                             >
                                                 New Address
                                             </button>
@@ -1474,14 +1474,14 @@ export const EditInvoicePage: React.FC = () => {
                                         <span className="text-gray-500">GST Treatment:</span>
                                         <span className="text-gray-800">{getGstTreatmentLabel(customerDetail.gst_preference || customerDetail.gst_treatment)}</span>
                                         <IconButton size="small" onClick={openGstModal}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500">GSTIN:</span>
                                         <span className="text-gray-800 font-medium">{selectedGstDetail?.gstin || customerDetail.gstin || "—"}</span>
                                         <IconButton size="small" onClick={openGstPickerModal}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                 </div>
@@ -1490,7 +1490,7 @@ export const EditInvoicePage: React.FC = () => {
                                     <button
                                         type="button"
                                         onClick={openCustomerDrawer}
-                                        className="text-[#C72030] text-sm font-medium hover:underline flex items-center gap-1"
+                                        className="text-[#DA7756] text-sm font-medium hover:underline flex items-center gap-1"
                                     >
                                         View Customer Details <ChevronRight className="w-4 h-4" />
                                     </button>
@@ -1511,7 +1511,7 @@ export const EditInvoicePage: React.FC = () => {
                         <div>
                             <label className="block text-sm font-medium mb-2">Billing Address</label>
                             <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y bg-white"
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y bg-white"
                                 rows={4}
                                 value={billingAddress}
                                 onChange={(e) => {
@@ -1528,7 +1528,7 @@ export const EditInvoicePage: React.FC = () => {
                         <div>
                             <label className="block text-sm font-medium mb-2">Shipping Address</label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y bg-white ${sameAsBilling ? 'bg-gray-50' : ''}`}
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y bg-white ${sameAsBilling ? 'bg-gray-50' : ''}`}
                                 rows={4}
                                 value={shippingAddress}
                                 onChange={(e) => {
@@ -1570,7 +1570,7 @@ export const EditInvoicePage: React.FC = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">Invoice Date<span className="text-red-500">*</span></label>
+                            <label className="block text-sm font-medium mb-2">Invoice Date<span className="text-brand">*</span></label>
                             <TextField
                                 fullWidth
                                 type="date"
@@ -1594,7 +1594,7 @@ export const EditInvoicePage: React.FC = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">Due Date<span className="text-red-500">*</span></label>
+                            <label className="block text-sm font-medium mb-2">Due Date<span className="text-brand">*</span></label>
                             <TextField
                                 fullWidth
                                 type="date"
@@ -1619,7 +1619,7 @@ export const EditInvoicePage: React.FC = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">Payment Terms<span className="text-red-500">*</span></label>
+                            <label className="block text-sm font-medium mb-2">Payment Terms<span className="text-brand">*</span></label>
                             <FormControl fullWidth>
                                 <Select
                                     value={selectedTerm}
@@ -1665,7 +1665,7 @@ export const EditInvoicePage: React.FC = () => {
                     <div className="mt-4">
                         <label className="block text-sm font-medium">Subject</label>
                         <textarea
-                            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y bg-white"
+                            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y bg-white"
                             rows={3}
                             value={subject}
                             onChange={(e) => {
@@ -1909,12 +1909,12 @@ export const EditInvoicePage: React.FC = () => {
                                 >
                                     <FormControlLabel
                                         value="TDS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                                         label={<span className="text-sm">TDS</span>}
                                     />
                                     <FormControlLabel
                                         value="TCS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                                         label={<span className="text-sm">TCS</span>}
                                     />
                                 </RadioGroup>
@@ -1980,7 +1980,7 @@ export const EditInvoicePage: React.FC = () => {
                 {/* Customer Notes */}
                 <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
                     <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y bg-white"
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y bg-white"
                         rows={3}
                         value={customerNotes}
                         onChange={(e) => {
@@ -1995,7 +1995,7 @@ export const EditInvoicePage: React.FC = () => {
 
                     <div className="mt-4 w-1/2">
                         <label className="block text-sm font-medium mb-2">
-                            Bank<span className="text-red-500">*</span>
+                            Bank<span className="text-brand">*</span>
                         </label>
                         <FormControl fullWidth size="small" error={!!errors.bank}>
                             <Select
@@ -2029,14 +2029,14 @@ export const EditInvoicePage: React.FC = () => {
                                 ))}
                             </Select>
                         </FormControl>
-                        {errors.bank && <p className="text-xs text-red-500 mt-1">{errors.bank}</p>}
+                        {errors.bank && <p className="text-xs text-brand mt-1">{errors.bank}</p>}
                     </div>
                 </Section>
 
                 {/* Terms & Conditions */}
                 <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
                     <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y bg-white"
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y bg-white"
                         rows={4}
                         value={termsAndConditions}
                         onChange={(e) => {
@@ -2061,8 +2061,8 @@ export const EditInvoicePage: React.FC = () => {
                                 {existingAttachments.map((file) => (
                                     <div key={file.id} className="flex items-center justify-between bg-gray-50 p-3 rounded">
                                         <div className="flex items-center gap-2">
-                                            <AttachFile fontSize="small" className="text-blue-500" />
-                                            <a href={file.url} target="_blank" rel="noreferrer" className="text-sm hover:underline text-blue-600">
+                                            <AttachFile fontSize="small" className="text-brand" />
+                                            <a href={file.url} target="_blank" rel="noreferrer" className="text-sm hover:underline text-brand">
                                                 {file.name || 'Attachment'}
                                             </a>
                                         </div>
@@ -2118,6 +2118,7 @@ export const EditInvoicePage: React.FC = () => {
                                 <Checkbox
                                     checked={displayAttachmentsInPortal}
                                     onChange={(e) => setDisplayAttachmentsInPortal(e.target.checked)}
+                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                 />
                             }
                             label="Display attachments in customer portal and emails"
@@ -2131,17 +2132,8 @@ export const EditInvoicePage: React.FC = () => {
                     variant="text"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        bgcolor: '#f8f1f1',
-                        color: '#C72030',
-                        fontWeight: 600,
-                        '&:hover': {
-                            bgcolor: '#f1e8e8',
-                            color: '#A01020'
-                        }
-                    }}
+                    className="fm-button-fix fm-button-brand px-8 py-2"
+                    sx={{ textTransform: 'none', fontWeight: 600 }}
                 >
                     Save as Draft
                 </Button>
@@ -2149,17 +2141,8 @@ export const EditInvoicePage: React.FC = () => {
                     variant="text"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
-                    sx={{
-                        bgcolor: '#f8f1f1',
-                        color: '#C72030',
-                        fontWeight: 600,
-                        px: 4,
-                        '&:hover': {
-                            bgcolor: '#f1e8e8',
-                            color: '#A01020'
-                        },
-                        textTransform: 'none'
-                    }}
+                    className="fm-button-fix fm-button-brand px-8 py-2"
+                    sx={{ textTransform: 'none', fontWeight: 600 }}
                 >
                     {isSubmitting ? 'Updating...' : 'Update Invoice'}
                 </Button>
@@ -2167,16 +2150,16 @@ export const EditInvoicePage: React.FC = () => {
                     variant="outlined"
                     onClick={() => navigate('/accounting/invoices/list')}
                     disabled={isSubmitting}
+                    className="fm-button-fix px-8 py-2"
                     sx={{
                         textTransform: 'none',
-                        px: 4,
-                        borderColor: '#C72030',
-                        color: '#C72030',
                         fontWeight: 600,
+                        borderColor: '#DA7756',
+                        color: '#DA7756',
                         '&:hover': {
-                            borderColor: '#A01020',
-                            bgcolor: '#f8f1f1',
-                            color: '#A01020'
+                            borderColor: '#C45F40',
+                            bgcolor: '#F2EEE9',
+                            color: '#C45F40'
                         }
                     }}
                 >
@@ -2195,7 +2178,7 @@ export const EditInvoicePage: React.FC = () => {
                             <div
                                 key={addr.id}
                                 className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
-                                    ? 'border-[#C72030] bg-red-50'
+                                    ? 'border-[#DA7756] bg-red-50'
                                     : 'border-gray-200 hover:border-gray-300'
                                     }`}
                                 onClick={() => {
@@ -2219,7 +2202,7 @@ export const EditInvoicePage: React.FC = () => {
                                             openAddressFormModal('edit', activeAddressType, addr);
                                         }}
                                     >
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 </div>
                             </div>
@@ -2229,7 +2212,7 @@ export const EditInvoicePage: React.FC = () => {
                 <DialogActions className="!justify-between !px-4">
                     <button
                         type="button"
-                        className="text-[#1d4ed8] text-sm font-medium"
+                        className="text-[#DA7756] text-sm font-medium"
                         onClick={() => openAddressFormModal('new', activeAddressType)}
                     >
                         + New address
@@ -2287,7 +2270,7 @@ export const EditInvoicePage: React.FC = () => {
             <Dialog open={gstManageModalOpen} onClose={() => setGstManageModalOpen(false)} maxWidth="md" fullWidth>
                 <DialogTitle className="!text-base !font-semibold !border-b !border-gray-200 !flex !items-center !justify-between !py-3">
                     <span>Manage Tax Informations</span>
-                    <IconButton size="small" onClick={() => setGstManageModalOpen(false)}><Close fontSize="small" className="text-red-500" /></IconButton>
+                    <IconButton size="small" onClick={() => setGstManageModalOpen(false)}><Close fontSize="small" className="text-brand" /></IconButton>
                 </DialogTitle>
                 <DialogContent className="!pt-4">
                     <div className="space-y-4">
@@ -2362,7 +2345,7 @@ export const EditInvoicePage: React.FC = () => {
                         ))}
                     </div>
                     <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
-                        <button type="button" className="text-blue-600 text-sm flex items-center gap-1" onClick={() => { setGstPickerModalOpen(false); openGstManageModal(); }}>
+                        <button type="button" className="text-brand text-sm flex items-center gap-1" onClick={() => { setGstPickerModalOpen(false); openGstManageModal(); }}>
                             <span>⚙</span> Manage Tax Informations
                         </button>
                     </div>
@@ -2394,7 +2377,7 @@ export const EditInvoicePage: React.FC = () => {
                         Cancel
                     </button>
                     <button
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                         onClick={() => {
                             if (currentItemIndex !== null) {
                                 updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
@@ -2444,7 +2427,7 @@ export const EditInvoicePage: React.FC = () => {
                                             <div className="text-sm text-gray-500">{customerDetail.company_name}</div>
                                         )}
                                         {customerDetail.email && (
-                                            <div className="text-xs text-blue-500">{customerDetail.email}</div>
+                                            <div className="text-xs text-brand">{customerDetail.email}</div>
                                         )}
                                     </div>
                                 </div>
@@ -2455,7 +2438,7 @@ export const EditInvoicePage: React.FC = () => {
                                             key={t}
                                             onClick={() => setDrawerActiveTab(i === 0 ? 'details' : 'activity')}
                                             className={`py-2 px-3 text-sm font-medium border-b-2 transition-colors ${drawerActiveTab === (i === 0 ? 'details' : 'activity')
-                                                ? "border-[#C72030] text-[#C72030]"
+                                                ? "border-[#DA7756] text-[#DA7756]"
                                                 : "border-transparent text-gray-500 hover:text-gray-700"
                                                 }`}
                                         >

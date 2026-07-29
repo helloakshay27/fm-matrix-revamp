@@ -55,25 +55,25 @@ const muiTheme = createTheme({
       },
     },
 
-    // ✅ Checkbox color
+    // ✅ Checkbox color — unified brand orange in both states (unchecked outline and checked fill)
     MuiCheckbox: {
       styleOverrides: {
         root: {
-          color: "#bf213e",
+          color: "var(--color-primary)",
           "&.Mui-checked": {
-            color: "#bf213e",
+            color: "var(--color-primary)",
           },
         },
       },
     },
 
-    // ✅ Radio button color
+    // ✅ Radio button color — unified brand orange in both states (unchecked ring and checked fill)
     MuiRadio: {
       styleOverrides: {
         root: {
-          color: "#bf213e",
+          color: "var(--color-primary)",
           "&.Mui-checked": {
-            color: "#bf213e",
+            color: "var(--color-primary)",
           },
         },
       },
@@ -686,7 +686,7 @@ const ItemsAdd = () => {
               // label="Name *"
               label={
                 <>
-                  Name <span style={{ color: "red" }}>*</span>
+                  Name <span style={{ color: "var(--color-primary)" }}>*</span>
                 </>
               }
               name="name"
@@ -728,7 +728,7 @@ const ItemsAdd = () => {
             {/* HSN / SAC Code */}
             {form.type === "goods" ? (
               <TextField
-                label={<span>HSN Code <span style={{ color: 'red' }}>*</span></span>}
+                label={<span>HSN Code <span style={{ color: 'var(--color-primary)' }}>*</span></span>}
                 name="hsn_code"
                 placeholder="Enter HSN Code"
                 value={form.hsn_code}
@@ -760,7 +760,7 @@ const ItemsAdd = () => {
 
             <FormControl fullWidth>
               <InputLabel>
-                Tax Preference <span style={{ color: "red" }}>*</span>{" "}
+                Tax Preference <span style={{ color: "var(--color-primary)" }}>*</span>{" "}
               </InputLabel>
               <Select
                 name="tax_preference"
@@ -790,7 +790,7 @@ const ItemsAdd = () => {
               <div className="mt-4">
                 <FormControl fullWidth>
                   <InputLabel>
-                    Exemption Reason <span style={{ color: "red" }}>*</span>
+                    Exemption Reason <span style={{ color: "var(--color-primary)" }}>*</span>
                   </InputLabel>
                   <Select
                     name="exemption_reason"
@@ -834,7 +834,7 @@ const ItemsAdd = () => {
                   fullWidth
                   label={<span>Opening Qty
                     {/* /stock */}
-                     <span style={{ color: "red" }}>*</span></span>}
+                    <span style={{ color: "var(--color-primary)" }}> *</span></span>}
                   name="current_stock"
                   placeholder="Enter opening qty"
                   value={form.current_stock}
@@ -846,7 +846,7 @@ const ItemsAdd = () => {
                 />
                 <TextField
                   fullWidth
-                  label={<span>Rate <span style={{ color: "red" }}>*</span></span>}
+                  label={<span>Rate <span style={{ color: "var(--color-primary)" }}>*</span></span>}
                   name="opening_stock_rate"
                   placeholder="Enter rate"
                   value={form.opening_stock_rate}
@@ -922,7 +922,7 @@ const ItemsAdd = () => {
 
                 <p className="text-gray-600 text-sm">Drag image(s) here or</p>
 
-                <label className="text-[#1976d2] text-sm font-medium cursor-pointer mt-1">
+                <label className="text-brand text-sm font-medium cursor-pointer mt-1">
                   Browse images
                   <input
                     type="file"
@@ -942,7 +942,7 @@ const ItemsAdd = () => {
                 />
 
                 <div className="flex items-center justify-between">
-                  <label className="text-[#1976d2] font-medium cursor-pointer">
+                  <label className="text-brand font-medium cursor-pointer">
                     Change Image
                     <input
                       type="file"
@@ -993,7 +993,7 @@ const ItemsAdd = () => {
                 fullWidth
                 label={
                   <>
-                    Selling Price <span style={{ color: "red" }}>*</span>
+                    Selling Price <span style={{ color: "var(--color-primary)" }}>*</span>
                   </>
                 }
                 name="selling_price"
@@ -1115,8 +1115,8 @@ const ItemsAdd = () => {
                 margin="normal"
                 sx={{ minWidth: 200 }}
               >
-                <InputLabel id="sales-account-label" sx={{ color: "#C72030" }}>
-                  Account<span style={{ color: "#C72030" }}>*</span>
+                <InputLabel id="sales-account-label" sx={{ color: "var(--color-primary)" }}>
+                  Account <span style={{ color: "var(--color-primary)" }}>*</span>
                 </InputLabel>
                 <Select
                   labelId="sales-account-label"
@@ -1227,7 +1227,7 @@ const ItemsAdd = () => {
                 fullWidth
                 label={
                   <>
-                    Cost Price <span style={{ color: "red" }}>*</span>
+                    Cost Price <span style={{ color: "var(--color-primary)" }}>*</span>
                   </>
                 }
                 name="cost_price"
@@ -1306,9 +1306,9 @@ const ItemsAdd = () => {
               >
                 <InputLabel
                   id="purchase-account-label"
-                  sx={{ color: "#C72030" }}
+                  sx={{ color: "var(--color-primary)" }}
                 >
-                  Account<span style={{ color: "#C72030" }}>*</span>
+                  Account <span style={{ color: "var(--color-primary)" }}>*</span>
                 </InputLabel>
                 <Select
                   labelId="purchase-account-label"
@@ -1425,7 +1425,7 @@ const ItemsAdd = () => {
             {/* Intra State Tax (CGST + SGST) */}
             <FormControl size="small" fullWidth>
               <InputLabel id="intra-state-tax-label" shrink>
-                Intra State Tax Rate <span style={{ color: "#C72030" }}>*</span>
+                Intra State Tax Rate <span style={{ color: "var(--color-primary)" }}>*</span>
               </InputLabel>
               <Select
                 labelId="intra-state-tax-label"
@@ -1476,7 +1476,7 @@ const ItemsAdd = () => {
             {/* Inter State Tax (IGST) */}
             <FormControl size="small" fullWidth>
               <InputLabel id="inter-state-tax-label" shrink>
-                Inter State Tax Rate <span style={{ color: "#C72030" }}>*</span>
+                Inter State Tax Rate <span style={{ color: "var(--color-primary)" }}>*</span>
               </InputLabel>
               <Select
                 labelId="inter-state-tax-label"
@@ -1528,8 +1528,9 @@ const ItemsAdd = () => {
         {/* BUTTONS */}
         <div className="flex gap-3 mt-10 mb-5 justify-center">
           <Button
+            variant="ghost"
             onClick={handleSubmit}
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            className="fm-button-fix fm-button-brand px-8 py-2"
           >
             Save
           </Button>
@@ -1537,6 +1538,7 @@ const ItemsAdd = () => {
           <Button
             variant="outline"
             onClick={() => navigate("/accounting/items")}
+            className="fm-button-fix px-8 py-2"
           >
             Cancel
           </Button>
@@ -1553,7 +1555,7 @@ const ItemsAdd = () => {
 
         <DialogActions>
           <Button
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            className="bg-brand hover:bg-brand-hover text-white"
             onClick={handleRemoveImage}
           >
             Delete

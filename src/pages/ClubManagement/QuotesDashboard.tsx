@@ -267,19 +267,8 @@ export const QuotesDashboard: React.FC = () => {
 
     // Helper function to get status badge
     const getStatusBadge = (status: string) => {
-        const statusColors: Record<string, string> = {
-            draft: 'bg-yellow-100 text-yellow-800',
-            confirmed: 'bg-blue-100 text-blue-800',
-            shipped: 'bg-purple-100 text-purple-800',
-            delivered: 'bg-green-100 text-green-800',
-            cancelled: 'bg-red-100 text-red-800',
-            closed: 'bg-gray-100 text-gray-800',
-            pending_approval: 'bg-orange-100 text-orange-800',
-        };
-
         return (
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
-                {/* {status.toUpperCase()} */}
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                 {status.replace(/_/g, " ").toUpperCase()}
             </span>
         );
@@ -339,7 +328,7 @@ export const QuotesDashboard: React.FC = () => {
                         setSelectedDeleteId(order.id);
                         setDeleteDialogOpen(true);
                     }}
-                    className="p-1 text-red-600 hover:text-red-700 hover:bg-gray-100 rounded"
+                    className="p-1 text-black-600 hover:text-red-700 hover:bg-black-100 rounded"
                     title="Delete"
                 >
                     <Trash2 className="w-4 h-4" />
@@ -347,10 +336,10 @@ export const QuotesDashboard: React.FC = () => {
             </div>
         ),
         quote_number: (
-            <div className="font-medium text-blue-600">{order.quote_number}</div>
+            <div className="font-medium text-brand">{order.quote_number}</div>
         ),
         reference_number: (
-            <div className="font-medium text-blue-600">{order.reference_number}</div>
+            <div className="font-medium text-brand">{order.reference_number}</div>
         ),
         customer_name: (
             <span className="text-sm text-gray-900">{order.customer_name}</span>
@@ -428,7 +417,7 @@ export const QuotesDashboard: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleToggleStatus(order)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-red-500" : "bg-gray-300"
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-brand" : "bg-gray-300"
                       }`}
                   >
                     <span
@@ -436,11 +425,8 @@ export const QuotesDashboard: React.FC = () => {
                         }`}
                     />
                   </button>
-        
-                  <span
-                    className={`text-sm font-medium ${isActive ? "text-red-600" : "text-red-600"
-                      }`}
-                  >
+
+                  <span className="text-sm font-medium text-gray-600">
                   </span>
                 </div>
             );
@@ -598,7 +584,7 @@ export const QuotesDashboard: React.FC = () => {
                     <div className="flex items-center gap-2">
                         <Button
                             // className='bg-primary text-primary-foreground hover:bg-primary/90'
-                             className='fm-button-fix fm-button-brand px-4 py-2P'
+                            className='fm-button-fix fm-button-brand px-8 py-2'
                             onClick={() => navigate('/accounting/quotes/add')}
                         >
                             <Plus className="w-4 h-4 mr-2" /> Add
@@ -615,7 +601,7 @@ export const QuotesDashboard: React.FC = () => {
                         {selectedRows.length > 0 && (
                             hasQuoteApproval ? (
                                 <Button
-                                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                    className="bg-brand hover:bg-brand-hover text-white"
                                     onClick={handleSubmitForApproval}
                                 >
                                     Submit for Approval
@@ -678,7 +664,7 @@ export const QuotesDashboard: React.FC = () => {
                         </div>
                         <div className="px-5 py-3 border-t flex justify-end">
                             <Button
-                                className="bg-[#C72030] text-white hover:bg-[#a81a28] px-6"
+                                className="bg-brand hover:bg-brand-hover text-white px-6"
                                 onClick={() => setErrorModal({ show: false, errors: [] })}
                             >
                                 OK

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import {
   Calendar,
   FileText,
+  NotepadText,
   ChevronDown,
   AlertTriangle,
   RefreshCw,
@@ -87,19 +88,60 @@ const SearchableSelect = ({
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const ref = React.useRef<HTMLDivElement>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  // Menu is portalled to <body> so no ancestor with overflow can clip it.
+  const [menuRect, setMenuRect] = React.useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
 
   const selected = options.find((o: any) => String(o.value) === String(value));
   const displayValue = selected?.label || placeholder;
 
+  const updateMenuPosition = React.useCallback(() => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    setMenuRect({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+  }, []);
+
   React.useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        ref.current &&
+        !ref.current.contains(target) &&
+        (!menuRef.current || !menuRef.current.contains(target))
+      ) {
         setOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    updateMenuPosition();
+    window.addEventListener("scroll", updateMenuPosition, true);
+    window.addEventListener("resize", updateMenuPosition);
+    return () => {
+      window.removeEventListener("scroll", updateMenuPosition, true);
+      window.removeEventListener("resize", updateMenuPosition);
+    };
+  }, [open, updateMenuPosition]);
+
+  // Keep the menu mounted for the exit animation after `open` flips to false
+  const [isMenuMounted, setIsMenuMounted] = React.useState(false);
+  React.useEffect(() => {
+    if (open) {
+      setIsMenuMounted(true);
+      return;
+    }
+    if (!isMenuMounted) return;
+    const timer = window.setTimeout(() => setIsMenuMounted(false), 120);
+    return () => window.clearTimeout(timer);
+  }, [open, isMenuMounted]);
 
   const filteredOptions = options.filter((o: any) =>
     (o.label || "").toLowerCase().includes(search.toLowerCase())
@@ -119,7 +161,7 @@ const SearchableSelect = ({
           value={open ? search : displayValue}
           onClick={() => {
             setOpen(true);
-            search("");
+            setSearch("");
           }}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -133,38 +175,56 @@ const SearchableSelect = ({
           )}
         />
       </div>
-      {open && (
-        <div
-          className="absolute top-full left-0 mt-1 z-[999] bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden min-w-full"
-          style={{ maxHeight: 220, overflowY: "auto" }}
-        >
-          {filteredOptions.length === 0 ? (
-            <div className="px-4 py-2.5 text-sm font-medium text-neutral-500 text-center">
-              No results found
-            </div>
-          ) : (
-            filteredOptions.map((opt: any) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => {
-                  onChange(opt.value);
-                  setOpen(false);
-                  setSearch("");
-                }}
-                className={cn(
-                  "w-full text-left px-4 py-2.5 text-sm font-medium transition-colors truncate",
-                  String(value) === String(opt.value)
-                    ? "bg-[#FFF3EE] text-[#CE7A5A] font-semibold"
-                    : "text-neutral-700 hover:bg-[#FFF3EE] hover:text-[#CE7A5A]"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))
-          )}
-        </div>
-      )}
+      {isMenuMounted &&
+        menuRect &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className={cn(
+              "bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden",
+              open ? "dd-menu-enter" : "dd-menu-exit"
+            )}
+            style={{
+              position: "fixed",
+              top: menuRect.top,
+              left: menuRect.left,
+              minWidth: Math.max(menuRect.width, 200),
+              maxWidth: 320,
+              maxHeight: 220,
+              overflowY: "auto",
+              zIndex: 9999,
+              fontFamily: "'Poppins', sans-serif",
+            }}
+          >
+            {filteredOptions.length === 0 ? (
+              <div className="px-4 py-2.5 text-sm font-medium text-neutral-500 text-center">
+                No results found
+              </div>
+            ) : (
+              filteredOptions.map((opt: any) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  title={opt.label}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                    setSearch("");
+                  }}
+                  className={cn(
+                    "dd-option w-full text-left px-4 py-2.5 text-sm font-medium leading-snug break-words",
+                    String(value) === String(opt.value)
+                      ? "bg-[#FFF3EE] text-[#CE7A5A] font-semibold"
+                      : "text-neutral-700 hover:bg-[#FFF3EE] hover:text-[#CE7A5A]"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
@@ -508,6 +568,9 @@ const getCalendarDisplayStatus = (status: any) => {
 const getMemberId = (member: any) =>
   member?.user_id ?? member?.id ?? member?.user?.id ?? null;
 
+const getMemberFilterKey = (name: any) =>
+  String(name || "").trim().toLowerCase();
+
 const getMemberCalendar = (member: any) => {
   const calendar = member?.daily_calendar || member?.daily_calender;
   return Array.isArray(calendar) ? calendar : [];
@@ -578,6 +641,58 @@ const getViewSourceType = (item: any): string => {
   return getItemType(item);
 };
 
+const getItemTagNames = (item: any): string[] => {
+  const rawTags =
+    item?.tags ||
+    item?.tag_names ||
+    item?.project_tags ||
+    item?.task_tags ||
+    item?.originalData?.tags ||
+    item?.originalData?.tag_names ||
+    item?.originalData?.project_tags ||
+    item?.originalData?.task_tags;
+  const singleTags = [
+    item?.tag,
+    item?.tag_name,
+    item?.project_tag,
+    item?.originalData?.tag,
+    item?.originalData?.tag_name,
+    item?.originalData?.project_tag,
+  ];
+
+  const normalizeTag = (tag: any) => {
+    if (!tag) return "";
+    if (typeof tag === "string") return tag;
+    return tag.name || tag.title || tag.label || "";
+  };
+
+  const arrayTags = Array.isArray(rawTags) ? rawTags : [];
+  return [...arrayTags, ...singleTags]
+    .map(normalizeTag)
+    .map((tag) => String(tag).trim())
+    .filter(Boolean);
+};
+
+const getItemProjectName = (item: any): string => {
+  const project =
+    item?.project_management_title ||
+    item?.project_title ||
+    item?.project_name ||
+    item?.project?.name ||
+    item?.project?.title ||
+    item?.project_management?.name ||
+    item?.project_management?.title ||
+    item?.originalData?.project_management_title ||
+    item?.originalData?.project_title ||
+    item?.originalData?.project_name ||
+    item?.originalData?.project?.name ||
+    item?.originalData?.project?.title ||
+    item?.originalData?.project_management?.name ||
+    item?.originalData?.project_management?.title ||
+    "";
+  return String(project).trim();
+};
+
 const getViewSourceId = (item: any): any => {
   const rawId =
     item?.source_id ??
@@ -621,6 +736,265 @@ const getPayloadSourceType = (item: any): any => {
   if (rawType.includes("task") || rawId.startsWith("task-")) return "task";
 
   return "note";
+};
+
+// ── Tasks / Issues / To-Do column with a 7 / 14 / 30 day range filter ──
+const TASK_RANGE_OPTIONS = [
+  { value: 7, label: "7 Days" },
+  { value: 14, label: "14 Days" },
+  { value: 30, label: "30 Days" },
+];
+
+const parseDateValue = (value: any): Date | null => {
+  if (!value) return null;
+  const dt = new Date(value);
+  return isNaN(dt.getTime()) ? null : dt;
+};
+
+// Date used to decide if an item falls inside the selected range:
+// created_at first (when the task/issue/todo was raised), target date as fallback.
+const getItemRangeDate = (item: any, detail?: any): Date | null => {
+  const d = item?.originalData || detail || {};
+  return (
+    parseDateValue(item?.created_at) ||
+    parseDateValue(d?.created_at) ||
+    parseDateValue(item?.target_date) ||
+    parseDateValue(d?.target_date) ||
+    parseDateValue(d?.updated_at)
+  );
+};
+
+// Target/due date of an item (from the row itself or the fetched detail).
+const getItemTargetDateValue = (item: any, detail?: any): Date | null => {
+  const d = item?.originalData || detail || {};
+  return (
+    parseDateValue(item?.target_date) ||
+    parseDateValue(item?.due_date) ||
+    parseDateValue(d?.target_date) ||
+    parseDateValue(d?.due_date) ||
+    parseDateValue(d?.end_date)
+  );
+};
+
+// Overdue = explicit overdue status, or a past target date on a not-done item.
+const isItemOverdue = (item: any, detail?: any): boolean => {
+  const status = String(getItemStatus(item)).toLowerCase();
+  if (isCompletedStatus(status)) return false;
+  if (status === "overdue" || status === "overdued") return true;
+  const target = getItemTargetDateValue(item, detail);
+  if (!target) return false;
+  target.setHours(23, 59, 59, 999);
+  return target.getTime() < Date.now();
+};
+
+const TASK_STATUS_BUCKETS = [
+  {
+    key: "overdue",
+    label: "Overdue",
+    statuses: ["overdue", "overdued"],
+    colorClass: "text-red-700",
+    headerBg: "bg-red-50",
+    pillBg: "bg-red-100 text-red-700",
+  },
+  {
+    key: "in_progress",
+    label: "In Progress",
+    statuses: ["in_progress", "in progress", "started", "wip"],
+    colorClass: "text-sky-700",
+    headerBg: "bg-sky-50",
+    pillBg: "bg-sky-100 text-sky-700",
+  },
+  {
+    key: "open",
+    label: "Open",
+    statuses: ["open", "pending", "reopen", "reopened", "new", "to_do", "todo"],
+    colorClass: "text-slate-600",
+    headerBg: "bg-slate-50",
+    pillBg: "bg-slate-100 text-slate-600",
+  },
+  {
+    key: "on_hold",
+    label: "On Hold",
+    statuses: ["on_hold", "hold"],
+    colorClass: "text-orange-700",
+    headerBg: "bg-orange-50",
+    pillBg: "bg-orange-100 text-orange-700",
+  },
+];
+
+// Start of the window: today - (days - 1), i.e. last N days including today.
+const getRangeStartDate = (days: number) => {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - (days - 1));
+  return start;
+};
+
+const TasksIssuesTodoCard = ({
+  items,
+  showMemberBadges,
+  renderRows,
+  isAbsent = false,
+}: {
+  items: any[];
+  showMemberBadges: boolean;
+  renderRows: (
+    rows: any[],
+    showMemberBadges: boolean,
+    emptyText?: string
+  ) => React.ReactNode;
+  isAbsent?: boolean;
+}) => {
+  const [rangeDays, setRangeDays] = useState(7);
+  const [details, setDetails] = useState<Record<string, any>>({});
+
+  const sourceItems = isAbsent ? [] : items;
+
+  // tasks_issues rows from the daily_meeting API carry no dates, so pull
+  // created_at / target_date on demand (cached in itemDetailCache).
+  useEffect(() => {
+    let active = true;
+    const pending = sourceItems
+      .map((item) => {
+        const type = getViewSourceType(item);
+        const id = getViewSourceId(item);
+        return { item, type, id, key: `${type}:${id}` };
+      })
+      .filter(
+        ({ item, type, id, key }) =>
+          !item?.originalData &&
+          !item?.created_at &&
+          !(key in details) &&
+          !!id &&
+          ["task", "issue", "todo"].includes(type)
+      );
+    if (!pending.length) return;
+
+    Promise.all(
+      pending.map(async ({ type, id, key }) => {
+        const data = await fetchItemDetail(type, id);
+        return data ? ([key, data] as [string, any]) : null;
+      })
+    ).then((entries) => {
+      if (!active) return;
+      const resolved = entries.filter(Boolean) as [string, any][];
+      if (!resolved.length) return;
+      setDetails((prev) => {
+        const missing = resolved.filter(([key]) => !(key in prev));
+        if (!missing.length) return prev;
+        const merged = { ...prev };
+        missing.forEach(([key, value]) => {
+          merged[key] = value;
+        });
+        return merged;
+      });
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [sourceItems, details]);
+
+  const filteredItems = useMemo(() => {
+    const start = getRangeStartDate(rangeDays);
+    return sourceItems.filter((item) => {
+      const detail = details[`${getViewSourceType(item)}:${getViewSourceId(item)}`];
+      const date = getItemRangeDate(item, detail);
+      // No date available for this item — keep it visible instead of dropping it.
+      if (!date) return true;
+      return date.getTime() >= start.getTime();
+    });
+  }, [sourceItems, details, rangeDays]);
+
+  // Bifurcate into Overdue / In Progress / Open / On Hold buckets.
+  const bucketedItems = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    TASK_STATUS_BUCKETS.forEach((bucket) => {
+      groups[bucket.key] = [];
+    });
+
+    filteredItems.forEach((item) => {
+      const detail =
+        details[`${getViewSourceType(item)}:${getViewSourceId(item)}`];
+      if (isItemOverdue(item, detail)) {
+        groups.overdue.push(item);
+        return;
+      }
+      const status = String(getItemStatus(item)).toLowerCase();
+      const bucket = TASK_STATUS_BUCKETS.find((b) =>
+        b.statuses.includes(status)
+      );
+      groups[bucket ? bucket.key : "open"].push(item);
+    });
+
+    return groups;
+  }, [filteredItems, details]);
+
+  return (
+    <div className="bg-white border border-[#E8E2DE] rounded-xl p-0 overflow-hidden">
+      <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+        <NotepadText className="w-4 h-4 shrink-0 text-[#DA7756]" />
+        <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase min-w-0 truncate">
+          Tasks, Issues &amp; To Do ({filteredItems.length})
+        </h4>
+        <div className="relative ml-auto shrink-0">
+          <select
+            value={rangeDays}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => setRangeDays(Number(e.target.value))}
+            className="appearance-none cursor-pointer rounded-full border border-[#E8E2DE] bg-white pl-3 pr-7 py-1 text-[11px] font-semibold text-neutral-600 focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)]"
+          >
+            {TASK_RANGE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
+        </div>
+      </div>
+      <div className="p-4">
+        {filteredItems.length === 0 ? (
+          renderRows([], showMemberBadges)
+        ) : (
+          <div className="space-y-3">
+            {TASK_STATUS_BUCKETS.map((bucket) => {
+              const bucketItems = bucketedItems[bucket.key] || [];
+              if (!bucketItems.length) return null;
+              return (
+                <div key={bucket.key} className="space-y-1.5">
+                  <div
+                    className={cn(
+                      "flex items-center gap-2 px-2 py-1.5 rounded-[6px]",
+                      bucket.headerBg
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "flex-1 text-[10px] font-black uppercase tracking-wider",
+                        bucket.colorClass
+                      )}
+                    >
+                      {bucket.label}
+                    </span>
+                    <span
+                      className={cn(
+                        "rounded-full px-1.5 py-0.5 text-[9px] font-bold",
+                        bucket.pillBg
+                      )}
+                    >
+                      {bucketItems.length}
+                    </span>
+                  </div>
+                  {renderRows(bucketItems, showMemberBadges)}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 const getApiErrorMessage = (responseData: any, fallback: string) => {
@@ -799,12 +1173,17 @@ const DailyTab = ({
   >(() => externalSelectedMeetingId || null);
   const [membersList, setMembersList] = useState<any[]>([]);
   const [selectedMember, setSelectedMember] = useState("all");
+  const [selectedHod, setSelectedHod] = useState("all");
+  const [selectedTag, setSelectedTag] = useState("all");
+  const [selectedProject, setSelectedProject] = useState("all");
   const [dailyData, setDailyData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [calendarDateRow, setCalendarDateRow] = useState<any[]>([]);
   const isArrowNav = React.useRef(false);
   const [expandedReports, setExpandedReports] = useState<any[]>([]);
+  const [reportMemberFilters, setReportMemberFilters] = useState<Record<string, string>>({});
+  const [reportProjectFilters, setReportProjectFilters] = useState<Record<string, string>>({});
   const [selectedReports, setSelectedReports] = useState<any[]>([]);
   const [meetingNotes, setMeetingNotes] = useState("");
   const [savedMeetingNotes, setSavedMeetingNotes] = useState("");
@@ -1301,10 +1680,31 @@ const DailyTab = ({
     }
   };
 
-  const toggleExpand = (id: any) =>
+  const toggleExpand = (id: any) => {
+    const isCollapsing = expandedReports.includes(id);
     setExpandedReports((p) =>
       p.includes(id) ? p.filter((r) => r !== id) : [...p, id]
     );
+    // Card band karne par uske andar ke Member/Project filters reset
+    if (!isCollapsing) return;
+    const cardKey = String(id);
+    const clearCardFilter = (prev: Record<string, string>) => {
+      if (!(cardKey in prev)) return prev;
+      const next = { ...prev };
+      delete next[cardKey];
+      return next;
+    };
+    setReportMemberFilters(clearCardFilter);
+    setReportProjectFilters(clearCardFilter);
+    // Global Members filter is card ko force kar raha tha to wo bhi hata do
+    if (
+      selectedReporteeExpandId !== null &&
+      selectedReporteeExpandId !== undefined &&
+      String(selectedReporteeExpandId) === cardKey
+    ) {
+      setSelectedMember("all");
+    }
+  };
 
   const buildCombinedData = (allReports: any[]) => {
     const allAccomplishments: any[] = [];
@@ -1810,6 +2210,69 @@ const DailyTab = ({
         sensitivity: "base",
       })
     );
+  // HODs = top-level report owners that have reportees under them
+  // (fallback: every report owner, when nobody has reportees).
+  const hodReports = memberReports.filter(
+    (report: any) =>
+      Array.isArray(report.reportee_reports) && report.reportee_reports.length > 0
+  );
+  const hodOptions = [
+    { value: "all", label: "All HOD" },
+    ...(hodReports.length > 0 ? hodReports : memberReports).map((report: any) => ({
+      value: String(report.user_id),
+      label: report.department
+        ? `${(report.name || "").trim()} — ${report.department}`
+        : (report.name || "").trim() || `User ${report.user_id}`,
+    })),
+  ];
+
+  const getReportFilterItems = (report: any) => {
+    const reportData = normalizeReportData(resolveRawSource(report));
+    const reporteeItems = Array.isArray(report.reportee_reports)
+      ? report.reportee_reports.flatMap((reportee: any) => {
+        const reporteeData = normalizeReportData(resolveRawSource(reportee));
+        return [
+          ...reporteeData.accomplishments,
+          ...reporteeData.tasks_issues,
+          ...reporteeData.tomorrow_plan,
+        ];
+      })
+      : [];
+    return [
+      ...reportData.accomplishments,
+      ...reportData.tasks_issues,
+      ...reportData.tomorrow_plan,
+      ...reporteeItems,
+    ];
+  };
+  const addFilterOption = (map: Map<string, string>, label: string) => {
+    const cleanLabel = String(label || "").trim();
+    if (!cleanLabel) return;
+    const key = cleanLabel.toLowerCase();
+    if (!map.has(key)) map.set(key, cleanLabel);
+  };
+  const tagOptionMap = new Map<string, string>();
+  const projectOptionMap = new Map<string, string>();
+  memberReports.forEach((report: any) => {
+    getReportFilterItems(report).forEach((item: any) => {
+      getItemTagNames(item).forEach((tag) => addFilterOption(tagOptionMap, tag));
+      addFilterOption(projectOptionMap, getItemProjectName(item));
+    });
+  });
+  const tagOptions = [
+    { value: "all", label: "All Tags" },
+    ...Array.from(tagOptionMap.entries()).map(([value, label]) => ({
+      value,
+      label,
+    })),
+  ];
+  const projectOptions = [
+    { value: "all", label: "All Projects" },
+    ...Array.from(projectOptionMap.entries()).map(([value, label]) => ({
+      value,
+      label,
+    })),
+  ];
   const adminPlanMissedMembers = memberReports.filter(
     isAdminAddedMissedPlanReport
   );
@@ -1845,14 +2308,81 @@ const DailyTab = ({
     (member: any) =>
       !absentSubmittedUserIds.has(String(member.id || member.user_id))
   );
-  if (selectedMember !== "all") {
+  if (selectedHod !== "all") {
     memberReports = memberReports.filter(
+      (r: any) => String(r.user_id) === selectedHod
+    );
+    failedMembers = failedMembers.filter(
+      (m: any) => String(m.id || m.user_id) === selectedHod
+    );
+  }
+  // The picked member may be a reportee rather than a report owner (e.g. Uzair
+  // sits under Akshay). In that case show the HOD's card and force that card's
+  // member filter to the reportee, so only their rows are listed.
+  let selectedReporteeExpandId: any = null;
+  let selectedReporteeOwnerId: string | null = null;
+  let selectedReporteeMemberKey: string | null = null;
+  if (selectedMember !== "all") {
+    const isOwnReport = memberReports.some(
       (r: any) => String(r.user_id) === selectedMember
+    );
+    if (!isOwnReport) {
+      const ownerReport = memberReports.find(
+        (r: any) =>
+          Array.isArray(r.reportee_reports) &&
+          r.reportee_reports.some(
+            (reportee: any) => String(reportee.user_id) === selectedMember
+          )
+      );
+      if (ownerReport) {
+        const reportee = ownerReport.reportee_reports.find(
+          (item: any) => String(item.user_id) === selectedMember
+        );
+        selectedReporteeOwnerId = String(ownerReport.user_id);
+        selectedReporteeExpandId =
+          ownerReport.journal_id || ownerReport.user_id;
+        selectedReporteeMemberKey = getMemberFilterKey(
+          reportee?.name || reportee?.email
+        );
+      }
+    }
+  }
+  if (selectedMember !== "all") {
+    memberReports = memberReports.filter((r: any) =>
+      selectedReporteeOwnerId
+        ? String(r.user_id) === selectedReporteeOwnerId
+        : String(r.user_id) === selectedMember
     );
     failedMembers = failedMembers.filter(
       (m: any) => String(m.id) === selectedMember
     );
   }
+  if (selectedTag !== "all" || selectedProject !== "all") {
+    memberReports = memberReports.filter((report: any) =>
+      getReportFilterItems(report).some((item: any) => {
+        const matchesTag =
+          selectedTag === "all" ||
+          getItemTagNames(item).some(
+            (tag) => tag.toLowerCase() === selectedTag
+          );
+        const matchesProject =
+          selectedProject === "all" ||
+          getItemProjectName(item).toLowerCase() === selectedProject;
+        return matchesTag && matchesProject;
+      })
+    );
+  }
+
+  // Reportee selected from the global Members filter → open the HOD's card
+  useEffect(() => {
+    if (selectedReporteeExpandId === null || selectedReporteeExpandId === undefined)
+      return;
+    setExpandedReports((prev) =>
+      prev.includes(selectedReporteeExpandId)
+        ? prev
+        : [...prev, selectedReporteeExpandId]
+    );
+  }, [selectedReporteeExpandId]);
 
   const getReportSelectionKey = (report: any) =>
     String(report?.journal_id || report?.user_id || "");
@@ -2062,6 +2592,115 @@ const DailyTab = ({
     );
   };
 
+  const getMemberBadgeClass = (name: any) => {
+    const colors = [
+      "bg-[#E7E3FF] text-[#6756C9]",
+      "bg-[#FFE2A8] text-[#8B5A00]",
+      "bg-[#BFEADF] text-[#0E6F5E]",
+      "bg-[#F0E8FF] text-[#7564C9]",
+      "bg-[#FFD9B5] text-[#A15305]",
+      "bg-[#DDEBFF] text-[#315FAD]",
+    ];
+    const seed = String(name || "")
+      .split("")
+      .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    return colors[seed % colors.length];
+  };
+
+  const getMemberShortName = (name: any) => {
+    const parts = String(name || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (!parts.length) return "";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  };
+
+  const renderAccomplishmentRows = (
+    items: any[] = [],
+    _showMemberBadge = false,
+    emptyText = "None recorded."
+  ) => {
+    if (!items.length) {
+      return <p className="px-1 py-2 text-xs text-neutral-300 italic">{emptyText}</p>;
+    }
+
+    return (
+      <ul className="space-y-3">
+        {items.map((item: any, index: number) => {
+          const type = getViewSourceType(item);
+          const hasDetails = ["task", "issue", "todo"].includes(type);
+          // Design: tasks/issues use the orange notepad glyph, todos/notes the blue document glyph
+          const isNotepadLike = type === "task" || type === "issue";
+          const ItemIcon = isNotepadLike ? NotepadText : FileText;
+          const typeLabel =
+            type === "task"
+              ? "Task"
+              : type === "issue"
+                ? "Issue"
+                : type === "todo"
+                  ? "Todo"
+                  : "Note";
+          const typeBadgeClass =
+            type === "task"
+              ? "bg-[#DA7756] text-white border-transparent"
+              : type === "issue"
+                ? "bg-violet-600 text-white border-transparent"
+                : type === "todo"
+                  ? "bg-amber-500 text-white border-transparent"
+                  : "bg-gray-500 text-white border-transparent";
+          const memberName = item.member || item.member_name || item.user_name || "";
+
+          return (
+            <li
+              key={`${getItemTitle(item)}-${memberName}-${index}`}
+              onClick={hasDetails ? () => handleViewTaskIssueTodoItem(item) : undefined}
+              className={cn(
+                "flex min-h-[54px] flex-col rounded-[10px] border border-[#ECEFF3] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]",
+                hasDetails &&
+                "row-action cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]"
+              )}
+            >
+              <div className="flex flex-1 items-center gap-3 px-4 py-3">
+                <ItemIcon
+                  className={cn(
+                    "h-[18px] w-[18px] shrink-0",
+                    isNotepadLike ? "text-[#F36A3D]" : "text-[#4BA3F2]"
+                  )}
+                />
+                <span className="min-w-0 flex-1 text-[13px] font-medium leading-[16px] text-[#2B2F38]">
+                  {getItemTitle(item)}
+                </span>
+                <span
+                  className={cn(
+                    "shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-extrabold uppercase leading-none",
+                    typeBadgeClass
+                  )}
+                >
+                  {typeLabel}
+                </span>
+                {memberName && (
+                  <span
+                    className={cn(
+                      "flex h-[22px] min-w-[22px] shrink-0 items-center justify-center rounded-full px-1.5 text-[9px] font-extrabold leading-none",
+                      getMemberBadgeClass(memberName)
+                    )}
+                    title={memberName}
+                  >
+                    {getMemberShortName(memberName)}
+                  </span>
+                )}
+              </div>
+              {/* Target date + overdue + estimated effort + active time */}
+              <ReportItemMeta item={item} />
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
   const visibleReports = memberReports.filter(
     (report: any) =>
       !isAdminAddedMissedPlanReport(report) &&
@@ -2096,6 +2735,38 @@ const DailyTab = ({
           }
           .feedback-panel-enter { animation: feedbackPanelIn 180ms ease-out both; }
           .feedback-panel-exit { animation: feedbackPanelOut 180ms ease-in both; }
+
+          /* Dropdown open / close */
+          @keyframes ddMenuIn {
+            from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes ddMenuOut {
+            from { opacity: 1; transform: translateY(0) scale(1); }
+            to { opacity: 0; transform: translateY(-4px) scale(0.98); }
+          }
+          .dd-menu-enter { animation: ddMenuIn 150ms cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: top center; }
+          .dd-menu-exit { animation: ddMenuOut 120ms ease-in both; transform-origin: top center; }
+          .dd-option { transition: background-color 120ms ease, color 120ms ease, padding-left 120ms ease; }
+          .dd-option:hover { padding-left: 20px; }
+
+          /* Expanding a report card */
+          @keyframes cardBodyIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .card-body-enter { animation: cardBodyIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+          /* Row click → navigate / open details */
+          .row-action { transition: transform 130ms ease, box-shadow 130ms ease, border-color 130ms ease, background-color 130ms ease; }
+          .row-action:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15,23,42,0.07); }
+          .row-action:active { transform: scale(0.985); box-shadow: none; }
+
+          @media (prefers-reduced-motion: reduce) {
+            .dd-menu-enter, .dd-menu-exit, .card-body-enter,
+            .feedback-panel-enter, .feedback-panel-exit { animation: none !important; }
+            .row-action, .row-action:hover, .row-action:active { transform: none; }
+          }
         `}
       </style>
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-stretch">
@@ -2103,12 +2774,10 @@ const DailyTab = ({
         <div className="h-full">
           {/* ══ CALENDAR CARD ══ */}
           <div className="rounded-2xl border border-gray-200 bg-white shadow-sm h-full flex flex-col">
-            <div className="p-5">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div className="p-5 flex-1 flex flex-col justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="bg-blue-50 p-2 rounded-lg">
-                    <Calendar size={20} className="text-blue-600" />
-                  </div>
+                  <Calendar size={20} className="text-neutral-500 shrink-0" />
                   <span className="text-base sm:text-lg font-bold text-[#1a1a1a] tracking-tight leading-tight">
                     Daily Meeting for {topDateStr}
                   </span>
@@ -2161,7 +2830,7 @@ const DailyTab = ({
                   </div>
                 </div>
               ) : (
-                <div className="flex gap-4 overflow-x-auto overflow-y-visible pb-8 pt-4 scrollbar-none snap-x">
+                <div className="grid grid-cols-7 gap-2 sm:gap-3 overflow-y-visible pb-3 pt-2">
                   {calendarRow.map((dateItem: any) => {
                     const isSelected = dateItem.full_date === activeDate;
                     let rawStatus = dateItem.status;
@@ -2206,13 +2875,13 @@ const DailyTab = ({
                             : () => setActiveDate(dateItem.full_date)
                         }
                         className={cn(
-                          "min-w-[80px] h-[80px] rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all shrink-0 snap-center relative",
+                          "w-full h-[104px] rounded-xl flex flex-col items-center justify-center gap-1.5 transition-all relative",
                           isHoliday || isUpcoming
                             ? "cursor-not-allowed opacity-70"
                             : "cursor-pointer"
                         )}
                         style={{
-                          background: isSelected ? "#FFFFFF" : "#F5F5F5",
+                          background: isSelected ? "#FFFFFF" : "#F5F3EE",
                           border: isSelected
                             ? "1.5px solid #DA7756"
                             : "1.5px solid transparent",
@@ -2225,50 +2894,29 @@ const DailyTab = ({
                             ? "Holiday - not selectable"
                             : isUpcoming
                               ? "Upcoming - not selectable"
-                              : undefined
+                              : displayLabel
                         }
                       >
                         {topBarColor !== "transparent" && (
                           <div
-                            className="absolute top-[-1.5px] left-[-1.5px] right-[-1.5px] z-10 h-2.5 rounded-t-xl"
+                            className="absolute top-[-1.5px] left-[-1.5px] right-[-1.5px] z-10 h-3 rounded-t-xl"
                             style={{ backgroundColor: topBarColor }}
                           />
                         )}
                         {isUpcoming && !isSelected && (
                           <div
-                            className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full border border-white"
+                            className="absolute top-0 right-0 z-20 w-2.5 h-2.5 rounded-full border border-white"
                             style={{
                               backgroundColor: "#E28B8B",
                               transform: "translate(30%, -30%)",
                             }}
                           />
                         )}
-                        <span className="text-[11px] font-semibold text-gray-500 mt-2">
+                        <span className="text-[13px] font-semibold text-neutral-500 mt-2">
                           {dateItem.day}
                         </span>
-                        <span className="text-[22px] font-black text-gray-800 leading-tight">
+                        <span className="text-[24px] font-black text-neutral-800 leading-tight">
                           {dateItem.date}
-                        </span>
-                        <span
-                          className="text-[9px] font-bold uppercase tracking-tight px-1.5 py-0.5 rounded-[4px] mt-0.5"
-                          style={{
-                            color: isFilled
-                              ? "#0f9e7b"
-                              : isMissed
-                                ? "#c0392b"
-                                : isHoliday
-                                  ? "#6b7280"
-                                  : "#94a3b8",
-                            background: isFilled
-                              ? "#e6faf6"
-                              : isMissed
-                                ? "#fce8e8"
-                                : isHoliday
-                                  ? "#f1f5f9"
-                                  : "#f1f5f9",
-                          }}
-                        >
-                          {displayLabel}
                         </span>
                       </div>
                     );
@@ -2277,13 +2925,13 @@ const DailyTab = ({
               )}
 
               {!noMeetings && (
-                <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 pt-4 border-t border-gray-100 mt-3">
+                <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 pt-3 border-t border-gray-100 mt-1">
                   <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-semibold">
                     <span
                       className="w-3 h-3 rounded-sm"
                       style={{ background: "#61CDBB" }}
                     />
-                    Filled
+                    Held
                   </div>
                   <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-semibold">
                     <span
@@ -2348,21 +2996,36 @@ const DailyTab = ({
               </div>
 
               {/* Stats row */}
-              <div className="flex items-center gap-2 flex-wrap px-4 py-3 border-b border-gray-100">
-                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-[#CE7A5A] text-white shadow-sm">
-                  Total: {dailyData.total_members || 0}
-                </span>
-                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-white text-green-600 border border-green-400/50 shadow-sm">
-                  Submitted: {dailyData.submitted || 0}
-                </span>
-                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-white text-[#b91c1c] border border-[#b91c1c]/70 shadow-sm">
-                  Missed: {dailyData.missed || 0}
-                </span>
+              <div className="grid grid-cols-3 gap-3 px-4 py-3">
+                <div className="rounded-xl px-4 py-3 bg-[#F2F1EC]">
+                  <div className="text-[26px] font-black text-neutral-800 leading-none">
+                    {dailyData.total_members || 0}
+                  </div>
+                  <div className="text-[11px] font-semibold text-neutral-500 mt-1.5">
+                    Total
+                  </div>
+                </div>
+                <div className="rounded-xl px-4 py-3 bg-[#CFEDE4]">
+                  <div className="text-[26px] font-black text-neutral-800 leading-none">
+                    {dailyData.submitted || 0}
+                  </div>
+                  <div className="text-[11px] font-semibold text-neutral-600 mt-1.5">
+                    Submitted
+                  </div>
+                </div>
+                <div className="rounded-xl px-4 py-3 bg-[#F9DDD8]">
+                  <div className="text-[26px] font-black text-neutral-800 leading-none">
+                    {dailyData.missed || 0}
+                  </div>
+                  <div className="text-[11px] font-semibold text-neutral-600 mt-1.5">
+                    Missed
+                  </div>
+                </div>
               </div>
 
               {/* Meeting Notes — grows to fill height */}
               <div className="p-4 flex-1 flex flex-col">
-                <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
+                <p className="text-[11px] font-bold text-neutral-500 mb-2">
                   Meeting Notes
                 </p>
                 <textarea
@@ -2377,57 +3040,7 @@ const DailyTab = ({
                 />
               </div>
 
-              {/* Footer: Select All + Save */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-gray-50 px-4 py-3 border-t border-gray-100 mt-auto">
-                <label className="flex shrink-0 items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={areAllVisibleReportsSelected}
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 shrink-0 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
-                  />
-                  <span className="text-sm font-bold leading-tight text-[#1A1A1A] whitespace-nowrap">
-                    Select All
-                  </span>
-                </label>
-                {isActiveDateSubmitted ? (
-                  <div className="flex w-full min-w-0 flex-col items-stretch gap-2 sm:flex-1 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-                    {!notesChanged && (
-                      <span className="min-w-0 max-w-[150px] text-[11px] leading-tight text-neutral-400 font-medium italic">
-                        Edit notes to enable update
-                      </span>
-                    )}
-                    <BtnPrimary
-                      icon={isSavingMeeting ? Loader2 : RefreshCw}
-                      onClick={handleUpdateNotesOnly}
-                      disabled={isSavingMeeting || !notesChanged}
-                      loading={isSavingMeeting}
-                    className="min-h-[44px] min-w-0 whitespace-nowrap rounded-full bg-[#6E8EEB] px-5 py-2.5 text-[13px] leading-tight hover:bg-[#5F7FE0] border-[#6E8EEB] shadow-none disabled:bg-[#9AAEF0] disabled:text-white disabled:opacity-100 sm:min-w-[156px]"
-                    >
-                      {isSavingMeeting ? "Updating..." : "Update Notes"}
-                    </BtnPrimary>
-                  </div>
-                ) : meetingJournalId ? (
-                  <BtnPrimary
-                    icon={isSavingMeeting ? Loader2 : RefreshCw}
-                    onClick={handleUpdateMeeting}
-                    disabled={isSavingMeeting}
-                    loading={isSavingMeeting}
-                    className="bg-blue-600 hover:bg-blue-700 border-blue-700"
-                  >
-                    {isSavingMeeting ? "Updating..." : "Update Meeting"}
-                  </BtnPrimary>
-                ) : (
-                  <BtnPrimary
-                    icon={isSavingMeeting ? Loader2 : FileText}
-                    onClick={handleSaveMeeting}
-                    disabled={isSavingMeeting}
-                    loading={isSavingMeeting}
-                  >
-                    {isSavingMeeting ? "Saving..." : "Save Meeting"}
-                  </BtnPrimary>
-                )}
-              </div>
+              {/* Select All + Save Meeting moved to the filter bar below */}
             </div>
           )}
         </div>
@@ -2437,11 +3050,8 @@ const DailyTab = ({
 
       {/* ══ FULL WIDTH BELOW — Filters ══ */}
       {/* ══ FILTERS ══ */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-          <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest whitespace-nowrap">
-            Meeting
-          </span>
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 flex flex-wrap items-center gap-3 sm:gap-4">
+        <div className="flex shrink-0 items-center gap-2">
           {noMeetings ? (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
               <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
@@ -2464,11 +3074,7 @@ const DailyTab = ({
 
         {!noMeetings && (
           <>
-            <div className="hidden sm:block w-px h-5 bg-gray-200 shrink-0" />
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-              <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest whitespace-nowrap">
-                Members
-              </span>
+            <div className="flex shrink-0 items-center gap-2">
               <SearchableSelect
                 value={selectedMember}
                 onChange={setSelectedMember}
@@ -2480,6 +3086,24 @@ const DailyTab = ({
                     label: m.name,
                   })),
                 ]}
+              />
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <SearchableSelect
+                value={selectedTag}
+                onChange={setSelectedTag}
+                placeholder="All Tags"
+                options={tagOptions}
+              />
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <SearchableSelect
+                value={selectedProject}
+                onChange={setSelectedProject}
+                placeholder="All Projects"
+                options={projectOptions}
               />
             </div>
           </>
@@ -2563,6 +3187,76 @@ const DailyTab = ({
       {/* ══ REPORTS SECTION — member cards in left col ══ */}
       {!isLoading && dailyData && !noMeetings && (
         <>
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 space-y-4">
+          {/* ══ Action bar: HOD filter + Select All + Save Meeting ══ */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex shrink-0 items-center gap-2">
+              <SearchableSelect
+                value={selectedHod}
+                onChange={(value: string) => {
+                  setSelectedHod(value);
+                  // HOD badalne par member + project filters wapas "all" par
+                  setSelectedMember("all");
+                  setSelectedProject("all");
+                  setReportMemberFilters({});
+                  setReportProjectFilters({});
+                }}
+                placeholder="Select HOD"
+                options={hodOptions}
+              />
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 sm:gap-4">
+              <label className="flex shrink-0 items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={areAllVisibleReportsSelected}
+                  onChange={handleSelectAll}
+                  className="w-4 h-4 shrink-0 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
+                />
+                <span className="text-sm font-bold leading-tight text-[#1A1A1A] whitespace-nowrap">
+                  Select All
+                </span>
+              </label>
+              {isActiveDateSubmitted ? (
+                <>
+                  {!notesChanged && (
+                    <span className="max-w-[150px] text-[11px] leading-tight text-neutral-400 font-medium italic">
+                      Edit notes to enable update
+                    </span>
+                  )}
+                  <BtnPrimary
+                    icon={isSavingMeeting ? Loader2 : RefreshCw}
+                    onClick={handleUpdateNotesOnly}
+                    disabled={isSavingMeeting || !notesChanged}
+                    loading={isSavingMeeting}
+                    className="min-h-[44px] whitespace-nowrap rounded-full bg-[#6E8EEB] px-5 py-2.5 text-[13px] leading-tight hover:bg-[#5F7FE0] border-[#6E8EEB] shadow-none disabled:bg-[#9AAEF0] disabled:text-white disabled:opacity-100"
+                  >
+                    {isSavingMeeting ? "Updating..." : "Update Notes"}
+                  </BtnPrimary>
+                </>
+              ) : meetingJournalId ? (
+                <BtnPrimary
+                  icon={isSavingMeeting ? Loader2 : RefreshCw}
+                  onClick={handleUpdateMeeting}
+                  disabled={isSavingMeeting}
+                  loading={isSavingMeeting}
+                  className="bg-blue-600 hover:bg-blue-700 border-blue-700"
+                >
+                  {isSavingMeeting ? "Updating..." : "Update Meeting"}
+                </BtnPrimary>
+              ) : (
+                <BtnPrimary
+                  icon={isSavingMeeting ? Loader2 : FileText}
+                  onClick={handleSaveMeeting}
+                  disabled={isSavingMeeting}
+                  loading={isSavingMeeting}
+                >
+                  {isSavingMeeting ? "Saving..." : "Save Meeting"}
+                </BtnPrimary>
+              )}
+            </div>
+          </div>
+
           {visibleReports.length === 0 && failedMembers.length === 0 && (
             <div className="p-10 text-center text-sm font-bold text-neutral-400 bg-white border border-gray-200 rounded-2xl">
               No reports found for this selection.
@@ -2641,6 +3335,222 @@ const DailyTab = ({
                     const reporteeReports = Array.isArray(report.reportee_reports)
                       ? report.reportee_reports
                       : [];
+                    const hasReporteeReports = reporteeReports.length > 0;
+                    const combinedAccomplishmentRows = hasReporteeReports
+                      ? [
+                        ...userAccomplishments.map((item: any) => ({
+                          ...item,
+                          member: report.name,
+                        })),
+                        ...reporteeReports.flatMap((reportee: any) => {
+                          const reporteeRaw = resolveRawSource(reportee);
+                          const reporteeData = normalizeReportData(reporteeRaw);
+                          const reporteeAbsent = isReportAbsent(
+                            reportee,
+                            reporteeRaw,
+                            reporteeData
+                          );
+                          if (reporteeAbsent) return [];
+                          return reporteeData.accomplishments.map((item: any) => ({
+                            ...item,
+                            member: reportee.name || item.member,
+                          }));
+                        }),
+                      ]
+                      : userAccomplishments;
+                    const combinedTasksIssueRows = hasReporteeReports
+                      ? [
+                        ...visibleTasksIssues.map((item: any) => ({
+                          ...item,
+                          member: report.name,
+                        })),
+                        ...reporteeReports.flatMap((reportee: any) => {
+                          const reporteeRaw = resolveRawSource(reportee);
+                          const reporteeData = normalizeReportData(reporteeRaw);
+                          const reporteeAbsent = isReportAbsent(
+                            reportee,
+                            reporteeRaw,
+                            reporteeData
+                          );
+                          if (reporteeAbsent) return [];
+                          return reporteeData.tasks_issues
+                            .filter((item: any) => !isCompletedStatus(getItemStatus(item)))
+                            .map((item: any) => ({
+                              ...item,
+                              member: reportee.name || item.member,
+                            }));
+                        }),
+                      ]
+                      : visibleTasksIssues;
+                    const combinedTomorrowPlanRows = hasReporteeReports
+                      ? [
+                        ...userTomorrowPlan.map((item: any) => ({
+                          ...item,
+                          member: report.name,
+                        })),
+                        ...reporteeReports.flatMap((reportee: any) => {
+                          const reporteeRaw = resolveRawSource(reportee);
+                          const reporteeData = normalizeReportData(reporteeRaw);
+                          const reporteeAbsent = isReportAbsent(
+                            reportee,
+                            reporteeRaw,
+                            reporteeData
+                          );
+                          if (reporteeAbsent) return [];
+                          return reporteeData.tomorrow_plan.map((item: any) => ({
+                            ...item,
+                            member: reportee.name || item.member,
+                          }));
+                        }),
+                      ]
+                      : userTomorrowPlan;
+                    const reportMemberKey = String(rId);
+                    const allReportRows = [
+                      ...combinedAccomplishmentRows,
+                      ...combinedTasksIssueRows,
+                      ...combinedTomorrowPlanRows,
+                    ];
+                    const getRowMemberKey = (item: any) =>
+                      getMemberFilterKey(
+                        item.member ||
+                        item.member_name ||
+                        item.name ||
+                        item.email ||
+                        report.name
+                      );
+
+                    // Raw per-card selections (before validating against options)
+                    const selectedReportMember =
+                      reportMemberFilters[reportMemberKey] || "all";
+                    const selectedReportProject =
+                      reportProjectFilters[reportMemberKey] || "all";
+                    // Global Members filter picked a reportee of this HOD →
+                    // lock this card's member filter to that reportee.
+                    // (a manual pick on this card still wins)
+                    const forcedReporteeMemberKey =
+                      selectedReporteeMemberKey &&
+                        selectedReporteeOwnerId === String(report.user_id) &&
+                        selectedReportMember === "all"
+                        ? selectedReporteeMemberKey
+                        : null;
+                    const memberScopeKey =
+                      forcedReporteeMemberKey ?? selectedReportMember;
+
+                    // Project list is scoped to the selected member — only the
+                    // projects that member actually worked on stay selectable.
+                    const reportProjectMap = new Map<string, string>();
+                    allReportRows
+                      .filter(
+                        (item: any) =>
+                          memberScopeKey === "all" ||
+                          getRowMemberKey(item) === memberScopeKey
+                      )
+                      .forEach((item: any) => {
+                        const projectName = getItemProjectName(item);
+                        if (!projectName) return;
+                        const key = projectName.toLowerCase();
+                        if (!reportProjectMap.has(key))
+                          reportProjectMap.set(key, projectName);
+                      });
+                    const reportProjectOptions = [
+                      { value: "all", label: "All Projects" },
+                      ...Array.from(reportProjectMap.entries()).map(
+                        ([value, label]) => ({ value, label })
+                      ),
+                    ];
+                    const activeReportProject = reportProjectOptions.some(
+                      (option) => String(option.value) === String(selectedReportProject)
+                    )
+                      ? selectedReportProject
+                      : "all";
+
+                    // Member list is scoped to the selected project — only members
+                    // who actually have items on that project stay selectable.
+                    const hodMemberOption = {
+                      value: getMemberFilterKey(report.name || report.email),
+                      label: hasReporteeReports
+                        ? `${(report.name || report.email || "HOD").trim()} (HOD)`
+                        : report.name || report.email || "Member",
+                    };
+                    // HOD ka apna report bhi selectable rehna chahiye
+                    const baseMemberOptions = hasReporteeReports
+                      ? [
+                        hodMemberOption,
+                        ...reporteeReports.map((reportee: any) => ({
+                          value: getMemberFilterKey(reportee.name || reportee.email),
+                          label: reportee.name || reportee.email || "Reportee",
+                        })),
+                      ]
+                      : [hodMemberOption];
+                    const memberKeysInProject = new Set(
+                      allReportRows
+                        .filter(
+                          (item: any) =>
+                            activeReportProject === "all" ||
+                            getItemProjectName(item).toLowerCase() ===
+                            activeReportProject
+                        )
+                        .map(getRowMemberKey)
+                    );
+                    const scopedMemberOptions =
+                      activeReportProject === "all"
+                        ? baseMemberOptions
+                        : baseMemberOptions.filter((option) =>
+                          memberKeysInProject.has(String(option.value))
+                        );
+                    const reportMemberOptions = [
+                      { value: "all", label: "All Members" },
+                      ...scopedMemberOptions,
+                    ].filter((option, index, options) =>
+                      option.value === "all" ||
+                      options.findIndex((item) => item.value === option.value) === index
+                    );
+                    // Count = jitne members dropdown mein selectable hain (HOD included)
+                    const reportMemberCount = reportMemberOptions.length - 1;
+                    const reportMemberOptionExists = reportMemberOptions.some(
+                      (option) => String(option.value) === String(memberScopeKey)
+                    );
+                    const activeReportMember = reportMemberOptionExists
+                      ? memberScopeKey
+                      : "all";
+
+                    const filterRowsForSelectedMember = (items: any[]) => {
+                      return items.filter((item: any) => {
+                        const memberName =
+                          item.member || item.member_name || item.name || item.email || report.name;
+                        const matchesMember =
+                          activeReportMember === "all" ||
+                          getMemberFilterKey(memberName) === activeReportMember;
+                        const matchesTag =
+                          selectedTag === "all" ||
+                          getItemTagNames(item).some(
+                            (tag) => tag.toLowerCase() === selectedTag
+                          );
+                        const itemProject = getItemProjectName(item).toLowerCase();
+                        const matchesProject =
+                          selectedProject === "all" || itemProject === selectedProject;
+                        const matchesReportProject =
+                          activeReportProject === "all" ||
+                          itemProject === activeReportProject;
+                        return (
+                          matchesMember &&
+                          matchesTag &&
+                          matchesProject &&
+                          matchesReportProject
+                        );
+                      });
+                    };
+                    const filteredAccomplishmentRows = filterRowsForSelectedMember(
+                      combinedAccomplishmentRows
+                    );
+                    const filteredTasksIssueRows = filterRowsForSelectedMember(
+                      combinedTasksIssueRows
+                    );
+                    const filteredTomorrowPlanRows = filterRowsForSelectedMember(
+                      combinedTomorrowPlanRows
+                    );
+                    const showFilteredMemberBadges =
+                      hasReporteeReports && activeReportMember === "all";
 
                     const sections =
                       draftRaw?.sections ||
@@ -2705,27 +3615,30 @@ const DailyTab = ({
                     const reportCalendarRow = reportCalendar.length
                       ? mergeCalendarWithFallback(reportCalendar, baseCalendarRow)
                       : dateRow;
+                    const reportStatusInitial = isRawPending
+                      ? "M"
+                      : attendanceLabel.toLowerCase().startsWith("absent")
+                        ? "A"
+                        : "P";
 
                     return (
                       <div
                         key={rId}
                         className={cn(
-                          "bg-white border rounded-xl shadow-sm overflow-hidden transition-all",
-                          isSelected
-                            ? "border-[#4A90E2] border-l-[4px]"
-                            : "border-[#EAE3DF]"
+                          "min-h-[92px] bg-white border border-[#D1D5DB] rounded-[14px] shadow-none overflow-hidden transition-all",
+                          isSelected && "ring-1 ring-[#7AD5CC]"
                         )}
                       >
                         <div
                           className={cn(
-                            "p-4 transition-colors flex items-start gap-3 sm:gap-4",
+                            "px-5 py-3 transition-colors flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between",
                             canExpand
-                              ? "cursor-pointer hover:bg-gray-50"
+                              ? "cursor-pointer hover:bg-[#FAFAFA]"
                               : "cursor-default"
                           )}
                           onClick={() => canExpand && toggleExpand(rId)}
                         >
-                          <div className="flex items-start gap-3 pt-1">
+                          <div className="flex items-start gap-3 pt-[1px]">
                             <input
                               type="checkbox"
                               checked={isPermanentlyChecked || isSelected}
@@ -2741,7 +3654,7 @@ const DailyTab = ({
                               }}
                               onClick={(e) => e.stopPropagation()}
                               className={cn(
-                                "w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] shrink-0 mt-3",
+                                "w-[15px] h-[15px] rounded border-[#DADDE3] accent-[#CE7A5A] shrink-0 mt-0.5",
                                 isPermanentlyChecked
                                   ? "opacity-60 cursor-not-allowed"
                                   : "cursor-pointer"
@@ -2753,23 +3666,23 @@ const DailyTab = ({
                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                  <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
+                                  <h3 className="font-bold text-[#202124] text-[18px] leading-[22px] truncate">
                                     {report.name}
                                   </h3>
                                   {(report.name?.includes("HOD") ||
                                     report.name?.includes("TL")) && (
-                                      <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                                      <span className="hidden items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
                                         <Crown className="w-3 h-3 fill-orange-400" />{" "}
                                         HOD
                                       </span>
                                     )}
                                   {report.department && (
-                                    <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                    <span className="hidden border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
                                       {report.department}
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[11px] text-gray-400 mb-2 truncate">
+                                <div className="hidden text-[11px] text-gray-400 mb-2 truncate">
                                   {report.email || "Report submitted"}
                                   {report.submitted_at && (
                                     <span className="ml-1">
@@ -2777,25 +3690,42 @@ const DailyTab = ({
                                     </span>
                                   )}
                                 </div>
+                                <div className="flex flex-wrap items-center gap-[8px] mt-8">
+                                  <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                                    KPI: {kpiStr}
+                                  </span>
+                                  <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                                    Tasks, Issues &amp; Todos: {tasksIssuesStr}
+                                  </span>
+                                  <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                                    Planning: {planStr}
+                                  </span>
+                                  <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                                    Timing: {timeStr}
+                                  </span>
+                                </div>
                               </div>
 
-                              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                              <div className="flex flex-wrap items-center gap-[12px] shrink-0">
+                                <span className="flex h-[21px] w-[21px] items-center justify-center rounded-full border border-[#39CFC5] bg-[#DDF8F3] text-[10px] font-bold text-[#088F86]">
+                                  {reportStatusInitial}
+                                </span>
                                 {/* Not submitted → "Missed", never Absent/Present */}
                                 {isRawPending && (
-                                  <span className="border border-red-100 bg-red-50 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
-                                    Missed
+                                  <span className="flex h-[19px] min-w-[96px] items-center justify-center rounded-full bg-red-50 px-4 text-[9px] font-extrabold uppercase text-red-600 shrink-0">
+                                    Not Submitted
                                   </span>
                                 )}
                                 {/* Attendance is only meaningful for a submitted report —
                                     never tag a non-submitted member as Absent/Present */}
                                 {!isRawPending && (
                                   <>
-                                    <span className="text-[10px] font-bold text-white bg-[#10B981] border border-[#10B981] px-2 py-0.5 rounded-full shrink-0">
+                                <span className="flex h-[19px] min-w-[96px] items-center justify-center rounded-full bg-[#72CFC5] px-4 text-[9px] font-extrabold uppercase text-white shrink-0">
                                       Submitted
                                     </span>
                                     <span
                                       className={cn(
-                                        "border text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0",
+                                        "hidden border text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0",
                                         attendanceBadgeClass
                                       )}
                                     >
@@ -2807,7 +3737,7 @@ const DailyTab = ({
                                   </>
                                 )}
                                 {canExpand && (
-                                  <button className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform">
+                                  <button className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[#EEF0F2] text-[#111827] shrink-0 transition-transform">
                                     <ChevronDown
                                       className={cn(
                                         "w-4 h-4 transition-transform",
@@ -2820,11 +3750,11 @@ const DailyTab = ({
                             </div>
 
                             {canExpand && reportCalendarRow.length > 0 && (
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
-                                <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 mt-2">
+                                <span className="hidden text-[10px] text-gray-500 font-medium whitespace-nowrap">
                                   {configName}
                                 </span>
-                                <div className="flex items-center gap-1.5 flex-wrap">
+                                <div className="flex items-center gap-[6px] flex-wrap">
                                   {reportCalendarRow.map(
                                     (d: any, i: number) => {
                                       const s = getCalendarDisplayStatus(
@@ -2834,17 +3764,17 @@ const DailyTab = ({
                                         <div
                                           key={i}
                                           className={cn(
-                                            "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
+                                            "flex h-[25px] w-[25px] items-center justify-center rounded-full border text-[9px] font-bold",
                                             s === "done" || s === "submitted"
-                                              ? "bg-[#10B981] text-white border-[#10B981]"
+                                              ? "bg-[#D7F8F3] text-[#078C83] border-[#33CFC4]"
                                               : s === "missed"
-                                                ? "bg-[#EF4444] text-white border-[#EF4444]"
+                                                ? "bg-[#FFE4EA] text-[#C71D3C] border-[#FF7D95]"
                                                 : s === "holiday"
-                                                  ? "bg-[#D1D5DB] text-white border-[#D1D5DB]"
-                                                  : "bg-gray-100 text-gray-400 border-gray-200"
+                                                  ? "bg-[#F3F4F6] text-[#9CA3AF] border-[#E5E7EB]"
+                                                  : "bg-white text-[#9CA3AF] border-[#E5E7EB]"
                                           )}
                                         >
-                                          <span className="text-[8px] opacity-90 leading-none mb-0.5">
+                                          <span className="hidden text-[8px] opacity-90 leading-none mb-0.5">
                                             {d.day ? d.day.charAt(0) : ""}
                                           </span>
                                           <span className="leading-none">
@@ -2861,23 +3791,8 @@ const DailyTab = ({
                         </div>
 
                         {isExpanded && canExpand && (
-                          <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
+                          <div className="card-body-enter bg-[#FFFAF8] border-t border-[#EAE3DF]">
                             <div className="p-5 space-y-5">
-                              <div className="flex flex-wrap items-center gap-2 mb-3">
-                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                  KPI: {kpiStr}
-                                </span>
-                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                  Task, Issues & To-do's: {tasksIssuesStr}
-                                </span>
-                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                  Planning: {planStr}
-                                </span>
-                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                  Timing: {timeStr}
-                                </span>
-                              </div>
-
                               <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm mb-4">
                                 <span>
                                   ⭐ Self rating {selfRatingText || "0/10"}
@@ -2901,74 +3816,66 @@ const DailyTab = ({
                                 </div>
                               )}
 
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <p className="text-sm font-extrabold text-[#2B2F38]">
+                                  Total Members: {reportMemberCount}
+                                </p>
+                                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
+                                  <SearchableSelect
+                                    value={activeReportMember}
+                                    onChange={(value: string) => {
+                                      setReportMemberFilters((prev) => ({
+                                        ...prev,
+                                        [reportMemberKey]: value,
+                                      }));
+                                      // "All Members" yahan se choose kiya to
+                                      // upar wala global Members filter bhi reset
+                                      if (value === "all") setSelectedMember("all");
+                                    }}
+                                    placeholder="Member"
+                                    options={reportMemberOptions}
+                                  />
+                                  <SearchableSelect
+                                    value={activeReportProject}
+                                    onChange={(value: string) =>
+                                      setReportProjectFilters((prev) => ({
+                                        ...prev,
+                                        [reportMemberKey]: value,
+                                      }))
+                                    }
+                                    placeholder="Project"
+                                    options={reportProjectOptions}
+                                  />
+                                </div>
+                              </div>
+
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {/* Accomplishments */}
-                                <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                                    <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                                      <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-                                    </div>
-                                    <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                <div className="bg-white border border-[#E8E2DE] rounded-xl p-0 overflow-hidden">
+                                  <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+                                    <CheckCircle2 className="w-4 h-4 text-[#798c5e] shrink-0" />
+                                    <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase">
                                       Accomplishments
                                     </h4>
                                   </div>
-                                  {isAbsentReport || userAccomplishments.length === 0 ? (
-                                    <p className="text-xs text-neutral-300 italic">
-                                      None recorded.
-                                    </p>
-                                  ) : (
-                                    <ul className="space-y-2">
-                                      {userAccomplishments.map(
-                                        (item: any, i: number) => {
-                                          const type = (item.source_type || "note").toLowerCase();
-                                          const typePillStyle =
-                                            type === "issue"
-                                              ? "bg-red-100 text-red-700 border-red-200"
-                                              : type === "todo"
-                                                ? "bg-violet-100 text-violet-700 border-violet-200"
-                                                : type === "task"
-                                                  ? "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30"
-                                                  : "bg-gray-100 text-gray-600 border-gray-200";
-                                          const hasDetails = ["task", "issue", "todo"].includes(type);
-
-                                          return (
-                                            <li
-                                              key={i}
-                                              className="flex flex-col rounded-[10px] border transition-all bg-green-50/60 border-green-100"
-                                            >
-                                              <div className="flex items-center gap-2 px-3 py-2.5">
-                                                <span
-                                                  className={cn(
-                                                    "shrink-0 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border",
-                                                    typePillStyle
-                                                  )}
-                                                >
-                                                  {type}
-                                                </span>
-                                                <span className="flex-1 min-w-0 text-xs font-semibold text-neutral-800 leading-tight">
-                                                  {getItemTitle(item)}
-                                                </span>
-                                                {hasDetails && (
-                                                  <button
-                                                    onClick={() => handleViewReportItem(item)}
-                                                    className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
-                                                    title={`View ${type}`}
-                                                  >
-                                                    <Eye className="w-3 h-3" />
-                                                  </button>
-                                                )}
-                                              </div>
-                                              <ReportItemMeta item={item} />
-                                            </li>
-                                          );
-                                        }
+                                  <div className="p-4">
+                                    {isAbsentReport
+                                      ? renderAccomplishmentRows([], false)
+                                      : renderAccomplishmentRows(
+                                        filteredAccomplishmentRows,
+                                        showFilteredMemberBadges
                                       )}
-                                    </ul>
-                                  )}
+                                  </div>
                                 </div>
 
-                                {/* Tasks & Issues — status buckets */}
-                                <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                                {/* Tasks & Issues — 7 / 14 / 30 day range filter */}
+                                <TasksIssuesTodoCard
+                                  items={filteredTasksIssueRows}
+                                  showMemberBadges={showFilteredMemberBadges}
+                                  isAbsent={isAbsentReport}
+                                  renderRows={renderAccomplishmentRows}
+                                />
+                                <div className="hidden bg-white border border-[#F0E8E3] rounded-xl p-4">
                                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
                                     <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
                                       <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
@@ -3099,17 +4006,19 @@ const DailyTab = ({
                                                 {bucketItems.length}
                                               </span>
                                             </div>
-                                            <ul className="space-y-1.5 pl-1 mb-1">
+                                            <ul className="space-y-2.5 pl-1 mb-1">
                                               {bucketItems.map(
                                                 (item: any, i: number) => {
                                                   const type =
                                                     getItemType(item);
                                                   const typePillStyle =
                                                     type === "issue"
-                                                      ? "bg-red-100 text-red-700 border-red-200"
+                                                      ? "bg-red-50 text-red-700 border-red-200"
                                                       : type === "todo"
-                                                        ? "bg-violet-100 text-violet-700 border-violet-200"
-                                                        : "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30";
+                                                        ? "bg-violet-50 text-violet-700 border-violet-200"
+                                                        : type === "note"
+                                                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                                                          : "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30";
                                                   const priority =
                                                     item.priority ||
                                                     item.urgency ||
@@ -3174,31 +4083,34 @@ const DailyTab = ({
                                                         hasDetails && "cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]"
                                                       )}
                                                     >
-                                                      <div className="flex items-center gap-2 px-3 py-2.5">
+                                                      <div className="flex items-start gap-3 px-3 py-3">
                                                         {/* Type pill */}
                                                         <span
                                                           className={cn(
-                                                            "shrink-0 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border",
+                                                            "shrink-0 mt-0.5 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border",
                                                             typePillStyle
                                                           )}
                                                         >
                                                           {type}
                                                         </span>
-                                                        {/* Title */}
-                                                        <span className="flex-1 min-w-0 text-xs font-semibold text-neutral-800 leading-tight">
-                                                          {getItemTitle(item)}
-                                                        </span>
-                                                        {/* Priority */}
-                                                        {priorityPill && (
-                                                          <span
-                                                            className={cn(
-                                                              "shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full border",
-                                                              priorityPill
-                                                            )}
-                                                          >
-                                                            {priority}
+                                                        
+                                                        {/* Title & Priority */}
+                                                        <div className="flex-1 min-w-0 flex flex-col gap-1">
+                                                          <span className="text-[13px] font-bold text-[#0F172A] leading-snug">
+                                                            {getItemTitle(item)}
                                                           </span>
-                                                        )}
+                                                          {priorityPill && (
+                                                            <span
+                                                              className={cn(
+                                                                "self-start text-[9px] font-bold px-2 py-0.5 rounded-full border",
+                                                                priorityPill
+                                                              )}
+                                                            >
+                                                              {priority}
+                                                            </span>
+                                                          )}
+                                                        </div>
+
                                                         {/* View button — always shown for task/issue */}
                                                         {hasDetails && (
                                                           <button
@@ -3206,11 +4118,10 @@ const DailyTab = ({
                                                               event.stopPropagation();
                                                               handleViewTaskIssueTodoItem(viewItem);
                                                             }}
-                                                            className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                                            className="shrink-0 flex items-center justify-center w-[26px] h-[26px] rounded-[6px] bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
                                                             title={`View ${type}`}
                                                           >
-                                                            <Eye className="w-3 h-3" />
-                                                            {/* <span className="text-[9px] font-bold">View</span> */}
+                                                            <Eye className="w-3.5 h-3.5" />
                                                           </button>
                                                         )}
                                                       </div>
@@ -3228,8 +4139,23 @@ const DailyTab = ({
                                   )}
                                 </div>
 
-                                {/* Tomorrow's Plan */}
-                                <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                                <div className="bg-white border border-[#E8E2DE] rounded-xl p-0 overflow-hidden">
+                                  <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+                                    <Calendar className="w-4 h-4 text-[#6b9bcc] shrink-0" />
+                                    <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase">
+                                      Tomorrow's Plan
+                                    </h4>
+                                  </div>
+                                  <div className="p-4">
+                                    {isAbsentReport
+                                      ? renderAccomplishmentRows([], false)
+                                      : renderAccomplishmentRows(
+                                        filteredTomorrowPlanRows,
+                                        showFilteredMemberBadges
+                                      )}
+                                  </div>
+                                </div>
+                                <div className="hidden bg-white border border-[#F0E8E3] rounded-xl p-4">
                                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
                                     <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
                                       <Calendar className="w-3.5 h-3.5 text-blue-600" />
@@ -3301,7 +4227,7 @@ const DailyTab = ({
                                 </div>
                               </div>
 
-                              {reporteeReports.length > 0 && (
+                              {false && reporteeReports.length > 0 && (
                                 <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
                                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 pb-3 border-b border-gray-100">
                                     <div className="flex items-center gap-2">
@@ -3870,6 +4796,7 @@ const DailyTab = ({
               </div>
             </div>
           )}
+          </div>
         </>
       )}
 
@@ -3907,91 +4834,86 @@ const DailyTab = ({
               return (
                 <div
                   key={missedId}
-                  onClick={() => toggleExpand(missedId)}
-                  className="bg-white border border-[#4A90E2] border-l-[4px] rounded-xl shadow-sm overflow-hidden transition-all cursor-pointer"
+                  className="min-h-[92px] bg-white border border-[#D1D5DB] rounded-[14px] shadow-none overflow-hidden transition-all"
                 >
-                  <div className="p-4 flex items-start gap-4">
-                    <div className="flex items-start gap-3 pt-1">
+                  <div
+                    className="px-5 py-3 transition-colors flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between cursor-pointer hover:bg-[#FAFAFA]"
+                    onClick={() => toggleExpand(missedId)}
+                  >
+                    <div className="flex items-start gap-3 pt-[1px]">
                       <input
                         type="checkbox"
                         checked
                         readOnly
                         disabled
-                        className="w-4 h-4 rounded border-gray-300 shrink-0 mt-3 opacity-60 cursor-not-allowed"
+                        className="w-[15px] h-[15px] rounded border-[#DADDE3] accent-[#CE7A5A] shrink-0 mt-0.5 opacity-60 cursor-not-allowed"
                       />
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="flex items-center justify-center w-11 h-11 rounded-full border-[1.5px] border-[#CE7A5A] text-[#CE7A5A] font-extrabold text-[16px] shrink-0 bg-white">
-                          0
-                        </div>
-                        <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-100 rounded-full px-1.5 py-0.5 whitespace-nowrap">
-                          Missed
-                        </span>
-                      </div>
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
+                            <h3 className="font-bold text-[#202124] text-[18px] leading-[22px] truncate">
                               {member.name || member}
                             </h3>
                             {member.department && (
-                              <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                              <span className="hidden border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
                                 {member.department}
                               </span>
                             )}
-                            <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full shrink-0">
-                              NOT SUBMITTED
-                            </span>
                           </div>
-                          <div className="text-[11px] text-gray-400 mb-2 truncate">
+                          <div className="hidden text-[11px] text-gray-400 mb-2 truncate">
                             {member.email ||
                               "Report not submitted for this date"}
                           </div>
+                          <div className="flex flex-wrap items-center gap-[8px] mt-8">
+                            <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                              KPI: 0/20
+                            </span>
+                            <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                              Tasks, Issues &amp; Todos: 0/20
+                            </span>
+                            <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                              Planning: 0/20
+                            </span>
+                            <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                              Timing: 0/20
+                            </span>
+                          </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleExpand(missedId);
-                          }}
-                          className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform"
-                        >
-                          <ChevronDown
-                            className={cn(
-                              "w-4 h-4 transition-transform",
-                              isMissedExpanded && "rotate-180"
-                            )}
-                          />
-                        </button>
-                      </div>
 
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                          KPI: 0/20
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                          Tasks, Issues & Todos: 0/20
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                          Planning: 0/20
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                          Timing: 0/20
-                        </span>
+                        <div className="flex flex-wrap items-center gap-[12px] shrink-0">
+                          <span className="flex h-[21px] w-[21px] items-center justify-center rounded-full border border-[#39CFC5] bg-[#DDF8F3] text-[10px] font-bold text-[#088F86]">
+                            M
+                          </span>
+                          <span className="flex h-[19px] min-w-[96px] items-center justify-center rounded-full bg-red-50 px-4 text-[9px] font-extrabold uppercase text-red-600 shrink-0">
+                            Not Submitted
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(missedId);
+                            }}
+                            className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[#EEF0F2] text-[#111827] shrink-0 transition-transform"
+                          >
+                            <ChevronDown
+                              className={cn(
+                                "w-4 h-4 transition-transform",
+                                isMissedExpanded && "rotate-180"
+                              )}
+                            />
+                          </button>
+                        </div>
                       </div>
-
-                      <p className="text-[10px] text-gray-400 italic mb-0 mt-1">
-                        Click to view missed submission details
-                      </p>
 
                       {missedMemberCalendarRow.length > 0 && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 mt-2">
+                          <span className="hidden text-[10px] text-gray-500 font-medium whitespace-nowrap">
                             {configName}
                           </span>
-                          <div className="flex items-center gap-1.5 flex-wrap">
+                          <div className="flex items-center gap-[6px] flex-wrap">
                             {missedMemberCalendarRow.map(
                               (d: any, dateIndex: number) => {
                                 const s =
@@ -4003,17 +4925,17 @@ const DailyTab = ({
                                   <div
                                     key={dateIndex}
                                     className={cn(
-                                      "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
+                                      "flex h-[25px] w-[25px] items-center justify-center rounded-full border text-[9px] font-bold",
                                       s === "done" || s === "submitted"
-                                        ? "bg-[#10B981] text-white border-[#10B981]"
+                                        ? "bg-[#D7F8F3] text-[#078C83] border-[#33CFC4]"
                                         : s === "missed"
-                                          ? "bg-[#EF4444] text-white border-[#EF4444]"
+                                          ? "bg-[#FFE4EA] text-[#C71D3C] border-[#FF7D95]"
                                           : s === "holiday"
-                                            ? "bg-[#D1D5DB] text-white border-[#D1D5DB]"
-                                            : "bg-gray-100 text-gray-400 border-gray-200"
+                                            ? "bg-[#F3F4F6] text-[#9CA3AF] border-[#E5E7EB]"
+                                            : "bg-white text-[#9CA3AF] border-[#E5E7EB]"
                                     )}
                                   >
-                                    <span className="text-[8px] opacity-90 leading-none mb-0.5">
+                                    <span className="hidden text-[8px] opacity-90 leading-none mb-0.5">
                                       {d.day ? d.day.charAt(0) : ""}
                                     </span>
                                     <span className="leading-none">
@@ -4029,66 +4951,55 @@ const DailyTab = ({
                     </div>
                   </div>
                   {isMissedExpanded && (
-                    <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
+                    <div className="card-body-enter bg-[#FFFAF8] border-t border-[#EAE3DF]">
                       <div className="p-5 space-y-5">
-                        <div className="flex flex-wrap gap-3">
-                          <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
-                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                            <span className="text-sm font-bold text-yellow-800">
-                              Self Rating: 0/10
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
-                            <span className="text-sm font-bold text-purple-800">
-                              Total Score: 0
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 rounded-xl px-4 py-2.5 border bg-red-50 border-red-100">
-                            <span className="text-sm font-bold text-red-700">
-                              Missed
-                            </span>
-                          </div>
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm mb-4">
+                          <span>⭐ Self rating 0/10</span>
+                          <span className="text-gray-400">Total Score: 0</span>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                              <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                          {/* Accomplishments */}
+                          <div className="bg-white border border-[#E8E2DE] rounded-xl p-0 overflow-hidden">
+                            <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+                              <div className="w-5 h-5 rounded-full border border-[#252A31] flex items-center justify-center shrink-0">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-[#252A31]" />
                               </div>
-                              <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                              <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase">
                                 Accomplishments
                               </h4>
                             </div>
-                            <p className="text-xs text-neutral-300 italic">
-                              None recorded.
-                            </p>
+                            <div className="p-2">
+                              {renderAccomplishmentRows([], false)}
+                            </div>
                           </div>
 
-                          <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                              <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-                                <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
-                              </div>
-                              <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                Tasks, Issues & Todos
+                          {/* Task, Issues & To Do */}
+                          <div className="bg-white border border-[#E8E2DE] rounded-xl p-0 overflow-hidden">
+                            <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+                              <NotepadText className="w-4 h-4 shrink-0 text-[#252A31]" />
+                              <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase">
+                                Task, Issues &amp; To Do (0)
                               </h4>
                             </div>
-                            <p className="text-xs text-neutral-300 italic">
-                              None recorded.
-                            </p>
+                            <div className="p-2">
+                              {renderAccomplishmentRows([], false)}
+                            </div>
                           </div>
 
-                          <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                              <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                                <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                          {/* Tomorrow's Plan */}
+                          <div className="bg-white border border-[#E8E2DE] rounded-xl p-0 overflow-hidden">
+                            <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+                              <div className="w-5 h-5 rounded-full border border-[#4BA3F2] flex items-center justify-center shrink-0">
+                                <Calendar className="w-3.5 h-3.5 text-[#4BA3F2]" />
                               </div>
-                              <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                              <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase">
                                 Tomorrow's Plan
                               </h4>
                             </div>
-                            {renderCompactReportItems(missedTomorrowPlan)}
+                            <div className="p-2">
+                              {renderAccomplishmentRows(missedTomorrowPlan, false)}
+                            </div>
                           </div>
                         </div>
 

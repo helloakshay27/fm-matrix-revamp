@@ -185,7 +185,7 @@ export const EmailRuleSetupPage: React.FC = () => {
       case 'active':
         return (
           <div
-            className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${rule.active ? 'bg-green-500' : 'bg-gray-300'}`}
+            className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${rule.active ? 'bg-brand' : 'bg-gray-300'}`}
             onClick={() => handleToggleActive(rule.id)}
             aria-label={rule.active ? 'Deactivate email rule' : 'Activate email rule'}
           >

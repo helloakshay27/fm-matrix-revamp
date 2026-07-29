@@ -1,17 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Loader2, Download, ChevronLeft, ChevronRight, Upload, FileSpreadsheet, X, Pencil } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Plus, Loader2, Download, Upload, FileSpreadsheet, X, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { EnhancedSelect } from '@/components/ui/enhanced-select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import {
   Dialog,
   DialogContent,
@@ -57,6 +51,7 @@ export function GoldenQrSetupPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
   const perPage = 20;
 
   const [showImportDialog, setShowImportDialog] = useState(false);
@@ -412,203 +407,207 @@ export function GoldenQrSetupPage() {
   const getRoomName = (id: string | number) =>
     rooms.data?.find((r) => String(r.id) === String(id))?.name || id;
 
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
+  const columns: ColumnConfig[] = [
+     { key: 'action', label: 'Action', sortable: false, hideable: false },
+    { key: 'sr_no', label: 'Sr. No.', sortable: false, hideable: false },
+    { key: 'building', label: 'Building', sortable: true, defaultVisible: true },
+    { key: 'wing', label: 'Wing', sortable: true, defaultVisible: true },
+    { key: 'area', label: 'Area', sortable: true, defaultVisible: true },
+    { key: 'floor', label: 'Floor', sortable: true, defaultVisible: true },
+    { key: 'room', label: 'Room', sortable: true, defaultVisible: true },
+    { key: 'mark_golden_ticket', label: 'Golden Ticket', sortable: true, defaultVisible: true },
+    { key: 'show_requester', label: 'Show Requester', sortable: true, defaultVisible: true },
+    { key: 'qr_code', label: 'QR Code', sortable: false, defaultVisible: true },
+   
+  ];
+
+  const renderCell = (item: GoldenQrRecord, columnKey: string) => {
+    const content = item.content || item;
+    const index = tableData.indexOf(item);
+
+    switch (columnKey) {
+      case 'sr_no':
+        return (currentPage - 1) * perPage + index + 1;
+      case 'building':
+        return getBuildingName(content.building_id);
+      case 'wing':
+        return getWingName(content.wing_id) || '-';
+      case 'area':
+        return getAreaName(content.area_id) || '-';
+      case 'floor':
+        return getFloorName(content.floor) || '-';
+      case 'room':
+        return getRoomName(content.room) || '-';
+      case 'mark_golden_ticket':
+        return String(item.mark_golden_ticket) === 'true' ? (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+            Yes
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            No
+          </span>
+        );
+      case 'show_requester':
+        return String(item.show_requester) === 'true' ? (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+            Yes
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+            No
+          </span>
+        );
+      case 'qr_code':
+        return item.qr_code_url ? (
+          <img
+            src={item.qr_code_url}
+            alt="QR Code"
+            className="w-12 h-12 object-contain cursor-pointer hover:opacity-75 transition-opacity"
+            onClick={() => setQrModalUrl(item.qr_code_url)}
+          />
+        ) : (
+          <span className="text-gray-400">-</span>
+        );
+      case 'action':
+        return (
+          <button
+            onClick={() => handleEditClick(item)}
+            className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-brand transition-colors"
+            title="Edit"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+        );
+      default:
+        return item[columnKey] ?? '--';
+    }
+  };
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      {/* Header */}
+      {/* <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Golden QR Setup</h1>
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={handleDownloadPdf}
-            disabled={selectedIds.size === 0 || isDownloading}
-            variant="outline"
-            className="bg-[#C72030] hover:bg-[#a01828] text-white"
-          >
-            {isDownloading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4 mr-2" />
-            )}
-            Download QR PDF {selectedIds.size > 0 && `(${selectedIds.size})`}
-          </Button>
-          <Button
-            onClick={() => setShowImportDialog(true)}
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Import
-          </Button>
-          <Button
-            onClick={() => setShowDialog(true)}
-            className="bg-[#C72030] hover:bg-[#a01828] text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
-        </div>
-      </div>
+      </div> */}
 
       {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        {isLoadingTable ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-[#C72030]" />
+      <EnhancedTable
+        data={tableData}
+        columns={columns}
+        renderCell={renderCell}
+        storageKey="golden-qr-table"
+        loading={isLoadingTable}
+        loadingMessage="Loading records..."
+        emptyMessage="No records found"
+        enableSearch={true}
+        searchTerm={searchQuery}
+        onSearchChange={handleSearch}
+        searchPlaceholder="Search Golden QR..."
+        selectable={true}
+        selectedItems={Array.from(selectedIds).map(id => id.toString())}
+        onSelectItem={(id, checked) => toggleRow(Number(id), checked)}
+        onSelectAll={(checked) => toggleSelectAll(checked)}
+        getItemId={(item) => item.id?.toString() || ''}
+        enableExport={true}
+        exportFileName="golden_qr_setup"
+        handleExport={handleDownloadPdf}
+        pagination={false}
+        leftActions={
+          <div className="flex gap-3">
+            <Button
+              onClick={() => setShowDialog(true)}
+              className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add
+            </Button>
+            <Button
+              onClick={() => setShowImportDialog(true)}
+              variant="outline"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 h-9 px-4 text-sm font-medium"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              <span className="text-sm font-medium text-[#C72030]">Import</span>
+            </Button>
           </div>
-        ) : (
-          <>
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#F5F5F5]">
-                <TableHead className="w-10">
-                  <Checkbox
-                    checked={allCurrentSelected}
-                    onCheckedChange={(checked) => toggleSelectAll(Boolean(checked))}
-                    aria-label="Select all"
-                  />
-                </TableHead>
-                <TableHead className="font-semibold text-gray-700">Sr. No.</TableHead>
-                <TableHead className="font-semibold text-gray-700">Building</TableHead>
-                <TableHead className="font-semibold text-gray-700">Wing</TableHead>
-                <TableHead className="font-semibold text-gray-700">Area</TableHead>
-                <TableHead className="font-semibold text-gray-700">Floor</TableHead>
-                <TableHead className="font-semibold text-gray-700">Room</TableHead>
-                <TableHead className="font-semibold text-gray-700">Golden Ticket</TableHead>
-                <TableHead className="font-semibold text-gray-700">Show Requester</TableHead>
-                <TableHead className="font-semibold text-gray-700">QR Code</TableHead>
-                <TableHead className="font-semibold text-gray-700">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tableData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={11} className="text-center py-8 text-gray-500">
-                    No records found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                tableData.map((record, index) => {
-                  const content = record.content || record;
-                  const rowChecked = record.id != null && selectedIds.has(record.id);
-                  return (
-                    <TableRow key={record.id ?? index} className="hover:bg-gray-50">
-                      <TableCell>
-                        <Checkbox
-                          checked={rowChecked}
-                          onCheckedChange={(checked) =>
-                            record.id != null && toggleRow(record.id, Boolean(checked))
-                          }
-                          aria-label={`Select row ${record.id}`}
-                        />
-                      </TableCell>
-                      <TableCell>{(currentPage - 1) * perPage + index + 1}</TableCell>
-                      <TableCell>{getBuildingName(content.building_id)}</TableCell>
-                      <TableCell>{getWingName(content.wing_id) || '-'}</TableCell>
-                      <TableCell>{getAreaName(content.area_id) || '-'}</TableCell>
-                      <TableCell>{getFloorName(content.floor) || '-'}</TableCell>
-                      <TableCell>{getRoomName(content.room) || '-'}</TableCell>
-                      <TableCell>
-                        {String(record.mark_golden_ticket) === 'true' ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                            Yes
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                            No
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {String(record.show_requester) === 'true' ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                            Yes
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                            No
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {record.qr_code_url ? (
-                          <img
-                            src={record.qr_code_url}
-                            alt="QR Code"
-                            className="w-16 h-16 object-contain cursor-pointer hover:opacity-75 transition-opacity"
-                            onClick={() => setQrModalUrl(record.qr_code_url)}
-                          />
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <button
-                          onClick={() => handleEditClick(record)}
-                          className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-[#C72030] transition-colors"
-                          title="Edit"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+        }
+        // rightActions={
+        //   <Button
+        //     onClick={handleDownloadPdf}
+        //     disabled={selectedIds.size === 0 || isDownloading}
+        //     variant="outline"
+        //     className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium"
+        //   >
+        //     {isDownloading ? (
+        //       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        //     ) : (
+        //       <Download className="w-4 h-4 mr-2" />
+        //     )}
+        //     Download QR PDF {selectedIds.size > 0 && `(${selectedIds.size})`}
+        //   </Button>
+        // }
+      />
+
+      {/* Custom Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg">
+          <p className="text-sm text-gray-600">
+            Showing {(currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, totalCount)} of {totalCount} records
+          </p>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { loadTableData(currentPage - 1); setCurrentPage(currentPage - 1); }}
+              disabled={currentPage <= 1 || isLoadingTable}
+              className="h-8 w-8 p-0"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+              .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+                if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((item, idx) =>
+                item === 'ellipsis' ? (
+                  <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">...</span>
+                ) : (
+                  <Button
+                    key={item}
+                    variant={item === currentPage ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => { loadTableData(item as number); setCurrentPage(item as number); }}
+                    disabled={isLoadingTable}
+                    className={`h-8 w-8 p-0 ${item === currentPage ? 'bg-brand hover:bg-brand-hover text-white border-brand' : ''}`}
+                  >
+                    {item}
+                  </Button>
+                )
               )}
-            </TableBody>
-          </Table>
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
-                Showing {(currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, totalCount)} of {totalCount} records
-              </p>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { loadTableData(currentPage - 1); setCurrentPage(currentPage - 1); }}
-                  disabled={currentPage <= 1 || isLoadingTable}
-                  className="h-8 w-8 p-0"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                  .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
-                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
-                    acc.push(p);
-                    return acc;
-                  }, [])
-                  .map((item, idx) =>
-                    item === 'ellipsis' ? (
-                      <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">…</span>
-                    ) : (
-                      <Button
-                        key={item}
-                        variant={item === currentPage ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => { loadTableData(item as number); setCurrentPage(item as number); }}
-                        disabled={isLoadingTable}
-                        className={`h-8 w-8 p-0 ${item === currentPage ? 'bg-[#C72030] hover:bg-[#a01828] text-white border-[#C72030]' : ''}`}
-                      >
-                        {item}
-                      </Button>
-                    )
-                  )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { loadTableData(currentPage + 1); setCurrentPage(currentPage + 1); }}
-                  disabled={currentPage >= totalPages || isLoadingTable}
-                  className="h-8 w-8 p-0"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-          </>
-        )}
-      </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { loadTableData(currentPage + 1); setCurrentPage(currentPage + 1); }}
+              disabled={currentPage >= totalPages || isLoadingTable}
+              className="h-8 w-8 p-0"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* QR Code Modal */}
       <Dialog open={!!qrModalUrl} onOpenChange={(open) => !open && setQrModalUrl(null)}>
@@ -653,9 +652,9 @@ export function GoldenQrSetupPage() {
                 onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
               />
               {importFile ? (
-                <div className="flex items-center justify-between p-3 rounded-lg border border-[#C72030] bg-red-50">
+                <div className="flex items-center justify-between p-3 rounded-lg border border-brand bg-brand-light">
                   <div className="flex items-center gap-2 min-w-0">
-                    <FileSpreadsheet className="w-4 h-4 text-[#C72030] shrink-0" />
+                    <FileSpreadsheet className="w-4 h-4 text-brand shrink-0" />
                     <span className="text-sm text-gray-700 truncate">{importFile.name}</span>
                   </div>
                   <button
@@ -668,7 +667,7 @@ export function GoldenQrSetupPage() {
               ) : (
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-gray-300 hover:border-[#C72030] hover:bg-red-50 transition-colors cursor-pointer"
+                  className="w-full flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-gray-300 hover:border-brand hover:bg-brand-light transition-colors cursor-pointer"
                 >
                   <Upload className="w-6 h-6 text-gray-400" />
                   <span className="text-sm text-gray-500">Click to browse .xlsx / .xls / .csv</span>
@@ -683,7 +682,7 @@ export function GoldenQrSetupPage() {
                 size="sm"
                 onClick={handleDownloadSample}
                 disabled={isDownloadingSample}
-                className="border-green-600 text-green-600 hover:bg-green-50"
+                className="border-[#C72030] text-[#C72030] hover:bg-green-50"
               >
                 {isDownloadingSample ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -703,7 +702,7 @@ export function GoldenQrSetupPage() {
                 <Button
                   onClick={handleImport}
                   disabled={!importFile || isImporting}
-                  className="bg-[#C72030] hover:bg-[#a01828] text-white"
+                  className="bg-brand hover:bg-brand-hover text-white"
                 >
                   {isImporting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Import
@@ -828,7 +827,7 @@ export function GoldenQrSetupPage() {
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="bg-[#C72030] hover:bg-[#a01828] text-white"
+                className="bg-brand hover:bg-brand-hover text-white"
               >
                 {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Save

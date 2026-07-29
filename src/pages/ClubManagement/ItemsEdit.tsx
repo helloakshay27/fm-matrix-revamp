@@ -48,9 +48,9 @@ const muiTheme = createTheme({
         MuiCheckbox: {
             styleOverrides: {
                 root: {
-                    color: "#bf213e",
+                    color: "var(--color-primary)",
                     "&.Mui-checked": {
-                        color: "#bf213e",
+                        color: "var(--color-primary)",
                     },
                 },
             },
@@ -60,9 +60,9 @@ const muiTheme = createTheme({
         MuiRadio: {
             styleOverrides: {
                 root: {
-                    color: "#bf213e",
+                    color: "var(--color-primary)",
                     "&.Mui-checked": {
-                        color: "#bf213e",
+                        color: "var(--color-primary)",
                     },
                 },
             },
@@ -670,7 +670,7 @@ const ItemsEdit = () => {
                             // label="Name *"
                             label={
                                 <>
-                                    Name <span style={{ color: "red" }}>*</span>
+                                    Name <span style={{ color: "var(--color-primary)" }}>*</span>
                                 </>
                             }
 
@@ -709,7 +709,7 @@ const ItemsEdit = () => {
 
                         {form.type === "goods" ? (
                             <TextField
-                                label={<span>HSN Code <span style={{ color: 'red' }}>*</span></span>}
+                                label={<span>HSN Code <span style={{ color: 'var(--color-primary)' }}>*</span></span>}
                                 name="hsn_code"
                                 placeholder="Enter HSN Code"
                                 value={form.hsn_code}
@@ -737,7 +737,7 @@ const ItemsEdit = () => {
 
 
                         <FormControl fullWidth>
-                            <InputLabel>Tax Preference <span style={{ color: "red" }}>*</span></InputLabel>
+                            <InputLabel>Tax Preference <span style={{ color: "var(--color-primary)" }}>*</span></InputLabel>
                             <Select
                                 name="tax_preference"
                                 value={form.tax_preference}
@@ -755,7 +755,7 @@ const ItemsEdit = () => {
 
                         {form.tax_preference === "non_taxable" && (
                             <FormControl fullWidth>
-                                <InputLabel>Exemption Reason <span style={{ color: "red" }}>*</span></InputLabel>
+                                <InputLabel>Exemption Reason <span style={{ color: "var(--color-primary)" }}>*</span></InputLabel>
                                 <Select
                                     name="exemption_reason"
                                     value={form.exemption_reason}
@@ -795,7 +795,7 @@ const ItemsEdit = () => {
                             <div className="grid md:grid-cols-3 gap-4">
                                 <TextField
                                     fullWidth
-                                    label={<span>Opening Qty <span style={{ color: "red" }}>*</span></span>}
+                                    label={<span>Opening Qty <span style={{ color: "var(--color-primary)" }}>*</span></span>}
                                     value={form.opening_stock}
                                     onChange={(e) => {
                                         const value = e.target.value.replace(/[^0-9.]/g, "");
@@ -806,7 +806,7 @@ const ItemsEdit = () => {
                                 />
                                 <TextField
                                     fullWidth
-                                    label={<span>Rate <span style={{ color: "red" }}>*</span></span>}
+                                    label={<span>Rate <span style={{ color: "var(--color-primary)" }}>*</span></span>}
                                     value={form.opening_stock_rate}
                                     onChange={(e) => {
                                         const value = e.target.value.replace(/[^0-9.]/g, "");
@@ -848,7 +848,7 @@ const ItemsEdit = () => {
 
                                 <p className="text-gray-600 text-sm">Drag image(s) here or</p>
 
-                                <label className="text-[#1976d2] text-sm font-medium cursor-pointer mt-1">
+                                <label className="text-brand text-sm font-medium cursor-pointer mt-1">
                                     Browse images
                                     <input
                                         type="file"
@@ -868,7 +868,7 @@ const ItemsEdit = () => {
                                 />
 
                                 <div className="flex items-center justify-between">
-                                    <label className="text-[#1976d2] font-medium cursor-pointer">
+                                    <label className="text-brand font-medium cursor-pointer">
                                         Change Image
                                         <input
                                             type="file"
@@ -917,7 +917,7 @@ const ItemsEdit = () => {
                                 fullWidth
                                 label={
                                     <>
-                                        Selling Price <span style={{ color: "red" }}>*</span>
+                                        Selling Price <span style={{ color: "var(--color-primary)" }}>*</span>
                                     </>
                                 }
                                 name="selling_price"
@@ -1032,7 +1032,7 @@ const ItemsEdit = () => {
                             />
 
                             <FormControl disabled={!form.sellable} fullWidth margin="normal" sx={{ minWidth: 200 }}>
-                                <InputLabel id="sales-account-label" sx={{ color: '#C72030' }}>Account<span style={{ color: '#C72030' }}>*</span></InputLabel>
+                                <InputLabel id="sales-account-label" sx={{ color: 'var(--color-primary)' }}>Account<span style={{ color: 'var(--color-primary)' }}>*</span></InputLabel>
                                 <Select
                                     labelId="sales-account-label"
                                     name="sales_account"
@@ -1142,7 +1142,7 @@ const ItemsEdit = () => {
                                 fullWidth
                                 label={
                                     <>
-                                        Cost Price <span style={{ color: "red" }}>*</span>
+                                        Cost Price <span style={{ color: "var(--color-primary)" }}>*</span>
                                     </>
                                 }
                                 name="cost_price"
@@ -1214,7 +1214,7 @@ const ItemsEdit = () => {
                             />
 
                             <FormControl disabled={!form.purchasable} fullWidth margin="normal" sx={{ minWidth: 200 }}>
-                                <InputLabel id="purchase-account-label" sx={{ color: '#C72030' }}>Account<span style={{ color: '#C72030' }}>*</span></InputLabel>
+                                <InputLabel id="purchase-account-label" sx={{ color: 'var(--color-primary)' }}>Account<span style={{ color: 'var(--color-primary)' }}>*</span></InputLabel>
                                 <Select
                                     labelId="purchase-account-label"
                                     name="purchase_account"
@@ -1336,7 +1336,7 @@ const ItemsEdit = () => {
                         {/* Intra State Tax (CGST + SGST) */}
                         <FormControl size="small" fullWidth>
                             <InputLabel id="intra-state-tax-label" shrink>
-                                Intra State Tax Rate <span style={{ color: "#C72030" }}>*</span>
+                                Intra State Tax Rate <span style={{ color: "var(--color-primary)" }}>*</span>
                             </InputLabel>
                             <Select
                                 labelId="intra-state-tax-label"
@@ -1387,7 +1387,7 @@ const ItemsEdit = () => {
                         {/* Inter State Tax (IGST) */}
                         <FormControl size="small" fullWidth>
                             <InputLabel id="inter-state-tax-label" shrink>
-                                Inter State Tax Rate <span style={{ color: "#C72030" }}>*</span>
+                                Inter State Tax Rate <span style={{ color: "var(--color-primary)" }}>*</span>
                             </InputLabel>
                             <Select
                                 labelId="inter-state-tax-label"
@@ -1440,13 +1440,18 @@ const ItemsEdit = () => {
                 {/* BUTTONS */}
                 <div className="flex gap-3 mt-10 mb-5 justify-center">
                     <Button
+                        variant="ghost"
                         onClick={handleSubmit}
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                        className="fm-button-fix fm-button-brand px-8 py-2"
                     >
                         Update
                     </Button>
 
-                    <Button variant="outline" onClick={() => navigate("/accounting/items")}>
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate("/accounting/items")}
+                        className="fm-button-fix px-8 py-2"
+                    >
                         Cancel
                     </Button>
                 </div>
@@ -1459,7 +1464,7 @@ const ItemsEdit = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                        className="bg-brand hover:bg-brand-hover text-white"
                         onClick={handleRemoveImage}
                     >
                         Delete

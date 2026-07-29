@@ -19,6 +19,16 @@ import {
 } from '@mui/material';
 const muiTheme = createTheme({});
 
+const formatDate = (value: string | null | undefined) => {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return value;
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+};
+
 
 export const ItemsDetails = () => {
     const navigate = useNavigate();
@@ -193,7 +203,7 @@ export const ItemsDetails = () => {
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
                             className={`pb-2 text-sm font-medium capitalize ${activeTab === tab
-                                ? "border-b-2 border-[#C72030] text-[#C72030]"
+                                ? "border-b-2 border-brand text-brand"
                                 : "text-gray-500"
                                 }`}
                         >
@@ -213,7 +223,7 @@ export const ItemsDetails = () => {
                                 {itemIconUrl ? (
                                     <img src={itemIconUrl} className="w-full h-full object-cover" />
                                 ) : (
-                                    <FileCog className="text-[#C72030]" />
+                                    <FileCog className="text-brand" />
                                 )}
                             </div>
                             <div>
@@ -296,7 +306,7 @@ export const ItemsDetails = () => {
                                         checked={!!itemData?.track_inventory}
                                         readOnly
                                         disabled
-                                        className="w-4 h-4 accent-[#C72030]"
+                                        className="w-4 h-4 accent-brand"
                                     />
                                     <span className="text-sm text-gray-600">
                                         {itemData?.track_inventory ? "Yes" : "No"}
@@ -351,12 +361,17 @@ export const ItemsDetails = () => {
                                     renderRow={(row) => ({
                                         ...row,
 
+                                        date: formatDate(row.date),
+
                                         direction: (
                                             <Chip
                                                 label={row.direction}
                                                 size="small"
-                                                color={row.direction === "in" ? "success" : "error"}
                                                 variant="outlined"
+                                                sx={{
+                                                    color: "var(--color-primary)",
+                                                    borderColor: "var(--color-primary)",
+                                                }}
                                             />
                                         ),
 
@@ -417,7 +432,7 @@ export const ItemsDetails = () => {
                                         { key: "total_amount", label: "Total" },
                                         { key: "status", label: "Status" },
                                     ]}
-                                    renderRow={(row) => row}
+                                    renderRow={(row) => ({ ...row, date: formatDate(row.date) })}
                                 />
                             </>
                         )}
@@ -434,7 +449,7 @@ export const ItemsDetails = () => {
                                         { key: "total_amount", label: "Total" },
                                         { key: "status", label: "Status" },
                                     ]}
-                                    renderRow={(row) => row}
+                                    renderRow={(row) => ({ ...row, date: formatDate(row.date) })}
                                 />
                             </>
                         )}
@@ -451,7 +466,7 @@ export const ItemsDetails = () => {
                                         { key: "total_amount", label: "Total" },
                                         { key: "status", label: "Status" },
                                     ]}
-                                    renderRow={(row) => row}
+                                    renderRow={(row) => ({ ...row, date: formatDate(row.date) })}
                                 />
                             </>
                         )}
@@ -468,7 +483,7 @@ export const ItemsDetails = () => {
                                         { key: "total_amount", label: "Total" },
                                         { key: "status", label: "Status" },
                                     ]}
-                                    renderRow={(row) => row}
+                                    renderRow={(row) => ({ ...row, date: formatDate(row.date) })}
                                 />
                             </>
                         )}
@@ -485,7 +500,7 @@ export const ItemsDetails = () => {
                                         { key: "total_amount", label: "Total" },
                                         { key: "status", label: "Status" },
                                     ]}
-                                    renderRow={(row) => row}
+                                    renderRow={(row) => ({ ...row, date: formatDate(row.date) })}
                                 />
                             </>
                         )}
@@ -501,7 +516,7 @@ export const ItemsDetails = () => {
                             {/* Header */}
                             <div className="p-6 border-b">
                                 <h3 className="text-lg font-semibold flex items-center gap-2">
-                                    <FileText className="h-5 w-5 text-primary" />
+                                    <FileText className="h-5 w-5 text-brand" />
                                     History
                                 </h3>
                             </div>
@@ -520,11 +535,7 @@ export const ItemsDetails = () => {
 
                                             const Icon = isCreated ? CirclePlus : isUpdated ? Edit : FileText;
 
-                                            const iconStyle = isCreated
-                                                ? "bg-green-50 text-green-600 border-green-100"
-                                                : isUpdated
-                                                    ? "bg-sky-50 text-sky-600 border-sky-100"
-                                                    : "bg-gray-50 text-gray-500 border-gray-100";
+                                            const iconStyle = "bg-brand-light text-brand border-brand";
 
                                             return (
                                                 <div key={key} className="flex gap-6 py-5">
