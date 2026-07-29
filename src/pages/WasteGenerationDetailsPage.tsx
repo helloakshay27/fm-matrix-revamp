@@ -89,9 +89,11 @@ export const WasteGenerationDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="p-6 bg-white min-h-screen">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading waste generation details...</div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading Utility Waste Generation Details...</p>
+          <p className="text-gray-700">Loading waste generation details...</p>
         </div>
       </div>
     );
@@ -144,64 +146,50 @@ export const WasteGenerationDetailsPage = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
-      <Button variant="ghost" onClick={handleBackToList} className="mb-2 p-0">
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Back
-      </Button>
-
-      {/* Header */}
-      <div className="flex justify-between items-end mb-6">
-        <h1 className="text-2xl font-semibold">WASTE GENERATION DETAILS</h1>
-        <div className="flex gap-2 flex-wrap">
-          {shouldShow("Waste Generation", "update") && (
-            <Button
-              size="sm"
-              onClick={handleUpdate}
-              className="bg-[#6B2C91] hover:bg-[#5A2579] text-white"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
-            </Button>
-          )}
-          {/* {shouldShow("Waste Generation", "destroy") && (
-            <Button
-              size="sm"
-              onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              <Trash className="w-4 h-4 mr-2" />
-              Delete
-            </Button>
-          )} */}
+    <div className="p-6">
+      <div className="mb-6">
+        <button
+          onClick={handleBackToList}
+          className="flex items-center gap-1 hover:text-gray-800 mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Waste Generation List
+        </button>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">Waste Generation Details</h1>
+          <div className="flex gap-2">
+            {shouldShow("Waste Generation", "update") && (
+              <Button
+                onClick={handleUpdate}
+                variant="outline"
+                className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div className="rounded-lg border-r border-b border-gray-200 shadow-sm bg-gray-50">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full flex bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
-            <TabsTrigger
-              value="waste-details"
-              className="flex-1 bg-white data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] px-3 py-3 border-r border-gray-200 last:border-r-0 flex items-center justify-center gap-2"
-            >
-              <Package className="w-4 h-4" />
-              Waste Details
-            </TabsTrigger>
-            <TabsTrigger
-              value="user-details"
-              className="flex-1 bg-white data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] px-3 py-3 border-r border-gray-200 last:border-r-0 flex items-center justify-center gap-2"
-            >
-              <User className="w-4 h-4" />
-              User Details
-            </TabsTrigger>
-            <TabsTrigger
-              value="bag-details"
-              className="flex-1 bg-white data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] px-3 py-3 border-r border-gray-200 last:border-r-0 flex items-center justify-center gap-2"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              Bag Details
-            </TabsTrigger>
+          <TabsList className="w-full flex flex-nowrap gap-0 rounded-t-lg p-0 overflow-x-auto mb-4 bg-gray-100 h-[50px]">
+            {[
+              { label: "Waste Details", value: "waste-details", icon: Package },
+              { label: "User Details", value: "user-details", icon: User },
+              { label: "Bag Details", value: "bag-details", icon: ShoppingBag },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="w-[230px] h-9 rounded-none border-0 m-0 px-5 py-2.5 text-sm font-medium text-[#1a1a1a] bg-gray-100 flex items-center justify-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           {/* Waste Details Tab */}

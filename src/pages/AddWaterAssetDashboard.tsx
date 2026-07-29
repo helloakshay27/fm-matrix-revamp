@@ -2238,7 +2238,6 @@ function AddWaterAssetDashboard() {
         <div className="flex justify-center gap-4">
           <Button
             onClick={handleSaveAndCreateNew}
-            className="bg-purple-700 text-white hover:bg-purple-800"
             disabled={saving}
           >
             {saving ? 'Saving...' : 'Save & Create New Asset'}

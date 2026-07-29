@@ -2272,7 +2272,7 @@ export const EditSurveyPage = () => {
                   variant="outline"
                   className="fm-button-fix border-dashed"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-4 h-4 mr-2 text-[#C72030]" />
                   Add More Questions
                 </Button>
               </div>

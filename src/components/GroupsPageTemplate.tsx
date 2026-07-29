@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Upload, X, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, TextField, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
@@ -349,6 +350,37 @@ export const GroupsPageTemplate = ({
           />
         )}
 
+        {loading ? (
+          <div className="bg-white rounded-lg border border-gray-200">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#f6f4ee]">
+                  <TableHead className="font-medium">Sr.No</TableHead>
+                  <TableHead className="font-medium">Group Name</TableHead>
+                  <TableHead className="font-medium">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={3} className="pt-4 pb-16">
+                    <div className="w-full flex items-center justify-start gap-3 pl-4">
+                      <div
+                        className="h-5 w-5 rounded-full animate-spin"
+                        style={{
+                          border: "2px solid #000000",
+                          borderTopColor: "transparent",
+                        }}
+                      />
+                      <span className="text-sm text-black">
+                        Loading ...
+                      </span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           {/* Groups Table */}
           <div className="bg-white rounded-lg border border-gray-200">
@@ -370,15 +402,10 @@ export const GroupsPageTemplate = ({
                       <TableCell className="text-center">{group.srNo}</TableCell>
                       <TableCell>{group.groupName}</TableCell>
                       <TableCell className="text-center">
-                        <div
-                          className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${group.status ? 'bg-green-500' : 'bg-gray-300'}`}
-                          onClick={() => toggleGroupStatus(group.id)}
-                          aria-label={group.status ? 'Deactivate group' : 'Activate group'}
-                        >
-                          <span
-                            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${group.status ? 'translate-x-6' : 'translate-x-1'}`}
-                          />
-                        </div>
+                        <Switch
+                          checked={group.status}
+                          onCheckedChange={() => toggleGroupStatus(group.id)}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -409,15 +436,10 @@ export const GroupsPageTemplate = ({
                       <TableCell>{subGroup.groupName}</TableCell>
                       <TableCell>{subGroup.subGroupName}</TableCell>
                       <TableCell className="text-center">
-                        <div
-                          className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${subGroup.status ? 'bg-green-500' : 'bg-gray-300'}`}
-                          onClick={() => toggleSubGroupStatus(subGroup.id)}
-                          aria-label={subGroup.status ? 'Deactivate sub group' : 'Activate sub group'}
-                        >
-                          <span
-                            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${subGroup.status ? 'translate-x-6' : 'translate-x-1'}`}
-                          />
-                        </div>
+                        <Switch
+                          checked={subGroup.status}
+                          onCheckedChange={() => toggleSubGroupStatus(subGroup.id)}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -426,6 +448,7 @@ export const GroupsPageTemplate = ({
             </div>
           </div>
         </div>
+        )}
 
         {/* Add Group Modal */}
         <ThemeProvider theme={theme}>

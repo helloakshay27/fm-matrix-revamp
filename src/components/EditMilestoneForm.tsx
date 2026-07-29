@@ -27,6 +27,7 @@ interface EditMilestoneFormProps {
     handleClose: () => void;
     milestoneData: {
         id?: string;
+        milestone_code?: string;
         title?: string;
         description?: string;
         owner_id?: string;
@@ -100,6 +101,7 @@ const EditMilestoneForm = ({ owners, handleClose, milestoneData, onUpdate }: Edi
 
     const [milestones, setMilestones] = useState([])
     const [formData, setFormData] = useState({
+        milestoneCode: milestoneData.milestone_code || "",
         milestoneTitle: milestoneData.title || "",
         description: milestoneData.description || "",
         owner: milestoneData.owner_id || "",
@@ -170,6 +172,7 @@ const EditMilestoneForm = ({ owners, handleClose, milestoneData, onUpdate }: Edi
             // TODO: Replace with actual API call when available
             const payload = {
                 milestone: {
+                    milestone_code: formData.milestoneCode,
                     title: formData.milestoneTitle,
                     description: formData.description || '',
                     owner_id: formData.owner,
@@ -195,6 +198,20 @@ const EditMilestoneForm = ({ owners, handleClose, milestoneData, onUpdate }: Edi
         <>
             <form className="h-full" onSubmit={handleSubmit}>
                 <div className="max-w-[90%] mx-auto h-[calc(100%-4rem)] overflow-y-auto pr-3">
+                    <div className="mt-4 space-y-2">
+                        <TextField
+                            label="Milestone Code"
+                            name="milestoneCode"
+                            fullWidth
+                            variant="outlined"
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{ sx: fieldStyles }}
+                            sx={{ mt: 1 }}
+                            value={formData.milestoneCode}
+                            onChange={handleChange}
+                        />
+                    </div>
+
                     <div className="mt-4 space-y-2">
                         <TextField
                             label="Milestone Title"

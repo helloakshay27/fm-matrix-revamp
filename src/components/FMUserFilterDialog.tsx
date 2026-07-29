@@ -329,7 +329,13 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
                 </Box>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2, pt: 0 }}>
-                <Button variant="outline" onClick={handleReset} className="border-gray-300 text-gray-700 hover:bg-gray-50">Reset</Button>
+                <Button
+                    variant="outline"
+                    onClick={handleReset}
+                    className="border-brand text-brand hover:bg-brand hover:text-white"
+                >
+                    Reset
+                </Button>
                 <Button
                     onClick={handleSubmit}
                     className="!bg-brand hover:!bg-brand-hover !text-white"

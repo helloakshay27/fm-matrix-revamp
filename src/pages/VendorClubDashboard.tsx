@@ -301,7 +301,7 @@ export const VendorClubDashboard = () => {
     <div className="flex flex-wrap gap-2 sm:gap-3">
       <Button
         onClick={() => setShowActionPanel((prev) => !prev)}
-        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+        className="fm-button-fix fm-button-brand h-9 px-4 text-sm font-medium"
       >
         <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
         Action
@@ -385,6 +385,9 @@ export const VendorClubDashboard = () => {
 
   return (
     <div className="p-2 sm:p-4 lg:p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="font-work-sans font-semibold text-2xl text-[#1a1a1a]">Vendors</h1>
+      </div>
       <Toaster position="top-right" richColors closeButton />
       <div className="w-full">
         {renderListTab()}
@@ -396,19 +399,19 @@ export const VendorClubDashboard = () => {
           <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle className="text-lg font-semibold">Bulk Upload</DialogTitle>
             <Button variant="ghost" size="sm" onClick={() => setShowImportModal(false)} className="p-1">
-              <X className="w-4 h-4 text-red-500" />
+              <X className="w-4 h-4 text-gray-500" />
             </Button>
           </DialogHeader>
           <div className="space-y-6">
             <div
-              className="border-2 border-dashed border-red-700 rounded-lg p-8 text-center"
+              className="border-2 border-dashed border-brand rounded-lg p-8 text-center"
               onDrop={handleDrop}
               onDragOver={handleDragOver}
             >
-              <Upload className="w-8 h-8 mx-auto mb-2 text-red-700" />
+              <Upload className="w-8 h-8 mx-auto mb-2 text-brand" />
               <p className="text-sm mb-2">
                 <span className="text-gray-600">Drag & Drop or </span>
-                <label className="text-red-700 cursor-pointer font-medium">
+                <label className="text-brand cursor-pointer font-medium">
                   Choose File
                   <input
                     type="file"
@@ -420,9 +423,9 @@ export const VendorClubDashboard = () => {
               </p>
               <p className="text-xs text-gray-500">Supports: CSV, Excel (.xlsx, .xls)</p>
               {selectedFile && (
-                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm font-medium text-green-700">Selected file:</p>
-                  <p className="text-xs text-green-600">{selectedFile.name}</p>
+                <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-sm font-medium text-brand">Selected file:</p>
+                  <p className="text-xs text-brand">{selectedFile.name}</p>
                 </div>
               )}
             </div>
@@ -430,14 +433,14 @@ export const VendorClubDashboard = () => {
               <Button
                 variant="outline"
                 onClick={handleDownloadSample}
-                className="text-red-700 border-red-700 hover:bg-red-50"
+                className="fm-button-fix px-8 py-2"
               >
                 Download Sample Format
               </Button>
               <Button
                 onClick={handleImportSubmit}
                 disabled={!selectedFile || isImporting}
-                className="bg-red-700 text-white hover:bg-red-800 disabled:opacity-50"
+                className="fm-button-fix fm-button-brand px-8 py-2 disabled:opacity-50"
               >
                 {isImporting ? (
                   <>

@@ -545,14 +545,14 @@ export const VisitorDetailsPage = () => {
               View Pass
             </Button>
 
-            {shouldShow("Visitor", "update") && (
+            {/* {shouldShow("Visitor", "update") && (
               <Button
                 onClick={handleUpdate}
                 className="bg-white text-white hover:bg-[#C72030]/90 [&_svg]:text-white"
               >
                 <Pencil className="w-4 h-4 mr-2" />
               </Button>
-            )}
+            )} */}
              {/* <Button
                               onClick={handleUpdate}
                               variant="outline"

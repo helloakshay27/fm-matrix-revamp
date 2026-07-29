@@ -117,10 +117,10 @@ export const ViewTrainingSchedule = () => {
     // Loading state
     if (loading) {
         return (
-            <div className="p-4 sm:p-6 min-h-screen flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#C72030]" />
-                    <p className="text-gray-600">Loading form details...</p>
+            <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <p className="text-gray-700">Loading Schedule Details...</p>
                 </div>
             </div>
         );

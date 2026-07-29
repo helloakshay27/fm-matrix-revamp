@@ -739,7 +739,8 @@ const IssuesListPage = ({
 
   const fetchSprintsList = useCallback(async () => {
     try {
-      const result = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
+      const user_id = localStorage.getItem("userId")
+      const result = await dispatch(fetchSprints({ token, baseUrl, filters: { "q[owner_id_eq]": user_id } })).unwrap();
       const list =
         result?.sprints ||
         result?.data?.sprints ||

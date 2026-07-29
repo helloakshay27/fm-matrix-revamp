@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef, Fragment } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import { FileText, Eye } from "lucide-react";
 import { toast } from "sonner";
-import { API_CONFIG } from "@/config/apiConfig";
 import { apiClient } from "@/utils/apiClient";
 import { PostHogAuditActivity } from "@/components/PostHogAuditActivity";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { OperationalAuditConductedFilterDialog } from "@/components/OperationalAuditConductedFilterDialog";
 import {
   Pagination,
   PaginationContent,
@@ -42,15 +43,16 @@ interface AuditConductedResponse {
 export const OperationalAuditConductedDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [conductedData, setConductedData] = useState<
-    AuditConductedOccurrence[]
-  >([]);
+  const [conductedData, setConductedData] = useState<AuditConductedOccurrence[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const [auditEvent, setAuditEvent] = useState<{ key: number; event: "Report opened" } | null>(null);
   const auditEventKeyRef = useRef(0);
+
   const captureAuditEvent = (event: "Report opened") => {
     auditEventKeyRef.current += 1;
     setAuditEvent({ key: auditEventKeyRef.current, event });
@@ -97,13 +99,11 @@ export const OperationalAuditConductedDashboard = () => {
         responseType: "blob",
       });
 
-      // Create a blob URL and open it in a new window
       const blob = new Blob([response.data], { type: "application/pdf" });
       const blobUrl = window.URL.createObjectURL(blob);
       window.open(blobUrl, "_blank");
       captureAuditEvent("Report opened");
 
-      // Clean up the blob URL after a delay
       setTimeout(() => {
         window.URL.revokeObjectURL(blobUrl);
       }, 100);
@@ -133,7 +133,7 @@ export const OperationalAuditConductedDashboard = () => {
         `/pms/asset_task_occurrences/${auditId}/delete_print_pdf`
       );
       toast.success("Report deleted successfully");
-      fetchAuditsConducted(); // Refresh data
+      fetchAuditsConducted();
     } catch (error) {
       console.error("Error deleting PDF:", error);
       toast.error("Failed to delete report");
@@ -147,29 +147,38 @@ export const OperationalAuditConductedDashboard = () => {
     return `${hours}h ${minutes}m`;
   };
 
+  const getStatusVariant = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "completed":
+        return "accepted";
+      case "in progress":
+      case "in-progress":
+        return "pending";
+      default:
+        return "pending";
+    }
+  };
+
   const columns = [
-    // { key: 'actions', label: 'Actions', sortable: false, draggable: false },
-    { key: "report", label: "Report", sortable: true, draggable: true },
-    { key: "id", label: "ID", sortable: true, draggable: true },
-    { key: "auditName", label: "Audit Name", sortable: true, draggable: true },
-    {
-      key: "startDateTime",
-      label: "Start Date & Time",
-      sortable: true,
-      draggable: true,
-    },
-    {
-      key: "conductedBy",
-      label: "Conducted By",
-      sortable: true,
-      draggable: true,
-    },
-    { key: "status", label: "Status", sortable: true, draggable: true },
-    { key: "site", label: "Site", sortable: true, draggable: true },
-    { key: "duration", label: "Duration", sortable: true, draggable: true },
-    { key: "percentage", label: "%", sortable: true, draggable: true },
-    { key: "delete", label: "Delete", sortable: false, draggable: true },
+    { key: "report", label: "Report", sortable: true, draggable: true, defaultVisible: true },
+    { key: "id", label: "ID", sortable: true, draggable: true, defaultVisible: true },
+    { key: "auditName", label: "Audit Name", sortable: true, draggable: true, defaultVisible: true },
+    { key: "startDateTime", label: "Start Date & Time", sortable: true, draggable: true, defaultVisible: true },
+    { key: "conductedBy", label: "Conducted By", sortable: true, draggable: true, defaultVisible: true },
+    { key: "status", label: "Status", sortable: true, draggable: true, defaultVisible: true },
+    { key: "site", label: "Site", sortable: true, draggable: true, defaultVisible: true },
+    { key: "duration", label: "Duration", sortable: true, draggable: true, defaultVisible: true },
+    { key: "percentage", label: "%", sortable: true, draggable: true, defaultVisible: true },
+    { key: "delete", label: "Delete", sortable: false, draggable: true, defaultVisible: true },
   ];
+
+  const filteredData = searchTerm
+    ? conductedData.filter((item) =>
+        Object.values(item).some((value) =>
+          String(value ?? "").toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      )
+    : conductedData;
 
   const renderCell = (item: AuditConductedOccurrence, columnKey: string) => {
     switch (columnKey) {
@@ -178,6 +187,7 @@ export const OperationalAuditConductedDashboard = () => {
           <Button
             variant="ghost"
             size="sm"
+            className="h-8 w-8 p-0 text-black hover:bg-gray-100"
             onClick={() => console.log("View conducted audit:", item.id)}
           >
             <Eye className="w-4 h-4" />
@@ -189,14 +199,14 @@ export const OperationalAuditConductedDashboard = () => {
             variant="ghost"
             size="sm"
             onClick={() => handlePrintReport(item.id, item.print_pdf_url)}
-            className="p-1 h-auto hover:bg-gray-100"
+            className="h-8 w-8 p-0 hover:bg-gray-100"
             title="Print PDF"
           >
-            <FileText className="w-4 h-4 text-blue-600" />
+            <FileText className="w-4 h-4 text-gray-700" />
           </Button>
         ) : null;
       case "id":
-        return <span className="text-blue-600 font-medium">{item.id}</span>;
+        return <span className="text-gray-900 font-medium">{item.id}</span>;
       case "auditName":
         return item.form_name;
       case "startDateTime":
@@ -205,15 +215,9 @@ export const OperationalAuditConductedDashboard = () => {
         return item.conducted_by || "-";
       case "status":
         return (
-          <span
-            className={`px-2 py-1 rounded text-xs font-medium ${
-              item.status === "Completed"
-                ? "bg-green-100 text-green-800"
-                : "bg-yellow-100 text-yellow-800"
-            }`}
-          >
+          <StatusBadge status={getStatusVariant(item.status)}>
             {item.status}
-          </span>
+          </StatusBadge>
         );
       case "site":
         return item.site;
@@ -227,7 +231,7 @@ export const OperationalAuditConductedDashboard = () => {
             variant="ghost"
             size="sm"
             onClick={() => handleDeleteReport(item.id, item.delete_url)}
-            className="text-red-600 hover:bg-red-50"
+            className="text-brand-error hover:bg-brand-error/10"
             title="Delete Report"
           >
             Delete
@@ -240,7 +244,7 @@ export const OperationalAuditConductedDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(conductedData.map((item) => item.id.toString()));
+      setSelectedItems(filteredData.map((item) => item.id.toString()));
     } else {
       setSelectedItems([]);
     }
@@ -262,135 +266,125 @@ export const OperationalAuditConductedDashboard = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="flex-1 p-6 bg-white min-h-screen">
       <PostHogAuditActivity event="Audit Conducted List Viewed" />
       {auditEvent && (
         <PostHogAuditActivity key={auditEvent.key} event={auditEvent.event} />
       )}
+
       <div className="mb-6">
-        <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">
-            Audits Conducted &gt; Audits Conducted List
-          </p>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">
-            AUDITS CONDUCTED LIST
-          </h1>
-        </div>
+        <p className="text-sm text-gray-500 mb-1">
+          Audits Conducted &gt; Audits Conducted List
+        </p>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          Audits Conducted List
+        </h1>
       </div>
 
-      {loading && (
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <EnhancedTable
+        data={filteredData}
+        columns={columns}
+        renderCell={renderCell}
+        onSelectAll={handleSelectAll}
+        onSelectItem={handleSelectItem}
+        getItemId={(item) => item.id.toString()}
+        storageKey="conducted-audit-table"
+        loading={loading}
+        loadingMessage="Loading..."
+        enableSearch
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search audits..."
+        pagination={false}
+        emptyMessage="No audits conducted found."
+        onFilterClick={() => setShowFilters(true)}
+      />
+
+      {totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => {
+                    if (currentPage > 1) handlePageChange(currentPage - 1);
+                  }}
+                  className={
+                    currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+
+              <PaginationItem>
+                <PaginationLink
+                  onClick={() => handlePageChange(1)}
+                  isActive={currentPage === 1}
+                >
+                  1
+                </PaginationLink>
+              </PaginationItem>
+
+              {currentPage > 4 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+
+              {Array.from({ length: 3 }, (_, i) => currentPage - 1 + i)
+                .filter((page) => page > 1 && page < totalPages)
+                .map((page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => handlePageChange(page)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+              {currentPage < totalPages - 3 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+
+              {totalPages > 1 && (
+                <PaginationItem>
+                  <PaginationLink
+                    onClick={() => handlePageChange(totalPages)}
+                    isActive={currentPage === totalPages}
+                  >
+                    {totalPages}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => {
+                    if (currentPage < totalPages) handlePageChange(currentPage + 1);
+                  }}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+
+          <div className="text-center mt-2 text-sm text-gray-600">
+            Showing page {currentPage} of {totalPages} ({totalCount} total audits)
+          </div>
         </div>
       )}
 
-      {!loading && (
-        <>
-          <div className="overflow-x-auto">
-            <EnhancedTable
-              data={conductedData}
-              columns={columns}
-              renderCell={renderCell}
-              // selectable={true}
-              // selectedItems={selectedItems}
-              onSelectAll={handleSelectAll}
-              onSelectItem={handleSelectItem}
-              getItemId={(item) => item.id.toString()}
-              storageKey="conducted-audit-table"
-              className="w-full"
-              pagination={false}
-            />
-          </div>
-
-          {totalPages > 1 && (
-            <div className="mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => {
-                        if (currentPage > 1) {
-                          handlePageChange(currentPage - 1);
-                        }
-                      }}
-                      className={
-                        currentPage === 1
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
-                    />
-                  </PaginationItem>
-
-                  <PaginationItem>
-                    <PaginationLink
-                      onClick={() => handlePageChange(1)}
-                      isActive={currentPage === 1}
-                    >
-                      1
-                    </PaginationLink>
-                  </PaginationItem>
-
-                  {currentPage > 4 && (
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  )}
-
-                  {Array.from({ length: 3 }, (_, i) => currentPage - 1 + i)
-                    .filter((page) => page > 1 && page < totalPages)
-                    .map((page) => (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => handlePageChange(page)}
-                          isActive={currentPage === page}
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
-
-                  {currentPage < totalPages - 3 && (
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  )}
-
-                  {totalPages > 1 && (
-                    <PaginationItem>
-                      <PaginationLink
-                        onClick={() => handlePageChange(totalPages)}
-                        isActive={currentPage === totalPages}
-                      >
-                        {totalPages}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => {
-                        if (currentPage < totalPages) {
-                          handlePageChange(currentPage + 1);
-                        }
-                      }}
-                      className={
-                        currentPage === totalPages
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-
-              <div className="text-center mt-2 text-sm text-gray-600">
-                Showing page {currentPage} of {totalPages} ({totalCount} total
-                audits)
-              </div>
-            </div>
-          )}
-        </>
-      )}
+      <OperationalAuditConductedFilterDialog
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+      />
     </div>
   );
 };

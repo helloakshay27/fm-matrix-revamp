@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import qs from "qs";
 import { toast } from "sonner";
 import axios from "axios";
+import { renderGroupedUserCheckboxList } from "@/components/GroupedUserCheckboxList";
 
 const statusOptions = [
     { label: "Open", value: "open", color: "bg-blue-500" },
@@ -359,14 +360,6 @@ const IssueFilterModal = ({
     //         }))
     //         : [];
 
-    const userOptions =
-        users && users.length > 0
-            ? users.map((user: any) => ({
-                label: user.full_name,
-                value: user.id || `${user.firstname}-${user.lastname}`,
-            }))
-            : [];
-
     const projectOptions =
         projects && projects.length > 0
             ? projects.map((project: any) => ({
@@ -640,8 +633,8 @@ const IssueFilterModal = ({
                                         onChange={(e) => setAssigneeSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(
-                                    userOptions,
+                                {renderGroupedUserCheckboxList(
+                                    users,
                                     selectedAssignees,
                                     setSelectedAssignees,
                                     assigneeSearch
@@ -680,8 +673,8 @@ const IssueFilterModal = ({
                                         onChange={(e) => setCreatorSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(
-                                    userOptions,
+                                {renderGroupedUserCheckboxList(
+                                    users,
                                     selectedCreators,
                                     setSelectedCreators,
                                     creatorSearch

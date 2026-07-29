@@ -146,11 +146,11 @@ export const GRNDetailsPage = () => {
   const { id } = useParams();
 
   const formatIndian = (val: string | number | null | undefined): string => {
-  if (val === "" || val === null || val === undefined) return "-";
-  const n = parseFloat(String(val));
-  if (isNaN(n)) return String(val);
-  return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
-};
+    if (val === "" || val === null || val === undefined) return "-";
+    const n = parseFloat(String(val));
+    if (isNaN(n)) return String(val);
+    return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  };
 
   const [openDebitModal, setOpenDebitModal] = useState(false);
   const [grnDetails, setGrnDetails] = useState<any>({});
@@ -167,8 +167,14 @@ export const GRNDetailsPage = () => {
     description: "",
   });
   const [externalApiCalls, setExternalApiCalls] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const fetchData = async () => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
       const response = await dispatch(
         fetchSingleGRN({ baseUrl, token, id: Number(id) })
@@ -182,6 +188,8 @@ export const GRNDetailsPage = () => {
     } catch (error) {
       console.log(error);
       toast.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -229,43 +237,43 @@ export const GRNDetailsPage = () => {
     navigate(`/finance/grn-srn/feeds/${id}`);
   };
 
-    const handleSendToSap = useCallback(async () => {
-      const token = localStorage.getItem("token");
-      const baseUrl = localStorage.getItem("baseUrl");
-  // sendto sap
-  
-      if (!baseUrl || !token || !id) {
-        toast.error("Missing required configuration");
-        return;
-      }
-      setSapPushDisabled(true);
-      try {
-        const response = await axios.get<{ message: string }>(
-          `https://${baseUrl}/pms/grns/${id}.json?send_sap=yes`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-  
-        toast.success(response.data.message || "Sent to SAP successfully");
-  
-        // wait for server-side processing
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-  
-        fetchData();
-          toast.success("Data refreshed after send to SAP");
-        // Disable the button after successful push
-  
-      } catch (error: any) {
-        console.error("Send to SAP error:", error);
-  
-        toast.error(
-          error?.response?.data?.message ||
-          error.message ||
-          "Failed to send to SAP"
-        );
-      }
-    }, [id]);
+  const handleSendToSap = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    const baseUrl = localStorage.getItem("baseUrl");
+    // sendto sap
+
+    if (!baseUrl || !token || !id) {
+      toast.error("Missing required configuration");
+      return;
+    }
+    setSapPushDisabled(true);
+    try {
+      const response = await axios.get<{ message: string }>(
+        `https://${baseUrl}/pms/grns/${id}.json?send_sap=yes`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      toast.success(response.data.message || "Sent to SAP successfully");
+
+      // wait for server-side processing
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      fetchData();
+      toast.success("Data refreshed after send to SAP");
+      // Disable the button after successful push
+
+    } catch (error: any) {
+      console.error("Send to SAP error:", error);
+
+      toast.error(
+        error?.response?.data?.message ||
+        error.message ||
+        "Failed to send to SAP"
+      );
+    }
+  }, [id]);
 
   const handleApprove = async () => {
     const payload = {
@@ -398,6 +406,17 @@ export const GRNDetailsPage = () => {
       sno: index + 1,
     })) || [];
 
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading GRN details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
       <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
@@ -424,7 +443,7 @@ export const GRNDetailsPage = () => {
             <Button
               size="sm"
               variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+              // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
               onClick={handleSendToSap}
               disabled={sapPushDisabled}
             >
@@ -436,7 +455,7 @@ export const GRNDetailsPage = () => {
               <Button
                 size="sm"
                 variant="outline"
-                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                 onClick={handleOpenDebitModal}
               >
                 Debit Note
@@ -446,7 +465,7 @@ export const GRNDetailsPage = () => {
           <Button
             size="sm"
             variant="outline"
-            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+            // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
             onClick={handleFeeds}
           >
             <Rss className="w-4 h-4 mr-1" />
@@ -1105,17 +1124,16 @@ export const GRNDetailsPage = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
-                    <p className={`text-sm font-medium ${
-                      apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'
-                    }`}>
+                    <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'
+                      }`}>
                       {apiCall.response_status || '-'}
                     </p>
                   </div>
                   <div className="md:col-span-2">
                     <p className="text-sm text-gray-600 font-semibold">Message</p>
                     <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
-                      {apiCall.eval_status && apiCall.eval_status.trim() 
-                        ? apiCall.eval_status 
+                      {apiCall.eval_status && apiCall.eval_status.trim()
+                        ? apiCall.eval_status
                         : (apiCall.response_string ? JSON.stringify(JSON.parse(apiCall.response_string), null, 2) : '-')}
                     </p>
                   </div>

@@ -77,6 +77,7 @@ import {
   ChartColumnIncreasing,
   IndianRupee,
   Circle,
+  Settings2,
 } from "lucide-react";
 import { template } from "lodash";
 
@@ -148,6 +149,7 @@ const navigationStructure = {
         icon: CheckSquare,
         subItems: [{ name: "Setup", href: "/settings/approval-matrix/setup" }],
       },
+    
       {
         name: "Value Added Services",
         icon: Star,
@@ -243,6 +245,10 @@ const navigationStructure = {
           {
             name: "Cost Approval",
             href: "/settings/ticket-management/cost-approval",
+          },
+          {
+            name: "QR Setup",
+            href: "/settings/ticket-management/qr-setup",
           },
         ],
       },
@@ -1277,6 +1283,10 @@ const modulesByPackage = {
               name: "Cost Approval",
               href: "/settings/ticket-management/cost-approval",
             },
+             {
+            name: "QR Setup",
+            href: "/settings/ticket-management/qr-setup",
+          },
           ],
         },
         {

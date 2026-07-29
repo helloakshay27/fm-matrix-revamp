@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Car,
   Bike,
+  Zap,
   CheckCircle,
   XCircle,
   Users,
@@ -39,6 +40,11 @@ interface ParkingStatisticsCardProps {
       occupied: number;
       vacant: number;
     };
+    electric_vehicle?: {
+      total: number;
+      occupied: number;
+      vacant: number;
+    };
   };
   onDownload?: () => Promise<void>;
   metricDownloads?: Partial<
@@ -69,6 +75,7 @@ const metricConfigs: Array<{
   subMetrics?: {
     twoWheeler: string;
     fourWheeler: string;
+    electricVehicle: string;
   };
 }> = [
   {
@@ -83,6 +90,7 @@ const metricConfigs: Array<{
     subMetrics: {
       twoWheeler: "2W",
       fourWheeler: "4W",
+      electricVehicle: "EV",
     },
   },
   {
@@ -97,6 +105,7 @@ const metricConfigs: Array<{
     subMetrics: {
       twoWheeler: "2W",
       fourWheeler: "4W",
+      electricVehicle: "EV",
     },
   },
   {
@@ -111,6 +120,7 @@ const metricConfigs: Array<{
     subMetrics: {
       twoWheeler: "2W",
       fourWheeler: "4W",
+      electricVehicle: "EV",
     },
   },
   {
@@ -125,6 +135,7 @@ const metricConfigs: Array<{
     subMetrics: {
       twoWheeler: "2W",
       fourWheeler: "4W",
+      electricVehicle: "EV",
     },
   },
   {
@@ -139,6 +150,7 @@ const metricConfigs: Array<{
     subMetrics: {
       twoWheeler: "2W",
       fourWheeler: "4W",
+      electricVehicle: "EV",
     },
   },
   {
@@ -153,6 +165,7 @@ const metricConfigs: Array<{
     subMetrics: {
       twoWheeler: "2W",
       fourWheeler: "4W",
+      electricVehicle: "EV",
     },
   },
 ];
@@ -238,6 +251,11 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
       occupied: apiData.current_period?.four_wheeler?.booked || 0,
       vacant: apiData.current_period?.four_wheeler?.available || 0,
     },
+    electric_vehicle: {
+      total: apiData.current_period?.electric_vehicle?.total || 0,
+      occupied: apiData.current_period?.electric_vehicle?.booked || 0,
+      vacant: apiData.current_period?.electric_vehicle?.available || 0,
+    },
   } : (propData || {
     total_slots: 0,
     occupied: 0,
@@ -247,6 +265,7 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
     utilization: 0,
     two_wheeler: { total: 0, occupied: 0, vacant: 0 },
     four_wheeler: { total: 0, occupied: 0, vacant: 0 },
+    electric_vehicle: { total: 0, occupied: 0, vacant: 0 },
   });
 
   const handleRefresh = async () => {
@@ -327,67 +346,76 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
   // Also pull previous/yoy category splits for 2W/4W if present
   const prevTwo = apiData?.yoy_period?.two_wheeler || apiData?.previous_period?.two_wheeler;
   const prevFour = apiData?.yoy_period?.four_wheeler || apiData?.previous_period?.four_wheeler;
+  const prevElectric = apiData?.yoy_period?.electric_vehicle || apiData?.previous_period?.electric_vehicle;
 
     switch (key) {
       case "total_slots":
         {
           const prevSumTotal = (prevTwo?.total ?? null) !== null && (prevFour?.total ?? null) !== null
-            ? (prevTwo?.total || 0) + (prevFour?.total || 0)
+            ? (prevTwo?.total || 0) + (prevFour?.total || 0) + (prevElectric?.total || 0)
             : undefined;
           return {
           total: data.total_slots || 0,
           twoWheeler: data.two_wheeler?.total || 0,
           fourWheeler: data.four_wheeler?.total || 0,
-          // Prefer previous 2W+4W sum when available; else API metric
+          electricVehicle: data.electric_vehicle?.total || 0,
+          // Prefer previous 2W+4W+EV sum when available; else API metric
           lastYear: prevSumTotal ?? lastYearValue?.total_slots ?? 0,
           prevTwoWheeler: prevTwo?.total,
           prevFourWheeler: prevFour?.total,
+          prevElectricVehicle: prevElectric?.total,
         };
   }
       case "occupied":
         {
           const prevOccupiedSum = (prevTwo?.booked ?? null) !== null && (prevFour?.booked ?? null) !== null
-            ? (prevTwo?.booked || 0) + (prevFour?.booked || 0)
+            ? (prevTwo?.booked || 0) + (prevFour?.booked || 0) + (prevElectric?.booked || 0)
             : undefined;
           return {
           total: data.occupied || 0,
           twoWheeler: data.two_wheeler?.occupied || 0,
           fourWheeler: data.four_wheeler?.occupied || 0,
+          electricVehicle: data.electric_vehicle?.occupied || 0,
           // Prefer previous booked sum when available; else API metric
           lastYear: prevOccupiedSum ?? lastYearValue?.occupied ?? 0,
           prevTwoWheeler: prevTwo?.booked,
           prevFourWheeler: prevFour?.booked,
+          prevElectricVehicle: prevElectric?.booked,
         };
   }
       case "vacant":
         {
           const prevVacantSum = (prevTwo?.available ?? null) !== null && (prevFour?.available ?? null) !== null
-            ? (prevTwo?.available || 0) + (prevFour?.available || 0)
+            ? (prevTwo?.available || 0) + (prevFour?.available || 0) + (prevElectric?.available || 0)
             : undefined;
           return {
           total: data.vacant || 0,
           twoWheeler: data.two_wheeler?.vacant || 0,
           fourWheeler: data.four_wheeler?.vacant || 0,
+          electricVehicle: data.electric_vehicle?.vacant || 0,
           // Prefer previous available sum when available; else API metric
           lastYear: prevVacantSum ?? lastYearValue?.vacant ?? 0,
           prevTwoWheeler: prevTwo?.available,
           prevFourWheeler: prevFour?.available,
+          prevElectricVehicle: prevElectric?.available,
         };
   }
       case "checked_in":
         {
           const prevCheckedInSum = (prevTwo?.booked ?? null) !== null && (prevFour?.booked ?? null) !== null
-            ? (prevTwo?.booked || 0) + (prevFour?.booked || 0)
+            ? (prevTwo?.booked || 0) + (prevFour?.booked || 0) + (prevElectric?.booked || 0)
             : undefined;
           return {
             total: data.checked_in || 0,
             // Use booked counts for checked-in submetrics
             twoWheeler: data.two_wheeler?.occupied || 0,
             fourWheeler: data.four_wheeler?.occupied || 0,
-            // Prefer previous 2W+4W booked sum when available; else API metric
+            electricVehicle: data.electric_vehicle?.occupied || 0,
+            // Prefer previous 2W+4W+EV booked sum when available; else API metric
             lastYear: prevCheckedInSum ?? lastYearValue?.checked_in ?? 0,
             prevTwoWheeler: prevTwo?.booked,
             prevFourWheeler: prevFour?.booked,
+            prevElectricVehicle: prevElectric?.booked,
           };
         }
       case "checked_out":
@@ -395,6 +423,7 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
           total: data.checked_out || 0,
           twoWheeler: 0,
           fourWheeler: 0,
+          electricVehicle: 0,
           lastYear: lastYearValue?.checked_out || 0,
         };
       case "utilization":
@@ -406,12 +435,16 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
           fourWheeler: data.four_wheeler?.total && data.four_wheeler?.occupied
             ? Math.round((data.four_wheeler.occupied / data.four_wheeler.total) * 100)
             : 0,
+          electricVehicle: data.electric_vehicle?.total && data.electric_vehicle?.occupied
+            ? Math.round((data.electric_vehicle.occupied / data.electric_vehicle.total) * 100)
+            : 0,
           lastYear: lastYearValue?.utilization_percent || 0,
           prevTwoWheeler: (prevTwo?.total && prevTwo?.booked) ? Math.round((prevTwo.booked / prevTwo.total) * 100) : undefined,
           prevFourWheeler: (prevFour?.total && prevFour?.booked) ? Math.round((prevFour.booked / prevFour.total) * 100) : undefined,
+          prevElectricVehicle: (prevElectric?.total && prevElectric?.booked) ? Math.round((prevElectric.booked / prevElectric.total) * 100) : undefined,
         };
       default:
-        return { total: 0, twoWheeler: 0, fourWheeler: 0, lastYear: 0 };
+        return { total: 0, twoWheeler: 0, fourWheeler: 0, electricVehicle: 0, lastYear: 0 };
     }
   };
 
@@ -545,9 +578,9 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
                     </div>
                   </div>
 
-                  {/* Sub-metrics for 2W and 4W */}
+                  {/* Sub-metrics for 2W, 4W and EV */}
                   {metric.subMetrics && (
-                    <div className={`flex items-center gap-2 text-xs ${textColor} opacity-90 pt-1`}>
+                    <div className={`flex items-center gap-2 text-xs ${textColor} opacity-90 pt-1 flex-wrap`}>
                       <div className="flex items-center gap-1">
                         <Bike className="w-3 h-3" />
                         <span>{metric.subMetrics.twoWheeler}: {metric.key === "utilization" ? `${value.twoWheeler}%` : value.twoWheeler}</span>
@@ -556,6 +589,11 @@ export const ParkingStatisticsCard: React.FC<ParkingStatisticsCardProps> = ({
                       <div className="flex items-center gap-1">
                         <Car className="w-3 h-3" />
                         <span>{metric.subMetrics.fourWheeler}: {metric.key === "utilization" ? `${value.fourWheeler}%` : value.fourWheeler}</span>
+                      </div>
+                      <span className="opacity-50">|</span>
+                      <div className="flex items-center gap-1">
+                        <Zap className="w-3 h-3" />
+                        <span>{metric.subMetrics.electricVehicle}: {metric.key === "utilization" ? `${value.electricVehicle}%` : value.electricVehicle}</span>
                       </div>
                     </div>
                   )}

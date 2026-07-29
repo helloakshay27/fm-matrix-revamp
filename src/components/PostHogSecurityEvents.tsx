@@ -1,25 +1,49 @@
 import { usePostHog } from "@posthog/react";
 
 const RELEASE_VERSION = (import.meta.env.VITE_APP_VERSION as string) ?? "dev";
-
+ 
 export type PatrolStatus = "active" | "inactive";
 export type PatrolFilterBy = "patrol" | "status" | "date" | string;
 export type VehicleCategory = "owned" | "staff" | "workshop";
 export type VehicleTypeCategory = "2_wheeler" | "4_wheeler";
-
+ 
 /**
  * Custom hooks for tracking Security module events (Patrolling and Vehicle).
  * Maps directly to the Vehicle & Patrolling (Security) Event Catalogue.
  */
-
+ 
 export function usePatrolEvents() {
   const posthog = usePostHog();
+ 
+  const getCommonContext = () => {
+    const _siteId = localStorage.getItem("selectedSiteId") ?? localStorage.getItem("site_id");
+    const _companyId = localStorage.getItem("selectedCompanyId") ?? localStorage.getItem("company_id");
+    const siteIdNum = _siteId && !isNaN(Number(_siteId)) ? Number(_siteId) : undefined;
+    const companyIdNum = _companyId && !isNaN(Number(_companyId)) ? Number(_companyId) : undefined;
+    const _userId = localStorage.getItem("userId") ?? localStorage.getItem("user_id");
+    const userIdNum = _userId && !isNaN(Number(_userId)) ? Number(_userId) : undefined;
+    const _orgId = localStorage.getItem("selectedOrgId") ?? localStorage.getItem("organization_id") ?? localStorage.getItem("org_id");
+    const orgIdNum = _orgId && !isNaN(Number(_orgId)) ? Number(_orgId) : undefined;
 
+    return {
+      project_id: "P-223",
+      project_code: "FM-01",
+      site_id: siteIdNum,
+      site_name: localStorage.getItem("selectedSiteName") ?? undefined,
+      company_id: companyIdNum,
+      company_name: localStorage.getItem("selectedCompany") ?? undefined,
+      organization_id: orgIdNum,
+      organization_name: localStorage.getItem("selectedOrg") ?? undefined,
+      user_id: userIdNum,
+    };
+  };
+ 
   const capture = (event: string, props: Record<string, unknown> = {}) => {
     if (!posthog) return;
     posthog.capture(event, {
       platform: "web",
       release_version: RELEASE_VERSION,
+      ...getCommonContext(),
       ...props,
     });
   };
@@ -70,12 +94,36 @@ export function usePatrolEvents() {
 
 export function useVehicleEvents() {
   const posthog = usePostHog();
+ 
+  const getCommonContext = () => {
+    const _siteId = localStorage.getItem("selectedSiteId") ?? localStorage.getItem("site_id");
+    const _companyId = localStorage.getItem("selectedCompanyId") ?? localStorage.getItem("company_id");
+    const siteIdNum = _siteId && !isNaN(Number(_siteId)) ? Number(_siteId) : undefined;
+    const companyIdNum = _companyId && !isNaN(Number(_companyId)) ? Number(_companyId) : undefined;
+    const _userId = localStorage.getItem("userId") ?? localStorage.getItem("user_id");
+    const userIdNum = _userId && !isNaN(Number(_userId)) ? Number(_userId) : undefined;
+    const _orgId = localStorage.getItem("selectedOrgId") ?? localStorage.getItem("organization_id") ?? localStorage.getItem("org_id");
+    const orgIdNum = _orgId && !isNaN(Number(_orgId)) ? Number(_orgId) : undefined;
 
+    return {
+      project_id: "P-223",
+      project_code: "FM-01",
+      site_id: siteIdNum,
+      site_name: localStorage.getItem("selectedSiteName") ?? undefined,
+      company_id: companyIdNum,
+      company_name: localStorage.getItem("selectedCompany") ?? undefined,
+      organization_id: orgIdNum,
+      organization_name: localStorage.getItem("selectedOrg") ?? undefined,
+      user_id: userIdNum,
+    };
+  };
+ 
   const capture = (event: string, props: Record<string, unknown> = {}) => {
     if (!posthog) return;
     posthog.capture(event, {
       platform: "web",
       release_version: RELEASE_VERSION,
+      ...getCommonContext(),
       ...props,
     });
   };

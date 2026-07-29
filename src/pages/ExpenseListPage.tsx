@@ -398,7 +398,7 @@ export const ExpenseListPage: React.FC = () => {
             </span>
         ),
         expense_account: (
-            <div className="font-medium text-blue-600">
+            <div className="font-medium text-brand">
                 {expense.expense_accounts?.[0]?.lock_account_name || getAccountName(expense.account_id)}
             </div>
         ),
@@ -503,11 +503,9 @@ export const ExpenseListPage: React.FC = () => {
                 onSearchChange={handleSearch}
                 loading={loading}
                 leftActions={(
-                    <Button onClick={() => navigate('/accounting/expense/create')} 
-                    // className="fm-button-fix fm-button-brand gap-2 px-4 py-2"
-                     className='fm-button-fix fm-button-brand px-4 py-2P'
+                    <Button onClick={() => navigate('/accounting/expense/create')}
+                     className='fm-button-fix fm-button-brand px-8 py-2'
                     >
-                         
                         <Plus className="h-4 w-4" />
                         Add
                     </Button>
@@ -533,10 +531,14 @@ export const ExpenseListPage: React.FC = () => {
                     <p>Are you sure you want to delete this expense? This action cannot be undone.</p>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleDeleteCancel} variant="outline">
+                    <Button onClick={handleDeleteCancel} variant="outline" className="fm-button-fix px-8 py-2">
                         No
                     </Button>
-                    <Button onClick={handleDeleteConfirm} disabled={deleting} className="text-red-600 hover:bg-red-50">
+                    <Button
+                        onClick={handleDeleteConfirm}
+                        disabled={deleting}
+                        className="bg-[#dc2626] hover:bg-[#b91c1c] text-white px-8 py-2"
+                    >
                         {deleting ? 'Deleting...' : 'Yes, Delete'}
                     </Button>
                 </DialogActions>

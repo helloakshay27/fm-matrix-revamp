@@ -241,6 +241,7 @@ export const WODetailsPage = () => {
     editWbsCode: false,
   });
   const [externalApiCalls, setExternalApiCalls] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const [workOrder, setWorkOrder] = useState({
     letter_of_indent: false,
@@ -297,6 +298,11 @@ export const WODetailsPage = () => {
   };
 
   const fetchWorkOrder = async () => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
       const response = await dispatch(
         getWorkOrderById({ baseUrl, token, id })
@@ -315,6 +321,8 @@ export const WODetailsPage = () => {
     } catch (error) {
       console.log(error);
       toast.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -457,7 +465,9 @@ export const WODetailsPage = () => {
       toast.success(response.data.message);
     } catch (error) {
       console.log(error);
-      toast.error("Failed to send to SAP");
+      toast.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -491,6 +501,17 @@ export const WODetailsPage = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading WO details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
       <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
@@ -505,7 +526,7 @@ export const WODetailsPage = () => {
             <Button
               size="sm"
               variant="outline"
-              className="border-gray-300 bg-purple-600 text-white sap_button"
+              // className="border-gray-300 bg-purple-600 text-white sap_button"
               onClick={handleSendToSap}
             >
               Send To SAP Team
@@ -566,7 +587,7 @@ export const WODetailsPage = () => {
               <Button
                 size="sm"
                 variant="outline"
-                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                 onClick={() => setOpenInvoiceModal(true)}
               >
                 Add Invoice
@@ -574,7 +595,7 @@ export const WODetailsPage = () => {
               <Button
                 size="sm"
                 variant="outline"
-                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                 onClick={handleOpenDebitCreditModal}
               >
                 Debit/Credit Note
@@ -1009,7 +1030,7 @@ export const WODetailsPage = () => {
           <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Invoices/SES Details</h3>
         </div>
 
-        
+
         <div className="overflow-x-auto">
           <EnhancedTable
             data={invoices}

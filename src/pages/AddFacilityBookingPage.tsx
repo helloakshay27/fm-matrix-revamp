@@ -136,6 +136,10 @@ export const AddFacilityBookingPage = () => {
     multiple_booking_count?: number;
     concurrent_slots?: number;
   } | null>(null);
+  // True only when booking_rule_for_user errored out — used to lift slot-selection
+  // restrictions entirely, as opposed to bookingRuleData being null simply because
+  // nothing has been fetched yet (which keeps the default single-slot restriction).
+  const [bookingRuleFetchFailed, setBookingRuleFetchFailed] = useState(false);
   const [flexiblePriceData, setFlexiblePriceData] = useState<{
     success: boolean;
     total_minutes: number;
@@ -159,11 +163,15 @@ export const AddFacilityBookingPage = () => {
   // Helper: Max slots user can select
   const maxSelectableSlots = isRequestableType
     ? Infinity // For requestable, allow unlimited consecutive slots
-    : (bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1);
+    : bookingRuleFetchFailed
+      ? Infinity // Booking rule lookup failed — don't restrict slot selection
+      : (bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1);
   // Helper: Max concurrent slots
   const maxConcurrentSlots = isRequestableType
     ? (facilityDetails?.max_people || 10) // For requestable, enforce consecutive slots up to max_people
-    : (bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1);
+    : bookingRuleFetchFailed
+      ? (facilityDetails?.max_people || 10) // Booking rule lookup failed — don't restrict slot selection
+      : (bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1);
 
   // Helper: Check if consecutive selection is valid
   const isConsecutiveSelection = (slots: number[]) => {
@@ -187,7 +195,7 @@ export const AddFacilityBookingPage = () => {
       const newSelection = [...selectedSlots, slotId];
 
       // Check if adding this slot maintains consecutive pattern
-      if (!isConsecutiveSelection(newSelection)) return false;
+      // if (!isConsecutiveSelection(newSelection)) return false;
 
       // Check if total doesn't exceed max
       if (newSelection.length > maxSelectableSlots) return false;
@@ -245,7 +253,7 @@ export const AddFacilityBookingPage = () => {
         }
       })
 
-      
+
       setUsers(reseponse.data.users)
     } catch (error) {
       console.log(error)
@@ -452,6 +460,7 @@ export const AddFacilityBookingPage = () => {
           });
           console.log('Booking Rule for User Response:', bookingRuleResponse.data);
           // Store booking rule data in state
+          setBookingRuleFetchFailed(false);
           if (bookingRuleResponse.data) {
             setBookingRuleData(bookingRuleResponse.data);
             console.log('Booking rule rate:', bookingRuleResponse.data.rate);
@@ -468,11 +477,16 @@ export const AddFacilityBookingPage = () => {
               console.warn('Server error (500): The API encountered an internal error. Check if user_id and facility_setup_id are valid.');
             }
           }
+          // Clear any stale booking rule data (e.g. from a previous facility/user) and mark the
+          // lookup as failed so slot selection is never left restricted because of it.
+          setBookingRuleData(null);
+          setBookingRuleFetchFailed(true);
         }
       };
       fetchAmenityBooking();
     } else {
       console.log('❌ Amenity API not called - condition not met');
+      setBookingRuleFetchFailed(false);
     }
   }, [userType, selectedUser, selectedFacility]);
 
@@ -573,29 +587,6 @@ export const AddFacilityBookingPage = () => {
       }
 
       const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
-
-      // --- Cost calculation based on per_slot_charge and accessories ---
-      const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
-      const slotsCount = selectedSlots.length;
-
-      // Calculate slot total
-      const slotTotal = slotsCount * perSlotCharge;
-
-      // Calculate accessory total with quantities
-      const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
-        const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
-        return total + ((accessory?.price || 0) * (quantity || 0));
-      }, 0);
-
-      // Subtotal includes slots and accessories
-      const subtotalBeforeDiscount = slotTotal + accessoryTotal;
-      const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
-      const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
-      const gstPercentage = facilityDetails?.gst || 0;
-      const sgstPercentage = facilityDetails?.sgst || 0;
-      const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
-      const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
-      const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
 
       // Build booked_members_attributes array from people table
       const bookedMembersAttributes = peopleTable
@@ -992,10 +983,10 @@ export const AddFacilityBookingPage = () => {
                 `You can select multiple consecutive slots. Selected slots must be continuous.`
               ) : (
                 <>
-                  {bookingRuleData?.multiple_bookings
+                  {/* {bookingRuleData?.multiple_bookings
                     ? `You can select up to ${maxSelectableSlots} slots. `
                     : 'You can select only one slot. '}
-                  {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`}
+                  {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`} */}
                 </>
               )}
             </div>
@@ -1418,8 +1409,8 @@ export const AddFacilityBookingPage = () => {
         <div className="flex justify-center">
           <Button
             type="submit"
-           className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
+            className="fm-button-fix fm-button-brand px-4 py-2"
+            variant="ghost"
           >
             Submit
           </Button>

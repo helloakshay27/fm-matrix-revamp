@@ -283,12 +283,10 @@ export const ViewSchedulePage = () => {
 
   if (isLoading) {
     return (
-      <div className="p-6 mx-auto">
-        <div className="flex items-center justify-center h-32">
-          <div className="flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Loading schedule details...</span>
-          </div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading schedule details...</p>
         </div>
       </div>
     );

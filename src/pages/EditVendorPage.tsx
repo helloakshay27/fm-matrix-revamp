@@ -92,42 +92,34 @@ function CustomStepIcon(props: {
 }
 
 const RedButton = styled(MuiButton)(({ theme }) => ({
-    backgroundColor: '#fffaf6',
-    color: '#DA7756',
-    minWidth: '128px',
-    height: '44px',
-    borderRadius: '10px',
-    fontSize: '14px',
+    backgroundColor: '#da7756',
+    color: 'white !important',
+    borderRadius: 0,
     textTransform: 'none',
     padding: '8px 16px',
     fontFamily: 'Work Sans, sans-serif',
-    fontWeight: 700,
-    letterSpacing: '0.02em',
-    border: '1px solid #DA7756',
-    boxShadow: '0 4px 10px rgba(218, 119, 86, 0.12)',
-    '&, &.MuiButton-root': {
-        color: '#DA7756',
-    },
+    fontWeight: 500,
+    boxShadow: '0 2px 4px rgba(218, 119, 86, 0.2)',
     '&:hover': {
-        backgroundColor: '#fdf0ea',
-        boxShadow: '0 6px 14px rgba(218, 119, 86, 0.16)',
+        backgroundColor: '#C4623C',
+        boxShadow: '0 4px 8px rgba(218, 119, 86, 0.3)',
     },
 }));
+RedButton.defaultProps = { color: 'inherit' };
 
 const DraftButton = styled(MuiButton)(({ theme }) => ({
-    backgroundColor: '#fffaf6',
-    color: '#DA7756',
-    minWidth: '108px',
-    height: '44px',
-    borderRadius: '10px',
-    fontSize: '14px',
+    backgroundColor: '#ffffff',
+    color: '#da7756',
+    border: '1px solid #da7756',
+    borderRadius: 0,
     textTransform: 'none',
     padding: '8px 16px',
     fontFamily: 'Work Sans, sans-serif',
-    fontWeight: 600,
-    border: '1px solid #E2D3C6',
+    fontWeight: 500,
     '&:hover': {
-        backgroundColor: '#fdf0ea',
+        backgroundColor: '#F2EEE9',
+        borderColor: '#C45F40',
+        color: '#C45F40',
     },
 }));
 
@@ -833,7 +825,7 @@ export const EditVendorPage = () => {
         const fileNames = currentFiles.map(f => f.name);
 
         return (
-            <div className={`border-2 border-dashed rounded-lg p-6 text-center ${fileNames.length > 0 ? 'border-[#DA7756] bg-[#fef6f4]' : 'border-gray-300'}`}>
+            <div className={`border-2 border-dashed rounded-lg p-6 text-center ${fileNames.length > 0 ? 'border-[#DA7756] bg-orange-50' : 'border-gray-300'}`}>
                 <p className="text-gray-600 font-medium mb-2">{title}</p>
                 <label className="cursor-pointer">
                     <div className="flex flex-col items-center">
@@ -873,7 +865,7 @@ export const EditVendorPage = () => {
                             <Box p={3}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                                     <TextField
-                                        label={<span>Company Name <span style={{ color: 'red' }}>*</span></span>}
+                                        label={<span>Company Name <span style={{ color: '#DA7756' }}>*</span></span>}
                                         fullWidth
                                         value={formData.companyName}
                                         onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
@@ -898,7 +890,7 @@ export const EditVendorPage = () => {
                                         helperText={errors.secondaryPhone}
                                     />
                                     <TextField
-                                        label={<span>Email <span style={{ color: 'red' }}>*</span></span>}
+                                        label={<span>Email <span style={{ color: '#DA7756' }}>*</span></span>}
                                         type="email"
                                         fullWidth
                                         value={formData.email}
@@ -1008,13 +1000,13 @@ export const EditVendorPage = () => {
                         </SectionCard>
                         <SectionCard>
                             <SectionHeader>
-                                <Landmark className="text-[#C72030]" />
+                                <Landmark className="text-[#DA7756]" />
                                 <SectionTitle>OTHER DETAILS</SectionTitle>
                             </SectionHeader>
                             <Box p={3}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                                     <TextField
-                                        label={<span>GST Treatment <span style={{ color: 'red' }}>*</span></span>}
+                                        label={<span>GST Treatment <span style={{ color: '#DA7756' }}>*</span></span>}
                                         select
                                         fullWidth
                                         value={formData.gstTreatment}
@@ -1105,7 +1097,7 @@ export const EditVendorPage = () => {
                         </SectionCard>
                         <SectionCard>
                             <SectionHeader>
-                                <Landmark className="text-[#C72030]" />
+                                <Landmark className="text-[#DA7756]" />
                                 <SectionTitle>OPENING BALANCE</SectionTitle>
                             </SectionHeader>
                             <Box p={3}>
@@ -1200,9 +1192,9 @@ export const EditVendorPage = () => {
                                                     }
                                                 }}
                                                 sx={{
-                                                    border: '1px solid #C72030',
+                                                    border: '1px solid #DA7756',
                                                     borderRadius: '4px',
-                                                    color: '#C72030',
+                                                    color: '#DA7756',
                                                     width: 36,
                                                     height: 36,
                                                     flexShrink: 0,
@@ -1233,7 +1225,7 @@ export const EditVendorPage = () => {
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                                         <TextField
-                                            label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
+                                            label={<span>Country <span style={{ color: '#DA7756' }}>*</span></span>}
                                             fullWidth
                                             value={billingAddress.country}
                                             onChange={(e) => setBillingAddress({ ...billingAddress, country: e.target.value })}
@@ -1243,7 +1235,7 @@ export const EditVendorPage = () => {
                                             placeholder="e.g., India"
                                         />
                                         <TextField
-                                            label={<span>State <span style={{ color: 'red' }}>*</span></span>}
+                                            label={<span>State <span style={{ color: '#DA7756' }}>*</span></span>}
                                             fullWidth
                                             value={billingAddress.state}
                                             onChange={(e) => setBillingAddress({ ...billingAddress, state: e.target.value })}
@@ -1253,7 +1245,7 @@ export const EditVendorPage = () => {
                                             placeholder="e.g., Maharashtra"
                                         />
                                         <TextField
-                                            label={<span>City <span style={{ color: 'red' }}>*</span></span>}
+                                            label={<span>City <span style={{ color: '#DA7756' }}>*</span></span>}
                                             fullWidth
                                             value={billingAddress.city}
                                             onChange={(e) => setBillingAddress({ ...billingAddress, city: e.target.value })}
@@ -1274,7 +1266,7 @@ export const EditVendorPage = () => {
                                     </div>
                                     <div className="grid grid-cols-1 gap-4">
                                         <TextField
-                                            label={<span>Address Line 1 <span style={{ color: 'red' }}>*</span></span>}
+                                            label={<span>Address Line 1 <span style={{ color: '#DA7756' }}>*</span></span>}
                                             fullWidth
                                             value={billingAddress.addressLine1}
                                             onChange={(e) => setBillingAddress({ ...billingAddress, addressLine1: e.target.value })}
@@ -1296,7 +1288,7 @@ export const EditVendorPage = () => {
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                                         <TextField
-                                            label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
+                                            label={<span>Country <span style={{ color: '#DA7756' }}>*</span></span>}
                                             fullWidth
                                             value={shippingAddress.country}
                                             onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
@@ -1306,7 +1298,7 @@ export const EditVendorPage = () => {
                                             placeholder="e.g., India"
                                         />
                                         <TextField
-                                            label={<span>State <span style={{ color: 'red' }}>*</span></span>}
+                                            label={<span>State <span style={{ color: '#DA7756' }}>*</span></span>}
                                             fullWidth
                                             value={shippingAddress.state}
                                             onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
@@ -1316,7 +1308,7 @@ export const EditVendorPage = () => {
                                             placeholder="e.g., Maharashtra"
                                         />
                                         <TextField
-                                            label={<span>City <span style={{ color: 'red' }}>*</span></span>}
+                                            label={<span>City <span style={{ color: '#DA7756' }}>*</span></span>}
                                             fullWidth
                                             value={shippingAddress.city}
                                             onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
@@ -1337,7 +1329,7 @@ export const EditVendorPage = () => {
                                     </div>
                                     <div className="grid grid-cols-1 gap-4">
                                         <TextField
-                                            label={<span>Address Line 1 <span style={{ color: 'red' }}>*</span></span>}
+                                            label={<span>Address Line 1 <span style={{ color: '#DA7756' }}>*</span></span>}
                                             fullWidth
                                             value={shippingAddress.addressLine1}
                                             onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine1: e.target.value })}
@@ -1429,11 +1421,11 @@ export const EditVendorPage = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         {errors[`contact_${index}_general`] && (
                                             <div className="col-span-full">
-                                                <p className="text-red-500 text-sm mt-1">{errors[`contact_${index}_general`]}</p>
+                                                <p className="text-brand text-sm mt-1">{errors[`contact_${index}_general`]}</p>
                                             </div>
                                         )}
                                         <TextField
-                                            label={<span>First Name <span style={{ color: 'red' }}>*</span></span>}
+                                            label={<span>First Name <span style={{ color: '#DA7756' }}>*</span></span>}
                                             fullWidth
                                             value={contact.firstName}
                                             onChange={(e) => handleContactPersonChange(index, 'firstName', e.target.value)}
@@ -1441,7 +1433,7 @@ export const EditVendorPage = () => {
                                             helperText={errors[`contact_${index}_firstName`]}
                                         />
                                         <TextField
-                                            label={<span>Last Name <span style={{ color: 'red' }}>*</span></span>}
+                                            label={<span>Last Name <span style={{ color: '#DA7756' }}>*</span></span>}
                                             fullWidth
                                             value={contact.lastName}
                                             onChange={(e) => handleContactPersonChange(index, 'lastName', e.target.value)}
@@ -1449,7 +1441,7 @@ export const EditVendorPage = () => {
                                             helperText={errors[`contact_${index}_lastName`]}
                                         />
                                         <TextField
-                                            label={<span>Primary Email <span style={{ color: 'red' }}>*</span></span>}
+                                            label={<span>Primary Email <span style={{ color: '#DA7756' }}>*</span></span>}
                                             type="email"
                                             fullWidth
                                             value={contact.primaryEmail}
@@ -1517,7 +1509,7 @@ export const EditVendorPage = () => {
                                 <TextField
                                     label={
                                         <span>
-                                            Start Date <span style={{ color: 'red' }}>*</span>
+                                            Start Date <span style={{ color: '#DA7756' }}>*</span>
                                         </span>
                                     }
                                     id="startFrom"
@@ -1597,7 +1589,21 @@ export const EditVendorPage = () => {
     }
 
     return (
-        <div className="p-6 bg-[#F6F4EE] min-h-screen">
+        <div className="p-6 bg-[#F6F4EE] min-h-screen vendor-club-form">
+            <style>{`
+                .vendor-club-form .Mui-error {
+                    color: #DA7756 !important;
+                }
+                .vendor-club-form .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+                    border-color: #DA7756 !important;
+                }
+                .vendor-club-form .MuiFormHelperText-root.Mui-error {
+                    color: #DA7756 !important;
+                }
+                .vendor-club-form .MuiInputLabel-root.Mui-error {
+                    color: #DA7756 !important;
+                }
+            `}</style>
             <div className="mb-6">
                 <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
                     <button
@@ -1629,9 +1635,10 @@ export const EditVendorPage = () => {
                                 onClick={() => handleStepClick(index)}
                                 sx={{
                                     cursor: 'pointer',
-                                    backgroundColor: (index === activeStep || completedSteps.includes(index)) ? '#DA7756' : 'white',
-                                    color: (index === activeStep || completedSteps.includes(index)) ? 'white' : '#C4B89D',
-                                    border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#DA7756' : '#C4B89D'}`,
+                                    backgroundColor: 'white',
+                                    color: (index === activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D',
+                                    border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D'}`,
+                                    fontWeight: (index === activeStep) ? 600 : 500,
                                     padding: '8px 12px',
                                     fontSize: '11px',
                                     fontWeight: 500,

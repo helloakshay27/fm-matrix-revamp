@@ -553,29 +553,28 @@ export const AssetAuditDashboard = () => {
   //   }
   // };
   const statusOptions = [
-    { value: 'scheduled', label: 'Scheduled', color: '#C4B89D' },
-    { value: 'in_progress', label: 'In Progress', color: '#F4C790' },
-    { value: 'completed', label: 'Completed', color: '#AAB9C5' },
-    { value: 'overdue', label: 'Overdue', color: '#E4626F' },
-    { value: 'closed', label: 'Closed', color: '#bbf7d0' },
-    { value: 'paused', label: 'Paused', color: '#93C5FD' },
+    { value: 'scheduled', label: 'Scheduled', color: '#F2EBC9' },
+    { value: 'in_progress', label: 'In Progress', color: '#F8E4C7' },
+    { value: 'completed', label: 'Completed', color: '#C7EDDA' },
+    { value: 'overdue', label: 'Overdue', color: '#F2C8C4' },
+    { value: 'closed', label: 'Closed', color: '#E5E0D8' },
+    { value: 'paused', label: 'Paused', color: '#CECBF6' },
   ];
 
   const getStatusStyle = (status: string): React.CSSProperties => {
-    const normalizedStatus = status.toLowerCase().replace(/\s+/g, '');
+    const normalizedStatus = status.toLowerCase().replace(/[\s_]+/g, '_');
     const statusMap: { [key: string]: string } = {
-      'scheduled': '#C4B89D',
-      'in_progress': '#F4C790',
-      'completed': '#AAB9C5',
-      'overdue': '#E4626F',
-      'closed': '#bbf7d0',
-      'paused': '#93C5FD',
-
+      scheduled: '#F2EBC9',
+      in_progress: '#F8E4C7',
+      completed: '#C7EDDA',
+      overdue: '#F2C8C4',
+      closed: '#E5E0D8',
+      paused: '#CECBF6',
     };
-    const color = statusMap[normalizedStatus];
+    const color = statusMap[normalizedStatus] || '#F2EBC9';
     return {
       backgroundColor: color,
-      color: '#000',
+      color: '#2c2c2c',
       border: 'none',
     };
   };

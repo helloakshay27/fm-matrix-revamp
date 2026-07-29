@@ -1222,7 +1222,7 @@ export const PermitDetails = () => {
                 const response = await fetchPermitDetails(id);
                 console.log(response)
                 setPermitData(response);
-                
+
                 onPermitDetailOpened({
                     permit_status: response.permit.status,
                     open_source: isFromPendingApprovals ? 'approval_queue' : 'direct'
@@ -1450,10 +1450,10 @@ export const PermitDetails = () => {
 
     if (loading) {
         return (
-            <div className="p-6 min-h-screen bg-gray-50">
-                <div className="flex items-center justify-center h-64">
-                    <RefreshCw className="w-8 h-8 animate-spin text-[#C72030]" />
-                    <span className="ml-3 text-gray-600">Loading permit details...</span>
+            <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <p className="text-gray-700">Loading permit details...</p>
                 </div>
             </div>
         );
@@ -1503,7 +1503,7 @@ export const PermitDetails = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => navigate(`/safety/permit/edit/${id}`)}
-                                className="bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
+                            // className="bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
                             >
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit

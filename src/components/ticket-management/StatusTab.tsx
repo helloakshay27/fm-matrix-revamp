@@ -515,7 +515,7 @@ export const StatusTab: React.FC = () => {
                   <div className="flex justify-end">
                     <Button
                       onClick={handleSaveReopen}
-                      className="bg-green-600 hover:bg-green-700 text-white"
+                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                     >
                       Save Reopen Settings
                     </Button>

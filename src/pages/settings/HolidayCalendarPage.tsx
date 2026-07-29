@@ -10,9 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from '@/components/ui/switch';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CalendarDays, Plus, Eye, Edit, Trash2, Filter, Loader2 } from 'lucide-react';
 import { useApiConfig } from '@/hooks/useApiConfig';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
@@ -144,7 +146,7 @@ export const HolidayCalendarPage = () => {
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [recurringOpen, setRecurringOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadingHolidays, setLoadingHolidays] = useState(false);
+  const [loadingHolidays, setLoadingHolidays] = useState(true);
   const [loadingEditData, setLoadingEditData] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
@@ -737,23 +739,16 @@ export const HolidayCalendarPage = () => {
       </div>
     ),
     status: (
-      <button
-        onClick={() => handleToggleStatus(holiday)}
-        disabled={togglingId === holiday.id}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-          holiday.active ? 'bg-green-500' : 'bg-gray-300'
-        } ${togglingId === holiday.id ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-        title={holiday.active ? 'Click to Deactivate' : 'Click to Activate'}
-      >
-        <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-            holiday.active ? 'translate-x-6' : 'translate-x-1'
-          }`}
+      <div className="relative inline-flex">
+        <Switch
+          checked={holiday.active}
+          onCheckedChange={() => handleToggleStatus(holiday)}
+          disabled={togglingId === holiday.id}
         />
         {togglingId === holiday.id && (
-          <Loader2 className="absolute right-[-20px] top-1 w-4 h-4 animate-spin text-gray-400" />
+          <Loader2 className="ml-2 w-4 h-4 animate-spin text-gray-400" />
         )}
-      </button>
+      </div>
     ),
   });
 
@@ -766,11 +761,39 @@ export const HolidayCalendarPage = () => {
 
       {/* Loader overlay */}
       {loadingHolidays && (
-        <div className="flex items-center justify-center py-12">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <p className="text-sm text-gray-500">Loading holidays...</p>
-          </div>
+        <div className="bg-white rounded-lg border border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">Action</TableHead>
+                <TableHead className="font-medium">Holiday Name</TableHead>
+                <TableHead className="font-medium">Date</TableHead>
+                <TableHead className="font-medium">Recurring</TableHead>
+                <TableHead className="font-medium">Sites</TableHead>
+                <TableHead className="font-medium">Holiday Type</TableHead>
+                <TableHead className="font-medium">Modules</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={8} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{
+                        border: "2px solid #000000",
+                        borderTopColor: "transparent",
+                      }}
+                    />
+                    <span className="text-sm text-black">
+                      Loading ...
+                    </span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
       )}
 
@@ -785,6 +808,7 @@ export const HolidayCalendarPage = () => {
         enableSearch={true}
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
+        emptyMessage=""
         rightActions={(
           <>
             {activeFilterCount > 0 && (

@@ -203,7 +203,14 @@ export const InvoiceDetails = () => {
         description: "",
     });
 
+    const [loading, setLoading] = useState<boolean>(true);
+
     const fetchData = async () => {
+        if (!id) {
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
         try {
             const response = await dispatch(
                 getInvoiceById({ baseUrl, token, id })
@@ -213,6 +220,8 @@ export const InvoiceDetails = () => {
         } catch (error) {
             console.error("Error fetching invoice:", error);
             toast.error(String(error) || "Failed to fetch invoice");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -384,6 +393,17 @@ export const InvoiceDetails = () => {
         setRejectComment("");
     };
 
+    if (loading) {
+        return (
+            <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <p className="text-gray-700">Loading invoice details...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
             <Button
@@ -414,7 +434,7 @@ export const InvoiceDetails = () => {
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                                // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                                 onClick={() => setOpenDebitModal(true)}
                             >
                                 Debit Note
@@ -425,7 +445,7 @@ export const InvoiceDetails = () => {
                         <Button
                             size="sm"
                             variant="outline"
-                            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                            // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                             onClick={handleSendToSap}
                             disabled={sapPushDisabled}
                         >
@@ -435,7 +455,7 @@ export const InvoiceDetails = () => {
                     <Button
                         size="sm"
                         variant="outline"
-                        className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                        // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                         onClick={handleFeeds}
                     >
                         <Rss className="w-4 h-4 mr-1" />

@@ -100,15 +100,15 @@ export const SeatSetupDashboard = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <div className="flex-1 p-6">
+      <div className="flex-1 min-w-0 p-6">
         {/* Header */}
         <div className="mb-6">
           <div className="text-sm text-gray-500 mb-2">Space &gt; Seat Setup</div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <h1 className="text-2xl font-bold text-gray-800">SEAT SETUP</h1>
             <Button 
               onClick={handleAddClick}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+              className="bg-brand hover:bg-brand-hover text-white flex items-center gap-2 [&_svg]:text-white shrink-0 whitespace-nowrap"
             >
               <Plus className="w-4 h-4" />
               Add
@@ -117,8 +117,8 @@ export const SeatSetupDashboard = () => {
         </div>
 
         {/* Seat Type Headers */}
-        <div className="bg-white rounded-lg border shadow-sm overflow-hidden mb-4">
-          <div className="bg-gray-100 p-4">
+        <div className="bg-white rounded-lg border shadow-sm overflow-x-auto mb-4">
+          <div className="bg-gray-100 p-4 min-w-[1200px]">
             <div className="flex gap-4">
               <div className="w-32">
                 <span className="text-sm font-medium text-gray-700">Seat Type</span>
@@ -133,8 +133,8 @@ export const SeatSetupDashboard = () => {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-          <Table>
+        <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
+          <Table className="min-w-[1200px]">
             <TableHeader>
               <TableRow className="bg-gray-50">
                 <TableHead className="font-semibold text-gray-700">Location</TableHead>

@@ -64,7 +64,7 @@ export const VisitorManagementSetup = () => {
   
   // API data state
   const [visitorGateData, setVisitorGateData] = useState<VisitorGateData[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalEntries, setTotalEntries] = useState(0);
@@ -237,17 +237,19 @@ export const VisitorManagementSetup = () => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length} className="text-center py-8">
-                  <div className="flex items-center justify-center">
-                    <RefreshCw className="w-5 h-5 animate-spin mr-2" />
-                    Loading society gates...
+                <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                    />
+                    <span className="text-sm text-black">Loading ...</span>
                   </div>
                 </TableCell>
               </TableRow>
             ) : filteredData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length} className="text-center py-8 text-gray-500">
-                  No society gates found
                 </TableCell>
               </TableRow>
             ) : (

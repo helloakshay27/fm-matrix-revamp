@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { InputAdornment, TextField } from "@mui/material";
 import axios from "axios";
-import { Loader2, TrendingUp, Target, Users, DollarSign, BarChart3, Globe } from "lucide-react";
+import { Loader2, TrendingUp, Target, Users, DollarSign, BarChart3, Globe, ArrowLeft } from "lucide-react";
 
 // MARKET ANALYSIS TAB COMPONENT
 const MarketAnalysisTab = ({ productData }) => {
@@ -199,9 +199,9 @@ const muiTheme = createTheme({
         MuiCheckbox: {
             styleOverrides: {
                 root: {
-                    color: "#DA7756",
+                    color: "var(--color-primary)",
                     "&.Mui-checked": {
-                        color: "#DA7756",
+                        color: "var(--color-primary)",
                     },
                 },
             },
@@ -211,9 +211,9 @@ const muiTheme = createTheme({
         MuiRadio: {
             styleOverrides: {
                 root: {
-                    color: "#DA7756",
+                    color: "var(--color-primary)",
                     "&.Mui-checked": {
-                        color: "#DA7756",
+                        color: "var(--color-primary)",
                     },
                 },
             },
@@ -372,7 +372,7 @@ const AddressTab = ({ billing, setBilling, shipping, setShipping }) => {
             <div>
                 <h3 className="font-semibold mb-3">
                     Shipping Address
-                    <span className="text-blue-600 text-sm ml-2 cursor-pointer" onClick={copyBillingToShipping}>
+                    <span className="text-brand text-sm ml-2 cursor-pointer" onClick={copyBillingToShipping}>
                         (Copy billing address)
                     </span>
                 </h3>
@@ -809,7 +809,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                         <MenuItem key={term.name} value={term.name}>{term.name}</MenuItem>
                     ))}
                     {/* <MenuItem>
-                        <span className="text-blue-600 cursor-pointer" onClick={() => setShowConfig(true)}>
+                        <span className="text-brand cursor-pointer" onClick={() => setShowConfig(true)}>
                             Configure Terms
                         </span>
                     </MenuItem> */}
@@ -864,7 +864,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                         </table>
                         <div className="flex gap-2 mb-2">
                             <button
-                                className="text-blue-600 text-sm"
+                                className="text-brand text-sm"
                                 onClick={handleAddNewTerm}
                             >
                                 + Add New
@@ -907,7 +907,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
 
             {/* More Details toggle */}
             <div className="col-span-2">
-                <span className="text-blue-600 text-sm cursor-pointer" onClick={() => setShowMore(v => !v)}>
+                <span className="text-brand text-sm cursor-pointer" onClick={() => setShowMore(v => !v)}>
                     {showMore ? 'Hide More Details' : 'Add More Details'}
                 </span>
             </div>
@@ -949,7 +949,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
 
             {/* Customer Owner info (display only) */}
             {/* <div className="col-span-2 text-xs text-gray-500 mt-2">
-                    Customer Owner: Assign a user as the customer owner to provide access only to the data of this customer. <a href="#" className="text-blue-600">Learn More</a>
+                    Customer Owner: Assign a user as the customer owner to provide access only to the data of this customer. <a href="#" className="text-brand">Learn More</a>
                 </div> */}
         </div>
     );
@@ -1163,73 +1163,77 @@ const ContactPersonsTab = ({ rows, setRows }) => {
                     {rows.map((row, idx) => (
                         <tr key={idx}>
                             <td className="border p-2">
-                                <select
-                                    className="border rounded px-2 py-1 w-full"
-                                    value={row.salutation}
-                                    onChange={e => handleRowChange(idx, 'salutation', e.target.value)}
-                                >
-                                    <option value="">Select</option>
-                                    <option value="Mr">Mr</option>
-                                    <option value="Ms">Ms</option>
-                                    <option value="Mrs">Mrs</option>
-                                </select>
+                                <FormControl fullWidth size="small">
+                                    <Select
+                                        displayEmpty
+                                        value={row.salutation}
+                                        onChange={e => handleRowChange(idx, 'salutation', e.target.value)}
+                                        renderValue={(val) => val ? val : <span style={{ color: '#aaa' }}>Select</span>}
+                                        sx={{ height: 36 }}
+                                    >
+                                        <MenuItem value=""><em>Select</em></MenuItem>
+                                        <MenuItem value="Mr">Mr</MenuItem>
+                                        <MenuItem value="Ms">Ms</MenuItem>
+                                        <MenuItem value="Mrs">Mrs</MenuItem>
+                                    </Select>
+                                </FormControl>
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.firstName ? 'border-red-500' : ''}`}
+                                    className={`border rounded px-2 py-1 w-full h-9 ${rowErrors[idx]?.firstName ? 'border-[#DA7756]' : ''}`}
                                     value={row.firstName}
                                     onChange={e => handleRowChange(idx, 'firstName', e.target.value)}
                                     placeholder="First Name"
                                 />
                                 {rowErrors[idx]?.firstName && (
-                                    <span className="text-red-500 text-xs">{rowErrors[idx].firstName}</span>
+                                    <span className="text-brand text-xs">{rowErrors[idx].firstName}</span>
                                 )}
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.lastName ? 'border-red-500' : ''}`}
+                                    className={`border rounded px-2 py-1 w-full h-9 ${rowErrors[idx]?.lastName ? 'border-[#DA7756]' : ''}`}
                                     value={row.lastName}
                                     onChange={e => handleRowChange(idx, 'lastName', e.target.value)}
                                     placeholder="Last Name"
                                 />
                                 {rowErrors[idx]?.lastName && (
-                                    <span className="text-red-500 text-xs">{rowErrors[idx].lastName}</span>
+                                    <span className="text-brand text-xs">{rowErrors[idx].lastName}</span>
                                 )}
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.email ? 'border-red-500' : ''}`}
+                                    className={`border rounded px-2 py-1 w-full h-9 ${rowErrors[idx]?.email ? 'border-[#DA7756]' : ''}`}
                                     value={row.email}
                                     onChange={e => handleRowChange(idx, 'email', e.target.value)}
                                     placeholder="example@gmail.com"
                                     type="email"
                                 />
                                 {rowErrors[idx]?.email && (
-                                    <span className="text-red-500 text-xs">{rowErrors[idx].email}</span>
+                                    <span className="text-brand text-xs">{rowErrors[idx].email}</span>
                                 )}
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.workPhone ? 'border-red-500' : ''}`}
+                                    className={`border rounded px-2 py-1 w-full h-9 ${rowErrors[idx]?.workPhone ? 'border-[#DA7756]' : ''}`}
                                     value={row.workPhone}
                                     onChange={e => handleRowChange(idx, 'workPhone', e.target.value)}
                                     placeholder="Work Phone"
                                     type="tel"
                                 />
                                 {rowErrors[idx]?.workPhone && (
-                                    <span className="text-red-500 text-xs">{rowErrors[idx].workPhone}</span>
+                                    <span className="text-brand text-xs">{rowErrors[idx].workPhone}</span>
                                 )}
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.mobile ? 'border-red-500' : ''}`}
+                                    className={`border rounded px-2 py-1 w-full h-9 ${rowErrors[idx]?.mobile ? 'border-[#DA7756]' : ''}`}
                                     value={row.mobile}
                                     onChange={e => handleRowChange(idx, 'mobile', e.target.value)}
                                     placeholder="Mobile"
                                     type="tel"
                                 />
                                 {rowErrors[idx]?.mobile && (
-                                    <span className="text-red-500 text-xs">{rowErrors[idx].mobile}</span>
+                                    <span className="text-brand text-xs">{rowErrors[idx].mobile}</span>
                                 )}
                             </td>
                             <td className="border p-2 text-center">
@@ -1249,7 +1253,7 @@ const ContactPersonsTab = ({ rows, setRows }) => {
             </table>
             <button
                 type="button"
-                className="mt-3 text-blue-600 text-sm"
+                className="mt-3 text-brand text-sm"
                 onClick={handleAddRow}
             >
                 + Add Contact Person
@@ -1751,6 +1755,16 @@ const CustomersAdd = () => {
     return (
         <ThemeProvider theme={muiTheme}>
             <div className="p-6 bg-white min-h-screen">
+                <div className="mb-6">
+                    <Button
+                        variant="ghost"
+                        onClick={() => navigate("/accounting/customers")}
+                        className="p-0"
+                    >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back to Customers
+                    </Button>
+                </div>
                 <h1 className="text-2xl font-semibold mb-6">New Customer</h1>
 
                 {/* CUSTOMER TYPE */}
@@ -1997,9 +2011,10 @@ const CustomersAdd = () => {
                 {/* BUTTONS */}
                 <div className="flex gap-3 justify-center" style={{ marginBottom: '100px' }}>
                     <Button
+                        variant="ghost"
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="fm-button-fix fm-button-brand min-w-[100px]"
+                        className="fm-button-fix fm-button-brand px-8 py-2 min-w-[100px]"
                     >
                         {loading ? (
                             <>
@@ -2011,7 +2026,7 @@ const CustomersAdd = () => {
                         )}
                     </Button>
 
-                    <Button variant="outline" onClick={() => navigate("/accounting/customers")}>
+                    <Button variant="outline" className="fm-button-fix px-8 py-2" onClick={() => navigate("/accounting/customers")}>
                         Cancel
                     </Button>
                 </div>

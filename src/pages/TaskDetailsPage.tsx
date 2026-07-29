@@ -1344,7 +1344,7 @@ export const TaskDetailsPage = () => {
                         taskDetails?.actions?.can_edit) && (
                           <Button
                             onClick={handleTaskReschedule}
-                            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                            className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                           >
                             Task Reschedule
                           </Button>
@@ -1353,7 +1353,7 @@ export const TaskDetailsPage = () => {
                         taskDetails?.actions?.can_edit) && (
                           <Button
                             onClick={handleSubmitTask}
-                            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                            className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                           >
                             Submit Task
                           </Button>
@@ -1367,7 +1367,7 @@ export const TaskDetailsPage = () => {
                         taskDetails?.actions?.can_edit) && (
                           <Button
                             onClick={handleTaskReschedule}
-                            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                            className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                           >
                             Task Reschedule
                           </Button>
@@ -1389,7 +1389,7 @@ export const TaskDetailsPage = () => {
                           <Button
                             onClick={handleJobSheetModalClick}
                             variant="outline"
-                            className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
+                            className="border-brand text-brand hover:bg-brand-light px-4 py-2"
                           >
                             Job Sheet
                           </Button>
@@ -1404,7 +1404,7 @@ export const TaskDetailsPage = () => {
                     <>
                       <Button
                         onClick={handleSubmitTask}
-                        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                        className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                       >
                         Submit Task
                       </Button>
@@ -1422,7 +1422,7 @@ export const TaskDetailsPage = () => {
                         <Button
                           onClick={handleJobSheetModalClick}
                           variant="outline"
-                          className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
+                          className="border-brand text-brand hover:bg-brand-light px-4 py-2"
                         >
                           Job Sheet
                         </Button>
@@ -1430,7 +1430,7 @@ export const TaskDetailsPage = () => {
                     {taskDetails?.actions?.can_submit_task && (
                       <Button
                         onClick={handleSubmitTask}
-                        className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                        className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                       >
                         Submit Task
                       </Button>

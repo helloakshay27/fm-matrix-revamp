@@ -180,6 +180,7 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
       const yoy = apiData.data.yoy || {
         two_wheeler: { total_occupied: 0, total_vacant: 0 },
         four_wheeler: { total_occupied: 0, total_vacant: 0 },
+        electric_vehicle: { total_occupied: 0, total_vacant: 0 },
       };
 
       return [
@@ -196,6 +197,13 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
           lastYearVacant: yoy.four_wheeler?.total_vacant || 0,
           thisYearOccupied: current.four_wheeler?.total_occupied || 0,
           thisYearVacant: current.four_wheeler?.total_vacant || 0,
+        },
+        {
+          category: 'EV',
+          lastYearOccupied: yoy.electric_vehicle?.total_occupied || 0,
+          lastYearVacant: yoy.electric_vehicle?.total_vacant || 0,
+          thisYearOccupied: current.electric_vehicle?.total_occupied || 0,
+          thisYearVacant: current.electric_vehicle?.total_vacant || 0,
         },
       ];
     }
@@ -218,6 +226,13 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
         lastYearVacant: 22,
         thisYearOccupied: 46,
         thisYearVacant: 24,
+      },
+      {
+        category: 'EV',
+        lastYearOccupied: 8,
+        lastYearVacant: 4,
+        thisYearOccupied: 12,
+        thisYearVacant: 6,
       },
     ];
   };
@@ -340,7 +355,7 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CardTitle className="text-lg font-bold text-[#1A1A1A]">2W / 4W Occupancy</CardTitle>
+            <CardTitle className="text-lg font-bold text-[#1A1A1A]">2W / 4W / EV Occupancy</CardTitle>
             {loading && <div className="h-4 w-4 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />}
           </div>
           <div className="flex items-center gap-2">

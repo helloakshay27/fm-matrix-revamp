@@ -683,22 +683,11 @@ export const BillDetails = () => {
   };
 
   const getStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      draft: "bg-gray-100 text-gray-800 border-gray-200",
-      confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-      processing: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      shipped: "bg-purple-100 text-purple-800 border-purple-200",
-      delivered: "bg-green-100 text-green-800 border-green-200",
-      cancelled: "bg-red-100 text-red-800 border-red-200",
-    };
-    return colors[status] || colors.draft;
+    return "bg-gray-100 text-gray-800 border-gray-200";
   };
 
   const getApprovalStatusBadge = (status: any) => {
-    const s = String(status || "").toLowerCase();
-    if (s === "approved") return "bg-green-100 text-green-800";
-    if (s === "rejected") return "bg-red-100 text-red-800";
-    return "bg-yellow-100 text-yellow-800";
+    return "bg-gray-100 text-gray-800";
   };
 
   const handleEdit = () => {
@@ -913,7 +902,7 @@ const totalReverseTax = groupedReverseTax.reduce(
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -993,7 +982,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                 {salesOrder.status === "draft" && (
                   <Button
                     size="sm"
-                    className="bg-green-600 text-white hover:bg-green-700"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("open")}
                   >
@@ -1005,7 +994,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                 {/* {salesOrder.status === "confirmed" && (
                   <Button
                     size="sm"
-                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => navigate("/accounting/invoices/add", { state: { saleOrderId: salesOrder?.id || id } })}
                   >
@@ -1022,7 +1011,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                 {salesOrder.status === "draft" && (
                   <Button
                     size="sm"
-                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("pending_approval")}
                   >
@@ -1036,7 +1025,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                     <>
                       <Button
                         size="sm"
-                        className="bg-green-600 text-white hover:bg-green-700"
+                        className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                         disabled={actionLoading}
                         onClick={() => updateApprovalStatus("approved")}
                       >
@@ -1044,7 +1033,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                       </Button>
                       <Button
                         size="sm"
-                        className="bg-red-600 text-white hover:bg-red-700"
+                        className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                         disabled={actionLoading}
                         onClick={() => updateApprovalStatus("rejected")}
                       >
@@ -1057,7 +1046,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                 {salesOrder.status === "approved" && (
                   <Button
                     size="sm"
-                    className="bg-green-600 text-white hover:bg-green-700"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("open")}
                   >
@@ -1069,7 +1058,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                 {/* {salesOrder.status === "confirmed" && (
                   <Button
                     size="sm"
-                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => navigate("/accounting/invoices/add", { state: { saleOrderId: salesOrder?.id || id } })}
                   >
@@ -1126,28 +1115,12 @@ const totalReverseTax = groupedReverseTax.reduce(
             backgroundColor: "rgba(250, 250, 250, 1)",
           }}
         >
-          <style>{`
-                        .bill-detail-tabs button[data-state="active"] {
-                            background-color: rgba(237, 234, 227, 1) !important;
-                            color: rgba(199, 32, 48, 1) !important;
-                        }
-                    `}</style>
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList
-              className="bill-detail-tabs w-full flex flex-nowrap rounded-t-lg p-0 overflow-x-auto mb-4"
-              style={{
-                gap: "0",
-                padding: "0",
-                backgroundColor: "rgba(246, 247, 247, 1)",
-                height: "50px",
-                marginBottom: "16px",
-                justifyContent: "flex-start",
-              }}
-            >
+            <TabsList className="flex flex-wrap w-full max-w-3xl justify-start">
               {[
                 { label: "Bill Details", value: "order-details" },
                 ...(isBillOverdue
@@ -1161,25 +1134,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
-                  style={{
-                    width: "230px",
-                    height: "36px",
-                    paddingTop: "10px",
-                    paddingRight: "20px",
-                    paddingBottom: "10px",
-                    paddingLeft: "20px",
-                    borderRadius: "0",
-                    border: "none",
-                    margin: "0",
-                    fontFamily: "Work Sans",
-                    fontWeight: 500,
-                    fontSize: "14px",
-                    lineHeight: "100%",
-                    letterSpacing: "0%",
-                    color: "rgba(26, 26, 26, 1)",
-                    backgroundColor: "rgba(246, 247, 247, 1)",
-                  }}
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -1326,7 +1281,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                           salesOrder?.reverse_charge === "true"
                         }
                         readOnly
-                        className="h-4 w-4 accent-[#bf213e] cursor-not-allowed"
+                        className="h-4 w-4 accent-[#DA7756] cursor-not-allowed"
                       />
                       <span className="text-sm font-medium text-muted-foreground">
                         This transaction is applicable for reverse charge
@@ -1689,7 +1644,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                       {selectedSupplier?.pan_number && (
                         <p className="text-xs text-muted-foreground mt-2">
                           PAN:{" "}
-                          <span className="text-blue-600">
+                          <span className="text-brand">
                             {selectedSupplier.pan_number}
                           </span>
                         </p>
@@ -1820,7 +1775,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                       </label>
 
                       <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                         rows={3}
                         maxLength={500}
                         value={notes}
@@ -1889,7 +1844,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                     <Button
                       onClick={handleRecordPayment}
                       disabled={paymentSubmitting}
-                      className="bg-[#C72030] hover:bg-[#a81a28]"
+                      className="bg-[#DA7756] hover:bg-[#C45F40]"
                     >
                       {paymentSubmitting ? "Saving..." : "Save as Paid"}
                     </Button>
@@ -2051,12 +2006,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                               : isAccepted || isSent
                                 ? Eye
                                 : FileText;
-                          const iconWrapClass =
-                            isConverted || isCreated
-                              ? "bg-green-50 text-green-600 border-green-100"
-                              : isAccepted || isSent
-                                ? "bg-sky-50 text-sky-600 border-sky-100"
-                                : "bg-gray-50 text-gray-500 border-gray-100";
+                          const iconWrapClass = "bg-brand-light text-brand border-brand/20";
 
                           return (
                             <div key={key} className="flex gap-6 py-5">
@@ -2180,7 +2130,7 @@ const totalReverseTax = groupedReverseTax.reduce(
         <DialogContent className="max-w-4xl">
           <div className="flex items-center justify-between">
             <DialogHeader>
-              <DialogTitle className="text-[#C72030]">Approval Log</DialogTitle>
+              <DialogTitle className="text-[#DA7756]">Approval Log</DialogTitle>
             </DialogHeader>
             <button
               type="button"
@@ -2195,7 +2145,7 @@ const totalReverseTax = groupedReverseTax.reduce(
           <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
+                <TableRow className="bg-[#DA7756] hover:bg-[#DA7756] [&>th]:!text-white [&>th]:!opacity-100">
                   <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">
                     Sr.No.
                   </TableHead>
@@ -2264,20 +2214,25 @@ const totalReverseTax = groupedReverseTax.reduce(
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Sales Order</DialogTitle>
+            <DialogTitle>Delete Bill</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this sales order? This action
+              Are you sure you want to delete this bill? This action
               cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 justify-end mt-4">
             <Button
               variant="outline"
+              className="fm-button-fix px-8 py-2"
               onClick={() => setShowDeleteDialog(false)}
             >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button
+              variant="destructive"
+              className="bg-[#dc2626] hover:bg-[#b91c1c] text-white"
+              onClick={handleDelete}
+            >
               Delete
             </Button>
           </div>

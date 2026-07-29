@@ -4731,15 +4731,10 @@ export const SurveyResponseDetailPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
-        <div className="text-center py-8">
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
-          <h1 className="text-xl font-semibold text-gray-800 mb-2">
-            Loading survey details...
-          </h1>
-          <p className="text-gray-600">
-            Please wait while we fetch the survey information.
-          </p>
+          <p className="text-gray-700">Loading Survey Response Details...</p>
         </div>
       </div>
     );

@@ -494,15 +494,7 @@ export const PaymentMadeDetailsPage: React.FC<PaymentMadeDetailsPageProps> = ({
             </h2>
 
             {payment && (
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  payment.status === "PAID"
-                    ? "bg-green-100 text-green-700"
-                    : payment.status === "VOID"
-                    ? "bg-red-100 text-red-700"
-                    : "bg-yellow-100 text-yellow-700"
-                }`}
-              >
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                 {payment.status}
               </span>
             )}
@@ -511,41 +503,44 @@ export const PaymentMadeDetailsPage: React.FC<PaymentMadeDetailsPageProps> = ({
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
+              style={{ borderColor: '#DA7756', color: '#DA7756' }}
               onClick={() =>
                 setActiveTab("pdf")
               }
             >
-              <FileText className="h-4 w-4 mr-2" />
+              <FileText className="h-4 w-4 mr-2" color="#DA7756" />
               PDF
             </Button>
 
             <Button
               variant="outline"
+              style={{ borderColor: '#DA7756', color: '#DA7756' }}
               onClick={() =>
                 navigate("/accounting/payments-made/template", { state: { recordId: id } })
               }
             >
-              <Settings2 className="h-4 w-4 mr-2" />
+              <Settings2 className="h-4 w-4 mr-2" color="#DA7756" />
               Template Edit
             </Button>
 
             <Button
               onClick={handleDownloadPdf}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="fm-button-fix fm-button-brand px-8 py-2"
             >
-              <Download className="h-4 w-4 mr-2" />
+              <Download className="h-4 w-4 mr-2" color="#ffffff" />
               Download PDF
             </Button>
 
             <Button
               variant="outline"
+              style={{ borderColor: '#DA7756', color: '#DA7756' }}
               onClick={() =>
                 navigate(
                   `/accounting/payments-made/edit/${payment?.id}`
                 )
               }
             >
-              <Edit2 className="w-4 h-4 mr-2" />
+              <Edit2 className="w-4 h-4 mr-2" color="#DA7756" />
               Edit
             </Button>
           </div>
@@ -558,11 +553,11 @@ export const PaymentMadeDetailsPage: React.FC<PaymentMadeDetailsPageProps> = ({
           className="w-full"
         >
           <TabsList className="mb-6">
-            <TabsTrigger value="details">
+            <TabsTrigger value="details" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">
               Details View
             </TabsTrigger>
 
-            <TabsTrigger value="pdf">
+            <TabsTrigger value="pdf" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">
               PDF View
             </TabsTrigger>
           </TabsList>
@@ -591,12 +586,12 @@ export const PaymentMadeDetailsPage: React.FC<PaymentMadeDetailsPageProps> = ({
                   </div>
 
                   <div className="col-span-4 flex justify-end">
-                    <div className="bg-green-500 text-white p-6 rounded shadow text-center">
+                    <div className="bg-[#DA7756] text-white p-6 rounded shadow text-center">
                       <div className="text-sm">
                         Amount Paid
                       </div>
 
-                      <div className="text-2xl font-bold mt-2">
+                      <div className="text-2xl font-bold mt-2 !text-white">
                         {amountFormatted}
                       </div>
                     </div>
@@ -684,7 +679,7 @@ export const PaymentMadeDetailsPage: React.FC<PaymentMadeDetailsPageProps> = ({
                     </div>
 
                     <div className="mt-2">
-                      <div className="text-blue-600 font-semibold">
+                      <div className="text-brand font-semibold">
                         {payment?.vendor_name ||
                           "-"}
                       </div>
@@ -730,7 +725,7 @@ export const PaymentMadeDetailsPage: React.FC<PaymentMadeDetailsPageProps> = ({
                             key={bp.id}
                             className="border-t"
                           >
-                            <td className="p-3 text-blue-600">
+                            <td className="p-3 text-brand">
                               {bp.formatted_number ||
                                 `BILL-${bp.resource_id}`}
                             </td>
@@ -800,7 +795,7 @@ export const PaymentMadeDetailsPage: React.FC<PaymentMadeDetailsPageProps> = ({
                       <div className="flex items-center justify-between py-3 text-xs text-gray-500">
                         <div>
                           Amount is displayed in your base currency{" "}
-                          <span className="bg-green-700 text-white px-1.5 py-0.5 rounded-sm font-semibold">
+                          <span className="bg-brand text-white px-1.5 py-0.5 rounded-sm font-semibold">
                             INR
                           </span>
                         </div>
@@ -925,7 +920,7 @@ export const PaymentMadeDetailsPage: React.FC<PaymentMadeDetailsPageProps> = ({
                     onClick={
                       handleDownloadPdf
                     }
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="fm-button-fix fm-button-brand px-8 py-2"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Download PDF

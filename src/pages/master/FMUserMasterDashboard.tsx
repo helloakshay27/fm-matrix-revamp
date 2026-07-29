@@ -724,7 +724,7 @@ export const FMUserMasterDashboard = () => {
             onCheckedChange={(checked) =>
               handleToggleUserStatus(user.lockUserId ?? "", checked)
             }
-            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            className="data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756] data-[state=unchecked]:bg-gray-300"
             disabled={!user.lockUserId}
           />
         );

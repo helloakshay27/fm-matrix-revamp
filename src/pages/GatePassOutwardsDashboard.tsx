@@ -250,7 +250,7 @@ useEffect(() => {
         {shouldShow("Outwards", "show") && (
           <div title="View details">
             <Eye
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
+              className="w-4 h-4 text-gray-600 cursor-pointer"
               onClick={() => handleViewDetails(entry.id)}
             />
           </div>

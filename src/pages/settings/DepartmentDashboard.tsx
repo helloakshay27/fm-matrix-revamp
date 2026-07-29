@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
@@ -8,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-// import { Switch } from '@/components/ui/switch';
+import { Switch } from '@/components/ui/switch';
 import { Edit, Plus } from 'lucide-react';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Department } from '@/services/departmentService';
@@ -16,7 +17,6 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchDepartmentData, addDepartment, updateDepartment } from '@/store/slices/departmentSlice';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { Switch } from '@mui/material';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 interface LocalDepartment extends Department {
@@ -134,29 +134,9 @@ export const DepartmentDashboard = () => {
     switch (columnKey) {
       case 'status':
         return (
-          // <Switch
-          //   checked={item.status}
-          //   onCheckedChange={() => toggleStatus(item.id)}
-          //   className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
-          // />
           <Switch
             checked={item.status}
-            onChange={() => toggleStatus(item.id)}
-            size='small'
-            sx={{
-              '& .MuiSwitch-switchBase.Mui-checked': {
-                color: '#04A231',
-              },
-              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                backgroundColor: '#04A231',
-              },
-              '& .MuiSwitch-switchBase:not(.Mui-checked)': {
-                color: '#C72030',
-              },
-              '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
-                backgroundColor: 'rgba(199, 32, 48, 0.5)',
-              },
-            }}
+            onCheckedChange={() => toggleStatus(item.id)}
           />
         );
       default:
@@ -204,7 +184,37 @@ export const DepartmentDashboard = () => {
           </div>
         )}
 
-        {!loading && (
+        {loading ? (
+          <div className="bg-white rounded-lg border border-gray-200">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#f6f4ee]">
+                  <TableHead className="font-medium">Actions</TableHead>
+                  <TableHead className="font-medium">Department</TableHead>
+                  <TableHead className="font-medium">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={3} className="pt-4 pb-16">
+                    <div className="w-full flex items-center justify-start gap-3 pl-4">
+                      <div
+                        className="h-5 w-5 rounded-full animate-spin"
+                        style={{
+                          border: "2px solid #000000",
+                          borderTopColor: "transparent",
+                        }}
+                      />
+                      <span className="text-sm text-black">
+                        Loading ...
+                      </span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
           <>
             {/* Header with Add Department button */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -271,7 +281,7 @@ export const DepartmentDashboard = () => {
                       <Switch
                         checked={department.status}
                         onCheckedChange={() => toggleStatus(department.id)}
-                        className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                        className="data-[state=unchecked]:bg-gray-300"
                       />
                     </div>
                   </div>
@@ -292,9 +302,8 @@ export const DepartmentDashboard = () => {
                 enableExport={false} // Set to true if you want to enable export
                 pagination={true}
                 pageSize={10}
-                loading={loading}
                 leftActions={leftActions}
-                emptyMessage="No departments found"
+                emptyMessage=""
                 storageKey="department-table"
                 className="w-full"
               />

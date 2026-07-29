@@ -1,6 +1,7 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable"
 import { Button } from "@/components/ui/button";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"
+import { Switch } from "@/components/ui/switch";
 import { Edit, Plus, X, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -182,16 +183,10 @@ const ProjectStatus = () => {
                 return (
                     <div className="flex items-center gap-2">
                         <span className="text-sm">{isActive ? 'Active' : 'Inactive'}</span>
-                        <div
-                            onClick={() => handleToggleStatus(item.id)}
-                            className={`cursor-pointer relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-300'
-                                }`}
-                        >
-                            <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'
-                                    }`}
-                            />
-                        </div>
+                        <Switch
+                            checked={isActive}
+                            onCheckedChange={() => handleToggleStatus(item.id)}
+                        />
                     </div>
                 );
             default:

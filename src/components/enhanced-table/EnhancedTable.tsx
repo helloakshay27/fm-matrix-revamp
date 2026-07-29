@@ -688,7 +688,7 @@ export function EnhancedTable<T extends Record<string, any>>({
 
     // Default search input
     return (
-      <div className="relative w-full sm:w-[420px] md:w-[460px] max-w-none">
+      <div className="relative w-[300px] max-w-full">
         {isSearching && (
           <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
         )}
@@ -701,7 +701,7 @@ export function EnhancedTable<T extends Record<string, any>>({
           }
           value={effectiveSearchValue}
           onChange={(e) => handleSearchInputChange(e.target.value)}
-          className="pl-10 pr-10"
+          className="h-9 pl-10 pr-10"
           disabled={isSearching}
         />
         {effectiveSearchValue && (
@@ -1011,16 +1011,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                         </div>
                       </TableHead>
                     )}
-                    {renderActions && (
-                      <TableHead
-                        className="bg-[#f6f4ee] text-center w-16 min-w-16 sticky top-0"
-                        data-actions
-                      >
-                        <div className="flex justify-center items-center text-center">
-                          Actions
-                        </div>
-                      </TableHead>
-                    )}
                     {selectable && (
                       <TableHead
                         className="bg-[#f6f4ee] w-12 min-w-12 text-center sticky top-0"
@@ -1036,6 +1026,16 @@ export function EnhancedTable<T extends Record<string, any>>({
                               "data-state": "indeterminate",
                             })}
                           />
+                        </div>
+                      </TableHead>
+                    )}
+                    {renderActions && (
+                      <TableHead
+                        className="bg-[#f6f4ee] text-center w-16 min-w-16 sticky top-0"
+                        data-actions
+                      >
+                        <div className="flex justify-center items-center text-center">
+                          Actions
                         </div>
                       </TableHead>
                     )}
@@ -1124,6 +1124,16 @@ export function EnhancedTable<T extends Record<string, any>>({
                         {/* Empty for add row */}
                       </TableCell>
                     )}
+                    {selectable && (
+                      <TableCell
+                        className="p-4 w-12 min-w-12 text-center"
+                        data-checkbox
+                      >
+                        <div className="flex justify-center">
+                          <Checkbox disabled />
+                        </div>
+                      </TableCell>
+                    )}
                     {renderActions && (
                       <TableCell
                         className="p-4 text-center w-16 min-w-16"
@@ -1148,16 +1158,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                           >
                             <X className="w-4 h-4" />
                           </Button>
-                        </div>
-                      </TableCell>
-                    )}
-                    {selectable && (
-                      <TableCell
-                        className="p-4 w-12 min-w-12 text-center"
-                        data-checkbox
-                      >
-                        <div className="flex justify-center">
-                          <Checkbox disabled />
                         </div>
                       </TableCell>
                     )}
@@ -1260,12 +1260,14 @@ export function EnhancedTable<T extends Record<string, any>>({
                           <div>{emptyMessage}</div>
                           <Button
                             onClick={handleAddRowClick}
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-2"
+                            variant="icon"
+                            size="icon"
+                            className="h-8 w-8 !rounded-full bg-brand p-0 text-white hover:bg-brand-hover [&_svg]:text-white"
+                            aria-label={newRowPlaceholder}
+                            title={newRowPlaceholder}
                           >
-                            <Plus className="w-4 h-4" />
-                            {newRowPlaceholder}
+                            <Plus className="h-4 w-4" />
+                            <span className="sr-only">{newRowPlaceholder}</span>
                           </Button>
                         </div>
                       ) : (
@@ -1324,16 +1326,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                               )}
                             </TableCell>
                           )}
-                          {renderActions && (
-                            <TableCell
-                              className="p-4 text-center w-16 min-w-16"
-                              data-actions
-                            >
-                              <div className="flex justify-center items-center gap-2">
-                                {renderActions(item)}
-                              </div>
-                            </TableCell>
-                          )}
                           {selectable && (
                             <TableCell
                               className="p-4 w-12 min-w-12 text-center"
@@ -1350,6 +1342,16 @@ export function EnhancedTable<T extends Record<string, any>>({
                                   aria-label={`Select row ${index + 1}`}
                                   onClick={(e) => e.stopPropagation()}
                                 />
+                              </div>
+                            </TableCell>
+                          )}
+                          {renderActions && (
+                            <TableCell
+                              className="p-4 text-center w-16 min-w-16"
+                              data-actions
+                            >
+                              <div className="flex justify-center items-center gap-2">
+                                {renderActions(item)}
                               </div>
                             </TableCell>
                           )}
@@ -1433,9 +1435,18 @@ export function EnhancedTable<T extends Record<string, any>>({
                         }
                         className="text-center py-4 text-gray-500 hover:text-gray-700"
                       >
-                        <div className="flex items-center justify-start gap-2">
-                          <Plus className="w-4 h-4" />
-                          {newRowPlaceholder}
+                        <div className="flex items-center justify-start">
+                          <Button
+                            onClick={handleAddRowClick}
+                            variant="icon"
+                            size="icon"
+                            className="h-8 w-8 !rounded-full bg-brand p-0 text-white hover:bg-brand-hover [&_svg]:text-white"
+                            aria-label={newRowPlaceholder}
+                            title={newRowPlaceholder}
+                          >
+                            <Plus className="h-4 w-4" />
+                            <span className="sr-only">{newRowPlaceholder}</span>
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>

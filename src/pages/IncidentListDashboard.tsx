@@ -181,7 +181,7 @@ export const IncidentListDashboard = () => {
                   </Button>
                   )}
                 </TableCell>
-                <TableCell className="text-blue-600 font-medium">
+                <TableCell className="text-gray-900 font-medium">
                   {incident.id}
                 </TableCell>
                 <TableCell className="max-w-xs truncate">

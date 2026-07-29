@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Upload } from "lucide-react";
+import { Plus, Edit } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AddCategoryModal } from "@/components/AddCategoryModal";
 import { EditCategoryModal } from "@/components/EditCategoryModal";
@@ -8,7 +8,7 @@ import { AddDeviationStatusModal } from "@/components/AddDeviationStatusModal";
 import { AddStatusModal } from "@/components/AddStatusModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '@/hooks/use-toast';
 
 interface Category {
   id: number;
@@ -32,6 +32,8 @@ interface UploadedFile {
 
 export const FitoutSetupDashboard = () => {
   const [activeTab, setActiveTab] = useState('Category');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
   const [isAddDeviationOpen, setIsAddDeviationOpen] = useState(false);
@@ -49,20 +51,27 @@ export const FitoutSetupDashboard = () => {
   const [categories, setCategories] = useState<Category[]>([
     { id: 1, category: 'ho', amount: '', active: true },
     { id: 2, category: 'Furniture', amount: '', active: true },
-    { id: 3, category: 'xx', amount: '', active: false }
+    { id: 3, category: 'xx', amount: '', active: false },
   ]);
 
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [deviationStatuses, setDeviationStatuses] = useState<DeviationStatus[]>([]);
 
   const tabs = ['Category', 'Status', 'Fitout Guide', 'Deviation Status'];
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
 
   const handleAddCategory = (newCategory: { category: string; amount?: string }) => {
     const category: Category = {
       id: categories.length + 1,
       category: newCategory.category,
       amount: newCategory.amount || '',
-      active: true
+      active: true,
     };
     setCategories([...categories, category]);
   };
@@ -73,30 +82,36 @@ export const FitoutSetupDashboard = () => {
   };
 
   const handleUpdateCategory = (updatedCategory: Category) => {
-    setCategories(categories.map(cat =>
+    setCategories(categories.map((cat) =>
       cat.id === updatedCategory.id ? updatedCategory : cat
     ));
     setEditingCategory(null);
   };
 
   const handleToggleActive = (id: number) => {
-    setCategories(categories.map(cat =>
+    setCategories(categories.map((cat) =>
       cat.id === id ? { ...cat, active: !cat.active } : cat
     ));
 
     toast({
-      title: "Success",
-      description: "Category updated successfully!",
+      title: 'Success',
+      description: 'Category updated successfully!',
     });
+  };
+
+  const handleToggleDeviationActive = (id: number) => {
+    setDeviationStatuses((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, active: !item.active } : item))
+    );
   };
 
   const handleAddStatus = (newStatus: { status: string; fixedState: string; color: string; order: string }) => {
     const status: Status = {
       id: statuses.length + 1,
-      order: parseInt(newStatus.order) || statuses.length + 1,
+      order: parseInt(newStatus.order, 10) || statuses.length + 1,
       status: newStatus.status,
       fixedState: newStatus.fixedState,
-      color: newStatus.color
+      color: newStatus.color,
     };
     setStatuses([...statuses, status]);
   };
@@ -107,14 +122,14 @@ export const FitoutSetupDashboard = () => {
       Array.from(files).forEach((file) => {
         const newFile: UploadedFile = {
           id: uploadedFiles.length + 1,
-          fileName: file.name
+          fileName: file.name,
         };
-        setUploadedFiles(prev => [...prev, newFile]);
+        setUploadedFiles((prev) => [...prev, newFile]);
       });
 
       toast({
-        title: "Success",
-        description: "File uploaded successfully!",
+        title: 'Success',
+        description: 'File uploaded successfully!',
       });
     }
   };
@@ -124,10 +139,9 @@ export const FitoutSetupDashboard = () => {
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <Button
           onClick={() => setIsAddCategoryOpen(true)}
-          className="hover:bg-[#C72030]/90 text-white"
-          style={{ backgroundColor: 'rgb(199 32 48 / var(--tw-text-opacity, 1))' }}
+          className="!bg-[#DA7756] !text-white hover:!bg-[#DA7756]/90"
         >
-          <Plus className="w-4 h-4 mr-2 stroke-[#ffffff] text-white" />
+          <Plus className="w-4 h-4 mr-2 !text-white" />
           Add
         </Button>
       </div>
@@ -267,58 +281,64 @@ export const FitoutSetupDashboard = () => {
   const renderFitoutGuideTab = () => (
     <div>
       <div className="mb-6">
-        <div className="border-2 border-dashed rounded-lg p-8 text-center" style={{ borderColor: '#C72030' }}>
+        <div className="border-2 border-dashed border-[#C72030] rounded-lg p-8 text-center">
           <div className="mb-4">
-            <span className="font-medium" style={{ color: '#C72030' }}>Choose File</span>
+            <span className="font-medium text-[#C72030]">Choose File</span>
             <span className="text-gray-500 ml-2">No file chosen</span>
           </div>
           <label htmlFor="file-upload">
-            <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white cursor-pointer" asChild>
-              <span>
-                <Upload className="w-4 h-4 mr-2 stroke-[#C72030] text-white" />
+            <Button className="bg-brand hover:bg-brand-hover text-white cursor-pointer [&_svg]:!text-white" asChild>
+              <span className="inline-flex items-center justify-center gap-2">
+                <Plus className="w-4 h-4" />
                 Upload
               </span>
             </Button>
           </label>
-          <input
-            id="file-upload"
-            type="file"
-            multiple
-            className="hidden"
-            onChange={handleFileUpload}
-          />
+          <input id="file-upload" type="file" multiple className="hidden" onChange={handleFileUpload} />
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead>Actions</TableHead>
-              <TableHead>SR No.</TableHead>
-              <TableHead>File Name</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {uploadedFiles.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center py-8 text-gray-500">
-                  No files uploaded
-                </TableCell>
-              </TableRow>
-            ) : (
-              uploadedFiles.map((file, index) => (
-                <TableRow key={file.id}>
-                  <TableCell>
-                    <Edit className="w-4 h-4 stroke-[#C72030] cursor-pointer" />
-                  </TableCell>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{file.fileName}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+      <div className="w-full min-w-0 max-w-full">
+        <EnhancedTable
+          data={filteredFiles}
+          columns={guideColumns}
+          renderCell={(item: UploadedFile & { sr_no: number }, columnKey: string) => {
+            switch (columnKey) {
+              case 'sr_no':
+                return item.sr_no;
+              case 'fileName':
+                return <span className="font-medium text-gray-900">{item.fileName}</span>;
+              default:
+                return '—';
+            }
+          }}
+          renderActions={() => (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+              title="Edit"
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+          )}
+          storageKey="fitout-setup-guide-table"
+          enableSearch
+          searchTerm={searchTerm}
+          onSearchChange={(value) => {
+            setSearchTerm(value);
+            setCurrentPage(1);
+          }}
+          disableClientSearch
+          searchPlaceholder="Search files..."
+          hideTableExport
+          emptyMessage="No files uploaded"
+          pagination
+          pageSize={15}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          getItemId={(item) => String(item.id)}
+        />
       </div>
     </div>
   );
@@ -358,11 +378,16 @@ export const FitoutSetupDashboard = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'Category': return renderCategoryTab();
-      case 'Status': return renderStatusTab();
-      case 'Fitout Guide': return renderFitoutGuideTab();
-      case 'Deviation Status': return renderDeviationStatusTab();
-      default: return renderCategoryTab();
+      case 'Category':
+        return renderCategoryTab();
+      case 'Status':
+        return renderStatusTab();
+      case 'Fitout Guide':
+        return renderFitoutGuideTab();
+      case 'Deviation Status':
+        return renderDeviationStatusTab();
+      default:
+        return renderCategoryTab();
     }
   };
 
@@ -374,15 +399,15 @@ export const FitoutSetupDashboard = () => {
 
       <h1 className="text-2xl font-bold mb-6">FITOUT SETUP</h1>
 
-      <div className="flex gap-1 mb-6 overflow-x-auto">
+      <div className="grid w-full grid-cols-4 bg-white border border-gray-200 mb-6">
         {tabs.map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => handleTabChange(tab)}
             className={`px-6 py-2 font-medium border-b-2 whitespace-nowrap ${
               activeTab === tab
-                ? 'text-[#C72030] border-[#C72030]'
-                : 'text-gray-500 border-transparent hover:text-gray-700'
+                ? 'bg-[#EDEAE3] text-[#C72030]'
+                : 'bg-white text-black'
             }`}
           >
             {tab}

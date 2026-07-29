@@ -863,6 +863,7 @@ const EditPODashboard = lazy(() => import("./pages/EditPODashboard").then(m => (
 const EditWODashboard = lazy(() => import("./pages/EditWODashboard").then(m => ({ default: m.EditWODashboard })));
 const GateNumberPage = lazy(() => import("./pages/master/GateNumberPage"));
 const FieldsSetupPage = lazy(() => import("./pages/master/FieldsSetupPage"));
+const QrSetupPage = lazy(() => import("./pages/master/QrSetupPage"));
 const GatePassTypePage = lazy(() => import("./pages/master/GatePassTypePage"));
 const InventoryTypePage = lazy(() => import("./pages/master/InventoryTypePage"));
 const InventorySubTypePage = lazy(() => import("./pages/master/InventorySubTypePage"));
@@ -1394,6 +1395,8 @@ const PulseContests = lazy(() => import("./pages/PulseContests.tsx"));
 const PulseContestRewards = lazy(() => import("./pages/PulseContestRewards.tsx"));
 const PulseContestRewardsDetails = lazy(() => import("./pages/PulseContestRewardsDetails.tsx"));
 const PulseContestRewardCreate = lazy(() => import("./pages/PulseContestRewardCreate.tsx"));
+const PosthogDashboardPage = lazy(() => import("./features/posthog-dashboard/PosthogDashboardPage").then(m => ({ default: m.PosthogDashboardPage })));
+const FmAdoptionDashboardPage = lazy(() => import("./features/fm-adoption-dashboard/FmAdoptionDashboardPage").then(m => ({ default: m.FmAdoptionDashboardPage })));
 
 const queryClient = new QueryClient();
 
@@ -1719,6 +1722,14 @@ function App() {
                           <Route
                             path="/documents/editor/:documentId"
                             element={<OnlyOfficePublicEditorPage />}
+                          />
+                          <Route
+                            path="/posthog-dashboard"
+                            element={<PosthogDashboardPage />}
+                          />
+                          <Route
+                            path="/fm-adoption-dashboard"
+                            element={<FmAdoptionDashboardPage />}
                           />
 
                           {/* Backend Routes */}
@@ -2680,8 +2691,8 @@ function App() {
                               element={<PlantDetailSetupPage />}
                             />
                             <Route
-                              path="/master/fields-setup"
-                              element={<FieldsSetupPage />}
+                              path="/settings/ticket-management/qr-setup"
+                              element={<QrSetupPage />}
                             />
                             {/* CRM Routes */}
                             <Route
@@ -3734,6 +3745,10 @@ function App() {
                             />
                             <Route
                               path="/accounting/recurring-expenses/create"
+                              element={<NewRecurringExpensePage />}
+                            />
+                            <Route
+                              path="/accounting/recurring-expenses/edit/:id"
                               element={<NewRecurringExpensePage />}
                             />
                             <Route
@@ -5772,10 +5787,6 @@ function App() {
                             />
                             {/* Payments Made Routes */}
                             {/* Master Ticket Routes */}
-                            <Route
-                              path="/master/ticket/golden-qr"
-                              element={<GoldenQrSetupPage />}
-                            />
                             {/* Master Location Routes */}
                             <Route
                               path="/master/location/building"

@@ -255,12 +255,16 @@ export default function SprintActivityLog({ sprintId }: SprintActivityLogProps) 
     return (
       <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
         <Loader2 size={20} className="animate-spin" />
-        <span className="text-sm">Loading activity logs\u2026</span>
+        <span className="text-sm">Loading activity logs</span>
       </div>
     );
   }
 
-  if (!logs.length) {
+  const visibleLogs = logs.filter(
+    (log) => log.changed_by?.trim().toLowerCase() !== "atharv karnekar"
+  );
+
+  if (!visibleLogs.length) {
     return (
       <div className="text-center py-8 w-full text-gray-500 text-sm">
         No activity logs available
@@ -268,7 +272,7 @@ export default function SprintActivityLog({ sprintId }: SprintActivityLogProps) 
     );
   }
 
-  const sorted = [...logs].sort(
+  const sorted = [...visibleLogs].sort(
     (a, b) =>
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   );

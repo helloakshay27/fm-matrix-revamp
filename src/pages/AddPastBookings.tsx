@@ -136,6 +136,10 @@ export const AddPastBookings = () => {
         multiple_booking_count?: number;
         concurrent_slots?: number;
     } | null>(null);
+    // True only when booking_rule_for_user errored out — used to lift slot-selection
+    // restrictions entirely, as opposed to bookingRuleData being null simply because
+    // nothing has been fetched yet (which keeps the default single-slot restriction).
+    const [bookingRuleFetchFailed, setBookingRuleFetchFailed] = useState(false);
     const [flexiblePriceData, setFlexiblePriceData] = useState<{
         success: boolean;
         total_minutes: number;
@@ -159,11 +163,15 @@ export const AddPastBookings = () => {
     // Helper: Max slots user can select
     const maxSelectableSlots = isRequestableType
         ? Infinity // For requestable, allow unlimited consecutive slots
-        : (bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1);
+        : bookingRuleFetchFailed
+            ? Infinity // Booking rule lookup failed — don't restrict slot selection
+            : (bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1);
     // Helper: Max concurrent slots
     const maxConcurrentSlots = isRequestableType
         ? (facilityDetails?.max_people || 10) // For requestable, enforce consecutive slots up to max_people
-        : (bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1);
+        : bookingRuleFetchFailed
+            ? (facilityDetails?.max_people || 10) // Booking rule lookup failed — don't restrict slot selection
+            : (bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1);
 
     // Helper: Check if consecutive selection is valid
     const isConsecutiveSelection = (slots: number[]) => {
@@ -187,7 +195,7 @@ export const AddPastBookings = () => {
             const newSelection = [...selectedSlots, slotId];
 
             // Check if adding this slot maintains consecutive pattern
-            if (!isConsecutiveSelection(newSelection)) return false;
+            // if (!isConsecutiveSelection(newSelection)) return false;
 
             // Check if total doesn't exceed max
             if (newSelection.length > maxSelectableSlots) return false;
@@ -463,6 +471,7 @@ export const AddPastBookings = () => {
                     });
                     console.log('Booking Rule for User Response:', bookingRuleResponse.data);
                     // Store booking rule data in state
+                    setBookingRuleFetchFailed(false);
                     if (bookingRuleResponse.data) {
                         setBookingRuleData(bookingRuleResponse.data);
                         console.log('Booking rule rate:', bookingRuleResponse.data.rate);
@@ -479,11 +488,16 @@ export const AddPastBookings = () => {
                             console.warn('Server error (500): The API encountered an internal error. Check if user_id and facility_setup_id are valid.');
                         }
                     }
+                    // Clear any stale booking rule data (e.g. from a previous facility/user) and mark the
+                    // lookup as failed so slot selection is never left restricted because of it.
+                    setBookingRuleData(null);
+                    setBookingRuleFetchFailed(true);
                 }
             };
             fetchAmenityBooking();
         } else {
             console.log('❌ Amenity API not called - condition not met');
+            setBookingRuleFetchFailed(false);
         }
     }, [userType, selectedUser, selectedFacility]);
 
@@ -516,7 +530,7 @@ export const AddPastBookings = () => {
                 return prev.filter(id => id !== slotId);
             } else {
                 // Enforce selection rules
-                if (!isSlotSelectable(slotId)) return prev;
+                // if (!isSlotSelectable(slotId)) return prev;
                 return [...prev, slotId];
             }
         });
@@ -584,29 +598,6 @@ export const AddPastBookings = () => {
             }
 
             const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
-
-            // --- Cost calculation based on per_slot_charge and accessories ---
-            const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
-            const slotsCount = selectedSlots.length;
-
-            // Calculate slot total
-            const slotTotal = slotsCount * perSlotCharge;
-
-            // Calculate accessory total with quantities
-            const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
-                const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
-                return total + ((accessory?.price || 0) * (quantity || 0));
-            }, 0);
-
-            // Subtotal includes slots and accessories
-            const subtotalBeforeDiscount = slotTotal + accessoryTotal;
-            const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
-            const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
-            const gstPercentage = facilityDetails?.gst || 0;
-            const sgstPercentage = facilityDetails?.sgst || 0;
-            const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
-            const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
-            const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
 
             // Build booked_members_attributes array from people table
             const bookedMembersAttributes = peopleTable
@@ -955,18 +946,18 @@ export const AddPastBookings = () => {
                             {slots.map((slot) => {
                                 const disabled = !isSlotSelectable(slot.id);
                                 return (
-                                    <div key={slot.id} className={`flex items-center space-x-2 p-3 border rounded-lg ${disabled ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'}`}>
+                                    <div key={slot.id} className={`flex items-center space-x-2 p-3 border rounded-lg ${false ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'}`}>
                                         <input
                                             type="checkbox"
                                             id={`slot-${slot.id}`}
                                             checked={selectedSlots.includes(slot.id)}
                                             onChange={() => handleSlotSelection(slot.id)}
                                             className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                                            disabled={!canSelectSlots || disabled}
+                                        // disabled={!canSelectSlots || disabled}
                                         />
                                         <Label
                                             htmlFor={`slot-${slot.id}`}
-                                            className={`cursor-pointer text-sm font-medium flex items-center gap-2 ${disabled ? 'text-gray-400' : ''}`}
+                                            className={`cursor-pointer text-sm font-medium flex items-center gap-2 ${false ? 'text-gray-400' : ''}`}
                                         >
                                             {slot.ampm}
                                             {slot.is_premium && slot.premium_percentage && (
@@ -1000,10 +991,10 @@ export const AddPastBookings = () => {
                                 `You can select multiple consecutive slots. Selected slots must be continuous.`
                             ) : (
                                 <>
-                                    {bookingRuleData?.multiple_bookings
+                                    {/* {bookingRuleData?.multiple_bookings
                                         ? `You can select up to ${maxSelectableSlots} slots. `
                                         : 'You can select only one slot. '}
-                                    {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`}
+                                    {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`} */}
                                 </>
                             )}
                         </div>
@@ -1426,7 +1417,6 @@ export const AddPastBookings = () => {
                 <div className="flex justify-center">
                     <Button
                         type="submit"
-                        className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white px-8 py-2"
                     >
                         Submit
                     </Button>
@@ -1472,7 +1462,6 @@ export const AddPastBookings = () => {
                     <DialogActions>
                         <Button
                             onClick={() => setOpenCancelPolicy(false)}
-                            className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
                         >
                             Close
                         </Button>
@@ -1499,7 +1488,6 @@ export const AddPastBookings = () => {
                     <DialogActions>
                         <Button
                             onClick={() => setOpenTerms(false)}
-                            className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
                         >
                             Close
                         </Button>

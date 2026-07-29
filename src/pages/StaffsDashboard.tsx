@@ -470,7 +470,7 @@ useEffect(() => {
             className="p-2 h-8 w-8 hover:bg-accent"
             title="View staff"
           >
-            <Eye className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+            <Eye className="w-4 h-4 text-gray-600" />
           </Button>
         )}
         {shouldShow("Staff", "update") && (
@@ -484,7 +484,7 @@ useEffect(() => {
             className="p-2 h-8 w-8 hover:bg-accent"
             title="Edit staff"
           >
-            <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+            <Edit className="w-4 h-4 text-gray-600" />
           </Button>
         )}
         {/* <Button
@@ -505,7 +505,7 @@ useEffect(() => {
     name: staff.name,
     unit: staff.unit,
     department: staff.department,
-    email: staff.email ? <span className="text-blue-600">{staff.email}</span> : '--',
+    email: staff.email ? <span className="text-black-600">{staff.email}</span> : '--',
     mobile: staff.mobile,
     workType: staff.workType,
     vendorName: staff.vendorName || '--',

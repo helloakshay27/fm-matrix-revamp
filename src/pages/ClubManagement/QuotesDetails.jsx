@@ -224,37 +224,15 @@ export const QuotesDetails = () => {
     };
 
     const getStatusColor = (status) => {
-        const colors = {
-            draft: "bg-gray-100 text-gray-800 border-gray-200",
-            sent: "bg-blue-100 text-blue-800 border-blue-200",
-            accepted: "bg-green-100 text-green-800 border-green-200",
-            declined: "bg-red-100 text-red-800 border-red-200",
-            expired: "bg-orange-100 text-orange-800 border-orange-200",
-            converted: "bg-purple-100 text-purple-800 border-purple-200",
-            pending_approval: 'bg-orange-100 text-orange-800',
-        };
-        return colors[status] || colors.draft;
+        return "bg-gray-100 text-gray-800 border-gray-200";
     };
 
-    const getPdfStatusStyle = (status) => {
-        const styles = {
-            draft: { backgroundColor: "#f3f4f6", color: "#1f2937", borderColor: "#e5e7eb" },
-            sent: { backgroundColor: "#dbeafe", color: "#1e40af", borderColor: "#bfdbfe" },
-            accepted: { backgroundColor: "#dcfce7", color: "#166534", borderColor: "#bbf7d0" },
-            declined: { backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" },
-            expired: { backgroundColor: "#ffedd5", color: "#9a3412", borderColor: "#fed7aa" },
-            converted: { backgroundColor: "#f3e8ff", color: "#6b21a8", borderColor: "#e9d5ff" },
-            pending_approval: { backgroundColor: "#ffedd5", color: "#9a3412", borderColor: "#fed7aa" },
-            approved: { backgroundColor: "#dbeafe", color: "#1d4ed8", borderColor: "#bfdbfe" },
-        };
-        return styles[status] || styles.draft;
+    const getPdfStatusStyle = () => {
+        return { backgroundColor: "#f3f4f6", color: "#1f2937", borderColor: "#e5e7eb" };
     };
 
     const getApprovalStatusBadge = (status) => {
-        const s = String(status || "").toLowerCase();
-        if (s === "approved") return "bg-green-100 text-green-800";
-        if (s === "rejected") return "bg-red-100 text-red-800";
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-gray-100 text-gray-800";
     };
 
     const handleEdit = () => {
@@ -374,9 +352,9 @@ export const QuotesDetails = () => {
             <div className="flex items-center justify-center h-screen">
                 <div className="text-center">
                     <p className="text-lg text-muted-foreground">Quote not found</p>
-                    <Button className="mt-4" onClick={() => navigate("/accounting/quotes")}>
+                    <Button variant="ghost" className="mt-4" onClick={() => navigate("/accounting/quotes")}>
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Quotes
+                        {/* Back to Quotes */}
                     </Button>
                 </div>
             </div>
@@ -505,13 +483,13 @@ export const QuotesDetails = () => {
                     </div>
                     <div className="grid grid-cols-2 border-b border-gray-500 min-h-[30px]">
                         <div className="px-2 py-2 border-r border-gray-500">
-                            <p className="font-bold text-blue-700">{quoteData.customer_name || "N/A"}</p>
+                            <p className="font-bold">{quoteData.customer_name || "N/A"}</p>
                             {formatAddressBlock(billingAddress).map((line, index) => (
                                 <p key={index}>{line}</p>
                             ))}
                         </div>
                         <div className="px-2 py-2">
-                            <p className="font-bold text-blue-700">{quoteData.customer_name || "N/A"}</p>
+                            <p className="font-bold">{quoteData.customer_name || "N/A"}</p>
                             {formatAddressBlock(shippingAddress || billingAddress).map((line, index) => (
                                 <p key={index}>{line}</p>
                             ))}
@@ -571,7 +549,7 @@ export const QuotesDetails = () => {
                                 {quoteData.lock_account_tax_amount ? (
                                     <div className="flex justify-between">
                                         <span>Amount Withheld</span>
-                                        <span className="text-red-600">(-) {Number(quoteData.lock_account_tax_amount || 0).toFixed(2)}</span>
+                                        <span>(-) {Number(quoteData.lock_account_tax_amount || 0).toFixed(2)}</span>
                                     </div>
                                 ) : null}
                                 {taxRows.map(([name, tax], index) => (
@@ -654,12 +632,13 @@ export const QuotesDetails = () => {
 
     return (
         <div className="min-h-screen bg-background p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+            <div className="w-full space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={() => navigate("/accounting/quotes")}>
-                            <ArrowLeft className="h-5 w-5" />
+                        <Button variant="ghost" onClick={() => navigate("/accounting/quotes")} className="p-0">
+                            <ArrowLeft className="h-5 w-5 mr-2" />
+                            {/* Back to Quotes */}
                         </Button>
                         <div>
                             <h1 className="text-2xl font-bold flex items-center gap-3">
@@ -781,7 +760,7 @@ export const QuotesDetails = () => {
                                     <div className="relative">
                                         <Button
                                             size="sm"
-                                            className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                            className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                                             onClick={() => setShowConvertMenu((p) => !p)}
                                         >
                                             Convert ▾
@@ -817,7 +796,7 @@ export const QuotesDetails = () => {
                                 {quoteData.status === "draft" && (
                                     <Button
                                         size="sm"
-                                        className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                        className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                                         disabled={actionLoading}
                                         onClick={() => updateStatus("pending_approval")}
                                     >
@@ -896,7 +875,7 @@ export const QuotesDetails = () => {
                                     <div className="relative">
                                         <Button
                                             size="sm"
-                                            className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                            className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                                             onClick={() => setShowConvertMenu((p) => !p)}
                                         >
                                             Convert ▾
@@ -932,7 +911,7 @@ export const QuotesDetails = () => {
                     <DialogContent className="max-w-4xl">
                         <div className="flex items-center justify-between">
                             <DialogHeader>
-                                <DialogTitle className="text-[#C72030]">Approval Log</DialogTitle>
+                                <DialogTitle className="text-[#DA7756]">Approval Log</DialogTitle>
                             </DialogHeader>
                             <button
                                 type="button"
@@ -947,7 +926,7 @@ export const QuotesDetails = () => {
                         <div className="rounded-lg border overflow-hidden">
                             <Table>
                                 <TableHeader>
-                                    <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
+                                    <TableRow className="bg-[#DA7756] hover:bg-[#DA7756] [&>th]:!text-white [&>th]:!opacity-100">
                                         <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">Sr.No.</TableHead>
                                         <TableHead className="!text-white !opacity-100 font-semibold">Approval Level</TableHead>
                                         <TableHead className="!text-white !opacity-100 font-semibold">Approved By</TableHead>
@@ -1022,11 +1001,11 @@ export const QuotesDetails = () => {
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="grid grid-cols-5 w-full max-w-3xl">
-                        <TabsTrigger value="quote-details">Quote Details</TabsTrigger>
-                        <TabsTrigger value="pdf">PDF</TabsTrigger>
-                        <TabsTrigger value="customer-info">Customer Info</TabsTrigger>
-                        <TabsTrigger value="attachments">Attachments & Comms</TabsTrigger>
-                        <TabsTrigger value="activity-logs">Activity Logs</TabsTrigger>
+                        <TabsTrigger value="quote-details" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Quote Details</TabsTrigger>
+                        <TabsTrigger value="pdf" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">PDF</TabsTrigger>
+                        <TabsTrigger value="customer-info" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Customer Info</TabsTrigger>
+                        <TabsTrigger value="attachments" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Attachments & Comms</TabsTrigger>
+                        <TabsTrigger value="activity-logs" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Activity Logs</TabsTrigger>
                     </TabsList>
 
                     {/* Quote Details Tab */}
@@ -1043,10 +1022,10 @@ export const QuotesDetails = () => {
                                                                     </span>
                         
                                                                     <Badge
-                                                                        variant="secondary"
+                                                                        // variant="secondary"
                                                                         className="h-5 px-2 text-xs rounded-full"
                                                                     >
-                                                                        1
+                                                                        {quoteData?.invoices?.length || 0}
                                                                     </Badge>
                                                                 </div>
                                                             </AccordionTrigger>
@@ -1076,7 +1055,7 @@ export const QuotesDetails = () => {
                                                                                     {/* Invoice Number */}
                                                                                     <TableCell>
                                                                                         <button
-                                                                                            className="text-blue-600 hover:underline font-medium"
+                                                                                            className="text-brand hover:underline font-medium"
                                                                                             onClick={() => navigate(`/accounting/invoices/${inv.id}`)}
                                                                                         >
                                                                                             {inv.invoice_number}
@@ -1086,12 +1065,12 @@ export const QuotesDetails = () => {
                                                                                     {/* Status */}
                                                                                     <TableCell>
                                                                                         <span
-                                                                                            className={`text-xs font-semibold ${inv.status === "overdue"
-                                                                                                    ? "text-red-600"
-                                                                                                    : inv.status === "paid"
-                                                                                                        ? "text-green-600"
-                                                                                                        : "text-orange-500"
-                                                                                                }`}
+                                                                                            // className={`text-xs font-semibold ${inv.status === "overdue"
+                                                                                            //         ? "text-red-600"
+                                                                                            //         : inv.status === "paid"
+                                                                                            //             ? "text-green-600"
+                                                                                            //             : "text-orange-500"
+                                                                                            //     }`}
                                                                                         >
                                                                                             {inv.status?.toUpperCase()}
                                                                                         </span>
@@ -1639,12 +1618,7 @@ export const QuotesDetails = () => {
                                                     quoteData?.lock_account_sale_order_id;
 
                                                 const Icon = isConverted || isCreated ? CirclePlus : (isAccepted || isSent ? Edit : FileText);
-                                                const iconWrapClass =
-                                                    isConverted || isCreated
-                                                        ? "bg-green-50 text-green-600 border-green-100"
-                                                        : (isAccepted || isSent
-                                                            ? "bg-sky-50 text-sky-600 border-sky-100"
-                                                            : "bg-gray-50 text-gray-500 border-gray-100");
+                                                const iconWrapClass = "bg-brand-light text-brand border-brand/20";
 
                                                 return (
                                                     <div key={key} className="flex gap-6 py-5">
@@ -1667,7 +1641,7 @@ export const QuotesDetails = () => {
                                                             {isConverted && salesOrderId ? (
                                                                 <button
                                                                     type="button"
-                                                                    className="mt-2 inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                                                                    className="mt-2 inline-flex items-center gap-2 text-sm text-brand hover:underline"
                                                                     onClick={() => navigate(`/accounting/sales-order/${salesOrderId}`)}
                                                                 >
                                                                     <Eye className="h-4 w-4" />

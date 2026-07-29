@@ -783,7 +783,7 @@ export const CreatePaymentPage: React.FC = () => {
       <div className="flex gap-2 border-t border-gray-100 bg-gray-50 px-3 py-2">
         <Button
           type="button"
-          className="h-8 rounded px-3 text-xs bg-blue-500 hover:bg-blue-600 text-white"
+          className="h-8 rounded px-3 text-xs bg-[#DA7756] hover:bg-[#C45F40] text-white"
           onClick={applyPaymentAmountToBills}
         >
           Yes
@@ -1087,7 +1087,7 @@ export const CreatePaymentPage: React.FC = () => {
                           <label className="mt-2 flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
                             <input
                               type="checkbox"
-                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              className="w-4 h-4 rounded border-gray-300 text-brand focus:ring-brand cursor-pointer"
                               checked={payFullAmount}
                               disabled={
                                 !selectedVendor ||
@@ -1219,7 +1219,7 @@ export const CreatePaymentPage: React.FC = () => {
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Settings
-                                    className="absolute right-3 top-2.5 h-4 w-4 text-blue-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                                    className="absolute right-3 top-2.5 h-4 w-4 text-brand cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
                                     onClick={() => setIsConfigModalOpen(true)}
                                   />
                                 </TooltipTrigger>
@@ -1618,7 +1618,7 @@ export const CreatePaymentPage: React.FC = () => {
                       <div className="flex justify-end mb-2">
                         <button
                           type="button"
-                          className="text-blue-500 text-xs hover:underline"
+                          className="text-brand text-xs hover:underline"
                           onClick={() => {
                             setAppliedAmounts({});
                             setPayFullAmount(false);
@@ -1732,7 +1732,7 @@ export const CreatePaymentPage: React.FC = () => {
                                 />
                                 <button
                                   type="button"
-                                  className="mt-1 text-[11px] text-blue-500 hover:underline"
+                                  className="mt-1 text-[11px] text-brand hover:underline"
                                   onClick={() => {
                                     setPayFullAmount(false);
                                     setAppliedAmounts((prev) => ({
@@ -1815,7 +1815,7 @@ export const CreatePaymentPage: React.FC = () => {
                     <div className="flex justify-end mb-2">
                       <button
                         type="button"
-                        className="text-blue-500 text-xs hover:underline"
+                        className="text-brand text-xs hover:underline"
                         onClick={() => {
                           setAppliedAmounts({});
                           setPayFullAmount(false);
@@ -1854,7 +1854,7 @@ export const CreatePaymentPage: React.FC = () => {
                           {selectedVendor && (
                             <button
                               type="button"
-                              className="mt-3 text-blue-500 text-xs hover:underline"
+                              className="mt-3 text-brand text-xs hover:underline"
                               onClick={() => fetchBills(selectedVendor)}
                             >
                               Retry
@@ -1945,7 +1945,7 @@ export const CreatePaymentPage: React.FC = () => {
                               />
                               <button
                                 type="button"
-                                className="mt-1 text-[11px] text-blue-500 hover:underline"
+                                className="mt-1 text-[11px] text-brand hover:underline"
                                 onClick={() => {
                                   setPayFullAmount(false);
                                   setAppliedAmounts((prev) => ({
@@ -2017,14 +2017,14 @@ export const CreatePaymentPage: React.FC = () => {
                   <Button
                     variant="outline"
                     disabled={isSaving}
-                    className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 h-9 px-4 text-sm font-medium rounded-[4px]"
+                    className="fm-button-fix px-8 py-2"
                     onClick={() => handleSave("DRAFT")}
                   >
                     {isSaving ? "Saving..." : "Save as Draft"}
                   </Button>
                   <Button
                     disabled={isSaving}
-                    className="bg-[#2977ff] hover:bg-blue-600 text-white h-9 px-4 text-sm font-medium rounded-[4px]"
+                    className="fm-button-fix fm-button-brand px-8 py-2"
                     onClick={() => handleSave("PAID")}
                   >
                     {isSaving ? "Saving..." : "Save as Paid"}
@@ -2032,7 +2032,7 @@ export const CreatePaymentPage: React.FC = () => {
                   <Button
                     variant="outline"
                     disabled={isSaving}
-                    className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 h-9 px-4 text-sm font-medium rounded-[4px]"
+                    className="fm-button-fix px-8 py-2"
                     onClick={() => navigate("/accounting/payments-made")}
                   >
                     Cancel
@@ -2063,7 +2063,7 @@ export const CreatePaymentPage: React.FC = () => {
                       <h2 className="text-lg font-semibold text-gray-900">
                         {selectedSupplier?.name ?? "-"}
                       </h2>
-                      <ExternalLink className="h-4 w-4 text-blue-500 cursor-pointer" />
+                      <ExternalLink className="h-4 w-4 text-brand cursor-pointer" />
                     </div>
                   </div>
                 </div>
@@ -2078,7 +2078,7 @@ export const CreatePaymentPage: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Mail className="h-4 w-4 text-gray-400" />
-                      <span className="text-blue-500">
+                      <span className="text-brand">
                         {selectedSupplier?.email ?? "-"}
                       </span>
                     </div>
@@ -2206,7 +2206,7 @@ export const CreatePaymentPage: React.FC = () => {
 
                         <div className="flex gap-4 items-start relative">
                           <div className="h-8 w-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 z-10 shadow-sm">
-                            <MessageSquare className="h-4 w-4 text-blue-400" />
+                            <MessageSquare className="h-4 w-4 text-brand" />
                           </div>
                           <div className="flex-1 space-y-2">
                             <div className="text-xs">
@@ -2295,7 +2295,7 @@ export const CreatePaymentPage: React.FC = () => {
                       <RadioGroupItem
                         value="auto"
                         id="auto"
-                        className="text-blue-600 border-gray-300"
+                        className="text-brand border-gray-300"
                       />
                       <Label
                         htmlFor="auto"
@@ -2314,7 +2314,7 @@ export const CreatePaymentPage: React.FC = () => {
                           <Input
                             value={modalPrefix}
                             onChange={(e) => setModalPrefix(e.target.value)}
-                            className="h-9 border-gray-300 text-sm focus:ring-blue-500"
+                            className="h-9 border-gray-300 text-sm focus:ring-brand"
                           />
                         </div>
                         <div className="space-y-1.5">
@@ -2325,7 +2325,7 @@ export const CreatePaymentPage: React.FC = () => {
                             type="number"
                             value={modalNextNumber}
                             onChange={(e) => setModalNextNumber(e.target.value)}
-                            className="h-9 border-gray-300 text-sm focus:ring-blue-500"
+                            className="h-9 border-gray-300 text-sm focus:ring-brand"
                           />
                         </div>
                       </div>
@@ -2337,7 +2337,7 @@ export const CreatePaymentPage: React.FC = () => {
                       <RadioGroupItem
                         value="manual"
                         id="manual"
-                        className="text-blue-600 border-gray-300"
+                        className="text-brand border-gray-300"
                       />
                       <Label
                         htmlFor="manual"
@@ -2356,7 +2356,7 @@ export const CreatePaymentPage: React.FC = () => {
                           <Input
                             value={modalPrefix}
                             onChange={(e) => setModalPrefix(e.target.value)}
-                            className="h-9 border-gray-300 text-sm focus:ring-blue-500"
+                            className="h-9 border-gray-300 text-sm focus:ring-brand"
                             placeholder="e.g. PAY"
                           />
                         </div>
@@ -2367,7 +2367,7 @@ export const CreatePaymentPage: React.FC = () => {
                           <Input
                             value={modalNextNumber}
                             onChange={(e) => setModalNextNumber(e.target.value)}
-                            className="h-9 border-gray-300 text-sm focus:ring-blue-500"
+                            className="h-9 border-gray-300 text-sm focus:ring-brand"
                             placeholder="e.g. 1001"
                           />
                         </div>
@@ -2391,7 +2391,7 @@ export const CreatePaymentPage: React.FC = () => {
                       setPaymentNumber(`${modalPrefix}${modalNextNumber}`);
                     }
                   }}
-                  className="bg-[#2977ff] hover:bg-blue-600 text-white h-9 px-6 text-sm font-medium rounded-[4px]"
+                  className="fm-button-fix fm-button-brand h-9 px-6 text-sm font-medium"
                 >
                   Save
                 </Button>

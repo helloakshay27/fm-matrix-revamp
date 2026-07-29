@@ -22,6 +22,8 @@ import { useAppDispatch } from "@/store/hooks";
 import { LogsTimeline } from "@/components/LogTimeline";
 import axios from "axios";
 import { CustomTabs } from "@/components/CustomTabs";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 interface OrderData {
   id: number;
@@ -60,6 +62,7 @@ interface OrderData {
   items: {
     id: number;
     menu_name: string;
+    menu_sub_category: string;
     rate: number;
     quantity: number;
     total: string;
@@ -182,6 +185,24 @@ export const RestaurantOrderDetailPage = () => {
     );
   }
 
+  const itemListColumns: ColumnConfig[] = [
+    { key: "sr_no", label: "Sr. No.", defaultVisible: true },
+    { key: "menu_sub_category", label: "Sub Category", defaultVisible: true },
+    { key: "menu_name", label: "Menu", defaultVisible: true },
+    { key: "quantity", label: "Quantity", defaultVisible: true },
+    { key: "total", label: "Amount", defaultVisible: true },
+  ];
+
+  const itemListData = order.items.map((item, index) => ({
+    ...item,
+    sr_no: index + 1,
+  }));
+
+  const renderItemListCell = (
+    item: (typeof itemListData)[number],
+    columnKey: string
+  ) => item[columnKey as keyof typeof item];
+
   const tabs = [
     {
       value: "order_details",
@@ -260,44 +281,44 @@ export const RestaurantOrderDetailPage = () => {
       label: "Item List",
       content: (
         <div
-          className="px-6 py-[31px] bg-white rounded-lg shadow p-6 border-2"
+          className="px-6 py-[31px] bg-white rounded-lg shadow p-6 border-2 space-y-6"
         >
-          <div className="grid grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">Item List</h3>
-              <div className="space-y-2 grid grid-cols-2">
-                {order.items.map((item, index) => (
-                  <div key={index} className="text-[#C72030]">
-                    {item.menu_name}
-                    <div className="text-gray-600 text-sm">{item.quantity}Qty x 1</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {Number(order.totals.total_amount) > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">Total Price</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Sub Total:</span>
-                    <span>{order.totals.sub_total}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>GST:</span>
-                    <span>{order.totals.gst}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Delivery Charge:</span>
-                    <span>{order.totals.delivery_charge}</span>
-                  </div>
-                  <div className="flex justify-between font-semibold border-t pt-2 border-gray-400 text-lg text-[#1A1A1A]">
-                    <span>TOTAL:</span>
-                    <span>{order.totals.total_amount}</span>
-                  </div>
+          <div>
+            <h3 className="text-lg font-semibold text-[#1A1A1A]">Item List</h3>
+            <EnhancedTable
+              data={itemListData}
+              columns={itemListColumns}
+              renderCell={renderItemListCell}
+              hideColumnsButton={true}
+              hideTableSearch={true}
+              pagination={false}
+              enableSearch={false}
+              getItemId={(item) => String(item.id)}
+            />
+          </div>
+          {Number(order.totals.total_amount) > 0 && (
+            <div className="max-w-sm ml-auto">
+              <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">Total Price</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Sub Total:</span>
+                  <span>{order.totals.sub_total}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>GST:</span>
+                  <span>{order.totals.gst}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Delivery Charge:</span>
+                  <span>{order.totals.delivery_charge}</span>
+                </div>
+                <div className="flex justify-between font-semibold border-t pt-2 border-gray-400 text-lg text-[#1A1A1A]">
+                  <span>TOTAL:</span>
+                  <span>{order.totals.total_amount}</span>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       ),
     },
