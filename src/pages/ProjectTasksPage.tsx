@@ -1498,7 +1498,7 @@ const ProjectTasksPage = () => {
 
         // Add global search filter (searches in title, task_code, and description)
         if (debouncedSearchTerm.trim()) {
-            filters["q[title_or_task_code_or_description_cont]"] =
+            filters["q[id_or_title_or_task_code_or_description_cont]"] =
                 debouncedSearchTerm.trim();
         }
 
@@ -3362,7 +3362,7 @@ const ProjectTasksPage = () => {
                     onSort={handleColumnSort}
                     onSearchChange={handleSearchChange}
                     onFilterClick={() => setIsFilterModalOpen(true)}
-                    canAddRow={true}
+                    // canAddRow={true}
                     loading={isLoading}
                     readonlyColumns={["id", "duration", "predecessor", "successor"]}
                     onAddRow={(newRowData) => {
