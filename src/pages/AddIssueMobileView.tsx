@@ -447,10 +447,10 @@ const AddIssueMobileView = () => {
                             required
                         >
                             <option value="">Select Priority</option>
-                            <option value="P1">P1: Urgent & Important</option>
-                            <option value="P2">P2: Important, Not Urgent</option>
-                            <option value="P3">P3: Urgent, Not Important</option>
-                            <option value="P4">P4: Not Urgent or Important</option>
+                            <option value="P1">Q1: Urgent & Important</option>
+                            <option value="P2">Q2: Important, Not Urgent</option>
+                            <option value="P3">Q3: Urgent, Not Important</option>
+                            <option value="P4">Q4: Not Urgent or Important</option>
                         </select>
                     </div>
 

@@ -61,10 +61,10 @@ const formatEffortDuration = (totalHours: number): string => {
 };
 
 const priorityOptions = [
-  { value: "P1", label: "P1: Urgent & Important" },
-  { value: "P2", label: "P2: Important, Not Urgent" },
-  { value: "P3", label: "P3: Urgent, Not Important" },
-  { value: "P4", label: "P4: Not Urgent or Important" },
+  { value: "P1", label: "Q1: Urgent & Important" },
+  { value: "P2", label: "Q2: Important, Not Urgent" },
+  { value: "P3", label: "Q3: Urgent, Not Important" },
+  { value: "P4", label: "Q4: Not Urgent or Important" },
 ];
 
 const AttachmentsSelector = ({
