@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import createApiSlice from "../api/apiSlice";
 import {
   fetchFacilityBookings,
-  type BookingData,
+  type FacilityBookingsResponse,
 } from "@/services/bookingService";
 import axios from "axios";
 
@@ -61,6 +61,16 @@ export interface FacilityBookingDetails {
       name: string;
     };
   }[];
+  total?: number;
+  facility_charge?: number;
+  facility_gst?: number;
+  facility_sgst?: number;
+  charge_type?: string;
+  tentative_price?: number;
+  coupon?: {
+    code?: string;
+    discount?: number;
+  } | null;
 }
 
 export interface FacilityBookingResponse {
@@ -263,7 +273,7 @@ export const getLogs = createAsyncThunk(
 )
 
 // Create slice using the createApiSlice utility
-export const facilityBookingsSlice = createApiSlice<BookingData[]>(
+export const facilityBookingsSlice = createApiSlice<FacilityBookingsResponse>(
   "facilityBookings",
   fetchFacilityBookingsData
 );

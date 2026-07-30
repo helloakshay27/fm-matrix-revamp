@@ -9,7 +9,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import type { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { exportReport, fetchFacilityBookingsData, filterBookings } from '@/store/slices/facilityBookingsSlice';
-import type { BookingData } from '@/services/bookingService';
+import type { BookingData, FacilityBookingsResponse } from '@/services/bookingService';
 import { toast } from 'sonner';
 import { format, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -26,7 +26,8 @@ const enhancedTableColumns: ColumnConfig[] = [
   { key: 'companyName', label: 'Company Name', sortable: true, draggable: true },
   { key: 'facility', label: 'Facility', sortable: true, draggable: true },
   { key: 'facilityType', label: 'Facility Type', sortable: true, draggable: true },
-  { key: 'charges', label: 'Charges', sortable: true, draggable: true },
+  { key: 'amountWithoutGst', label: 'Amount (Without GST)', sortable: true, draggable: true },
+  { key: 'amountWithGst', label: 'Amount (With GST)', sortable: true, draggable: true },
   { key: 'scheduledDate', label: 'Scheduled Date', sortable: true, draggable: true },
   { key: 'scheduledTime', label: 'Scheduled Time', sortable: true, draggable: true },
   { key: 'bookingStatus', label: 'Booking Status', sortable: true, draggable: true },
@@ -94,9 +95,9 @@ const muiTheme = createTheme({
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
     case 'Confirmed':
-      return 'success';
+      return 'secondary';
     case 'Pending':
-      return 'warning';
+      return 'outline';
     case 'Cancelled':
       return 'destructive';
     case 'Completed':
@@ -116,7 +117,7 @@ const BookingListDashboard = () => {
 
   const { data: bookings, loading, error } = useAppSelector((state) => state.facilityBookings);
 
-  const [bookingData, setBookingData] = useState([]);
+  const [bookingData, setBookingData] = useState<BookingData[]>([]);
   const [facilities, setFacilities] = useState([]);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isExportByCentreModalOpen, setIsExportByCentreModalOpen] = useState(false);
@@ -188,7 +189,10 @@ const BookingListDashboard = () => {
       });
   }, [dispatch, baseUrl, token]);
 
-  const handleStatusChange = async (bookingId: number, newStatus: string) => {
+  const isBookingStatus = (value: string): value is BookingData['bookingStatus'] =>
+    ['Confirmed', 'Pending', 'Cancelled'].includes(value as BookingData['bookingStatus']);
+
+  const handleStatusChange = async (bookingId: number, newStatus: BookingData['bookingStatus']) => {
     setStatusUpdating(bookingId);
     try {
       await axios.patch(
@@ -307,6 +311,8 @@ const BookingListDashboard = () => {
         createdOn: item.created_at.split(" ")[0],
         facility: item.facility_name,
         facilityType: item.fac_type,
+        amountWithoutGst: item.sub_total ?? '-',
+        amountWithGst: item.amount_full ?? '-',
         id: item.id,
         scheduledDate: item.startdate.split("T")[0],
         scheduledTime: item.show_schedule_24_hour,
@@ -454,9 +460,8 @@ const BookingListDashboard = () => {
       items.push(
         <PaginationItem key={1} className='cursor-pointer'>
           <PaginationLink
-            onClick={() => handlePageChange(1)}
+            onClick={() => !isPageLoading && handlePageChange(1)}
             isActive={currentPage === 1}
-            disabled={isPageLoading}
           >
             1
           </PaginationLink>
@@ -474,9 +479,8 @@ const BookingListDashboard = () => {
           items.push(
             <PaginationItem key={i} className='cursor-pointer'>
               <PaginationLink
-                onClick={() => handlePageChange(i)}
+                onClick={() => !isPageLoading && handlePageChange(i)}
                 isActive={currentPage === i}
-                disabled={isPageLoading}
               >
                 {i}
               </PaginationLink>
@@ -490,9 +494,8 @@ const BookingListDashboard = () => {
           items.push(
             <PaginationItem key={i} className='cursor-pointer'>
               <PaginationLink
-                onClick={() => handlePageChange(i)}
+                onClick={() => !isPageLoading && handlePageChange(i)}
                 isActive={currentPage === i}
-                disabled={isPageLoading}
               >
                 {i}
               </PaginationLink>
@@ -513,9 +516,8 @@ const BookingListDashboard = () => {
             items.push(
               <PaginationItem key={i} className='cursor-pointer'>
                 <PaginationLink
-                  onClick={() => handlePageChange(i)}
+                  onClick={() => !isPageLoading && handlePageChange(i)}
                   isActive={currentPage === i}
-                  disabled={isPageLoading}
                 >
                   {i}
                 </PaginationLink>
@@ -529,9 +531,8 @@ const BookingListDashboard = () => {
         items.push(
           <PaginationItem key={totalPages} className='cursor-pointer'>
             <PaginationLink
-              onClick={() => handlePageChange(totalPages)}
+              onClick={() => !isPageLoading && handlePageChange(totalPages)}
               isActive={currentPage === totalPages}
-              disabled={isPageLoading}
             >
               {totalPages}
             </PaginationLink>
@@ -543,9 +544,8 @@ const BookingListDashboard = () => {
         items.push(
           <PaginationItem key={i} className='cursor-pointer'>
             <PaginationLink
-              onClick={() => handlePageChange(i)}
+              onClick={() => !isPageLoading && handlePageChange(i)}
               isActive={currentPage === i}
-              disabled={isPageLoading}
             >
               {i}
             </PaginationLink>
@@ -566,7 +566,11 @@ const BookingListDashboard = () => {
         return (
           <Select
             value={item.bookingStatus}
-            onValueChange={(newStatus) => handleStatusChange(item.id, newStatus)}
+            onValueChange={(newStatus) => {
+              if (isBookingStatus(newStatus)) {
+                handleStatusChange(item.id, newStatus);
+              }
+            }}
             disabled={statusUpdating === item.id}
           >
             <SelectTrigger className="w-[140px] border-none bg-transparent flex justify-center items-center [&>svg]:hidden">
