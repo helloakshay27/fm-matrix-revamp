@@ -78,7 +78,7 @@ const CashFlowStatementReport: React.FC = () => {
               >
                 {acc.ledger_id ? (
                   <span
-                    className="text-blue-600 cursor-pointer hover:underline"
+                    className="text-brand cursor-pointer hover:underline"
                     onClick={() => navigate(`/accounting/reports/cash-flow-statement/details/${acc.ledger_id}`)}
                   >
                     {acc.name}

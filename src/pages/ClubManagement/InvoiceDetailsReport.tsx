@@ -25,8 +25,8 @@ interface InvoiceDetailRow {
 }
 
 const statusColorMap: Record<string, string> = {
-  Overdue: "bg-orange-100 text-orange-700",
-  Sent: "bg-blue-100 text-blue-700",
+  Overdue: "bg-gray-100 text-gray-800",
+  Sent: "bg-gray-100 text-gray-800",
 };
 
 const columns: ColumnConfig[] = [
@@ -93,7 +93,7 @@ const InvoiceDetailsReport: React.FC = () => {
   if (!dateStr) return "--";
 
   const [year, month, day] = dateStr.split("-");
-  return `${day}-${month}-${year}`;
+  return `${day}/${month}/${year}`;
 };
   // ✅ API call
   const fetchInvoices = async () => {
@@ -394,13 +394,13 @@ const renderRow = (row: InvoiceDetailRow) => {
       status: isTotalRow ? (
   <span className="font-semibold text-black">Total</span>
 ) : isCreditNote ? (
-  <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 capitalize">
+  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 capitalize">
     {row.status || "--"}
   </span>
 ) : (
       <span
         className={`px-2 py-1 rounded-full text-xs font-medium ${
-          statusColorMap[row.status] || "bg-gray-100"
+          statusColorMap[row.status] || "bg-gray-100 text-gray-800"
         }`}
       >
         {row.status}
@@ -442,7 +442,7 @@ const renderRow = (row: InvoiceDetailRow) => {
         onClick={() =>
           navigate(`/accounting/dashboard/invoices/${row.invoiceId || ""}`)
         }
-        className="text-sm font-medium !text-blue-600 hover:underline text-left"
+        className="text-sm font-medium !text-brand hover:underline text-left"
       >
         {row.invoiceNo}
       </button>
@@ -467,7 +467,7 @@ const renderRow = (row: InvoiceDetailRow) => {
             ? "font-semibold text-black"
             : isCreditNote
             ? "text-gray-700 font-medium"
-            : "text-blue-600"
+            : "text-brand"
         }
       >
         {isTotalRow ? "" : row.customerName}
@@ -478,7 +478,7 @@ const renderRow = (row: InvoiceDetailRow) => {
     total: (
       <span
         className={`font-semibold ${
-          row.total < 0 ? "text-red-600" : "text-blue-700"
+          row.total < 0 ? "text-red-600" : "text-brand"
         }`}
       >
         {formatCurrency(row.total)}

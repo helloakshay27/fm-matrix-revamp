@@ -76,12 +76,7 @@ const toNumber = (value?: string | number) => {
 };
 
 const statusBadge = (status: string) => {
-  const normalized = status?.toLowerCase() || "";
-  let bg = "bg-gray-100 text-gray-600";
-  if (normalized === "active") bg = "bg-green-100 text-green-700";
-  else if (normalized === "inactive" || normalized === "stopped") bg = "bg-red-100 text-red-700";
-  else if (normalized === "expired") bg = "bg-orange-100 text-orange-700";
-  else if (normalized === "draft") bg = "bg-yellow-100 text-yellow-700";
+  const bg = "bg-gray-100 text-gray-800";
 
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide ${bg}`}>
@@ -186,13 +181,13 @@ const RecurringInvoiceDetailsReport: React.FC = () => {
 
   const renderRow = (row: RecurringInvoiceRow) => ({
     status: statusBadge(row.status),
-    profile_name: <span className="text-sm font-medium text-blue-600">{row.profile_name}</span>,
-    customer_name: <span className="text-sm font-medium text-blue-600">{row.customer_name}</span>,
+    profile_name: <span className="text-sm font-medium text-brand">{row.profile_name}</span>,
+    customer_name: <span className="text-sm font-medium text-brand">{row.customer_name}</span>,
     frequency: <span className="text-sm text-gray-600">{row.frequency}</span>,
     last_invoice_date: <span className="text-sm text-gray-600">{formatDate(row.last_invoice_date)}</span>,
     next_invoice_date: <span className="text-sm text-gray-600">{formatDate(row.next_invoice_date)}</span>,
     expiry_date: <span className="text-sm text-gray-600">{formatDate(row.expiry_date)}</span>,
-    amount: <span className="text-sm font-semibold text-blue-600">{formatCurrency(row.amount)}</span>,
+    amount: <span className="text-sm font-semibold text-brand">{formatCurrency(row.amount)}</span>,
     activity: (
       <Button
         type="button"
@@ -317,12 +312,7 @@ const RecurringInvoiceDetailsReport: React.FC = () => {
                 const isSent = hint.includes("sent");
 
                 const Icon = isConverted || isCreated ? CirclePlus : (isAccepted || isSent ? Edit : FileText);
-                const iconWrapClass =
-                  isConverted || isCreated
-                    ? "bg-green-50 text-green-600 border-green-100"
-                    : (isAccepted || isSent
-                      ? "bg-sky-50 text-sky-600 border-sky-100"
-                      : "bg-gray-50 text-gray-500 border-gray-100");
+                const iconWrapClass = "bg-brand-light text-brand border-brand/20";
 
                 return (
                   <div key={key} className="flex gap-6 py-5">
@@ -372,13 +362,7 @@ const RecurringInvoiceDetailsReport: React.FC = () => {
                         <td className="px-3 py-2 font-medium">{lvl?.approved_at || "—"}</td>
                         <td className="px-3 py-2">
                           <span
-                            className={`px-3 py-1 rounded text-xs font-semibold ${
-                              String(lvl?.status || "").toLowerCase() === "approved"
-                                ? "bg-green-100 text-green-800"
-                                : String(lvl?.status || "").toLowerCase() === "rejected"
-                                  ? "bg-red-100 text-red-800"
-                                  : "bg-yellow-100 text-yellow-800"
-                            }`}
+                            className="px-3 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800"
                           >
                             {String(lvl?.status || "pending").toUpperCase()}
                           </span>

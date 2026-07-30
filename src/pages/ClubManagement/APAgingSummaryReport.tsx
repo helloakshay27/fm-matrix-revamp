@@ -167,12 +167,12 @@ const APAgingSummaryReport: React.FC = () => {
 
   const renderRow = (row: APAgingRow) => {
     const isTotal = row.id === "__total__";
-    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`;
+    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`;
     return {
       vendorName: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
       ) : (
-        <span className="text-sm font-medium text-blue-600">{row.vendorName}</span>
+        <span className="text-sm font-medium text-brand">{row.vendorName}</span>
       ),
       current: <span className={amtClass}>{formatAmount(row.current)}</span>,
       days1To15: <span className={amtClass}>{formatAmount(row.days1To15)}</span>,

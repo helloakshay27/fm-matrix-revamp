@@ -324,19 +324,8 @@ const SalesBySalesPersonDetails: React.FC = () => {
         { sales: 0, salesWithTax: 0, balanceDue: 0 }
     );
 
-    const getStatusStyle = (status: string) => {
-        switch (status?.toLowerCase()) {
-            case "paid":
-                return "text-green-600";
-            case "open":
-                return "text-blue-500";
-            case "overdue":
-                return "text-red-600";
-            case "draft":
-                return "text-gray-500";
-            default:
-                return "text-gray-700";
-        }
+    const getStatusStyle = (_status: string) => {
+        return "bg-gray-100 text-gray-800";
     };
 
     return (
@@ -404,8 +393,8 @@ const SalesBySalesPersonDetails: React.FC = () => {
                                         {row.status}
                                     </td>
                                     <td className="p-3">{row.due_date || ""}</td>
-                                    <td className="p-3 text-blue-600">{row.number}</td>
-                                    <td className="p-3 text-blue-600">{row.customer_name}</td>
+                                    <td className="p-3 text-brand">{row.number}</td>
+                                    <td className="p-3 text-brand">{row.customer_name}</td>
                                     <td className="p-3 text-right">₹{row.sales.toFixed(2)}</td>
                                     <td className="p-3 text-right">₹{row.sales_with_tax.toFixed(2)}</td>
                                     <td className="p-3 text-right">₹{row.balance_due.toFixed(2)}</td>

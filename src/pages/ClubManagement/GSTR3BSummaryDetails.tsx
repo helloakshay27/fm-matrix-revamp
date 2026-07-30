@@ -190,6 +190,24 @@ import { FileText, ArrowLeft } from "lucide-react";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 
+// Formats a date-like cell value (ISO yyyy-MM-dd, or dd-MM-yyyy) to dd/MM/yyyy for display.
+// Non-date values (amounts, entry numbers, etc.) are passed through unchanged.
+const formatCellDate = (value: any): any => {
+  if (value === null || value === undefined || value === "") return value;
+  const str = String(value);
+  const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    const [, y, m, d] = isoMatch;
+    return `${d}/${m}/${y}`;
+  }
+  const dmyDashMatch = str.match(/^(\d{2})-(\d{2})-(\d{4})/);
+  if (dmyDashMatch) {
+    const [, d, m, y] = dmyDashMatch;
+    return `${d}/${m}/${y}`;
+  }
+  return value;
+};
+
 const GSTR3BSummaryDetails: React.FC = () => {
   const [columns, setColumns] = useState<string[]>([]);
   const [rows, setRows] = useState<any[][]>([]);
@@ -303,7 +321,7 @@ const GSTR3BSummaryDetails: React.FC = () => {
                 <tr key={rowIndex} className="hover:bg-gray-50">
                   {row.map((cell: any, cellIndex: number) => (
                     <td key={cellIndex} className="border px-4 py-3">
-                      {cell ?? ""}
+                      {(cellIndex === 0 ? formatCellDate(cell) : cell) ?? ""}
                     </td>
                   ))}
                 </tr>

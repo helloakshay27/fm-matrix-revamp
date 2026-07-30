@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -101,10 +101,10 @@ const BankMaster = () => {
     actions: (
       <div className="flex items-center gap-2">
         <Button size="icon" variant="ghost" onClick={() => navigate(`/accounting/bank-master/edit/${bank.id}`)} title="Edit">
-          <Pencil className="h-4 w-4" />
+          <Edit className="h-4 w-4" />
         </Button>
         <Button size="icon" variant="ghost" onClick={() => openDeleteDialog(bank)} title="Delete">
-          <Trash2 className="h-4 w-4 text-red-500" />
+          <Trash2 className="h-4 w-4" />
         </Button>
       </div>
     ),
@@ -122,7 +122,7 @@ const BankMaster = () => {
           type="button"
           onClick={() => handleToggleStatus(bank)}
           className={`status-toggle relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            bank.active ? 'bg-red-500' : 'bg-gray-300'
+            bank.active ? 'bg-brand' : 'bg-gray-300'
           }`}
         >
           <span
@@ -131,10 +131,6 @@ const BankMaster = () => {
             }`}
           />
         </button>
-
-        <span className={`text-sm font-medium ${bank.active ? 'text-red-600' : 'text-red-600'}`}>
-          {/* {bank.active ? 'Active' : 'Inactive'} */}
-        </span>
       </div>
     ),
   });
@@ -148,25 +144,23 @@ const BankMaster = () => {
         </div>
       </header>
 
-      <div className="[&_*:not(.status-toggle):not(.status-toggle-thumb)]:!rounded-none [&_.rounded-lg]:!rounded-none [&_.rounded-md]:!rounded-none [&_.rounded]:!rounded-none">
-        <EnhancedTaskTable
-          data={banks}
-          columns={bankColumns}
-          renderRow={renderRow}
-          storageKey="bank-master-v1"
-          hideTableExport
-          enableSearch
-          loading={loading}
-          searchPlaceholder="Search bank details"
-          leftActions={
-            <Button onClick={() => navigate('/accounting/bank-master/add')} className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Plus className="mr-2 h-4 w-4 !text-white" />
-              <span className="!text-white">Add Bank</span>
-            </Button>
-          }
-          emptyMessage="No bank details found. Add your first bank record."
-        />
-      </div>
+      <EnhancedTaskTable
+        data={banks}
+        columns={bankColumns}
+        renderRow={renderRow}
+        storageKey="bank-master-v1"
+        hideTableExport
+        enableSearch
+        loading={loading}
+        searchPlaceholder="Search bank details"
+        leftActions={
+          <Button onClick={() => navigate('/accounting/bank-master/add')} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Plus className="mr-2 h-4 w-4 !text-white" />
+            <span className="!text-white">Add Bank</span>
+          </Button>
+        }
+        emptyMessage="No bank details found. Add your first bank record."
+      />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => {
         setDeleteDialogOpen(open);

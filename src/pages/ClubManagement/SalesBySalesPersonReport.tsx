@@ -258,7 +258,7 @@ const SalesBySalesPersonReport = () => {
 
                 <tr key={index} className="border-t hover:bg-gray-50">
 
-                  <td className="p-3 text-blue-600 cursor-pointer hover:underline" onClick={() => handleRowClick(row)}>{row.name}</td>
+                  <td className="p-3 text-brand cursor-pointer hover:underline" onClick={() => handleRowClick(row)}>{row.name}</td>
 
                   <td className="p-3 text-center">{row.invoice_count}</td>
 

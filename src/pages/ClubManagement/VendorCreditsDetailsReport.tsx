@@ -73,13 +73,13 @@ const toNumber = (value?: string | number) => Number(value ?? 0) || 0;
 
 
 const statusBadgeMap: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-700",
-  open: "bg-blue-100 text-blue-700",
-  paid: "bg-green-100 text-green-700",
-  closed: "bg-green-100 text-green-700",
-  overdue: "bg-orange-100 text-orange-700",
-  cancelled: "bg-red-100 text-red-700",
-  void: "bg-red-100 text-red-700",
+  draft: "bg-gray-100 text-gray-800",
+  open: "bg-gray-100 text-gray-800",
+  paid: "bg-gray-100 text-gray-800",
+  closed: "bg-gray-100 text-gray-800",
+  overdue: "bg-gray-100 text-gray-800",
+  cancelled: "bg-gray-100 text-gray-800",
+  void: "bg-gray-100 text-gray-800",
 };
 
 const VendorCreditsDetailsReport: React.FC = () => {
@@ -197,15 +197,15 @@ const VendorCreditsDetailsReport: React.FC = () => {
       status: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
       ) : (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadgeMap[row.status.toLowerCase()] || "bg-gray-100 text-gray-700"}`}>
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadgeMap[row.status.toLowerCase()] || "bg-gray-100 text-gray-800"}`}>
           {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
         </span>
       ),
       vendorCreditDate: <span className="text-sm text-gray-600">{isTotal ? "" : formatDisplayDate(row.vendorCreditDate)}</span>,
-      creditNoteNumber: <span className="text-sm font-medium text-blue-600">{isTotal ? "" : row.creditNoteNumber}</span>,
-      vendorName: <span className="text-sm font-medium text-blue-600">{isTotal ? "" : row.vendorName}</span>,
+      creditNoteNumber: <span className="text-sm font-medium text-brand">{isTotal ? "" : row.creditNoteNumber}</span>,
+      vendorName: <span className="text-sm font-medium text-brand">{isTotal ? "" : row.vendorName}</span>,
       amount: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`}>
           {formatAmount(row.amount)}
         </span>
       ),

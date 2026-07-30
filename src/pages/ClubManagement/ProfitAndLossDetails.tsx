@@ -220,7 +220,7 @@ export const ProfitAndLossDetails = () => {
     if (loading || ledgerLoading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <div className="animate-spin h-8 w-8 border-b-2 border-blue-600 rounded-full" />
+                <div className="animate-spin h-8 w-8 border-b-2 border-brand rounded-full" />
             </div>
         );
     }
@@ -244,7 +244,7 @@ export const ProfitAndLossDetails = () => {
                     <h1 className="text-2xl font-semibold text-gray-900">
                         {ledgerDetails?.name || accountName}
                     </h1>
-                    {/* <Button variant="outline" className="text-blue-600 border-blue-600">
+                    {/* <Button variant="outline" className="text-brand border-brand">
             Edit
           </Button> */}
                 </div>
@@ -271,7 +271,7 @@ export const ProfitAndLossDetails = () => {
             {/* Closing Balance */}
             {/* <div className="bg-[#F9FBFF] border rounded-md p-5 mb-6">
                 <p className="text-xs text-gray-500 uppercase mb-1">Closing Balance</p>
-                <p className="text-xl font-semibold text-blue-600">
+                <p className="text-xl font-semibold text-brand">
                     ₹{Math.abs(ledgerDetails?.current_total ?? closingBalance).toFixed(2)}{' '}
                     <span className="text-sm">
                         {(ledgerDetails?.current_total ?? closingBalance) >= 0 ? 'Dr' : 'Cr'}
@@ -350,20 +350,20 @@ export const ProfitAndLossDetails = () => {
                                         <td className="border border-gray-300 px-4 py-3 text-right">
                                             {t.debit ? (
                                                 (() => { const route = getDrillDownRoute(t); return route ? (
-                                                    <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.debit).toFixed(2)}</span>
+                                                    <span className="text-brand cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.debit).toFixed(2)}</span>
                                                 ) : `₹${Number(t.debit).toFixed(2)}`; })()
                                             ) : '-'}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3 text-right">
                                             {t.credit ? (
                                                 (() => { const route = getDrillDownRoute(t); return route ? (
-                                                    <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.credit).toFixed(2)}</span>
+                                                    <span className="text-brand cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.credit).toFixed(2)}</span>
                                                 ) : `₹${Number(t.credit).toFixed(2)}`; })()
                                             ) : '-'}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3 text-right font-medium">
                                             {(() => { const route = getDrillDownRoute(t); return route ? (
-                                                <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.amount).toFixed(2)}</span>
+                                                <span className="text-brand cursor-pointer hover:underline" onClick={() => navigate(route)}>₹{Number(t.amount).toFixed(2)}</span>
                                             ) : `₹${Number(t.amount).toFixed(2)}`; })()}
                                         </td>
                                     </tr>

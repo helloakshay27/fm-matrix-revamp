@@ -76,7 +76,7 @@ const formatCurrency = (val: number) =>
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "--";
   const [y, m, d] = dateStr.split("-");
-  return `${d}-${m}-${y}`;
+  return `${d}/${m}/${y}`;
 };
 
 const BUCKET_LABEL_MAP: Record<string, string> = {
@@ -89,10 +89,10 @@ const BUCKET_LABEL_MAP: Record<string, string> = {
 };
 
 const statusColorMap: Record<string, string> = {
-  Overdue: "bg-orange-100 text-orange-700",
-  Sent: "bg-blue-100 text-blue-700",
-  Paid: "bg-green-100 text-green-700",
-  Open: "bg-gray-100 text-gray-700",
+  Overdue: "bg-gray-100 text-gray-800",
+  Sent: "bg-gray-100 text-gray-800",
+  Paid: "bg-gray-100 text-gray-800",
+  Open: "bg-gray-100 text-gray-800",
 };
 
 // ─── COMPONENT ─────────────────────────────────────
@@ -326,7 +326,7 @@ const ARAgingSummaryReport: React.FC = () => {
       <span className="text-sm font-bold text-[#1A1A1A]">{formatCurrency(value)}</span>
     ) : value !== 0 ? (
       <span
-        className="text-blue-600 cursor-pointer hover:underline font-medium text-sm"
+        className="text-brand cursor-pointer hover:underline font-medium text-sm"
         onClick={() => setDetailView({ bucket, customer: customerName })}
       >
         {formatCurrency(value)}
@@ -344,7 +344,7 @@ const ARAgingSummaryReport: React.FC = () => {
       ) : (
         <button
           onClick={() => navigate(`/accounting/customers/details/${customerId || ""}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.customerName}
         </button>
@@ -358,7 +358,7 @@ const ARAgingSummaryReport: React.FC = () => {
         <span className="text-sm font-bold text-[#1A1A1A]">{formatCurrency(row.total)}</span>
       ) : row.total !== 0 ? (
         <span
-          className="text-blue-600 cursor-pointer hover:underline font-semibold text-sm"
+          className="text-brand cursor-pointer hover:underline font-semibold text-sm"
           onClick={() => setDetailView({ bucket: "all", customer: row.customerName })}
         >
           {formatCurrency(row.total)}
@@ -370,7 +370,7 @@ const ARAgingSummaryReport: React.FC = () => {
         <span className="text-sm font-bold text-[#1A1A1A]">{formatCurrency(row.totalFCY)}</span>
       ) : row.totalFCY !== 0 ? (
         <span
-          className="text-blue-600 cursor-pointer hover:underline text-sm"
+          className="text-brand cursor-pointer hover:underline text-sm"
           onClick={() => setDetailView({ bucket: "all", customer: row.customerName })}
         >
           {formatCurrency(row.totalFCY)}
@@ -409,7 +409,7 @@ const ARAgingSummaryReport: React.FC = () => {
       transactionNo: (
         <button
           onClick={() => navigate(`/accounting/dashboard/invoices/${row.invoiceId || ""}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.transactionNo}
         </button>
@@ -423,13 +423,13 @@ const ARAgingSummaryReport: React.FC = () => {
       customerName: (
         <button
           onClick={() => navigate(`/accounting/customers/details/${row.customerId || ""}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.customerName}
         </button>
       ),
       age: <span className="text-sm text-gray-600">{row.age}</span>,
-      amount: <span className="text-sm font-medium text-blue-600">{formatCurrency(row.amount)}</span>,
+      amount: <span className="text-sm font-medium text-brand">{formatCurrency(row.amount)}</span>,
       balanceDue: <span className="text-sm font-medium text-gray-900">{formatCurrency(row.balanceDue)}</span>,
     };
   };
