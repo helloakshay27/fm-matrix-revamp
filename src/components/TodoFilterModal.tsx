@@ -27,10 +27,10 @@ export interface TodoFilters {
 }
 
 const PRIORITY_OPTIONS = [
-    { label: "P1 - Urgent & Important", value: "P1", color: "bg-red-500" },
-    { label: "P2 - Important, Not Urgent", value: "P2", color: "bg-green-500" },
-    { label: "P3 - Urgent, Not Important", value: "P3", color: "bg-yellow-500" },
-    { label: "P4 - Not Urgent or Important", value: "P4", color: "bg-blue-500" },
+    { label: "Q1 - Urgent & Important", value: "P1", color: "bg-red-500" },
+    { label: "Q2 - Important, Not Urgent", value: "P2", color: "bg-green-500" },
+    { label: "Q3 - Urgent, Not Important", value: "P3", color: "bg-yellow-500" },
+    { label: "Q4 - Not Urgent or Important", value: "P4", color: "bg-blue-500" },
 ];
 
 const TodoFilterModal = ({

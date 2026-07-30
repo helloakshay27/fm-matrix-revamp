@@ -1234,6 +1234,7 @@ import BusinessCompassTaskDetailsPage from "./pages/BusinessCompass/BusinessComp
 import BusinessCompassIssueDetailsPage from "./pages/BusinessCompass/BusinessCompassIssueDetailsPage.tsx";
 import BusinessCompassTasksPage from "./pages/BusinessCompass/BusinessCompassTasksPage.tsx";
 import BusinessCompassIssuesPage from "./pages/BusinessCompass/BusinessCompassIssuesPage.tsx";
+import BusinessCompassTodoPage from "./pages/BusinessCompass/BusinessCompassTodoPage.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -2295,7 +2296,7 @@ function App() {
                             />
                             <Route
                               path="/business-compass/todo"
-                              element={<Todo />}
+                              element={<BusinessCompassTodoPage />}
                             />
                             <Route
                               path="/business-compass/channels"
