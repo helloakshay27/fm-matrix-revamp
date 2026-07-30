@@ -15,7 +15,17 @@ export const getApiBaseUrl = () => {
 export const getApiContext = () => ({
   baseUrl: getApiBaseUrl(),
   token: localStorage.getItem("token") || "",
-  orgId: localStorage.getItem("org_id") || "",
+  orgId:
+    localStorage.getItem("org_id") ||
+    localStorage.getItem("organization_id") ||
+    (() => {
+      try {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        return String(user?.organization_id || user?.org_id || user?.company_id || "");
+      } catch {
+        return "";
+      }
+    })(),
 });
 
 /**

@@ -12,7 +12,7 @@ export default function KpiList() {
     kpiRoleFilter, setKpiRoleFilter,
     kpiMemberFilter, setKpiMemberFilter,
     kpiViewMode, setKpiViewMode,
-    uniqueDepts, uniqueRoles, uniqueMembers,
+    uniqueKpiDepts, uniqueKpiRoles, uniqueKpiMembers,
     toggleKpiStatus, openEditKpi, setAssignKpiModal,
     setShowAddKpi,
     jdTitle, kraName,
@@ -32,9 +32,9 @@ export default function KpiList() {
               onChange={(e) => setKpiSearch(e.target.value)}
             />
           </div>
-          <FilterSelect value={kpiDeptFilter} onChange={(e) => setKpiDeptFilter(e.target.value)} label="All Departments" options={uniqueDepts} />
-          <FilterSelect value={kpiRoleFilter} onChange={(e) => setKpiRoleFilter(e.target.value)} label="All Roles" options={uniqueRoles} />
-          <FilterSelect value={kpiMemberFilter} onChange={(e) => setKpiMemberFilter(e.target.value)} label="All Members" options={uniqueMembers} />
+          <FilterSelect value={kpiDeptFilter} onChange={(e) => setKpiDeptFilter(e.target.value)} label="All Departments" options={uniqueKpiDepts} />
+          <FilterSelect value={kpiRoleFilter} onChange={(e) => setKpiRoleFilter(e.target.value)} label="All Roles" options={uniqueKpiRoles} />
+          <FilterSelect value={kpiMemberFilter} onChange={(e) => setKpiMemberFilter(e.target.value)} label="All Members" options={uniqueKpiMembers} />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ padding: "6px 14px", borderRadius: 999, background: T.orangeSoft, fontSize: 12, fontWeight: 700, color: T.orange }}>

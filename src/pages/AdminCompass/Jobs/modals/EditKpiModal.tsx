@@ -2,11 +2,25 @@
 import { useJobs } from "../JobsContext";
 import { T, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
 import { Fld, FI, FS, Btn } from "../components/UI";
+import MemberSearchSelect from "../components/MemberSearchSelect";
 
 export default function EditKpiModal() {
-  const { editingKpiId, setEditingKpiId, editKpiForm, setEditKpiForm, customUnits, saveEditKpi, allJds, allKras, krasForJd, allMembers, kpisSaving } = useJobs();
+  const {
+    editingKpiId, setEditingKpiId, editKpiForm, setEditKpiForm, customUnits, saveEditKpi,
+    allJds, allKras, krasForJd, kpisSaving, kpiAssignUsers, kpiAssignUsersLoading,
+    kpiModalJdsLoading, kpiModalJdsError, kpiModalKras, kpiModalKrasLoading, kpiModalKrasError,
+    kpiKraSearch, setKpiKraSearch,
+  } = useJobs();
   if (!editingKpiId) return null;
-  const editKras = editKpiForm.jdId ? krasForJd(editKpiForm.jdId) : allKras;
+  const editKras = editKpiForm.jdId ? kpiModalKras : allKras;
+  const assigneeOptions = kpiAssignUsers;
+  const kraBlockedReason = !editKpiForm.jdId
+    ? "Select a job description to load KRAs"
+    : !editKpiForm.departmentId
+      ? "Enter department ID to load KRAs"
+      : !editKpiForm.assigneeIds?.[0]
+        ? "Select an assignee to load KRAs"
+        : "";
   return (
     <div
       style={{
@@ -57,47 +71,87 @@ export default function EditKpiModal() {
             <Fld label="Job Description">
               <FS
                 value={editKpiForm.jdId || ""}
+                disabled={kpiModalJdsLoading || kpisSaving}
                 onChange={(e) =>
                   setEditKpiForm((f) => ({
                     ...f,
                     jdId: e.target.value,
                     kraId: "",
+                    departmentId:
+                      allJds.find((j) => String(j.id) === String(e.target.value))?.departmentId ||
+                      f.departmentId,
                   }))
                 }
               >
-                <option value="">Select JD</option>
+                <option value="">{kpiModalJdsLoading ? "Loading JDs..." : "Select JD"}</option>
                 {allJds.map((j) => (
                   <option key={j.id} value={j.id}>
                     {j.title}
                   </option>
                 ))}
               </FS>
-            </Fld>
-            <Fld label="Linked KRA">
-              <FS
-                value={editKpiForm.kraId || ""}
-                onChange={(e) =>
-                  setEditKpiForm((f) => ({ ...f, kraId: e.target.value }))
-                }
-              >
-                <option value="">Select KRA</option>
-                {editKras.map((k) => (
-                  <option key={k.id} value={k.id}>
-                    {k.title}
-                  </option>
-                ))}
-              </FS>
+              {kpiModalJdsError && (
+                <span style={{ fontSize: 11, color: T.danger }}>Could not load JDs: {kpiModalJdsError}</span>
+              )}
             </Fld>
             <Fld label="Department ID">
               <FI
                 type="number"
                 value={editKpiForm.departmentId || ""}
                 onChange={(e) =>
-                  setEditKpiForm((f) => ({ ...f, departmentId: e.target.value }))
+                  setEditKpiForm((f) => ({ ...f, departmentId: e.target.value, kraId: "" }))
                 }
               />
             </Fld>
+            <Fld label="Assignee Person">
+              <MemberSearchSelect
+                value={editKpiForm.assigneeIds?.[0] || ""}
+                options={assigneeOptions}
+                onChange={(value) =>
+                  setEditKpiForm((f) => ({
+                    ...f,
+                    kraId: "",
+                    assigneeIds: value ? [Number(value)] : [],
+                  }))
+                }
+                placeholder="Select assignee"
+                loading={kpiAssignUsersLoading}
+                disabled={kpisSaving || kpiAssignUsersLoading}
+              />
+            </Fld>
           </div>
+          <Fld label="Linked KRA">
+            {kraBlockedReason ? (
+              <FI value="" placeholder={kraBlockedReason} disabled />
+            ) : (
+              <>
+                <FI
+                  placeholder="Search KRA"
+                  value={kpiKraSearch}
+                  onChange={(e) => setKpiKraSearch(e.target.value)}
+                  disabled={kpisSaving}
+                  style={{ minHeight: 38, marginBottom: 6 }}
+                />
+                <FS
+                  value={editKpiForm.kraId || ""}
+                  disabled={kpiModalKrasLoading || kpisSaving}
+                  onChange={(e) =>
+                    setEditKpiForm((f) => ({ ...f, kraId: e.target.value }))
+                  }
+                >
+                  <option value="">{kpiModalKrasLoading ? "Loading KRAs..." : "Select KRA"}</option>
+                  {editKras.map((k) => (
+                    <option key={k.id} value={k.id}>
+                      {k.title}
+                    </option>
+                  ))}
+                </FS>
+              </>
+            )}
+            {kpiModalKrasError && (
+              <span style={{ fontSize: 11, color: T.danger }}>Could not load KRAs: {kpiModalKrasError}</span>
+            )}
+          </Fld>
           <div
             style={{
               display: "grid",
@@ -183,7 +237,7 @@ export default function EditKpiModal() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              gridTemplateColumns: "1fr",
               gap: 16,
             }}
           >
@@ -196,24 +250,6 @@ export default function EditKpiModal() {
               >
                 <option value="positive">Positive</option>
                 <option value="negative">Negative</option>
-              </FS>
-            </Fld>
-            <Fld label="Assignee Person">
-              <FS
-                value={editKpiForm.assigneeIds?.[0] || ""}
-                onChange={(e) =>
-                  setEditKpiForm((f) => ({
-                    ...f,
-                    assigneeIds: e.target.value ? [Number(e.target.value)] : [],
-                  }))
-                }
-              >
-                <option value="">Select assignee</option>
-                {allMembers.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
               </FS>
             </Fld>
           </div>
