@@ -53,6 +53,9 @@ const EditFacilityBookingPage = () => {
     const [selectedDate, setSelectedDate] = useState("")
     const [comment, setComment] = useState("")
     const [subTotal, setSubTotal] = useState("")
+    const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('amount')
+    const [discountPercentage, setDiscountPercentage] = useState<number>(0)
+    const [discountAmount, setDiscountAmount] = useState<number>(0)
     const [gstPercentage, setGstPercentage] = useState("")
     const [sgstPercentage, setSgstPercentage] = useState("")
     const [amountFull, setAmountFull] = useState("")
@@ -64,9 +67,14 @@ const EditFacilityBookingPage = () => {
     const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
     const [slotsLoading, setSlotsLoading] = useState(false);
     const [detailsLoaded, setDetailsLoaded] = useState(false);
-    const gstAmount = (parseFloat(subTotal) * Number(gstPercentage)) / 100 || 0
-    const sgstAmount = (parseFloat(subTotal) * Number(sgstPercentage)) / 100 || 0
-    const grandTotal = parseFloat(subTotal) + gstAmount + sgstAmount || 0
+    const subTotalNum = parseFloat(subTotal) || 0
+    const calculatedDiscountAmount = discountType === 'percentage'
+        ? (subTotalNum * (discountPercentage || 0)) / 100
+        : (discountAmount || 0)
+    const taxableAmount = subTotalNum - calculatedDiscountAmount
+    const gstAmount = (taxableAmount * Number(gstPercentage)) / 100 || 0
+    const sgstAmount = (taxableAmount * Number(sgstPercentage)) / 100 || 0
+    const grandTotal = taxableAmount + gstAmount + sgstAmount || 0
 
     const getUsers = async () => {
         try {
@@ -169,6 +177,8 @@ const EditFacilityBookingPage = () => {
             }
             setComment(bookingDetails.comment || "");
             setSubTotal(bookingDetails.sub_total || "");
+            setDiscountType('amount');
+            setDiscountAmount(Number(bookingDetails.discount) || 0);
             setGstPercentage(bookingDetails.gst?.toString() || "");
             setSgstPercentage(bookingDetails.sgst?.toString() || "");
             setAmountFull(bookingDetails.amount_full || "");
@@ -226,6 +236,7 @@ const EditFacilityBookingPage = () => {
                 sgst: sgstPercentage ? parseFloat(sgstPercentage) : '',
                 gst: gstPercentage ? parseFloat(gstPercentage) : '',
                 sub_total: Number(subTotal),
+                discount: calculatedDiscountAmount,
                 amount_full: grandTotal,
                 amount_paid: grandTotal,
                 date: selectedDate.replace(/-/g, '/'),
@@ -540,6 +551,45 @@ const EditFacilityBookingPage = () => {
                                 />
                             </span>
                         </div>
+
+                        {/* Discount - Editable */}
+                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                            <div className="flex items-center gap-2">
+                                <span className="text-gray-700">Discount</span>
+                                <select
+                                    value={discountType}
+                                    onChange={(e) => setDiscountType(e.target.value as 'percentage' | 'amount')}
+                                    className='border border-gray-300 rounded-md px-2 py-1 text-sm'
+                                >
+                                    <option value="percentage">%</option>
+                                    <option value="amount">₹</option>
+                                </select>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    max={discountType === 'percentage' ? 100 : undefined}
+                                    step={discountType === 'percentage' ? 0.1 : 1}
+                                    value={discountType === 'percentage' ? discountPercentage : discountAmount}
+                                    onChange={(e) => {
+                                        if (discountType === 'percentage') {
+                                            setDiscountPercentage(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)));
+                                        } else {
+                                            setDiscountAmount(Math.max(0, parseFloat(e.target.value) || 0));
+                                        }
+                                    }}
+                                    className='w-20 text-right border border-gray-300 rounded-md px-2 py-1'
+                                />
+                            </div>
+                            <span className="font-medium text-red-600">- ₹{calculatedDiscountAmount.toFixed(2)}</span>
+                        </div>
+
+                        {/* Subtotal After Discount */}
+                        {calculatedDiscountAmount > 0 && (
+                            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                                <span className="text-gray-700 font-medium">Subtotal After Discount</span>
+                                <span className="font-medium">₹{taxableAmount.toFixed(2)}</span>
+                            </div>
+                        )}
 
                         {/* GST */}
                         <div className="flex justify-between items-center py-2 border-b border-gray-200">

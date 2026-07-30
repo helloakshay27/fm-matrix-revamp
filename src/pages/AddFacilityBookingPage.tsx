@@ -121,6 +121,7 @@ export const AddFacilityBookingPage = () => {
     ampm: string;
     wrap_time: number;
     booked_by: string;
+    booked?: boolean;
     formated_start_hour: string;
     formated_end_hour: string;
     formated_start_minute: string;
@@ -189,6 +190,7 @@ export const AddFacilityBookingPage = () => {
   const isSlotSelectable = (slotId: number) => {
     if (!canSelectSlots) return false;
     if (selectedSlots.includes(slotId)) return true; // allow deselect
+    if (slots.find((s) => s.id === slotId)?.booked) return false;
 
     if (isRequestableType) {
       // For requestable type, enforce consecutive slots only
@@ -947,23 +949,28 @@ export const AddFacilityBookingPage = () => {
           {slots.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {slots.map((slot) => {
+                const isSelected = selectedSlots.includes(slot.id);
+                const isBooked = !!slot.booked && !isSelected;
                 const disabled = !isSlotSelectable(slot.id);
                 return (
-                  <div key={slot.id} className={`flex items-center space-x-2 p-3 border rounded-lg ${disabled ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'}`}>
+                  <div key={slot.id} className={`flex items-center space-x-2 p-3 border rounded-lg ${isBooked ? 'bg-red-50 opacity-60 border-red-300' : disabled ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'}`}>
                     <input
                       type="checkbox"
                       id={`slot-${slot.id}`}
-                      checked={selectedSlots.includes(slot.id)}
+                      checked={isSelected}
                       onChange={() => handleSlotSelection(slot.id)}
                       className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                       disabled={!canSelectSlots || disabled}
                     />
                     <Label
                       htmlFor={`slot-${slot.id}`}
-                      className={`cursor-pointer text-sm font-medium flex items-center gap-2 ${disabled ? 'text-gray-400' : ''}`}
+                      className={`cursor-pointer text-sm font-medium flex items-center gap-2 ${isBooked ? 'text-red-600' : disabled ? 'text-gray-400' : ''}`}
                     >
                       {slot.ampm}
-                      {slot.is_premium && slot.premium_percentage && (
+                      {isBooked && (
+                        <span className="text-xs font-semibold text-red-600">Booked</span>
+                      )}
+                      {slot.is_premium && slot.premium_percentage && !isBooked && (
                         <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
                             <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
@@ -1141,7 +1148,11 @@ export const AddFacilityBookingPage = () => {
                       ? (subtotalWithAccessories * (discountPercentage || 0)) / 100
                       : (discountAmount || 0);
                     const subtotalAfterDiscount = subtotalWithAccessories - calculatedDiscountAmount;
-                    const grandTotal = subtotalAfterDiscount + flexiblePriceData.cgst_amount + flexiblePriceData.sgst_amount;
+                    const gstPercentage = facilityDetails?.gst || 0;
+                    const sgstPercentage = facilityDetails?.sgst || 0;
+                    const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
+                    const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
+                    const grandTotal = subtotalAfterDiscount + gstAmount + sgstAmount;
 
                     return (
                       <>
@@ -1232,16 +1243,22 @@ export const AddFacilityBookingPage = () => {
                           </div>
                         )}
 
-                        {/* CGST from API */}
+                        {/* CGST (on subtotal after discount) */}
                         <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-gray-700">CGST</span>
-                          <span className="font-medium">₹{flexiblePriceData.cgst_amount.toFixed(2)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">CGST</span>
+                            <span className="text-sm text-gray-500">({gstPercentage}%)</span>
+                          </div>
+                          <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
                         </div>
 
-                        {/* SGST from API */}
+                        {/* SGST (on subtotal after discount) */}
                         <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-gray-700">SGST</span>
-                          <span className="font-medium">₹{flexiblePriceData.sgst_amount.toFixed(2)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">SGST</span>
+                            <span className="text-sm text-gray-500">({sgstPercentage}%)</span>
+                          </div>
+                          <span className="font-medium">₹{sgstAmount.toFixed(2)}</span>
                         </div>
 
                         {/* Grand Total */}
