@@ -232,6 +232,7 @@ const EditFacilityBookingPage = () => {
                 selected_slots: selectedSlots,
                 book_by_id: selectedSlots[0],
                 book_by: 'slot',
+                comment,
             };
 
             const response = await axios.patch(
@@ -430,9 +431,6 @@ const EditFacilityBookingPage = () => {
                                 },
                                 shrink: true
                             }}
-                            inputProps={{
-                                min: new Date().toISOString().split("T")[0],
-                            }}
                             sx={fieldStyles}
                         />
                     </div>
@@ -496,11 +494,11 @@ const EditFacilityBookingPage = () => {
                     <TextField
                         label="Comment"
                         value={comment}
+                        onChange={(e) => setComment(e.target.value)}
                         variant="outlined"
                         fullWidth
                         multiline
                         rows={4}
-                        disabled
                         InputLabelProps={{ shrink: true }}
                         sx={{
                             mt: 1,
