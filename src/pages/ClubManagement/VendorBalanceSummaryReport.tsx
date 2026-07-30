@@ -174,7 +174,7 @@ const VendorBalanceSummaryReport: React.FC = () => {
       vendorName: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
       ) : (
-        <span className="text-sm font-medium text-blue-600">{row.vendorName}</span>
+        <span className="text-sm font-medium text-brand">{row.vendorName}</span>
       ),
       billedAmount: (
         <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-gray-900"}`}>

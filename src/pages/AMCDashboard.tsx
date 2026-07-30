@@ -2625,19 +2625,19 @@ export const AMCDashboard = () => {
                 </div>
               </Box>
 
-              <div className="flex justify-center gap-2 mt-12 pt-6 border-t">
+              <div className="flex justify-end gap-2 mt-12 pt-6 border-t">
+                <Button
+                  onClick={handleApplyFilters}
+                  className="fm-button-fix fm-button-brand px-4 py-2"
+                >
+                  Apply Filter
+                </Button>
                 <Button
                   variant="outline"
                   onClick={handleResetFilters}
-                  className="px-4 py-2 text-sm font-medium rounded hover:opacity-80 transition-opacity"
+                  className="border-brand text-brand hover:bg-brand hover:text-white"
                 >
-                  Clear All
-                </Button>
-                <Button
-                  onClick={handleApplyFilters}
-                  className="h-11 px-6 bg-[#C72030] hover:bg-[#a81c29] text-white"
-                >
-                  Apply Filter
+                  Reset
                 </Button>
               </div>
             </div>

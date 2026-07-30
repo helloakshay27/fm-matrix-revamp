@@ -1,18 +1,31 @@
 // @ts-nocheck
+import { useNavigate } from "react-router-dom";
 import { useJobs } from "../JobsContext";
 import { T, COLORS, DEPARTMENTS, EMP_TYPES, EXP_LEVELS } from "../constants";
 import { I, ico } from "../icons";
 import { card, SH, FI, FS, FT, Fld, Btn, StatusPill } from "./UI";
 
 export default function EditJdScreen() {
+  const navigate = useNavigate();
   const {
     allJds, editingJd, editForm, ef,
-    cancelEditJd, saveEditJd, publishJd,
+    saveEditJd, publishJd,
     allKras, allKpis,
   } = useJobs();
 
   const jd = allJds.find((j) => j.id === editingJd);
   if (!jd) return null;
+
+  const handleBack = () => navigate("/admin-compass/jobs");
+  const handleSave = () => {
+    saveEditJd();
+    navigate("/admin-compass/jobs");
+  };
+  const handleSaveAndPublish = () => {
+    saveEditJd();
+    publishJd(editingJd);
+    navigate("/admin-compass/jobs");
+  };
 
   return (
     <div>
@@ -31,7 +44,7 @@ export default function EditJdScreen() {
           marginBottom: 16,
           padding: 0,
         }}
-        onClick={cancelEditJd}
+        onClick={handleBack}
       >
         {ico.arrowLeft} Back to Job Descriptions
       </button>
@@ -58,10 +71,7 @@ export default function EditJdScreen() {
           {jd.status === "draft" && (
             <Btn
               primary
-              onClick={() => {
-                saveEditJd();
-                publishJd(editingJd);
-              }}
+              onClick={handleSaveAndPublish}
             >
               {ico.power} Save & Publish
             </Btn>
@@ -308,8 +318,8 @@ export default function EditJdScreen() {
           borderTop: `1px solid ${T.borderSoft}`,
         }}
       >
-        <Btn onClick={cancelEditJd}>Cancel</Btn>
-        <Btn primary onClick={saveEditJd}>
+        <Btn onClick={handleBack}>Cancel</Btn>
+        <Btn primary onClick={handleSave}>
           <I d="M20 6L9 17l-5-5" size={14} stroke="#fff" /> Save Changes
         </Btn>
       </div>

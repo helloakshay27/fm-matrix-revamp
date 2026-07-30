@@ -264,8 +264,11 @@ const CRMWalletDetails = () => {
                     className="bg-[#F6F4EE]"
                     style={{ border: "1px solid #D9D9D9" }}
                 >
-                    <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                        <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                    <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
+                        <span
+                            className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
+                            style={{ color: '#C72030' }}
+                        >
                             C
                         </span>
                         CUSTOMER DETAILS
@@ -332,8 +335,11 @@ const CRMWalletDetails = () => {
                     className="bg-[#F6F4EE]"
                     style={{ border: "1px solid #D9D9D9" }}
                 >
-                    <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                        <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                    <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
+                        <span
+                            className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
+                            style={{ color: '#C72030' }}
+                        >
                             W
                         </span>
                         WALLET DETAILS
@@ -451,8 +457,11 @@ const CRMWalletDetails = () => {
                     style={{ border: "1px solid #D9D9D9" }}
                 >
                     <div className="flex justify-between items-center">
-                        <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                            <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                        <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
+                            <span
+                                className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
+                                style={{ color: '#C72030' }}
+                            >
                                 R
                             </span>
                             RECURRING RULE STATUS

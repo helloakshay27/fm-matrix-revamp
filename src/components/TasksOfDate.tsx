@@ -91,7 +91,7 @@ const TaskCard = ({ task, selectedDate, isDragging, setDraggedTask }) => {
         e.dataTransfer.effectAllowed = "move";
       }}
       onDragEnd={() => setDraggedTask(null)}
-      className={`p-3 mb-2 border-l-4 cursor-move ${task.priority === "High" ? "border-[#C72030]" : task.priority === "Medium" ? "border-[#ED9017]" : "border-[#1FCFB3]"} bg-[#D5DBDB] ${isDragging ? "opacity-50" : "hover:opacity-80"
+      className={`p-3 mb-2 border-l-4 cursor-move ${String(task.priority).toUpperCase() === "P1" ? "border-[#C72030]" : String(task.priority).toUpperCase() === "P2" ? "border-[#ED9017]" : String(task.priority).toUpperCase() === "P3" ? "border-[#1F7CFB]" : "border-[#1FCFB3]"} bg-[#D5DBDB] ${isDragging ? "opacity-50" : "hover:opacity-80"
         } transition-opacity`}
     >
       <div className="mb-2">

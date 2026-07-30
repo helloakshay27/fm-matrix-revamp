@@ -3032,14 +3032,28 @@ table tbody tr:hover,
    FAILED TO LOAD / ERROR STATES
    =========================================== */
 
-/* Error/Failed state containers */
+/* Error/Failed state containers
+   Do NOT use [class*="text-destructive"] — it also matches
+   text-destructive-foreground on toasts and kills contrast. */
 .error-message,
 .error-state,
 [class*="error-message"],
 [class*="failed-to-load"],
-.text-destructive,
-[class*="text-destructive"] {
+.text-destructive {
   color: var(--color-danger) !important;
+}
+
+/* Keep toast text readable against brand-error-bg */
+[data-radix-collection-item].destructive,
+.destructive[role="status"],
+li.destructive,
+div.destructive.group {
+  color: var(--color-text) !important;
+}
+div.destructive.group [class*="ToastTitle"],
+div.destructive.group [class*="ToastDescription"],
+.destructive.group > div {
+  color: var(--color-text) !important;
 }
 
 /* Failed to load card styling */

@@ -11,11 +11,11 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
-  Button,
   Box,
   Grid,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { Button } from '@/components/ui/button';
 
 interface InventoryFilterDialogProps {
   open: boolean;
@@ -137,7 +137,16 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={() => onOpenChange(false)} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <DialogTitle
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '1.125rem',
+          fontWeight: 600,
+          color: '#111827',
+        }}
+      >
         FILTER BY
         <IconButton size="small" onClick={() => onOpenChange(false)}>
           <CloseIcon fontSize="small" />
@@ -271,16 +280,15 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button
           onClick={handleApply}
-          className="fm-button-fix fm-button-brand h-[45px] px-5 font-medium text-[16px]"
-          disableElevation
+          className="fm-button-fix fm-button-brand px-4 py-2"
         >
-          Apply
+          Apply Filters
         </Button>
 
         <Button
+          variant="outline"
           onClick={handleReset}
-          className="fm-button-fix fm-button-brand h-[45px] px-5 font-medium text-[16px]"
-          disableElevation
+          className="border-brand text-brand hover:bg-brand hover:text-white"
         >
           Reset
         </Button>

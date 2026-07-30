@@ -209,8 +209,8 @@ export const ScheduleFilterDialog = ({
             </Button>
             <Button
               onClick={handleReset}
-              variant="ghost"
-              className="fm-button-fix fm-button-brand px-4 py-2"
+              variant="outline"
+              className="border-brand text-brand hover:bg-brand hover:text-white"
             >
               Reset
             </Button>

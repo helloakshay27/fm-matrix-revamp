@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Download, ChevronDown } from "lucide-react";
+import { Plus, Download } from "lucide-react";
 import { DesignInsightFilterModal } from '@/components/DesignInsightFilterModal';
 import { ExportModal } from '@/components/ExportModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -180,48 +180,48 @@ export const DesignInsightsDashboard = () => {
         searchPlaceholder="Search design insights..."
         enableExport
         handleExport={handleExportCSV}
+        hideTableExport
         pagination
         pageSize={10}
         enableSearch
         loading={loading}
         loadingMessage="Loading..."
-        hideTableExport={false}
         onFilterClick={() => setIsFilterOpen(true)}
         leftActions={
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={handleAddClick}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
-            >
-              <Plus className="w-4 h-4 mr-2" /> Add
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 h-9 px-4 text-sm font-medium whitespace-nowrap"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Report
-                  <ChevronDown className="w-4 h-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="bg-white border shadow-lg z-50">
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => setIsExportOpen(true)}
-                >
-                  With Picture
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => setIsExportOpen(true)}
-                >
-                  Without Picture
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <Button
+            onClick={handleAddClick}
+            className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Add
+          </Button>
+        }
+        filterAdjacentActions={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-brand text-brand hover:bg-brand-selected hover:text-brand flex items-center rounded-lg"
+                title="Download Report"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-white border shadow-lg z-50">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => setIsExportOpen(true)}
+              >
+                With Picture
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => setIsExportOpen(true)}
+              >
+                Without Picture
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         }
       />
 

@@ -333,7 +333,6 @@ export const ScheduledTaskDashboard = () => {
   );
   const [taskData, setTaskData] = useState<TaskRecord[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showTaskFilter, setShowTaskFilter] = useState(false);
   const [currentFilters, setCurrentFilters] = useState<TaskFilters>({});
   const [showTaskExportModal, setShowTaskExportModal] = useState(false);
@@ -440,7 +439,6 @@ export const ScheduledTaskDashboard = () => {
     status: string | null = null
   ) => {
     setLoading(true);
-    setError(null);
 
     try {
       const token = getToken();
@@ -564,7 +562,7 @@ export const ScheduledTaskDashboard = () => {
       setTotalCount(transformedData.length);
     } catch (error) {
       console.error("Error fetching tasks:", error);
-      setError("Failed to fetch tasks. Please try again.");
+      toast.error("Failed to fetch tasks. Please try again.");
       // Set empty data on error
       setTaskData([]);
     } finally {
@@ -1214,34 +1212,7 @@ export const ScheduledTaskDashboard = () => {
 
             {/* Task Table */}
             <div className="rounded-lg">
-              {error ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-red-500">{error}</div>
-                  <Button
-                    onClick={() =>
-                      fetchTasks(
-                        currentFilters,
-                        currentPage,
-                        debouncedSearchQuery
-                      )
-                    }
-                    variant="outline"
-                    className="ml-4"
-                  >
-                    Retry
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  {/* Debug info */}
-                  {console.log(
-                    "Rendering table with data:",
-                    taskData.length,
-                    "items"
-                  )}
-                  {console.log("Search query state:", searchQuery)}{" "}
-                  {/* Additional debug */}
-                  <EnhancedTaskTable
+              <EnhancedTaskTable
                     data={taskData}
                     columns={[
                       {
@@ -1445,8 +1416,6 @@ export const ScheduledTaskDashboard = () => {
                       setShowSelectionPanel(checked && taskData.length > 0);
                     }}
                   />
-                </>
-              )}
             </div>
 
             {/* Pagination */}

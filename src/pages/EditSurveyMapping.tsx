@@ -1605,10 +1605,9 @@ export const EditSurveyMapping = () => {
 
           <div className="flex justify-end">
             <Button
-              variant="outline"
               onClick={addSurveyMapping}
               disabled={isSubmitting}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white [&_svg]:!text-white"
             >
               <Plus className="w-4 h-4" />
               Add Location Configuration
@@ -1749,8 +1748,7 @@ export const EditSurveyMapping = () => {
 
       <div className="flex items-center gap-3 justify-center pt-2">
         <Button
-          variant="destructive"
-          className="px-8"
+          className="px-8 bg-brand hover:bg-brand-hover text-white"
           onClick={handleSubmit}
           disabled={isSubmitting}
         >
@@ -1765,7 +1763,7 @@ export const EditSurveyMapping = () => {
         </Button>
         <Button
           variant="outline"
-          className="px-8"
+          className="px-8 border-brand text-brand hover:bg-brand-selected hover:text-brand"
           onClick={() => navigate("/maintenance/survey/mapping")}
           disabled={isSubmitting}
         >

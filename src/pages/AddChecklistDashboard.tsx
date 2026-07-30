@@ -326,7 +326,7 @@ export const AddChecklistDashboard = () => {
         <Button
           onClick={handleProceed}
           variant="outline"
-          className="border-gray-300 px-8"
+          className="border-brand text-brand hover:bg-brand-selected px-8"
         >
           Proceed
         </Button>

@@ -51,6 +51,15 @@ const GSTR3BSummary: React.FC = () => {
     return date.toISOString().split('T')[0];
   };
 
+  // Display-only formatter: converts an ISO (yyyy-MM-dd) date string to dd/MM/yyyy for on-screen rendering.
+  // Do NOT use this for startDate/endDate state itself — those must stay ISO for the <Input type="date"> bindings and API params.
+  const formatDisplayDate = (isoDate: string): string => {
+    if (!isoDate) return "";
+    const d = new Date(`${isoDate}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return isoDate;
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  };
+
   const calculateDates = (filter: string) => {
     const now = new Date();
     let start: Date, end: Date;
@@ -208,7 +217,7 @@ const GSTR3BSummary: React.FC = () => {
 
         <div className="flex items-center gap-4 flex-wrap">
           <div className="text-sm text-gray-600">
-            {startDate} to {endDate}
+            {formatDisplayDate(startDate)} to {formatDisplayDate(endDate)}
           </div>
 
           <DropdownMenu>

@@ -1378,7 +1378,11 @@ const BusinessCompassDailyReport = lazy(() => import("./pages/BusinessCompass/Bu
 const BusinessPlanAndGoles = lazy(() => import("./pages/AdminCompass/BusinessPlanAndGoles"));
 const DailyMeeting = lazy(() => import("./pages/AdminCompass/DailyMeeting"));
 const KPI = lazy(() => import("./pages/AdminCompass/KPI"));
+const AdminCompassJobsLayout = lazy(() => import("./pages/AdminCompass/Jobs/JobsLayout"));
 const AdminCompassJobs = lazy(() => import("./pages/AdminCompass/Jobs"));
+const AdminCompassJobsCreate = lazy(() => import("./pages/AdminCompass/Jobs/JobsCreatePage"));
+const AdminCompassJobsView = lazy(() => import("./pages/AdminCompass/Jobs/JobsViewPage"));
+const AdminCompassJobsEdit = lazy(() => import("./pages/AdminCompass/Jobs/JobsEditPage"));
 const ReportAnalytics = lazy(() => import("./pages/ReportAnalytics"));
 const WeeklyMeetings = lazy(() => import("./pages/AdminCompass/WeeklyMeetings"));
 const TeamDashboard = lazy(() => import("./pages/AdminCompass/TeamDashboard"));
@@ -2412,8 +2416,13 @@ function App() {
                             />
                             <Route
                               path="/admin-compass/jobs"
-                              element={<AdminCompassJobs />}
-                            />
+                              element={<AdminCompassJobsLayout />}
+                            >
+                              <Route index element={<AdminCompassJobs />} />
+                              <Route path="create" element={<AdminCompassJobsCreate />} />
+                              <Route path="edit/:id" element={<AdminCompassJobsEdit />} />
+                              <Route path=":id" element={<AdminCompassJobsView />} />
+                            </Route>
                             <Route
                               path="/admin-compass/disc-report"
                               element={<DiscReport />}

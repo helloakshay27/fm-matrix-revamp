@@ -79,10 +79,10 @@ interface BCIssueEditModalProps {
 }
 
 const globalPriorityOptions = [
-  { value: "urgent", label: "Urgent" },
-  { value: "high", label: "High" },
-  { value: "medium", label: "Medium" },
-  { value: "low", label: "Low" },
+  { value: "P1", label: "P1: Urgent & Important" },
+  { value: "P2", label: "P2: Important, Not Urgent" },
+  { value: "P3", label: "P3: Urgent, Not Important" },
+  { value: "P4", label: "P4: Not Urgent or Important" },
 ];
 
 const Attachments = ({ attachments, setAttachments }: { attachments: File[]; setAttachments: (f: File[]) => void }) => {

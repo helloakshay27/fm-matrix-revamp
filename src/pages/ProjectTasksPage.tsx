@@ -1496,7 +1496,7 @@ const ProjectTasksPage = () => {
 
         // Add global search filter (searches in title, task_code, and description)
         if (debouncedSearchTerm.trim()) {
-            filters["q[title_or_task_code_or_description_cont]"] =
+            filters["q[id_or_title_or_task_code_or_description_cont]"] =
                 debouncedSearchTerm.trim();
         }
 
@@ -1815,7 +1815,7 @@ const ProjectTasksPage = () => {
                 expected_start_date: data.expected_start_date,
                 target_date: data.target_date,
                 status: data.status || "open",
-                priority: data.priority || "Medium",
+                priority: data.priority || "P2",
                 active: true,
                 responsible_person_id: data.responsible || data.responsible_person_id,
                 ...(projectId && { project_management_id: projectId }),
@@ -2808,15 +2808,16 @@ const ProjectTasksPage = () => {
         if (columnKey === "priority") {
             return (
                 <Select
-                    value={value || "Medium"}
+                    value={value || "P2"}
                     onChange={(e) => onChange(e.target.value)}
                     displayEmpty
                     size="small"
                     sx={{ minWidth: 110 }}
                 >
-                    <MenuItem value="High">High</MenuItem>
-                    <MenuItem value="Medium">Medium</MenuItem>
-                    <MenuItem value="Low">Low</MenuItem>
+                    <MenuItem value="P1">P1</MenuItem>
+                    <MenuItem value="P2">P2</MenuItem>
+                    <MenuItem value="P3">P3</MenuItem>
+                    <MenuItem value="P4">P4</MenuItem>
                 </Select>
             );
         }
@@ -3360,7 +3361,7 @@ const ProjectTasksPage = () => {
                     onSort={handleColumnSort}
                     onSearchChange={handleSearchChange}
                     onFilterClick={() => setIsFilterModalOpen(true)}
-                    canAddRow={true}
+                    // canAddRow={true}
                     loading={isLoading}
                     readonlyColumns={["id", "duration", "predecessor", "successor"]}
                     onAddRow={(newRowData) => {

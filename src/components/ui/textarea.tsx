@@ -41,7 +41,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         <div className="field-group relative" style={{ margin: '20px 0' }}>
           <textarea
             className={cn(
-              "floating-label flex min-h-[80px] w-full pt-4 pb-2 px-[15px] text-base border border-[#ccc] rounded transition-colors placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 resize-vertical",
+              "floating-label flex min-h-[80px] w-full pt-4 pb-2 px-[15px] text-base border border-[#ccc] rounded transition-colors placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-brand disabled:cursor-not-allowed disabled:opacity-50 resize-vertical",
               className
             )}
             placeholder=""
@@ -71,7 +71,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         className={cn(
-          "flex min-h-[80px] w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-base transition-colors placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 resize-vertical",
+          "flex min-h-[80px] w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-base transition-colors placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-brand disabled:cursor-not-allowed disabled:opacity-50 resize-vertical",
           className
         )}
         placeholder={placeholder}

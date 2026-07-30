@@ -78,15 +78,20 @@ const buildScheduleSelectStyles = (
     ...base,
     zIndex: 9999,
     boxSizing: 'border-box',
+    overflow: 'hidden',
   }),
   menuList: (base) => ({
     ...base,
     padding: 0,
-    maxHeight: MENU_MAX_HEIGHT,
+    overflowY: 'auto',
   }),
   option: (base, state) => ({
     ...base,
-    backgroundColor: state.isFocused ? 'var(--color-primary-selected)' : '#fff',
+    backgroundColor: state.isSelected
+      ? 'var(--color-primary-light)'
+      : state.isFocused
+        ? 'var(--color-primary-selected)'
+        : '#fff',
     color: '#000',
     cursor: 'pointer',
     padding: '8px 12px',
@@ -106,30 +111,23 @@ const buildScheduleSelectStyles = (
   }),
 });
 
+const SEARCH_BAR_HEIGHT = 64;
+
 const MenuListWithSearch = (
   props: MenuListProps<ReactSelectOption, false, GroupBase<ReactSelectOption>>
 ) => {
-  const { children, innerRef, innerProps, selectProps } = props;
-  const extra = selectProps as typeof selectProps & FormSearchSelectExtraProps;
+  const { children, maxHeight, innerProps } = props;
+  const extra = props.selectProps as typeof props.selectProps & FormSearchSelectExtraProps;
   const { menuSearch, onMenuSearchChange } = extra;
+  const listMaxHeight = Math.max(120, (maxHeight ?? MENU_MAX_HEIGHT) - SEARCH_BAR_HEIGHT);
 
   return (
-    <components.MenuList
-      {...props}
-      innerRef={innerRef}
-      innerProps={{
-        ...innerProps,
-        onWheel: (e: React.WheelEvent<HTMLDivElement>) => {
-          e.stopPropagation();
-          innerProps?.onWheel?.(e);
-        },
-        style: {
-          ...innerProps?.style,
-          padding: 0,
-          maxHeight: MENU_MAX_HEIGHT,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-        },
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        maxHeight: maxHeight ?? MENU_MAX_HEIGHT,
+        overflow: 'hidden',
       }}
     >
       <div
@@ -153,8 +151,28 @@ const MenuListWithSearch = (
           autoComplete="off"
         />
       </div>
-      {children}
-    </components.MenuList>
+      <components.MenuList
+        {...props}
+        maxHeight={listMaxHeight}
+        innerProps={{
+          ...innerProps,
+          onWheel: (e: React.WheelEvent<HTMLDivElement>) => {
+            // Keep wheel scrolling inside the menu; don't scroll the page.
+            e.stopPropagation();
+            innerProps?.onWheel?.(e);
+          },
+          style: {
+            ...innerProps?.style,
+            maxHeight: listMaxHeight,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            WebkitOverflowScrolling: 'touch',
+          },
+        }}
+      >
+        {children}
+      </components.MenuList>
+    </div>
   );
 };
 
@@ -225,6 +243,7 @@ export const FormSearchSelect: React.FC<FormSearchSelectProps> = ({
           ...base,
           zIndex: 9999,
           boxSizing: 'border-box' as const,
+          overflow: 'hidden' as const,
         };
         if (!measuredWidth) {
           return {
@@ -325,7 +344,11 @@ export const FormSearchSelect: React.FC<FormSearchSelectProps> = ({
             typeof document !== 'undefined' ? document.body : null
           }
           menuPosition="fixed"
+          maxMenuHeight={MENU_MAX_HEIGHT}
           styles={selectStyles}
+          formatOptionLabel={(opt) => (
+            <span title={opt.label}>{opt.label}</span>
+          )}
           noOptionsMessage={() =>
             isLoading ? 'Loading...' : 'No options found'
           }

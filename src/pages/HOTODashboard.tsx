@@ -94,7 +94,7 @@ export const HOTODashboard: React.FC = () => {
             type="button"
             variant="outline"
             onClick={handleGoBack}
-            className="fm-button-fix border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+            className="fm-button-fix border-brand text-brand hover:bg-brand-selected px-8 py-2"
           >
             Discard
           </Button>

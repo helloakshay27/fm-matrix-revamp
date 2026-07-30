@@ -97,7 +97,7 @@ export const ClubBroadcastDetailsPage = () => {
         return (
             <div className="p-6 bg-white min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-4"></div>
                     <p className="text-gray-700">Loading broadcast details...</p>
                 </div>
             </div>
@@ -111,7 +111,7 @@ export const ClubBroadcastDetailsPage = () => {
                 <Button
                     variant="ghost"
                     onClick={() => navigate(-1)}
-                    className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-0"
+                    className="flex items-center gap-2 text-brand hover:text-brand hover:bg-brand-selected px-0"
                 >
                     <ArrowLeft className="w-4 h-4" />
                     Back to Broadcasts
@@ -120,7 +120,7 @@ export const ClubBroadcastDetailsPage = () => {
                     variant="outline"
                     onClick={handlePrint}
                     disabled={isPrinting}
-                    className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+                    className="flex items-center gap-2 border-brand text-brand hover:bg-brand-selected hover:text-brand"
                 >
                     {
                         isPrinting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />
@@ -131,7 +131,7 @@ export const ClubBroadcastDetailsPage = () => {
             {/* Broadcast Details Section */}
             <div className="bg-white rounded-lg border border-gray-200 mb-6">
                 <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
-                    <div className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                    <div className="w-[40px] h-[40px] bg-brand text-white rounded-full flex items-center justify-center text-md font-bold">
                         B
                     </div>
                     <h2 className="text-lg font-bold text-gray-900">BROADCAST DETAILS</h2>
@@ -224,7 +224,7 @@ export const ClubBroadcastDetailsPage = () => {
 
             <div className="bg-white rounded-lg border border-gray-200 mb-6">
                 <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
-                    <div className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                    <div className="w-[40px] h-[40px] bg-brand text-white rounded-full flex items-center justify-center text-md font-bold">
                         D
                     </div>
                     <h2 className="text-lg font-bold text-gray-900">Description</h2>
@@ -238,7 +238,7 @@ export const ClubBroadcastDetailsPage = () => {
             {/* Attachments Section */}
             <div className="bg-white rounded-lg border border-gray-200 mb-6">
                 <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
-                    <div className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                    <div className="w-[40px] h-[40px] bg-brand text-white rounded-full flex items-center justify-center text-md font-bold">
                         A
                     </div>
                     <h2 className="text-lg font-bold text-gray-900">ATTACHMENTS</h2>
@@ -266,7 +266,7 @@ export const ClubBroadcastDetailsPage = () => {
 
             <div className="bg-white rounded-lg border border-gray-200 mb-6">
                 <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
-                    <div className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                    <div className="w-[40px] h-[40px] bg-brand text-white rounded-full flex items-center justify-center text-md font-bold">
                         S
                     </div>
                     <h2 className="text-lg font-bold text-gray-900">Shared With</h2>

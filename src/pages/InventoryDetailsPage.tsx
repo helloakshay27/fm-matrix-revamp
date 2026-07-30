@@ -5,8 +5,17 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, QrCode, Edit, Loader2, Box, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { apiClient } from '@/utils/apiClient';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+
+const historyColumns: ColumnConfig[] = [
+  { key: 'dateTime', label: 'Date / Time', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'changedBy', label: 'Changed By', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'logType', label: 'Log Type', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'changes', label: 'Changes', sortable: false, hideable: true, defaultVisible: true },
+];
 
 export const InventoryDetailsPage = () => {
   const { id } = useParams();
@@ -21,6 +30,7 @@ export const InventoryDetailsPage = () => {
   const [feedsLoading, setFeedsLoading] = useState(false);
   const [feedsError, setFeedsError] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
+  const [historySearchTerm, setHistorySearchTerm] = useState('');
   const [hsnCodeDisplay, setHsnCodeDisplay] = useState<string>('');
   // Maps for displaying master names instead of IDs in history
   const [invTypeMap, setInvTypeMap] = useState<Record<string, string>>({});
@@ -960,90 +970,131 @@ export const InventoryDetailsPage = () => {
             <div className="bg-white rounded-lg border text-[15px]">
               <div className="flex p-4 items-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                  <Box className="w-6 h-6 text-[#DA7756]" />
+                  <Box className="w-6 h-6 text-brand" />
                 </div>
                 <h2 className="text-lg font-[700]">HISTORY</h2>
               </div>
               <div className="p-4">
-                {feedsLoading && (
-                  <div className="text-gray-600 text-sm">Loading history...</div>
-                )}
                 {feedsError && (
-                  <div className="text-red-600 text-sm">{feedsError}</div>
+                  <div className="text-brand-error text-sm mb-3">{feedsError}</div>
                 )}
-                {!feedsLoading && !feedsError && feeds.length === 0 && (
-                  <div className="text-gray-600 text-sm">No history available.</div>
-                )}
-                {!feedsLoading && !feedsError && feeds.length > 0 && (
-                  <div className="rounded-md border border-gray-200 shadow-sm">
-                    <div className="max-h-[520px] overflow-y-auto relative">
-                      <table className="min-w-full text-sm">
-                        <thead className="sticky top-0 z-10 bg-gray-100/95 backdrop-blur-sm">
-                          <tr className="text-xs uppercase tracking-wide text-gray-600">
-                            <th className="px-4 py-3 text-left font-semibold">Date / Time</th>
-                            <th className="px-4 py-3 text-left font-semibold">Changed By</th>
-                            <th className="px-4 py-3 text-left font-semibold">Log Type</th>
-                            <th className="px-4 py-3 text-left font-semibold w-2/3">Changes</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {feeds.map((feed, idx) => {
-                            const changes = parseChangedAttr(feed.changed_attr);
-                            const expanded = expandedRows[feed.id];
-                            const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/70';
-                            return (
-                              <tr
-                                key={feed.id}
-                                className={`${rowBg} hover:bg-[#f6f4ee] transition-colors`}
-                              >
-                                <td className="px-4 py-3 align-top whitespace-nowrap text-gray-800">
-                                  <div className="flex flex-col">
-                                    <span title={feed.created_at}>{formatDateTime(feed.created_at)}</span>
-                                    <span className="text-[10px] text-gray-500">{relativeTime(feed.created_at)}</span>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3 align-top whitespace-nowrap text-gray-700 font-medium">{feed.changed_by || '—'}</td>
-                                <td className="px-4 py-3 align-top">
-                                  <span className="inline-block px-2 py-1 rounded-full text-[11px] font-semibold bg-[#DA7756]/10 text-[#DA7756] whitespace-nowrap leading-none">
-                                    {feed.log_type?.replace('Pms::', '') || '—'}
+                <div className="w-full min-w-0 max-w-full">
+                  <EnhancedTable
+                    data={feeds.map((feed) => {
+                      const changes = parseChangedAttr(feed.changed_attr).filter(
+                        (c) => !HIDDEN_KEYS.has(c.key)
+                      );
+                      return {
+                        ...feed,
+                        id: feed.id,
+                        dateTime: formatDateTime(feed.created_at),
+                        relative: relativeTime(feed.created_at),
+                        changedBy: feed.changed_by || '',
+                        logType: feed.log_type?.replace('Pms::', '') || '',
+                        changesList: changes,
+                        changesSearch: changes
+                          .map(
+                            (c) =>
+                              `${LABELS[c.key] || startCase(c.key)} ${formatValue(c.key, c.from)} ${formatValue(c.key, c.to)}`
+                          )
+                          .join(' '),
+                      };
+                    })}
+                    columns={historyColumns}
+                    renderCell={(item: any, columnKey: string) => {
+                      switch (columnKey) {
+                        case 'dateTime':
+                          return (
+                            <div className="flex flex-col gap-0.5 whitespace-nowrap">
+                              <span className="text-sm font-medium text-gray-900" title={item.created_at}>
+                                {item.dateTime || '—'}
+                              </span>
+                              <span className="text-[11px] text-gray-500 leading-none">
+                                {item.relative || ''}
+                              </span>
+                            </div>
+                          );
+                        case 'changedBy':
+                          return (
+                            <span className="text-sm font-medium text-gray-800 whitespace-nowrap">
+                              {item.changedBy || '—'}
+                            </span>
+                          );
+                        case 'logType':
+                          return item.logType ? (
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-brand-light text-brand whitespace-nowrap leading-none">
+                              {item.logType}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          );
+                        case 'changes': {
+                          const changes = item.changesList || [];
+                          const expanded = !!expandedRows[item.id];
+                          if (changes.length === 0) {
+                            return <span className="text-gray-400">—</span>;
+                          }
+                          const visible = expanded ? changes : changes.slice(0, 3);
+                          return (
+                            <div className="flex flex-col gap-1.5 min-w-[280px] max-w-xl">
+                              {visible.map((c: any) => (
+                                <div
+                                  key={c.key}
+                                  className="flex items-center flex-wrap gap-1.5 text-[12px] bg-gray-50 border border-gray-100 rounded-md px-2.5 py-1.5"
+                                >
+                                  <span className="font-semibold text-gray-700 shrink-0">
+                                    {LABELS[c.key] || startCase(c.key)}
                                   </span>
-                                </td>
-                                <td className="px-4 py-3 align-top">
-                                  {changes.length === 0 && (
-                                    <span className="text-gray-400">—</span>
+                                  <span className="text-gray-400 line-through">
+                                    {formatValue(c.key, c.from)}
+                                  </span>
+                                  <ArrowRight className="w-3 h-3 text-gray-400 shrink-0" />
+                                  <span className="text-green-700 font-semibold">
+                                    {formatValue(c.key, c.to)}
+                                  </span>
+                                </div>
+                              ))}
+                              {changes.length > 3 && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleRow(item.id);
+                                  }}
+                                  className="flex items-center gap-1 self-start text-[11px] text-brand hover:underline mt-0.5"
+                                >
+                                  {expanded ? (
+                                    <ChevronUp className="w-3 h-3" />
+                                  ) : (
+                                    <ChevronDown className="w-3 h-3" />
                                   )}
-                                  {changes.length > 0 && (
-                                    <div className="flex flex-col gap-1">
-                                      {(expanded ? changes : changes.slice(0, 3))
-                                        .filter(c => !HIDDEN_KEYS.has(c.key))
-                                        .map(c => (
-                                          <div key={c.key} className="flex items-start flex-wrap gap-1 text-[12px] bg-gray-100 rounded px-2 py-1">
-                                            <span className="font-semibold text-gray-700">{LABELS[c.key] || startCase(c.key)}</span>
-                                            <span className="text-gray-400 line-through">{formatValue(c.key, c.from)}</span>
-                                            <ArrowRight className="w-3 h-3 text-gray-400 mt-0.5" />
-                                            <span className="text-green-700 font-semibold">{formatValue(c.key, c.to)}</span>
-                                          </div>
-                                        ))}
-                                      {changes.filter(c => !HIDDEN_KEYS.has(c.key)).length > 3 && (
-                                        <button
-                                          onClick={() => toggleRow(feed.id)}
-                                          className="flex items-center gap-1 self-start text-[11px] text-[#DA7756] hover:underline mt-1"
-                                        >
-                                          {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                                          {expanded ? 'Show less' : `Show ${changes.filter(c => !HIDDEN_KEYS.has(c.key)).length - 3} more`}
-                                        </button>
-                                      )}
-                                    </div>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
+                                  {expanded
+                                    ? 'Show less'
+                                    : `Show ${changes.length - 3} more`}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        }
+                        default:
+                          return '—';
+                      }
+                    }}
+                    storageKey="inventory-details-history-table"
+                    enableSearch
+                    searchTerm={historySearchTerm}
+                    onSearchChange={setHistorySearchTerm}
+                    searchPlaceholder="Search history..."
+                    hideTableExport
+                    emptyMessage="No history available."
+                    loading={feedsLoading}
+                    loadingMessage="Loading history..."
+                    pagination
+                    pageSize={10}
+                    getItemId={(item) => String(item.id)}
+                    className="[&_td]:align-top [&_th]:align-middle"
+                  />
+                </div>
               </div>
             </div>
           </TabsContent>

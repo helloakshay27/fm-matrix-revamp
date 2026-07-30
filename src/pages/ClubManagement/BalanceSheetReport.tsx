@@ -164,7 +164,7 @@ const BalanceSheetReport: React.FC = () => {
           >
             <a
               href={targetUrl}
-              className={`text-blue-700 ${drillDownSupported ? 'underline' : ''}`}
+              className={`text-brand ${drillDownSupported ? 'underline' : ''}`}
               onClick={(e) => { e.preventDefault(); navigate(targetUrl); }}
             >
               {ledger.ledger_name}
@@ -219,7 +219,7 @@ const BalanceSheetReport: React.FC = () => {
                 return (
                   <a
                     href={targetUrl}
-                    className={`text-blue-600 ${drillDownSupported ? 'underline' : ''}`}
+                    className={`text-brand ${drillDownSupported ? 'underline' : ''}`}
                     onClick={(e) => { e.preventDefault(); navigate(targetUrl); }}
                   >
                     {node.name}
@@ -494,7 +494,7 @@ const BalanceSheetReport: React.FC = () => {
       >
         {row.isLedger ? (
           <span
-            className="text-blue-600 cursor-pointer hover:underline"
+            className="text-brand cursor-pointer hover:underline"
             onClick={() =>
               navigate(
                 `/accounting/reports/balance-sheet/details/${row.ledger_id}`

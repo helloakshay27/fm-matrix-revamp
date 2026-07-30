@@ -248,7 +248,7 @@ const ExpenseSummaryByCategoryReport: React.FC = () => {
 
   const renderRow = (row: ExpenseSummaryRow) => {
     const isTotal = row.id === "__total__";
-    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`;
+    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`;
     return {
       category_name: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
@@ -260,7 +260,7 @@ const ExpenseSummaryByCategoryReport: React.FC = () => {
       ) : (
         <button
           onClick={() => fetchDetail(row, filters.fromDate, filters.toDate)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {formatCurrency(row.amount)}
         </button>
@@ -270,7 +270,7 @@ const ExpenseSummaryByCategoryReport: React.FC = () => {
       ) : (
         <button
           onClick={() => fetchDetail(row, filters.fromDate, filters.toDate)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {formatCurrency(row.amount_with_tax)}
         </button>
@@ -280,9 +280,9 @@ const ExpenseSummaryByCategoryReport: React.FC = () => {
 
   const renderDetailRow = (row: ExpenseDetailRow) => {
     const isTotal = row.type === "__total__";
-    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`;
+    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`;
     return {
-      date: <span className="text-sm text-gray-600">{isTotal ? "" : row.date}</span>,
+      date: <span className="text-sm text-gray-600">{isTotal ? "" : formatDisplayDate(row.date)}</span>,
       type: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
       ) : (
@@ -293,7 +293,7 @@ const ExpenseSummaryByCategoryReport: React.FC = () => {
       ) : row.customerId ? (
         <button
           onClick={() => navigate(`/accounting/customers/details/${row.customerId}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.customer_name}
         </button>
@@ -305,7 +305,7 @@ const ExpenseSummaryByCategoryReport: React.FC = () => {
       ) : row.vendorId ? (
         <button
           onClick={() => navigate(`/maintenance/vendor/view/${row.vendorId}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.vendor_name}
         </button>

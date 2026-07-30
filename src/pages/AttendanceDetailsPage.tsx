@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { getReturnToFromState } from '@/utils/listBackNavigation';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 interface AttUser {
   id: number;
   name: string | null;
@@ -25,6 +25,14 @@ interface AttendanceResponse {
   att_user: AttUser;
   attendances: AttendanceRecord[];
 }
+
+const attendanceColumns: ColumnConfig[] = [
+  { key: 'date', label: 'Date', sortable: true, hideable: false, defaultVisible: true },
+  { key: 'punched_in_time', label: 'Punched In Time', sortable: false, hideable: false, defaultVisible: true },
+  { key: 'punched_out_time', label: 'Punched Out Time', sortable: false, hideable: false, defaultVisible: true },
+  { key: 'duration', label: 'Duration', sortable: false, hideable: false, defaultVisible: true },
+];
+
 export const AttendanceDetailsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -121,34 +129,24 @@ export const AttendanceDetailsPage = () => {
 
       {/* Attendance Records Table */}
       <div className="bg-white rounded-lg border">
-        <div className="max-h-[60vh] overflow-y-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="sticky top-0 bg-white z-10">Date</TableHead>
-                <TableHead className="sticky top-0 bg-white z-10">Punched In Time</TableHead>
-                <TableHead className="sticky top-0 bg-white z-10">Punched Out Time</TableHead>
-                <TableHead className="sticky top-0 bg-white z-10">Duration</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {allRecords.length > 0 ? allRecords.map(record => (
-                <TableRow key={record.id}>
-                  <TableCell className="font-medium">{record.date}</TableCell>
-                  <TableCell>{record.punched_in_time}</TableCell>
-                  <TableCell>{record.punched_out_time || '-'}</TableCell>
-                  <TableCell>{record.duration}</TableCell>
-                </TableRow>
-              )) : (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                    No attendance records found for this user.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <EnhancedTable
+          data={allRecords}
+          columns={attendanceColumns}
+          renderCell={(item: AttendanceRecord, columnKey: string) => {
+            if (columnKey === 'punched_out_time') {
+              return item.punched_out_time || '-';
+            }
+            return item[columnKey as keyof AttendanceRecord] as React.ReactNode;
+          }}
+          storageKey="attendance-details-table"
+          hideTableSearch
+          hideTableExport
+          hideColumnsButton
+          emptyMessage="No attendance records found for this user."
+          pagination
+          pageSize={15}
+          getItemId={(item) => String(item.id)}
+        />
       </div>
     </>}
 

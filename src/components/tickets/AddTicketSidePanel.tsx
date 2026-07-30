@@ -1098,7 +1098,7 @@ export const AddTicketSidePanel: React.FC<AddTicketSidePanelProps> = ({
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8 py-2"
+              className="bg-brand hover:bg-brand-hover text-white px-8 py-2"
             >
               {isSubmitting ? 'Creating...' : 'Create Ticket'}
             </Button>
@@ -1106,7 +1106,7 @@ export const AddTicketSidePanel: React.FC<AddTicketSidePanelProps> = ({
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+              className="border-brand text-brand hover:bg-brand-selected px-8 py-2"
             >
               Cancel
             </Button>

@@ -151,31 +151,29 @@ export const WBSElementDashboard = () => {
     </div>
   );
 
-  const leftAction = (
-    <div className="flex gap-3">
-      {shouldShow("WBS", "create") && (
-        <Button
-          style={{ backgroundColor: '#C72030' }}
-          className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-          onClick={() => setIsAddDialogOpen(true)}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add
-        </Button>
-      )}
-      {shouldShow("WBS", "create") && (
-        <Button
-          variant="outline"
-          className="fm-button-fix fm-button-brand px-4 py-2"
-          onClick={() => setIsBulkUploadOpen(true)}
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Import
-        </Button>
-      )}
-    </div>
-  );
+  const leftAction = shouldShow("WBS", "create") ? (
+    <Button
+      style={{ backgroundColor: '#C72030' }}
+      className="fm-button-fix fm-button-brand px-4 py-2"
+      variant="ghost"
+      onClick={() => setIsAddDialogOpen(true)}
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      Add
+    </Button>
+  ) : undefined;
+
+  const importAction = shouldShow("WBS", "create") ? (
+    <Button
+      onClick={() => setIsBulkUploadOpen(true)}
+      title="Import"
+      variant="outline"
+      size="sm"
+      className="h-9 w-9 p-0 rounded-lg border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+    >
+      <Download className="w-4 h-4" />
+    </Button>
+  ) : undefined;
 
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
@@ -192,6 +190,7 @@ export const WBSElementDashboard = () => {
         renderCell={renderCell}
         renderActions={renderActions}
         leftActions={leftAction}
+        filterAdjacentActions={importAction}
         storageKey="wbs-table"
         emptyMessage="No WBS elements found"
         loading={loading}

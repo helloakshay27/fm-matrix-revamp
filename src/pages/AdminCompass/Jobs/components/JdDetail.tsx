@@ -1,14 +1,16 @@
 // @ts-nocheck
+import { useNavigate } from "react-router-dom";
 import { useJobs } from "../JobsContext";
 import { T, COLORS } from "../constants";
 import { I, ico } from "../icons";
 import { card, Btn, StatusPill } from "./UI";
 
 export default function JdDetail() {
+  const navigate = useNavigate();
   const {
-    allJds, viewingJd, setViewingJd,
+    allJds, viewingJd,
     allKras, allKpis,
-    startEditJd, publishJd, setAssignModal,
+    publishJd, setAssignModal,
     initials,
   } = useJobs();
 
@@ -36,7 +38,7 @@ export default function JdDetail() {
           marginBottom: 16,
           padding: 0,
         }}
-        onClick={() => setViewingJd(null)}
+        onClick={() => navigate("/admin-compass/jobs")}
       >
         {ico.arrowLeft} Back to Job Descriptions
       </button>
@@ -69,7 +71,7 @@ export default function JdDetail() {
             )}
             <Btn
               onClick={() => {
-                startEditJd(jd.id);
+                navigate(`/admin-compass/jobs/edit/${jd.id}`);
               }}
             >
               {ico.edit} Edit

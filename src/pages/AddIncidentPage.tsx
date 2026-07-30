@@ -2431,8 +2431,7 @@ export const AddIncidentPage = () => {
       <div className="flex justify-center pt-6">
         <Button
           onClick={handleSubmit}
-          variant="ghost"
-          className="fm-button-fix fm-button-brand px-8 text-[18px]"
+          className="px-8 bg-brand hover:bg-brand-hover text-white"
         >
           Create Incident
         </Button>

@@ -783,6 +783,7 @@ export const AddBroadcastPage = () => {
 
         <div className="flex justify-center gap-4 mt-8 pb-8">
           <Button
+            type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
             className="min-w-[150px] h-10 !bg-brand hover:!bg-brand-hover !text-white disabled:!bg-brand disabled:!text-white disabled:opacity-100"
@@ -792,9 +793,10 @@ export const AddBroadcastPage = () => {
             </span>
           </Button>
           <Button
+            type="button"
             onClick={() => navigate(-1)}
-            variant="outline"
-            className="min-w-[150px] h-10 !border-brand !text-brand hover:!bg-brand hover:!text-white"
+            variant="ghost"
+            className="min-w-[150px] h-10 bg-white border border-brand !text-brand hover:!bg-[rgba(218,119,86,0.08)] hover:!text-brand hover:!border-brand active:!bg-[rgba(218,119,86,0.08)] active:!text-brand"
           >
             Cancel
           </Button>

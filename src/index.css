@@ -380,8 +380,8 @@ body {
     --muted-foreground: 0 0% 53%;
     --accent: 17 64% 60% / 0.08;
     --accent-foreground: 0 0% 17%;
-    --destructive: 0 58% 72%;
-    /* #E7848E */
+    --destructive: 355 55% 48%;
+    /* darker error for readable contrast with white text */
     --destructive-foreground: 0 0% 100%;
     --border: 40 20% 73%;
     /* #C4B89D */
