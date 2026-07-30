@@ -44,10 +44,10 @@ const Transition = forwardRef(function Transition(
 });
 
 const globalPriorityOptions = [
-    { value: 5, label: "Urgent" },
-    { value: 4, label: "High" },
-    { value: 3, label: "Medium" },
-    { value: 2, label: "Low" },
+    { value: "P1", label: "P1: Urgent & Important" },
+    { value: "P2", label: "P2: Important, Not Urgent" },
+    { value: "P3", label: "P3: Urgent, Not Important" },
+    { value: "P4", label: "P4: Not Urgent or Important" },
 ];
 
 const Attachments = ({ attachments, setAttachments }) => {
@@ -334,10 +334,10 @@ const EditIssueModal = ({
                 setEndDate(null);
             }
 
-            // Priorities are fixed options 2-5. issueData.priority is string (e.g. "high").
+            // Priorities are fixed options P1-P4. issueData.priority is stored as-is (e.g. "P1").
             if (issueData.priority) {
-                const pLabel = issueData.priority.charAt(0).toUpperCase() + issueData.priority.slice(1).toLowerCase();
-                const pOption = globalPriorityOptions.find(o => o.label === pLabel);
+                const pValue = String(issueData.priority).toUpperCase();
+                const pOption = globalPriorityOptions.find(o => o.value === pValue);
                 if (pOption) {
                     setPriority(pOption.value);
                 }
@@ -859,13 +859,8 @@ const EditIssueModal = ({
             formData.append("issue[end_date]", formattedEndDate || "");
 
             // Priority
-            // If priority is an ID (value), we need the label? 
-            // AddIssueModal sends the label.
-            const priorityOption = globalPriorityOptions.find(
-                (option) => String(option.value) === String(priority)
-            );
-            if (priorityOption) {
-                formData.append("issue[priority]", priorityOption.label);
+            if (priority) {
+                formData.append("issue[priority]", String(priority));
             }
 
             // created_by_id - should we update this? probably not.

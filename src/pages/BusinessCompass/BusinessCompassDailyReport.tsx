@@ -154,6 +154,10 @@ interface AccomplishmentItem {
   completed: boolean;
   starred: boolean;
   fromYesterday?: boolean;
+  // Set when this item was pulled in from a reportee's report — the reportee
+  // stays the owner of record even though it's submitted inside this report.
+  ownerId?: number | string | null;
+  ownerName?: string | null;
 }
 
 interface DailyReportDraft {
@@ -202,6 +206,58 @@ const getReportItemText = (item: any) =>
   );
 
 const getReportDateKey = (date: unknown) => cleanReportText(date).slice(0, 10);
+
+const ORIGINAL_DATA_OMIT_KEYS = [
+  // task-side bookkeeping
+  "task_code",
+  "total_issues",
+  "completed_issues",
+  "total_sub_tasks",
+  "completed_sub_tasks",
+  "sub_tasks_managements",
+  "estimated_min",
+  "successor_task",
+  "predecessor_task",
+  "project_status_id",
+  "completion_percent",
+  "created_by_name",
+  "milestone_title",
+  "expected_start_date",
+  "task_allocation_times",
+  // issue-side bookkeeping
+  "url",
+  "comments",
+  "attachments",
+  "issue_status_logs",
+  "issue_allocation_times",
+  "created_by",
+  "created_by_id",
+  "issue_type",
+  "issue_type_name",
+  "start_date",
+  "started_at",
+  "resource_id",
+  "resource_type",
+  "milestone_id",
+  "milstone_name",
+  "task_management_id",
+  "task_management_name",
+  "sub_task_management_name",
+  "project_management_id",
+  "time_taken_to_complete",
+  "total_effective_minutes",
+  "description",
+  "is_started",
+  // shared
+  "responsible_person_id",
+];
+
+const sanitizeOriginalData = (data: any) => {
+  if (!data || typeof data !== "object") return data;
+  const clone = { ...data };
+  ORIGINAL_DATA_OMIT_KEYS.forEach((key) => delete clone[key]);
+  return clone;
+};
 
 const getNonEmptyReportItems = (
   items: any[] | { items?: any[] } | undefined | null
@@ -350,10 +406,22 @@ const isImageFile = (fileName: string, contentType: string) => {
 };
 
 const getPriorityClass = (priority?: string) => {
-  if (priority === "High") return "bc-priority-high";
-  if (priority === "Medium") return "bc-priority-medium";
+  const p = String(priority || "").toUpperCase();
+  if (p === "P1") return "bc-priority-high";
+  if (p === "P2") return "bc-priority-medium";
+  if (p === "P3") return "bc-priority-low-medium";
   return "bc-priority-low";
 };
+
+const PRIORITY_COLORS: Record<string, { bg: string; color: string }> = {
+  P1: { bg: "#fee2e2", color: "#991b1b" },
+  P2: { bg: "#fef3c7", color: "#92400e" },
+  P3: { bg: "#dbeafe", color: "#1e40af" },
+  P4: { bg: "#dcfce7", color: "#166534" },
+};
+
+const getPriorityColors = (priority?: string) =>
+  PRIORITY_COLORS[String(priority || "").toUpperCase()] || PRIORITY_COLORS.P4;
 
 const extractRealId = (prefixedId: string) =>
   Number(prefixedId.replace("task-", "").replace("issue-", "").replace("todo-", ""));
@@ -387,6 +455,8 @@ const BusinessCompassDailyReport: React.FC = () => {
       source_type?: string | null;
       fromWeeklyPlan?: boolean;
       originalData?: any;
+      ownerId?: number | string | null;
+      ownerName?: string | null;
     }[]
   >([]);
   const [uploadedFiles, setUploadedFiles] = useState<
@@ -1310,6 +1380,60 @@ const BusinessCompassDailyReport: React.FC = () => {
     setHiddenAutoIds((prev) => new Set([...prev, sourceId]));
   };
 
+  // ── Pulling items from a reportee's report into your own ──
+  // Keyed by reportee + the item's original source (or its text, for plain
+  // notes) so the same reportee item toggles the same borrowed row instead of
+  // duplicating on repeated clicks.
+  const getBorrowedItemKey = (member: any, item: any) => {
+    const sourceId = item?.originalData?.id ?? item?.source_id;
+    const sourceType = item?.source_type || item?.type || "note";
+    const identity = sourceId ?? cleanReportText(item?.title || item?.text || item?.name || "");
+    return `${member?.user_id}:${sourceType}:${identity}`;
+  };
+
+  const toggleBorrowedAccomplishment = (member: any, item: any) => {
+    const text = cleanReportText(item?.title || item?.text || item?.name || "");
+    if (!text) return;
+    const id = `borrowed-${getBorrowedItemKey(member, item)}`;
+    markDraftDirty();
+    setAccomplishments((prev) =>
+      prev.some((a) => a.id === id)
+        ? prev.filter((a) => a.id !== id)
+        : [
+          {
+            id,
+            text,
+            completed: true,
+            starred: false,
+            ownerId: member?.user_id ?? null,
+            ownerName: member?.name?.trim() || "",
+          },
+          ...prev,
+        ]
+    );
+  };
+
+  const toggleBorrowedPlanItem = (member: any, item: any) => {
+    const text = cleanReportText(item?.title || item?.text || item?.name || "");
+    if (!text) return;
+    const id = `borrowed-plan-${getBorrowedItemKey(member, item)}`;
+    markDraftDirty();
+    setPlanningItems((prev) =>
+      prev.some((p) => p.id === id)
+        ? prev.filter((p) => p.id !== id)
+        : [
+          {
+            id,
+            text,
+            starred: false,
+            ownerId: member?.user_id ?? null,
+            ownerName: member?.name?.trim() || "",
+          },
+          ...prev,
+        ]
+    );
+  };
+
   const planningItemMatchesSourceItem = (
     plan: {
       text: string;
@@ -2151,6 +2275,8 @@ const BusinessCompassDailyReport: React.FC = () => {
           completed: true,
           starred: false,
           fromYesterday: false,
+          ownerId: ach.owner_id ?? null,
+          ownerName: ach.owner_name ?? null,
         }));
       }
 
@@ -2180,6 +2306,8 @@ const BusinessCompassDailyReport: React.FC = () => {
               ...(p.source_id != null
                 ? { source_id: p.source_id, source_type: p.source_type }
                 : {}),
+              ownerId: p.owner_id ?? null,
+              ownerName: p.owner_name ?? null,
             })
           )
         );
@@ -2390,6 +2518,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                   completed: true,
                   starred: false,
                   fromYesterday: false,
+                  ownerId: ach.owner_id ?? null,
+                  ownerName: ach.owner_name ?? null,
                 }));
               }
 
@@ -2418,6 +2548,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                       ...(p.source_id != null
                         ? { source_id: p.source_id, source_type: p.source_type }
                         : {}),
+                      ownerId: p.owner_id ?? null,
+                      ownerName: p.owner_name ?? null,
                     })
                   )
                 );
@@ -2632,13 +2764,16 @@ const BusinessCompassDailyReport: React.FC = () => {
         .map((a) => ({
           title: cleanReportText(a.text),
           star: a.starred,
+          ...(a.ownerId != null
+            ? { owner_id: a.ownerId, owner_name: a.ownerName || "" }
+            : {}),
         })),
       ...autoAddedAccomplishments.map((item) => ({
         title: cleanReportText(item.title || ""),
         star: autoStarredIds.has(String(item.id)),
         source_id: item.originalData?.id,
         source_type: item.type,
-        originalData: item.originalData,
+        originalData: sanitizeOriginalData(item.originalData),
       })),
     ].filter((a) => a.title !== "");
     const manualTomorrowPlan = planningItems
@@ -2646,7 +2781,10 @@ const BusinessCompassDailyReport: React.FC = () => {
         title: cleanReportText(p.text),
         is_starred: p.starred,
         ...(p.source_id != null
-          ? { source_id: p.source_id, source_type: p.source_type, originalData: p.originalData }
+          ? { source_id: p.source_id, source_type: p.source_type, originalData: sanitizeOriginalData(p.originalData) }
+          : {}),
+        ...(p.ownerId != null
+          ? { owner_id: p.ownerId, owner_name: p.ownerName || "" }
           : {}),
       }))
       .filter((p) => p.title !== "");
@@ -2661,7 +2799,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         is_starred: false,
         source_id: item.originalData?.id ?? null,
         source_type: item.type ?? null,
-        originalData: item.originalData,
+        originalData: sanitizeOriginalData(item.originalData),
       }));
 
     const tomorrowPlanPayload = [
@@ -3812,6 +3950,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   </Button>
                                 </div>
 
+                                {item.ownerName && (
+                                  <div className="flex items-center pt-1 flex-wrap">
+                                    <span
+                                      className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 bg-indigo-50 text-indigo-600 border border-indigo-100"
+                                      title={`Credited to ${item.ownerName} in the submitted report`}
+                                    >
+                                      From {item.ownerName}
+                                    </span>
+                                  </div>
+                                )}
+
                                 {/* {item.fromYesterday && (
                                   <div className="flex items-center pt-1 flex-wrap">
                                     <span className="pt-0.5">
@@ -3896,18 +4045,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       <span
                                         className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
                                         style={{
-                                          backgroundColor:
-                                            item.priority === "High"
-                                              ? "#fee2e2"
-                                              : item.priority === "Medium"
-                                                ? "#fef3c7"
-                                                : "#dcfce7",
-                                          color:
-                                            item.priority === "High"
-                                              ? "#991b1b"
-                                              : item.priority === "Medium"
-                                                ? "#92400e"
-                                                : "#166534",
+                                          backgroundColor: getPriorityColors(item.priority).bg,
+                                          color: getPriorityColors(item.priority).color,
                                         }}
                                       >
                                         {item.priority}
@@ -4294,6 +4433,14 @@ const BusinessCompassDailyReport: React.FC = () => {
                                           >
                                             {item.source_type || "Note"}
                                           </span>
+                                          {item.ownerName && (
+                                            <span
+                                              className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 bg-indigo-50 text-indigo-600 border border-indigo-100"
+                                              title={`Credited to ${item.ownerName} in the submitted report`}
+                                            >
+                                              From {item.ownerName}
+                                            </span>
+                                          )}
                                           <input
                                             type="text"
                                             value={item.text}
@@ -4310,18 +4457,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             <span
                                               className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
                                               style={{
-                                                backgroundColor:
-                                                  livePriority === "High"
-                                                    ? "#fee2e2"
-                                                    : livePriority === "Medium"
-                                                      ? "#fef3c7"
-                                                      : "#dcfce7",
-                                                color:
-                                                  livePriority === "High"
-                                                    ? "#991b1b"
-                                                    : livePriority === "Medium"
-                                                      ? "#92400e"
-                                                      : "#166534",
+                                                backgroundColor: getPriorityColors(livePriority).bg,
+                                                color: getPriorityColors(livePriority).color,
                                               }}
                                             >
                                               {livePriority}
@@ -4636,18 +4773,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               <span
                                                 className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
                                                 style={{
-                                                  backgroundColor:
-                                                    item.priority === "High"
-                                                      ? "#fee2e2"
-                                                      : item.priority === "Medium"
-                                                        ? "#fef3c7"
-                                                        : "#dcfce7",
-                                                  color:
-                                                    item.priority === "High"
-                                                      ? "#991b1b"
-                                                      : item.priority === "Medium"
-                                                        ? "#92400e"
-                                                        : "#166534",
+                                                  backgroundColor: getPriorityColors(item.priority).bg,
+                                                  color: getPriorityColors(item.priority).color,
                                                 }}
                                               >
                                                 {item.priority}
@@ -5289,18 +5416,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                           <span
                                             className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
                                             style={{
-                                              backgroundColor:
-                                                item.priority === "High"
-                                                  ? "#fee2e2"
-                                                  : item.priority === "Medium"
-                                                    ? "#fef3c7"
-                                                    : "#dcfce7",
-                                              color:
-                                                item.priority === "High"
-                                                  ? "#991b1b"
-                                                  : item.priority === "Medium"
-                                                    ? "#92400e"
-                                                    : "#166534",
+                                              backgroundColor: getPriorityColors(item.priority).bg,
+                                              color: getPriorityColors(item.priority).color,
                                             }}
                                           >
                                             {item.priority}
@@ -5943,18 +6060,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                                 <span
                                                   className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
                                                   style={{
-                                                    backgroundColor:
-                                                      item.priority === "High"
-                                                        ? "#fee2e2"
-                                                        : item.priority === "Medium"
-                                                          ? "#fef3c7"
-                                                          : "#dcfce7",
-                                                    color:
-                                                      item.priority === "High"
-                                                        ? "#991b1b"
-                                                        : item.priority === "Medium"
-                                                          ? "#92400e"
-                                                          : "#166534",
+                                                    backgroundColor: getPriorityColors(item.priority).bg,
+                                                    color: getPriorityColors(item.priority).color,
                                                   }}
                                                 >
                                                   {item.priority}
@@ -6199,418 +6306,463 @@ const BusinessCompassDailyReport: React.FC = () => {
                   </div>
                 </div>
 
-              <div className="space-y-3 p-3">
-                {isReporteeLoading ? (
-                  <div className="flex items-center justify-center gap-2 py-6 text-xs font-semibold text-slate-400">
-                    <Loader2 size={14} className="animate-spin" />
-                    Loading reportee reports...
-                  </div>
-                ) : reporteeError ? (
-                  <p className="py-6 text-center text-xs font-semibold text-red-500">
-                    {reporteeError}
-                  </p>
-                ) : reporteeMembers.length === 0 ? (
-                  <p className="py-6 text-center text-xs font-semibold italic text-slate-400">
-                    No reportee reports for {formattedSelectedDate}.
-                  </p>
-                ) : (
-                  reporteeMembers.map((member: any, memberIndex: number) => {
-                    const memberKey = String(member?.user_id ?? memberIndex);
-                    const isMemberExpanded =
-                      expandedReportees.includes(memberKey);
-                    const memberStatus = String(member?.status || "").toLowerCase();
-                    const isMemberSubmitted =
-                      memberStatus !== "missed" && memberStatus !== "pending";
-                    // sections is {} when missed, has score values when submitted
-                    const sections = member?.sections || {};
-                    const hasSubmittedData = Object.keys(sections).length > 0;
-                    // score from API member.score (null when missed) or sum of sections
-                    const totalScore = member?.score != null
-                      ? Number(member.score)
-                      : hasSubmittedData
-                        ? Object.values(sections).reduce((sum: number, v: any) => sum + (Number(v) || 0), 0)
-                        : 0;
-                    const scoreChips = [
-                      { label: "KPI", value: Number(sections.kpi_achievement ?? 0) },
-                      {
-                        label: "Tasks & Todos",
-                        value: Number(sections.tasks_issues_todos ?? 0),
-                      },
-                      {
-                        label: "Accomplishments",
-                        value: Number(sections.accomplishments ?? 0),
-                      },
-                      { label: "Planning", value: Number(sections.planning ?? 0) },
-                      { label: "Timing", value: Number(sections.timing ?? 0) },
-                    ];
-                    const columns = [
-                      {
-                        key: "accomplishments",
-                        title: "Accomplishments",
-                        Icon: CheckCircle2,
-                        iconClass: "text-[#798c5e]",
-                        items: member.accomplishments as any[],
-                      },
-                      {
-                        key: "tasks_issues",
-                        title: "Tasks, Issues & To Do",
-                        Icon: ListTodo,
-                        iconClass: "text-[#DA7756]",
-                        items: (member.tasks_issues as any[]).filter(
-                          (item: any) => 
-                            String(item?.status).toLowerCase() !== "completed" &&
-                            String(item?.status).toLowerCase() !== "closed"
-                        ),
-                      },
-                      {
-                        key: "tomorrow_plan",
-                        title: "Tomorrow's Plan",
-                        Icon: CalendarCheck,
-                        iconClass: "text-[#6b9bcc]",
-                        items: member.tomorrow_plan as any[],
-                      },
-                    ];
-                    const submittedStamp = member?.submitted_at
-                      ? new Date(member.submitted_at).toLocaleString("en-GB", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        second: "2-digit",
-                        hour12: false,
-                      })
-                      : null;
+                <div className="space-y-3 p-3">
+                  {isReporteeLoading ? (
+                    <div className="flex items-center justify-center gap-2 py-6 text-xs font-semibold text-slate-400">
+                      <Loader2 size={14} className="animate-spin" />
+                      Loading reportee reports...
+                    </div>
+                  ) : reporteeError ? (
+                    <p className="py-6 text-center text-xs font-semibold text-red-500">
+                      {reporteeError}
+                    </p>
+                  ) : reporteeMembers.length === 0 ? (
+                    <p className="py-6 text-center text-xs font-semibold italic text-slate-400">
+                      No reportee reports for {formattedSelectedDate}.
+                    </p>
+                  ) : (
+                    reporteeMembers.map((member: any, memberIndex: number) => {
+                      const memberKey = String(member?.user_id ?? memberIndex);
+                      const isMemberExpanded =
+                        expandedReportees.includes(memberKey);
+                      const memberStatus = String(member?.status || "").toLowerCase();
+                      const isMemberSubmitted =
+                        memberStatus !== "missed" && memberStatus !== "pending";
+                      // sections is {} when missed, has score values when submitted
+                      const sections = member?.sections || {};
+                      const hasSubmittedData = Object.keys(sections).length > 0;
+                      // score from API member.score (null when missed) or sum of sections
+                      const totalScore = member?.score != null
+                        ? Number(member.score)
+                        : hasSubmittedData
+                          ? Object.values(sections).reduce((sum: number, v: any) => sum + (Number(v) || 0), 0)
+                          : 0;
+                      const scoreChips = [
+                        { label: "KPI", value: Number(sections.kpi_achievement ?? 0) },
+                        {
+                          label: "Tasks & Todos",
+                          value: Number(sections.tasks_issues_todos ?? 0),
+                        },
+                        {
+                          label: "Accomplishments",
+                          value: Number(sections.accomplishments ?? 0),
+                        },
+                        { label: "Planning", value: Number(sections.planning ?? 0) },
+                        { label: "Timing", value: Number(sections.timing ?? 0) },
+                      ];
+                      const columns = [
+                        {
+                          key: "accomplishments",
+                          title: "Accomplishments",
+                          Icon: CheckCircle2,
+                          iconClass: "text-[#798c5e]",
+                          items: member.accomplishments as any[],
+                        },
+                        {
+                          key: "tasks_issues",
+                          title: "Tasks, Issues & To Do",
+                          Icon: ListTodo,
+                          iconClass: "text-[#DA7756]",
+                          items: (member.tasks_issues as any[]).filter(
+                            (item: any) =>
+                              String(item?.status).toLowerCase() !== "completed" &&
+                              String(item?.status).toLowerCase() !== "closed"
+                          ),
+                        },
+                        {
+                          key: "tomorrow_plan",
+                          title: "Tomorrow's Plan",
+                          Icon: CalendarCheck,
+                          iconClass: "text-[#6b9bcc]",
+                          items: member.tomorrow_plan as any[],
+                        },
+                      ];
+                      const submittedStamp = member?.submitted_at
+                        ? new Date(member.submitted_at).toLocaleString("en-GB", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                          hour12: false,
+                        })
+                        : null;
 
-                    return (
-                      <div
-                        key={memberKey}
-                        className="overflow-hidden rounded-xl border border-indigo-100 bg-indigo-50/30"
-                      >
+                      return (
                         <div
-                          className="flex cursor-pointer flex-col gap-3 p-4 transition-colors hover:bg-indigo-50/60 sm:flex-row sm:items-start sm:justify-between"
-                          onClick={() => toggleReportee(memberKey)}
+                          key={memberKey}
+                          className="overflow-hidden rounded-xl border border-indigo-100 bg-indigo-50/30"
                         >
-                          <div className="min-w-0">
-                            <div className="mb-1 flex flex-wrap items-center gap-2">
-                              <h4 className="truncate text-sm font-bold text-neutral-900">
-                                {member?.name?.trim() || "Member"}
-                              </h4>
-                              {member?.department && (
-                                <span className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
-                                  {member.department}
-                                </span>
-                              )}
-                              {isMemberSubmitted && (
-                                <span className="shrink-0 rounded-full border border-green-100 bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">
-                                  Submitted
-                                </span>
-                              )}
-                            </div>
-                            <p className="truncate text-[11px] text-neutral-400">
-                              {member?.email || "—"}
-                              {submittedStamp && (
-                                <span className="ml-1">- {submittedStamp}</span>
-                              )}
-                            </p>
-                          </div>
-
-                          <div className="ml-auto flex shrink-0 items-center gap-2 self-start sm:self-center">
-                            {!isMemberSubmitted ? (
-                              <span className="shrink-0 rounded-full border border-red-100 bg-red-50 px-2.5 py-0.5 text-[10px] font-bold text-red-700">
-                                Missed
-                              </span>
-                            ) : (
-                              <span
-                                className={cn(
-                                  "shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold",
-                                  member?.is_absent
-                                    ? "border-red-100 bg-red-50 text-red-700"
-                                    : "border-green-100 bg-green-50 text-green-700"
-                                )}
-                              >
-                                {member?.is_absent
-                                  ? `Absent${member?.absent_reason
-                                    ? `: ${member.absent_reason}`
-                                    : ""
-                                  }`
-                                  : "Present"}
-                              </span>
-                            )}
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                toggleReportee(memberKey);
-                              }}
-                              className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-blue-500"
-                            >
-                              <ChevronDown
-                                size={15}
-                                className={cn(
-                                  "transition-transform",
-                                  isMemberExpanded && "rotate-180"
-                                )}
-                              />
-                            </button>
-                          </div>
-                        </div>
-
-                        {isMemberExpanded && (
-                          <div className="border-t border-indigo-100 bg-white p-3">
-                            {/* Absent notice */}
-                            {member?.is_absent && (
-                              <div className="mb-3 flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2">
-                                <span className="mt-0.5 shrink-0 text-red-500">✕</span>
-                                <div>
-                                  <p className="text-[11px] font-bold text-red-700">Absent</p>
-                                  {member?.absent_reason && (
-                                    <p className="text-[11px] text-red-500 font-medium">{member.absent_reason}</p>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                            {/* Score chips — only when report is submitted and sections have data */}
-                            {isMemberSubmitted && hasSubmittedData && (
-                              <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1.5">
-                                {scoreChips.map((chip) => (
-                                  <span
-                                    key={chip.label}
-                                    className="inline-flex h-[22px] items-center rounded-full bg-[#FFF3EE] px-2.5 text-[10px] font-semibold text-[#c2664a]"
-                                  >
-                                    {chip.label}
-                                    <span className="ml-1 font-bold">
-                                      {chip.value}/20
-                                    </span>
+                          <div
+                            className="flex cursor-pointer flex-col gap-3 p-4 transition-colors hover:bg-indigo-50/60 sm:flex-row sm:items-start sm:justify-between"
+                            onClick={() => toggleReportee(memberKey)}
+                          >
+                            <div className="min-w-0">
+                              <div className="mb-1 flex flex-wrap items-center gap-2">
+                                <h4 className="truncate text-sm font-bold text-neutral-900">
+                                  {member?.name?.trim() || "Member"}
+                                </h4>
+                                {member?.department && (
+                                  <span className="shrink-0 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
+                                    {member.department}
                                   </span>
-                                ))}
-                                <span className="inline-flex h-[22px] items-center rounded-full bg-neutral-100 px-2.5 text-[10px] font-bold text-neutral-600">
-                                  Total {totalScore}
+                                )}
+                                {isMemberSubmitted && (
+                                  <span className="shrink-0 rounded-full border border-green-100 bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">
+                                    Submitted
+                                  </span>
+                                )}
+                              </div>
+                              <p className="truncate text-[11px] text-neutral-400">
+                                {member?.email || "—"}
+                                {submittedStamp && (
+                                  <span className="ml-1">- {submittedStamp}</span>
+                                )}
+                              </p>
+                            </div>
+
+                            <div className="ml-auto flex shrink-0 items-center gap-2 self-start sm:self-center">
+                              {!isMemberSubmitted ? (
+                                <span className="shrink-0 rounded-full border border-red-100 bg-red-50 px-2.5 py-0.5 text-[10px] font-bold text-red-700">
+                                  Missed
                                 </span>
-                              </div>
-                            )}
-                            {/* Missed notice */}
-                            {!isMemberSubmitted && !member?.is_absent && (
-                              <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2">
-                                <span className="text-[11px] font-semibold text-amber-700">Report not yet submitted for this date.</span>
-                              </div>
-                            )}
-                            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                              {columns.map((column) => (
-                                <div
-                                  key={column.key}
-                                  className="overflow-hidden rounded-[12px] border border-[#E8E2DE] bg-white"
+                              ) : (
+                                <span
+                                  className={cn(
+                                    "shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold",
+                                    member?.is_absent
+                                      ? "border-red-100 bg-red-50 text-red-700"
+                                      : "border-green-100 bg-green-50 text-green-700"
+                                  )}
                                 >
-                                  <div className="flex items-center gap-2 border-b border-[#EFE7E2] px-3 py-2.5">
-                                    <column.Icon
-                                      size={15}
-                                      className={cn("shrink-0", column.iconClass)}
-                                    />
-                                    <h5 className="min-w-0 flex-1 truncate text-[11px] font-extrabold uppercase tracking-[0.1em] text-[#3E342F]">
-                                      {column.title}
-                                    </h5>
-                                    <span className="shrink-0 rounded-full bg-neutral-100 px-1.5 text-[10px] font-bold leading-[18px] text-neutral-500">
-                                      {column.items.length}
-                                    </span>
-                                  </div>
-                                  <div className="space-y-2 p-2.5">
-                                    {column.items.length === 0 ? (
-                                      <p className="px-1 py-2 text-[11px] italic text-slate-300">
-                                        {isMemberSubmitted ? "None recorded." : "Not submitted."}
-                                      </p>
-                                    ) : (
-                                      (() => {
-                                        const renderItem = (item: any, itemIndex: number) => {
-                                          const itemType = String(
-                                            item?.source_type || item?.type || "note"
-                                          ).toLowerCase();
-                                          const original =
-                                            item?.originalData || {};
-                                          const dueRaw =
-                                            original?.target_date ||
-                                            original?.end_date ||
-                                            original?.due_date;
-                                          const dueDate = fmtDate(dueRaw);
-                                          const itemStatus = String(
-                                            item?.status || original?.status || ""
-                                          ).toLowerCase();
-                                          // Accomplishments = completed task/issue/todo,
-                                          // so nothing here is overdue and status reads "completed"
-                                          const isAccomplishment =
-                                            column.key === "accomplishments";
-                                          const isItemDone =
-                                            isAccomplishment ||
-                                            COMPLETED_STATUSES.has(itemStatus);
-                                          const overdueLabel = isItemDone
-                                            ? null
-                                            : getOverdueLabel(dueRaw);
-                                          const statusLabel = isAccomplishment
-                                            ? "completed"
-                                            : itemStatus;
-                                          // Accomplishments + Tasks/Issues columns don't
-                                          // repeat the status (buckets already show it)
-                                          const showStatusTag =
-                                            column.key === "tomorrow_plan";
-                                          const effortEst = fmtHours(
-                                            original?.total_allocated_hours ||
-                                            original?.estimated_hour
-                                          );
-                                          const projectName =
-                                            original?.project_management_title ||
-                                            original?.project_management_name;
-                                          const isClickable = ["task", "issue", "todo"].includes(itemType);
-                                          return (
-                                            <div
-                                              key={`${itemType}-${itemIndex}`}
-                                              onClick={isClickable ? () => handleViewReportItem(item) : undefined}
-                                              className={cn(
-                                                "rounded-[10px] border border-[#EEF1F4] bg-white p-2.5",
-                                                isClickable &&
-                                                "cursor-pointer transition-colors hover:border-[#DA7756]/30 hover:bg-[#FFFAF8]"
-                                              )}
-                                            >
-                                              {/* Type + status */}
-                                              <div className="mb-1.5 flex items-center gap-1.5">
-                                                {itemType && (
-                                                  <span
-                                                    className={cn(
-                                                      "shrink-0 rounded-[4px] px-1.5 text-[9px] font-bold uppercase leading-[16px] tracking-wide",
-                                                      itemType === "task"
-                                                        ? "bg-[#FFF3EE] text-[#c2664a]"
-                                                        : itemType === "issue"
-                                                          ? "bg-violet-50 text-violet-600"
-                                                          : itemType === "todo"
-                                                            ? "bg-amber-50 text-amber-600"
-                                                            : "bg-neutral-100 text-neutral-500"
-                                                    )}
-                                                  >
-                                                    {itemType}
-                                                  </span>
-                                                )}
-                                                {/* Status tag only for Tomorrow's Plan —
-                                                    accomplishments/tasks columns skip it */}
-                                                {statusLabel && showStatusTag && (
-                                                  <span className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-neutral-400">
-                                                    {statusLabel.replace(/_/g, " ")}
-                                                  </span>
-                                                )}
-                                              </div>
+                                  {member?.is_absent
+                                    ? `Absent${member?.absent_reason
+                                      ? `: ${member.absent_reason}`
+                                      : ""
+                                    }`
+                                    : "Present"}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  toggleReportee(memberKey);
+                                }}
+                                className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-blue-500"
+                              >
+                                <ChevronDown
+                                  size={15}
+                                  className={cn(
+                                    "transition-transform",
+                                    isMemberExpanded && "rotate-180"
+                                  )}
+                                />
+                              </button>
+                            </div>
+                          </div>
 
-                                              {/* Title */}
-                                              <p className="break-words text-[12px] font-semibold leading-[17px] text-[#2B2F38]">
-                                                {typeof item === "string"
-                                                  ? item
-                                                  : item?.title ||
-                                                  item?.text ||
-                                                  item?.name ||
-                                                  "—"}
-                                              </p>
-
-                                              {/* Meta — date, estimate, overdue */}
-                                              {(dueDate ||
-                                                overdueLabel ||
-                                                effortEst) && (
-                                                  <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                                                    {dueDate && (
-                                                      <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                                                        <Calendar size={10} className="shrink-0" />
-                                                        {dueDate}
-                                                      </span>
-                                                    )}
-                                                    {effortEst && (
-                                                      <span className="flex items-center gap-1 text-[10px] text-slate-500">
-                                                        <Clock size={10} className="shrink-0" />
-                                                        Est {effortEst}
-                                                      </span>
-                                                    )}
-                                                    {overdueLabel && (
-                                                      <span className="flex items-center gap-1 text-[10px] font-semibold text-red-500">
-                                                        <AlertCircle size={10} className="shrink-0" />
-                                                        {overdueLabel}
-                                                      </span>
-                                                    )}
-                                                  </div>
-                                                )}
-                                              {projectName && (
-                                                <p className="mt-1 truncate text-[10px] font-medium text-slate-400">
-                                                  {projectName}
-                                                </p>
-                                              )}
-                                            </div>
-                                          );
-                                        };
-
-                                        if (column.key === "tasks_issues") {
-                                          // Overdue = explicit status, or a past due date on a not-done item
-                                          const isOverdueItem = (i: any) => {
-                                            const s = String(i?.status || "").toLowerCase();
-                                            if (COMPLETED_STATUSES.has(s)) return false;
-                                            if (s.includes("overdue")) return true;
-                                            const d = i?.originalData || {};
-                                            return !!getOverdueLabel(
-                                              d?.target_date || d?.end_date || d?.due_date
-                                            );
-                                          };
-                                          const overdue = column.items.filter(isOverdueItem);
-                                          const rest = column.items.filter((i: any) => !isOverdueItem(i));
-                                          const inProgress = rest.filter((i: any) => ["in_progress", "in progress", "started", "wip"].includes(String(i?.status).toLowerCase()));
-                                          const onHold = rest.filter((i: any) => ["on_hold", "hold"].includes(String(i?.status).toLowerCase()));
-                                          const openItems = rest.filter((i: any) => ["open", "pending", "reopen", "reopened", "new", "to_do", "todo"].includes(String(i?.status).toLowerCase()));
-                                          // Anything with an unexpected status still has to show up
-                                          const bucketed = new Set([...overdue, ...inProgress, ...onHold, ...openItems]);
-                                          const others = column.items.filter((i: any) => !bucketed.has(i));
-
-                                          return (
-                                            <div className="space-y-4">
-                                              {overdue.length > 0 && (
-                                                <div className="space-y-1.5">
-                                                  <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-red-500"><span className="h-1.5 w-1.5 rounded-full bg-current" />Overdue<span className="font-semibold text-neutral-400">({overdue.length})</span></h6>
-                                                  {overdue.map(renderItem)}
-                                                </div>
-                                              )}
-                                              {inProgress.length > 0 && (
-                                                <div className="space-y-1.5">
-                                                  <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-sky-600"><span className="h-1.5 w-1.5 rounded-full bg-current" />In Progress<span className="font-semibold text-neutral-400">({inProgress.length})</span></h6>
-                                                  {inProgress.map(renderItem)}
-                                                </div>
-                                              )}
-                                              {onHold.length > 0 && (
-                                                <div className="space-y-1.5">
-                                                  <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-amber-600"><span className="h-1.5 w-1.5 rounded-full bg-current" />On Hold<span className="font-semibold text-neutral-400">({onHold.length})</span></h6>
-                                                  {onHold.map(renderItem)}
-                                                </div>
-                                              )}
-                                              {openItems.length > 0 && (
-                                                <div className="space-y-1.5">
-                                                  <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500"><span className="h-1.5 w-1.5 rounded-full bg-current" />Open<span className="font-semibold text-neutral-400">({openItems.length})</span></h6>
-                                                  {openItems.map(renderItem)}
-                                                </div>
-                                              )}
-                                              {others.length > 0 && (
-                                                <div className="space-y-1.5">
-                                                  <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-neutral-400"><span className="h-1.5 w-1.5 rounded-full bg-current" />Other<span className="font-semibold text-neutral-400">({others.length})</span></h6>
-                                                  {others.map(renderItem)}
-                                                </div>
-                                              )}
-                                            </div>
-                                          );
-                                        }
-
-                                        return column.items.map(renderItem);
-                                      })()
+                          {isMemberExpanded && (
+                            <div className="border-t border-indigo-100 bg-white p-3">
+                              {/* Absent notice */}
+                              {member?.is_absent && (
+                                <div className="mb-3 flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 px-3 py-2">
+                                  <span className="mt-0.5 shrink-0 text-red-500">✕</span>
+                                  <div>
+                                    <p className="text-[11px] font-bold text-red-700">Absent</p>
+                                    {member?.absent_reason && (
+                                      <p className="text-[11px] text-red-500 font-medium">{member.absent_reason}</p>
                                     )}
                                   </div>
                                 </div>
-                              ))}
+                              )}
+                              {/* Score chips — only when report is submitted and sections have data */}
+                              {isMemberSubmitted && hasSubmittedData && (
+                                <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                                  {scoreChips.map((chip) => (
+                                    <span
+                                      key={chip.label}
+                                      className="inline-flex h-[22px] items-center rounded-full bg-[#FFF3EE] px-2.5 text-[10px] font-semibold text-[#c2664a]"
+                                    >
+                                      {chip.label}
+                                      <span className="ml-1 font-bold">
+                                        {chip.value}/20
+                                      </span>
+                                    </span>
+                                  ))}
+                                  <span className="inline-flex h-[22px] items-center rounded-full bg-neutral-100 px-2.5 text-[10px] font-bold text-neutral-600">
+                                    Total {totalScore}
+                                  </span>
+                                </div>
+                              )}
+                              {/* Missed notice */}
+                              {!isMemberSubmitted && !member?.is_absent && (
+                                <div className="mb-3 flex items-center gap-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2">
+                                  <span className="text-[11px] font-semibold text-amber-700">Report not yet submitted for this date.</span>
+                                </div>
+                              )}
+                              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                                {columns.map((column) => (
+                                  <div
+                                    key={column.key}
+                                    className="overflow-hidden rounded-[12px] border border-[#E8E2DE] bg-white"
+                                  >
+                                    <div className="flex items-center gap-2 border-b border-[#EFE7E2] px-3 py-2.5">
+                                      <column.Icon
+                                        size={15}
+                                        className={cn("shrink-0", column.iconClass)}
+                                      />
+                                      <h5 className="min-w-0 flex-1 truncate text-[11px] font-extrabold uppercase tracking-[0.1em] text-[#3E342F]">
+                                        {column.title}
+                                      </h5>
+                                      <span className="shrink-0 rounded-full bg-neutral-100 px-1.5 text-[10px] font-bold leading-[18px] text-neutral-500">
+                                        {column.items.length}
+                                      </span>
+                                    </div>
+                                    <div className="space-y-2 p-2.5">
+                                      {column.items.length === 0 ? (
+                                        <p className="px-1 py-2 text-[11px] italic text-slate-300">
+                                          {isMemberSubmitted ? "None recorded." : "Not submitted."}
+                                        </p>
+                                      ) : (
+                                        (() => {
+                                          const renderItem = (item: any, itemIndex: number) => {
+                                            const itemType = String(
+                                              item?.source_type || item?.type || "note"
+                                            ).toLowerCase();
+                                            const original =
+                                              item?.originalData || {};
+                                            const dueRaw =
+                                              original?.target_date ||
+                                              original?.end_date ||
+                                              original?.due_date;
+                                            const dueDate = fmtDate(dueRaw);
+                                            const itemStatus = String(
+                                              item?.status || original?.status || ""
+                                            ).toLowerCase();
+                                            // Accomplishments = completed task/issue/todo,
+                                            // so nothing here is overdue and status reads "completed"
+                                            const isAccomplishment =
+                                              column.key === "accomplishments";
+                                            const isItemDone =
+                                              isAccomplishment ||
+                                              COMPLETED_STATUSES.has(itemStatus);
+                                            const overdueLabel = isItemDone
+                                              ? null
+                                              : getOverdueLabel(dueRaw);
+                                            const statusLabel = isAccomplishment
+                                              ? "completed"
+                                              : itemStatus;
+                                            // Accomplishments + Tasks/Issues columns don't
+                                            // repeat the status (buckets already show it)
+                                            const showStatusTag =
+                                              column.key === "tomorrow_plan";
+                                            const effortEst = fmtHours(
+                                              original?.total_allocated_hours ||
+                                              original?.estimated_hour
+                                            );
+                                            const projectName =
+                                              original?.project_management_title ||
+                                              original?.project_management_name;
+                                            const isClickable = ["task", "issue", "todo"].includes(itemType);
+                                            // Managers can pull a reportee's accomplishment or
+                                            // tomorrow's-plan item into their own report — the
+                                            // reportee stays the credited owner in the payload.
+                                            const isBorrowable =
+                                              column.key === "accomplishments" ||
+                                              column.key === "tomorrow_plan";
+                                            const borrowedId = isBorrowable
+                                              ? `${column.key === "accomplishments" ? "borrowed" : "borrowed-plan"}-${getBorrowedItemKey(member, item)}`
+                                              : null;
+                                            const isBorrowed = isBorrowable
+                                              ? column.key === "accomplishments"
+                                                ? accomplishments.some((a) => a.id === borrowedId)
+                                                : planningItems.some((p) => p.id === borrowedId)
+                                              : false;
+                                            return (
+                                              <div
+                                                key={`${itemType}-${itemIndex}`}
+                                                onClick={isClickable ? () => handleViewReportItem(item) : undefined}
+                                                className={cn(
+                                                  "rounded-[10px] border border-[#EEF1F4] bg-white p-2.5",
+                                                  isClickable &&
+                                                  "cursor-pointer transition-colors hover:border-[#DA7756]/30 hover:bg-[#FFFAF8]"
+                                                )}
+                                              >
+                                                {/* Type + status */}
+                                                <div className="mb-1.5 flex items-center gap-1.5">
+                                                  {itemType && (
+                                                    <span
+                                                      className={cn(
+                                                        "shrink-0 rounded-[4px] px-1.5 text-[9px] font-bold uppercase leading-[16px] tracking-wide",
+                                                        itemType === "task"
+                                                          ? "bg-[#FFF3EE] text-[#c2664a]"
+                                                          : itemType === "issue"
+                                                            ? "bg-violet-50 text-violet-600"
+                                                            : itemType === "todo"
+                                                              ? "bg-amber-50 text-amber-600"
+                                                              : "bg-neutral-100 text-neutral-500"
+                                                      )}
+                                                    >
+                                                      {itemType}
+                                                    </span>
+                                                  )}
+                                                  {/* Status tag only for Tomorrow's Plan —
+                                                    accomplishments/tasks columns skip it */}
+                                                  {statusLabel && showStatusTag && (
+                                                    <span className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-neutral-400">
+                                                      {statusLabel.replace(/_/g, " ")}
+                                                    </span>
+                                                  )}
+                                                  {isBorrowable && (
+                                                    <button
+                                                      type="button"
+                                                      onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        if (column.key === "accomplishments") {
+                                                          toggleBorrowedAccomplishment(member, item);
+                                                        } else {
+                                                          toggleBorrowedPlanItem(member, item);
+                                                        }
+                                                      }}
+                                                      className={cn(
+                                                        "ml-auto flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide transition-colors",
+                                                        isBorrowed
+                                                          ? "border-emerald-200 bg-emerald-50 text-emerald-600"
+                                                          : "border-neutral-200 bg-white text-neutral-400 hover:border-[#DA7756] hover:text-[#DA7756]"
+                                                      )}
+                                                      title={
+                                                        isBorrowed
+                                                          ? `Added to your report (credited to ${member?.name?.trim() || "this reportee"})`
+                                                          : `Add to your report (credited to ${member?.name?.trim() || "this reportee"})`
+                                                      }
+                                                    >
+                                                      {isBorrowed ? (
+                                                        <Check size={10} />
+                                                      ) : (
+                                                        <Plus size={10} />
+                                                      )}
+                                                      {isBorrowed ? "Added" : "Add to mine"}
+                                                    </button>
+                                                  )}
+                                                </div>
+
+                                                {/* Title */}
+                                                <p className="break-words text-[12px] font-semibold leading-[17px] text-[#2B2F38]">
+                                                  {typeof item === "string"
+                                                    ? item
+                                                    : item?.title ||
+                                                    item?.text ||
+                                                    item?.name ||
+                                                    "—"}
+                                                </p>
+
+                                                {/* Meta — date, estimate, overdue */}
+                                                {(dueDate ||
+                                                  overdueLabel ||
+                                                  effortEst) && (
+                                                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                                                      {dueDate && (
+                                                        <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                                                          <Calendar size={10} className="shrink-0" />
+                                                          {dueDate}
+                                                        </span>
+                                                      )}
+                                                      {effortEst && (
+                                                        <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                                                          <Clock size={10} className="shrink-0" />
+                                                          Est {effortEst}
+                                                        </span>
+                                                      )}
+                                                      {overdueLabel && (
+                                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-500">
+                                                          <AlertCircle size={10} className="shrink-0" />
+                                                          {overdueLabel}
+                                                        </span>
+                                                      )}
+                                                    </div>
+                                                  )}
+                                                {projectName && (
+                                                  <p className="mt-1 truncate text-[10px] font-medium text-slate-400">
+                                                    {projectName}
+                                                  </p>
+                                                )}
+                                              </div>
+                                            );
+                                          };
+
+                                          if (column.key === "tasks_issues") {
+                                            // Overdue = explicit status, or a past due date on a not-done item
+                                            const isOverdueItem = (i: any) => {
+                                              const s = String(i?.status || "").toLowerCase();
+                                              if (COMPLETED_STATUSES.has(s)) return false;
+                                              if (s.includes("overdue")) return true;
+                                              const d = i?.originalData || {};
+                                              return !!getOverdueLabel(
+                                                d?.target_date || d?.end_date || d?.due_date
+                                              );
+                                            };
+                                            const overdue = column.items.filter(isOverdueItem);
+                                            const rest = column.items.filter((i: any) => !isOverdueItem(i));
+                                            const inProgress = rest.filter((i: any) => ["in_progress", "in progress", "started", "wip"].includes(String(i?.status).toLowerCase()));
+                                            const onHold = rest.filter((i: any) => ["on_hold", "hold"].includes(String(i?.status).toLowerCase()));
+                                            const openItems = rest.filter((i: any) => ["open", "pending", "reopen", "reopened", "new", "to_do", "todo"].includes(String(i?.status).toLowerCase()));
+                                            // Anything with an unexpected status still has to show up
+                                            const bucketed = new Set([...overdue, ...inProgress, ...onHold, ...openItems]);
+                                            const others = column.items.filter((i: any) => !bucketed.has(i));
+
+                                            return (
+                                              <div className="space-y-4">
+                                                {overdue.length > 0 && (
+                                                  <div className="space-y-1.5">
+                                                    <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-red-500"><span className="h-1.5 w-1.5 rounded-full bg-current" />Overdue<span className="font-semibold text-neutral-400">({overdue.length})</span></h6>
+                                                    {overdue.map(renderItem)}
+                                                  </div>
+                                                )}
+                                                {inProgress.length > 0 && (
+                                                  <div className="space-y-1.5">
+                                                    <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-sky-600"><span className="h-1.5 w-1.5 rounded-full bg-current" />In Progress<span className="font-semibold text-neutral-400">({inProgress.length})</span></h6>
+                                                    {inProgress.map(renderItem)}
+                                                  </div>
+                                                )}
+                                                {onHold.length > 0 && (
+                                                  <div className="space-y-1.5">
+                                                    <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-amber-600"><span className="h-1.5 w-1.5 rounded-full bg-current" />On Hold<span className="font-semibold text-neutral-400">({onHold.length})</span></h6>
+                                                    {onHold.map(renderItem)}
+                                                  </div>
+                                                )}
+                                                {openItems.length > 0 && (
+                                                  <div className="space-y-1.5">
+                                                    <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500"><span className="h-1.5 w-1.5 rounded-full bg-current" />Open<span className="font-semibold text-neutral-400">({openItems.length})</span></h6>
+                                                    {openItems.map(renderItem)}
+                                                  </div>
+                                                )}
+                                                {others.length > 0 && (
+                                                  <div className="space-y-1.5">
+                                                    <h6 className="flex items-center gap-1.5 px-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-neutral-400"><span className="h-1.5 w-1.5 rounded-full bg-current" />Other<span className="font-semibold text-neutral-400">({others.length})</span></h6>
+                                                    {others.map(renderItem)}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          }
+
+                                          return column.items.map(renderItem);
+                                        })()
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
-            </div>
             )}
 
             {isAbsent && (
@@ -7354,18 +7506,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               <span
                                                 className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
                                                 style={{
-                                                  backgroundColor:
-                                                    ach.originalData.priority === "High"
-                                                      ? "#fee2e2"
-                                                      : ach.originalData.priority === "Medium"
-                                                        ? "#fef3c7"
-                                                        : "#dcfce7",
-                                                  color:
-                                                    ach.originalData.priority === "High"
-                                                      ? "#991b1b"
-                                                      : ach.originalData.priority === "Medium"
-                                                        ? "#92400e"
-                                                        : "#166534",
+                                                  backgroundColor: getPriorityColors(ach.originalData.priority).bg,
+                                                  color: getPriorityColors(ach.originalData.priority).color,
                                                 }}
                                               >
                                                 {ach.originalData.priority}
@@ -7524,18 +7666,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               <span
                                                 className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
                                                 style={{
-                                                  backgroundColor:
-                                                    livePriority === "High"
-                                                      ? "#fee2e2"
-                                                      : livePriority === "Medium"
-                                                        ? "#fef3c7"
-                                                        : "#dcfce7",
-                                                  color:
-                                                    livePriority === "High"
-                                                      ? "#991b1b"
-                                                      : livePriority === "Medium"
-                                                        ? "#92400e"
-                                                        : "#166534",
+                                                  backgroundColor: getPriorityColors(livePriority).bg,
+                                                  color: getPriorityColors(livePriority).color,
                                                 }}
                                               >
                                                 {livePriority}

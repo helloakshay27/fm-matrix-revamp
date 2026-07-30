@@ -22,9 +22,10 @@ const STATUS_COLORS = {
 };
 
 const PRIORITY_COLORS = {
-    "High": { bg: "bg-red-100", text: "text-red-800" },
-    "Medium": { bg: "bg-yellow-100", text: "text-yellow-800" },
-    "Low": { bg: "bg-green-100", text: "text-green-800" },
+    "P1": { bg: "bg-red-100", text: "text-red-800" },
+    "P2": { bg: "bg-yellow-100", text: "text-yellow-800" },
+    "P3": { bg: "bg-blue-100", text: "text-blue-800" },
+    "P4": { bg: "bg-green-100", text: "text-green-800" },
 };
 
 const ProjectTaskDetailsPage = () => {
@@ -49,7 +50,7 @@ const ProjectTaskDetailsPage = () => {
         title: "",
         description: "",
         status: "open",
-        priority: "Medium",
+        priority: "P2",
         responsible_person_id: "",
         responsible_person_name: "",
         expected_start_date: "",
@@ -88,7 +89,7 @@ const ProjectTaskDetailsPage = () => {
     }
 
     const statusInfo = STATUS_COLORS[task.status?.toLowerCase()] || STATUS_COLORS["open"];
-    const priorityInfo = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS["Medium"];
+    const priorityInfo = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS["P2"];
 
     return (
         <div className="p-6 mx-auto">

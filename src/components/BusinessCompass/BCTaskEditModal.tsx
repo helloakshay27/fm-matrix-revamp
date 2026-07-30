@@ -77,6 +77,13 @@ const parseDateObj = (dateStr: string) => {
   return { year: d.getFullYear(), month: d.getMonth(), date: d.getDate() };
 };
 
+const priorityOptions = [
+  { value: "P1", label: "P1: Urgent & Important" },
+  { value: "P2", label: "P2: Important, Not Urgent" },
+  { value: "P3", label: "P3: Urgent, Not Important" },
+  { value: "P4", label: "P4: Not Urgent or Important" },
+];
+
 const AttachmentsSelector = ({
   files,
   onFilesChange,
@@ -512,7 +519,7 @@ const SimpleTaskForm = ({
       formDataPayload.append("task[start_date]", fmt(startDate) || "");
       formDataPayload.append("task[due_date]", fmt(endDate));
       formDataPayload.append("task[effort_duration]", formatEffortDuration(totalWorkingHours));
-      formDataPayload.append("task[priority]", formData.priority.toLowerCase());
+      formDataPayload.append("task[priority]", formData.priority);
       formDataPayload.append("task[status]", editData?.status || "open");
 
       let taskAllocationTimesAttributes: any[] = [];
@@ -861,9 +868,11 @@ const SimpleTaskForm = ({
                 sx={fieldStyles}
               >
                 <MenuItem value=""><em>Select Priority</em></MenuItem>
-                <MenuItem value="High">High</MenuItem>
-                <MenuItem value="Medium">Medium</MenuItem>
-                <MenuItem value="Low">Low</MenuItem>
+                {priorityOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </div>

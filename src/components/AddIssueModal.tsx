@@ -52,10 +52,10 @@ const Transition = forwardRef(function Transition(
 });
 
 const globalPriorityOptions = [
-  { value: 5, label: "Urgent" },
-  { value: 4, label: "High" },
-  { value: 3, label: "Medium" },
-  { value: 2, label: "Low" },
+  { value: "P1", label: "P1: Urgent & Important" },
+  { value: "P2", label: "P2: Important, Not Urgent" },
+  { value: "P3", label: "P3: Urgent, Not Important" },
+  { value: "P4", label: "P4: Not Urgent or Important" },
 ];
 
 const Attachments = ({ attachments, setAttachments }) => {
@@ -951,14 +951,7 @@ const AddIssueModal = ({
       formData.append("issue[description]", description || "");
       formData.append("issue[start_date]", formattedStartDate || "");
       formData.append("issue[end_date]", formattedEndDate || "");
-      formData.append(
-        "issue[priority]",
-        String(
-          globalPriorityOptions.find(
-            (option) => String(option.value) === String(priority)
-          )?.label || ""
-        )
-      );
+      formData.append("issue[priority]", String(priority));
       formData.append(
         "issue[created_by_id]",
         JSON.parse(localStorage.getItem("user") || "{}")?.id || ""
