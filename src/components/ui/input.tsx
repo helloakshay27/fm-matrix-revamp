@@ -45,7 +45,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <input
             type={type}
             className={cn(
-              "floating-label w-full px-[15px] text-base border border-[#ccc] rounded transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-0 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50",
+              "floating-label w-full px-[15px] text-base border border-[#ccc] rounded transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-0 focus-visible:border-brand disabled:cursor-not-allowed disabled:opacity-50",
               "h-[36px]", // ✅ fixed height to 36px
               className
             )}
@@ -79,7 +79,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          "flex w-full rounded-md border border-gray-300 bg-transparent px-3 text-base transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50",
+          "flex w-full rounded-md border border-gray-300 bg-transparent px-3 text-base transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-brand disabled:cursor-not-allowed disabled:opacity-50",
           "h-[36px]", // ✅ fixed height to 36px
           className
         )}

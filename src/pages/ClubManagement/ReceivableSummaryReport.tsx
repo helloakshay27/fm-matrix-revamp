@@ -43,7 +43,7 @@ const formatDisplayDate = (value: string) => {
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "--";
   const [y, m, d] = dateStr.split("-");
-  return `${d}-${m}-${y}`;
+  return `${d}/${m}/${y}`;
 };
 
 const formatCurrency = (value: number): string => {
@@ -56,11 +56,11 @@ const formatCurrency = (value: number): string => {
 };
 
 const statusColorMap: Record<string, string> = {
-  Overdue: "bg-orange-100 text-orange-700",
-  Open: "bg-blue-100 text-blue-700",
-  Sent: "bg-blue-100 text-blue-700",
-  Paid: "bg-green-100 text-green-700",
-  Draft: "bg-yellow-100 text-yellow-700",
+  Overdue: "bg-gray-100 text-gray-800",
+  Open: "bg-gray-100 text-gray-800",
+  Sent: "bg-gray-100 text-gray-800",
+  Paid: "bg-gray-100 text-gray-800",
+  Draft: "bg-gray-100 text-gray-800",
 };
 
 const columns: ColumnConfig[] = [
@@ -165,16 +165,16 @@ const ReceivableSummaryReport: React.FC = () => {
 
   const renderRow = (row: ReceivableSummaryRow) => {
     const isTotal = row.id === "__total__";
-    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`;
+    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`;
     return {
       customerName: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
       ) : (
-        <span className="text-sm font-medium text-blue-600">{row.customerName}</span>
+        <span className="text-sm font-medium text-brand">{row.customerName}</span>
       ),
       date: <span className="text-sm text-gray-600">{isTotal ? "" : row.date}</span>,
       transactionNo: (
-        <span className="text-sm font-medium text-blue-600">{isTotal ? "" : row.transactionNo}</span>
+        <span className="text-sm font-medium text-brand">{isTotal ? "" : row.transactionNo}</span>
       ),
       referenceNo: (
         <span className="text-sm text-gray-600">{isTotal ? "" : (row.referenceNo || "--")}</span>

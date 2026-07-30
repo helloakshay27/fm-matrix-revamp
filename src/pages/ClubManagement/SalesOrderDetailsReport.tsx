@@ -19,10 +19,10 @@ interface SalesOrderRow {
 }
 
 const statusColorMap: Record<string, string> = {
-  draft: "bg-yellow-100 text-yellow-700",
-  confirmed: "bg-green-100 text-green-700",
-  closed: "bg-blue-100 text-blue-700",
-  cancelled: "bg-red-100 text-red-700",
+  draft: "bg-gray-100 text-gray-800",
+  confirmed: "bg-gray-100 text-gray-800",
+  closed: "bg-gray-100 text-gray-800",
+  cancelled: "bg-gray-100 text-gray-800",
 };
 
 const columns: ColumnConfig[] = [
@@ -53,7 +53,7 @@ const formatDate = (dateStr: string) => {
   if (!dateStr) return "--";
   const [year, month, day] = dateStr.split("-");
   if (!day) return dateStr;
-  return `${day}-${month}-${year}`;
+  return `${day}/${month}/${year}`;
 };
 
 const SalesOrderDetailsReport: React.FC = () => {
@@ -136,7 +136,7 @@ const SalesOrderDetailsReport: React.FC = () => {
       status: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
       ) : (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColorMap[row.status.toLowerCase()] || "bg-gray-100 text-gray-700"}`}>
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColorMap[row.status.toLowerCase()] || "bg-gray-100 text-gray-800"}`}>
           {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
         </span>
       ),
@@ -145,16 +145,16 @@ const SalesOrderDetailsReport: React.FC = () => {
       salesOrderNo: isTotal ? <span /> : (
         <button
           onClick={() => navigate(`/accounting/sales-order/${row.salesOrderId}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.salesOrderNo}
         </button>
       ),
       customerName: (
-        <span className="text-sm font-medium text-blue-600">{isTotal ? "" : row.customerName}</span>
+        <span className="text-sm font-medium text-brand">{isTotal ? "" : row.customerName}</span>
       ),
       amount: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`}>
           {formatCurrency(row.amount)}
         </span>
       ),

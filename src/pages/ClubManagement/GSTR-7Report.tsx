@@ -417,7 +417,7 @@ const GSTR7Report: React.FC = () => {
         </span>
       ),
       vendor: (
-        <span className="text-[13px] font-semibold text-[#2563eb]">
+        <span className="text-[13px] font-semibold text-[#DA7756]">
           {isTotalRow ? "Total" : row.vendor}
         </span>
       ),
@@ -442,7 +442,7 @@ const GSTR7Report: React.FC = () => {
         </span>
       ),
       totalTax: (
-        <span className="inline-flex w-full justify-end text-[13px] font-bold text-[#2563eb]">
+        <span className="inline-flex w-full justify-end text-[13px] font-bold text-[#DA7756]">
           {formatCurrency(row.totalTax)}
         </span>
       ),

@@ -154,7 +154,28 @@ const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = nu
             </div>
 
             <DialogContent >
-                <form className="space-y-4">
+                <style>{`
+                    .coa-modal-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+                        border-color: #DA7756 !important;
+                    }
+                    .coa-modal-form .MuiInputLabel-root.Mui-focused {
+                        color: #DA7756 !important;
+                    }
+                    .coa-modal-form [class*="MuiFormControl"]:has(.MuiInputBase-multiline) [class*="MuiInputLabel"].Mui-focused,
+                    .coa-modal-form [class*="MuiFormControl"]:has(textarea) [class*="MuiInputLabel"].Mui-focused {
+                        color: #DA7756 !important;
+                    }
+                    .coa-modal-form .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+                        border-color: #DA7756 !important;
+                    }
+                    .coa-modal-form .MuiInputLabel-root.Mui-error {
+                        color: #DA7756 !important;
+                    }
+                    .coa-modal-form .MuiFormHelperText-root.Mui-error {
+                        color: #DA7756 !important;
+                    }
+                `}</style>
+                <form className="coa-modal-form space-y-4">
                     <div className="flex gap-8">
                         <div className="flex-1 space-y-4" style={{ minWidth: 500 }}>
                             {/* <FormControl fullWidth margin="normal" sx={{ minWidth: 500 }}>
@@ -184,6 +205,8 @@ const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = nu
                                 margin="normal"
                                 label={<span>Account Name<span style={{ color: '#C72030' }}>*</span></span>}
                                 name="accountName"
+                                placeholder="Enter account name"
+                                InputLabelProps={{ shrink: true }}
                                 value={formData.accountName || ''}
                                 onChange={e => setFormData(prev => ({ ...prev, accountName: e.target.value }))}
                             // required
@@ -232,6 +255,8 @@ const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = nu
                                 margin="normal"
                                 label="Account Code"
                                 name="accountCode"
+                                placeholder="Enter account code"
+                                InputLabelProps={{ shrink: true }}
                                 value={formData.accountCode || ''}
                                 onChange={e => setFormData(prev => ({ ...prev, accountCode: e.target.value }))}
                             />
@@ -253,6 +278,7 @@ const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = nu
                                 margin="normal"
                                 label="Description"
                                 name="description"
+                                placeholder="Enter description (max. 500 characters)"
                                 value={formData.description || ''}
                                 onChange={e =>
                                     setFormData(prev => ({ ...prev, description: e.target.value }))
@@ -268,6 +294,21 @@ const AddChartofAccountGroupModal = ({ open, onOpenChange, editingAccessory = nu
                                         height: "auto !important",
                                         padding: "2px !important",
                                         display: "flex",
+                                    },
+                                    "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                                        borderColor: "#DA7756 !important",
+                                    },
+                                    "& .MuiInputLabel-root.Mui-focused": {
+                                        color: "#DA7756 !important",
+                                    },
+                                    "& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline": {
+                                        borderColor: "#DA7756 !important",
+                                    },
+                                    "& .MuiInputLabel-root.Mui-error": {
+                                        color: "#DA7756 !important",
+                                    },
+                                    "& .MuiFormHelperText-root.Mui-error": {
+                                        color: "#DA7756 !important",
                                     },
                                     "& .MuiInputBase-input[aria-hidden='true']": {
                                         flex: 0,

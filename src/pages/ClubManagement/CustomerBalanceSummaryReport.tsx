@@ -134,14 +134,14 @@ const CustomerBalanceSummaryReport: React.FC = () => {
 
   const renderRow = (row: CustomerBalanceRow) => {
     const isTotal = row.id === "__total__";
-    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`;
+    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`;
     return {
       customerName: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
       ) : (
         <button
           onClick={() => navigate(`/accounting/customers/details/${row.customerId}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.customerName}
         </button>

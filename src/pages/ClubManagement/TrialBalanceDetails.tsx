@@ -119,7 +119,7 @@ export const TrialBalanceDetails = () => {
     if (loading || ledgerLoading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <div className="animate-spin h-8 w-8 border-b-2 border-blue-600 rounded-full" />
+                <div className="animate-spin h-8 w-8 border-b-2 border-brand rounded-full" />
             </div>
         );
     }
@@ -143,7 +143,7 @@ export const TrialBalanceDetails = () => {
                     <h1 className="text-2xl font-semibold text-gray-900">
                         {ledgerDetails?.name || accountName}
                     </h1>
-                    {/* <Button variant="outline" className="text-blue-600 border-blue-600">
+                    {/* <Button variant="outline" className="text-brand border-brand">
             Edit
           </Button> */}
                 </div>
@@ -170,7 +170,7 @@ export const TrialBalanceDetails = () => {
             {/* Closing Balance */}
             {/* <div className="bg-[#F9FBFF] border rounded-md p-5 mb-6">
                 <p className="text-xs text-gray-500 uppercase mb-1">Closing Balance</p>
-                <p className="text-xl font-semibold text-blue-600">
+                <p className="text-xl font-semibold text-brand">
                     ₹{Math.abs(ledgerDetails?.current_total ?? closingBalance).toFixed(2)}{' '}
                     <span className="text-sm">
                         {(ledgerDetails?.current_total ?? closingBalance) >= 0 ? 'Dr' : 'Cr'}

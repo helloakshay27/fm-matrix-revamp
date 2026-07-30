@@ -3,9 +3,7 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, TextField } from '@mui/material';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -173,7 +171,7 @@ const UnitMaster: React.FC = () => {
                     <Edit className="w-4 h-4" />
                 </Button>
                 <Button size="icon" variant="ghost" onClick={() => openDeleteDialog(uom)} title="Delete">
-                    <Trash2 className="w-4 h-4 text-red-500" />
+                    <Trash2 className="w-4 h-4 " />
                 </Button>
             </div>
         ),
@@ -185,43 +183,47 @@ const UnitMaster: React.FC = () => {
                 <button
                     type="button"
                     onClick={() => handleToggleStatus(uom)}
-                    className={`status-toggle relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${uom.active ? 'bg-red-500' : 'bg-gray-300'}`}
+                    className={`status-toggle relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${uom.active ? 'bg-brand' : 'bg-gray-300'}`}
                 >
                     <span
                         className={`status-toggle-thumb inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${uom.active ? 'translate-x-6' : 'translate-x-1'}`}
                     />
                 </button>
-
-                <span
-                    className={`text-sm font-medium ${uom.active ? 'text-red-600' : 'text-red-600'}`}
-                >
-                    {/* {uom.active ? 'Active' : 'Inactive'} */}
-                </span>
             </div>
         ),
     });
 
     const modalFields = (
-        <div className="space-y-4 pt-2">
-            <div>
-                <Label>UOM Name <span className="text-red-500">*</span></Label>
-                <Input
-                    className="mt-1 rounded-none"
+        <>
+            <style>{`
+                .uom-modal-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+                    border-color: #DA7756 !important;
+                }
+                .uom-modal-form .MuiInputLabel-root.Mui-focused {
+                    color: #DA7756 !important;
+                }
+            `}</style>
+            <div className="uom-modal-form space-y-4 pt-2">
+                <TextField
+                    fullWidth
+                    margin="normal"
+                    label={<span>UOM Name<span style={{ color: '#C72030' }}>*</span></span>}
+                    placeholder="Enter UOM name"
+                    InputLabelProps={{ shrink: true }}
                     value={form.name}
                     onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                    placeholder="Enter UOM name"
                 />
-            </div>
-            <div>
-                <Label>UOM Short Name <span className="text-red-500">*</span></Label>
-                <Input
-                    className="mt-1 rounded-none"
+                <TextField
+                    fullWidth
+                    margin="normal"
+                    label={<span>UOM Short Name<span style={{ color: '#C72030' }}>*</span></span>}
+                    placeholder="Enter short name"
+                    InputLabelProps={{ shrink: true }}
                     value={form.short_name}
                     onChange={(e) => setForm((p) => ({ ...p, short_name: e.target.value }))}
-                    placeholder="Enter short name"
                 />
             </div>
-        </div>
+        </>
     );
 
     return (
@@ -230,40 +232,39 @@ const UnitMaster: React.FC = () => {
                 <h1 className="text-2xl font-bold tracking-tight">Unit of Measurement</h1>
             </header>
 
-            <div className="[&_*:not(.status-toggle):not(.status-toggle-thumb)]:!rounded-none [&_.rounded-lg]:!rounded-none [&_.rounded-md]:!rounded-none [&_.rounded]:!rounded-none">
-                <EnhancedTaskTable
-                    data={uoms}
-                    columns={columns}
-                    renderRow={renderRow}
-                    storageKey="unit-master-v1"
-                    hideTableExport
-                    enableSearch
-                    loading={loading}
-                    leftActions={
-                        <Button
-                            className="bg-primary text-primary-foreground hover:bg-primary/90"
-                            onClick={() => { setForm(emptyForm); setAddOpen(true); }}
-                        >
-                            <Plus className="w-4 h-4 mr-2 !text-white" />
-                            <span className="!text-white">Add</span>
-                        </Button>
-                    }
-                />
-            </div>
+            <EnhancedTaskTable
+                data={uoms}
+                columns={columns}
+                renderRow={renderRow}
+                storageKey="unit-master-v1"
+                hideTableExport
+                enableSearch
+                loading={loading}
+                leftActions={
+                    <Button
+                        className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        onClick={() => { setForm(emptyForm); setAddOpen(true); }}
+                    >
+                        <Plus className="w-4 h-4 mr-2 !text-white" />
+                        <span className="!text-white">Add</span>
+                    </Button>
+                }
+            />
 
             {/* Add Modal */}
-            <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) setForm(emptyForm); }}>
-                <DialogContent className="rounded-none border border-gray-300">
-                    <DialogHeader>
-                        <DialogTitle>UOM Master</DialogTitle>
-                    </DialogHeader>
+            <Dialog open={addOpen} onClose={() => { setAddOpen(false); setForm(emptyForm); }} fullWidth maxWidth="sm">
+                <div className="flex items-center justify-between px-6 pt-6">
+                    <h5 className="text-lg font-semibold">UOM Master</h5>
+                </div>
+                <DialogContent>
                     {modalFields}
-                    <div className="flex justify-center gap-3 mt-4">
+                    <div className="mt-4 pt-5 flex justify-center gap-3">
                         <Button onClick={handleAdd} disabled={submitting}
-                            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">
+                            style={{ backgroundColor: "#C72030" }}
+                            className="text-white hover:bg-[#C72030]/90 min-w-[100px]">
                             {submitting ? 'Creating...' : 'Add'}
                         </Button>
-                        <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setAddOpen(false)} className="min-w-[100px]">Cancel</Button>
                     </div>
                 </DialogContent>
             </Dialog>
@@ -296,18 +297,19 @@ const UnitMaster: React.FC = () => {
             </AlertDialog>
 
             {/* Edit Modal */}
-            <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) { setForm(emptyForm); setEditId(null); } }}>
-                <DialogContent className="rounded-none border border-gray-300">
-                    <DialogHeader>
-                        <DialogTitle>Edit UOM</DialogTitle>
-                    </DialogHeader>
+            <Dialog open={editOpen} onClose={() => { setEditOpen(false); setForm(emptyForm); setEditId(null); }} fullWidth maxWidth="sm">
+                <div className="flex items-center justify-between px-6 pt-6">
+                    <h5 className="text-lg font-semibold">Edit UOM</h5>
+                </div>
+                <DialogContent>
                     {modalFields}
-                    <div className="flex justify-center gap-3 mt-4">
+                    <div className="mt-4 pt-5 flex justify-center gap-3">
                         <Button onClick={handleUpdate} disabled={submitting}
-                            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">
+                            style={{ backgroundColor: "#C72030" }}
+                            className="text-white hover:bg-[#C72030]/90 min-w-[100px]">
                             {submitting ? 'Updating...' : 'Update'}
                         </Button>
-                        <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setEditOpen(false)} className="min-w-[100px]">Cancel</Button>
                     </div>
                 </DialogContent>
             </Dialog>

@@ -13,6 +13,7 @@ import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import CircularProgress from "@mui/material/CircularProgress";
+import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
@@ -20,6 +21,10 @@ import axios from "axios";
 
 // ─────────────────────────── MUI theme ───────────────────────────────────────
 const muiTheme = createTheme({
+  palette: {
+    primary: { main: "#DA7756" },
+    error: { main: "#DA7756" },
+  },
   components: {
     MuiInputLabel: {
       styleOverrides: { root: { fontSize: "16px" } },
@@ -355,118 +360,87 @@ const TaxRatesTable: React.FC = () => {
       )}
 
       {/* ── Add / Edit modal ───────────────────────────────────────────────── */}
-      {panelOpen && (
-        <>
-          <div className="fixed inset-0 bg-black/40 z-40" onClick={closePanel} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" aria-modal="true">
-            <div
-              className="bg-white rounded-lg shadow-2xl w-full max-w-md flex flex-col"
-              style={{ animation: "taxPopIn 0.18s ease-out" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b">
-                <h2 className="text-lg font-bold text-[#1A1A1A]">
-                  {editingTax ? "Edit Tax Rate" : "New Tax Rate"}
-                </h2>
-                <button onClick={closePanel} className="text-gray-400 hover:text-gray-600 text-xl leading-none">
-                  &times;
-                </button>
-              </div>
+      <Dialog open={panelOpen} onClose={closePanel} fullWidth maxWidth="sm">
+        <div className="flex items-center justify-between px-6 pt-6">
+          <h5 className="text-lg font-semibold">{editingTax ? "Edit Tax Rate" : "New Tax Rate"}</h5>
+        </div>
+        <DialogContent>
+          <form className="space-y-4">
+            <TextField
+              fullWidth
+              margin="normal"
+              label={<span>Tax Name<span style={{ color: '#C72030' }}>*</span></span>}
+              name="name"
+              placeholder="e.g. GST10"
+              InputLabelProps={{ shrink: true }}
+              value={currentForm.name}
+              onChange={(e) => {
+                setCurrentForm((s) => ({ ...s, name: e.target.value }));
+                if (e.target.value.trim()) setFormErrors((s) => ({ ...s, name: "" }));
+              }}
+              error={!!formErrors.name}
+              helperText={formErrors.name}
+            />
 
-              {/* Body */}
-              <div className="px-6 py-6 space-y-5">
-                {/* Tax Name */}
-                <div className="flex items-start gap-4">
-                  <label className="w-28 pt-2 text-sm font-semibold text-[#C72030] shrink-0">
-                    Tax Name<span className="text-[#C72030]">*</span>
-                  </label>
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={currentForm.name}
-                      onChange={(e) => {
-                        setCurrentForm((s) => ({ ...s, name: e.target.value }));
-                        if (e.target.value.trim()) setFormErrors((s) => ({ ...s, name: "" }));
-                      }}
-                      placeholder="e.g. GST10"
-                      className={`w-full h-10 border rounded px-3 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 transition ${formErrors.name ? "border-red-400" : "border-gray-300"}`}
-                    />
-                    {formErrors.name && <p className="text-xs text-red-500 mt-1">{formErrors.name}</p>}
-                  </div>
-                </div>
+            <FormControl fullWidth margin="normal">
+              <InputLabel id="tax-rate-type-label" shrink error={!!formErrors.rate_type}>
+                Tax Type<span style={{ color: '#C72030' }}>*</span>
+              </InputLabel>
+              <Select
+                labelId="tax-rate-type-label"
+                label="Tax Type*"
+                displayEmpty
+                notched
+                value={currentForm.rate_type}
+                onChange={(e) => {
+                  setCurrentForm((s) => ({ ...s, rate_type: e.target.value }));
+                  if (e.target.value) setFormErrors((s) => ({ ...s, rate_type: "" }));
+                }}
+                error={!!formErrors.rate_type}
+              >
+                <MenuItem value="" disabled>Select Tax Type</MenuItem>
+                {RATE_TYPE_OPTIONS.map((o) => (
+                  <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+                ))}
+              </Select>
+              {formErrors.rate_type && <p className="text-xs mt-1" style={{ color: '#DA7756' }}>{formErrors.rate_type}</p>}
+            </FormControl>
 
-                {/* Tax Type (rate_type) */}
-                <div className="flex items-start gap-4">
-                  <label className="w-28 pt-2 text-sm font-semibold text-[#C72030] shrink-0">
-                    Tax Type<span className="text-[#C72030]">*</span>
-                  </label>
-                  <div className="flex-1">
-                    <select
-                      value={currentForm.rate_type}
-                      onChange={(e) => {
-                        setCurrentForm((s) => ({ ...s, rate_type: e.target.value }));
-                        if (e.target.value) setFormErrors((s) => ({ ...s, rate_type: "" }));
-                      }}
-                      className={`w-full h-10 border rounded px-3 text-sm text-gray-700 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 bg-white transition ${formErrors.rate_type ? "border-red-400" : "border-gray-300"}`}
-                    >
-                      <option value="">Select Tax Type</option>
-                      {RATE_TYPE_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </select>
-                    {formErrors.rate_type && <p className="text-xs text-red-500 mt-1">{formErrors.rate_type}</p>}
-                  </div>
-                </div>
+            <TextField
+              fullWidth
+              margin="normal"
+              type="number"
+              label={<span>Rate (%)<span style={{ color: '#C72030' }}>*</span></span>}
+              name="rate"
+              placeholder="Enter tax rate"
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: 0, max: 100, step: 0.01 }}
+              value={currentForm.rate}
+              onChange={(e) => {
+                setCurrentForm((s) => ({ ...s, rate: e.target.value }));
+                if (e.target.value) setFormErrors((s) => ({ ...s, rate: "" }));
+              }}
+              error={!!formErrors.rate}
+              helperText={formErrors.rate}
+            />
 
-                {/* Rate */}
-                <div className="flex items-start gap-4">
-                  <label className="w-28 pt-2 text-sm font-semibold text-[#C72030] shrink-0">
-                    Rate (%)<span className="text-[#C72030]">*</span>
-                  </label>
-                  <div className="flex-1">
-                    <div className="flex">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={currentForm.rate}
-                        onChange={(e) => {
-                          setCurrentForm((s) => ({ ...s, rate: e.target.value }));
-                          if (e.target.value) setFormErrors((s) => ({ ...s, rate: "" }));
-                        }}
-                        className={`flex-1 h-10 border rounded-l px-3 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 transition ${formErrors.rate ? "border-red-400" : "border-gray-300"}`}
-                      />
-                      <span className="h-10 px-4 flex items-center border border-l-0 border-gray-300 rounded-r bg-gray-50 text-sm text-gray-600 font-medium">
-                        %
-                      </span>
-                    </div>
-                    {formErrors.rate && <p className="text-xs text-red-500 mt-1">{formErrors.rate}</p>}
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="px-6 py-4 border-t flex gap-3 justify-end bg-white rounded-b-lg">
-                <Button
-                  className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                  onClick={handleSave}
-                  disabled={formBusy}
-                >
-                  {formBusy ? (editingTax ? "Updating…" : "Saving…") : (editingTax ? "Update" : "Save")}
-                </Button>
-                <Button variant="outline" disabled={formBusy} onClick={closePanel}>Cancel</Button>
-              </div>
+            <div className="mt-4 pt-5 flex justify-center gap-3">
+              <Button
+                type="button"
+                onClick={handleSave}
+                disabled={formBusy}
+                style={{ backgroundColor: "#C72030" }}
+                className="text-white hover:bg-[#C72030]/90 min-w-[100px]"
+              >
+                {formBusy ? (editingTax ? "Updating…" : "Saving…") : (editingTax ? "Update" : "Save")}
+              </Button>
+              <Button type="button" variant="outline" disabled={formBusy} onClick={closePanel} className="min-w-[100px]">
+                Cancel
+              </Button>
             </div>
-          </div>
-          <style>{`
-            @keyframes taxPopIn {
-              from { transform: scale(0.93); opacity: 0; }
-              to   { transform: scale(1);    opacity: 1; }
-            }
-          `}</style>
-        </>
-      )}
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -99,7 +99,7 @@ const ProfitAndLossReport: React.FC = () => {
                     event.preventDefault();
                     navigate(targetUrl);
                   }}
-                  className="font-medium text-blue-600 underline"
+                  className="font-medium text-brand underline"
                 >
                   {ledger.ledger_name}
                 </a>

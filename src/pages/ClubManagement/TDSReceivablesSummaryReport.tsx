@@ -240,7 +240,7 @@ const TDSReceivablesSummaryReport: React.FC = () => {
                         {/* <button
                           type="button"
                           onClick={() => handleSectionClick(row)}
-                          className="font-semibold text-blue-600 hover:underline"
+                          className="font-semibold text-brand hover:underline"
                         >
                           {row.sectionCode}
                         </button> */}
