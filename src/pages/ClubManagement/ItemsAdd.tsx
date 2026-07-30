@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
   // TextField,
@@ -20,7 +20,6 @@ import { InputAdornment, TextField } from "@mui/material";
 import {
   Trash2,
   ArrowLeft,
-  Search,
 } from "lucide-react";
 import {
   Dialog,
@@ -30,6 +29,10 @@ import {
 } from "@mui/material";
 
 const muiTheme = createTheme({
+  palette: {
+    primary: { main: "#DA7756" },
+    error: { main: "#DA7756" },
+  },
   components: {
     MuiTextField: {
       styleOverrides: {
@@ -183,8 +186,6 @@ const ItemsAdd = () => {
   const [intraTaxes, setIntraTaxes] = useState<TaxGroup[]>([]);
   const [interTaxes, setInterTaxes] = useState<TaxRate[]>([]);
   const [unitOptions, setUnitOptions] = useState<{ value: string; label: string }[]>([]);
-  const [intraSearch, setIntraSearch] = useState("");
-  const [interSearch, setInterSearch] = useState("");
 
   React.useEffect(() => {
     const fetchSalesAccountGroups = async () => {
@@ -326,16 +327,6 @@ const ItemsAdd = () => {
       setForm((p) => ({ ...p, inter_state_tax: String(taxSettings.inter_state_tax_rate_id) }));
     }
   }, [taxSettings]);
-
-  const filteredIntraTaxes = useMemo(
-    () => intraTaxes.filter((t) => t.name.toLowerCase().includes(intraSearch.toLowerCase())),
-    [intraTaxes, intraSearch]
-  );
-
-  const filteredInterTaxes = useMemo(
-    () => interTaxes.filter((t) => t.name.toLowerCase().includes(interSearch.toLowerCase())),
-    [interTaxes, interSearch]
-  );
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
@@ -1432,42 +1423,21 @@ const ItemsAdd = () => {
                 value={form.intra_state_tax || ""}
                 label="Intra State Tax Rate"
                 displayEmpty
+                notched
                 renderValue={(val) => {
                   if (!val) return <span style={{ color: "#888" }}>Select</span>;
                   const match = intraTaxes.find((t) => String(t.id) === String(val));
                   return match ? <span>{match.name}</span> : <span style={{ color: "#888" }}>Select</span>;
                 }}
                 onChange={(e) => setForm((p) => ({ ...p, intra_state_tax: e.target.value }))}
-                onClose={() => setIntraSearch("")}
-                MenuProps={{ autoFocus: false, PaperProps: { style: { maxHeight: 300 } } }}
               >
-                <ListSubheader disableSticky sx={{ p: 1, bgcolor: "#f1f5f9" }}>
-                  <TextField
-                    size="small"
-                    autoFocus
-                    placeholder="Type to search..."
-                    fullWidth
-                    value={intraSearch}
-                    onChange={(e) => setIntraSearch(e.target.value)}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Search className="h-4 w-4" style={{ color: "#7c3aed" }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </ListSubheader>
-                <MenuItem value="">
+                <MenuItem value="" disabled>
                   <span style={{ color: "#888" }}>Select</span>
                 </MenuItem>
-                {filteredIntraTaxes.map((tax) => (
-                  <MenuItem key={tax.id} value={String(tax.id)}>
-                    {tax.name}
-                  </MenuItem>
+                {intraTaxes.map((tax) => (
+                  <MenuItem key={tax.id} value={String(tax.id)}>{tax.name}</MenuItem>
                 ))}
-                {filteredIntraTaxes.length === 0 && (
+                {intraTaxes.length === 0 && (
                   <MenuItem disabled>No tax found.</MenuItem>
                 )}
               </Select>
@@ -1483,42 +1453,21 @@ const ItemsAdd = () => {
                 value={form.inter_state_tax || ""}
                 label="Inter State Tax Rate"
                 displayEmpty
+                notched
                 renderValue={(val) => {
                   if (!val) return <span style={{ color: "#888" }}>Select</span>;
                   const match = interTaxes.find((t) => String(t.id) === String(val));
                   return match ? <span>{match.name}</span> : <span style={{ color: "#888" }}>Select</span>;
                 }}
                 onChange={(e) => setForm((p) => ({ ...p, inter_state_tax: e.target.value }))}
-                onClose={() => setInterSearch("")}
-                MenuProps={{ autoFocus: false, PaperProps: { style: { maxHeight: 300 } } }}
               >
-                <ListSubheader disableSticky sx={{ p: 1, bgcolor: "#f1f5f9" }}>
-                  <TextField
-                    size="small"
-                    autoFocus
-                    placeholder="Type to search..."
-                    fullWidth
-                    value={interSearch}
-                    onChange={(e) => setInterSearch(e.target.value)}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Search className="h-4 w-4" style={{ color: "#7c3aed" }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </ListSubheader>
-                <MenuItem value="">
+                <MenuItem value="" disabled>
                   <span style={{ color: "#888" }}>Select</span>
                 </MenuItem>
-                {filteredInterTaxes.map((tax) => (
-                  <MenuItem key={tax.id} value={String(tax.id)}>
-                    {tax.name}
-                  </MenuItem>
+                {interTaxes.map((tax) => (
+                  <MenuItem key={tax.id} value={String(tax.id)}>{tax.name} [{tax.rate}%]</MenuItem>
                 ))}
-                {filteredInterTaxes.length === 0 && (
+                {interTaxes.length === 0 && (
                   <MenuItem disabled>No tax found.</MenuItem>
                 )}
               </Select>

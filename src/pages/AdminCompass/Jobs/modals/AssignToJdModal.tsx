@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useJobs } from "../JobsContext";
-import { T, KPI_UNITS, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
+import { T, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
 import { Fld, FI, FT, FS, Btn } from "../components/UI";
 
 export default function AssignToJdModal() {

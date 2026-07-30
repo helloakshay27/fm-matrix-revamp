@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, Edit } from "lucide-react";
+import { Plus, Edit, Trash2, Download, FileText } from "lucide-react";
 import { AddCategoryModal } from "@/components/AddCategoryModal";
 import { EditCategoryModal } from "@/components/EditCategoryModal";
 import { AddDeviationStatusModal } from "@/components/AddDeviationStatusModal";
@@ -30,6 +30,9 @@ interface Status {
 interface UploadedFile {
   id: number;
   fileName: string;
+  fileSize: number;
+  uploadedAt: string;
+  fileUrl: string;
 }
 
 interface DeviationStatus {
@@ -37,6 +40,8 @@ interface DeviationStatus {
   category: string;
   active: boolean;
 }
+
+type GuideTableRow = UploadedFile & { sr_no: number };
 
 const categoryColumns: ColumnConfig[] = [
   { key: "category", label: "Category", sortable: true, hideable: true, defaultVisible: true },
@@ -55,12 +60,21 @@ const statusColumns: ColumnConfig[] = [
 const guideColumns: ColumnConfig[] = [
   { key: "sr_no", label: "Sr. No.", sortable: true, hideable: true, defaultVisible: true },
   { key: "fileName", label: "File Name", sortable: true, hideable: true, defaultVisible: true },
+  { key: "fileSize", label: "File Size", sortable: true, hideable: true, defaultVisible: true },
+  { key: "uploadedAt", label: "Uploaded On", sortable: true, hideable: true, defaultVisible: true },
 ];
 
 const deviationColumns: ColumnConfig[] = [
   { key: "category", label: "Category", sortable: true, hideable: true, defaultVisible: true },
   { key: "active", label: "Active/Inactive", sortable: false, hideable: true, defaultVisible: true },
 ];
+
+const formatFileSize = (bytes: number) => {
+  if (!bytes && bytes !== 0) return "—";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 export const FitoutSetupDashboard = () => {
   const [activeTab, setActiveTab] = useState('Category');
@@ -152,9 +166,13 @@ export const FitoutSetupDashboard = () => {
     if (files) {
       setUploadedFiles((prev) => {
         const nextId = prev.length > 0 ? Math.max(...prev.map((file) => file.id)) + 1 : 1;
+        const uploadedAt = new Date().toLocaleString();
         const newFiles: UploadedFile[] = Array.from(files).map((file, index) => ({
           id: nextId + index,
           fileName: file.name,
+          fileSize: file.size,
+          uploadedAt,
+          fileUrl: URL.createObjectURL(file),
         }));
         return [...prev, ...newFiles];
       });
@@ -164,6 +182,31 @@ export const FitoutSetupDashboard = () => {
         description: 'File uploaded successfully!',
       });
     }
+    event.target.value = '';
+  };
+
+  const handleDownloadFile = (file: UploadedFile) => {
+    const link = document.createElement('a');
+    link.href = file.fileUrl;
+    link.download = file.fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDeleteFile = (id: number) => {
+    setUploadedFiles((prev) => {
+      const fileToDelete = prev.find((file) => file.id === id);
+      if (fileToDelete?.fileUrl) {
+        URL.revokeObjectURL(fileToDelete.fileUrl);
+      }
+      return prev.filter((file) => file.id !== id);
+    });
+
+    toast({
+      title: 'Success',
+      description: 'File deleted successfully!',
+    });
   };
 
   const renderCategoryTab = () => (
@@ -319,66 +362,92 @@ export const FitoutSetupDashboard = () => {
     </div>
   );
 
-  const renderFitoutGuideTab = () => (
-    <div>
-      <div className="mb-6">
-        <div className="border-2 border-dashed border-brand rounded-lg p-8 text-center">
-          <div className="mb-4">
-            <span className="font-medium text-brand">Choose File</span>
-            <span className="text-gray-500 ml-2">No file chosen</span>
+  const renderFitoutGuideTab = () => {
+    const guideData: GuideTableRow[] = uploadedFiles.map((file, index) => ({
+      ...file,
+      sr_no: index + 1,
+    }));
+
+    return (
+      <div>
+        <div className="mb-6">
+          <div className="border-2 border-dashed border-brand rounded-lg p-8 text-center">
+            <div className="mb-4">
+              <span className="font-medium text-brand">Choose File</span>
+              <span className="text-gray-500 ml-2">No file chosen</span>
+            </div>
+            <label htmlFor="file-upload">
+              <Button className="bg-brand hover:bg-brand-hover text-white cursor-pointer [&_svg]:!text-white" asChild>
+                <span className="inline-flex items-center justify-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Upload
+                </span>
+              </Button>
+            </label>
+            <input id="file-upload" type="file" multiple className="hidden" onChange={handleFileUpload} />
           </div>
-          <label htmlFor="file-upload">
-            <Button className="bg-brand hover:bg-brand-hover text-white cursor-pointer [&_svg]:!text-white" asChild>
-              <span className="inline-flex items-center justify-center gap-2">
-                <Plus className="w-4 h-4" />
-                Upload
-              </span>
-            </Button>
-          </label>
-          <input id="file-upload" type="file" multiple className="hidden" onChange={handleFileUpload} />
+        </div>
+
+        <div className="w-full min-w-0 max-w-full">
+          <EnhancedTable
+            data={guideData}
+            columns={guideColumns}
+            renderCell={(item: GuideTableRow, columnKey: string) => {
+              switch (columnKey) {
+                case 'sr_no':
+                  return item.sr_no;
+                case 'fileName':
+                  return (
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="w-4 h-4 text-brand shrink-0" />
+                      <span className="font-medium text-gray-900 truncate">{item.fileName}</span>
+                    </div>
+                  );
+                case 'fileSize':
+                  return formatFileSize(item.fileSize);
+                case 'uploadedAt':
+                  return item.uploadedAt || '—';
+                default:
+                  return '—';
+              }
+            }}
+            renderActions={(item: GuideTableRow) => (
+              <div className="flex items-center justify-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-brand hover:bg-brand-light"
+                  title="Download"
+                  onClick={() => handleDownloadFile(item)}
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-brand-error hover:bg-brand-error/10"
+                  title="Delete"
+                  onClick={() => handleDeleteFile(item.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+            storageKey="fitout-setup-guide-v2"
+            enableSearch
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search files..."
+            hideTableExport
+            emptyMessage="No files uploaded"
+            pagination
+            pageSize={10}
+            getItemId={(item) => String(item.id)}
+          />
         </div>
       </div>
-
-      <div className="w-full min-w-0 max-w-full">
-        <EnhancedTable
-          data={uploadedFiles.map((file, index) => ({ ...file, sr_no: index + 1 }))}
-          columns={guideColumns}
-          renderCell={(item: UploadedFile & { sr_no: number }, columnKey: string) => {
-            switch (columnKey) {
-              case 'sr_no':
-                return item.sr_no;
-              case 'fileName':
-                return <span className="font-medium text-gray-900">{item.fileName}</span>;
-              default:
-                return '—';
-            }
-          }}
-          renderActions={() => (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-black hover:bg-gray-100"
-              title="Edit"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
-          )}
-          storageKey="fitout-setup-guide-table"
-          enableSearch
-          searchTerm={searchTerm}
-          onSearchChange={(value) => {
-            setSearchTerm(value);
-          }}
-          searchPlaceholder="Search files..."
-          hideTableExport
-          emptyMessage="No files uploaded"
-          pagination
-          pageSize={15}
-          getItemId={(item) => String(item.id)}
-        />
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderDeviationStatusTab = () => (
     <div>

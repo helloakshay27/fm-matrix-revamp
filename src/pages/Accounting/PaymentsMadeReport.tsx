@@ -93,12 +93,12 @@ const formatCurrency = (value: number) =>
   })}`;
 
 const statusBadgeMap: Record<string, string> = {
-  paid: "bg-green-100 text-green-700",
-  completed: "bg-green-100 text-green-700",
-  pending: "bg-yellow-100 text-yellow-700",
-  draft: "bg-gray-100 text-gray-700",
-  failed: "bg-red-100 text-red-700",
-  cancelled: "bg-red-100 text-red-700",
+  paid: "bg-gray-100 text-gray-800",
+  completed: "bg-gray-100 text-gray-800",
+  pending: "bg-gray-100 text-gray-800",
+  draft: "bg-gray-100 text-gray-800",
+  failed: "bg-gray-100 text-gray-800",
+  cancelled: "bg-gray-100 text-gray-800",
 };
 
 const PaymentsMadeReport: React.FC = () => {
@@ -213,24 +213,24 @@ const PaymentsMadeReport: React.FC = () => {
     return {
       date: <span className="text-sm text-gray-600">{isTotal ? "" : formatDate(row.date)}</span>,
       reference_number: <span className="text-sm text-gray-600">{isTotal ? "" : row.reference_number}</span>,
-      bill_numbers: <span className="text-sm font-medium text-blue-600">{isTotal ? "" : row.bill_numbers}</span>,
+      bill_numbers: <span className="text-sm font-medium text-brand">{isTotal ? "" : row.bill_numbers}</span>,
       vendor_name: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
       ) : (
-        <span className="text-sm font-medium text-blue-600">{row.vendor_name}</span>
+        <span className="text-sm font-medium text-brand">{row.vendor_name}</span>
       ),
       payment_mode: <span className="text-sm text-gray-600">{isTotal ? "" : row.payment_mode}</span>,
       notes: <span className="text-sm text-gray-600">{isTotal ? "" : row.notes}</span>,
       deposit_to: <span className="text-sm text-gray-600">{isTotal ? "" : row.deposit_to}</span>,
       status: isTotal ? <span /> : (
         row.status ? (
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadgeMap[row.status.toLowerCase()] || "bg-gray-100 text-gray-700"}`}>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadgeMap[row.status.toLowerCase()] || "bg-gray-100 text-gray-800"}`}>
             {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
           </span>
         ) : <span />
       ),
       amount: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`}>
           {formatCurrency(row.amount)}
         </span>
       ),

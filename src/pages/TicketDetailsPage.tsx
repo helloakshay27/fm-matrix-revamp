@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { ArrowLeft, Plus, FileText, Star, Flag, Paperclip, Download, Eye, ChevronDown, ChevronUp, User, MapPin, FileSearch, PlusCircle, ClipboardList, DollarSign, History, File, FileSpreadsheet, X, Edit, FileIcon, Check, Minus, MessageSquare, Ticket } from 'lucide-react';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
@@ -40,6 +42,43 @@ const formatDateToDDMMYYYY = (dateString: string) => {
   } catch (error) {
     return '-';
   }
+};
+
+const ticketLogColumns: ColumnConfig[] = [
+  { key: 'dateTime', label: 'Date/Time', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'log_type', label: 'Type', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'log_status', label: 'Status', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'log_by', label: 'By', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'details', label: 'Details', sortable: false, hideable: true, defaultVisible: true },
+];
+
+const getLogTypeLabel = (logType?: string) => {
+  if (logType === 'creation') return 'Created';
+  if (logType === 'status_update') return 'Status Update';
+  if (logType === 'assignee_change') return 'Assigned';
+  if (logType === 'comment') return 'Comment';
+  return 'Update';
+};
+
+const getLogTypeBadgeClass = (logType?: string) => {
+  if (logType === 'creation') return 'bg-green-100 text-green-700';
+  if (logType === 'status_update') return 'bg-blue-100 text-blue-700';
+  if (logType === 'assignee_change') return 'bg-purple-100 text-purple-700';
+  if (logType === 'comment') return 'bg-gray-100 text-gray-700';
+  return 'bg-gray-100 text-gray-700';
+};
+
+const getLogDetailsText = (log: any) => {
+  if (log.log_type === 'creation' && log.creation_summary) {
+    return log.creation_summary.ticket_raised || '-';
+  }
+  if (log.log_type === 'assignee_change' && log.assignment_changes) {
+    return `Assigned to: ${log.assignment_changes.assigned_to}`;
+  }
+  if (log.log_comment && log.log_comment.trim() !== '') {
+    return log.log_comment;
+  }
+  return '-';
 };
 
 const CustomMultiValue = (props) => (
@@ -559,6 +598,7 @@ export const TicketDetailsPage = () => {
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [activeTab, setActiveTab] = useState("analytics");
   const [activeSubTab, setActiveSubTab] = useState("analytics"); // Track sub-tab inside Analytics tab
+  const [logsSearchTerm, setLogsSearchTerm] = useState('');
   const [costInvolveEnabled, setCostInvolveEnabled] = useState<boolean>(false);
   const [currentAgeing, setCurrentAgeing] = useState<number>(0); // Ageing in seconds for real-time countdown
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
@@ -12705,82 +12745,68 @@ export const TicketDetailsPage = () => {
 
           {/* Action Logs Tab */}
           <TabsContent value="action-logs" className="p-4 sm:p-6">
-            {complaintLogs.length > 0 ? (
-              <div className="bg-white rounded-lg border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date/Time</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>By</TableHead>
-                      {/* <TableHead>Priority</TableHead> */}
-                      <TableHead>Details</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {complaintLogs.map((log, index) => (
-                      <TableRow key={log.id || index}>
-                        <TableCell className="font-medium text-sm whitespace-nowrap">
-                          {log.created_at ? formatLogTime(log.created_at) : ''}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={`text-xs ${
-                            log.log_type === 'creation' ? 'bg-green-100 text-green-700'
-                            : log.log_type === 'status_update' ? 'bg-blue-100 text-blue-700'
-                            : log.log_type === 'assignee_change' ? 'bg-purple-100 text-purple-700'
-                            : log.log_type === 'comment' ? 'bg-gray-100 text-gray-700'
-                            : 'bg-gray-100 text-gray-700'
-                          }`}>
-                            {log.log_type === 'creation' ? 'Created'
-                              : log.log_type === 'status_update' ? 'Status Update'
-                              : log.log_type === 'assignee_change' ? 'Assigned'
-                              : log.log_type === 'comment' ? 'Comment'
-                              : 'Update'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {log.log_status ? (
-                            <Badge className="bg-blue-100 text-blue-700 text-xs">
-                              {log.log_status}
-                            </Badge>
-                          ) : '-'}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {log.log_by || log.updated_by || "-"}
-                        </TableCell>
-                        {/* <TableCell className="text-sm">
-                          {getPriorityLabel(log.priority)}
-                        </TableCell> */}
-                        <TableCell className="text-sm">
-                          {log.log_type === 'creation' && log.creation_summary ? (
-                            <span>{log.creation_summary.ticket_raised}</span>
-                          ) : log.log_type === 'assignee_change' && log.assignment_changes ? (
-                            <span>Assigned to: {log.assignment_changes.assigned_to}</span>
-                          ) : log.log_comment && log.log_comment.trim() !== '' ? (
-                            log.log_comment.length > 50 ? (
-                              <Tooltip title={log.log_comment} arrow>
-                                <span className="cursor-help">
-                                  {log.log_comment.substring(0, 50)}...
-                                </span>
-                              </Tooltip>
-                            ) : (
-                              log.log_comment
-                            )
-                          ) : (
-                            "-"
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-8">
-                No action logs found
-              </p>
-            )}
+            <div className="w-full min-w-0 max-w-full">
+              <EnhancedTable
+                data={complaintLogs.map((log: any, index: number) => ({
+                  ...log,
+                  id: log.id ?? `log-${index}`,
+                  dateTime: log.created_at ? formatLogTime(log.created_at) : '',
+                  details: getLogDetailsText(log),
+                }))}
+                columns={ticketLogColumns}
+                renderCell={(item: any, columnKey: string) => {
+                  switch (columnKey) {
+                    case 'dateTime':
+                      return (
+                        <span className="font-medium text-sm whitespace-nowrap">
+                          {item.dateTime || '—'}
+                        </span>
+                      );
+                    case 'log_type':
+                      return (
+                        <Badge className={`text-xs ${getLogTypeBadgeClass(item.log_type)}`}>
+                          {getLogTypeLabel(item.log_type)}
+                        </Badge>
+                      );
+                    case 'log_status':
+                      return item.log_status ? (
+                        <Badge className="bg-blue-100 text-blue-700 text-xs">
+                          {item.log_status}
+                        </Badge>
+                      ) : (
+                        '—'
+                      );
+                    case 'log_by':
+                      return <span className="text-sm">{item.log_by || item.updated_by || '—'}</span>;
+                    case 'details': {
+                      const details = item.details || '—';
+                      if (details !== '—' && details.length > 50) {
+                        return (
+                          <Tooltip title={details} arrow>
+                            <span className="cursor-help text-sm">
+                              {details.substring(0, 50)}...
+                            </span>
+                          </Tooltip>
+                        );
+                      }
+                      return <span className="text-sm">{details}</span>;
+                    }
+                    default:
+                      return '—';
+                  }
+                }}
+                storageKey="ticket-details-action-logs"
+                enableSearch
+                searchTerm={logsSearchTerm}
+                onSearchChange={setLogsSearchTerm}
+                searchPlaceholder="Search logs..."
+                hideTableExport
+                emptyMessage="No action logs found"
+                pagination
+                pageSize={10}
+                getItemId={(item) => String(item.id)}
+              />
+            </div>
           </TabsContent>
         </Tabs>
       </div>

@@ -4,15 +4,7 @@ import { Button } from '@/components/ui/button';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, TextField } from '@mui/material';
 import { API_CONFIG } from '@/config/apiConfig';
 import { toast } from 'sonner';
 
@@ -273,7 +265,7 @@ export const SalesPersonMaster: React.FC = () => {
                     variant="ghost"
                     onClick={() => handleDelete(sp)}
                 >
-                    <Trash2 className="w-4 h-4 text-red-500" />
+                    <Trash2 className="w-4 h-4 " />
                 </Button>
 
             </div>
@@ -294,7 +286,7 @@ export const SalesPersonMaster: React.FC = () => {
         status: (
             <div className="flex items-center justify-center">
                 <div
-                    className={`relative inline-flex items-center h-6 w-11 rounded-full cursor-pointer transition-colors ${sp.active ? "bg-green-500" : "bg-gray-300"
+                    className={`relative inline-flex items-center h-6 w-11 rounded-full cursor-pointer transition-colors ${sp.active ? "bg-brand" : "bg-gray-300"
                         }`}
                     onClick={() => handleToggleStatus(sp)}
                 >
@@ -350,7 +342,6 @@ export const SalesPersonMaster: React.FC = () => {
                 leftActions={
                     <Button
                         className="bg-primary text-primary-foreground hover:bg-primary/90"
-                        // onClick={() => setAddModalOpen(true)}
                         onClick={() => {
                             setFormData({
                                 id: 0,
@@ -362,117 +353,173 @@ export const SalesPersonMaster: React.FC = () => {
                         }}
                     >
                         <Plus className="w-4 h-4 mr-2 !text-white" />
-                        <span className="!text-white" >Add</span> 
+                        <span className="!text-white" >Add</span>
                     </Button>
                 }
             />
 
             {/* Add Modal */}
-            <Dialog open={addModalOpen}
-                // onOpenChange={setAddModalOpen}
-                onOpenChange={(open) => {
-                    setAddModalOpen(open);
-                    if (!open) {
-                        setFormData({
-                            id: 0,
-                            name: "",
-                            email: "",
-                            active: true,
-                        });
-                    }
+            <Dialog
+                open={addModalOpen}
+                onClose={() => {
+                    setAddModalOpen(false);
+                    setFormData({
+                        id: 0,
+                        name: "",
+                        email: "",
+                        active: true,
+                    });
                 }}
+                fullWidth
+                maxWidth="sm"
             >
+                <div className="flex items-center justify-between px-6 pt-6">
+                    <h5 className="text-lg font-semibold">Add Salesperson</h5>
+                </div>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Add Salesperson</DialogTitle>
-                    </DialogHeader>
-
-                    <div className="space-y-4">
-                        <div>
-                            <Label>Name <span className="text-red-500">*</span></Label>
-                            <Input
-                                value={formData.name}
-                                // onChange={(e) =>
-                                //     setFormData((s) => ({ ...s, name: e.target.value }))
-                                // }
-
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    if (/^[A-Za-z\s]*$/.test(value)) {
-                                        setFormData((s) => ({ ...s, name: value }));
-                                    }
-                                }}
-
-                            />
-                        </div>
-
-                        <div>
-                            <Label>Email <span className="text-red-500">*</span></Label>
-                            <Input
-                                value={formData.email}
-                                onChange={(e) =>
-                                    setFormData((s) => ({ ...s, email: e.target.value }))
+                    <style>{`
+                        .sales-person-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+                            border-color: #DA7756 !important;
+                        }
+                        .sales-person-form .MuiInputLabel-root.Mui-focused {
+                            color: #DA7756 !important;
+                        }
+                        .sales-person-form .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+                            border-color: #DA7756 !important;
+                        }
+                        .sales-person-form .MuiInputLabel-root.Mui-error {
+                            color: #DA7756 !important;
+                        }
+                        .sales-person-form .MuiFormHelperText-root.Mui-error {
+                            color: #DA7756 !important;
+                        }
+                    `}</style>
+                    <form className="sales-person-form space-y-4">
+                        <TextField
+                            fullWidth
+                            margin="normal"
+                            label={<span>Name<span style={{ color: '#C72030' }}>*</span></span>}
+                            name="name"
+                            placeholder="Enter salesperson name"
+                            InputLabelProps={{ shrink: true }}
+                            value={formData.name}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^[A-Za-z\s]*$/.test(value)) {
+                                    setFormData((s) => ({ ...s, name: value }));
                                 }
-                            />
-                        </div>
-                    </div>
+                            }}
+                        />
 
-                    <div className="flex justify-center mt-4 gap-3">
-                        <Button onClick={handleAdd} disabled={submitting}>
-                            {submitting ? 'Adding...' : 'Add'}
-                        </Button>
-                        <Button variant="outline" onClick={() => setAddModalOpen(false)}>
-                            Cancel
-                        </Button>
-                    </div>
+                        <TextField
+                            fullWidth
+                            margin="normal"
+                            label={<span>Email<span style={{ color: '#C72030' }}>*</span></span>}
+                            name="email"
+                            placeholder="Enter email address"
+                            InputLabelProps={{ shrink: true }}
+                            value={formData.email}
+                            onChange={(e) =>
+                                setFormData((s) => ({ ...s, email: e.target.value }))
+                            }
+                        />
+
+                        <div className="mt-4 pt-5 flex justify-center gap-3">
+                            <Button
+                                type="button"
+                                onClick={handleAdd}
+                                disabled={submitting}
+                                style={{ backgroundColor: "#C72030" }}
+                                className="text-white hover:bg-[#C72030]/90 min-w-[100px]"
+                            >
+                                {submitting ? 'Adding...' : 'Add'}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setAddModalOpen(false)}
+                                className="min-w-[100px]"
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </form>
                 </DialogContent>
             </Dialog>
 
             {/* Edit Modal */}
-            <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+            <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)} fullWidth maxWidth="sm">
+                <div className="flex items-center justify-between px-6 pt-6">
+                    <h5 className="text-lg font-semibold">Edit Salesperson</h5>
+                </div>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Edit Salesperson</DialogTitle>
-                    </DialogHeader>
-
-                    <div className="space-y-4">
-                        <div>
-                            <Label>Name <span className="text-red-500">*</span></Label>
-                            <Input
-                                value={formData.name}
-                                // onChange={(e) =>
-                                //     setFormData((s) => ({ ...s, name: e.target.value }))
-                                // }
-
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    if (/^[A-Za-z\s]*$/.test(value)) {
-                                        setFormData((s) => ({ ...s, name: value }));
-                                    }
-                                }}
-
-                            />
-                        </div>
-
-                        <div>
-                            <Label>Email <span className="text-red-500">*</span></Label>
-                            <Input
-                                value={formData.email}
-                                onChange={(e) =>
-                                    setFormData((s) => ({ ...s, email: e.target.value }))
+                    <style>{`
+                        .sales-person-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+                            border-color: #DA7756 !important;
+                        }
+                        .sales-person-form .MuiInputLabel-root.Mui-focused {
+                            color: #DA7756 !important;
+                        }
+                        .sales-person-form .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+                            border-color: #DA7756 !important;
+                        }
+                        .sales-person-form .MuiInputLabel-root.Mui-error {
+                            color: #DA7756 !important;
+                        }
+                        .sales-person-form .MuiFormHelperText-root.Mui-error {
+                            color: #DA7756 !important;
+                        }
+                    `}</style>
+                    <form className="sales-person-form space-y-4">
+                        <TextField
+                            fullWidth
+                            margin="normal"
+                            label={<span>Name<span style={{ color: '#C72030' }}>*</span></span>}
+                            name="name"
+                            placeholder="Enter salesperson name"
+                            InputLabelProps={{ shrink: true }}
+                            value={formData.name}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^[A-Za-z\s]*$/.test(value)) {
+                                    setFormData((s) => ({ ...s, name: value }));
                                 }
-                            />
-                        </div>
-                    </div>
+                            }}
+                        />
 
-                    <div className="flex justify-center mt-4 gap-3">
-                        <Button onClick={handleUpdate} disabled={submitting}>
-                            {submitting ? 'Updating...' : 'Update'}
-                        </Button>
-                        <Button variant="outline" onClick={() => setEditModalOpen(false)}>
-                            Cancel
-                        </Button>
-                    </div>
+                        <TextField
+                            fullWidth
+                            margin="normal"
+                            label={<span>Email<span style={{ color: '#C72030' }}>*</span></span>}
+                            name="email"
+                            placeholder="Enter email address"
+                            InputLabelProps={{ shrink: true }}
+                            value={formData.email}
+                            onChange={(e) =>
+                                setFormData((s) => ({ ...s, email: e.target.value }))
+                            }
+                        />
+
+                        <div className="mt-4 pt-5 flex justify-center gap-3">
+                            <Button
+                                type="button"
+                                onClick={handleUpdate}
+                                disabled={submitting}
+                                style={{ backgroundColor: "#C72030" }}
+                                className="text-white hover:bg-[#C72030]/90 min-w-[100px]"
+                            >
+                                {submitting ? 'Updating...' : 'Update'}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setEditModalOpen(false)}
+                                className="min-w-[100px]"
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </form>
                 </DialogContent>
             </Dialog>
         </div>

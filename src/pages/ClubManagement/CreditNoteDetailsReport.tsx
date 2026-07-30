@@ -191,19 +191,19 @@ const CreditNoteDetailsReport: React.FC = () => {
   }, [rows, totals]);
 
   const statusColorMap: Record<string, string> = {
-    Draft: "bg-gray-100 text-gray-700",
-    Open: "bg-blue-100 text-blue-700",
-    Sent: "bg-blue-100 text-blue-700",
-    Paid: "bg-green-100 text-green-700",
-    Void: "bg-red-100 text-red-700",
-    Closed: "bg-green-100 text-green-700",
+    Draft: "bg-gray-100 text-gray-800",
+    Open: "bg-gray-100 text-gray-800",
+    Sent: "bg-gray-100 text-gray-800",
+    Paid: "bg-gray-100 text-gray-800",
+    Void: "bg-gray-100 text-gray-800",
+    Closed: "bg-gray-100 text-gray-800",
   };
 
   const renderRow = (row: CreditNoteRow) => {
     const isTotal = row.status === "__total__";
     return {
       status: isTotal ? <span /> : (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColorMap[row.status] || "bg-gray-100 text-gray-700"}`}>
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColorMap[row.status] || "bg-gray-100 text-gray-800"}`}>
           {row.status}
         </span>
       ),
@@ -213,7 +213,7 @@ const CreditNoteDetailsReport: React.FC = () => {
       ) : (
         <button
           onClick={() => navigate(`/accounting/credit-note/${row.id}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.credit_note_number}
         </button>
@@ -222,13 +222,13 @@ const CreditNoteDetailsReport: React.FC = () => {
       customer_name: (
         <span
           onClick={() => !isTotal && navigate(`/accounting/credit-note/${row.id}`)}
-          className={`text-sm font-medium ${isTotal ? "" : "text-blue-600 cursor-pointer hover:underline"}`}
+          className={`text-sm font-medium ${isTotal ? "" : "text-brand cursor-pointer hover:underline"}`}
         >
           {isTotal ? "" : row.customer_name}
         </span>
       ),
       credit_note_amount: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`}>
           {formatCurrency(row.credit_note_amount)}
         </span>
       ),

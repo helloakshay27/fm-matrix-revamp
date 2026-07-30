@@ -7,7 +7,7 @@ import {
 } from "../components/UI";
 import {
   T, DEPARTMENTS, EMP_TYPES, EXP_LEVELS,
-  KPI_UNITS, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE,
+  TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE,
 } from "../constants";
 
 export function StepDetails() {
@@ -484,7 +484,7 @@ export function StepKra() {
 export function StepKpi() {
   const {
     kpiAiDone, kpiAiLoading, formKras, formKpis, totalKpiWeight, allMembers,
-    addFormKpi, updFormKpi, remFormKpi, simulateAiKpis,
+    addFormKpi, updFormKpi, remFormKpi, simulateAiKpis, customUnits,
   } = useJobs();
 
   return (
@@ -656,8 +656,8 @@ export function StepKpi() {
                         }
                       >
                         <option value="">Select unit</option>
-                        {KPI_UNITS.map((u) => (
-                          <option key={u}>{u}</option>
+                        {customUnits.map((u) => (
+                          <option key={u.name}>{u.name}</option>
                         ))}
                       </FS>
                     </Fld>

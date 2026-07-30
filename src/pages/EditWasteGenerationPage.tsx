@@ -23,6 +23,7 @@ import {
   UpdateWasteGenerationPayload
 } from '@/services/wasteGenerationAPI';
 import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
+import { FormSearchSelect } from '@/components/FormSearchSelect';
 import { toast } from 'sonner';
 
 // Field styles for Material-UI components
@@ -376,10 +377,12 @@ const EditWasteGenerationPage = () => {
   );
   const operationalLandlordOptions = useMemo(
     () =>
-      operationalLandlords.map((l) => ({
-        value: l.id.toString(),
-        label: l.category_name,
-      })),
+      operationalLandlords
+        .filter((l) => l?.id != null && String(l.category_name || '').trim() !== '')
+        .map((l) => ({
+          value: String(l.id),
+          label: String(l.category_name).trim(),
+        })),
     [operationalLandlords]
   );
 
@@ -579,26 +582,22 @@ const EditWasteGenerationPage = () => {
 
             {/* Organization Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
-              <FormControl fullWidth disabled={loadingOperationalLandlords}>
-                <InputLabel shrink id="operational-name-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                  <span className="text-red-500">*</span> Operational Name of Landlord/ Tenant
-                </InputLabel>
-                <Select
-                  labelId="operational-name-label"
+              <div className="md:col-span-2 min-w-0">
+                <FormSearchSelect
+                  label={
+                    <span>
+                      <span className="text-red-500">*</span> Operational Name of Landlord/Tenant
+                    </span>
+                  }
                   value={formData.operationalName}
-                  onChange={(e: SelectChangeEvent<string>) => handleInputChange('operationalName', e.target.value)}
-                  displayEmpty
-                  sx={fieldStyles}
-                  MenuProps={selectMenuProps}
-                >
-                  <MenuItem value="">
-                    <em>{loadingOperationalLandlords ? 'Loading...' : 'Select Operational Name'}</em>
-                  </MenuItem>
-                  {operationalLandlordOptions.map((opt) => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  onChange={(value) => handleInputChange('operationalName', value)}
+                  options={operationalLandlordOptions}
+                  placeholder="Select Operational Name"
+                  disabled={loadingOperationalLandlords}
+                  isLoading={loadingOperationalLandlords}
+                  isClearable
+                />
+              </div>
 
               <TextField
                 label="Agency Name"
@@ -666,8 +665,7 @@ const EditWasteGenerationPage = () => {
               variant="outline"
               onClick={handleBack}
               disabled={submitting}
-              style={{ borderColor: '#d1d5db', color: '#374151' }}
-              className="hover:bg-gray-50 px-8 py-2 disabled:opacity-50 rounded-md"
+              className="border-brand text-brand hover:bg-brand-selected hover:text-brand px-8 py-2 disabled:opacity-50 rounded-md"
             >
               Back
             </Button>

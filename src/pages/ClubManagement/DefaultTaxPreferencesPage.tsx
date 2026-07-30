@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
 import { API_CONFIG } from "@/config/apiConfig";
 import { toast } from "sonner";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
@@ -8,9 +7,6 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
-import TextField from "@mui/material/TextField";
-import InputAdornment from "@mui/material/InputAdornment";
-import ListSubheader from "@mui/material/ListSubheader";
 
 interface Tax {
   id: number;
@@ -29,6 +25,10 @@ interface TaxGroup {
   name: string;
 }
 const muiTheme = createTheme({
+  palette: {
+    primary: { main: "#DA7756" },
+    error: { main: "#DA7756" },
+  },
   components: {
     MuiInputLabel: {
       styleOverrides: {
@@ -85,15 +85,6 @@ const muiTheme = createTheme({
         },
       },
     },
-    MuiListSubheader: {
-      styleOverrides: {
-        root: {
-          backgroundColor: "#f8fafc", // Light gray background for the search area
-          padding: "8px 12px",
-          lineHeight: "normal",
-        },
-      },
-    },
   },
 });
 
@@ -104,12 +95,10 @@ export const DefaultTaxPreferencesPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
 
-  const [intraSearch, setIntraSearch] = useState("");
-  const [interSearch, setInterSearch] = useState("");
-
 const [intraTaxes, setIntraTaxes] = useState<TaxGroup[]>([]);
 const [interTaxes, setInterTaxes] = useState<TaxRate[]>([]);
  const lock_account_id = localStorage.getItem('lock_account_id');
+ const baseUrl = localStorage.getItem('baseUrl');
 
   useEffect(() => {
     fetchInitialData();
@@ -229,13 +218,13 @@ const fetchInitialData = async () => {
 
   try {
     const [groupResponse, rateResponse, settingsResponse] = await Promise.all([
-      fetch(`https://club-uat-api.lockated.com/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
+      fetch(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
         headers: { Authorization: `Bearer ${API_CONFIG.TOKEN}` },
       }),
-      fetch(`https://club-uat-api.lockated.com/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
+      fetch(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
         headers: { Authorization: `Bearer ${API_CONFIG.TOKEN}` },
       }),
-      fetch(`https://club-uat-api.lockated.com/lock_accounts/${lock_account_id}/tax_settings.json`, {
+      fetch(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_settings.json`, {
         headers: { Authorization: `Bearer ${API_CONFIG.TOKEN}` },
       }),
     ]);
@@ -243,13 +232,13 @@ const fetchInitialData = async () => {
     // INTRA → GROUPS
     if (groupResponse.ok) {
       const data = await groupResponse.json();
-      setIntraTaxes(data);
+      setIntraTaxes(Array.isArray(data) ? data : (data?.data || []));
     }
 
     // INTER → RATES
     if (rateResponse.ok) {
       const data = await rateResponse.json();
-      setInterTaxes(data);
+      setInterTaxes(Array.isArray(data) ? data : (data?.data || []));
     }
 
     if (settingsResponse.ok) {
@@ -286,7 +275,7 @@ const fetchInitialData = async () => {
       };
 
       const response = await fetch(
-        `https://club-uat-api.lockated.com/lock_accounts/${lock_account_id}/tax_settings.json`,
+        `https://${baseUrl}/lock_accounts/${lock_account_id}/tax_settings.json`,
         {
           method: "POST",
           headers: {
@@ -310,29 +299,6 @@ const fetchInitialData = async () => {
     }
   };
 
-  // const filteredIntraTaxes = useMemo(() => {
-  //   return taxes.filter((t) =>
-  //     t.name.toLowerCase().includes(intraSearch.toLowerCase())
-  //   );
-  // }, [taxes, intraSearch]);
-
-  const filteredIntraTaxes = useMemo(() => {
-  return intraTaxes.filter((t) =>
-    t.name.toLowerCase().includes(intraSearch.toLowerCase())
-  );
-}, [intraTaxes, intraSearch]);
-
-  // const filteredInterTaxes = useMemo(() => {
-  //   return taxes.filter((t) =>
-  //     t.name.toLowerCase().includes(interSearch.toLowerCase())
-  //   );
-  // }, [taxes, interSearch]);
-
-  const filteredInterTaxes = useMemo(() => {
-  return interTaxes.filter((t) =>
-    t.name.toLowerCase().includes(interSearch.toLowerCase())
-  );
-}, [interTaxes, interSearch]);
 
   return (
     <ThemeProvider theme={muiTheme}>
@@ -343,76 +309,34 @@ const fetchInitialData = async () => {
           </h1>
         </div>
 
-        <div className="max-w-4xl space-y-8">
+        <style>{`
+          .default-tax-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+            border-color: #DA7756 !important;
+          }
+          .default-tax-form .MuiInputLabel-root.Mui-focused {
+            color: #DA7756 !important;
+          }
+        `}</style>
+        <div className="default-tax-form max-w-4xl space-y-8">
           {/* Intra State Tax Rate */}
           <div className="flex flex-col w-full max-w-[360px]">
-            <FormControl size="small" fullWidth disabled={loading}>
-              <InputLabel id="intra-state-tax-label">
-                Intra State Tax Rate <span style={{ color: "#C72030" }}>*</span>
+            <FormControl fullWidth margin="normal" disabled={loading}>
+              <InputLabel id="intra-state-tax-label" shrink>
+                Intra State Tax Rate<span style={{ color: "#C72030" }}>*</span>
               </InputLabel>
               <Select
                 labelId="intra-state-tax-label"
-                id="intra-state-tax-select"
+                label="Intra State Tax Rate*"
+                displayEmpty
+                notched
                 value={intraStateTax}
-                label={
-                  <span>
-                    Intra State Tax Rate{" "}
-                    <span style={{ color: "#C72030" }}>*</span>
-                  </span>
-                }
                 onChange={(e) => setIntraStateTax(e.target.value)}
-                onClose={() => setIntraSearch("")}
-                MenuProps={{ autoFocus: false }}
               >
-                <ListSubheader disableSticky sx={{ p: 1, bgcolor: "#f1f5f9" }}>
-                  <TextField
-                    size="small"
-                    autoFocus
-                    placeholder="Type to search..."
-                    fullWidth
-                    value={intraSearch}
-                    onChange={(e) => setIntraSearch(e.target.value)}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    sx={{
-                      bgcolor: "white",
-                      "& .MuiOutlinedInput-root": {
-                        borderColor: "#2563eb", // Matching the requested blue border for search
-                        height: "40px",
-                      },
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#bfdbfe", // blue-200 like color
-                        borderWidth: "2px",
-                        borderRadius: "8px",
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#2563eb",
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#2563eb",
-                      },
-                    }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Search
-                            className="h-4 w-4"
-                            style={{ color: "#7c3aed" }}
-                          />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </ListSubheader>
-                <MenuItem value="">
-                  <span style={{ color: "#888" }}>Select</span>
-                </MenuItem>
-                {filteredIntraTaxes.map((tax) => (
-                  <MenuItem key={tax.id} value={String(tax.id)}>
-                    {tax.name} 
-                    {/* [{tax.percentage}%] */}
-                  </MenuItem>
+                <MenuItem value="" disabled>Select tax rate</MenuItem>
+                {intraTaxes.map((tax) => (
+                  <MenuItem key={tax.id} value={String(tax.id)}>{tax.name}</MenuItem>
                 ))}
-                {filteredIntraTaxes.length === 0 && (
+                {intraTaxes.length === 0 && (
                   <MenuItem disabled>No tax found.</MenuItem>
                 )}
               </Select>
@@ -424,71 +348,23 @@ const fetchInitialData = async () => {
 
           {/* Inter State Tax Rate */}
           <div className="flex flex-col w-full max-w-[360px]">
-            <FormControl size="small" fullWidth disabled={loading}>
-              <InputLabel id="inter-state-tax-label">
-                Inter State Tax Rate <span style={{ color: "#C72030" }}>*</span>
+            <FormControl fullWidth margin="normal" disabled={loading}>
+              <InputLabel id="inter-state-tax-label" shrink>
+                Inter State Tax Rate<span style={{ color: "#C72030" }}>*</span>
               </InputLabel>
               <Select
                 labelId="inter-state-tax-label"
-                id="inter-state-tax-select"
+                label="Inter State Tax Rate*"
+                displayEmpty
+                notched
                 value={interStateTax}
-                label={
-                  <span>
-                    Inter State Tax Rate{" "}
-                    <span style={{ color: "#C72030" }}>*</span>
-                  </span>
-                }
                 onChange={(e) => setInterStateTax(e.target.value)}
-                onClose={() => setInterSearch("")}
-                MenuProps={{ autoFocus: false }}
               >
-                <ListSubheader disableSticky sx={{ p: 1, bgcolor: "#f1f5f9" }}>
-                  <TextField
-                    size="small"
-                    autoFocus
-                    placeholder="Type to search..."
-                    fullWidth
-                    value={interSearch}
-                    onChange={(e) => setInterSearch(e.target.value)}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    sx={{
-                      bgcolor: "white",
-                      "& .MuiOutlinedInput-root": {
-                        height: "40px",
-                      },
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#bfdbfe",
-                        borderWidth: "2px",
-                        borderRadius: "8px",
-                      },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#2563eb",
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "#2563eb",
-                      },
-                    }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Search
-                            className="h-4 w-4"
-                            style={{ color: "#7c3aed" }}
-                          />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </ListSubheader>
-                <MenuItem value="">
-                  <span style={{ color: "#888" }}>Select</span>
-                </MenuItem>
-                {filteredInterTaxes.map((tax) => (
-                  <MenuItem key={tax.id} value={String(tax.id)}>
-                    {tax.name} [{tax.rate}%]
-                  </MenuItem>
+                <MenuItem value="" disabled>Select tax rate</MenuItem>
+                {interTaxes.map((tax) => (
+                  <MenuItem key={tax.id} value={String(tax.id)}>{tax.name} [{tax.rate}%]</MenuItem>
                 ))}
-                {filteredInterTaxes.length === 0 && (
+                {interTaxes.length === 0 && (
                   <MenuItem disabled>No tax found.</MenuItem>
                 )}
               </Select>
@@ -510,7 +386,8 @@ const fetchInitialData = async () => {
               <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-[#F6EEE5] hover:bg-[#EBDDD0] text-[#C72030] font-semibold px-8 py-2 rounded disabled:opacity-50"
+                style={{ backgroundColor: "#C72030" }}
+                className="text-white hover:bg-[#C72030]/90 min-w-[100px] disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Save"}
               </Button>

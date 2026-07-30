@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useJobs } from "../JobsContext";
-import { T, KPI_UNITS } from "../constants";
+import { T } from "../constants";
 import { ico } from "../icons";
 import { card, FI, Btn, SH, aBtn } from "./UI";
 
@@ -11,6 +11,9 @@ export default function SettingsUnits() {
     setNewUnitInput,
     addCustomUnit,
     removeCustomUnit,
+    unitsLoading,
+    unitsSaving,
+    unitsError,
   } = useJobs();
 
   return (
@@ -26,11 +29,11 @@ export default function SettingsUnits() {
             placeholder="e.g. Tickets, NPS Score, Tasks"
             value={newUnitInput}
             onChange={(e) => setNewUnitInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addCustomUnit()}
+            onKeyDown={(e) => e.key === "Enter" && !unitsSaving && addCustomUnit()}
             style={{ flex: 1 }}
           />
-          <Btn primary onClick={addCustomUnit}>
-            {ico.plus} Add Unit
+          <Btn primary disabled={unitsSaving} onClick={addCustomUnit}>
+            {ico.plus} {unitsSaving ? "Saving..." : "Add Unit"}
           </Btn>
         </div>
         <div
@@ -40,11 +43,26 @@ export default function SettingsUnits() {
             gap: 6,
           }}
         >
-          {customUnits.map((unit, i) => {
-            const isDefault = KPI_UNITS.includes(unit);
+          {unitsLoading && (
+            <p style={{ fontSize: 12.5, color: T.inkMuted, margin: 0, padding: "10px 0" }}>
+              Loading units…
+            </p>
+          )}
+          {!unitsLoading && unitsError && (
+            <p style={{ fontSize: 12.5, color: T.danger, margin: 0, padding: "10px 0" }}>
+              Could not load units: {unitsError}
+            </p>
+          )}
+          {!unitsLoading && !unitsError && customUnits.length === 0 && (
+            <p style={{ fontSize: 12.5, color: T.inkMuted, margin: 0, padding: "10px 0" }}>
+              No units configured yet. Add the first one above.
+            </p>
+          )}
+          {customUnits.map((unit) => {
+            const isDefault = unit.isDefault;
             return (
               <div
-                key={i}
+                key={unit.name}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -69,7 +87,7 @@ export default function SettingsUnits() {
                   }}
                 >
                   <span style={{ fontSize: 13.5, fontWeight: 600 }}>
-                    {unit}
+                    {unit.name}
                   </span>
                   {isDefault && (
                     <span
@@ -88,10 +106,16 @@ export default function SettingsUnits() {
                 </div>
                 {!isDefault && (
                   <button
-                    style={aBtn}
+                    style={{
+                      ...aBtn,
+                      cursor: unitsSaving ? "not-allowed" : "pointer",
+                      opacity: unitsSaving ? 0.5 : 1,
+                    }}
+                    disabled={unitsSaving}
                     title="Remove"
                     onClick={() => removeCustomUnit(unit)}
                     onMouseOver={(e) => {
+                      if (unitsSaving) return;
                       e.currentTarget.style.background =
                         "rgba(228,145,145,.1)";
                       e.currentTarget.style.color = T.danger;

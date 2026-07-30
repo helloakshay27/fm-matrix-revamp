@@ -4,8 +4,9 @@ import { T, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
 import { Fld, FI, FS, Btn } from "../components/UI";
 
 export default function EditKpiModal() {
-  const { editingKpiId, setEditingKpiId, editKpiForm, setEditKpiForm, customUnits, saveEditKpi } = useJobs();
+  const { editingKpiId, setEditingKpiId, editKpiForm, setEditKpiForm, customUnits, saveEditKpi, allJds, allKras, krasForJd, allMembers, kpisSaving } = useJobs();
   if (!editingKpiId) return null;
+  const editKras = editKpiForm.jdId ? krasForJd(editKpiForm.jdId) : allKras;
   return (
     <div
       style={{
@@ -53,6 +54,57 @@ export default function EditKpiModal() {
               gap: 16,
             }}
           >
+            <Fld label="Job Description">
+              <FS
+                value={editKpiForm.jdId || ""}
+                onChange={(e) =>
+                  setEditKpiForm((f) => ({
+                    ...f,
+                    jdId: e.target.value,
+                    kraId: "",
+                  }))
+                }
+              >
+                <option value="">Select JD</option>
+                {allJds.map((j) => (
+                  <option key={j.id} value={j.id}>
+                    {j.title}
+                  </option>
+                ))}
+              </FS>
+            </Fld>
+            <Fld label="Linked KRA">
+              <FS
+                value={editKpiForm.kraId || ""}
+                onChange={(e) =>
+                  setEditKpiForm((f) => ({ ...f, kraId: e.target.value }))
+                }
+              >
+                <option value="">Select KRA</option>
+                {editKras.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.title}
+                  </option>
+                ))}
+              </FS>
+            </Fld>
+            <Fld label="Department ID">
+              <FI
+                type="number"
+                value={editKpiForm.departmentId || ""}
+                onChange={(e) =>
+                  setEditKpiForm((f) => ({ ...f, departmentId: e.target.value }))
+                }
+              />
+            </Fld>
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 1fr",
+              gap: 16,
+            }}
+          >
             <Fld label="KPI Name *">
               <FI
                 value={editKpiForm.name || ""}
@@ -70,7 +122,7 @@ export default function EditKpiModal() {
               >
                 <option value="">Select</option>
                 {customUnits.map((u) => (
-                  <option key={u}>{u}</option>
+                  <option key={u.name}>{u.name}</option>
                 ))}
               </FS>
             </Fld>
@@ -117,13 +169,54 @@ export default function EditKpiModal() {
             <FS
               value={editKpiForm.updateType || "manual"}
               onChange={(e) =>
-                setEditKpiForm((f) => ({ ...f, updateType: e.target.value }))
+                setEditKpiForm((f) => ({
+                  ...f,
+                  updateType: e.target.value,
+                  dataSource: e.target.value === "manual" ? "" : f.dataSource,
+                }))
               }
             >
               <option value="manual">Manual Entry</option>
               <option value="automatic">Automatic</option>
             </FS>
           </Fld>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 16,
+            }}
+          >
+            <Fld label="Measurement Type">
+              <FS
+                value={editKpiForm.measurementType || "positive"}
+                onChange={(e) =>
+                  setEditKpiForm((f) => ({ ...f, measurementType: e.target.value }))
+                }
+              >
+                <option value="positive">Positive</option>
+                <option value="negative">Negative</option>
+              </FS>
+            </Fld>
+            <Fld label="Assignee Person">
+              <FS
+                value={editKpiForm.assigneeIds?.[0] || ""}
+                onChange={(e) =>
+                  setEditKpiForm((f) => ({
+                    ...f,
+                    assigneeIds: e.target.value ? [Number(e.target.value)] : [],
+                  }))
+                }
+              >
+                <option value="">Select assignee</option>
+                {allMembers.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </FS>
+            </Fld>
+          </div>
           {editKpiForm.updateType === "automatic" && (
             <div
               style={{
@@ -179,7 +272,7 @@ export default function EditKpiModal() {
         >
           <Btn onClick={() => setEditingKpiId(null)}>Cancel</Btn>
           <Btn primary onClick={saveEditKpi}>
-            Save Changes
+            {kpisSaving ? "Saving..." : "Save Changes"}
           </Btn>
         </div>
       </div>

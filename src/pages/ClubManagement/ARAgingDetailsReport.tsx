@@ -44,14 +44,14 @@ const formatCurrency = (value: number): string =>
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "--";
   const [y, m, d] = dateStr.split("-");
-  return `${d}-${m}-${y}`;
+  return `${d}/${m}/${y}`;
 };
 
 const statusColorMap: Record<string, string> = {
-  Overdue: "bg-orange-100 text-orange-700",
-  Sent: "bg-blue-100 text-blue-700",
+  Overdue: "bg-gray-100 text-gray-800",
+  Sent: "bg-gray-100 text-gray-800",
   Open: "bg-gray-100 text-gray-800",
-  Paid: "bg-green-100 text-green-700",
+  Paid: "bg-gray-100 text-gray-800",
 };
 
 const BUCKET_LABELS: Record<string, string> = {
@@ -225,8 +225,8 @@ const ARAgingDetailsReport: React.FC = () => {
         date: <span className="text-sm font-bold text-[#1A1A1A]">Total — {row.customerName}</span>,
         dueDate: <span />, transactionNo: <span />, type: <span />,
         status: <span />, customerName: <span />, age: <span />,
-        amount: <span className="text-sm font-bold text-blue-600">{formatCurrency(row.amount)}</span>,
-        balanceDue: <span className="text-sm font-bold text-blue-600">{formatCurrency(row.balanceDue)}</span>,
+        amount: <span className="text-sm font-bold text-brand">{formatCurrency(row.amount)}</span>,
+        balanceDue: <span className="text-sm font-bold text-brand">{formatCurrency(row.balanceDue)}</span>,
       };
     }
 
@@ -235,8 +235,8 @@ const ARAgingDetailsReport: React.FC = () => {
         date: <span className="text-sm font-bold text-[#1A1A1A]">Total</span>,
         dueDate: <span />, transactionNo: <span />, type: <span />,
         status: <span />, customerName: <span />, age: <span />,
-        amount: <span className="text-sm font-bold text-blue-600">{formatCurrency(row.amount)}</span>,
-        balanceDue: <span className="text-sm font-bold text-blue-600">{formatCurrency(row.balanceDue)}</span>,
+        amount: <span className="text-sm font-bold text-brand">{formatCurrency(row.amount)}</span>,
+        balanceDue: <span className="text-sm font-bold text-brand">{formatCurrency(row.balanceDue)}</span>,
       };
     }
 
@@ -246,7 +246,7 @@ const ARAgingDetailsReport: React.FC = () => {
       transactionNo: (
         <button
           onClick={() => navigate(`/accounting/dashboard/invoices/${row.invoiceId || ""}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.transactionNo}
         </button>
@@ -260,7 +260,7 @@ const ARAgingDetailsReport: React.FC = () => {
       customerName: (
         <button
           onClick={() => navigate(`/accounting/customers/details/${row.customerId || ""}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.customerName}
         </button>
@@ -269,12 +269,12 @@ const ARAgingDetailsReport: React.FC = () => {
       amount: (
         <button
           onClick={() => navigate(`/accounting/dashboard/invoices/${row.invoiceId || ""}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline"
+          className="text-sm font-medium !text-brand hover:underline"
         >
           {formatCurrency(row.amount)}
         </button>
       ),
-      balanceDue: <span className="text-sm font-medium text-blue-600">{formatCurrency(row.balanceDue)}</span>,
+      balanceDue: <span className="text-sm font-medium text-brand">{formatCurrency(row.balanceDue)}</span>,
     };
   };
 

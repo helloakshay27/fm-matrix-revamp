@@ -56,17 +56,17 @@ const formatDate = (dateStr: string) => {
   if (!dateStr) return "--";
   if (dateStr.includes("-")) {
     const [y, m, d] = dateStr.split("-");
-    return `${d}-${m}-${y}`;
+    return `${d}/${m}/${y}`;
   }
   return dateStr;
 };
 
 const statusColorMap: Record<string, string> = {
-  Open: "bg-blue-100 text-blue-700",
-  Paid: "bg-green-100 text-green-700",
-  Draft: "bg-gray-100 text-gray-700",
-  Void: "bg-red-100 text-red-700",
-  Overdue: "bg-orange-100 text-orange-700",
+  Open: "bg-gray-100 text-gray-800",
+  Paid: "bg-gray-100 text-gray-800",
+  Draft: "bg-gray-100 text-gray-800",
+  Void: "bg-gray-100 text-gray-800",
+  Overdue: "bg-gray-100 text-gray-800",
 };
 
 const columns: ColumnConfig[] = [
@@ -180,20 +180,20 @@ const BillDetailsReport: React.FC = () => {
 
     return {
       status: isTotal ? <span /> : (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColorMap[row.status] || "bg-gray-100 text-gray-700"}`}>
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColorMap[row.status] || "bg-gray-100 text-gray-800"}`}>
           {row.status}
         </span>
       ),
       billDate: <span className="text-sm text-gray-600">{isTotal ? "" : row.billDate}</span>,
       dueDate: <span className="text-sm text-gray-600">{isTotal ? "" : row.dueDate}</span>,
       billNo: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`}>
           {row.billNo}
         </span>
       ),
-      vendorName: <span className="text-sm font-medium text-blue-600">{isTotal ? "" : row.vendorName}</span>,
+      vendorName: <span className="text-sm font-medium text-brand">{isTotal ? "" : row.vendorName}</span>,
       billAmount: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`}>
           {formatAmount(row.billAmount)}
         </span>
       ),

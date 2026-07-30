@@ -359,7 +359,7 @@ const PaymentsRecievedReport: React.FC = () => {
       customer_name: isTotal ? <span /> : (
         <button
           onClick={() => navigate(`/accounting/payments-received/${payment.id}`)}
-          className="text-[13px] font-semibold text-[#2563eb]"
+          className="text-[13px] font-semibold text-[#DA7756]"
         >
           {payment.customer_name || "-"}
         </button>
@@ -369,22 +369,22 @@ const PaymentsRecievedReport: React.FC = () => {
       invoice_number: <span className="text-[13px] text-[#111827]">{isTotal ? "" : payment.invoice_number}</span>,
       deposit_to: <span className="text-[13px] text-[#111827]">{isTotal ? "" : payment.deposit_to || "Petty Cash"}</span>,
       amount_fcy: (
-        <span className={`text-[13px] font-semibold ${isTotal ? "text-[#1A1A1A]" : "text-[#2563eb]"}`}>
+        <span className={`text-[13px] font-semibold ${isTotal ? "text-[#1A1A1A]" : "text-[#DA7756]"}`}>
           {formatCurrency(payment.amount_fcy)}
         </span>
       ),
       unused_amount_fcy: (
-        <span className={`text-[13px] font-semibold ${isTotal ? "text-[#1A1A1A]" : "text-[#2563eb]"}`}>
+        <span className={`text-[13px] font-semibold ${isTotal ? "text-[#1A1A1A]" : "text-[#DA7756]"}`}>
           {formatCurrency(payment.unused_amount_fcy)}
         </span>
       ),
       amount_bcy: (
-        <span className={`text-[13px] font-semibold ${isTotal ? "text-[#1A1A1A]" : "text-[#2563eb]"}`}>
+        <span className={`text-[13px] font-semibold ${isTotal ? "text-[#1A1A1A]" : "text-[#DA7756]"}`}>
           {formatCurrency(payment.amount_bcy)}
         </span>
       ),
       unused_amount_bcy: (
-        <span className={`text-[13px] font-semibold ${isTotal ? "text-[#1A1A1A]" : "text-[#2563eb]"}`}>
+        <span className={`text-[13px] font-semibold ${isTotal ? "text-[#1A1A1A]" : "text-[#DA7756]"}`}>
           {formatCurrency(payment.unused_amount_bcy)}
         </span>
       ),

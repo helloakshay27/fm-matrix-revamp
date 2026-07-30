@@ -180,10 +180,10 @@ const BillableExpenseDetails: React.FC = () => {
 
   const renderRow = (row: BillableExpenseRow) => {
     const isTotal = row.id === "__total__";
-    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`;
+    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`;
 
     return {
-      date: <span className="text-sm text-gray-600">{isTotal ? "" : row.date}</span>,
+      date: <span className="text-sm text-gray-600">{isTotal ? "" : formatDisplayDate(row.date)}</span>,
       transaction_no: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
       ) : (
@@ -196,7 +196,7 @@ const BillableExpenseDetails: React.FC = () => {
       ) : (
         <button
           onClick={() => navigate(`/accounting/expense/${row.id}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {formatCurrency(row.item_amount_bcy)}
         </button>
