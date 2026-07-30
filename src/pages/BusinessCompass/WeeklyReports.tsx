@@ -257,6 +257,16 @@ const REMARK_CHIP_META: Record<
     },
 };
 
+const PRIORITY_COLORS: Record<string, { bg: string; color: string }> = {
+    P1: { bg: "#fee2e2", color: "#991b1b" },
+    P2: { bg: "#fef3c7", color: "#92400e" },
+    P3: { bg: "#dbeafe", color: "#1e40af" },
+    P4: { bg: "#dcfce7", color: "#166534" },
+};
+
+const getPriorityColors = (priority?: string) =>
+    PRIORITY_COLORS[String(priority || "").toUpperCase()] || PRIORITY_COLORS.P4;
+
 const normalizeToString = (w: any): string => {
     if (typeof w === "string") return w;
     if (w && typeof w === "object") {
@@ -3527,8 +3537,8 @@ const WeeklyReports = () => {
                                                 <span
                                                     className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0 mt-1"
                                                     style={{
-                                                        backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                        color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                        backgroundColor: getPriorityColors(item.priority).bg,
+                                                        color: getPriorityColors(item.priority).color,
                                                     }}
                                                 >
                                                     {item.priority}
@@ -4166,8 +4176,8 @@ const WeeklyReports = () => {
                                                                             <span
                                                                                 className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
                                                                                 style={{
-                                                                                    backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                                    color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                                                    backgroundColor: getPriorityColors(item.priority).bg,
+                                                                                    color: getPriorityColors(item.priority).color,
                                                                                 }}
                                                                             >
                                                                                 {item.priority}
@@ -4389,8 +4399,8 @@ const WeeklyReports = () => {
                                                                         <span
                                                                             className="rounded-full px-1.5 py-0.5 text-[9px] font-bold"
                                                                             style={{
-                                                                                backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                                color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                                                                backgroundColor: getPriorityColors(item.priority).bg,
+                                                                                color: getPriorityColors(item.priority).color,
                                                                             }}
                                                                         >
                                                                             {item.priority}
@@ -4512,8 +4522,8 @@ const WeeklyReports = () => {
                                                                         <span
                                                                             className="rounded-full px-1.5 py-0.5 text-[9px] font-bold"
                                                                             style={{
-                                                                                backgroundColor: priority === "High" ? "#fee2e2" : priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                                                                color: priority === "High" ? "#991b1b" : priority === "Medium" ? "#92400e" : "#166534",
+                                                                                backgroundColor: getPriorityColors(priority).bg,
+                                                                                color: getPriorityColors(priority).color,
                                                                             }}
                                                                         >
                                                                             {priority}

@@ -47,9 +47,10 @@ const FILTER_STATUS_OPTIONS = [
 ];
 
 const FILTER_PRIORITY_OPTIONS = [
-    { label: "High", value: "high" },
-    { label: "Medium", value: "medium" },
-    { label: "Low", value: "low" },
+    { label: "P1", value: "p1" },
+    { label: "P2", value: "p2" },
+    { label: "P3", value: "p3" },
+    { label: "P4", value: "p4" },
 ];
 
 const EMPTY_FILTERS = {

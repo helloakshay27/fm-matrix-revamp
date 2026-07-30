@@ -14,10 +14,10 @@ const getInitials = (name = "") => {
 };
 
 const priorityColorMap: Record<string, string> = {
-  high: "text-red-600",
-  medium: "text-amber-500",
-  low: "text-green-600",
-  critical: "text-red-800",
+  p1: "text-red-600",
+  p2: "text-amber-500",
+  p3: "text-blue-600",
+  p4: "text-green-600",
 };
 
 const IssueCard = ({ issue }: { issue: any }) => {
