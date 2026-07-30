@@ -16,6 +16,7 @@ import {
   fetchLockAccount,
   Organization,
   getUser,
+  savePatmBcLinked,
 } from "@/utils/auth";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
@@ -260,6 +261,9 @@ const LoginPageContent = ({ setBaseUrl, setToken }: { setBaseUrl: (url: string) 
     // Save org details
     localStorage.setItem("selectedOrg", org.name);
     localStorage.setItem("org_id", org.id.toString());
+
+    // Feature flag from the org's other_config; false when absent.
+    savePatmBcLinked(org);
 
     // Use saveBaseUrl for normalized URL storage
     saveBaseUrl(baseUrl);

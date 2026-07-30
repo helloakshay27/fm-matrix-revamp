@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { getAuthHeaders, getBaseUrl } from "./Shared";
+import { isPatmBcLinked } from "@/utils/auth";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
 import AddIssueModal from "../../../components/AddIssueModal";
 import AddToDoModal from "../../../components/AddToDoModal";
@@ -84,6 +85,8 @@ const SearchableSelect = ({
   onChange,
   options,
   placeholder = "All",
+  disabled = false,
+  disabledHint,
 }: any) => {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
@@ -143,6 +146,14 @@ const SearchableSelect = ({
     return () => window.clearTimeout(timer);
   }, [open, isMenuMounted]);
 
+  // A select that becomes disabled while open must not leave its menu hanging.
+  React.useEffect(() => {
+    if (disabled) {
+      setOpen(false);
+      setSearch("");
+    }
+  }, [disabled]);
+
   const filteredOptions = options.filter((o: any) =>
     (o.label || "").toLowerCase().includes(search.toLowerCase())
   );
@@ -152,25 +163,35 @@ const SearchableSelect = ({
       ref={ref}
       className="relative w-full sm:w-auto"
       style={{ fontFamily: "'Poppins', sans-serif" }}
+      title={disabled ? disabledHint : undefined}
     >
       <div className="relative flex items-center min-w-0 sm:min-w-[160px]">
         <input
           type="text"
-          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 pr-8 text-sm font-medium text-neutral-700 shadow-sm focus:outline-none focus:border-[#CE7A5A]/60 hover:border-[#CE7A5A]/60 transition-all cursor-pointer placeholder:text-neutral-700"
+          disabled={disabled}
+          className={cn(
+            "w-full bg-white border border-gray-200 rounded-xl px-3 py-2 pr-8 text-sm font-medium text-neutral-700 shadow-sm focus:outline-none transition-all placeholder:text-neutral-700",
+            disabled
+              ? "cursor-not-allowed bg-gray-50 text-neutral-400 placeholder:text-neutral-400"
+              : "cursor-pointer focus:border-[#CE7A5A]/60 hover:border-[#CE7A5A]/60"
+          )}
           placeholder={placeholder}
           value={open ? search : displayValue}
           onClick={() => {
+            if (disabled) return;
             setOpen(true);
             setSearch("");
           }}
           onChange={(e) => {
+            if (disabled) return;
             setSearch(e.target.value);
             setOpen(true);
           }}
         />
         <ChevronDown
           className={cn(
-            "absolute right-3 w-4 h-4 text-neutral-400 transition-transform pointer-events-none",
+            "absolute right-3 w-4 h-4 transition-transform pointer-events-none",
+            disabled ? "text-neutral-300" : "text-neutral-400",
             open && "rotate-180"
           )}
         />
@@ -1094,6 +1115,16 @@ const formatSelfRating = (rating: any): string => {
   return ratingText.includes("/") ? ratingText : `${ratingText}/10`;
 };
 
+// ── Report cards are titled by department, not by the HOD's own name ──
+// Falls back to the person's name when the department is missing or the API
+// sends the literal placeholder "No Department".
+const formatDepartmentLabel = (department: any, fallbackName?: any): string => {
+  const dept = String(department ?? "").trim();
+  const name = String(fallbackName ?? "").trim();
+  if (!dept || /^no\s*department$/i.test(dept)) return name || "No Department";
+  return /department$/i.test(dept) ? dept : `${dept} Department`;
+};
+
 // ── Strip missed-members prefix from textarea value before saving ──
 const stripMissedMembersPrefix = (text: string): string => {
   const missedHeaderMatch = text.match(
@@ -1176,6 +1207,9 @@ const DailyTab = ({
   const [selectedHod, setSelectedHod] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
   const [selectedProject, setSelectedProject] = useState("all");
+  // Tag/Project filters only exist when the org has PATM linked to Business
+  // Compass. Read once — the flag is written at organization-select time.
+  const patmBcLinked = React.useMemo(() => isPatmBcLinked(), []);
   const [dailyData, setDailyData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -1305,6 +1339,17 @@ const DailyTab = ({
     setSelectedMeetingIdState(meetingId);
     if (meetingId) onSelectedMeetingChange?.(String(meetingId));
   };
+
+  // Every dependent filter's option list is derived from the selected meeting's
+  // payload, so a selection carried across meetings would filter out everything.
+  useEffect(() => {
+    setSelectedMember("all");
+    setSelectedHod("all");
+    setSelectedTag("all");
+    setSelectedProject("all");
+    setReportMemberFilters({});
+    setReportProjectFilters({});
+  }, [selectedMeetingId]);
 
   const navigate = useNavigate();
 
@@ -2210,19 +2255,94 @@ const DailyTab = ({
         sensitivity: "base",
       })
     );
-  // HODs = top-level report owners that have reportees under them
-  // (fallback: every report owner, when nobody has reportees).
-  const hodReports = memberReports.filter(
-    (report: any) =>
-      Array.isArray(report.reportee_reports) && report.reportee_reports.length > 0
+  // `missed_members` carries no `department`, so resolve it from the full report
+  // tree (HODs + their reportees) before any filter narrows `memberReports`.
+  const departmentByUserId = new Map<string, string>();
+  ((dailyData?.member_reports || dailyData?.reports || []) as any[]).forEach(
+    (report: any) => {
+      if (report?.user_id != null && report?.department)
+        departmentByUserId.set(String(report.user_id), report.department);
+      (Array.isArray(report?.reportee_reports)
+        ? report.reportee_reports
+        : []
+      ).forEach((reportee: any) => {
+        if (reportee?.user_id != null && reportee?.department)
+          departmentByUserId.set(String(reportee.user_id), reportee.department);
+      });
+    }
   );
+  const resolveDepartmentLabel = (entity: any): string => {
+    if (typeof entity === "string") return entity;
+    const entityId = String(entity?.user_id ?? entity?.id ?? "");
+    return formatDepartmentLabel(
+      entity?.department || departmentByUserId.get(entityId),
+      entity?.name
+    );
+  };
+  // Stable grouping key for the department filter. Unlike `resolveDepartmentLabel`
+  // this never falls back to a person's name — everyone without a real department
+  // collapses into a single "No Department" bucket.
+  const NO_DEPARTMENT_KEY = "No Department";
+  const resolveDepartmentKey = (entity: any): string => {
+    const entityId = String(entity?.user_id ?? entity?.id ?? "");
+    const raw = String(
+      entity?.department || departmentByUserId.get(entityId) || ""
+    ).trim();
+    return !raw || /^no\s*department$/i.test(raw) ? NO_DEPARTMENT_KEY : raw;
+  };
+
+  // The Members dropdown is scoped to the selected meeting: its participants are
+  // the report owners plus their reportees (and anyone listed as missed) — not
+  // every user in the org, which is what `membersList` holds.
+  const meetingMemberOptions = (() => {
+    const nameById = new Map<string, string>();
+    const addMember = (person: any) => {
+      const personId = person?.user_id ?? person?.id;
+      if (personId == null) return;
+      const key = String(personId);
+      const name = String(person?.name || "").trim();
+      if (!nameById.has(key)) nameById.set(key, name || `User ${key}`);
+    };
+    ((dailyData?.member_reports || dailyData?.reports || []) as any[]).forEach(
+      (report: any) => {
+        addMember(report);
+        (Array.isArray(report?.reportee_reports)
+          ? report.reportee_reports
+          : []
+        ).forEach(addMember);
+      }
+    );
+    ((dailyData?.missed_members || []) as any[]).forEach(addMember);
+    return Array.from(nameById.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) =>
+        a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+      );
+  })();
+  // Before the first payload lands there is nothing to scope to, so fall back to
+  // the org-wide list rather than rendering an empty dropdown.
+  const memberFilterOptions =
+    meetingMemberOptions.length > 0
+      ? meetingMemberOptions
+      : membersList.map((m: any) => ({ value: String(m.id), label: m.name }));
+
+  // One option per department, not per HOD — two HODs in the same department
+  // (e.g. Sadanand Gupta and Vinayak Mane both in Quality Assurance) previously
+  // produced two indistinguishable rows. Options come from every member, not just
+  // HODs, so departments without an HOD are still reachable.
+  const departmentFilterKeys = Array.from(
+    new Set(memberReports.map((report: any) => resolveDepartmentKey(report)))
+  ).sort((a: string, b: string) => {
+    // Keep the catch-all bucket last.
+    if (a === NO_DEPARTMENT_KEY) return 1;
+    if (b === NO_DEPARTMENT_KEY) return -1;
+    return a.localeCompare(b, undefined, { sensitivity: "base" });
+  });
   const hodOptions = [
-    { value: "all", label: "All HOD" },
-    ...(hodReports.length > 0 ? hodReports : memberReports).map((report: any) => ({
-      value: String(report.user_id),
-      label: report.department
-        ? `${(report.name || "").trim()} — ${report.department}`
-        : (report.name || "").trim() || `User ${report.user_id}`,
+    { value: "all", label: "All Departments" },
+    ...departmentFilterKeys.map((key: string) => ({
+      value: key,
+      label: key === NO_DEPARTMENT_KEY ? key : `${key} Department`,
     })),
   ];
 
@@ -2310,10 +2430,10 @@ const DailyTab = ({
   );
   if (selectedHod !== "all") {
     memberReports = memberReports.filter(
-      (r: any) => String(r.user_id) === selectedHod
+      (r: any) => resolveDepartmentKey(r) === selectedHod
     );
     failedMembers = failedMembers.filter(
-      (m: any) => String(m.id || m.user_id) === selectedHod
+      (m: any) => resolveDepartmentKey(m) === selectedHod
     );
   }
   // The picked member may be a reportee rather than a report owner (e.g. Uzair
@@ -3081,31 +3201,41 @@ const DailyTab = ({
                 placeholder="All Members"
                 options={[
                   { value: "all", label: "All Members" },
-                  ...membersList.map((m: any) => ({
-                    value: m.id,
-                    label: m.name,
-                  })),
+                  ...memberFilterOptions,
                 ]}
               />
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
-              <SearchableSelect
-                value={selectedTag}
-                onChange={setSelectedTag}
-                placeholder="All Tags"
-                options={tagOptions}
-              />
-            </div>
+            {/* Tags + Projects pushed to the far right of the same filter row.
+                Only shown when the organization has PATM linked to Business
+                Compass — tags/projects come from that side. */}
+            {patmBcLinked && (
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 sm:ml-auto">
+              {/* Tag and Project filters are mutually exclusive — picking one
+                  disables the other until it is reset to "all". */}
+              <div className="flex shrink-0 items-center gap-2">
+                <SearchableSelect
+                  value={selectedTag}
+                  onChange={setSelectedTag}
+                  placeholder="All Tags"
+                  options={tagOptions}
+                  disabled={selectedProject !== "all"}
+                  disabledHint="Clear the Project filter to filter by tag."
+                />
+              </div>
 
-            <div className="flex shrink-0 items-center gap-2">
-              <SearchableSelect
-                value={selectedProject}
-                onChange={setSelectedProject}
-                placeholder="All Projects"
-                options={projectOptions}
-              />
+              <div className="flex shrink-0 items-center gap-2">
+                <SearchableSelect
+                  value={selectedProject}
+                  onChange={setSelectedProject}
+                  placeholder="All Projects"
+                  options={projectOptions}
+                  disabled={selectedTag !== "all"}
+                  disabledHint="Clear the Tag filter to filter by project."
+                />
+              </div>
             </div>
+            )}
           </>
         )}
       </div>
@@ -3201,7 +3331,7 @@ const DailyTab = ({
                   setReportMemberFilters({});
                   setReportProjectFilters({});
                 }}
-                placeholder="Select HOD"
+                placeholder="Select Department"
                 options={hodOptions}
               />
             </div>
@@ -3667,8 +3797,16 @@ const DailyTab = ({
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                                   <h3 className="font-bold text-[#202124] text-[18px] leading-[22px] truncate">
-                                    {report.name}
+                                    {resolveDepartmentLabel(report)}
                                   </h3>
+                                  {!!report.name?.trim() &&
+                                    resolveDepartmentLabel(report) !==
+                                      report.name.trim() && (
+                                    <span className="inline-flex items-center gap-1 border border-[#EA725C] bg-white text-[#EA725C] text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                      <Crown className="w-3 h-3" />
+                                      {report.name.trim()}
+                                    </span>
+                                  )}
                                   {(report.name?.includes("HOD") ||
                                     report.name?.includes("TL")) && (
                                       <span className="hidden items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
@@ -3835,17 +3973,21 @@ const DailyTab = ({
                                     placeholder="Member"
                                     options={reportMemberOptions}
                                   />
-                                  <SearchableSelect
-                                    value={activeReportProject}
-                                    onChange={(value: string) =>
-                                      setReportProjectFilters((prev) => ({
-                                        ...prev,
-                                        [reportMemberKey]: value,
-                                      }))
-                                    }
-                                    placeholder="Project"
-                                    options={reportProjectOptions}
-                                  />
+                                  {/* Project filter only exists when the org has
+                                      PATM linked to Business Compass. */}
+                                  {patmBcLinked && (
+                                    <SearchableSelect
+                                      value={activeReportProject}
+                                      onChange={(value: string) =>
+                                        setReportProjectFilters((prev) => ({
+                                          ...prev,
+                                          [reportMemberKey]: value,
+                                        }))
+                                      }
+                                      placeholder="Project"
+                                      options={reportProjectOptions}
+                                    />
+                                  )}
                                 </div>
                               </div>
 
@@ -4855,8 +4997,16 @@ const DailyTab = ({
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <h3 className="font-bold text-[#202124] text-[18px] leading-[22px] truncate">
-                              {member.name || member}
+                              {resolveDepartmentLabel(member)}
                             </h3>
+                            {!!member?.name?.trim() &&
+                              resolveDepartmentLabel(member) !==
+                                member.name.trim() && (
+                              <span className="inline-flex items-center gap-1 border border-[#EA725C] bg-white text-[#EA725C] text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                <Crown className="w-3 h-3" />
+                                {member.name.trim()}
+                              </span>
+                            )}
                             {member.department && (
                               <span className="hidden border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
                                 {member.department}

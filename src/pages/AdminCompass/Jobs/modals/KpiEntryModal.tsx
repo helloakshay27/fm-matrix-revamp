@@ -1,10 +1,10 @@
 // @ts-nocheck
 import { useJobs } from "../JobsContext";
-import { T, KPI_UNITS, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
+import { T, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
 import { Fld, FI, FS, Btn } from "../components/UI";
 
 export default function KpiEntryModal() {
-  const { showAddKpi, setShowAddKpi, newKpi, setNewKpi, allJds, krasForJd, allMembers, saveNewKpi } = useJobs();
+  const { showAddKpi, setShowAddKpi, newKpi, setNewKpi, allJds, krasForJd, allMembers, saveNewKpi, customUnits, kpisSaving } = useJobs();
   if (!showAddKpi) return null;
   return (
     <div
@@ -49,7 +49,7 @@ export default function KpiEntryModal() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              gridTemplateColumns: "1fr 1fr 1fr",
               gap: 16,
             }}
           >
@@ -87,6 +87,16 @@ export default function KpiEntryModal() {
                 ))}
               </FS>
             </Fld>
+            <Fld label="Department ID">
+              <FI
+                type="number"
+                placeholder="e.g. 12"
+                value={newKpi.departmentId || ""}
+                onChange={(e) =>
+                  setNewKpi((f) => ({ ...f, departmentId: e.target.value }))
+                }
+              />
+            </Fld>
           </div>
           <div
             style={{
@@ -112,8 +122,8 @@ export default function KpiEntryModal() {
                 }
               >
                 <option value="">Select</option>
-                {KPI_UNITS.map((u) => (
-                  <option key={u}>{u}</option>
+                {customUnits.map((u) => (
+                  <option key={u.name}>{u.name}</option>
                 ))}
               </FS>
             </Fld>
@@ -130,14 +140,19 @@ export default function KpiEntryModal() {
           </div>
           <Fld label="Assignee Person">
             <FS
-              value={newKpi.assignee || ""}
-              onChange={(e) =>
-                setNewKpi((f) => ({ ...f, assignee: e.target.value }))
-              }
+              value={newKpi.assigneeIds?.[0] || ""}
+              onChange={(e) => {
+                const member = allMembers.find((m) => String(m.id) === e.target.value);
+                setNewKpi((f) => ({
+                  ...f,
+                  assignee: member?.name || "",
+                  assigneeIds: e.target.value ? [Number(e.target.value)] : [],
+                }));
+              }}
             >
               <option value="">Select assignee</option>
               {allMembers.map((m) => (
-                <option key={m.id} value={m.name}>
+                <option key={m.id} value={m.id}>
                   {m.name}
                 </option>
               ))}
@@ -273,7 +288,7 @@ export default function KpiEntryModal() {
         >
           <Btn onClick={() => setShowAddKpi(false)}>Cancel</Btn>
           <Btn primary onClick={saveNewKpi}>
-            Submit
+            {kpisSaving ? "Saving..." : "Submit"}
           </Btn>
         </div>
       </div>

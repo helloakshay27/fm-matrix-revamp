@@ -16,6 +16,7 @@ export default function KpiList() {
     toggleKpiStatus, openEditKpi, setAssignKpiModal,
     setShowAddKpi,
     jdTitle, kraName,
+    kpisLoading, kpisError, refreshKpis,
   } = useJobs();
 
   return (
@@ -37,8 +38,9 @@ export default function KpiList() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ padding: "6px 14px", borderRadius: 999, background: T.orangeSoft, fontSize: 12, fontWeight: 700, color: T.orange }}>
-            {filteredKpis.length} KPIs
+            {kpisLoading ? "Loading..." : `${filteredKpis.length} KPIs`}
           </div>
+          <Btn onClick={refreshKpis}>{ico.refresh || "Refresh"}</Btn>
           <div style={{ display: "flex", border: `1px solid ${T.borderSoft}`, borderRadius: T.rsm, overflow: "hidden" }}>
             <button
               style={{ ...gBtn, width: 36, height: 36, borderRadius: 0, background: kpiViewMode === "list" ? T.orangeSoft : T.raised, color: kpiViewMode === "list" ? T.orange : T.inkMuted, border: "none" }}
@@ -59,7 +61,19 @@ export default function KpiList() {
         </div>
       </div>
 
-      {kpiViewMode === "card" ? (
+      {kpisError && (
+        <div style={{ ...card, marginBottom: 12, color: T.error, fontSize: 12.5 }}>
+          Could not load KPIs: {kpisError}
+        </div>
+      )}
+
+      {!kpisLoading && filteredKpis.length === 0 && (
+        <div style={{ ...card, textAlign: "center", color: T.inkMuted, fontSize: 13 }}>
+          No KPIs found.
+        </div>
+      )}
+
+      {filteredKpis.length > 0 && (kpiViewMode === "card" ? (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
           {filteredKpis.map((kpi, i) => (
             <div
@@ -145,7 +159,7 @@ export default function KpiList() {
             </div>
           ))}
         </div>
-      )}
+      ))}
     </div>
   );
 }

@@ -77,9 +77,8 @@ export const EXP_LEVELS = [
   "Entry Level", "Mid Level", "Senior", "Lead", "Manager", "Director", "VP", "C-Suite",
 ];
 
-export const KPI_UNITS = [
-  "Percentage (%)", "Number (#)", "Currency (₹)", "Rating (1–5)", "Days", "Hours", "Score",
-];
+// KPI units are not hardcoded — they are loaded from the
+// `kpi_units_configuration` extra_fields group. See ./kpiUnitsApi.ts.
 
 export const TARGET_FREQ = ["Daily", "Weekly", "Monthly", "Quarterly", "Yearly"];
 
