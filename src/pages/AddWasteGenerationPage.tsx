@@ -2,9 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
-import { TextField } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import { Recycle, ArrowLeft } from 'lucide-react';
-import { FormSearchSelect } from '@/components/FormSearchSelect';
 import {
   fetchBuildings,
   fetchWings,
@@ -25,34 +24,28 @@ import { toast } from 'sonner';
 
 // Field styles for Material-UI components
 const fieldStyles = {
-  height: "45px",
-  backgroundColor: "#fff",
-  borderRadius: "4px",
-  "& .MuiOutlinedInput-root": {
-    height: "45px",
-    "& fieldset": { borderColor: "#999" },
-    "&:hover fieldset": { borderColor: "#1976d2" },
-    "&.Mui-focused fieldset": { borderColor: "#1976d2" },
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
   },
-  "& .MuiInputLabel-root": {
-    "&.Mui-focused": { color: "#1976d2" },
-    "& .MuiInputLabel-asterisk": {
-      color: "#C72030 !important",
+};
+
+// Shared MenuProps so Select dropdowns render correctly (positioned under the
+// field, not detached) and match the brand-consistent styling used elsewhere
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
     },
-    "&.Mui-required .MuiInputLabel-asterisk": {
-      color: "#C72030 !important",
-    },
   },
-  "& .MuiFormLabel-asterisk": {
-    color: "#C72030 !important",
-  },
-  "& .MuiInputLabel-asterisk": {
-    color: "#C72030 !important",
-  },
-  // Additional asterisk selectors to ensure red color
-  "& .MuiFormLabel-root .MuiFormLabel-asterisk": {
-    color: "#C72030 !important",
-  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
 };
 
 const AddWasteGenerationPage = () => {
@@ -391,41 +384,80 @@ const AddWasteGenerationPage = () => {
           <div className="p-6 space-y-10">
             {/* Location Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
-              <FormSearchSelect
-                label={<>Building <span className="text-red-500">*</span></>}
-                value={formData.building}
-                onChange={(v) => handleInputChange('building', v)}
-                options={buildingOptions}
-                placeholder="Select Building"
-                isLoading={loadingBuildings}
-                disabled={loadingBuildings}
-              />
+              <FormControl fullWidth disabled={loadingBuildings}>
+                <InputLabel shrink id="building-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Building <span className="text-red-500">*</span>
+                </InputLabel>
+                <Select
+                  labelId="building-label"
+                  value={formData.building}
+                  onChange={(e: SelectChangeEvent<string>) => handleInputChange('building', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>{loadingBuildings ? 'Loading...' : 'Select Building'}</em>
+                  </MenuItem>
+                  {buildingOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-              <FormSearchSelect
-                label="Wing"
-                value={formData.wing}
-                onChange={(v) => handleInputChange('wing', v)}
-                options={wingOptions}
-                placeholder={
-                  !formData.building
-                    ? 'Select Building First'
-                    : 'Select Wing (Optional)'
-                }
-                isLoading={loadingWings}
-                disabled={loadingWings || !formData.building}
-              />
+              <FormControl fullWidth disabled={loadingWings || !formData.building}>
+                <InputLabel shrink id="wing-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Wing
+                </InputLabel>
+                <Select
+                  labelId="wing-label"
+                  value={formData.wing}
+                  onChange={(e: SelectChangeEvent<string>) => handleInputChange('wing', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>
+                      {loadingWings
+                        ? 'Loading...'
+                        : !formData.building
+                        ? 'Select Building First'
+                        : 'Select Wing (Optional)'}
+                    </em>
+                  </MenuItem>
+                  {wingOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-              <FormSearchSelect
-                label="Area"
-                value={formData.area}
-                onChange={(v) => handleInputChange('area', v)}
-                options={areaOptions}
-                placeholder={
-                  !formData.wing ? 'Select Wing First' : 'Select Area (Optional)'
-                }
-                isLoading={loadingAreas}
-                disabled={loadingAreas || !formData.wing}
-              />
+              <FormControl fullWidth disabled={loadingAreas || !formData.wing}>
+                <InputLabel shrink id="area-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Area
+                </InputLabel>
+                <Select
+                  labelId="area-label"
+                  value={formData.area}
+                  onChange={(e: SelectChangeEvent<string>) => handleInputChange('area', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>
+                      {loadingAreas
+                        ? 'Loading...'
+                        : !formData.wing
+                        ? 'Select Wing First'
+                        : 'Select Area (Optional)'}
+                    </em>
+                  </MenuItem>
+                  {areaOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
               <TextField
                 label={<span>Date <span className="text-red-500">*</span></span>}
@@ -457,25 +489,47 @@ const AddWasteGenerationPage = () => {
                 error={false}
               />
 
-              <FormSearchSelect
-                label={<>Commodity <span className="text-red-500">*</span></>}
-                value={formData.commodity}
-                onChange={(v) => handleInputChange('commodity', v)}
-                options={commodityOptions}
-                placeholder="Select Commodity"
-                isLoading={loadingCommodities}
-                disabled={loadingCommodities}
-              />
+              <FormControl fullWidth disabled={loadingCommodities}>
+                <InputLabel shrink id="commodity-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Commodity <span className="text-red-500">*</span>
+                </InputLabel>
+                <Select
+                  labelId="commodity-label"
+                  value={formData.commodity}
+                  onChange={(e: SelectChangeEvent<string>) => handleInputChange('commodity', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>{loadingCommodities ? 'Loading...' : 'Select Commodity'}</em>
+                  </MenuItem>
+                  {commodityOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-              <FormSearchSelect
-                label={<>Category <span className="text-red-500">*</span></>}
-                value={formData.category}
-                onChange={(v) => handleInputChange('category', v)}
-                options={categoryOptions}
-                placeholder="Select Category"
-                isLoading={loadingCategories}
-                disabled={loadingCategories}
-              />
+              <FormControl fullWidth disabled={loadingCategories}>
+                <InputLabel shrink id="category-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Category <span className="text-red-500">*</span>
+                </InputLabel>
+                <Select
+                  labelId="category-label"
+                  value={formData.category}
+                  onChange={(e: SelectChangeEvent<string>) => handleInputChange('category', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>{loadingCategories ? 'Loading...' : 'Select Category'}</em>
+                  </MenuItem>
+                  {categoryOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               <TextField
                 fullWidth
                 label="UOM"
@@ -507,20 +561,26 @@ const AddWasteGenerationPage = () => {
 
             {/* Organization Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-10">
-              <FormSearchSelect
-                label={
-                  <>
-                    <span className="text-red-500">*</span> Operational Name of
-                    Landlord/ Tenant
-                  </>
-                }
-                value={formData.operationalName}
-                onChange={(v) => handleInputChange('operationalName', v)}
-                options={operationalLandlordOptions}
-                placeholder="Select Operational Name"
-                isLoading={loadingOperationalLandlords}
-                disabled={loadingOperationalLandlords}
-              />
+              <FormControl fullWidth disabled={loadingOperationalLandlords}>
+                <InputLabel shrink id="operational-name-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  <span className="text-red-500">*</span> Operational Name of Landlord/ Tenant
+                </InputLabel>
+                <Select
+                  labelId="operational-name-label"
+                  value={formData.operationalName}
+                  onChange={(e: SelectChangeEvent<string>) => handleInputChange('operationalName', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>{loadingOperationalLandlords ? 'Loading...' : 'Select Operational Name'}</em>
+                  </MenuItem>
+                  {operationalLandlordOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
               <TextField
                 label="Agency Name"

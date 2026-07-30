@@ -1,9 +1,8 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { TextField } from "@mui/material";
-import { FormSearchSelect } from '@/components/FormSearchSelect';
+import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from "@mui/material";
 import { X } from "lucide-react";
 import { toast } from 'sonner';
 import {
@@ -46,6 +45,22 @@ const USER_TYPE_OPTIONS = [
   { value: 'Client', label: 'Client' },
 ];
 
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 const EMPTY_FILTERS: Filters = {
   fromDate: '',
@@ -192,32 +207,11 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
     onClose();
   };
 
-  const categoryOptions = useMemo(
-    () => categories.map(c => ({ value: c.id.toString(), label: c.category_name })),
-    [categories]
-  );
-
-  const subcategoryOptions = useMemo(
-    () => subcategories.map(s => ({ value: s.id.toString(), label: s.category_name })),
-    [subcategories]
-  );
-
-  const entityOptions = useMemo(
-    () => entities.map(e => ({ value: e.id.toString(), label: e.name })),
-    [entities]
-  );
-
   const fieldStyles = {
-    height: '45px',
-    backgroundColor: '#fff',
-    borderRadius: '4px',
-    '& .MuiOutlinedInput-root': {
-      height: '45px',
-      '& fieldset': { borderColor: '#999' },
-      '&:hover fieldset': { borderColor: '#1976d2' },
-      '&.Mui-focused fieldset': { borderColor: '#1976d2' },
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
     },
-    '& .MuiInputLabel-root': { '&.Mui-focused': { color: '#1976d2' } },
   };
 
   return (
@@ -249,7 +243,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                 fullWidth
                 variant="outlined"
                 slotProps={{ inputLabel: { shrink: true } }}
-                sx={fieldStyles}
+                InputProps={{ sx: fieldStyles }}
               />
               <TextField
                 label="To Date"
@@ -259,7 +253,7 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                 fullWidth
                 variant="outlined"
                 slotProps={{ inputLabel: { shrink: true } }}
-                sx={fieldStyles}
+                InputProps={{ sx: fieldStyles }}
               />
             </div>
 
@@ -273,30 +267,52 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                 variant="outlined"
                 placeholder="Search by user name"
                 slotProps={{ inputLabel: { shrink: true } }}
-                sx={fieldStyles}
+                InputProps={{ sx: fieldStyles }}
               />
-              <FormSearchSelect
-                label="Customer"
-                value={filters.customerId}
-                onChange={v => set('customerId', v)}
-                options={entityOptions}
-                placeholder="Select Customer"
-                isLoading={loadingEntities}
-                disabled={loadingEntities}
-              />
+              <FormControl fullWidth disabled={loadingEntities}>
+                <InputLabel shrink id="customer-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Customer
+                </InputLabel>
+                <Select
+                  labelId="customer-label"
+                  value={filters.customerId}
+                  onChange={(e: SelectChangeEvent<string>) => set('customerId', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>{loadingEntities ? 'Loading...' : 'Select Customer'}</em>
+                  </MenuItem>
+                  {entities.map((entity) => (
+                    <MenuItem key={entity.id} value={entity.id.toString()}>{entity.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </div>
 
             {/* Row 3: User Type + Status */}
             <div className="grid grid-cols-2 gap-6">
-              <FormSearchSelect
-                label="User Type"
-                value={filters.userType}
-                onChange={v => set('userType', v)}
-                options={USER_TYPE_OPTIONS}
-                placeholder="Select User Type"
-                isLoading={false}
-                disabled={false}
-              />
+              <FormControl fullWidth>
+                <InputLabel shrink id="user-type-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  User Type
+                </InputLabel>
+                <Select
+                  labelId="user-type-label"
+                  value={filters.userType}
+                  onChange={(e: SelectChangeEvent<string>) => set('userType', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select User Type</em>
+                  </MenuItem>
+                  {USER_TYPE_OPTIONS.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               <TextField
                 label="Status"
                 value={filters.status}
@@ -305,33 +321,61 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                 variant="outlined"
                 placeholder="Enter status"
                 slotProps={{ inputLabel: { shrink: true } }}
-                sx={fieldStyles}
+                InputProps={{ sx: fieldStyles }}
               />
             </div>
 
             {/* Row 4: Waste Category + Waste Subcategory */}
             <div className="grid grid-cols-2 gap-6">
-              <FormSearchSelect
-                label="Waste Category"
-                value={filters.categoryId}
-                onChange={v => {
-                  set('categoryId', v);
-                  set('subcategoryId', '');
-                }}
-                options={categoryOptions}
-                placeholder="Select Waste Category"
-                isLoading={loadingCategories}
-                disabled={loadingCategories}
-              />
-              <FormSearchSelect
-                label="Waste Subcategory"
-                value={filters.subcategoryId}
-                onChange={v => set('subcategoryId', v)}
-                options={subcategoryOptions}
-                placeholder={filters.categoryId ? 'Select Waste Subcategory' : 'Select a category first'}
-                isLoading={loadingSubcategories}
-                disabled={!filters.categoryId || loadingSubcategories}
-              />
+              <FormControl fullWidth disabled={loadingCategories}>
+                <InputLabel shrink id="waste-category-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Waste Category
+                </InputLabel>
+                <Select
+                  labelId="waste-category-label"
+                  value={filters.categoryId}
+                  onChange={(e: SelectChangeEvent<string>) => {
+                    set('categoryId', e.target.value);
+                    set('subcategoryId', '');
+                  }}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>{loadingCategories ? 'Loading...' : 'Select Waste Category'}</em>
+                  </MenuItem>
+                  {categories.map((c) => (
+                    <MenuItem key={c.id} value={c.id.toString()}>{c.category_name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth disabled={!filters.categoryId || loadingSubcategories}>
+                <InputLabel shrink id="waste-subcategory-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Waste Subcategory
+                </InputLabel>
+                <Select
+                  labelId="waste-subcategory-label"
+                  value={filters.subcategoryId}
+                  onChange={(e: SelectChangeEvent<string>) => set('subcategoryId', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>
+                      {loadingSubcategories
+                        ? 'Loading...'
+                        : filters.categoryId
+                        ? 'Select Waste Subcategory'
+                        : 'Select a category first'}
+                    </em>
+                  </MenuItem>
+                  {subcategories.map((sc) => (
+                    <MenuItem key={sc.id} value={sc.id.toString()}>{sc.category_name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </div>
 
             {/* Row 5: Device / Tab ID */}
@@ -344,23 +388,23 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                 variant="outlined"
                 placeholder="Search by device or tab ID"
                 slotProps={{ inputLabel: { shrink: true } }}
-                sx={fieldStyles}
+                InputProps={{ sx: fieldStyles }}
               />
             </div>
           </div>
 
           {/* Actions */}
-          <div className="mt-8 flex justify-center gap-4 border-t border-gray-200 pt-6">
+          <div className="mt-8 flex justify-end gap-2 border-t border-gray-200 pt-6">
             <Button
               onClick={handleSubmit}
-              className="rounded-none px-8 !bg-brand hover:!bg-brand-hover !text-white shadow-none"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
-              Submit
+              Apply Filter
             </Button>
             <Button
               onClick={handleReset}
               variant="outline"
-              className="rounded-none px-8 shadow-none"
+              className="border-brand text-brand hover:bg-brand hover:text-white"
             >
               Reset
             </Button>

@@ -467,9 +467,9 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
           {/* Action buttons */}
           <div className="flex justify-end gap-4">
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={handleReset}
-              className="fm-button-fix fm-button-brand px-4 py-2"
+              className="border-brand text-brand hover:bg-brand hover:text-white"
             >
               Reset
             </Button>
