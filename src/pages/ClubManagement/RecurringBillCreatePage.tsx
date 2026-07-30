@@ -1624,7 +1624,7 @@ if (!profileName || profileName.trim() === "") {
                       {selectedBillingAddress.country && <div>{selectedBillingAddress.country}</div>}
                     </div>
                   ) : (
-                    <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                    <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
                       New Address
                     </button>
                   )}
@@ -1648,7 +1648,7 @@ if (!profileName || profileName.trim() === "") {
                       {selectedShippingAddress.country && <div>{selectedShippingAddress.country}</div>}
                     </div>
                   ) : (
-                    <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                    <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
                       New Address
                     </button>
                   )}
@@ -1702,7 +1702,7 @@ if (!profileName || profileName.trim() === "") {
                 )}
               </div>
               <textarea
-                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                 rows={4}
                 maxLength={500}
                 value={billingAddress}
@@ -1716,7 +1716,7 @@ if (!profileName || profileName.trim() === "") {
                 <button
                   type="button"
                   onClick={() => openAddressFormModal('new', 'billing')}
-                  className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
+                  className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
                 >
                   New Address
                 </button>
@@ -1735,7 +1735,7 @@ if (!profileName || profileName.trim() === "") {
                 )}
               </div>
               <textarea
-                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                 rows={4}
                 maxLength={500}
                 value={shippingAddress}
@@ -1750,7 +1750,7 @@ if (!profileName || profileName.trim() === "") {
                 <button
                   type="button"
                   onClick={() => openAddressFormModal('new', 'shipping')}
-                  className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
+                  className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
                 >
                   New Address
                 </button>
@@ -1996,7 +1996,7 @@ if (!profileName || profileName.trim() === "") {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                         onClick={handleSaveTerms}
                       >
                         Save
@@ -2239,7 +2239,7 @@ if (!profileName || profileName.trim() === "") {
         <div className="flex gap-2">
 
           <button
-            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+            className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
 
             onClick={handleSaveTerms}
           >
@@ -2501,6 +2501,7 @@ if (!profileName || profileName.trim() === "") {
             <div className="flex gap-3 pt-4">
               <ShadButton
                 variant="outline"
+                className="fm-button-fix px-8 py-2"
                 onClick={addItem}
               >
                 <Add className="w-4 h-4 mr-1" />
@@ -2569,12 +2570,12 @@ if (!profileName || profileName.trim() === "") {
                 >
                   <FormControlLabel
                     value="TDS"
-                    control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                    control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                     label={<span className="text-sm">TDS</span>}
                   />
                   <FormControlLabel
                     value="TCS"
-                    control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                    control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                     label={<span className="text-sm">TCS</span>}
                   />
                 </RadioGroup>
@@ -2640,7 +2641,7 @@ if (!profileName || profileName.trim() === "") {
         {/* Customer Notes */}
         <Section title="Notes" icon={<FileText className="w-5 h-5" />}>
           <textarea
-            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
             rows={3}
             maxLength={500}
             value={customerNotes}
@@ -2843,13 +2844,13 @@ if (!profileName || profileName.trim() === "") {
 
       <div className="flex items-center gap-3 justify-center pt-2">
        
-        <ShadButton className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={() => handleSubmit(true)} disabled={isSubmitting}>
+        <ShadButton className="fm-button-fix fm-button-brand px-8 py-2" onClick={() => handleSubmit(true)} disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : 'Save '}
         </ShadButton>
-         <ShadButton variant="outline" onClick={() => navigate('/accounting/recurring-bills')} disabled={isSubmitting}>
+         <ShadButton variant="outline" className="fm-button-fix px-8 py-2" onClick={() => navigate('/accounting/recurring-bills')} disabled={isSubmitting}>
           Cancel
         </ShadButton>
-        {/* <ShadButton className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={() => handleSubmit(false)} disabled={isSubmitting}>
+        {/* <ShadButton className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded" onClick={() => handleSubmit(false)} disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : 'Save as Open'}
         </ShadButton> */}
       </div>
@@ -2862,7 +2863,7 @@ if (!profileName || profileName.trim() === "") {
               <div
                 key={addr.id}
                 className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
-                  ? 'border-[#C72030] bg-red-50'
+                  ? 'border-[#DA7756] bg-red-50'
                   : 'border-gray-200 hover:border-gray-300'
                   }`}
                 onClick={() => {
@@ -3048,7 +3049,7 @@ if (!profileName || profileName.trim() === "") {
                   Outstanding Payables
                 </Typography>
               </div>
-              <div className="bg-green-50 rounded-lg p-4 text-center">
+              <div className="bg-orange-50 rounded-lg p-4 text-center">
                 <Typography variant="h6" className="font-bold">
                   ₹0.00
                 </Typography>
@@ -3072,7 +3073,7 @@ if (!profileName || profileName.trim() === "") {
                 ['Shipping Address', formatInlineAddress(selectedCustomer.default_shipping_address || selectedCustomer.shipping_address)],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between items-start py-1.5 border-b border-gray-100 last:border-0 gap-4">
-                  <span className="text-xs text-[#C72030] w-36 shrink-0">{label}</span>
+                  <span className="text-xs text-[#DA7756] w-36 shrink-0">{label}</span>
                   <span className="text-xs text-gray-700 text-right">{value}</span>
                 </div>
               ))}
@@ -3287,7 +3288,7 @@ if (!profileName || profileName.trim() === "") {
             Cancel
           </button>
           <button
-            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+            className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
             onClick={() => {
               if (currentItemIndex !== null) {
                 updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);

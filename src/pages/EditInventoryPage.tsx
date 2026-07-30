@@ -698,9 +698,10 @@ export const EditInventoryPage = () => {
 
   if (editLoading && !fetchedInventory) {
     return (
-      <div className="p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading inventory data...</div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#DA7756] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading inventory details...</p>
         </div>
       </div>
     );
@@ -817,8 +818,8 @@ export const EditInventoryPage = () => {
               </div>
 
 
-              {/* Form Grid - First Row */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              {/* Form Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 <div>
                   <FormControl fullWidth variant="outlined" sx={selectStyles}>
                     <InputLabel shrink>Select Asset Name</InputLabel>
@@ -952,11 +953,6 @@ export const EditInventoryPage = () => {
                   />
                 </div>
 
-
-              </div>
-
-              {/* Form Grid - Second Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 <div>
                   <TextField
                     label="Cost"
@@ -1190,10 +1186,7 @@ export const EditInventoryPage = () => {
                     </MuiSelect>
                   </FormControl>
                 </div>
-              </div>
 
-              {/* Form Grid - Third Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <TextField
                     label={<>Max.Stock Level<span style={{ color: '#DA7756' }}>*</span></>}
@@ -1238,7 +1231,7 @@ export const EditInventoryPage = () => {
                 </div>
               </div>
 
-              {/* Removed Inventory Sub Type field; Inventory Type moved above in Second Row */}
+              {/* Removed Inventory Sub Type field; Inventory Type moved above */}
 
             </div>
           )}

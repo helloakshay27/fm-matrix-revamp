@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
-import { useEnhancedSelectStyles } from '@/hooks/useEnhancedSelectStyles';
 import { X } from 'lucide-react';
 
 interface SnaggingFilterDialogProps {
@@ -19,9 +18,36 @@ interface FilterValues {
   stage: string;
 }
 
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
 export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: SnaggingFilterDialogProps) => {
   const { toast } = useToast();
-  const { fieldStyles, menuProps } = useEnhancedSelectStyles();
   const [filters, setFilters] = useState<FilterValues>({
     tower: '',
     floor: '',
@@ -53,8 +79,23 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full sm:max-w-[500px] bg-white">
+    // modal={false} lets portaled MUI Select menus receive clicks/scroll
+    // (Radix modal mode otherwise traps pointer events outside DialogContent).
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
+      <DialogContent
+        className="w-full sm:max-w-[500px] bg-white overflow-visible"
+        onPointerDownOutside={(e) => {
+          // Keep dialog open when interacting with the MUI select menu
+          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
@@ -79,7 +120,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               value={filters.tower}
               onChange={(e) => handleFilterChange('tower', e.target.value)}
               sx={fieldStyles}
-              MenuProps={menuProps}
+              MenuProps={selectMenuProps}
             >
               <MenuItem value=""><em>Select Tower</em></MenuItem>
               <MenuItem value="A">Tower A</MenuItem>
@@ -96,7 +137,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               value={filters.floor}
               onChange={(e) => handleFilterChange('floor', e.target.value)}
               sx={fieldStyles}
-              MenuProps={menuProps}
+              MenuProps={selectMenuProps}
             >
               <MenuItem value=""><em>Select Floor</em></MenuItem>
               <MenuItem value="1st">1st Floor</MenuItem>
@@ -118,7 +159,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               value={filters.flat}
               onChange={(e) => handleFilterChange('flat', e.target.value)}
               sx={fieldStyles}
-              MenuProps={menuProps}
+              MenuProps={selectMenuProps}
             >
               <MenuItem value=""><em>Select Flat</em></MenuItem>
               <MenuItem value="101">101</MenuItem>
@@ -138,7 +179,7 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
               value={filters.stage}
               onChange={(e) => handleFilterChange('stage', e.target.value)}
               sx={fieldStyles}
-              MenuProps={menuProps}
+              MenuProps={selectMenuProps}
             >
               <MenuItem value=""><em>Select Stage</em></MenuItem>
               <MenuItem value="Units Snagging">Units Snagging</MenuItem>
@@ -152,14 +193,14 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
         <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
           <Button
             onClick={handleApply}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 w-full sm:w-auto"
+            className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
           >
             APPLY
           </Button>
           <Button
             variant="outline"
             onClick={handleReset}
-            className="border-[#C72030] text-[#C72030] px-8 w-full sm:w-auto"
+            className="border-brand text-brand px-8 w-full sm:w-auto"
           >
             RESET
           </Button>

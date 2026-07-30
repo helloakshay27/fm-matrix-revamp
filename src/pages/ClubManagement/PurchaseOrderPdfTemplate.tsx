@@ -2,103 +2,12 @@ import React from "react";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import { getDocumentTemplateSettings, slugifyDocumentType } from "@/utils/documentTemplate";
 
-export const getAccountingPdfStatusStyle = (status) => {
-  const styles = {
-    draft: {
-      backgroundColor: "#f3f4f6",
-      color: "#1f2937",
-      borderColor: "#e5e7eb",
-    },
-    sent: {
-      backgroundColor: "#dbeafe",
-      color: "#1e40af",
-      borderColor: "#bfdbfe",
-    },
-    open: {
-      backgroundColor: "#dbeafe",
-      color: "#1e40af",
-      borderColor: "#bfdbfe",
-    },
-    accepted: {
-      backgroundColor: "#dcfce7",
-      color: "#166534",
-      borderColor: "#bbf7d0",
-    },
-    approved: {
-      backgroundColor: "#dcfce7",
-      color: "#166534",
-      borderColor: "#bbf7d0",
-    },
-    paid: {
-      backgroundColor: "#dcfce7",
-      color: "#166534",
-      borderColor: "#bbf7d0",
-    },
-    delivered: {
-      backgroundColor: "#dcfce7",
-      color: "#166534",
-      borderColor: "#bbf7d0",
-    },
-    confirmed: {
-      backgroundColor: "#dbeafe",
-      color: "#1d4ed8",
-      borderColor: "#bfdbfe",
-    },
-    processing: {
-      backgroundColor: "#fef9c3",
-      color: "#854d0e",
-      borderColor: "#fde68a",
-    },
-    pending_approval: {
-      backgroundColor: "#ffedd5",
-      color: "#9a3412",
-      borderColor: "#fed7aa",
-    },
-    overdue: {
-      backgroundColor: "#fee2e2",
-      color: "#991b1b",
-      borderColor: "#fecaca",
-    },
-    declined: {
-      backgroundColor: "#fee2e2",
-      color: "#991b1b",
-      borderColor: "#fecaca",
-    },
-    rejected: {
-      backgroundColor: "#fee2e2",
-      color: "#991b1b",
-      borderColor: "#fecaca",
-    },
-    cancelled: {
-      backgroundColor: "#fee2e2",
-      color: "#991b1b",
-      borderColor: "#fecaca",
-    },
-    expired: {
-      backgroundColor: "#ffedd5",
-      color: "#9a3412",
-      borderColor: "#fed7aa",
-    },
-    shipped: {
-      backgroundColor: "#f3e8ff",
-      color: "#6b21a8",
-      borderColor: "#e9d5ff",
-    },
-    converted: {
-      backgroundColor: "#f3e8ff",
-      color: "#6b21a8",
-      borderColor: "#e9d5ff",
-    },
-    closed: {
-      backgroundColor: "#16a34a",
-      color: "#ffffff",
-      borderColor: "#16a34a",
-    },
+export const getAccountingPdfStatusStyle = () => {
+  return {
+    backgroundColor: "#f3f4f6",
+    color: "#1f2937",
+    borderColor: "#e5e7eb",
   };
-
-  return (
-    styles[String(status || "").toLowerCase()] || styles.draft
-  );
 };
 
 const formatStatus = (status) => {
@@ -326,7 +235,7 @@ export const PurchaseDocumentPdf = ({
                 {partyLabel}
               </h3>
 
-              <p className="font-bold text-blue-700 mb-2">
+              <p className="font-bold mb-2">
                 {partyName || "Vendor"}
               </p>
 
@@ -355,7 +264,7 @@ export const PurchaseDocumentPdf = ({
                 Deliver To
               </h3>
 
-              <p className="font-bold text-blue-700 mb-2">
+              <p className="font-bold mb-2">
                 {localStorage.getItem("companyName") ||
                   "Lockated"}
               </p>
@@ -517,7 +426,7 @@ export const PurchaseDocumentPdf = ({
                   <span className="font-medium">
                     Discount
                   </span>
-                  <span className="font-semibold text-red-600">
+                  <span className="font-semibold text-black">
                     (-)
                     {formatCurrency
                       ? formatCurrency(
@@ -582,7 +491,7 @@ export const PurchaseDocumentPdf = ({
                   <span className="font-medium">
                     Amount Withheld
                   </span>
-                  <span className="font-semibold text-red-600">
+                  <span className="font-semibold text-black">
                     (-)
                     {formatCurrency
                       ? formatCurrency(
@@ -628,11 +537,11 @@ export const PurchaseDocumentPdf = ({
 
           {/* AMOUNT IN WORDS */}
           {totalInWords && (
-            <div className="mb-6 px-4 py-3 bg-blue-50 border border-blue-300 rounded text-[11px]">
-              <p className="font-bold text-blue-900 mb-1">
+            <div className="mb-6 px-4 py-3 bg-gray-50 border border-gray-300 rounded text-[11px]">
+              <p className="font-bold text-black mb-1">
                 Amount in Words
               </p>
-              <p className="italic font-semibold text-blue-900">
+              <p className="italic font-semibold text-black">
                 {totalInWords}
               </p>
             </div>

@@ -6,7 +6,6 @@ import {
   Typography,
   TextField,
   Paper,
-  Container,
   InputAdornment,
   RadioGroup,
   FormControlLabel,
@@ -184,20 +183,17 @@ const AddPollPage = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
-      <div className='px-6 pt-6 mx-auto'>
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/crm/polls")}
-          className='p-0'
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-        <h1 className="text-2xl font-bold mb-6">NEW POLL</h1>
-      </div>
-      <Container maxWidth="lg">
-        <Paper elevation={2} sx={{ p: 4, borderRadius: 3 }}>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <Button
+        variant="ghost"
+        onClick={() => navigate("/crm/polls")}
+        className='p-0'
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
+      <h1 className="text-2xl font-bold mb-6">NEW POLL</h1>
+      <Paper elevation={2} sx={{ p: 4, borderRadius: 3 }}>
           <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={4}>
               <TextField
@@ -313,7 +309,7 @@ const AddPollPage = () => {
                 <Button
                   type='button'
                   size="lg"
-                  className="bg-[#C72030] hover:bg-[#C72030] text-white mt-4"
+                  className="bg-brand hover:bg-brand-hover text-white mt-4"
                   onClick={addOption}
                 >
                   Add Option
@@ -323,8 +319,8 @@ const AddPollPage = () => {
                 variant="outlined"
                 sx={{
                   p: 3,
-                  bgcolor: 'rgba(199, 32, 48, 0.04)',
-                  borderColor: 'rgba(199, 32, 48, 0.12)'
+                  bgcolor: 'rgba(218, 119, 86, 0.04)',
+                  borderColor: 'rgba(218, 119, 86, 0.12)'
                 }}
               >
                 <Typography
@@ -346,9 +342,9 @@ const AddPollPage = () => {
                   sx={{
                     mb: 3,
                     '& .MuiRadio-root': {
-                      color: 'rgba(199, 32, 48, 0.6)',
+                      color: 'rgba(218, 119, 86, 0.6)',
                       '&.Mui-checked': {
-                        color: '#C72030'
+                        color: 'var(--color-primary)'
                       }
                     }
                   }}
@@ -389,7 +385,7 @@ const AddPollPage = () => {
                             <ListItemButton
                               onClick={() => handleUserSelection(user.id)}
                               sx={{
-                                '&:hover': { bgcolor: 'rgba(199, 32, 48, 0.08)' }
+                                '&:hover': { bgcolor: 'rgba(218, 119, 86, 0.08)' }
                               }}
                             >
                               <ListItemIcon>
@@ -398,7 +394,7 @@ const AddPollPage = () => {
                                   checked={selectedUsers.includes(user.id)}
                                   sx={{
                                     '&.Mui-checked': {
-                                      color: '#C72030'
+                                      color: 'var(--color-primary)'
                                     }
                                   }}
                                 />
@@ -427,10 +423,10 @@ const AddPollPage = () => {
                                 size="small"
                                 onDelete={() => handleUserSelection(userId)}
                                 sx={{
-                                  bgcolor: 'rgba(199, 32, 48, 0.1)',
-                                  color: '#C72030',
+                                  bgcolor: 'rgba(218, 119, 86, 0.1)',
+                                  color: 'var(--color-primary)',
                                   '& .MuiChip-deleteIcon': {
-                                    color: '#C72030'
+                                    color: 'var(--color-primary)'
                                   }
                                 }}
                               />
@@ -461,7 +457,7 @@ const AddPollPage = () => {
                             <ListItemButton
                               onClick={() => handleGroupSelection(group.id)}
                               sx={{
-                                '&:hover': { bgcolor: 'rgba(199, 32, 48, 0.08)' }
+                                '&:hover': { bgcolor: 'rgba(218, 119, 86, 0.08)' }
                               }}
                             >
                               <ListItemIcon>
@@ -470,7 +466,7 @@ const AddPollPage = () => {
                                   checked={selectedGroups.includes(group.id)}
                                   sx={{
                                     '&.Mui-checked': {
-                                      color: '#C72030'
+                                      color: 'var(--color-primary)'
                                     }
                                   }}
                                 />
@@ -499,10 +495,10 @@ const AddPollPage = () => {
                                 size="small"
                                 onDelete={() => handleGroupSelection(groupId)}
                                 sx={{
-                                  bgcolor: 'rgba(199, 32, 48, 0.1)',
-                                  color: '#C72030',
+                                  bgcolor: 'rgba(218, 119, 86, 0.1)',
+                                  color: 'var(--color-primary)',
                                   '& .MuiChip-deleteIcon': {
-                                    color: '#C72030'
+                                    color: 'var(--color-primary)'
                                   }
                                 }}
                               />
@@ -518,10 +514,10 @@ const AddPollPage = () => {
                     severity="info"
                     sx={{
                       mt: 2,
-                      bgcolor: 'rgba(199, 32, 48, 0.08)',
-                      borderColor: 'rgba(199, 32, 48, 0.2)',
+                      bgcolor: 'rgba(218, 119, 86, 0.08)',
+                      borderColor: 'rgba(218, 119, 86, 0.2)',
                       '& .MuiAlert-icon': {
-                        color: '#C72030'
+                        color: 'var(--color-primary)'
                       }
                     }}
                   >
@@ -533,7 +529,7 @@ const AddPollPage = () => {
                 <Button
                   type="submit"
                   size="lg"
-                  className="bg-[#C72030] hover:bg-[#C72030] text-white"
+                  className="bg-brand hover:bg-brand-hover text-white"
                 >
                   Submit Poll
                 </Button>
@@ -541,8 +537,7 @@ const AddPollPage = () => {
             </Stack>
           </Box>
         </Paper>
-      </Container>
-    </Box>
+    </div>
   );
 };
 

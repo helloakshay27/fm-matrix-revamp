@@ -1,19 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Check, X, Settings } from "lucide-react";
 import { StatsCard } from "@/components/StatsCard";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationEllipsis,
-} from "@/components/ui/pagination";
 import axios from "axios";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import { useParams } from "react-router-dom";
 import { StatusBadge } from "@/components/StatusBadge"; // Fixed: named import
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 interface AMCAnalyticsTab {
   amc: AMCData;
@@ -71,7 +64,6 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
   const targetId = amcId ?? id;
   const [analytics, setAnalytics] = useState<AMCAnalyticsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [pastAmcPage, setPastAmcPage] = useState(1);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -123,9 +115,56 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
   };
 
   const pastPPM = analytics?.past_ppm ?? [];
-  const PAST_AMC_PER_PAGE = 15;
-  const pastAmcTotalPages = Math.max(1, Math.ceil(pastPPM.length / PAST_AMC_PER_PAGE));
-  const pastPPMPage = pastPPM.slice((pastAmcPage - 1) * PAST_AMC_PER_PAGE, pastAmcPage * PAST_AMC_PER_PAGE);
+  const amcDetailColumns: ColumnConfig[] = useMemo(
+    () =>
+      configRows.map(({ label, key }) => ({
+        key,
+        label: label === "Red Flag" ? "🚩 Red Flag" : label,
+        sortable: false,
+        hideable: false,
+        defaultVisible: true,
+      })),
+    [configRows]
+  );
+
+  const amcDetailData = useMemo(
+    () => [analytics ?? ({} as AMCAnalyticsResponse)],
+    [analytics]
+  );
+
+  const pastAmcColumns: ColumnConfig[] = [
+    { key: "contractName", label: "Contract Name", sortable: false, hideable: false, defaultVisible: true },
+    { key: "startEndDate", label: "Start & End Date", sortable: false, hideable: false, defaultVisible: true },
+    { key: "amcType", label: "AMC Type", sortable: false, hideable: false, defaultVisible: true },
+    { key: "totalAssociatedAssets", label: "Total Associated Assets", sortable: false, hideable: false, defaultVisible: true },
+    { key: "amcValue", label: "AMC Value", sortable: false, hideable: false, defaultVisible: true },
+    { key: "statusLabel", label: "Status", sortable: false, hideable: false, defaultVisible: true },
+  ];
+
+  const pastAmcData = useMemo(
+    () =>
+      pastPPM.map((entry) => {
+        const statusVal = (entry.status || "").toLowerCase();
+        const isActive = statusVal === "active";
+        const isExpired = statusVal === "expired";
+        const totalAssets = Array.isArray(entry.amc_assets)
+          ? entry.amc_assets.length
+          : entry.total_associated_assets ?? "—";
+        return {
+          rowId: String(entry.id),
+          contractName: entry.contract_name || "—",
+          startEndDate: `${formatDate(entry.amc_start_date)} – ${formatDate(entry.amc_end_date)}`,
+          amcType: entry.checklist_type || entry.amc_type || "—",
+          totalAssociatedAssets: totalAssets,
+          amcValue:
+            entry.amc_cost !== undefined && entry.amc_cost !== null
+              ? `₹ ${entry.amc_cost.toLocaleString()}`
+              : "—",
+          statusLabel: isActive ? "Active" : isExpired ? "Expired" : entry.status || "—",
+        };
+      }),
+    [pastPPM]
+  );
 
   return (
     <div style={{ backgroundColor: 'rgba(250, 250, 250, 1)' }}>
@@ -138,54 +177,27 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
         </div>
 
         <div className="rounded-lg border border-gray-200 shadow-sm p-4 mx-4 mb-4" style={{ backgroundColor: 'rgba(250, 250, 250, 1)' }}>
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-            <thead>
-              <tr style={{ backgroundColor: 'rgba(237, 234, 227, 1)' }}>
-                {configRows.map(({ label }) => (
-                  <th
-                    key={label}
-                    className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200"
-                  >
-                    {label === "Red Flag" ? (
-                      <div className="flex items-center gap-1">
-                        <span className="text-red-600 text-xs">🚩</span>
-                        <span>Red Flag</span>
-                      </div>
-                    ) : (
-                      label
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="bg-white">
-                {configRows.map(({ key }) => {
-                  const value = analytics ? (analytics as Record<string, any>)[key] : undefined;
-                  const isEnabled = Boolean(value);
-                  return (
-                    <td
-                      key={key}
-                      className="px-4 py-3 text-center border-b border-gray-200"
-                    >
-                      {analytics ? (
-                        isEnabled ? (
-                          <Check className="w-5 h-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="w-5 h-5 text-red-500 mx-auto" />
-                        )
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            </tbody>
-          </table>
+          <EnhancedTable
+            data={amcDetailData}
+            columns={amcDetailColumns}
+            renderCell={(item: AMCAnalyticsResponse, columnKey: string) => {
+              const value = item[columnKey as keyof AMCAnalyticsResponse];
+              if (value === undefined || value === null) {
+                return <span className="text-gray-400">-</span>;
+              }
+              return value ? (
+                <Check className="w-5 h-5 text-green-600 mx-auto" />
+              ) : (
+                <X className="w-5 h-5 text-red-500 mx-auto" />
+              );
+            }}
+            storageKey="amc-analytics-detail-table"
+            hideTableSearch
+            hideTableExport
+            hideColumnsButton
+            getItemId={() => "amc-detail-row"}
+          />
         </div>
-      </div>
       </div>
 
       {/* Analytics Cards Section */}
@@ -243,126 +255,27 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
         </h2>
         
         <div className="rounded-lg border border-gray-200 shadow-sm mx-4 mb-4" style={{ backgroundColor: 'rgba(250, 250, 250, 1)' }}>
-          <div className="overflow-x-auto" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-            <table className="min-w-full">
-              <thead>
-                <tr className="bg-gray-50" style={{ backgroundColor: '#F6F4EE' }}>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Contract Name</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Start & End Date</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">AMC Type</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Total Associated Assets</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">AMC Value</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
-                      Loading past AMC data...
-                    </td>
-                  </tr>
-                ) : pastPPM.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
-                      No past AMC records available.
-                    </td>
-                  </tr>
-                ) : (
-                  pastPPMPage.map((entry) => {
-                    const statusVal = (entry.status || '').toLowerCase();
-                    const isActive = statusVal === 'active';
-                    const isExpired = statusVal === 'expired';
-                    const statusBg = isActive
-                      ? 'bg-green-100 text-green-800'
-                      : isExpired
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-gray-100 text-gray-700';
-                    const statusLabel = isActive ? 'Active' : isExpired ? 'Expired' : (entry.status || '—');
-                    const totalAssets = Array.isArray(entry.amc_assets)
-                      ? entry.amc_assets.length
-                      : (entry.total_associated_assets ?? '—');
-                    return (
-                      <tr
-                        key={entry.id}
-                        className="border-b"
-                        style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
-                      >
-                        <td className="px-4 py-3 text-sm text-gray-600">{entry.contract_name || '—'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
-                          {formatDate(entry.amc_start_date)} – {formatDate(entry.amc_end_date)}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {entry.checklist_type || entry.amc_type || '—'}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600 text-center">{totalAssets}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {entry.amc_cost !== undefined && entry.amc_cost !== null
-                            ? `₹ ${entry.amc_cost.toLocaleString()}`
-                            : '—'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${statusBg}`}>{statusLabel}</span>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          <EnhancedTable
+            data={pastAmcData}
+            columns={pastAmcColumns}
+            renderCell={(item: (typeof pastAmcData)[number], columnKey: string) => {
+              if (columnKey === "statusLabel") {
+                return <StatusBadge status={item.statusLabel} size="sm" />;
+              }
+              return item[columnKey as keyof typeof item] as React.ReactNode;
+            }}
+            storageKey="amc-analytics-past-amc-table"
+            hideTableSearch
+            hideTableExport
+            hideColumnsButton
+            loading={loading}
+            loadingMessage="Loading past AMC data..."
+            emptyMessage="No past AMC records available."
+            pagination
+            pageSize={15}
+            getItemId={(item) => item.rowId}
+          />
         </div>
-
-        {/* Past AMC Pagination */}
-        {pastAmcTotalPages > 1 && (
-          <div className="flex justify-center mt-4 mb-4">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => setPastAmcPage((p) => Math.max(1, p - 1))}
-                    className={pastAmcPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-                {(() => {
-                  const items: React.ReactNode[] = [];
-                  const delta = 1;
-                  let last = 0;
-                  for (let i = 1; i <= pastAmcTotalPages; i++) {
-                    if (i === 1 || i === pastAmcTotalPages || (i >= pastAmcPage - delta && i <= pastAmcPage + delta)) {
-                      if (last && i - last > 1) {
-                        items.push(
-                          <PaginationItem key={`e-${i}`}>
-                            <PaginationEllipsis />
-                          </PaginationItem>
-                        );
-                      }
-                      items.push(
-                        <PaginationItem key={i}>
-                          <PaginationLink
-                            isActive={pastAmcPage === i}
-                            onClick={() => setPastAmcPage(i)}
-                            className="cursor-pointer"
-                          >
-                            {i}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                      last = i;
-                    }
-                  }
-                  return items;
-                })()}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => setPastAmcPage((p) => Math.min(pastAmcTotalPages, p + 1))}
-                    className={pastAmcPage === pastAmcTotalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
       </div>
     </div>
   );

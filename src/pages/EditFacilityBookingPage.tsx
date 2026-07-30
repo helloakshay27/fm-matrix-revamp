@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchBookingDetails } from '@/store/slices/facilityBookingsSlice';
 import { fetchActiveFacilities } from '@/store/slices/facilitySetupsSlice';
 import { MenuItem, TextField } from '@mui/material';
 import axios from 'axios';
+import { apiClient } from '@/utils/apiClient';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
@@ -57,6 +59,11 @@ const EditFacilityBookingPage = () => {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [currentStatus, setCurrentStatus] = useState<string>("");
     const [statusUpdating, setStatusUpdating] = useState(false);
+    const [facilityDetails, setFacilityDetails] = useState<any>(null);
+    const [slots, setSlots] = useState<any[]>([]);
+    const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
+    const [slotsLoading, setSlotsLoading] = useState(false);
+    const [detailsLoaded, setDetailsLoaded] = useState(false);
     const gstAmount = (parseFloat(subTotal) * Number(gstPercentage)) / 100 || 0
     const sgstAmount = (parseFloat(subTotal) * Number(sgstPercentage)) / 100 || 0
     const grandTotal = parseFloat(subTotal) + gstAmount + sgstAmount || 0
@@ -91,13 +98,69 @@ const EditFacilityBookingPage = () => {
         }
     }
 
+    const fetchFacilityDetails = async (facilityId: string | number) => {
+        try {
+            const response = await apiClient.get(`/pms/admin/facility_setups/${facilityId}.json`);
+            if (response.data?.facility_setup) {
+                setFacilityDetails(response.data.facility_setup);
+            }
+        } catch (error) {
+            console.error('Error fetching facility details:', error);
+        }
+    };
+
+    const fetchSlots = async (facilityId: string | number, date: string, userId?: string) => {
+        if (!facilityId || !date) {
+            setSlots([]);
+            return;
+        }
+        setSlotsLoading(true);
+        try {
+            const formattedDate = date.replace(/-/g, '/');
+            const params: any = { on_date: formattedDate };
+            if (userId) {
+                params.user_id = userId;
+            }
+            const response = await apiClient.get(
+                `/pms/admin/facility_setups/${facilityId}/all_schedules_for_facility_setup.json`,
+                { params }
+            );
+            if (response.data && response.data.slots) {
+                setSlots(response.data.slots);
+                setSelectedSlots((prev) => prev.filter((sId) => response.data.slots.some((s: any) => s.id === sId)));
+            } else {
+                setSlots([]);
+            }
+        } catch (error) {
+            console.error('Error fetching slots:', error);
+            setSlots([]);
+        } finally {
+            setSlotsLoading(false);
+        }
+    };
+
+    const isSlotSelectable = (slotId: number) => {
+        if (selectedSlots.includes(slotId)) return true;
+        const slot = slots.find((s) => s.id === slotId);
+        return !slot?.is_booked;
+    };
+
+    const handleSlotSelection = (slotId: number) => {
+        setSelectedSlots((prev) => {
+            if (prev.includes(slotId)) {
+                return prev.filter((sId) => sId !== slotId);
+            }
+            return isSlotSelectable(slotId) ? [...prev, slotId] : prev;
+        });
+    };
+
     const fetchDetails = async () => {
         try {
             const response = await dispatch(
                 fetchBookingDetails({ baseUrl, token, id })
             ).unwrap();
 
-            const bookingDetails = (response as any) || response as any;
+            const bookingDetails = (response as any)?.facility_booking || (response as any);
             setSelectedUser(bookingDetails.user_id?.toString() || "");
             setSelectedFacility(bookingDetails.facility_id?.toString() || "");
             if (bookingDetails.startdate) {
@@ -110,9 +173,20 @@ const EditFacilityBookingPage = () => {
             setSgstPercentage(bookingDetails.sgst?.toString() || "");
             setAmountFull(bookingDetails.amount_full || "");
             setCurrentStatus(bookingDetails.current_status || "");
+
+            const slotIds = Array.isArray(bookingDetails.selected_slots)
+                ? bookingDetails.selected_slots.map((s: any) => (typeof s === 'object' ? s.id : s))
+                : [];
+            setSelectedSlots(slotIds);
+
+            if (bookingDetails.facility_id) {
+                fetchFacilityDetails(bookingDetails.facility_id);
+            }
         } catch (error) {
             console.error("Error fetching booking details:", error);
             toast.error("Failed to fetch booking details");
+        } finally {
+            setDetailsLoaded(true);
         }
     };
 
@@ -122,6 +196,14 @@ const EditFacilityBookingPage = () => {
         getFacilitySetups();
     }, [])
 
+    // Re-fetch the day's slots whenever the facility (fixed), date (editable), or user is known.
+    // Gated on detailsLoaded so this doesn't fire before selectedSlots has been pre-populated.
+    useEffect(() => {
+        if (detailsLoaded && selectedFacility && selectedDate) {
+            fetchSlots(selectedFacility, selectedDate, selectedUser || undefined);
+        }
+    }, [detailsLoaded, selectedFacility, selectedDate, selectedUser])
+
     const handleSubmit = async (e: any) => {
         e.preventDefault();
 
@@ -129,21 +211,32 @@ const EditFacilityBookingPage = () => {
             toast.error('Booking ID is missing');
             return;
         }
+        if (!selectedDate) {
+            toast.error('Please select a date');
+            return;
+        }
+        if (selectedSlots.length === 0) {
+            toast.error('Please select at least one slot');
+            return;
+        }
 
         setIsSubmitting(true);
         try {
             const payload = {
-                facility_booking: {
-                    sgst: sgstPercentage ? parseFloat(sgstPercentage) : '',
-                    gst: gstPercentage ? parseFloat(gstPercentage) : '',
-                    sub_total: Number(subTotal),
-                    amount_full: grandTotal,
-                    amount_paid: grandTotal,
-                }
+                sgst: sgstPercentage ? parseFloat(sgstPercentage) : '',
+                gst: gstPercentage ? parseFloat(gstPercentage) : '',
+                sub_total: Number(subTotal),
+                amount_full: grandTotal,
+                amount_paid: grandTotal,
+                date: selectedDate.replace(/-/g, '/'),
+                selected_slots: selectedSlots,
+                book_by_id: selectedSlots[0],
+                book_by: 'slot',
+                comment,
             };
 
-            const response = await axios.put(
-                `https://${baseUrl}/pms/facility_bookings/${id}.json`,
+            const response = await axios.patch(
+                `https://${baseUrl}/pms/admin/facility_bookings/${id}/update_booking_slots.json`,
                 payload,
                 {
                     headers: {
@@ -332,30 +425,80 @@ const EditFacilityBookingPage = () => {
                             onChange={(e) => setSelectedDate(e.target.value)}
                             variant="outlined"
                             fullWidth
-                            disabled
                             InputLabelProps={{
                                 classes: {
                                     asterisk: "text-red-500", // Tailwind class for red color
                                 },
                                 shrink: true
                             }}
-                            inputProps={{
-                                min: new Date().toISOString().split("T")[0],
-                            }}
                             sx={fieldStyles}
                         />
                     </div>
+                </div>
+
+                <div>
+                    <h2 className="text-lg font-semibold mb-4">Select Slot<span className="text-red-500"> *</span></h2>
+                    {slotsLoading && (
+                        <p className="text-gray-500">Loading slots...</p>
+                    )}
+                    {!slotsLoading && slots.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {slots.map((slot) => {
+                                const isSelected = selectedSlots.includes(slot.id);
+                                const isBooked = !!slot.is_booked && !isSelected;
+                                const disabled = !isSlotSelectable(slot.id);
+                                return (
+                                    <div
+                                        key={slot.id}
+                                        className={`flex items-center space-x-2 p-3 border rounded-lg ${isBooked ? 'bg-red-50 opacity-60 border-red-300' : disabled ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            id={`edit-slot-${slot.id}`}
+                                            checked={isSelected}
+                                            onChange={() => handleSlotSelection(slot.id)}
+                                            disabled={disabled}
+                                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                        />
+                                        <Label
+                                            htmlFor={`edit-slot-${slot.id}`}
+                                            className={`cursor-pointer text-sm font-medium flex items-center gap-2 ${isBooked ? 'text-red-600' : disabled ? 'text-gray-400' : ''
+                                                }`}
+                                        >
+                                            {slot.ampm}
+                                            {isBooked && (
+                                                <span className="text-xs font-semibold text-red-600">Booked</span>
+                                            )}
+                                            {slot.is_premium && slot.premium_percentage && !isBooked && (
+                                                <span className="text-xs font-semibold text-amber-600">
+                                                    +{slot.premium_percentage}%
+                                                </span>
+                                            )}
+                                        </Label>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                    {!slotsLoading && slots.length === 0 && (
+                        <p className="text-gray-500">
+                            {selectedFacility && selectedDate
+                                ? "No slots available for the selected date"
+                                : "Please select a date to see available slots"}
+                        </p>
+                    )}
                 </div>
 
                 <div className="space-y-2">
                     <TextField
                         label="Comment"
                         value={comment}
+                        onChange={(e) => setComment(e.target.value)}
                         variant="outlined"
                         fullWidth
                         multiline
                         rows={4}
-                        disabled
                         InputLabelProps={{ shrink: true }}
                         sx={{
                             mt: 1,

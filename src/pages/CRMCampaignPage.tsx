@@ -247,7 +247,7 @@ export const CRMCampaignPage = () => {
       <Button
         variant="ghost"
         size="sm"
-        className="h-8 w-8 p-0 text-[#C72030] hover:bg-[#C72030]/10 hover:text-[#C72030]"
+        className="h-8 w-8 p-0 text-brand hover:bg-brand-selected hover:text-brand"
         onClick={(e) => {
           e.stopPropagation();
           handleViewLead(item.id);
@@ -288,7 +288,7 @@ export const CRMCampaignPage = () => {
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => navigate('/crm/campaign/add')}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
+                className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add

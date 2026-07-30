@@ -169,12 +169,12 @@ const IssuesMobileView = () => {
     // Transform priority
     const transformPriority = (priority: string): string => {
         const priorityMap: Record<string, string> = {
-            "high": "HIGH",
-            "medium": "MEDIUM",
-            "low": "LOW",
-            "critical": "CRITICAL",
+            "p1": "P1",
+            "p2": "P2",
+            "p3": "P3",
+            "p4": "P4",
         };
-        return priorityMap[priority] || priority.toUpperCase();
+        return priorityMap[priority?.toLowerCase()] || priority?.toUpperCase();
     };
 
     const getStatusColor = (status: string) => {
@@ -198,13 +198,13 @@ const IssuesMobileView = () => {
 
     const getPriorityColor = (priority: string) => {
         switch (priority?.toLowerCase()) {
-            case "critical":
+            case "p1":
                 return { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-600" };
-            case "high":
+            case "p2":
                 return { bg: "bg-orange-100", text: "text-orange-700", dot: "bg-orange-600" };
-            case "medium":
+            case "p3":
                 return { bg: "bg-yellow-100", text: "text-yellow-700", dot: "bg-yellow-600" };
-            case "low":
+            case "p4":
                 return { bg: "bg-green-100", text: "text-green-700", dot: "bg-green-600" };
             default:
                 return { bg: "bg-gray-100", text: "text-gray-700", dot: "bg-gray-600" };

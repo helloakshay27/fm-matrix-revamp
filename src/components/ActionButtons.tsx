@@ -12,14 +12,14 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ onSave, onBack }) 
     <div className="flex justify-end gap-4">
       <Button 
         onClick={onSave}
-        className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8"
+        className="bg-brand hover:bg-brand-hover active:bg-brand-hover text-white px-8"
       >
         Save
       </Button>
       <Button 
         onClick={onBack}
         variant="outline"
-        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-8"
+        className="border-brand text-brand hover:bg-brand-selected active:bg-brand active:text-white px-8"
       >
         Back
       </Button>

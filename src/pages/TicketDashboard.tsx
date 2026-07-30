@@ -1192,7 +1192,7 @@ export const TicketDashboard = () => {
       {shouldShow("Ticket", "create") && (
         <Button
           onClick={handleAddButton}
-          className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+          className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
         >
           <Plus className="w-4 h-4 mr-2" /> Add
         </Button>
@@ -1216,7 +1216,7 @@ export const TicketDashboard = () => {
     <div className="flex gap-2">
       <Button
         variant="outline"
-        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+        className="border-brand text-brand hover:bg-brand-selected"
         onClick={() => setIsFilterOpen(true)}
       >
         <Filter className="w-4 h-4" />
@@ -1361,7 +1361,7 @@ export const TicketDashboard = () => {
           </div>
           {/* <div title="Update ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Edit
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-brand"
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/maintenance/ticket/update/${item.id}`);
@@ -1474,7 +1474,7 @@ export const TicketDashboard = () => {
           <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
             <TabsTrigger
               value="tickets"
-              className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+              className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -1483,7 +1483,7 @@ export const TicketDashboard = () => {
                 viewBox="0 0 24 24"
                 fill="none"
                 strokeWidth={2}
-                className="lucide lucide-ticket w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+                className="lucide lucide-ticket w-4 h-4 stroke-black group-data-[state=active]:stroke-[var(--color-primary)]"
               >
                 <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
                 <path d="M13 5v2" />
@@ -1495,7 +1495,7 @@ export const TicketDashboard = () => {
 
             <TabsTrigger
               value="analytics"
-              className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+              className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -1504,7 +1504,7 @@ export const TicketDashboard = () => {
                 viewBox="0 0 24 24"
                 fill="none"
                 strokeWidth={2}
-                className="lucide lucide-chart-column w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+                className="lucide lucide-chart-column w-4 h-4 stroke-black group-data-[state=active]:stroke-[var(--color-primary)]"
               >
                 <path d="M3 3v16a2 2 0 0 0 2 2h16" />
                 <path d="M18 17V9" />
@@ -1730,7 +1730,7 @@ export const TicketDashboard = () => {
                     onClick={() => item.clickable && handleStatusCardClick(item.type)}
                   >
                     <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-                      <IconComponent className="w-6 h-6 text-[#C72030]" />
+                      <IconComponent className="w-6 h-6 text-brand" />
                     </div>
                     <div>
                       <div className="text-2xl font-semibold text-[#1A1A1A]">
@@ -1866,7 +1866,7 @@ export const TicketDashboard = () => {
                           onClick={() => goToPage(pageNum)}
                           disabled={loading || searchLoading}
                           className={`w-8 h-8 flex items-center justify-center text-sm rounded disabled:opacity-50 ${currentPage === pageNum
-                            ? 'bg-[#C72030] text-white'
+                            ? 'bg-brand text-white'
                             : 'text-gray-700 hover:bg-gray-100'
                             }`}
                         >

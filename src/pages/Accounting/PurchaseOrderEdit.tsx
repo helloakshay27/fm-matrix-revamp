@@ -37,7 +37,7 @@ import {
     CheckCircle,
     EditOutlined,
 } from '@mui/icons-material';
-import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import ItemSearchInput from '@/components/ItemSearchInput';
 import axios from 'axios';
@@ -187,9 +187,9 @@ const BulkItemModal: React.FC<BulkItemModalProps> = ({ open, onClose, itemOption
                             const selected = isSelected(item.id);
                             return (
                                 <div key={item.id} onClick={() => toggleItem(item)}
-                                    className={`flex items-center justify-between px-4 py-3 cursor-pointer border-b border-gray-100 transition-colors ${selected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
+                                    className={`flex items-center justify-between px-4 py-3 cursor-pointer border-b border-gray-100 transition-colors ${selected ? 'bg-orange-50' : 'hover:bg-gray-50'}`}>
                                     <div>
-                                        <p className={`text-sm font-medium ${selected ? 'text-blue-600' : 'text-gray-800'}`}>{item.inventory_name}</p>
+                                        <p className={`text-sm font-medium ${selected ? 'text-brand' : 'text-gray-800'}`}>{item.inventory_name}</p>
                                         <p className="text-xs text-gray-500 mt-0.5">{item.sku ? `SKU: ${item.sku}  ` : ''}Purchase Rate: ₹{Number(item.rate).toFixed(2)}</p>
                                     </div>
                                     {selected && <CheckCircle sx={{ color: '#22c55e', fontSize: 22 }} />}
@@ -237,7 +237,7 @@ const BulkItemModal: React.FC<BulkItemModalProps> = ({ open, onClose, itemOption
             <div className="flex items-center justify-end gap-3 px-6 py-3 border-t border-gray-200 bg-white">
                 <Button variant="contained" onClick={() => { if (selectedItems.length > 0) { onAddItems(selectedItems); onClose(); } }}
                     disabled={selectedItems.length === 0}
-                    sx={{ bgcolor: '#2563eb', '&:hover': { bgcolor: '#1d4ed8' }, textTransform: 'none', borderRadius: 1.5, px: 3 }}>
+                    sx={{ bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' }, textTransform: 'none', borderRadius: 1.5, px: 3 }}>
                     Add Items
                 </Button>
                 <Button variant="outlined" onClick={onClose}
@@ -579,7 +579,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
             let loadedItemOptions: any[] = [];
             try {
                 const res = await axios.get(
-                    `https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`,
+                    `https://${baseUrl}/lock_account_items/select_list.json?lock_account_id=${lock_account_id}&q[can_be_purchase_eq]=1&active=true`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 const raw = res.data?.data || res.data || [];
@@ -1290,7 +1290,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
         return (
             <div className="fixed inset-0 flex items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-3">
-                    <CircularProgress size={48} />
+                    <CircularProgress size={48} sx={{ color: '#DA7756' }} />
                     <p className="text-sm text-muted-foreground">Loading purchase order...</p>
                 </div>
             </div>
@@ -1301,9 +1301,19 @@ export const PurchaseOrderEditPage: React.FC = () => {
         <div className="p-6 space-y-6 relative">
             {isSubmitting && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <CircularProgress size={60} />
+                    <CircularProgress size={60} sx={{ color: '#DA7756' }} />
                 </div>
             )}
+
+            <div className="mb-2">
+                <button
+                    onClick={() => navigate('/accounting/purchase-order')}
+                    className="flex items-center gap-2 text-gray-900 hover:text-gray-700 font-medium tracking-wide"
+                >
+                    <ArrowLeft className="w-5 h-5" />
+                    Back to Purchase Orders List
+                </button>
+            </div>
 
             <header className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">Edit Purchase Order</h1>
@@ -1393,7 +1403,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                 <Section title="Address Details" icon={<FileText className="w-5 h-5" />}>
                     <div className="space-y-4">
                         {vendorDetailLoading ? (
-                            <div className="flex justify-center py-4"><CircularProgress size={24} /></div>
+                            <div className="flex justify-center py-4"><CircularProgress size={24} sx={{ color: '#DA7756' }} /></div>
                         ) : vendorDetail && selectedVendor ? (
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-6 border-b border-gray-100">
@@ -1402,7 +1412,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Billing Address*
                                             <IconButton size="small" onClick={() => openAddressListModal('billing')}>
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedBillingAddress?.address ? (
@@ -1418,7 +1428,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                             </div>
                                         ) : (
                                             <button type="button" onClick={() => openAddressFormModal('new', 'billing')}
-                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100">
+                                                className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100">
                                                 + New Address
                                             </button>
                                         )}
@@ -1430,7 +1440,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Shipping Address*
                                             <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedShippingAddress?.address ? (
@@ -1446,7 +1456,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                             </div>
                                         ) : (
                                             <button type="button" onClick={() => openAddressFormModal('new', 'shipping')}
-                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100">
+                                                className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100">
                                                 + New Address
                                             </button>
                                         )}
@@ -1460,7 +1470,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                         <span className="text-gray-500">GST Treatment:</span>
                                         <span className="text-gray-800">{getGstTreatmentLabel(vendorDetail?.gst_preference)}</span>
                                         <IconButton size="small" onClick={() => { setGstTreatmentDraft(vendorDetail?.gst_preference || ''); setGstModalOpen(true); }}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -1469,7 +1479,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                             {selectedGstDetail?.gstin || vendorDetail?.primary_gst_detail?.gstin || '—'}
                                         </span>
                                         <IconButton size="small" onClick={() => setGstPickerModalOpen(true)}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                 </div>
@@ -1489,7 +1499,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                         <div className="space-y-3">
                                             {loadingOrgAddress && (
                                                 <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
-                                                    <CircularProgress size={16} /><span>Fetching organization address...</span>
+                                                    <CircularProgress size={16} sx={{ color: '#DA7756' }} /><span>Fetching organization address...</span>
                                                 </div>
                                             )}
                                             {orgAddressError && !loadingOrgAddress && (
@@ -1528,7 +1538,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                             </FormControl>
                                             {loadingCustomerAddress && (
                                                 <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
-                                                    <CircularProgress size={16} /><span>Loading customer address...</span>
+                                                    <CircularProgress size={16} sx={{ color: '#DA7756' }} /><span>Loading customer address...</span>
                                                 </div>
                                             )}
                                             {customerAddressError && !loadingCustomerAddress && (
@@ -1645,7 +1655,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                                 };
                                             }));
                                         }}
-                                        sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }}
+                                        sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                     />
                                 }
                                 label={<span className="text-sm font-medium">This transaction is applicable for Reverse Charge</span>}
@@ -1879,8 +1889,8 @@ export const PurchaseOrderEditPage: React.FC = () => {
 
                             <div className="flex flex-wrap items-center gap-3 py-2">
                                 <RadioGroup row value={taxType} onChange={(e) => setTaxType(e.target.value as 'TDS' | 'TCS')}>
-                                    <FormControlLabel value="TDS" control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />} label={<span className="text-sm">TDS</span>} />
-                                    <FormControlLabel value="TCS" control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />} label={<span className="text-sm">TCS</span>} />
+                                    <FormControlLabel value="TDS" control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />} label={<span className="text-sm">TDS</span>} />
+                                    <FormControlLabel value="TCS" control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />} label={<span className="text-sm">TCS</span>} />
                                 </RadioGroup>
                                 <FormControl size="small" sx={{ minWidth: 150 }}>
                                     <Select value={selectedTax} onChange={(e) => setSelectedTax(e.target.value)} displayEmpty
@@ -1984,11 +1994,11 @@ export const PurchaseOrderEditPage: React.FC = () => {
                             <div className="space-y-2">
                                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Existing Attachments</p>
                                 {existingAttachments.map((file: any, index: number) => (
-                                    <div key={index} className="flex items-center justify-between bg-blue-50 border border-blue-100 p-3 rounded">
+                                    <div key={index} className="flex items-center justify-between bg-orange-50 border border-orange-100 p-3 rounded">
                                         <div className="flex items-center gap-2">
-                                            <AttachFile fontSize="small" className="text-blue-500" />
+                                            <AttachFile fontSize="small" className="text-brand" />
                                             <a href={file.url || file.file_url || '#'} target="_blank" rel="noreferrer"
-                                                className="text-sm text-blue-600 underline">
+                                                className="text-sm text-brand underline">
                                                 {file.file_name || file.name || `Attachment ${index + 1}`}
                                             </a>
                                         </div>
@@ -2033,21 +2043,24 @@ export const PurchaseOrderEditPage: React.FC = () => {
             {/* ── Action Buttons ────────────────────────────────────────────── */}
             <div className="flex items-center gap-3 justify-center pt-2">
                 <Button variant="outlined" onClick={() => navigate('/accounting/purchase-order')} disabled={isSubmitting}
+                    className="fm-button-fix px-8 py-2"
                     sx={{
-                        textTransform: 'none', px: 4, borderColor: 'divider', color: 'text.secondary',
-                        '&:hover': { borderColor: 'primary.main', bgcolor: 'primary.main', color: 'white' },
+                        textTransform: 'none', fontWeight: 600, borderColor: '#DA7756', color: '#DA7756',
+                        '&:hover': { borderColor: '#C45F40', bgcolor: '#F2EEE9', color: '#C45F40' },
                     }}>
                     Cancel
                 </Button>
                 <Button variant="outlined" onClick={() => handleSubmit(true)} disabled={isSubmitting}
+                    className="fm-button-fix px-8 py-2"
                     sx={{
-                        textTransform: 'none', px: 4, borderColor: 'primary.main', color: 'primary.main',
-                        '&:hover': { borderColor: 'primary.dark', bgcolor: 'primary.main', color: 'white' },
+                        textTransform: 'none', fontWeight: 600, borderColor: '#DA7756', color: '#DA7756',
+                        '&:hover': { borderColor: '#C45F40', bgcolor: '#F2EEE9', color: '#C45F40' },
                     }}>
                     Save as Draft
                 </Button>
                 <Button variant="contained" onClick={() => handleSubmit(false)} disabled={isSubmitting}
-                    sx={{ bgcolor: 'primary.main', color: 'white', px: 4, '&:hover': { bgcolor: 'primary.dark' }, textTransform: 'none' }}>
+                    className="fm-button-fix fm-button-brand px-8 py-2"
+                    sx={{ textTransform: 'none', fontWeight: 600 }}>
                     {isSubmitting ? 'Updating...' : 'Update Purchase Order'}
                 </Button>
             </div>
@@ -2079,7 +2092,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                 </Typography>
                                 <Typography variant="body2">Outstanding Payables</Typography>
                             </div>
-                            <div className="bg-green-50 rounded-lg p-4 text-center">
+                            <div className="bg-orange-50 rounded-lg p-4 text-center">
                                 <Typography variant="h6" className="font-bold">₹0</Typography>
                                 <Typography variant="body2">Unused Credits</Typography>
                             </div>
@@ -2136,7 +2149,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                 </DialogContent>
                 <DialogActions>
                     <button className="bg-gray-200 px-4 py-2 rounded" onClick={() => setExemptionModalOpen(false)}>Cancel</button>
-                    <button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                    <button className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                         onClick={() => {
                             if (currentItemIndex !== null) updateItem(currentItemIndex, 'tax_exemption_id', selectedExemption);
                             setSelectedExemption(''); setCurrentItemIndex(null); setExemptionModalOpen(false);
@@ -2154,7 +2167,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                         {getAddressBookByType(activeAddressType).map((addr) => (
                             <div key={addr.id}
                                 className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
-                                    ? 'border-[#C72030] bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}
+                                    ? 'border-[#DA7756] bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}
                                 onClick={() => {
                                     if (activeAddressType === 'billing') setSelectedBillingAddressId(addr.id);
                                     else setSelectedShippingAddressId(addr.id);
@@ -2169,7 +2182,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                         {addr.country && <div>{addr.country}</div>}
                                     </div>
                                     <IconButton size="small" onClick={(e) => { e.stopPropagation(); openAddressFormModal('edit', activeAddressType, addr); }}>
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 </div>
                             </div>
@@ -2177,12 +2190,12 @@ export const PurchaseOrderEditPage: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions sx={{ justifyContent: 'space-between', px: 3 }}>
-                    <button type="button" className="text-blue-600 text-sm font-medium"
+                    <button type="button" className="text-brand text-sm font-medium"
                         onClick={() => openAddressFormModal('new', activeAddressType)}>
                         + New address
                     </button>
                     <Button onClick={() => setAddressListModalOpen(false)} variant="outlined" size="small"
-                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                        sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>
                         Close
                     </Button>
                 </DialogActions>
@@ -2227,9 +2240,9 @@ export const PurchaseOrderEditPage: React.FC = () => {
                 </DialogContent>
                 <DialogActions sx={{ justifyContent: 'flex-start', px: 3, py: 2 }}>
                     <Button variant="contained" onClick={handleSaveAddressForm}
-                        sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>Save</Button>
+                        sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}>Save</Button>
                     <Button variant="outlined" onClick={() => setAddressFormModalOpen(false)}
-                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>Cancel</Button>
+                        sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>Cancel</Button>
                 </DialogActions>
             </Dialog>
 
@@ -2249,7 +2262,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                         ))}
                     </div>
                     <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
-                        <button type="button" className="text-blue-600 text-sm flex items-center gap-1"
+                        <button type="button" className="text-brand text-sm flex items-center gap-1"
                             onClick={() => {
                                 setGstPickerModalOpen(false); setShowNewGstForm(false); setEditingGstDetailId(null);
                                 setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' });
@@ -2276,11 +2289,11 @@ export const PurchaseOrderEditPage: React.FC = () => {
                     <Button variant="contained" onClick={() => {
                         setVendorDetail((prev: any) => prev ? { ...prev, gst_preference: gstTreatmentDraft } : prev);
                         setGstModalOpen(false);
-                    }} sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+                    }} sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}>
                         Update
                     </Button>
                     <Button variant="outlined" onClick={() => setGstModalOpen(false)}
-                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                        sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>
                         Cancel
                     </Button>
                 </DialogActions>
@@ -2296,7 +2309,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                     <div className="space-y-4">
                         <Button variant="contained" size="small"
                             onClick={() => { setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setShowNewGstForm(true); }}
-                            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+                            sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}>
                             Add New Tax Information
                         </Button>
                         {showNewGstForm && (
@@ -2317,12 +2330,12 @@ export const PurchaseOrderEditPage: React.FC = () => {
                                     onChange={(e) => setNewGstForm(p => ({ ...p, business_trade_name: e.target.value }))} />
                                 <div className="md:col-span-2 flex gap-2">
                                     <Button variant="contained" size="small" onClick={handleSaveAndSelectGst}
-                                        sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+                                        sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}>
                                         {editingGstDetailId ? 'Save' : 'Save and Select'}
                                     </Button>
                                     <Button variant="outlined" size="small"
                                         onClick={() => { setShowNewGstForm(false); setEditingGstDetailId(null); }}
-                                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                                        sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>
                                         Cancel
                                     </Button>
                                 </div>
@@ -2359,7 +2372,7 @@ export const PurchaseOrderEditPage: React.FC = () => {
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 3 }}>
                     <Button variant="outlined" size="small" onClick={() => setGstManageModalOpen(false)}
-                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                        sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>
                         Close
                     </Button>
                 </DialogActions>

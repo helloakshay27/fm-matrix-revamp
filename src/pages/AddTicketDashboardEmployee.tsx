@@ -1677,7 +1677,7 @@ export const AddTicketDashboardEmployee = () => {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
+            className="bg-brand hover:bg-brand-hover text-white px-8 py-2"
           >
             {isSubmitting ? 'Creating...' : 'Create Tickets'}
           </Button>
@@ -1685,7 +1685,7 @@ export const AddTicketDashboardEmployee = () => {
             type="button"
             variant="outline"
             onClick={() => navigate(-1)}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+            className="border-brand text-brand hover:bg-brand-selected px-8 py-2"
           >
             Cancel
           </Button>

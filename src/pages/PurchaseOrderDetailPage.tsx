@@ -378,18 +378,7 @@ export const PurchaseOrderDetailPage = () => {
   };
 
   const getStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      draft: "bg-gray-100 text-gray-800 border-gray-200",
-      pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      approved: "bg-green-100 text-green-800 border-green-200",
-      confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-      processing: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      shipped: "bg-purple-100 text-purple-800 border-purple-200",
-      received: "bg-green-100 text-green-800 border-green-200",
-      delivered: "bg-green-100 text-green-800 border-green-200",
-      cancelled: "bg-red-100 text-red-800 border-red-200",
-    };
-    return colors[status?.toLowerCase()] || colors.draft;
+    return "bg-gray-100 text-gray-800 border-gray-200";
   };
 
   const handleEdit = () => {
@@ -494,7 +483,7 @@ export const PurchaseOrderDetailPage = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-background p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <div className="flex items-center gap-4 mb-6">
             <Button
               variant="ghost"
@@ -526,7 +515,7 @@ export const PurchaseOrderDetailPage = () => {
   if (!purchaseOrder) {
     return (
       <div className="min-h-screen bg-background p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <div className="flex items-center gap-4 mb-6">
             <Button
               variant="ghost"
@@ -565,7 +554,7 @@ export const PurchaseOrderDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -611,25 +600,28 @@ export const PurchaseOrderDetailPage = () => {
 
             <Button
               variant="outline"
+              style={{ borderColor: '#DA7756', color: '#DA7756' }}
               onClick={() => setActiveTab("pdf-view")}
             >
-              <FileText className="h-4 w-4 mr-2" />
+              <FileText className="h-4 w-4 mr-2" color="#DA7756" />
               PDF
             </Button>
 
             <Button
               variant="outline"
+              style={{ borderColor: '#DA7756', color: '#DA7756' }}
               onClick={() => navigate("/accounting/purchase-order/template", { state: { recordId: id } })}
             >
-              <Settings2 className="h-4 w-4 mr-2" />
+              <Settings2 className="h-4 w-4 mr-2" color="#DA7756" />
               Template Edit
             </Button>
 
             <Button
               variant="outline"
+              style={{ borderColor: '#DA7756', color: '#DA7756' }}
               onClick={handleDownloadPdf}
             >
-              <Download className="h-4 w-4 mr-2" />
+              <Download className="h-4 w-4 mr-2" color="#DA7756" />
               Download PDF
             </Button>
 
@@ -637,9 +629,10 @@ export const PurchaseOrderDetailPage = () => {
               size="sm"
               variant="outline"
               className="gap-2"
+              style={{ borderColor: '#DA7756', color: '#DA7756' }}
               onClick={() => navigate(`/accounting/purchase-order/edit/${id}`)}
             >
-              <Edit className="h-4 w-4" />
+              <Edit className="h-4 w-4" color="#DA7756" />
               Edit
             </Button>
 
@@ -662,7 +655,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "draft" && (
                   <Button
                     size="sm"
-                    className="bg-green-600 text-white hover:bg-green-700"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("issued")}
                   >
@@ -674,7 +667,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "issued" && (
                   <Button
                     size="sm"
-                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => navigate("/accounting/bills/create", { state: { saleOrderId: purchaseOrder?.id || id } })}
                   >
@@ -691,7 +684,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "draft" && (
                   <Button
                     size="sm"
-                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("pending_approval")}
                   >
@@ -704,7 +697,7 @@ export const PurchaseOrderDetailPage = () => {
                   <>
                     <Button
                       size="sm"
-                      className="bg-green-600 text-white hover:bg-green-700"
+                      className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                       disabled={actionLoading}
                       onClick={() => updateApprovalStatus("approved")}
                     >
@@ -712,7 +705,7 @@ export const PurchaseOrderDetailPage = () => {
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-red-600 text-white hover:bg-red-700"
+                      className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                       disabled={actionLoading}
                       onClick={() => updateApprovalStatus("rejected")}
                     >
@@ -725,7 +718,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "approved" && (
                   <Button
                     size="sm"
-                    className="bg-green-600 text-white hover:bg-green-700"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("issued")}
                   >
@@ -737,7 +730,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "issued" && (
                   <Button
                     size="sm"
-                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => navigate("/accounting/bills/create", { state: { saleOrderId: purchaseOrder?.id || id } })}
                   >
@@ -758,28 +751,12 @@ export const PurchaseOrderDetailPage = () => {
             backgroundColor: "rgba(250, 250, 250, 1)",
           }}
         >
-          <style>{`
-                        .purchase-order-tabs button[data-state="active"] {
-                            background-color: rgba(237, 234, 227, 1) !important;
-                            color: rgba(199, 32, 48, 1) !important;
-                        }
-                    `}</style>
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList
-              className="purchase-order-tabs w-full flex flex-nowrap rounded-t-lg p-0 overflow-x-auto mb-4"
-              style={{
-                gap: "0",
-                padding: "0",
-                backgroundColor: "rgba(246, 247, 247, 1)",
-                height: "50px",
-                marginBottom: "16px",
-                justifyContent: "flex-start",
-              }}
-            >
+            <TabsList className="flex flex-wrap w-full max-w-3xl justify-start">
               {[
                 { label: "Order Details", value: "order-details" },
                 { label: "Vendor Info", value: "vendor-info" },
@@ -789,25 +766,7 @@ export const PurchaseOrderDetailPage = () => {
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
-                  style={{
-                    width: "230px",
-                    height: "36px",
-                    paddingTop: "10px",
-                    paddingRight: "20px",
-                    paddingBottom: "10px",
-                    paddingLeft: "20px",
-                    borderRadius: "0",
-                    border: "none",
-                    margin: "0",
-                    fontFamily: "Work Sans",
-                    fontWeight: 500,
-                    fontSize: "14px",
-                    lineHeight: "100%",
-                    letterSpacing: "0%",
-                    color: "rgba(26, 26, 26, 1)",
-                    backgroundColor: "rgba(246, 247, 247, 1)",
-                  }}
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -1332,16 +1291,18 @@ export const PurchaseOrderDetailPage = () => {
                     <div className="flex items-center gap-3">
                       <Button
                         variant="outline"
+                        style={{ borderColor: '#DA7756', color: '#DA7756' }}
                         onClick={() => window.print()}
                       >
-                        <Printer className="h-4 w-4 mr-2" />
+                        <Printer className="h-4 w-4 mr-2" color="#DA7756" />
                         Print
                       </Button>
                       <Button
                         variant="outline"
+                        style={{ borderColor: '#DA7756', color: '#DA7756' }}
                         onClick={handleDownloadPdf}
                       >
-                        <Download className="h-4 w-4 mr-2" />
+                        <Download className="h-4 w-4 mr-2" color="#DA7756" />
                         Download PDF
                       </Button>
                     </div>
@@ -1452,12 +1413,14 @@ export const PurchaseOrderDetailPage = () => {
           <div className="flex gap-3 justify-end mt-4">
             <Button
               variant="outline"
+              className="fm-button-fix px-8 py-2"
               onClick={() => setShowDeleteDialog(false)}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
+              className="bg-[#dc2626] hover:bg-[#b91c1c] text-white"
               onClick={handleDelete}
               disabled={deleting}
             >

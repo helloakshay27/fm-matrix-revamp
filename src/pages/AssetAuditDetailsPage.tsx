@@ -1192,7 +1192,8 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Edit, Printer, Eye, File } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -1201,6 +1202,35 @@ import StatusDropdown from '@/components/StatusDropdown';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { PostHogAuditActivity } from '@/components/PostHogAuditActivity';
 
+interface AuditAssetRow {
+  rowId: string;
+  assetName: string;
+  serialNo: string;
+  manufacturer: string;
+  group: string;
+  subgroup: string;
+  site: string;
+  building: string;
+  wing: string;
+  floor: string;
+  department: string;
+}
+
+const assetAuditColumns: ColumnConfig[] = [
+  { key: 'assetName', label: 'Asset Name', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'serialNo', label: 'Asset Serial No', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'manufacturer', label: 'Manufacturer', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'group', label: 'Group', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'subgroup', label: 'Subgroup', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'site', label: 'Site', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'building', label: 'Building', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'wing', label: 'Wing', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'floor', label: 'Floor', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'department', label: 'Department', sortable: true, hideable: true, defaultVisible: true },
+];
+
+const renderAssetAuditCell = (item: AuditAssetRow, columnKey: string) =>
+  item[columnKey as keyof AuditAssetRow];
 // Helper Functions
 const formatDate = (dateString: string): string => {
   if (!dateString) return 'N/A';
@@ -1274,8 +1304,8 @@ export const AssetAuditDetailsPage = () => {
   const [filterSubGroup, setFilterSubGroup] = useState('');
 
   // Data
-  const [unscannedAssets, setUnscannedAssets] = useState<any[]>([]);
-  const [scannedAssets, setScannedAssets] = useState<any[]>([]);
+  const [unscannedAssets, setUnscannedAssets] = useState<AuditAssetRow[]>([]);
+  const [scannedAssets, setScannedAssets] = useState<AuditAssetRow[]>([]);
 
   // Dropdown Options
   const [wings, setWings] = useState<any[]>([]);
@@ -1348,7 +1378,8 @@ export const AssetAuditDetailsPage = () => {
       setSelectedStatus({ [data.id]: data.status || 'scheduled' });
 
       // Map Assets
-      const mapAsset = (asset: any) => ({
+      const mapAsset = (asset: any, index: number): AuditAssetRow => ({
+        rowId: String(asset.id ?? `${asset.serial_number || 'asset'}-${index}`),
         assetName: asset.name || 'N/A',
         serialNo: asset.serial_number || 'N/A',
         manufacturer: asset.manufacturer || 'N/A',
@@ -1358,7 +1389,7 @@ export const AssetAuditDetailsPage = () => {
         building: asset.location?.building || 'N/A',
         wing: asset.location?.wing || 'N/A',
         floor: asset.location?.floor || 'N/A',
-        department: 'N/A'
+        department: 'N/A',
       });
 
       setUnscannedAssets(Array.isArray(data.unscanned_assets) ? data.unscanned_assets.map(mapAsset) : []);
@@ -1825,87 +1856,31 @@ export const AssetAuditDetailsPage = () => {
             {/* Unscanned Assets Table */}
             <div className="mb-8">
               <h3 className="text-lg font-semibold mb-4">List Of Assets To Be Scanned</h3>
-              <div className="border rounded-lg overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead>Asset Name</TableHead>
-                      <TableHead>Asset Serial No</TableHead>
-                      <TableHead>Manufacturer</TableHead>
-                      <TableHead>Group</TableHead>
-                      <TableHead>Subgroup</TableHead>
-                      <TableHead>Site</TableHead>
-                      <TableHead>Building</TableHead>
-                      <TableHead>Wing</TableHead>
-                      <TableHead>Floor</TableHead>
-                      <TableHead>Department</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {unscannedAssets.length === 0 ? (
-                      <TableRow><TableCell colSpan={10} className="text-center py-8 text-gray-500">No unscanned assets available</TableCell></TableRow>
-                    ) : (
-                      unscannedAssets.map((asset, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{asset.assetName}</TableCell>
-                          <TableCell>{asset.serialNo}</TableCell>
-                          <TableCell>{asset.manufacturer}</TableCell>
-                          <TableCell>{asset.group}</TableCell>
-                          <TableCell>{asset.subgroup}</TableCell>
-                          <TableCell>{asset.site}</TableCell>
-                          <TableCell>{asset.building}</TableCell>
-                          <TableCell>{asset.wing}</TableCell>
-                          <TableCell>{asset.floor}</TableCell>
-                          <TableCell>{asset.department}</TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+              <EnhancedTable
+                data={unscannedAssets}
+                columns={assetAuditColumns}
+                renderCell={renderAssetAuditCell}
+                storageKey="asset-audit-unscanned-assets-table"
+                emptyMessage="No unscanned assets available"
+                pagination
+                pageSize={10}
+                getItemId={(item) => item.rowId}
+              />
             </div>
 
             {/* Scanned Assets Table */}
             <div>
               <h3 className="text-lg font-semibold mb-4">Total Scanned Assets</h3>
-              <div className="border rounded-lg overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead>Asset Name</TableHead>
-                      <TableHead>Asset Serial No</TableHead>
-                      <TableHead>Manufacturer</TableHead>
-                      <TableHead>Group</TableHead>
-                      <TableHead>Subgroup</TableHead>
-                      <TableHead>Site</TableHead>
-                      <TableHead>Building</TableHead>
-                      <TableHead>Wing</TableHead>
-                      <TableHead>Floor</TableHead>
-                      <TableHead>Department</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {scannedAssets.length === 0 ? (
-                      <TableRow><TableCell colSpan={10} className="text-center py-8 text-gray-500">No assets available</TableCell></TableRow>
-                    ) : (
-                      scannedAssets.map((asset, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{asset.assetName}</TableCell>
-                          <TableCell>{asset.serialNo}</TableCell>
-                          <TableCell>{asset.manufacturer}</TableCell>
-                          <TableCell>{asset.group}</TableCell>
-                          <TableCell>{asset.subgroup}</TableCell>
-                          <TableCell>{asset.site}</TableCell>
-                          <TableCell>{asset.building}</TableCell>
-                          <TableCell>{asset.wing}</TableCell>
-                          <TableCell>{asset.floor}</TableCell>
-                          <TableCell>{asset.department}</TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+              <EnhancedTable
+                data={scannedAssets}
+                columns={assetAuditColumns}
+                renderCell={renderAssetAuditCell}
+                storageKey="asset-audit-scanned-assets-table"
+                emptyMessage="No assets available"
+                pagination
+                pageSize={10}
+                getItemId={(item) => item.rowId}
+              />
             </div>
           </div>
         </div>

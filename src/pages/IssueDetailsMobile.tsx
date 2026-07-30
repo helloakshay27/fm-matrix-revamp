@@ -120,13 +120,13 @@ const IssueDetailsMobile = () => {
 
     const getPriorityColor = (priority: string) => {
         switch (priority?.toLowerCase()) {
-            case "critical":
+            case "p1":
                 return "bg-red-600 text-white";
-            case "high":
+            case "p2":
                 return "bg-orange-500 text-white";
-            case "medium":
+            case "p3":
                 return "bg-yellow-500 text-white";
-            case "low":
+            case "p4":
                 return "bg-green-500 text-white";
             default:
                 return "bg-gray-400 text-white";
@@ -147,12 +147,12 @@ const IssueDetailsMobile = () => {
 
     const transformPriority = (priority: string): string => {
         const priorityMap: Record<string, string> = {
-            "high": "HIGH",
-            "medium": "MEDIUM",
-            "low": "LOW",
-            "critical": "CRITICAL",
+            "p1": "P1",
+            "p2": "P2",
+            "p3": "P3",
+            "p4": "P4",
         };
-        return priorityMap[priority] || priority.toUpperCase();
+        return priorityMap[priority?.toLowerCase()] || priority?.toUpperCase();
     };
 
     if (loading) {

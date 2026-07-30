@@ -12,7 +12,6 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Container,
   Paper,
   InputAdornment,
   Pagination,
@@ -245,7 +244,7 @@ const CRMPollsPage = () => {
   );
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
@@ -262,8 +261,8 @@ const CRMPollsPage = () => {
           startIcon={<Plus size={20} />}
           onClick={() => navigate('/crm/polls/add')}
           sx={{
-            bgcolor: '#C72030',
-            '&:hover': { bgcolor: '#B01E2A' },
+            bgcolor: 'var(--color-primary)',
+            '&:hover': { bgcolor: 'var(--color-primary-hover)' },
             textTransform: 'none',
             fontWeight: 600,
             px: 3,
@@ -300,7 +299,15 @@ const CRMPollsPage = () => {
             <Button
               variant="outlined"
               startIcon={<Filter size={18} />}
-              sx={{ textTransform: 'none' }}
+              sx={{
+                textTransform: 'none',
+                borderColor: 'var(--color-primary)',
+                color: 'var(--color-primary)',
+                '&:hover': {
+                  borderColor: 'var(--color-primary-hover)',
+                  bgcolor: 'var(--color-primary-selected)',
+                },
+              }}
             >
               Filter
             </Button>
@@ -454,7 +461,7 @@ const CRMPollsPage = () => {
           )}
         </Menu>
       </Paper>
-    </Container>
+    </div>
   );
 };
 

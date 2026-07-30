@@ -828,8 +828,8 @@ export const AddInventoryPage = () => {
                 />
               </div>
 
-              {/* Form Grid - First Row */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              {/* Form Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 <div>
                   <FormControl fullWidth variant="outlined" sx={selectStyles}>
                     <InputLabel shrink>Select Asset Name</InputLabel>
@@ -955,11 +955,6 @@ export const AddInventoryPage = () => {
                   />
                 </div>
 
-
-              </div>
-
-              {/* Form Grid - Second Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 <div>
                   <TextField
                     label="Cost"
@@ -1183,10 +1178,7 @@ export const AddInventoryPage = () => {
                     </MuiSelect>
                   </FormControl>
                 </div>
-              </div>
 
-              {/* Form Grid - Third Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <TextField
                     label={<>Max.Stock Level<span style={{ color: '#DA7756' }}>*</span></>}
@@ -1234,7 +1226,7 @@ export const AddInventoryPage = () => {
               </div>
 
               {/* Inventory Type Masters - placed after Min Order Level */}
-              {/* Removed Inventory Sub Type field; Inventory Type moved above in Second Row */}
+              {/* Removed Inventory Sub Type field; Inventory Type moved above */}
             </div>
           )}
         </div>
