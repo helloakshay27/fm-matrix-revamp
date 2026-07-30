@@ -869,16 +869,18 @@ export const EditBroadcastPage = () => {
 
                 <div className="flex justify-center gap-4 mt-8 pb-8">
                     <Button
+                        type="button"
                         onClick={handleSubmit}
                         disabled={isSubmitting}
-                        className="disabled:!bg-[#DF808B] !bg-[#C72030] hover:bg-[#d0606e] !text-white min-w-[150px] h-10"
+                        className="min-w-[150px] h-10 !bg-brand hover:!bg-brand-hover !text-white disabled:!opacity-100 disabled:!bg-brand"
                     >
                         {isSubmitting ? "Updating..." : "Update"}
                     </Button>
                     <Button
+                        type="button"
                         onClick={() => navigate(-1)}
-                        variant="outline"
-                        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white min-w-[150px] h-10"
+                        variant="ghost"
+                        className="min-w-[150px] h-10 bg-white border border-brand !text-brand hover:!bg-[rgba(218,119,86,0.08)] hover:!text-brand hover:!border-brand active:!bg-[rgba(218,119,86,0.08)] active:!text-brand"
                     >
                         Cancel
                     </Button>
