@@ -1,17 +1,19 @@
 // @ts-nocheck
+import { useNavigate } from "react-router-dom";
 import { useJobs } from "../JobsContext";
 import { T, COLORS } from "../constants";
 import { I, ico } from "../icons";
 import { Btn, StatusPill, aBtn } from "./UI";
 
 export default function JdList() {
+  const navigate = useNavigate();
   const {
     filteredJds, jdSearch, setJdSearch,
-    setView, setStep,
+    resetCreate,
     kraCountFor, kpiCountFor, initials,
     actionMenuJd, setActionMenuJd,
-    startEditJd, setAssignModal,
-    publishJd, setViewingJd,
+    setAssignModal,
+    publishJd,
   } = useJobs();
 
   return (
@@ -59,8 +61,8 @@ export default function JdList() {
         <Btn
           primary
           onClick={() => {
-            setView("create");
-            setStep(0);
+            resetCreate();
+            navigate("/admin-compass/jobs/create");
           }}
         >
           {ico.plus} Create JD
@@ -244,7 +246,7 @@ export default function JdList() {
                     }
                     onClick={() => {
                       setActionMenuJd(null);
-                      startEditJd(jd.id);
+                      navigate(`/admin-compass/jobs/edit/${jd.id}`);
                     }}
                   >
                     <span style={{ display: "flex", color: T.inkMuted }}>
@@ -325,7 +327,7 @@ export default function JdList() {
               <button
                 style={aBtn}
                 title="View Details"
-                onClick={() => setViewingJd(jd.id)}
+                onClick={() => navigate(`/admin-compass/jobs/${jd.id}`)}
                 onMouseOver={(e) => {
                   e.currentTarget.style.background = T.orangeSoft;
                   e.currentTarget.style.color = T.orange;
