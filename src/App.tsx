@@ -149,6 +149,9 @@ const UtilityWasteGenerationSetupDashboard = lazy(() => import("./pages/UtilityW
 const AddWasteGenerationPage = lazy(() => import("./pages/AddWasteGenerationPage"));
 const EditWasteGenerationPage = lazy(() => import("./pages/EditWasteGenerationPage"));
 const WasteGenerationDetailsPage = lazy(() => import("./pages/WasteGenerationDetailsPage").then(m => ({ default: m.WasteGenerationDetailsPage })));
+const WasteDispatchPage = lazy(() => import("./pages/WasteDispatchPage"));
+const WasteDispatchHistoryPage = lazy(() => import("./pages/WasteDispatchHistoryPage"));
+const RecycleEntryPage = lazy(() => import("./pages/RecycleEntryPage"));
 
 // Import Survey pages
 const SurveyListDashboard = lazy(() => import("./pages/SurveyListDashboard").then(m => ({ default: m.SurveyListDashboard })));
@@ -4384,12 +4387,24 @@ function App() {
                               element={<UtilityWasteGenerationSetupDashboard />}
                             />
                             <Route
+                              path="/maintenance/waste/dispatch"
+                              element={<WasteDispatchHistoryPage />}
+                            />
+                            <Route
+                              path="/maintenance/waste/dispatch/recycle-entry/:id"
+                              element={<RecycleEntryPage />}
+                            />
+                            <Route
                               path="/maintenance/waste/generation/add"
                               element={<AddWasteGenerationPage />}
                             />
                             <Route
                               path="/maintenance/waste/generation/edit/:id"
                               element={<EditWasteGenerationPage />}
+                            />
+                            <Route
+                              path="/maintenance/waste/generation/dispatch"
+                              element={<WasteDispatchPage />}
                             />
                             <Route
                               path="/maintenance/waste/generation/:id"

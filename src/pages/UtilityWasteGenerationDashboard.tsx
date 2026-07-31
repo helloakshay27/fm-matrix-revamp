@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import {
   Plus, Upload, Eye, Trash2, Loader2, BarChart3,
   Calendar, Filter, RefreshCw, Leaf, Activity, Download,
-  Droplets, Percent, Package
+  Droplets, Percent, Package, Truck
 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -169,7 +169,8 @@ const UtilityWasteGenerationDashboard = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showActionPanel, setShowActionPanel] = useState(false);
-  
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
   // API states
   const [wasteGenerations, setWasteGenerations] = useState<WasteGeneration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -321,8 +322,26 @@ useEffect(() => {
 
   // Handlers
   const handleActionClick = () => setShowActionPanel(!showActionPanel);
-  const handleClearSelection = () => setShowActionPanel(false);
+  const handleClearSelection = () => {
+    setShowActionPanel(false);
+    setSelectedItems([]);
+  };
   const handleApplyFilters = (filters: WasteGenerationFilters) => { setActiveFilters(filters); setCurrentPage(1); };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedItems(checked ? wasteGenerations.map((item) => item.id.toString()) : []);
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    setSelectedItems((prev) =>
+      checked ? [...prev, itemId] : prev.filter((id) => id !== itemId)
+    );
+  };
+
+  const handleDispatch = () => {
+    const items = wasteGenerations.filter((item) => selectedItems.includes(item.id.toString()));
+    navigate('/maintenance/waste/generation/dispatch', { state: { items } });
+  };
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -473,6 +492,10 @@ useEffect(() => {
                 return '-';
               }}
               getItemId={(item) => item.id.toString()}
+              selectable={true}
+              selectedItems={selectedItems}
+              onSelectAll={handleSelectAll}
+              onSelectItem={handleSelectItem}
               onSearchChange={setSearchTerm}
               onFilterClick={() => setIsFilterModalOpen(true)}
               enableExport={true}
@@ -549,7 +572,12 @@ useEffect(() => {
       </div>
 
       {/* Action Panel */}
-      {showActionPanel && (
+      {selectedItems.length > 0 ? (
+        <SelectionPanel
+          actions={[{ label: 'Dispatch', icon: Truck, onClick: handleDispatch }]}
+          onClearSelection={handleClearSelection}
+        />
+      ) : showActionPanel && (
         <SelectionPanel
           onAdd={() => navigate('/maintenance/waste/generation/add')}
           onImport={() => setIsBulkUploadOpen(true)}
