@@ -150,7 +150,9 @@ body.product-pages-scope table td {
 }
 
 .bg-card,
-.cursor-grab svg {
+/* Draggable rows force their icons black — opt out with data-icon-color
+   when the icon carries its own meaning (task/issue/todo/note glyphs). */
+.cursor-grab svg:not([data-icon-color]) {
   color: #000000 !important;
 }
 
