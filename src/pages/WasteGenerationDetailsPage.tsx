@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
@@ -92,7 +93,6 @@ export const WasteGenerationDetailsPage = () => {
       <div className="p-6 bg-white min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
-          <p className="text-gray-700">Loading Utility Waste Generation Details...</p>
           <p className="text-gray-700">Loading waste generation details...</p>
         </div>
       </div>
@@ -111,39 +111,112 @@ export const WasteGenerationDetailsPage = () => {
     );
   }
 
-  const InfoRow = ({
-    label,
-    value,
+  type Field = { label: string; value: string | number | null | undefined };
+
+  // Card shell matching TicketDetailsPage.tsx's card pattern: icon-badge
+  // header bar + bordered body.
+  const DetailCard = ({
+    icon: Icon,
+    title,
+    children,
   }: {
-    label: string;
-    value: string | number | null | undefined;
-  }) =>
-    hasData(value) && (
-      <div className="flex items-start">
-        <span className="text-gray-500 w-40 flex-shrink-0 font-medium">
-          {label}
-        </span>
-        <span className="text-gray-500 mx-3">:</span>
-        <span
-          className="text-gray-900 font-semibold flex-1 break-words truncate max-w-full"
-          style={{
-            wordBreak: "break-word",
-            overflowWrap: "anywhere",
-            minWidth: 0,
-            display: "block",
-          }}
-          title={String(value)}
-        >
-          {String(value)}
-        </span>
+    icon: React.ElementType;
+    title: string;
+    children: React.ReactNode;
+  }) => (
+    <Card className="w-full bg-white rounded-lg shadow-sm border mb-6">
+      <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+          <Icon className="w-5 h-5 text-brand" />
+        </div>
+        <h3 className="text-lg font-semibold uppercase text-black">{title}</h3>
+      </div>
+      <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-4">
+        {children}
+      </div>
+    </Card>
+  );
+
+  // Renders a field list as two side-by-side columns, matching
+  // TicketDetailsPage.tsx's key/value row layout exactly.
+  const FieldColumns = ({ fields }: { fields: Field[] }) => {
+    const visible = fields.filter((f) => hasData(f.value));
+    if (visible.length === 0) {
+      return <p className="text-sm text-gray-500">No data available.</p>;
+    }
+    const midpoint = Math.ceil(visible.length / 2);
+    const colA = visible.slice(0, midpoint);
+    const colB = visible.slice(midpoint);
+    return (
+      <div className="flex flex-col sm:flex-row gap-10">
+        {[colA, colB].map((col, ci) => (
+          <div key={ci} className="flex flex-col gap-4 min-w-[280px] flex-1">
+            {col.map((field) => (
+              <div key={field.label} className="flex text-[14px] leading-snug min-w-0">
+                <div className="w-[180px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                  {field.label}
+                </div>
+                <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                  {String(field.value)}
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     );
+  };
 
-  const SectionCard = ({ children }: { children: React.ReactNode }) => (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      {children}
-    </div>
-  );
+  const wasteDetailsFields: Field[] = [
+    { label: "Location", value: wasteData.location_details },
+    { label: "Operational Name", value: wasteData.operational_landlord?.category_name },
+    { label: "Generated Unit", value: `${wasteData.waste_unit} KG` },
+    { label: "Recycled Unit", value: `${wasteData.recycled_unit} KG` },
+    {
+      label: "Recycled %",
+      value:
+        wasteData.waste_unit > 0
+          ? `${Math.round((wasteData.recycled_unit / wasteData.waste_unit) * 100)}%`
+          : "0%",
+    },
+    { label: "Agency Name", value: wasteData.agency_name },
+    { label: "Reference Number", value: wasteData.reference_number },
+    { label: "Building", value: wasteData.building_name },
+    { label: "Wing", value: wasteData.wing_name },
+    { label: "Area", value: wasteData.area_name },
+  ];
+
+  const userDetailsFields: Field[] = [
+    { label: "User Type", value: wasteData.user_type },
+    { label: "User Name", value: wasteData.user_name || wasteData.created_by?.full_name },
+    {
+      label: "Client Name",
+      value: wasteData.client_name || wasteData.vendor?.company_name || wasteData.agency_name,
+    },
+    { label: "Vendor", value: wasteData.vendor?.company_name },
+    { label: "Created By", value: wasteData.created_by?.full_name },
+    { label: "Creator Email", value: wasteData.created_by?.email },
+    {
+      label: "Waste Date",
+      value: wasteData.wg_date ? new Date(wasteData.wg_date).toLocaleDateString() : undefined,
+    },
+    {
+      label: "Created At",
+      value: wasteData.created_at ? new Date(wasteData.created_at).toLocaleString() : undefined,
+    },
+    {
+      label: "Updated At",
+      value: wasteData.updated_at ? new Date(wasteData.updated_at).toLocaleString() : undefined,
+    },
+  ];
+
+  const bagDetailsFields: Field[] = [
+    { label: "Category", value: wasteData.commodity?.category_name },
+    { label: "Subcategory", value: wasteData.category?.category_name },
+    { label: "No. of Bags", value: wasteData.bag_counts != null ? wasteData.bag_counts.toString() : undefined },
+    { label: "Device", value: wasteData.device_id != null ? wasteData.device_id.toString() : undefined },
+    { label: "Status", value: wasteData.status || undefined },
+  ];
 
   return (
     <div className="p-6">
@@ -172,189 +245,82 @@ export const WasteGenerationDetailsPage = () => {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="rounded-lg border-r border-b border-gray-200 shadow-sm bg-gray-50">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full flex flex-nowrap gap-0 rounded-t-lg p-0 overflow-x-auto mb-4 bg-gray-100 h-[50px]">
-            {[
-              { label: "Waste Details", value: "waste-details", icon: Package },
-              { label: "User Details", value: "user-details", icon: User },
-              { label: "Bag Details", value: "bag-details", icon: ShoppingBag },
-            ].map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className="w-[230px] h-9 rounded-none border-0 m-0 px-5 py-2.5 text-sm font-medium text-[#1a1a1a] bg-gray-100 flex items-center justify-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
-              >
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full flex flex-nowrap gap-0 rounded-t-lg p-0 overflow-x-auto mb-4 bg-gray-100 h-[50px]">
+          {[
+            { label: "Waste Details", value: "waste-details", icon: Package },
+            { label: "User Details", value: "user-details", icon: User },
+            { label: "Bag Details", value: "bag-details", icon: ShoppingBag },
+          ].map((tab) => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className="w-[230px] h-9 rounded-none border-0 m-0 px-5 py-2.5 text-sm font-medium text-[#1a1a1a] bg-gray-100 flex items-center justify-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-          {/* Waste Details Tab */}
-          <TabsContent value="waste-details" className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
-              <div className="space-y-4">
-                <InfoRow label="Location" value={wasteData.location_details} />
-                <InfoRow
-                  label="Operational Name"
-                  value={wasteData.operational_landlord?.category_name}
-                />
-                <InfoRow
-                  label="Generated Unit"
-                  value={`${wasteData.waste_unit} KG`}
-                />
-                <InfoRow
-                  label="Recycled Unit"
-                  value={`${wasteData.recycled_unit} KG`}
-                />
-                <InfoRow
-                  label="Recycled %"
-                  value={
-                    wasteData.waste_unit > 0
-                      ? `${Math.round((wasteData.recycled_unit / wasteData.waste_unit) * 100)}%`
-                      : "0%"
-                  }
-                />
-                <InfoRow label="Agency Name" value={wasteData.agency_name} />
-                <InfoRow
-                  label="Reference Number"
-                  value={wasteData.reference_number}
-                />
-              </div>
-              <div className="space-y-4">
-                <InfoRow label="Building" value={wasteData.building_name} />
-                <InfoRow label="Wing" value={wasteData.wing_name} />
-                <InfoRow label="Area" value={wasteData.area_name} />
-              </div>
-            </div>
-          </TabsContent>
+        <TabsContent value="waste-details">
+          <DetailCard icon={Package} title="Waste Details">
+            <FieldColumns fields={wasteDetailsFields} />
+          </DetailCard>
+        </TabsContent>
 
-          {/* User Details Tab */}
-          <TabsContent value="user-details" className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
-              <div className="space-y-4">
-                <InfoRow label="User Type" value={wasteData.user_type} />
-                <InfoRow
-                  label="User Name"
-                  value={wasteData.user_name || wasteData.created_by?.full_name}
-                />
-                <InfoRow
-                  label="Client Name"
-                  value={wasteData.client_name || wasteData.vendor?.company_name || wasteData.agency_name}
-                />
-                <InfoRow
-                  label="Vendor"
-                  value={wasteData.vendor?.company_name}
-                />
-                <InfoRow
-                  label="Created By"
-                  value={wasteData.created_by?.full_name}
-                />
-                <InfoRow
-                  label="Creator Email"
-                  value={wasteData.created_by?.email}
-                />
-              </div>
-              <div className="space-y-4">
-                <InfoRow
-                  label="Waste Date"
-                  value={
-                    wasteData.wg_date
-                      ? new Date(wasteData.wg_date).toLocaleDateString()
-                      : undefined
-                  }
-                />
-                <InfoRow
-                  label="Created At"
-                  value={
-                    wasteData.created_at
-                      ? new Date(wasteData.created_at).toLocaleString()
-                      : undefined
-                  }
-                />
-                <InfoRow
-                  label="Updated At"
-                  value={
-                    wasteData.updated_at
-                      ? new Date(wasteData.updated_at).toLocaleString()
-                      : undefined
-                  }
-                />
-              </div>
-            </div>
-          </TabsContent>
+        <TabsContent value="user-details">
+          <DetailCard icon={User} title="User Details">
+            <FieldColumns fields={userDetailsFields} />
+          </DetailCard>
+        </TabsContent>
 
-          {/* Bag Details Tab */}
-          <TabsContent value="bag-details" className="p-6">
-            <div className="grid grid-cols-1 gap-8 text-sm">
-              <div className="space-y-4">
-                <InfoRow
-                  label="Category"
-                  value={wasteData.commodity?.category_name}
-                />
-                <InfoRow
-                  label="Subcategory"
-                  value={wasteData.category?.category_name}
-                />
-                <InfoRow
-                  label="No. of Bags"
-                  value={wasteData.bag_counts != null ? wasteData.bag_counts.toString() : undefined}
-                />
-                {wasteData.waste_bag_details && wasteData.waste_bag_details.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                      Waste Bag Details
-                    </h4>
-                    <div className="border border-gray-200 rounded-md overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-gray-50">
-                            <TableHead>Bag</TableHead>
-                            <TableHead>Weight</TableHead>
+        <TabsContent value="bag-details">
+          <DetailCard icon={ShoppingBag} title="Bag Details">
+            <FieldColumns fields={bagDetailsFields} />
+            {wasteData.waste_bag_details && wasteData.waste_bag_details.length > 0 && (
+              <div className="mt-6">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                  Waste Bag Details
+                </h4>
+                <div className="border border-gray-200 rounded-md overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gray-50">
+                        <TableHead>Bag</TableHead>
+                        <TableHead>Weight</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {wasteData.waste_bag_details.map((bag: unknown, idx: number) => {
+                        const bagObj = bag as Record<string, unknown>;
+                        const weightEntry = Object.entries(bagObj).find(([key]) =>
+                          /value|weight/i.test(key)
+                        );
+                        const weightVal = weightEntry ? weightEntry[1] : undefined;
+                        const displayWeight =
+                          weightVal !== null && weightVal !== undefined && !isNaN(Number(weightVal))
+                            ? `${Number(weightVal)} Kg`
+                            : String(weightVal ?? "-");
+                        return (
+                          <TableRow key={idx}>
+                            <TableCell className="font-medium text-gray-900">
+                              Bag {idx + 1}
+                            </TableCell>
+                            <TableCell className="text-gray-900">
+                              {displayWeight}
+                            </TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {wasteData.waste_bag_details.map((bag: unknown, idx: number) => {
-                            const bagObj = bag as Record<string, unknown>;
-                            const weightEntry = Object.entries(bagObj).find(([key]) =>
-                              /value|weight/i.test(key)
-                            );
-                            const weightVal = weightEntry ? weightEntry[1] : undefined;
-                            const displayWeight =
-                              weightVal !== null && weightVal !== undefined && !isNaN(Number(weightVal))
-                                ? `${Number(weightVal)} Kg`
-                                : String(weightVal ?? "-");
-                            return (
-                              <TableRow key={idx}>
-                                <TableCell className="font-medium text-gray-900">
-                                  Bag {idx + 1}
-                                </TableCell>
-                                <TableCell className="text-gray-900">
-                                  {displayWeight}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                )}
-                <InfoRow
-                  label="Device"
-                  value={wasteData.device_id != null ? wasteData.device_id.toString() : undefined}
-                />
-                <InfoRow
-                  label="Status"
-                  value={wasteData.status || undefined}
-                />
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+            )}
+          </DetailCard>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
