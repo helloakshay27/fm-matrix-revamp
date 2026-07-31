@@ -3,24 +3,29 @@ import { useJobs } from "../JobsContext";
 import { T, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
 import { Fld, FI, FS, Btn } from "../components/UI";
 import MemberSearchSelect from "../components/MemberSearchSelect";
+import { useDepartments } from "../hooks/useDepartments";
 
 export default function EditKpiModal() {
+  const { data: departments = [], isLoading: deptLoading } = useDepartments();
   const {
     editingKpiId, setEditingKpiId, editKpiForm, setEditKpiForm, customUnits, saveEditKpi,
-    allJds, allKras, krasForJd, kpisSaving, kpiAssignUsers, kpiAssignUsersLoading,
+    allJds, kpisSaving, kpiAssignUsers, kpiAssignUsersLoading,
     kpiModalJdsLoading, kpiModalJdsError, kpiModalKras, kpiModalKrasLoading, kpiModalKrasError,
-    kpiKraSearch, setKpiKraSearch,
+    kraWeightageUsed,
   } = useJobs();
   if (!editingKpiId) return null;
-  const editKras = editKpiForm.jdId ? kpiModalKras : allKras;
   const assigneeOptions = kpiAssignUsers;
-  const kraBlockedReason = !editKpiForm.jdId
-    ? "Select a job description to load KRAs"
-    : !editKpiForm.departmentId
-      ? "Enter department ID to load KRAs"
-      : !editKpiForm.assigneeIds?.[0]
-        ? "Select an assignee to load KRAs"
-        : "";
+  // Baaki KPIs ka weightage (khud ko chhodkar) — total 100% se upar nahi ja sakta.
+  const kraUsedWeightage = editKpiForm.kraId
+    ? kraWeightageUsed(editKpiForm.kraId, editingKpiId)
+    : 0;
+  const kraRemainingWeightage = Math.max(0, 100 - kraUsedWeightage);
+  // Search + list ek hi input me — MemberSearchSelect khud filter karta hai.
+  const editKras = kpiModalKras.map((k) => ({ id: k.id, name: k.title }));
+  const departmentOptions = departments.map((d) => ({
+    id: d.id,
+    name: d.department_name || d.name || d.title || "Unnamed department",
+  }));
   return (
     <div
       style={{
@@ -64,7 +69,7 @@ export default function EditKpiModal() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
+              gridTemplateColumns: "1fr 1fr",
               gap: 16,
             }}
           >
@@ -76,7 +81,6 @@ export default function EditKpiModal() {
                   setEditKpiForm((f) => ({
                     ...f,
                     jdId: e.target.value,
-                    kraId: "",
                     departmentId:
                       allJds.find((j) => String(j.id) === String(e.target.value))?.departmentId ||
                       f.departmentId,
@@ -94,64 +98,64 @@ export default function EditKpiModal() {
                 <span style={{ fontSize: 11, color: T.danger }}>Could not load JDs: {kpiModalJdsError}</span>
               )}
             </Fld>
-            <Fld label="Department ID">
-              <FI
-                type="number"
+            <Fld label="Department">
+              <MemberSearchSelect
                 value={editKpiForm.departmentId || ""}
-                onChange={(e) =>
-                  setEditKpiForm((f) => ({ ...f, departmentId: e.target.value, kraId: "" }))
+                options={departmentOptions}
+                onChange={(value) =>
+                  setEditKpiForm((f) => ({ ...f, departmentId: value }))
                 }
+                placeholder="Search and select department"
+                loading={deptLoading}
+                loadingText="Loading departments..."
+                emptyText="No departments found"
+                disabled={deptLoading || kpisSaving}
               />
             </Fld>
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 16,
+            }}
+          >
             <Fld label="Assignee Person">
               <MemberSearchSelect
-                value={editKpiForm.assigneeIds?.[0] || ""}
+                multiple
+                value={(editKpiForm.assigneeIds || []).map(String)}
                 options={assigneeOptions}
-                onChange={(value) =>
+                onChange={(values) =>
                   setEditKpiForm((f) => ({
                     ...f,
-                    kraId: "",
-                    assigneeIds: value ? [Number(value)] : [],
+                    assigneeIds: (values || [])
+                      .map(Number)
+                      .filter((id) => Number.isFinite(id)),
                   }))
                 }
-                placeholder="Select assignee"
+                placeholder="Select assignees"
                 loading={kpiAssignUsersLoading}
                 disabled={kpisSaving || kpiAssignUsersLoading}
               />
             </Fld>
+            <Fld label="Linked KRA">
+              <MemberSearchSelect
+                value={editKpiForm.kraId || ""}
+                options={editKras}
+                onChange={(value) =>
+                  setEditKpiForm((f) => ({ ...f, kraId: value }))
+                }
+                placeholder="Search and select KRA"
+                loading={kpiModalKrasLoading}
+                loadingText="Loading KRAs..."
+                emptyText="No KRAs found"
+                disabled={kpisSaving || kpiModalKrasLoading}
+              />
+              {kpiModalKrasError && (
+                <span style={{ fontSize: 11, color: T.danger }}>Could not load KRAs: {kpiModalKrasError}</span>
+              )}
+            </Fld>
           </div>
-          <Fld label="Linked KRA">
-            {kraBlockedReason ? (
-              <FI value="" placeholder={kraBlockedReason} disabled />
-            ) : (
-              <>
-                <FI
-                  placeholder="Search KRA"
-                  value={kpiKraSearch}
-                  onChange={(e) => setKpiKraSearch(e.target.value)}
-                  disabled={kpisSaving}
-                  style={{ minHeight: 38, marginBottom: 6 }}
-                />
-                <FS
-                  value={editKpiForm.kraId || ""}
-                  disabled={kpiModalKrasLoading || kpisSaving}
-                  onChange={(e) =>
-                    setEditKpiForm((f) => ({ ...f, kraId: e.target.value }))
-                  }
-                >
-                  <option value="">{kpiModalKrasLoading ? "Loading KRAs..." : "Select KRA"}</option>
-                  {editKras.map((k) => (
-                    <option key={k.id} value={k.id}>
-                      {k.title}
-                    </option>
-                  ))}
-                </FS>
-              </>
-            )}
-            {kpiModalKrasError && (
-              <span style={{ fontSize: 11, color: T.danger }}>Could not load KRAs: {kpiModalKrasError}</span>
-            )}
-          </Fld>
           <div
             style={{
               display: "grid",
@@ -180,14 +184,29 @@ export default function EditKpiModal() {
                 ))}
               </FS>
             </Fld>
-            <Fld label="KPI Weightage (%)">
+            <Fld
+              label="KPI Weightage (%)"
+              hint={
+                editKpiForm.kraId
+                  ? `${kraUsedWeightage}% used by other KPIs, ${kraRemainingWeightage}% left`
+                  : undefined
+              }
+            >
               <FI
                 type="number"
+                min={0}
+                max={kraRemainingWeightage}
                 value={editKpiForm.weightage || ""}
                 onChange={(e) =>
                   setEditKpiForm((f) => ({ ...f, weightage: e.target.value }))
                 }
               />
+              {editKpiForm.kraId &&
+                Number(editKpiForm.weightage) > kraRemainingWeightage && (
+                  <span style={{ fontSize: 11, color: T.danger }}>
+                    Exceeds 100% total for this KRA
+                  </span>
+                )}
             </Fld>
           </div>
           <div

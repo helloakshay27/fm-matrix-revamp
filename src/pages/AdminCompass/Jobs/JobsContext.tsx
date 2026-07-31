@@ -28,8 +28,8 @@ import { fetchKpiUnits, saveKpiUnits } from "./kpiUnitsApi";
 import { fetchActivityLogs, LOGS_PER_PAGE } from "./activityLogsApi";
 import { fetchKpis, createKpi, updateKpi, toKpiPayload } from "./kpisApi";
 import { fetchJobDescriptions } from "./jobDescriptionsApi";
-import { fetchKras, createKra, updateKra, updateKraStatus } from "./krasApi";
-import { fetchUsersByOrganization } from "./usersApi";
+import { fetchKras, fetchAllKras, createKra, updateKra, updateKraStatus } from "./krasApi";
+import { fetchEscalateToUsers } from "./usersApi";
 import { useEscalateUsers } from "./hooks/useEscalateUsers";
 
 const JobsContext = createContext(null);
@@ -654,76 +654,31 @@ export function JobsProvider({ children }) {
       return;
     }
 
-    const form = showAddKpi ? newKpi : editKpiForm;
-    if (!form?.jdId) {
-      setKpiModalKras([]);
-      setKpiModalKrasError(null);
-      setKpiModalKrasLoading(false);
-      return;
-    }
-
-    const selectedJd = allJds.find((j) => sameId(j.id, form.jdId));
-    const selectedKra = allKras.find((k) => sameId(k.id, form.kraId));
-    const departmentId =
-      toNum(form.departmentId) ||
-      toNum(selectedJd?.departmentId) ||
-      toNum(selectedJd?.deptId) ||
-      toNum(selectedKra?.departmentId);
-    const assigneeId = Array.isArray(form.assigneeIds)
-      ? toNum(form.assigneeIds[0])
-      : undefined;
-    if (!departmentId || !assigneeId) {
-      setKpiModalKras([]);
-      setKpiModalKrasError(null);
-      setKpiModalKrasLoading(false);
-      return;
-    }
+    // The Linked KRA picker lists every KRA from GET /kras.json — it is not
+    // scoped by JD / department / assignee. Searching is done client-side.
     let active = true;
-    setKpiModalKras([]);
     setKpiModalKrasLoading(true);
     setKpiModalKrasError(null);
-    const timer = window.setTimeout(async () => {
+    (async () => {
       try {
-        const rows = await fetchKras({
-          departmentId,
-          jobDescriptionId: form.jdId,
-          assigneeId,
-          search: kpiKraSearch,
-          kraType: "job",
-          status: "active",
-        });
+        const rows = await fetchAllKras();
         if (!active || rows === null) return;
         setKpiModalKras(rows);
         mergeKras(rows);
       } catch (err) {
         if (!active) return;
         console.error("Failed to load linked KRAs:", err);
+        setKpiModalKras([]);
         setKpiModalKrasError(err?.message || "request failed");
       } finally {
         if (active) setKpiModalKrasLoading(false);
       }
-    }, 300);
+    })();
 
     return () => {
       active = false;
-      window.clearTimeout(timer);
     };
-  }, [
-    allJds,
-    allKras,
-    editKpiForm.assigneeIds,
-    editKpiForm.departmentId,
-    editKpiForm.jdId,
-    editKpiForm.kraId,
-    editingKpiId,
-    kpiKraSearch,
-    mergeKras,
-    newKpi.assigneeIds,
-    newKpi.departmentId,
-    newKpi.jdId,
-    newKpi.kraId,
-    showAddKpi,
-  ]);
+  }, [editingKpiId, mergeKras, showAddKpi]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -732,8 +687,37 @@ export function JobsProvider({ children }) {
     return () => window.clearTimeout(timer);
   }, [refreshKpis]);
 
+  // Ek KRA ki saari KPIs ka weightage milakar 100% se zyada nahi ho sakta —
+  // chahe us KRA se 2 KPIs juddi hon ya 10. `excludeKpiId` edit ke waqt
+  // current KPI ko total se hata deta hai.
+  const kraWeightageUsed = (kraId, excludeKpiId = null) =>
+    allKpis
+      .filter(
+        (kpi) =>
+          sameId(kpi.kraId, kraId) &&
+          (excludeKpiId === null || !sameId(kpi.id, excludeKpiId))
+      )
+      .reduce((sum, kpi) => sum + (Number(kpi.weightage) || 0), 0);
+
+  const exceedsKraWeightage = (kraId, weightage, excludeKpiId = null) => {
+    if (!kraId) return false;
+    const next = Number(weightage) || 0;
+    const used = kraWeightageUsed(kraId, excludeKpiId);
+    if (used + next <= 100) return false;
+    const kraTitle =
+      allKras.find((k) => sameId(k.id, kraId))?.title || "this KRA";
+    toast.error(
+      `Total KPI weightage for "${kraTitle}" cannot exceed 100%. Already used: ${used}%, remaining: ${Math.max(
+        0,
+        100 - used
+      )}%.`
+    );
+    return true;
+  };
+
   const saveNewKpi = async () => {
     if (!newKpi.jdId || !newKpi.kraId || !newKpi.name || !newKpi.target) return;
+    if (exceedsKraWeightage(newKpi.kraId, newKpi.weightage)) return;
     const selectedJd = allJds.find((j) => sameId(j.id, newKpi.jdId));
     const selectedKra = allKras.find((k) => sameId(k.id, newKpi.kraId));
     const payloadForm = {
@@ -976,6 +960,14 @@ export function JobsProvider({ children }) {
   };
 
   const saveEditKpi = async () => {
+    if (
+      exceedsKraWeightage(
+        editKpiForm.kraId,
+        editKpiForm.weightage,
+        editingKpiId
+      )
+    )
+      return;
     const previous = allKpis;
     const localPatch = {
       ...editKpiForm,
@@ -1019,7 +1011,7 @@ export function JobsProvider({ children }) {
     setKpiAssignUsersLoading(true);
     setKpiAssignUsersError(null);
     try {
-      const users = await fetchUsersByOrganization();
+      const users = await fetchEscalateToUsers();
       if (users === null) return;
       setKpiAssignUsers(users);
     } catch (err) {
@@ -1403,10 +1395,21 @@ export function JobsProvider({ children }) {
     const itemDept = kpiDeptFor(item);
     const itemRole = item.jdTitleFromApi || jdTitle(item.jdId);
     const itemMembers = item.assigneeNames || [];
-    const matchDept = kpiDeptFilter === "all" || itemDept === kpiDeptFilter;
+    // Filter ab departments API se aata hai (value = department id), lekin
+    // purane name-based selection ke liye fallback bhi rakha hai.
+    const matchDept =
+      kpiDeptFilter === "all" ||
+      String(item.departmentId ?? "") === String(kpiDeptFilter) ||
+      itemDept === kpiDeptFilter;
     const matchRole = kpiRoleFilter === "all" || itemRole === kpiRoleFilter;
+    // Member filter escalate-to-users API se aata hai (value = user id);
+    // purane name-based selection ke liye fallback bhi rakha hai.
     const matchMember =
-      kpiMemberFilter === "all" || itemMembers.includes(kpiMemberFilter);
+      kpiMemberFilter === "all" ||
+      (item.assigneeIds || []).some(
+        (id) => String(id) === String(kpiMemberFilter)
+      ) ||
+      itemMembers.includes(kpiMemberFilter);
     return matchSearch && matchDept && matchRole && matchMember;
   });
 
@@ -1447,6 +1450,7 @@ export function JobsProvider({ children }) {
     kpiModalKras,
     kpiModalKrasLoading,
     kpiModalKrasError,
+    kraWeightageUsed,
     kpiKraSearch,
     setKpiKraSearch,
     jdSearch,

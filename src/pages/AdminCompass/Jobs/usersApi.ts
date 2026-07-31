@@ -1,6 +1,7 @@
 // @ts-nocheck
 import {
   getApiContext,
+  buildApiUrl,
   apiHeaders,
   unwrapRows,
   firstDefined,
@@ -51,6 +52,32 @@ const normalizeUser = (row) => {
   };
 };
 
+const sortByName = (users) => {
+  const deduped = new Map(users.map((user) => [user.id, user]));
+  return Array.from(deduped.values()).sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+  );
+};
+
+/**
+ * GET {BASE_URL}/pms/users/get_escalate_to_users.json?access_token=…
+ * Source for the "Assignee Person" pickers in the KPI modals.
+ */
+export const fetchEscalateToUsers = async () => {
+  const { baseUrl, token } = getApiContext();
+  if (!baseUrl || !token) return null;
+
+  const res = await fetch(buildApiUrl("/pms/users/get_escalate_to_users.json"), {
+    method: "GET",
+    headers: apiHeaders(),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json().catch(() => []);
+  return sortByName(
+    unwrapRows(json, "users", "escalate_to_users").map(normalizeUser).filter(Boolean)
+  );
+};
+
 export const fetchUsersByOrganization = async () => {
   const { baseUrl, token, orgId } = getApiContext();
   if (!baseUrl || !token) return null;
@@ -62,11 +89,7 @@ export const fetchUsersByOrganization = async () => {
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json().catch(() => []);
-  const users = unwrapRows(json, "users", "fm_users")
-    .map(normalizeUser)
-    .filter(Boolean);
-  const deduped = new Map(users.map((user) => [user.id, user]));
-  return Array.from(deduped.values()).sort((a, b) =>
-    a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+  return sortByName(
+    unwrapRows(json, "users", "fm_users").map(normalizeUser).filter(Boolean)
   );
 };

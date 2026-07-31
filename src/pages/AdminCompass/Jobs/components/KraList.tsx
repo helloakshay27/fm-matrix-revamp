@@ -12,6 +12,7 @@ import {
   Btn,
   StatusPill,
   FilterSelect,
+  FilterSearchSelect,
   AiBar,
   Loader,
 } from "./UI";
@@ -157,18 +158,20 @@ export default function KraList() {
               onChange={(e) => setKraSearch(e.target.value)}
             />
           </div>
-          <FilterSelect
+          <FilterSearchSelect
             value={kraDeptFilter}
-            onChange={(e) => setKraDeptFilter(e.target.value)}
+            onChange={setKraDeptFilter}
             label="All Departments"
             options={departmentOptions}
+            emptyText="No departments found"
           />
           {/* <FilterSelect value={kraRoleFilter} onChange={(e) => setKraRoleFilter(e.target.value)} label="All Roles" options={uniqueRoles} /> */}
-          <FilterSelect
+          <FilterSearchSelect
             value={kraMemberFilter}
-            onChange={(e) => setKraMemberFilter(e.target.value)}
+            onChange={setKraMemberFilter}
             label="All Members"
             options={uniqueMembers}
+            emptyText="No members found"
           />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

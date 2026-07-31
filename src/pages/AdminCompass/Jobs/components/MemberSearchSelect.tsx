@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { T } from "../constants";
 
 export default function MemberSearchSelect({
@@ -10,6 +11,8 @@ export default function MemberSearchSelect({
   disabled = false,
   loading = false,
   multiple = false,
+  loadingText = "Loading users...",
+  emptyText = "No members found",
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -56,7 +59,7 @@ export default function MemberSearchSelect({
           ref={inputRef}
           type="text"
           disabled={disabled}
-          value={open ? query : loading ? "Loading users..." : displayValue}
+          value={open ? query : loading ? loadingText : displayValue}
           placeholder={placeholder}
           readOnly={!open}
           onClick={() => !disabled && setOpen(true)}
@@ -102,16 +105,23 @@ export default function MemberSearchSelect({
             transform: "translateY(-50%)",
             width: 28,
             height: 28,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 0,
             border: "none",
             background: "transparent",
             color: T.inkMuted,
             cursor: disabled ? "not-allowed" : "pointer",
-            fontFamily: T.font,
-            fontSize: 16,
-            lineHeight: 1,
           }}
         >
-          v
+          <ChevronDown
+            size={16}
+            style={{
+              transition: "transform .15s ease",
+              transform: open ? "rotate(180deg)" : "none",
+            }}
+          />
         </button>
       </div>
 
@@ -147,7 +157,7 @@ export default function MemberSearchSelect({
             )}
             {filtered.length === 0 ? (
               <div style={{ padding: "10px 12px", fontSize: 12.5, color: T.inkMuted }}>
-                No members found
+                {emptyText}
               </div>
             ) : (
               filtered.map((option) => (

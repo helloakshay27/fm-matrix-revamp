@@ -8,7 +8,11 @@ export interface EscalateUser {
 }
 
 export async function fetchEscalateUsers(): Promise<EscalateUser[]> {
-  const baseUrl = (localStorage.getItem("baseUrl") || "").replace(/\/$/, "");
+  // localStorage may hold the host with or without a scheme — normalize both.
+  const baseUrl = (localStorage.getItem("baseUrl") || "")
+    .trim()
+    .replace(/\/+$/, "")
+    .replace(/^https?:\/\//, "");
 
   if (!baseUrl) throw new Error("Base URL not found in localStorage");
 
