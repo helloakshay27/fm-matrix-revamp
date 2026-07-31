@@ -49,9 +49,15 @@ const assigneeList = (row) => {
 /** Server row → the shape the KPI tab already renders. */
 export const normalizeKpi = (row) => {
   const assignees = assigneeList(row);
+  const firstKra = Array.isArray(row?.kras) && row.kras.length > 0 ? row.kras[0] : null;
   const active = firstDefined(row?.active, row?.is_active);
+  const archived = firstDefined(row?.archived, row?.is_archived);
   const status =
-    active !== undefined
+    archived !== undefined
+      ? archived === true || String(archived).toLowerCase() === "true"
+        ? "inactive"
+        : "active"
+      : active !== undefined
       ? active === true || String(active).toLowerCase() === "true"
         ? "active"
         : "inactive"
@@ -73,11 +79,22 @@ export const normalizeKpi = (row) => {
     departmentName: String(
       firstDefined(row?.department_name, row?.department?.name) ?? ""
     ).trim(),
-    kraId: firstDefined(row?.kra_id, row?.kra?.id),
-    kraName: String(firstDefined(row?.kra_name, row?.kra?.title, row?.kra?.name) ?? "").trim(),
-    jdId: firstDefined(row?.job_description_id, row?.job_description?.id),
+    kraId: firstDefined(row?.kra_id, row?.kra?.id, firstKra?.id),
+    kraName: String(
+      firstDefined(row?.kra_name, row?.kra?.title, row?.kra?.name, firstKra?.title) ?? ""
+    ).trim(),
+    jdId: firstDefined(
+      row?.job_description_id,
+      row?.job_description?.id,
+      firstKra?.job_description_id
+    ),
     jdTitleFromApi: String(
-      firstDefined(row?.job_description_title, row?.job_description?.title) ?? ""
+      firstDefined(
+        row?.job_description_title,
+        row?.job_description?.title,
+        row?.job_title,
+        firstKra?.job_title
+      ) ?? ""
     ).trim(),
     assigneeIds: assignees.ids.length
       ? assignees.ids
@@ -88,7 +105,9 @@ export const normalizeKpi = (row) => {
       firstDefined(row?.update_type, row?.updateType, dataSource ? "automatic" : "manual")
     ).toLowerCase(),
     status,
-    // Kept so a status PATCH can reuse whichever key the row actually carries.
+    archived: archived === true || String(archived).toLowerCase() === "true",
+    hasArchivedFlag: archived !== undefined,
+    // Kept for backwards compatibility with older API rows.
     hasActiveFlag: active !== undefined,
   };
 };
@@ -111,6 +130,7 @@ export const toKpiPayload = (form = {}) => {
   put("data_source", form.dataSource);
   put("module_name", form.module);
   put("department_id", toNum(form.departmentId));
+  put("job_description_id", toNum(form.jdId));
   put("kra_id", toNum(form.kraId));
   if (Array.isArray(form.assigneeIds) && form.assigneeIds.length)
     kpi.assignee_ids = form.assigneeIds.map(toNum).filter((id) => id !== undefined);

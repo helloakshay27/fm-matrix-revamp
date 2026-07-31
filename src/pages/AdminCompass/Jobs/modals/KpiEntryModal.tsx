@@ -2,10 +2,25 @@
 import { useJobs } from "../JobsContext";
 import { T, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
 import { Fld, FI, FS, Btn } from "../components/UI";
+import MemberSearchSelect from "../components/MemberSearchSelect";
 
 export default function KpiEntryModal() {
-  const { showAddKpi, setShowAddKpi, newKpi, setNewKpi, allJds, krasForJd, allMembers, saveNewKpi, customUnits, kpisSaving } = useJobs();
+  const {
+    showAddKpi, setShowAddKpi, newKpi, setNewKpi, allJds, krasForJd,
+    saveNewKpi, customUnits, kpisSaving, kpiAssignUsers, kpiAssignUsersLoading,
+    kpiModalJdsLoading, kpiModalJdsError, kpiModalKras, kpiModalKrasLoading, kpiModalKrasError,
+    kpiKraSearch, setKpiKraSearch,
+  } = useJobs();
   if (!showAddKpi) return null;
+  const assigneeOptions = kpiAssignUsers;
+  const kraOptions = newKpi.jdId ? kpiModalKras : krasForJd(newKpi.jdId);
+  const kraBlockedReason = !newKpi.jdId
+    ? "Select a job description to load KRAs"
+    : !newKpi.departmentId
+      ? "Enter department ID to load KRAs"
+      : !newKpi.assigneeIds?.[0]
+        ? "Select an assignee to load KRAs"
+        : "";
   return (
     <div
       style={{
@@ -56,36 +71,28 @@ export default function KpiEntryModal() {
             <Fld label="Job Description *">
               <FS
                 value={newKpi.jdId}
+                disabled={kpiModalJdsLoading || kpisSaving}
                 onChange={(e) =>
                   setNewKpi((f) => ({
                     ...f,
                     jdId: e.target.value,
                     kraId: "",
+                    departmentId:
+                      allJds.find((j) => String(j.id) === String(e.target.value))?.departmentId ||
+                      f.departmentId,
                   }))
                 }
               >
-                <option value="">Select JD</option>
+                <option value="">{kpiModalJdsLoading ? "Loading JDs..." : "Select JD"}</option>
                 {allJds.map((j) => (
                   <option key={j.id} value={j.id}>
                     {j.title}
                   </option>
                 ))}
               </FS>
-            </Fld>
-            <Fld label="Linked KRA *">
-              <FS
-                value={newKpi.kraId}
-                onChange={(e) =>
-                  setNewKpi((f) => ({ ...f, kraId: e.target.value }))
-                }
-              >
-                <option value="">Select KRA</option>
-                {krasForJd(newKpi.jdId).map((k) => (
-                  <option key={k.id} value={k.id}>
-                    {k.title}
-                  </option>
-                ))}
-              </FS>
+              {kpiModalJdsError && (
+                <span style={{ fontSize: 11, color: T.danger }}>Could not load JDs: {kpiModalJdsError}</span>
+              )}
             </Fld>
             <Fld label="Department ID">
               <FI
@@ -93,11 +100,60 @@ export default function KpiEntryModal() {
                 placeholder="e.g. 12"
                 value={newKpi.departmentId || ""}
                 onChange={(e) =>
-                  setNewKpi((f) => ({ ...f, departmentId: e.target.value }))
+                  setNewKpi((f) => ({ ...f, departmentId: e.target.value, kraId: "" }))
                 }
               />
             </Fld>
+            <Fld label="Assignee Person">
+              <MemberSearchSelect
+                value={newKpi.assigneeIds?.[0] || ""}
+                options={assigneeOptions}
+                onChange={(value, member) => {
+                  setNewKpi((f) => ({
+                    ...f,
+                    kraId: "",
+                    assignee: member?.name || "",
+                    assigneeIds: value ? [Number(value)] : [],
+                  }));
+                }}
+                placeholder="Select assignee"
+                loading={kpiAssignUsersLoading}
+                disabled={kpisSaving || kpiAssignUsersLoading}
+              />
+            </Fld>
           </div>
+          <Fld label="Linked KRA *">
+            {kraBlockedReason ? (
+              <FI value="" placeholder={kraBlockedReason} disabled />
+            ) : (
+              <>
+                <FI
+                  placeholder="Search KRA"
+                  value={kpiKraSearch}
+                  onChange={(e) => setKpiKraSearch(e.target.value)}
+                  disabled={kpisSaving}
+                  style={{ minHeight: 38, marginBottom: 6 }}
+                />
+                <FS
+                  value={newKpi.kraId}
+                  disabled={kpiModalKrasLoading || kpisSaving}
+                  onChange={(e) =>
+                    setNewKpi((f) => ({ ...f, kraId: e.target.value }))
+                  }
+                >
+                  <option value="">{kpiModalKrasLoading ? "Loading KRAs..." : "Select KRA"}</option>
+                  {kraOptions.map((k) => (
+                    <option key={k.id} value={k.id}>
+                      {k.title}
+                    </option>
+                  ))}
+                </FS>
+              </>
+            )}
+            {kpiModalKrasError && (
+              <span style={{ fontSize: 11, color: T.danger }}>Could not load KRAs: {kpiModalKrasError}</span>
+            )}
+          </Fld>
           <div
             style={{
               display: "grid",
@@ -138,26 +194,6 @@ export default function KpiEntryModal() {
               />
             </Fld>
           </div>
-          <Fld label="Assignee Person">
-            <FS
-              value={newKpi.assigneeIds?.[0] || ""}
-              onChange={(e) => {
-                const member = allMembers.find((m) => String(m.id) === e.target.value);
-                setNewKpi((f) => ({
-                  ...f,
-                  assignee: member?.name || "",
-                  assigneeIds: e.target.value ? [Number(e.target.value)] : [],
-                }));
-              }}
-            >
-              <option value="">Select assignee</option>
-              {allMembers.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </FS>
-          </Fld>
           <div
             style={{
               display: "grid",

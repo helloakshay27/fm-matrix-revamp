@@ -9,6 +9,9 @@ import {
 import { fetchKpiUnits, saveKpiUnits } from "./kpiUnitsApi";
 import { fetchActivityLogs, LOGS_PER_PAGE } from "./activityLogsApi";
 import { fetchKpis, createKpi, updateKpi, toKpiPayload } from "./kpisApi";
+import { fetchJobDescriptions } from "./jobDescriptionsApi";
+import { fetchKras } from "./krasApi";
+import { fetchUsersByOrganization } from "./usersApi";
 
 const JobsContext = createContext(null);
 
@@ -31,7 +34,7 @@ export function JobsProvider({ children }) {
   const [kpiAiDone, setKpiAiDone] = useState(false);
   const [allJds, setAllJds] = useState(SEED_JDS);
   const [allKras, setAllKras] = useState(SEED_KRAS);
-  const [allKpis, setAllKpis] = useState(SEED_KPIS);
+  const [allKpis, setAllKpis] = useState([]);
   const [kpisLoading, setKpisLoading] = useState(false);
   const [kpisError, setKpisError] = useState(null);
   const [kpisSaving, setKpisSaving] = useState(false);
@@ -87,6 +90,16 @@ export function JobsProvider({ children }) {
   const [assignKpiModal, setAssignKpiModal] = useState(null);
   const [assignKraName, setAssignKraName] = useState("");
   const [assignKpiName, setAssignKpiName] = useState("");
+  const [assignKpiUserIds, setAssignKpiUserIds] = useState([]);
+  const [kpiAssignUsers, setKpiAssignUsers] = useState([]);
+  const [kpiAssignUsersLoading, setKpiAssignUsersLoading] = useState(false);
+  const [kpiAssignUsersError, setKpiAssignUsersError] = useState(null);
+  const [kpiModalJdsLoading, setKpiModalJdsLoading] = useState(false);
+  const [kpiModalJdsError, setKpiModalJdsError] = useState(null);
+  const [kpiModalKras, setKpiModalKras] = useState([]);
+  const [kpiModalKrasLoading, setKpiModalKrasLoading] = useState(false);
+  const [kpiModalKrasError, setKpiModalKrasError] = useState(null);
+  const [kpiKraSearch, setKpiKraSearch] = useState("");
 
   /* ── Setup / Org state ── */
   const [setupTab, setSetupTab] = useState("company");
@@ -118,8 +131,13 @@ export function JobsProvider({ children }) {
 
   /* Helpers */
   const sameId = (a, b) => String(a ?? "") === String(b ?? "");
-  const jdTitle = (id) => allJds.find((j) => sameId(j.id, id))?.title || allKpis.find((p) => sameId(p.jdId, id))?.jdTitleFromApi || "—";
-  const kraName = (id) => allKras.find((k) => sameId(k.id, id))?.title || allKpis.find((p) => sameId(p.kraId, id))?.kraName || "—";
+  const toNum = (value) => {
+    if (value === undefined || value === null || value === "") return undefined;
+    const num = Number(value);
+    return Number.isFinite(num) ? num : undefined;
+  };
+  const jdTitle = (id) => allKpis.find((p) => sameId(p.jdId, id))?.jdTitleFromApi || allJds.find((j) => sameId(j.id, id))?.title || "—";
+  const kraName = (id) => allKpis.find((p) => sameId(p.kraId, id))?.kraName || allKras.find((k) => sameId(k.id, id))?.title || "—";
   const kraCountFor = (jdId) => allKras.filter((k) => k.jdId === jdId).length;
   const kpiCountFor = (jdId) => allKpis.filter((p) => sameId(p.jdId, jdId)).length;
   const krasForJd = (jdId) => allKras.filter((k) => sameId(k.jdId, jdId));
@@ -264,20 +282,131 @@ export function JobsProvider({ children }) {
   }, []);
 
   const kpiApiFilters = useCallback(() => {
-    const selectedDeptJd = allJds.find((j) => j.dept === kpiDeptFilter || sameId(j.departmentId, kpiDeptFilter));
-    const selectedRoleJd = allJds.find((j) => j.title === kpiRoleFilter);
-    const selectedMemberJd = allJds.find((j) => Array.isArray(j.assigned) && j.assigned.includes(kpiMemberFilter));
-    const numericDept = Number(kpiDeptFilter);
     return {
       search: kpiSearch,
-      departmentId: selectedDeptJd?.departmentId || (Number.isFinite(numericDept) ? numericDept : undefined),
-      jobDescriptionId: selectedRoleJd?.id || selectedMemberJd?.id,
     };
-  }, [allJds, kpiDeptFilter, kpiMemberFilter, kpiRoleFilter, kpiSearch]);
+  }, [kpiSearch]);
 
   const refreshKpis = useCallback(() => {
     loadKpis(kpiApiFilters());
   }, [kpiApiFilters, loadKpis]);
+
+  const mergeKras = useCallback((rows = []) => {
+    setAllKras((prev) => {
+      const merged = new Map(prev.map((kra) => [String(kra.id), kra]));
+      let changed = false;
+      rows.forEach((kra) => {
+        const key = String(kra.id);
+        const previous = merged.get(key);
+        const next = { ...previous, ...kra };
+        if (!previous || JSON.stringify(previous) !== JSON.stringify(next)) changed = true;
+        merged.set(key, next);
+      });
+      return changed ? Array.from(merged.values()) : prev;
+    });
+  }, []);
+
+  const loadKpiModalJds = useCallback(async () => {
+    setKpiModalJdsLoading(true);
+    setKpiModalJdsError(null);
+    try {
+      const rows = await fetchJobDescriptions();
+      if (rows === null) return;
+      setAllJds(rows);
+    } catch (err) {
+      console.error("Failed to load job descriptions:", err);
+      setKpiModalJdsError(err?.message || "request failed");
+      toast.error(`Could not load job descriptions: ${err?.message || "request failed"}`);
+    } finally {
+      setKpiModalJdsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!showAddKpi && !editingKpiId) return;
+    loadKpiModalJds();
+  }, [editingKpiId, loadKpiModalJds, showAddKpi]);
+
+  useEffect(() => {
+    if (jobTab !== "kpi") return;
+    loadKpiModalJds();
+  }, [jobTab, loadKpiModalJds]);
+
+  useEffect(() => {
+    if (!showAddKpi && !editingKpiId) {
+      setKpiModalKras([]);
+      setKpiKraSearch("");
+      return;
+    }
+
+    const form = showAddKpi ? newKpi : editKpiForm;
+    if (!form?.jdId) {
+      setKpiModalKras([]);
+      setKpiModalKrasError(null);
+      setKpiModalKrasLoading(false);
+      return;
+    }
+
+    const selectedJd = allJds.find((j) => sameId(j.id, form.jdId));
+    const selectedKra = allKras.find((k) => sameId(k.id, form.kraId));
+    const departmentId =
+      toNum(form.departmentId) ||
+      toNum(selectedJd?.departmentId) ||
+      toNum(selectedJd?.deptId) ||
+      toNum(selectedKra?.departmentId);
+    const assigneeId = Array.isArray(form.assigneeIds) ? toNum(form.assigneeIds[0]) : undefined;
+    if (!departmentId || !assigneeId) {
+      setKpiModalKras([]);
+      setKpiModalKrasError(null);
+      setKpiModalKrasLoading(false);
+      return;
+    }
+    let active = true;
+    setKpiModalKras([]);
+    setKpiModalKrasLoading(true);
+    setKpiModalKrasError(null);
+    const timer = window.setTimeout(async () => {
+      try {
+        const rows = await fetchKras({
+          departmentId,
+          jobDescriptionId: form.jdId,
+          assigneeId,
+          search: kpiKraSearch,
+          kraType: "job",
+          status: "active",
+        });
+        if (!active || rows === null) return;
+        setKpiModalKras(rows);
+        mergeKras(rows);
+      } catch (err) {
+        if (!active) return;
+        console.error("Failed to load linked KRAs:", err);
+        setKpiModalKrasError(err?.message || "request failed");
+      } finally {
+        if (active) setKpiModalKrasLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [
+    allJds,
+    allKras,
+    editKpiForm.assigneeIds,
+    editKpiForm.departmentId,
+    editKpiForm.jdId,
+    editKpiForm.kraId,
+    editingKpiId,
+    kpiKraSearch,
+    mergeKras,
+    newKpi.assigneeIds,
+    newKpi.departmentId,
+    newKpi.jdId,
+    newKpi.kraId,
+    showAddKpi,
+  ]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -362,9 +491,10 @@ export function JobsProvider({ children }) {
     if (!kpi) return;
     const ns = kpi.status === "active" ? "inactive" : "active";
     const previous = allKpis;
-    setAllKpis((ps) => ps.map((p) => (sameId(p.id, id) ? { ...p, status: ns } : p)));
+    const archived = ns !== "active";
+    setAllKpis((ps) => ps.map((p) => (sameId(p.id, id) ? { ...p, status: ns, archived } : p)));
     try {
-      const updated = await updateKpi(id, kpi.hasActiveFlag ? { active: ns === "active" } : { status: ns });
+      const updated = await updateKpi(id, { archived });
       if (updated) setAllKpis((ps) => ps.map((p) => (sameId(p.id, id) ? { ...p, ...updated } : p)));
       addLog(ns === "active" ? "activate" : "deactivate", "KPI", kpi.name, `Status changed to ${ns === "active" ? "Active" : "Inactive"}`);
       showToast(`KPI ${ns === "active" ? "activated" : "deactivated"}`);
@@ -417,11 +547,57 @@ export function JobsProvider({ children }) {
     showToast("Person assigned to KRA");
   };
 
-  const assignToKpi = () => {
-    if (!assignKpiName.trim()) return;
-    addLog("assign", "KPI", allKpis.find((p) => p.id === assignKpiModal)?.name || "", `Assigned to ${assignKpiName.trim()}`);
-    setAssignKpiName(""); setAssignKpiModal(null);
-    showToast("Person assigned to KPI");
+  const loadKpiAssignUsers = useCallback(async () => {
+    setKpiAssignUsersLoading(true);
+    setKpiAssignUsersError(null);
+    try {
+      const users = await fetchUsersByOrganization();
+      if (users === null) return;
+      setKpiAssignUsers(users);
+    } catch (err) {
+      console.error("Failed to load KPI assign users:", err);
+      setKpiAssignUsersError(err?.message || "request failed");
+      toast.error(`Could not load users: ${err?.message || "request failed"}`);
+    } finally {
+      setKpiAssignUsersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!assignKpiModal) return;
+    const currentKpi = allKpis.find((p) => sameId(p.id, assignKpiModal));
+    setAssignKpiUserIds((currentKpi?.assigneeIds || []).map((id) => String(id)));
+    loadKpiAssignUsers();
+  }, [allKpis, assignKpiModal, loadKpiAssignUsers]);
+
+  useEffect(() => {
+    if ((!showAddKpi && !editingKpiId) || kpiAssignUsers.length > 0) return;
+    loadKpiAssignUsers();
+  }, [editingKpiId, kpiAssignUsers.length, loadKpiAssignUsers, showAddKpi]);
+
+  const assignToKpi = async () => {
+    const selectedIds = assignKpiUserIds
+      .map((id) => Number(id))
+      .filter((id) => Number.isFinite(id));
+    if (selectedIds.length === 0) return;
+    const selectedUsers = kpiAssignUsers.filter((u) => selectedIds.some((id) => sameId(u.id, id)));
+    const kpi = allKpis.find((p) => sameId(p.id, assignKpiModal));
+    if (!kpi) return;
+    const previous = allKpis;
+    setAllKpis((ps) => ps.map((p) => sameId(p.id, assignKpiModal) ? { ...p, assigneeIds: selectedIds, assigneeNames: selectedUsers.map((user) => user.name) } : p));
+    setKpisSaving(true);
+    try {
+      const updated = await updateKpi(assignKpiModal, { assignee_ids: selectedIds });
+      if (updated) setAllKpis((ps) => ps.map((p) => sameId(p.id, assignKpiModal) ? { ...p, ...updated } : p));
+      addLog("assign", "KPI", kpi.name || "", `Assigned to ${selectedUsers.map((user) => user.name).join(", ") || selectedIds.join(", ")}`);
+      setAssignKpiUserIds([]); setAssignKpiName(""); setAssignKpiModal(null);
+      showToast("Person assigned to KPI");
+    } catch (err) {
+      setAllKpis(previous);
+      toast.error(`Could not assign KPI: ${err?.message || "request failed"}`);
+    } finally {
+      setKpisSaving(false);
+    }
   };
 
   // Units come entirely from the API — nothing is hardcoded.
@@ -568,6 +744,10 @@ export function JobsProvider({ children }) {
   const uniqueDepts = [...new Set(allJds.map((j) => j.dept))];
   const uniqueRoles = [...new Set(allJds.map((j) => j.title))];
   const uniqueMembers = [...new Set(allJds.flatMap((j) => j.assigned))];
+  const kpiDeptFor = (p) => p.departmentName || allJds.find((j) => sameId(j.id, p.jdId))?.dept || "";
+  const uniqueKpiDepts = [...new Set(allKpis.map(kpiDeptFor).filter(Boolean))];
+  const uniqueKpiRoles = [...new Set(allKpis.map((p) => p.jdTitleFromApi || jdTitle(p.jdId)).filter((role) => role && role !== "—"))];
+  const uniqueKpiMembers = [...new Set(allKpis.flatMap((p) => p.assigneeNames || []).filter(Boolean))];
 
   const applyListFilters = (items, deptF, roleF, memberF, searchVal, searchField) => {
     return items.filter((item) => {
@@ -579,7 +759,16 @@ export function JobsProvider({ children }) {
     });
   };
   const filteredKras = applyListFilters(allKras, kraDeptFilter, kraRoleFilter, kraMemberFilter, kraSearch, "title");
-  const filteredKpis = applyListFilters(allKpis, kpiDeptFilter, kpiRoleFilter, kpiMemberFilter, kpiSearch, "name");
+  const filteredKpis = allKpis.filter((item) => {
+    const matchSearch = String(item.name || "").toLowerCase().includes(kpiSearch.toLowerCase());
+    const itemDept = kpiDeptFor(item);
+    const itemRole = item.jdTitleFromApi || jdTitle(item.jdId);
+    const itemMembers = item.assigneeNames || [];
+    const matchDept = kpiDeptFilter === "all" || itemDept === kpiDeptFilter;
+    const matchRole = kpiRoleFilter === "all" || itemRole === kpiRoleFilter;
+    const matchMember = kpiMemberFilter === "all" || itemMembers.includes(kpiMemberFilter);
+    return matchSearch && matchDept && matchRole && matchMember;
+  });
 
   const value = {
     activeNav, setActiveNav, jobTab, setJobTab, view, setView, viewingJd, setViewingJd,
@@ -587,6 +776,8 @@ export function JobsProvider({ children }) {
     aiLoading, setAiLoading, kraAiDone, setKraAiDone, kpiAiLoading, setKpiAiLoading, kpiAiDone, setKpiAiDone,
     allJds, setAllJds, allKras, setAllKras, allKpis, setAllKpis,
     kpisLoading, kpisError, kpisSaving, loadKpis, refreshKpis,
+    kpiModalJdsLoading, kpiModalJdsError, kpiModalKras, kpiModalKrasLoading, kpiModalKrasError,
+    kpiKraSearch, setKpiKraSearch,
     jdSearch, setJdSearch, kraSearch, setKraSearch, kpiSearch, setKpiSearch,
     assignModal, setAssignModal, assignName, setAssignName,
     expandedKra, setExpandedKra,
@@ -614,6 +805,7 @@ export function JobsProvider({ children }) {
     editingKpiId, setEditingKpiId, editKpiForm, setEditKpiForm,
     assignKraModal, setAssignKraModal, assignKraName, setAssignKraName,
     assignKpiModal, setAssignKpiModal, assignKpiName, setAssignKpiName,
+    assignKpiUserIds, setAssignKpiUserIds, kpiAssignUsers, kpiAssignUsersLoading, kpiAssignUsersError, loadKpiAssignUsers,
     jobForm, setJobForm, formKras, setFormKras, formKpis, setFormKpis, sf,
     jdTitle, kraName, kraCountFor, kpiCountFor, krasForJd, initials, totalKpiWeight,
     simulateAiJd, simulateAiKras, simulateAiKpis,
@@ -628,7 +820,7 @@ export function JobsProvider({ children }) {
     assignKraToMember, assignKpiToMember,
     filteredJds, filteredKras, filteredKpis, filteredDepts,
     filteredMembers, groupedMembers, ungrouped, memberDepts,
-    uniqueDepts, uniqueRoles, uniqueMembers,
+    uniqueDepts, uniqueRoles, uniqueMembers, uniqueKpiDepts, uniqueKpiRoles, uniqueKpiMembers,
   };
 
   return <JobsContext.Provider value={value}>{children}</JobsContext.Provider>;
