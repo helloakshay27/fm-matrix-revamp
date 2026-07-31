@@ -152,6 +152,7 @@ const WasteGenerationDetailsPage = lazy(() => import("./pages/WasteGenerationDet
 const WasteDispatchPage = lazy(() => import("./pages/WasteDispatchPage"));
 const WasteDispatchHistoryPage = lazy(() => import("./pages/WasteDispatchHistoryPage"));
 const RecycleEntryPage = lazy(() => import("./pages/RecycleEntryPage"));
+const WasteDispatchDetailPage = lazy(() => import("./pages/WasteDispatchDetailPage"));
 
 // Import Survey pages
 const SurveyListDashboard = lazy(() => import("./pages/SurveyListDashboard").then(m => ({ default: m.SurveyListDashboard })));
@@ -4393,6 +4394,10 @@ function App() {
                             <Route
                               path="/maintenance/waste/dispatch/recycle-entry/:id"
                               element={<RecycleEntryPage />}
+                            />
+                            <Route
+                              path="/maintenance/waste/dispatch/:id"
+                              element={<WasteDispatchDetailPage />}
                             />
                             <Route
                               path="/maintenance/waste/generation/add"
