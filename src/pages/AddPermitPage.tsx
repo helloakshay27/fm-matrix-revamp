@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
@@ -68,13 +68,13 @@ const menuProps = {
 export const AddPermitPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { 
-    onPermitCreateFormOpened, 
-    onPermitCreateStepCompleted, 
-    onPermitActivityBlockAdded, 
-    onPermitRequestRaised, 
-    onPermitCreateFormAbandoned, 
-    onPermitFormValidationFailed 
+  const {
+    onPermitCreateFormOpened,
+    onPermitCreateStepCompleted,
+    onPermitActivityBlockAdded,
+    onPermitRequestRaised,
+    onPermitCreateFormAbandoned,
+    onPermitFormValidationFailed
   } = usePermitEvents();
 
   const mountTime = useRef(Date.now());
@@ -84,7 +84,7 @@ export const AddPermitPage = () => {
 
   useEffect(() => {
     onPermitCreateFormOpened({ entry_source: location.state?.from || 'direct_link' });
-    
+
     return () => {
       if (!isSubmitted.current) {
         onPermitCreateFormAbandoned({
@@ -132,6 +132,21 @@ export const AddPermitPage = () => {
     supplierUser: '',
   });
 
+  const [activities, setActivities] = useState([
+    {
+      activity: '',
+      subActivity: '',
+      categoryOfHazards: '',
+      selectedRisks: [] as string[],
+      subActivities: [] as { id: number; name: string; parent_id: number }[],
+      hazardCategories: [] as { id: number; name: string; parent_id: number }[],
+      risks: [] as { id: number; name: string; parent_id: number }[],
+      loadingSubActivities: false,
+      loadingHazardCategories: false,
+      loadingRisks: false,
+    }
+  ]);
+
   // State for user account loading
   const [loadingUserAccount, setLoadingUserAccount] = useState(false);
 
@@ -146,7 +161,7 @@ export const AddPermitPage = () => {
   // State for Permit Types data
   const [permitTypes, setPermitTypes] = useState<{ id: number; name: string }[]>([]);  // ─── API State ─────────────────────────────────────────────────────────────
   const activitiesRef = useRef(activities);
-  
+
   useEffect(() => {
     activitiesRef.current = activities;
   }, [activities]);
@@ -202,21 +217,6 @@ export const AddPermitPage = () => {
   const [loadingFloors, setLoadingFloors] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [activities, setActivities] = useState([
-    {
-      activity: '',
-      subActivity: '',
-      categoryOfHazards: '',
-      selectedRisks: [] as string[],
-      subActivities: [] as { id: number; name: string; parent_id: number }[],
-      hazardCategories: [] as { id: number; name: string; parent_id: number }[],
-      risks: [] as { id: number; name: string; parent_id: number }[],
-      loadingSubActivities: false,
-      loadingHazardCategories: false,
-      loadingRisks: false,
-    }
-  ]);
 
   // Handler for multi-select changes
   const handleInputChange = (field: string, value: string) => {
