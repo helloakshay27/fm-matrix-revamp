@@ -39,7 +39,7 @@ const BookingCalenderView = () => {
 
     const getFacilities = async () => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/admin/facility_setups.json?q[fac_type_eq]=${bookingType}`, {
+            const response = await axios.get(`https://${baseUrl}/pms/admin/facility_setups.json?q[fac_type_eq]=${bookingType}&q[active_eq]=1`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -307,14 +307,14 @@ const BookingCalenderView = () => {
             {/* Header Controls */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
-                    {shouldShow( "Bookings","create")&&(
-                    <Button
-                        className="fm-button-fix fm-button-brand px-4 py-2"
-                        onClick={() => setShowActionPanel(true)}
-                    >
-                        <Plus className="w-4 h-4" />
-                        Action
-                    </Button>)}
+                    {shouldShow("Bookings", "create") && (
+                        <Button
+                            className="fm-button-fix fm-button-brand px-4 py-2"
+                            onClick={() => setShowActionPanel(true)}
+                        >
+                            <Plus className="w-4 h-4" />
+                            Action
+                        </Button>)}
 
                     <RadioGroup row value={bookingType} onChange={(e) => setBookingType(e.target.value)}>
                         <FormControlLabel

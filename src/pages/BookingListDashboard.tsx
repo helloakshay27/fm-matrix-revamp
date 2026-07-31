@@ -128,6 +128,7 @@ const BookingListDashboard = () => {
   const [filters, setFilters] = useState({
     facilityName: '',
     status: '',
+    amenityType: '',
     scheduledDateRange: '',
     createdOnDateRange: '',
   });
@@ -291,6 +292,9 @@ const BookingListDashboard = () => {
     const filterParams = {
       "q[facility_id_in]": filters.facilityName,
       "q[current_status_cont]": filters.status,
+      ...(filters.amenityType && {
+        "q[fac_type_eq]": filters.amenityType,
+      }),
       ...(formatedCreatedStartDate && formatedCreatedEndDate && {
         "q[date_range]": `${formatedCreatedStartDate} - ${formatedCreatedEndDate}`,
       }),
@@ -339,6 +343,7 @@ const BookingListDashboard = () => {
     setFilters({
       facilityName: '',
       status: '',
+      amenityType: '',
       scheduledDateRange: '',
       createdOnDateRange: '',
     });
@@ -377,6 +382,7 @@ const BookingListDashboard = () => {
       const areFiltersApplied =
         filters.facilityName ||
         filters.status ||
+        filters.amenityType ||
         scheduledDateFrom ||
         scheduledDateTo ||
         createdOnDateFrom ||
@@ -402,6 +408,9 @@ const BookingListDashboard = () => {
           page: page.toString(),
           "q[facility_id_in]": filters.facilityName,
           "q[current_status_cont]": filters.status,
+          ...(filters.amenityType && {
+            "q[fac_type_eq]": filters.amenityType,
+          }),
           ...(formatedCreatedStartDate && formatedCreatedEndDate && {
             "q[date_range]": `${formatedCreatedStartDate} - ${formatedCreatedEndDate}`,
           }),
@@ -687,6 +696,9 @@ const BookingListDashboard = () => {
       if (filters.status) {
         exportParams.append('q[current_status_cont]', filters.status);
       }
+      if (filters.amenityType) {
+        exportParams.append('q[fac_type_eq]', filters.amenityType);
+      }
       if (createdOnDateFrom && createdOnDateTo) {
         const from = format(parse(createdOnDateFrom, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy');
         const to = format(parse(createdOnDateTo, 'yyyy-MM-dd', new Date()), 'MM/dd/yyyy');
@@ -867,6 +879,22 @@ const BookingListDashboard = () => {
                     </MuiSelect>
                   </FormControl>
                 </div>
+
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Amenity Type</InputLabel>
+                  <MuiSelect
+                    label="Amenity Type"
+                    value={filters.amenityType}
+                    onChange={(e) => handleFilterChange('amenityType', e.target.value)}
+                    displayEmpty
+                    variant="outlined"
+                    fullWidth
+                  >
+                    <MenuItem value="">Select Amenity Type</MenuItem>
+                    <MenuItem value="bookable">Bookable</MenuItem>
+                    <MenuItem value="request">Requestable</MenuItem>
+                  </MuiSelect>
+                </FormControl>
 
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
