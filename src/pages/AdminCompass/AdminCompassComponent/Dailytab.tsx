@@ -3,6 +3,9 @@ import { createPortal } from "react-dom";
 import {
   Calendar,
   FileText,
+  FilePen,
+  CircleAlert,
+  ListTodo,
   NotepadText,
   ChevronDown,
   AlertTriangle,
@@ -33,6 +36,32 @@ import AddToDoModal from "../../../components/AddToDoModal";
 import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+
+// Task glyph — checklist rows inside a rounded frame. Lucide me iska boxed
+// variant nahi hai, isliye inline SVG (baaki icons jaisa hi currentColor +
+// stroke-2 pattern follow karta hai).
+const TaskChecksIcon = ({
+  className = "",
+  ...rest
+}: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+    {...rest}
+  >
+    <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" />
+    <path d="m6.5 9.5 1.4 1.4 2.6-2.9" />
+    <path d="M13.5 9.8H18" />
+    <path d="m6.5 15.5 1.4 1.4 2.6-2.9" />
+    <path d="M13.5 15.8H18" />
+  </svg>
+);
 
 // ── UI Components ──
 const BtnIcon = ({
@@ -534,7 +563,13 @@ export const ReportItemMeta = ({ item }: { item: any }) => {
   const status = (item?.status || d?.status || "").toLowerCase();
   const isDone = ["completed", "closed", "done"].includes(status);
   const targetRaw =
-    d?.target_date || d?.due_date || d?.end_date || item?.target_date;
+    d?.target_date ||
+    d?.due_date ||
+    d?.end_date ||
+    item?.target_date ||
+    item?.due_date ||
+    // tasks_issues rows carry end_date on the row itself (daily_meeting API).
+    item?.end_date;
   const dueDate = fmtItemDate(targetRaw);
   const overdueLabel = isDone ? null : getItemOverdueLabel(targetRaw);
   const effortEst = fmtItemHours(d?.total_allocated_hours || d?.estimated_hour);
@@ -824,6 +859,8 @@ const getItemTargetDateValue = (item: any, detail?: any): Date | null => {
   return (
     parseDateValue(item?.target_date) ||
     parseDateValue(item?.due_date) ||
+    // tasks_issues rows carry end_date on the row itself (daily_meeting API).
+    parseDateValue(item?.end_date) ||
     parseDateValue(d?.target_date) ||
     parseDateValue(d?.due_date) ||
     parseDateValue(d?.end_date)
@@ -919,6 +956,31 @@ const TASK_STATUS_BUCKETS = [
     pillBg: "bg-orange-100 text-orange-700",
   },
 ];
+
+// Item ki representative date — target/due date, warna start date.
+const getItemGroupDate = (item: any, detail?: any): Date | null =>
+  getItemTargetDateValue(item, detail) || getItemStartDateValue(item, detail);
+
+const bucketItemsByStatus = (items: any[], details: Record<string, any>) => {
+  const groups: Record<string, any[]> = {};
+  TASK_STATUS_BUCKETS.forEach((bucket) => {
+    groups[bucket.key] = [];
+  });
+
+  items.forEach((item) => {
+    const detail =
+      details[`${getViewSourceType(item)}:${getViewSourceId(item)}`];
+    if (isItemOverdue(item, detail)) {
+      groups.overdue.push(item);
+      return;
+    }
+    const status = String(getItemStatus(item)).toLowerCase();
+    const bucket = TASK_STATUS_BUCKETS.find((b) => b.statuses.includes(status));
+    groups[bucket ? bucket.key : "open"].push(item);
+  });
+
+  return groups;
+};
 
 // Window = last N days including today: [today - (days - 1) 00:00, today 23:59].
 const getRangeWindow = (days: number) => {
@@ -1024,28 +1086,44 @@ const TasksIssuesTodoCard = ({
     });
   }, [sourceItems, details, rangeDays, pendingDetailItems]);
 
-  // Bifurcate into Overdue / In Progress / Open / On Hold buckets.
-  const bucketedItems = useMemo(() => {
-    const groups: Record<string, any[]> = {};
-    TASK_STATUS_BUCKETS.forEach((bucket) => {
-      groups[bucket.key] = [];
-    });
+  // Pehle date ke hisaab se group, phir har date ke andar
+  // Overdue / In Progress / Open / On Hold buckets.
+  const dateGroups = useMemo(() => {
+    const groups = new Map<
+      string,
+      { key: string; label: string; sortValue: number; items: any[] }
+    >();
 
     filteredItems.forEach((item) => {
       const detail =
         details[`${getViewSourceType(item)}:${getViewSourceId(item)}`];
-      if (isItemOverdue(item, detail)) {
-        groups.overdue.push(item);
-        return;
+      const date = getItemGroupDate(item, detail);
+      const key = date
+        ? `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+        : "no-date";
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          label: (date && fmtItemDate(date.toISOString())) || "No date",
+          sortValue: date
+            ? new Date(
+              date.getFullYear(),
+              date.getMonth(),
+              date.getDate()
+            ).getTime()
+            : Number.POSITIVE_INFINITY,
+          items: [],
+        });
       }
-      const status = String(getItemStatus(item)).toLowerCase();
-      const bucket = TASK_STATUS_BUCKETS.find((b) =>
-        b.statuses.includes(status)
-      );
-      groups[bucket ? bucket.key : "open"].push(item);
+      groups.get(key)!.items.push(item);
     });
 
-    return groups;
+    return Array.from(groups.values())
+      .sort((a, b) => a.sortValue - b.sortValue)
+      .map((group) => ({
+        ...group,
+        buckets: bucketItemsByStatus(group.items, details),
+      }));
   }, [filteredItems, details]);
 
   return (
@@ -1075,46 +1153,63 @@ const TasksIssuesTodoCard = ({
         {filteredItems.length === 0 ? (
           renderRows([], showMemberBadges)
         ) : (
-          <div className="space-y-3">
-            {TASK_STATUS_BUCKETS.map((bucket) => {
-              const bucketItems = bucketedItems[bucket.key] || [];
-              if (!bucketItems.length) return null;
-              return (
-                <div key={bucket.key} className="space-y-1.5">
-                  <div
-                    className={cn(
-                      "flex items-center gap-2 px-2 py-1.5 rounded-[6px]",
-                      bucket.headerBg
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "flex-1 text-[10px] font-black uppercase tracking-wider",
-                        bucket.colorClass
-                      )}
-                    >
-                      {bucket.label}
-                    </span>
-                    <span
-                      className={cn(
-                        "rounded-full px-1.5 py-0.5 text-[9px] font-bold",
-                        bucket.pillBg
-                      )}
-                    >
-                      {bucketItems.length}
-                    </span>
-                  </div>
-                  {renderRows(
-                    bucketItems,
-                    showMemberBadges,
-                    undefined,
-                    itemProps,
-                    // Date / overdue / effort meta sirf isi column me
-                    true
-                  )}
+          <div className="space-y-4">
+            {dateGroups.map((group) => (
+              <div key={group.key} className="space-y-2">
+                {/* Date heading — items us din ki target (ya start) date par */}
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-3 h-3 shrink-0 text-neutral-400" />
+                  <span className="text-[11px] font-extrabold tracking-wide text-neutral-500">
+                    {group.label}
+                  </span>
+                  <span className="h-px flex-1 bg-[#EFE7E2]" />
+                  <span className="text-[10px] font-bold text-neutral-400">
+                    {group.items.length}
+                  </span>
                 </div>
-              );
-            })}
+                <div className="space-y-3">
+                  {TASK_STATUS_BUCKETS.map((bucket) => {
+                    const bucketItems = group.buckets[bucket.key] || [];
+                    if (!bucketItems.length) return null;
+                    return (
+                      <div key={bucket.key} className="space-y-1.5">
+                        <div
+                          className={cn(
+                            "flex items-center gap-2 px-2 py-1.5 rounded-[6px]",
+                            bucket.headerBg
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "flex-1 text-[10px] font-black uppercase tracking-wider",
+                              bucket.colorClass
+                            )}
+                          >
+                            {bucket.label}
+                          </span>
+                          <span
+                            className={cn(
+                              "rounded-full px-1.5 py-0.5 text-[9px] font-bold",
+                              bucket.pillBg
+                            )}
+                          >
+                            {bucketItems.length}
+                          </span>
+                        </div>
+                        {renderRows(
+                          bucketItems,
+                          showMemberBadges,
+                          undefined,
+                          itemProps,
+                          // Date / overdue / effort meta sirf isi column me
+                          true
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -2873,9 +2968,20 @@ const DailyTab = ({
         {items.map((item: any, index: number) => {
           const type = getViewSourceType(item);
           const hasDetails = ["task", "issue", "todo"].includes(type);
-          // Design: tasks/issues use the orange notepad glyph, todos/notes the blue document glyph
-          const isNotepadLike = type === "task" || type === "issue";
-          const ItemIcon = isNotepadLike ? NotepadText : FileText;
+          // Design: tasks ka checklist glyph, issues ka alert-circle glyph aur
+          // todos ka list-todo glyph — teeno orange; notes ka blue
+          // document-with-pen glyph (notes ka type tag hata diya gaya hai,
+          // icon hi unhe identify karta hai).
+          const isNotepadLike = type !== "note";
+          const ItemIcon =
+            type === "task"
+              ? TaskChecksIcon
+              : type === "issue"
+                ? CircleAlert
+                : type === "todo"
+                  ? ListTodo
+                  : FilePen;
+          // Type ka tag hata diya gaya hai — icon hi item ka type batata hai.
           const typeLabel =
             type === "task"
               ? "Task"
@@ -2884,14 +2990,6 @@ const DailyTab = ({
                 : type === "todo"
                   ? "Todo"
                   : "Note";
-          const typeBadgeClass =
-            type === "task"
-              ? "bg-[#DA7756] text-white border-transparent"
-              : type === "issue"
-                ? "bg-violet-600 text-white border-transparent"
-                : type === "todo"
-                  ? "bg-amber-500 text-white border-transparent"
-                  : "bg-gray-500 text-white border-transparent";
           const memberName = getItemMemberName(item);
           const extraProps = itemProps?.(item);
 
@@ -2909,6 +3007,10 @@ const DailyTab = ({
             >
               <div className="flex flex-1 items-center gap-3 px-4 py-3">
                 <ItemIcon
+                  // Draggable rows (Tasks column) ke global black override se
+                  // bachne ke liye — icon ka apna color rehna chahiye.
+                  data-icon-color="true"
+                  title={typeLabel}
                   className={cn(
                     "h-[18px] w-[18px] shrink-0",
                     isNotepadLike ? "text-[#F36A3D]" : "text-[#4BA3F2]"
@@ -2916,14 +3018,6 @@ const DailyTab = ({
                 />
                 <span className="min-w-0 flex-1 text-[13px] font-medium leading-[16px] text-[#2B2F38]">
                   {getItemTitle(item)}
-                </span>
-                <span
-                  className={cn(
-                    "shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-extrabold uppercase leading-none",
-                    typeBadgeClass
-                  )}
-                >
-                  {typeLabel}
                 </span>
                 {memberName && (
                   <span
@@ -2995,6 +3089,15 @@ const DailyTab = ({
       return a.label.localeCompare(b.label, undefined, { sensitivity: "base" });
     });
   })();
+
+  // Saare meeting members ek hi department ke hon to department-wise
+  // segregation ka matlab nahi — us case me department card skip karke
+  // member cards seedhe flat list me dikhte hain.
+  const showDepartmentGrouping =
+    new Set<string>([
+      ...visibleReports.map((report: any) => resolveDepartmentKey(report)),
+      ...failedMembers.map((member: any) => resolveDepartmentKey(member)),
+    ]).size > 1;
 
   const toggleDepartment = (key: string) =>
     setExpandedDepartments((prev) =>
@@ -3616,58 +3719,68 @@ const DailyTab = ({
                   return (
                     <div
                       key={group.key}
-                      className="bg-white border border-[#F0E8E3] rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden"
+                      className={cn(
+                        showDepartmentGrouping &&
+                        "bg-white border border-[#F0E8E3] rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden"
+                      )}
                     >
-                      <div
-                        onClick={() => toggleDepartment(group.key)}
-                        className={cn(
-                          "flex min-h-[72px] w-full cursor-pointer items-center gap-3 px-5 py-5 text-left transition-colors hover:bg-[#FFF8F5]",
-                          isDepartmentExpanded && "border-b border-[#F0E8E3]"
-                        )}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isGroupFullySelected}
-                          disabled={!groupHasSelectableReports}
-                          ref={(element) => {
-                            if (element)
-                              element.indeterminate = isGroupPartiallySelected;
-                          }}
-                          onClick={(event) => event.stopPropagation()}
-                          onChange={(event) => {
-                            event.stopPropagation();
-                            setDepartmentSelection(
-                              group.reports,
-                              event.target.checked
-                            );
-                          }}
-                          title={`Select all reports in ${group.label}`}
+                      {showDepartmentGrouping && (
+                        <div
+                          onClick={() => toggleDepartment(group.key)}
                           className={cn(
-                            "h-[15px] w-[15px] shrink-0 rounded border-[#DADDE3] accent-[#CE7A5A]",
-                            groupHasSelectableReports
-                              ? "cursor-pointer"
-                              : "opacity-60 cursor-not-allowed"
+                            "flex min-h-[72px] w-full cursor-pointer items-center gap-3 px-5 py-5 text-left transition-colors hover:bg-[#FFF8F5]",
+                            isDepartmentExpanded && "border-b border-[#F0E8E3]"
                           )}
-                        />
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF3EE]">
-                          <Users className="h-4 w-4 text-[#DA7756]" />
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isGroupFullySelected}
+                            disabled={!groupHasSelectableReports}
+                            ref={(element) => {
+                              if (element)
+                                element.indeterminate = isGroupPartiallySelected;
+                            }}
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={(event) => {
+                              event.stopPropagation();
+                              setDepartmentSelection(
+                                group.reports,
+                                event.target.checked
+                              );
+                            }}
+                            title={`Select all reports in ${group.label}`}
+                            className={cn(
+                              "h-[15px] w-[15px] shrink-0 rounded border-[#DADDE3] accent-[#CE7A5A]",
+                              groupHasSelectableReports
+                                ? "cursor-pointer"
+                                : "opacity-60 cursor-not-allowed"
+                            )}
+                          />
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF3EE]">
+                            <Users className="h-4 w-4 text-[#DA7756]" />
+                          </div>
+                          <span className="min-w-0 flex-1 truncate text-[15px] font-extrabold text-[#3E342F]">
+                            {group.label}
+                          </span>
+                          <span className="shrink-0 rounded-full bg-[#F4F1EE] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#6B625C]">
+                            {managerCount} Manager{managerCount === 1 ? "" : "s"}
+                          </span>
+                          <ChevronDown
+                            className={cn(
+                              "h-4 w-4 shrink-0 text-neutral-400 transition-transform",
+                              isDepartmentExpanded && "rotate-180"
+                            )}
+                          />
                         </div>
-                        <span className="min-w-0 flex-1 truncate text-[15px] font-extrabold text-[#3E342F]">
-                          {group.label}
-                        </span>
-                        <span className="shrink-0 rounded-full bg-[#F4F1EE] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#6B625C]">
-                          {managerCount} Manager{managerCount === 1 ? "" : "s"}
-                        </span>
-                        <ChevronDown
-                          className={cn(
-                            "h-4 w-4 shrink-0 text-neutral-400 transition-transform",
-                            isDepartmentExpanded && "rotate-180"
-                          )}
-                        />
-                      </div>
+                      )}
 
-                      {isDepartmentExpanded && (
-                        <div className="space-y-4 bg-[#FBF9F7] p-3">
+                      {(!showDepartmentGrouping || isDepartmentExpanded) && (
+                        <div
+                          className={cn(
+                            "space-y-4",
+                            showDepartmentGrouping && "bg-[#FBF9F7] p-3"
+                          )}
+                        >
                           {group.reports.map((report: any) => {
                     const rId = report.journal_id || report.user_id;
                     const isExpanded = expandedReports.includes(rId);
@@ -5034,35 +5147,45 @@ const DailyTab = ({
               return (
                 <div
                   key={group.key}
-                  className="bg-white border border-[#F0E8E3] rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden"
+                  className={cn(
+                    showDepartmentGrouping &&
+                    "bg-white border border-[#F0E8E3] rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden"
+                  )}
                 >
-                  <button
-                    type="button"
-                    onClick={() => toggleDepartment(group.key)}
-                    className={cn(
-                      "flex min-h-[72px] w-full items-center gap-3 px-5 py-5 text-left transition-colors hover:bg-[#FFF8F5]",
-                      isDepartmentExpanded && "border-b border-[#F0E8E3]"
-                    )}
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF3EE]">
-                      <Users className="h-4 w-4 text-[#DA7756]" />
-                    </div>
-                    <span className="min-w-0 flex-1 truncate text-[15px] font-extrabold text-[#3E342F]">
-                      {group.label}
-                    </span>
-                    <span className="shrink-0 rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-red-600">
-                      {missedCount} Not Submitted
-                    </span>
-                    <ChevronDown
+                  {showDepartmentGrouping && (
+                    <button
+                      type="button"
+                      onClick={() => toggleDepartment(group.key)}
                       className={cn(
-                        "h-4 w-4 shrink-0 text-neutral-400 transition-transform",
-                        isDepartmentExpanded && "rotate-180"
+                        "flex min-h-[72px] w-full items-center gap-3 px-5 py-5 text-left transition-colors hover:bg-[#FFF8F5]",
+                        isDepartmentExpanded && "border-b border-[#F0E8E3]"
                       )}
-                    />
-                  </button>
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF3EE]">
+                        <Users className="h-4 w-4 text-[#DA7756]" />
+                      </div>
+                      <span className="min-w-0 flex-1 truncate text-[15px] font-extrabold text-[#3E342F]">
+                        {group.label}
+                      </span>
+                      <span className="shrink-0 rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-red-600">
+                        {missedCount} Not Submitted
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 shrink-0 text-neutral-400 transition-transform",
+                          isDepartmentExpanded && "rotate-180"
+                        )}
+                      />
+                    </button>
+                  )}
 
-                  {isDepartmentExpanded && (
-                    <div className="space-y-4 bg-[#FBF9F7] p-3">
+                  {(!showDepartmentGrouping || isDepartmentExpanded) && (
+                    <div
+                      className={cn(
+                        "space-y-4",
+                        showDepartmentGrouping && "bg-[#FBF9F7] p-3"
+                      )}
+                    >
                       {group.members.map((member: any, i: number) => {
               const missedId = `missed-${member.id || member.user_id || member.name || i}`;
               const isMissedExpanded = expandedReports.includes(missedId);
