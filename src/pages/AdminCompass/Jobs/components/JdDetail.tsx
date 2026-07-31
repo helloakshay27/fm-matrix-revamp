@@ -5,19 +5,23 @@ import { T, COLORS } from "../constants";
 import { I, ico } from "../icons";
 import { card, Btn, StatusPill } from "./UI";
 
-export default function JdDetail() {
+export default function JdDetail({ jd: propJd, kras: propKras, kpis: propKpis }) {
   const navigate = useNavigate();
   const {
     allJds, viewingJd,
     allKras, allKpis,
     publishJd, setAssignModal,
-    initials,
+    initials: ctxInitials,
   } = useJobs();
 
-  const jd = allJds.find((j) => j.id === viewingJd);
+  const fromProps = propJd && propKras && propKpis;
+  const jd = fromProps ? propJd : allJds.find((j) => j.id === viewingJd);
   if (!jd) return null;
-  const jdKras = allKras.filter((k) => k.jdId === jd.id);
-  const jdKpis = allKpis.filter((p) => p.jdId === jd.id);
+  const jdKras = fromProps ? propKras : allKras.filter((k) => k.jdId === jd.id);
+  const jdKpis = fromProps ? propKpis : allKpis.filter((p) => p.jdId === jd.id);
+  const initials = fromProps ? 
+    (name) => name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() :
+    ctxInitials;
   const totalKraWt = jdKras.reduce((s, k) => s + (k.weightage || 0), 0);
   const totalKpiWt = jdKpis.reduce((s, p) => s + (p.weightage || 0), 0);
 

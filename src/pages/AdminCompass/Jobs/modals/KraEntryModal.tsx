@@ -1,11 +1,27 @@
 // @ts-nocheck
+import { useQueryClient } from "@tanstack/react-query";
 import { useJobs } from "../JobsContext";
 import { T } from "../constants";
 import { Fld, FI, FT, FS, Btn } from "../components/UI";
 
 export default function KraEntryModal() {
-  const { showAddKra, setShowAddKra, newKra, setNewKra, allJds, allMembers, saveNewKra } = useJobs();
+  const {
+    showAddKra,
+    setShowAddKra,
+    newKra,
+    setNewKra,
+    allJds,
+    escalateUsers,
+    krasSaving,
+    saveNewKra,
+  } = useJobs();
+  const queryClient = useQueryClient();
   if (!showAddKra) return null;
+
+  const handleSave = async () => {
+    await saveNewKra();
+    queryClient.invalidateQueries({ queryKey: ["kras-list"] });
+  };
   return (
     <div
       style={{
@@ -107,15 +123,15 @@ export default function KraEntryModal() {
           </div>
           <Fld label="Assignee Person">
             <FS
-              value={newKra.assignee || ""}
+              value={newKra.assigneeId || ""}
               onChange={(e) =>
-                setNewKra((f) => ({ ...f, assignee: e.target.value }))
+                setNewKra((f) => ({ ...f, assigneeId: e.target.value }))
               }
             >
               <option value="">Select assignee</option>
-              {allMembers.map((m) => (
-                <option key={m.id} value={m.name}>
-                  {m.name}
+              {escalateUsers.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.full_name || u.name}
                 </option>
               ))}
             </FS>
@@ -169,8 +185,8 @@ export default function KraEntryModal() {
           }}
         >
           <Btn onClick={() => setShowAddKra(false)}>Cancel</Btn>
-          <Btn primary onClick={saveNewKra}>
-            Submit
+          <Btn primary onClick={handleSave} disabled={krasSaving}>
+            {krasSaving ? "Saving…" : "Submit"}
           </Btn>
         </div>
       </div>

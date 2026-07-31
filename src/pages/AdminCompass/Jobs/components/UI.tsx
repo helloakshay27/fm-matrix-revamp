@@ -78,11 +78,19 @@ export const StatusPill = ({ s: st }) => (
   </span>
 );
 
-export const FilterSelect = ({ value, onChange, label, options }) => (
+export const FilterSelect = ({ value, onChange, label, options = [] }) => (
   <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 12px", background: T.raised, border: `1px solid ${T.borderSoft}`, borderRadius: T.rmd, minHeight: 40 }}>
     <select style={{ border: "none", outline: "none", background: "transparent", fontSize: 12.5, fontWeight: 500, fontFamily: T.font, color: T.ink, cursor: "pointer" }} value={value} onChange={onChange}>
       <option value="all">{label}</option>
-      {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      {options.map((o, index) => {
+        const optionValue = typeof o === "string" ? o : o?.value ?? o?.id ?? "";
+        const optionLabel = typeof o === "string" ? o : o?.label ?? o?.name ?? "";
+        return (
+          <option key={`${optionValue}-${index}`} value={String(optionValue)}>
+            {optionLabel}
+          </option>
+        );
+      })}
     </select>
   </div>
 );
