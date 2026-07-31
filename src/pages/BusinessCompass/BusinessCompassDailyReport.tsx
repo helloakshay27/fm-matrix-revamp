@@ -2962,6 +2962,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                     : item.status,
                 type: item.type,
                 source_id: item.originalData?.id,
+                start_date: item.originalData?.estimated_start_date || item.originalData?.start_date || null,
+                end_date: item.originalData?.target_date || item.originalData?.end_date || null,
               })),
             tomorrow_plan_date: getNextWorkingDay(startDate),
             tomorrow_plan: tomorrowPlanPayload,
