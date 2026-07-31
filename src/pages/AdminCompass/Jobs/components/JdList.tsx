@@ -3,18 +3,31 @@ import { useNavigate } from "react-router-dom";
 import { useJobs } from "../JobsContext";
 import { T, COLORS } from "../constants";
 import { I, ico } from "../icons";
-import { Btn, StatusPill, aBtn } from "./UI";
+import { Btn, StatusPill, aBtn, Loader } from "./UI";
+import { useFetchJobs } from "../hooks/useFetchJobs";
+
+const initials = (name) =>
+  name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
 export default function JdList() {
   const navigate = useNavigate();
   const {
-    filteredJds, jdSearch, setJdSearch,
+    jdSearch, setJdSearch,
     resetCreate,
-    kraCountFor, kpiCountFor, initials,
     actionMenuJd, setActionMenuJd,
     setAssignModal,
     publishJd,
   } = useJobs();
+
+  const { data: apiJds, isLoading, error } = useFetchJobs();
+  const filteredJds = (apiJds || []).filter((j) =>
+    j.title.toLowerCase().includes(jdSearch.toLowerCase())
+  );
 
   return (
     <div>
@@ -68,6 +81,38 @@ export default function JdList() {
           {ico.plus} Create JD
         </Btn>
       </div>
+
+      {isLoading && (
+        <Loader text="Loading job descriptions…" />
+      )}
+
+      {error && (
+        <div
+          style={{
+            padding: 24,
+            textAlign: "center",
+            color: T.danger,
+            fontSize: 14,
+          }}
+        >
+          Failed to load job descriptions. Please try again.
+        </div>
+      )}
+
+      {!isLoading && !error && filteredJds.length === 0 && (
+        <div
+          style={{
+            padding: 40,
+            textAlign: "center",
+            color: T.inkMuted,
+            fontSize: 14,
+          }}
+        >
+          No job descriptions found.
+        </div>
+      )}
+
+      {!isLoading && !error && filteredJds.length > 0 && (
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <div
           style={{
@@ -116,10 +161,10 @@ export default function JdList() {
             <span style={{ fontSize: 12, color: T.inkSoft }}>{jd.dept}</span>
             <span style={{ fontSize: 12, color: T.inkSoft }}>{jd.level}</span>
             <span style={{ fontSize: 13, fontWeight: 600 }}>
-              {kraCountFor(jd.id)}
+              {jd.krasCount}
             </span>
             <span style={{ fontSize: 13, fontWeight: 600 }}>
-              {kpiCountFor(jd.id)}
+              {jd.kpisCount}
             </span>
             <div>
               {jd.assigned.length > 0 ? (
@@ -343,6 +388,7 @@ export default function JdList() {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

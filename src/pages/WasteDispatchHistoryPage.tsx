@@ -76,7 +76,7 @@ const WasteDispatchHistoryPage: React.FC = () => {
   };
 
   const handleView = (record: DispatchRecord) => {
-    navigate(`/maintenance/waste/dispatch/recycle-entry/${record.id}`, { state: { record } });
+    navigate(`/maintenance/waste/dispatch/${record.id}`, { state: { record } });
   };
 
   const handleRecycleEntry = () => {

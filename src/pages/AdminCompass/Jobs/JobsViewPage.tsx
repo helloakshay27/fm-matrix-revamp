@@ -1,23 +1,25 @@
 // @ts-nocheck
-import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useJobs } from "./JobsContext";
+import { useFetchJobDetail } from "./hooks/useFetchJobDetail";
 import JdDetail from "./components/JdDetail";
 
 export default function JobsViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { allJds, setViewingJd } = useJobs();
+  const { data, isLoading, error } = useFetchJobDetail(Number(id));
 
-  useEffect(() => {
-    const numericId = Number(id);
-    if (!allJds.some((j) => j.id === numericId)) {
-      navigate("/admin-compass/jobs", { replace: true });
-      return;
-    }
-    setViewingJd(numericId);
-    return () => setViewingJd(null);
-  }, [id, allJds]);
+  if (isLoading) {
+    return (
+      <div style={{ padding: 40, textAlign: "center", color: "#888", fontSize: 14 }}>
+        Loading job description…
+      </div>
+    );
+  }
 
-  return <JdDetail />;
+  if (error || !data) {
+    navigate("/admin-compass/jobs", { replace: true });
+    return null;
+  }
+
+  return <JdDetail jd={data.jd} kras={data.kras} kpis={data.kpis} />;
 }

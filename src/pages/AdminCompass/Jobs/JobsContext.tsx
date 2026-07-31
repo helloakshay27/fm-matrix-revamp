@@ -1,17 +1,36 @@
 // @ts-nocheck
-import { createContext, useContext, useState, useRef, useEffect, useCallback } from "react";
-import { toast } from "sonner";
 import {
-  SEED_JDS, SEED_KRAS, SEED_KPIS, AI_KRAS, genAiKpis,
-  DEPARTMENTS, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE,
-  INITIAL_DEPTS, SEED_MEMBERS, COLORS,
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  SEED_JDS,
+  SEED_KRAS,
+  SEED_KPIS,
+  AI_KRAS,
+  genAiKpis,
+  DEPARTMENTS,
+  TARGET_FREQ,
+  DATA_SOURCES,
+  MODULES_BY_SOURCE,
+  INITIAL_DEPTS,
+  SEED_MEMBERS,
+  COLORS,
 } from "./constants";
 import { fetchKpiUnits, saveKpiUnits } from "./kpiUnitsApi";
 import { fetchActivityLogs, LOGS_PER_PAGE } from "./activityLogsApi";
 import { fetchKpis, createKpi, updateKpi, toKpiPayload } from "./kpisApi";
 import { fetchJobDescriptions } from "./jobDescriptionsApi";
-import { fetchKras } from "./krasApi";
+import { fetchKras, createKra, updateKra, updateKraStatus } from "./krasApi";
 import { fetchUsersByOrganization } from "./usersApi";
+import { useEscalateUsers } from "./hooks/useEscalateUsers";
 
 const JobsContext = createContext(null);
 
@@ -22,6 +41,7 @@ export function useJobs() {
 }
 
 export function JobsProvider({ children }) {
+  const queryClient = useQueryClient();
   const [activeNav, setActiveNav] = useState("jobs");
   const [jobTab, setJobTab] = useState("descriptions");
   const [view, setView] = useState("list");
@@ -38,16 +58,47 @@ export function JobsProvider({ children }) {
   const [kpisLoading, setKpisLoading] = useState(false);
   const [kpisError, setKpisError] = useState(null);
   const [kpisSaving, setKpisSaving] = useState(false);
+
+  // Fetch escalate users from API
+  const { data: escalateUsers = [] } = useEscalateUsers();
+
   const [jdSearch, setJdSearch] = useState("");
   const [kraSearch, setKraSearch] = useState("");
   const [kpiSearch, setKpiSearch] = useState("");
   const [assignModal, setAssignModal] = useState(null);
-  const [assignName, setAssignName] = useState("");
+  const [assignUserId, setAssignUserId] = useState(null);
+  const [assignUserName, setAssignUserName] = useState("");
   const [expandedKra, setExpandedKra] = useState(null);
   const [showAddKra, setShowAddKra] = useState(false);
+  const [krasSaving, setKrasSaving] = useState(false);
   const [showAddKpi, setShowAddKpi] = useState(false);
-  const [newKra, setNewKra] = useState({ jdId: "", title: "", desc: "", weightage: "", assignee: "", effectiveFrom: "", effectiveTo: "", status: "active" });
-  const [newKpi, setNewKpi] = useState({ jdId: "", kraId: "", departmentId: "", name: "", unit: "", weightage: "", assignee: "", assigneeIds: [], target: "", freq: "", updateType: "manual", dataSource: "", module: "", measurementType: "positive" });
+  const [newKra, setNewKra] = useState({
+    jdId: "",
+    title: "",
+    desc: "",
+    weightage: "",
+    assignee: "",
+    assigneeId: "",
+    effectiveFrom: "",
+    effectiveTo: "",
+    status: "active",
+  });
+  const [newKpi, setNewKpi] = useState({
+    jdId: "",
+    kraId: "",
+    departmentId: "",
+    name: "",
+    unit: "",
+    weightage: "",
+    assignee: "",
+    assigneeIds: [],
+    target: "",
+    freq: "",
+    updateType: "manual",
+    dataSource: "",
+    module: "",
+    measurementType: "positive",
+  });
   const [kraDeptFilter, setKraDeptFilter] = useState("all");
   const [kraRoleFilter, setKraRoleFilter] = useState("all");
   const [kraMemberFilter, setKraMemberFilter] = useState("all");
@@ -58,7 +109,22 @@ export function JobsProvider({ children }) {
   const [kpiViewMode, setKpiViewMode] = useState("list");
   const [actionMenuJd, setActionMenuJd] = useState(null);
   const [editingJd, setEditingJd] = useState(null);
-  const [editForm, setEditForm] = useState({ title: "", dept: "", reportingTo: "", type: "", level: "", location: "", salaryMin: "", salaryMax: "", summary: "", responsibilities: "", qualifications: "", skills: "", niceToHave: "" });
+  const [editForm, setEditForm] = useState({
+    title: "",
+    dept: "",
+    deptId: "",
+    reportingTo: "",
+    type: "",
+    level: "",
+    location: "",
+    salaryMin: "",
+    salaryMax: "",
+    summary: "",
+    responsibilities: "",
+    qualifications: "",
+    skills: "",
+    niceToHave: "",
+  });
   const [actionMenuMember, setActionMenuMember] = useState(null);
   const [viewingMember, setViewingMember] = useState(null);
   const [assignKraMemberModal, setAssignKraMemberModal] = useState(null);
@@ -108,7 +174,13 @@ export function JobsProvider({ children }) {
   const [showDeptModal, setShowDeptModal] = useState(false);
   const [editingDept, setEditingDept] = useState(null);
   const [deptSearch, setDeptSearch] = useState("");
-  const [deptForm, setDeptForm] = useState({ name: "", head: "", members: "", description: "", status: "active" });
+  const [deptForm, setDeptForm] = useState({
+    name: "",
+    head: "",
+    members: "",
+    description: "",
+    status: "active",
+  });
   const fileRef = useRef(null);
 
   /* ── Members state ── */
@@ -119,12 +191,34 @@ export function JobsProvider({ children }) {
   const [memberGroupView, setMemberGroupView] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteMode, setInviteMode] = useState("single");
-  const [inviteRows, setInviteRows] = useState([{ name: "", email: "", department: "" }]);
+  const [inviteRows, setInviteRows] = useState([
+    { name: "", email: "", department: "" },
+  ]);
   const [editingMember, setEditingMember] = useState(null);
-  const [editMemberForm, setEditMemberForm] = useState({ name: "", email: "", department: "", isHOD: false });
+  const [editMemberForm, setEditMemberForm] = useState({
+    name: "",
+    email: "",
+    department: "",
+    isHOD: false,
+  });
 
   /* Stepper form */
-  const [jobForm, setJobForm] = useState({ title: "", dept: "", reportingTo: "", type: "", level: "", location: "", salaryMin: "", salaryMax: "", summary: "", responsibilities: "", qualifications: "", skills: "", niceToHave: "" });
+  const [jobForm, setJobForm] = useState({
+    title: "",
+    dept: "",
+    deptId: "",
+    reportingTo: "",
+    type: "",
+    level: "",
+    location: "",
+    salaryMin: "",
+    salaryMax: "",
+    summary: "",
+    responsibilities: "",
+    qualifications: "",
+    skills: "",
+    niceToHave: "",
+  });
   const [formKras, setFormKras] = useState([]);
   const [formKpis, setFormKpis] = useState([]);
   const sf = (k, v) => setJobForm((f) => ({ ...f, [k]: v }));
@@ -136,24 +230,55 @@ export function JobsProvider({ children }) {
     const num = Number(value);
     return Number.isFinite(num) ? num : undefined;
   };
-  const jdTitle = (id) => allKpis.find((p) => sameId(p.jdId, id))?.jdTitleFromApi || allJds.find((j) => sameId(j.id, id))?.title || "—";
-  const kraName = (id) => allKpis.find((p) => sameId(p.kraId, id))?.kraName || allKras.find((k) => sameId(k.id, id))?.title || "—";
+  const jdTitle = (id) =>
+    allKpis.find((p) => sameId(p.jdId, id))?.jdTitleFromApi ||
+    allJds.find((j) => sameId(j.id, id))?.title ||
+    "—";
+  const kraName = (id) =>
+    allKpis.find((p) => sameId(p.kraId, id))?.kraName ||
+    allKras.find((k) => sameId(k.id, id))?.title ||
+    "—";
   const kraCountFor = (jdId) => allKras.filter((k) => k.jdId === jdId).length;
-  const kpiCountFor = (jdId) => allKpis.filter((p) => sameId(p.jdId, jdId)).length;
+  const kpiCountFor = (jdId) =>
+    allKpis.filter((p) => sameId(p.jdId, jdId)).length;
   const krasForJd = (jdId) => allKras.filter((k) => sameId(k.jdId, jdId));
-  const initials = (name) => name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  const initials = (name) =>
+    name
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   const showToast = (msg, type = "success") => toast[type](msg);
-  const totalKpiWeight = formKpis.reduce((s, k) => s + (Number(k.weightage) || 0), 0);
+  const totalKpiWeight = formKpis.reduce(
+    (s, k) => s + (Number(k.weightage) || 0),
+    0
+  );
 
   /* AI simulation */
   const simulateAiJd = () => {
     setAiLoading(true);
     setTimeout(() => {
-      sf("summary", `We are looking for a talented ${jobForm.title || "professional"} to join our ${jobForm.dept || "team"} with ${jobForm.level || "relevant"} experience.`);
-      sf("responsibilities", "• Lead end-to-end ownership of assigned workstreams\n• Collaborate cross-functionally with design, engineering, and business\n• Define and track key metrics\n• Conduct regular reviews\n• Present progress reports to leadership");
-      sf("qualifications", `• ${jobForm.level === "Senior" || jobForm.level === "Lead" ? "5+" : "2+"}  years of relevant experience\n• Strong analytical abilities\n• Excellent communication skills\n• Relevant degree`);
-      sf("skills", "• Proficiency in industry tools\n• Data-driven decision making\n• Stakeholder management");
-      sf("niceToHave", "• Agile experience\n• Startup background\n• Domain certifications");
+      sf(
+        "summary",
+        `We are looking for a talented ${jobForm.title || "professional"} to join our ${jobForm.dept || "team"} with ${jobForm.level || "relevant"} experience.`
+      );
+      sf(
+        "responsibilities",
+        "• Lead end-to-end ownership of assigned workstreams\n• Collaborate cross-functionally with design, engineering, and business\n• Define and track key metrics\n• Conduct regular reviews\n• Present progress reports to leadership"
+      );
+      sf(
+        "qualifications",
+        `• ${jobForm.level === "Senior" || jobForm.level === "Lead" ? "5+" : "2+"}  years of relevant experience\n• Strong analytical abilities\n• Excellent communication skills\n• Relevant degree`
+      );
+      sf(
+        "skills",
+        "• Proficiency in industry tools\n• Data-driven decision making\n• Stakeholder management"
+      );
+      sf(
+        "niceToHave",
+        "• Agile experience\n• Startup background\n• Domain certifications"
+      );
       setAiLoading(false);
       setJdMethod("ai");
     }, 2200);
@@ -161,7 +286,9 @@ export function JobsProvider({ children }) {
   const simulateAiKras = () => {
     setAiLoading(true);
     setTimeout(() => {
-      setFormKras(AI_KRAS.map((k, i) => ({ ...k, assignee: "", id: Date.now() + i })));
+      setFormKras(
+        AI_KRAS.map((k, i) => ({ ...k, assignee: "", id: Date.now() + i }))
+      );
       setAiLoading(false);
       setKraAiDone(true);
     }, 1800);
@@ -172,7 +299,12 @@ export function JobsProvider({ children }) {
       const gen = [];
       formKras.forEach((kra, idx) => {
         genAiKpis(kra.title).forEach((kpi) => {
-          gen.push({ ...kpi, assignee: "", kraIdx: idx, id: Date.now() + Math.random() * 10000 });
+          gen.push({
+            ...kpi,
+            assignee: "",
+            kraIdx: idx,
+            id: Date.now() + Math.random() * 10000,
+          });
         });
       });
       setFormKpis(gen);
@@ -182,38 +314,117 @@ export function JobsProvider({ children }) {
   };
 
   /* Form CRUD */
-  const addFormKra = () => setFormKras((k) => [...k, { id: Date.now(), title: "", desc: "", weightage: "", assignee: "", effectiveFrom: "", effectiveTo: "", status: "active" }]);
-  const updFormKra = (id, f, v) => setFormKras((ks) => ks.map((k) => (k.id === id ? { ...k, [f]: v } : k)));
+  const addFormKra = () =>
+    setFormKras((k) => [
+      ...k,
+      {
+        id: Date.now(),
+        title: "",
+        desc: "",
+        weightage: "",
+        assignee: "",
+        effectiveFrom: "",
+        effectiveTo: "",
+        status: "active",
+      },
+    ]);
+  const updFormKra = (id, f, v) =>
+    setFormKras((ks) => ks.map((k) => (k.id === id ? { ...k, [f]: v } : k)));
   const remFormKra = (id) => {
     const idx = formKras.findIndex((k) => k.id === id);
     setFormKras((ks) => ks.filter((k) => k.id !== id));
-    setFormKpis((ps) => ps.filter((p) => p.kraIdx !== idx).map((p) => ({ ...p, kraIdx: p.kraIdx > idx ? p.kraIdx - 1 : p.kraIdx })));
+    setFormKpis((ps) =>
+      ps
+        .filter((p) => p.kraIdx !== idx)
+        .map((p) => ({
+          ...p,
+          kraIdx: p.kraIdx > idx ? p.kraIdx - 1 : p.kraIdx,
+        }))
+    );
   };
-  const addFormKpi = (kraIdx) => setFormKpis((p) => [...p, { id: Date.now() + Math.random() * 1000, kraIdx, name: "", unit: "", weightage: "", assignee: "", target: "", freq: "", updateType: "manual", dataSource: "", module: "", measurementType: "positive" }]);
-  const updFormKpi = (id, f, v) => setFormKpis((ps) => ps.map((p) => (p.id === id ? { ...p, [f]: v } : p)));
+  const addFormKpi = (kraIdx) =>
+    setFormKpis((p) => [
+      ...p,
+      {
+        id: Date.now() + Math.random() * 1000,
+        kraIdx,
+        name: "",
+        unit: "",
+        weightage: "",
+        assignee: "",
+        target: "",
+        freq: "",
+        updateType: "manual",
+        dataSource: "",
+        module: "",
+        measurementType: "positive",
+      },
+    ]);
+  const updFormKpi = (id, f, v) =>
+    setFormKpis((ps) => ps.map((p) => (p.id === id ? { ...p, [f]: v } : p)));
   const remFormKpi = (id) => setFormKpis((ps) => ps.filter((p) => p.id !== id));
 
   const canNext = () => {
-    if (step === 0) return jobForm.title && jobForm.dept && jobForm.type && jobForm.level;
+    if (step === 0)
+      return jobForm.title && jobForm.dept && jobForm.type && jobForm.level;
     if (step === 1) return jobForm.summary && jobForm.responsibilities;
-    if (step === 2) return formKras.length > 0 && formKras.every((k) => k.title);
-    if (step === 3) return formKpis.length > 0 && formKpis.every((k) => k.name && k.target);
+    if (step === 2)
+      return formKras.length > 0 && formKras.every((k) => k.title);
+    if (step === 3)
+      return formKpis.length > 0 && formKpis.every((k) => k.name && k.target);
     return true;
   };
 
   const saveJd = () => {
     const nid = Date.now();
     const newJd = {
-      id: nid, title: jobForm.title, dept: jobForm.dept, level: jobForm.level,
-      type: jobForm.type, status: "draft", assigned: [],
-      created: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-      reportingTo: jobForm.reportingTo, location: jobForm.location,
-      salaryMin: jobForm.salaryMin, salaryMax: jobForm.salaryMax,
-      summary: jobForm.summary, responsibilities: jobForm.responsibilities,
-      qualifications: jobForm.qualifications, skills: jobForm.skills, niceToHave: jobForm.niceToHave,
+      id: nid,
+      title: jobForm.title,
+      dept: jobForm.dept,
+      level: jobForm.level,
+      type: jobForm.type,
+      status: "draft",
+      assigned: [],
+      created: new Date().toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+      reportingTo: jobForm.reportingTo,
+      location: jobForm.location,
+      salaryMin: jobForm.salaryMin,
+      salaryMax: jobForm.salaryMax,
+      summary: jobForm.summary,
+      responsibilities: jobForm.responsibilities,
+      qualifications: jobForm.qualifications,
+      skills: jobForm.skills,
+      niceToHave: jobForm.niceToHave,
     };
-    const nKras = formKras.map((k, i) => ({ id: `k_${nid}_${i}`, jdId: nid, title: k.title, desc: k.desc, weightage: Number(k.weightage) || 0, assignee: k.assignee, effectiveFrom: k.effectiveFrom, effectiveTo: k.effectiveTo, status: k.status }));
-    const nKpis = formKpis.map((p, i) => ({ id: `p_${nid}_${i}`, kraId: nKras[p.kraIdx]?.id || "", jdId: nid, name: p.name, unit: p.unit, weightage: Number(p.weightage) || 0, assignee: p.assignee, target: p.target, freq: p.freq, updateType: p.updateType, dataSource: p.dataSource, module: p.module }));
+    const nKras = formKras.map((k, i) => ({
+      id: `k_${nid}_${i}`,
+      jdId: nid,
+      title: k.title,
+      desc: k.desc,
+      weightage: Number(k.weightage) || 0,
+      assignee: k.assignee,
+      effectiveFrom: k.effectiveFrom,
+      effectiveTo: k.effectiveTo,
+      status: k.status,
+    }));
+    const nKpis = formKpis.map((p, i) => ({
+      id: `p_${nid}_${i}`,
+      kraId: nKras[p.kraIdx]?.id || "",
+      jdId: nid,
+      name: p.name,
+      unit: p.unit,
+      weightage: Number(p.weightage) || 0,
+      assignee: p.assignee,
+      target: p.target,
+      freq: p.freq,
+      updateType: p.updateType,
+      dataSource: p.dataSource,
+      module: p.module,
+    }));
     setAllJds((j) => [newJd, ...j]);
     setAllKras((k) => [...k, ...nKras]);
     setAllKpis((p) => [...p, ...nKpis]);
@@ -222,21 +433,59 @@ export function JobsProvider({ children }) {
   };
 
   const publishJd = (id) => {
-    setAllJds((prev) => prev.map((j) => (j.id === id ? { ...j, status: "published" } : j)));
+    setAllJds((prev) =>
+      prev.map((j) => (j.id === id ? { ...j, status: "published" } : j))
+    );
     showToast("Job description published successfully");
   };
 
   const startEditJd = (id) => {
     const jd = allJds.find((j) => j.id === id);
     if (!jd) return;
-    setEditForm({ title: jd.title || "", dept: jd.dept || "", reportingTo: jd.reportingTo || "", type: jd.type || "", level: jd.level || "", location: jd.location || "", salaryMin: jd.salaryMin || "", salaryMax: jd.salaryMax || "", summary: jd.summary || "", responsibilities: jd.responsibilities || "", qualifications: jd.qualifications || "", skills: jd.skills || "", niceToHave: jd.niceToHave || "" });
+    setEditForm({
+      title: jd.title || "",
+      dept: jd.dept || "",
+      deptId: jd.deptId || jd.departmentId || "",
+      reportingTo: jd.reportingTo || "",
+      type: jd.type || "",
+      level: jd.level || "",
+      location: jd.location || "",
+      salaryMin: jd.salaryMin || "",
+      salaryMax: jd.salaryMax || "",
+      summary: jd.summary || "",
+      responsibilities: jd.responsibilities || "",
+      qualifications: jd.qualifications || "",
+      skills: jd.skills || "",
+      niceToHave: jd.niceToHave || "",
+    });
     setEditingJd(id);
     setViewingJd(null);
     setView("list");
   };
 
   const saveEditJd = () => {
-    setAllJds((prev) => prev.map((j) => j.id === editingJd ? { ...j, title: editForm.title, dept: editForm.dept, reportingTo: editForm.reportingTo, type: editForm.type, level: editForm.level, location: editForm.location, salaryMin: editForm.salaryMin, salaryMax: editForm.salaryMax, summary: editForm.summary, responsibilities: editForm.responsibilities, qualifications: editForm.qualifications, skills: editForm.skills, niceToHave: editForm.niceToHave } : j));
+    setAllJds((prev) =>
+      prev.map((j) =>
+        j.id === editingJd
+          ? {
+            ...j,
+            title: editForm.title,
+            dept: editForm.dept,
+            reportingTo: editForm.reportingTo,
+            type: editForm.type,
+            level: editForm.level,
+            location: editForm.location,
+            salaryMin: editForm.salaryMin,
+            salaryMax: editForm.salaryMax,
+            summary: editForm.summary,
+            responsibilities: editForm.responsibilities,
+            qualifications: editForm.qualifications,
+            skills: editForm.skills,
+            niceToHave: editForm.niceToHave,
+          }
+          : j
+      )
+    );
     showToast("Job description updated successfully");
     setEditingJd(null);
   };
@@ -245,24 +494,82 @@ export function JobsProvider({ children }) {
   const ef = (k, v) => setEditForm((f) => ({ ...f, [k]: v }));
 
   const resetCreate = () => {
-    setView("list"); setStep(0); setJdMethod(null); setKraAiDone(false); setKpiAiDone(false);
-    setJobForm({ title: "", dept: "", reportingTo: "", type: "", level: "", location: "", salaryMin: "", salaryMax: "", summary: "", responsibilities: "", qualifications: "", skills: "", niceToHave: "" });
-    setFormKras([]); setFormKpis([]);
+    setView("list");
+    setStep(0);
+    setJdMethod(null);
+    setKraAiDone(false);
+    setKpiAiDone(false);
+    setJobForm({
+      title: "",
+      dept: "",
+      deptId: "",
+      reportingTo: "",
+      type: "",
+      level: "",
+      location: "",
+      salaryMin: "",
+      salaryMax: "",
+      summary: "",
+      responsibilities: "",
+      qualifications: "",
+      skills: "",
+      niceToHave: "",
+    });
+    setFormKras([]);
+    setFormKpis([]);
   };
 
   const assignUser = () => {
-    if (!assignName.trim()) return;
-    setAllJds((j) => j.map((jd) => jd.id === assignModal ? { ...jd, assigned: [...jd.assigned, assignName.trim()] } : jd));
-    setAssignName(""); setAssignModal(null);
+    if (!assignUserId || !assignUserName.trim()) return;
+    setAllJds((j) =>
+      j.map((jd) =>
+        jd.id === assignModal
+          ? { ...jd, assigned: [...jd.assigned, assignUserName.trim()] }
+          : jd
+      )
+    );
+    setAssignUserId(null);
+    setAssignUserName("");
+    setAssignModal(null);
     showToast("Member assigned successfully");
   };
 
-  const saveNewKra = () => {
+  const saveNewKra = async () => {
     if (!newKra.jdId || !newKra.title) return;
-    setAllKras((ks) => [...ks, { id: `k_new_${Date.now()}`, jdId: Number(newKra.jdId), ...newKra }]);
-    setNewKra({ jdId: "", title: "", desc: "", weightage: "", assignee: "", effectiveFrom: "", effectiveTo: "", status: "active" });
-    setShowAddKra(false);
-    showToast("KRA added successfully");
+    const selectedJd = allJds.find((j) => sameId(j.id, newKra.jdId));
+    setKrasSaving(true);
+    try {
+      const created = await createKra({
+        ...newKra,
+        resourceId:
+          newKra.resourceId ||
+          selectedJd?.deptId ||
+          selectedJd?.departmentId,
+      });
+      if (created)
+        setAllKras((ks) => [
+          created,
+          ...ks.filter((k) => !sameId(k.id, created.id)),
+        ]);
+      addLog("create", "KRA", newKra.title, "KRA created");
+      setNewKra({
+        jdId: "",
+        title: "",
+        desc: "",
+        weightage: "",
+        assignee: "",
+        assigneeId: "",
+        effectiveFrom: "",
+        effectiveTo: "",
+        status: "active",
+      });
+      setShowAddKra(false);
+      showToast("KRA added successfully");
+    } catch (err) {
+      toast.error(`Could not create KRA: ${err?.message || "request failed"}`);
+    } finally {
+      setKrasSaving(false);
+    }
   };
 
   const loadKpis = useCallback(async (filters = {}) => {
@@ -299,7 +606,8 @@ export function JobsProvider({ children }) {
         const key = String(kra.id);
         const previous = merged.get(key);
         const next = { ...previous, ...kra };
-        if (!previous || JSON.stringify(previous) !== JSON.stringify(next)) changed = true;
+        if (!previous || JSON.stringify(previous) !== JSON.stringify(next))
+          changed = true;
         merged.set(key, next);
       });
       return changed ? Array.from(merged.values()) : prev;
@@ -316,7 +624,9 @@ export function JobsProvider({ children }) {
     } catch (err) {
       console.error("Failed to load job descriptions:", err);
       setKpiModalJdsError(err?.message || "request failed");
-      toast.error(`Could not load job descriptions: ${err?.message || "request failed"}`);
+      toast.error(
+        `Could not load job descriptions: ${err?.message || "request failed"}`
+      );
     } finally {
       setKpiModalJdsLoading(false);
     }
@@ -326,6 +636,11 @@ export function JobsProvider({ children }) {
     if (!showAddKpi && !editingKpiId) return;
     loadKpiModalJds();
   }, [editingKpiId, loadKpiModalJds, showAddKpi]);
+
+  useEffect(() => {
+    if (!showAddKra) return;
+    loadKpiModalJds();
+  }, [loadKpiModalJds, showAddKra]);
 
   useEffect(() => {
     if (jobTab !== "kpi") return;
@@ -354,7 +669,9 @@ export function JobsProvider({ children }) {
       toNum(selectedJd?.departmentId) ||
       toNum(selectedJd?.deptId) ||
       toNum(selectedKra?.departmentId);
-    const assigneeId = Array.isArray(form.assigneeIds) ? toNum(form.assigneeIds[0]) : undefined;
+    const assigneeId = Array.isArray(form.assigneeIds)
+      ? toNum(form.assigneeIds[0])
+      : undefined;
     if (!departmentId || !assigneeId) {
       setKpiModalKras([]);
       setKpiModalKrasError(null);
@@ -421,14 +738,37 @@ export function JobsProvider({ children }) {
     const selectedKra = allKras.find((k) => sameId(k.id, newKpi.kraId));
     const payloadForm = {
       ...newKpi,
-      departmentId: newKpi.departmentId || selectedJd?.departmentId || selectedJd?.deptId || selectedKra?.departmentId,
+      departmentId:
+        newKpi.departmentId ||
+        selectedJd?.departmentId ||
+        selectedJd?.deptId ||
+        selectedKra?.departmentId,
     };
     setKpisSaving(true);
     try {
       const created = await createKpi(payloadForm);
-      if (created) setAllKpis((ps) => [created, ...ps.filter((p) => !sameId(p.id, created.id))]);
+      if (created)
+        setAllKpis((ps) => [
+          created,
+          ...ps.filter((p) => !sameId(p.id, created.id)),
+        ]);
       else await refreshKpis();
-      setNewKpi({ jdId: "", kraId: "", departmentId: "", name: "", unit: "", weightage: "", assignee: "", assigneeIds: [], target: "", freq: "", updateType: "manual", dataSource: "", module: "", measurementType: "positive" });
+      setNewKpi({
+        jdId: "",
+        kraId: "",
+        departmentId: "",
+        name: "",
+        unit: "",
+        weightage: "",
+        assignee: "",
+        assigneeIds: [],
+        target: "",
+        freq: "",
+        updateType: "manual",
+        dataSource: "",
+        module: "",
+        measurementType: "positive",
+      });
       setShowAddKpi(false);
       showToast("KPI added successfully");
       addLog("create", "KPI", newKpi.name, "KPI created");
@@ -470,20 +810,55 @@ export function JobsProvider({ children }) {
   // Local mutations in this module are still client-side, so a new entry is
   // prepended optimistically. The server list wins on the next fetch.
   const addLog = (type, entity, name, detail) => {
-    setActivityLogs((l) => [{
-      id: `local-${Date.now()}`, type, entity, name, user: "You",
-      timestamp: new Date().toLocaleString("sv-SE", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).replace(",", ""),
-      detail,
-    }, ...l]);
+    setActivityLogs((l) => [
+      {
+        id: `local-${Date.now()}`,
+        type,
+        entity,
+        name,
+        user: "You",
+        timestamp: new Date()
+          .toLocaleString("sv-SE", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+          .replace(",", ""),
+        detail,
+      },
+      ...l,
+    ]);
   };
 
-  const toggleKraStatus = (id) => {
-    const kra = allKras.find((k) => k.id === id);
-    if (!kra) return;
+  const toggleKraStatus = async (kra) => {
+    if (!kra || !kra.id) return;
+    const id = kra.id;
     const ns = kra.status === "active" ? "inactive" : "active";
-    setAllKras((ks) => ks.map((k) => (k.id === id ? { ...k, status: ns } : k)));
-    addLog(ns === "active" ? "activate" : "deactivate", "KRA", kra.title, `Status changed to ${ns === "active" ? "Active" : "Inactive"}`);
-    showToast(`KRA ${ns === "active" ? "activated" : "deactivated"}`);
+    const previous = allKras;
+    setAllKras((ks) =>
+      ks.map((k) => (sameId(k.id, id) ? { ...k, status: ns } : k))
+    );
+    try {
+      const updated = await updateKraStatus(id, ns);
+      if (updated)
+        setAllKras((ks) =>
+          ks.map((k) => (sameId(k.id, id) ? { ...k, ...updated } : k))
+        );
+      addLog(
+        ns === "active" ? "activate" : "deactivate",
+        "KRA",
+        kra.title,
+        `Status changed to ${ns === "active" ? "Active" : "Inactive"}`
+      );
+      showToast(`KRA ${ns === "active" ? "activated" : "deactivated"}`);
+    } catch (err) {
+      setAllKras(previous);
+      toast.error(
+        `Could not update KRA status: ${err?.message || "request failed"}`
+      );
+    }
   };
 
   const toggleKpiStatus = async (id) => {
@@ -492,43 +867,130 @@ export function JobsProvider({ children }) {
     const ns = kpi.status === "active" ? "inactive" : "active";
     const previous = allKpis;
     const archived = ns !== "active";
-    setAllKpis((ps) => ps.map((p) => (sameId(p.id, id) ? { ...p, status: ns, archived } : p)));
+    setAllKpis((ps) =>
+      ps.map((p) => (sameId(p.id, id) ? { ...p, status: ns, archived } : p))
+    );
     try {
       const updated = await updateKpi(id, { archived });
-      if (updated) setAllKpis((ps) => ps.map((p) => (sameId(p.id, id) ? { ...p, ...updated } : p)));
-      addLog(ns === "active" ? "activate" : "deactivate", "KPI", kpi.name, `Status changed to ${ns === "active" ? "Active" : "Inactive"}`);
+      if (updated)
+        setAllKpis((ps) =>
+          ps.map((p) => (sameId(p.id, id) ? { ...p, ...updated } : p))
+        );
+      addLog(
+        ns === "active" ? "activate" : "deactivate",
+        "KPI",
+        kpi.name,
+        `Status changed to ${ns === "active" ? "Active" : "Inactive"}`
+      );
       showToast(`KPI ${ns === "active" ? "activated" : "deactivated"}`);
     } catch (err) {
       setAllKpis(previous);
-      toast.error(`Could not update KPI status: ${err?.message || "request failed"}`);
+      toast.error(
+        `Could not update KPI status: ${err?.message || "request failed"}`
+      );
     }
   };
 
   const openEditKra = (kra) => {
+    const matchedAssignee = (escalateUsers || []).find((u) =>
+      sameId(u.id, kra.assigneeId) ||
+      (kra.assignee && String(u.full_name || u.name || "") === String(kra.assignee))
+    );
     setEditingKraId(kra.id);
-    setEditKraForm({ title: kra.title, desc: kra.desc, weightage: kra.weightage, effectiveFrom: kra.effectiveFrom, effectiveTo: kra.effectiveTo, status: kra.status });
+    setEditKraForm({
+      jdId: kra.jdId ?? kra.job_description_id ?? "",
+      title: kra.title,
+      desc: kra.desc,
+      weightage: kra.weightage,
+      effectiveFrom: kra.effectiveFrom,
+      effectiveTo: kra.effectiveTo,
+      status: kra.status,
+      assigneeId: kra.assigneeId || matchedAssignee?.id || "",
+    });
   };
 
-  const saveEditKra = () => {
-    setAllKras((ks) => ks.map((k) => k.id === editingKraId ? { ...k, ...editKraForm, weightage: Number(editKraForm.weightage) || 0 } : k));
-    addLog("edit", "KRA", editKraForm.title, "KRA details updated");
-    setEditingKraId(null);
-    showToast("KRA updated");
+  const patchKrasCache = (id, patch) => {
+    queryClient.setQueriesData({ queryKey: ["kras-list"] }, (current) => {
+      if (!Array.isArray(current)) return current;
+      return current.map((k) =>
+        sameId(k?.id, id) ? { ...k, ...patch } : k
+      );
+    });
+  };
+
+  const saveEditKra = async () => {
+    if (!editingKraId || !editKraForm.title) return;
+    const previous = allKras;
+    const selectedJd = allJds.find((j) => sameId(j.id, editKraForm.jdId));
+    const localPatch = {
+      ...editKraForm,
+      weightage: Number(editKraForm.weightage) || 0,
+    };
+    setAllKras((ks) =>
+      ks.map((k) => (sameId(k.id, editingKraId) ? { ...k, ...localPatch } : k))
+    );
+    setKrasSaving(true);
+    try {
+      const updated = await updateKra(editingKraId, {
+        ...editKraForm,
+        resourceId:
+          editKraForm.resourceId ||
+          selectedJd?.deptId ||
+          selectedJd?.departmentId,
+      });
+      if (updated)
+        setAllKras((ks) =>
+          ks.map((k) =>
+            sameId(k.id, editingKraId) ? { ...k, ...updated } : k
+          )
+        );
+      patchKrasCache(editingKraId, { ...localPatch, ...updated });
+      addLog("edit", "KRA", editKraForm.title, "KRA details updated");
+      setEditingKraId(null);
+      showToast("KRA updated");
+    } catch (err) {
+      setAllKras(previous);
+      toast.error(`Could not update KRA: ${err?.message || "request failed"}`);
+    } finally {
+      setKrasSaving(false);
+    }
   };
 
   const openEditKpi = (kpi) => {
     setEditingKpiId(kpi.id);
-    setEditKpiForm({ jdId: kpi.jdId || "", kraId: kpi.kraId || "", departmentId: kpi.departmentId || "", name: kpi.name, unit: kpi.unit, weightage: kpi.weightage, target: kpi.target, freq: kpi.freq, updateType: kpi.updateType, dataSource: kpi.dataSource || "", module: kpi.module || "", measurementType: kpi.measurementType || "positive", assigneeIds: kpi.assigneeIds || [] });
+    setEditKpiForm({
+      jdId: kpi.jdId || "",
+      kraId: kpi.kraId || "",
+      departmentId: kpi.departmentId || "",
+      name: kpi.name,
+      unit: kpi.unit,
+      weightage: kpi.weightage,
+      target: kpi.target,
+      freq: kpi.freq,
+      updateType: kpi.updateType,
+      dataSource: kpi.dataSource || "",
+      module: kpi.module || "",
+      measurementType: kpi.measurementType || "positive",
+      assigneeIds: kpi.assigneeIds || [],
+    });
   };
 
   const saveEditKpi = async () => {
     const previous = allKpis;
-    const localPatch = { ...editKpiForm, weightage: Number(editKpiForm.weightage) || 0 };
-    setAllKpis((ps) => ps.map((p) => sameId(p.id, editingKpiId) ? { ...p, ...localPatch } : p));
+    const localPatch = {
+      ...editKpiForm,
+      weightage: Number(editKpiForm.weightage) || 0,
+    };
+    setAllKpis((ps) =>
+      ps.map((p) => (sameId(p.id, editingKpiId) ? { ...p, ...localPatch } : p))
+    );
     setKpisSaving(true);
     try {
       const updated = await updateKpi(editingKpiId, toKpiPayload(editKpiForm));
-      if (updated) setAllKpis((ps) => ps.map((p) => sameId(p.id, editingKpiId) ? { ...p, ...updated } : p));
+      if (updated)
+        setAllKpis((ps) =>
+          ps.map((p) => (sameId(p.id, editingKpiId) ? { ...p, ...updated } : p))
+        );
       addLog("edit", "KPI", editKpiForm.name, "KPI details updated");
       setEditingKpiId(null);
       showToast("KPI updated");
@@ -542,8 +1004,14 @@ export function JobsProvider({ children }) {
 
   const assignToKra = () => {
     if (!assignKraName.trim()) return;
-    addLog("assign", "KRA", allKras.find((k) => k.id === assignKraModal)?.title || "", `Assigned to ${assignKraName.trim()}`);
-    setAssignKraName(""); setAssignKraModal(null);
+    addLog(
+      "assign",
+      "KRA",
+      allKras.find((k) => k.id === assignKraModal)?.title || "",
+      `Assigned to ${assignKraName.trim()}`
+    );
+    setAssignKraName("");
+    setAssignKraModal(null);
     showToast("Person assigned to KRA");
   };
 
@@ -566,7 +1034,9 @@ export function JobsProvider({ children }) {
   useEffect(() => {
     if (!assignKpiModal) return;
     const currentKpi = allKpis.find((p) => sameId(p.id, assignKpiModal));
-    setAssignKpiUserIds((currentKpi?.assigneeIds || []).map((id) => String(id)));
+    setAssignKpiUserIds(
+      (currentKpi?.assigneeIds || []).map((id) => String(id))
+    );
     loadKpiAssignUsers();
   }, [allKpis, assignKpiModal, loadKpiAssignUsers]);
 
@@ -580,17 +1050,43 @@ export function JobsProvider({ children }) {
       .map((id) => Number(id))
       .filter((id) => Number.isFinite(id));
     if (selectedIds.length === 0) return;
-    const selectedUsers = kpiAssignUsers.filter((u) => selectedIds.some((id) => sameId(u.id, id)));
+    const selectedUsers = kpiAssignUsers.filter((u) =>
+      selectedIds.some((id) => sameId(u.id, id))
+    );
     const kpi = allKpis.find((p) => sameId(p.id, assignKpiModal));
     if (!kpi) return;
     const previous = allKpis;
-    setAllKpis((ps) => ps.map((p) => sameId(p.id, assignKpiModal) ? { ...p, assigneeIds: selectedIds, assigneeNames: selectedUsers.map((user) => user.name) } : p));
+    setAllKpis((ps) =>
+      ps.map((p) =>
+        sameId(p.id, assignKpiModal)
+          ? {
+            ...p,
+            assigneeIds: selectedIds,
+            assigneeNames: selectedUsers.map((user) => user.name),
+          }
+          : p
+      )
+    );
     setKpisSaving(true);
     try {
-      const updated = await updateKpi(assignKpiModal, { assignee_ids: selectedIds });
-      if (updated) setAllKpis((ps) => ps.map((p) => sameId(p.id, assignKpiModal) ? { ...p, ...updated } : p));
-      addLog("assign", "KPI", kpi.name || "", `Assigned to ${selectedUsers.map((user) => user.name).join(", ") || selectedIds.join(", ")}`);
-      setAssignKpiUserIds([]); setAssignKpiName(""); setAssignKpiModal(null);
+      const updated = await updateKpi(assignKpiModal, {
+        assignee_ids: selectedIds,
+      });
+      if (updated)
+        setAllKpis((ps) =>
+          ps.map((p) =>
+            sameId(p.id, assignKpiModal) ? { ...p, ...updated } : p
+          )
+        );
+      addLog(
+        "assign",
+        "KPI",
+        kpi.name || "",
+        `Assigned to ${selectedUsers.map((user) => user.name).join(", ") || selectedIds.join(", ")}`
+      );
+      setAssignKpiUserIds([]);
+      setAssignKpiName("");
+      setAssignKpiModal(null);
       showToast("Person assigned to KPI");
     } catch (err) {
       setAllKpis(previous);
@@ -633,7 +1129,9 @@ export function JobsProvider({ children }) {
       showToast(successMsg);
     } catch (err) {
       setCustomUnits(previousUnits);
-      toast.error(`Could not save KPI units: ${err?.message || "request failed"}`);
+      toast.error(
+        `Could not save KPI units: ${err?.message || "request failed"}`
+      );
     } finally {
       setUnitsSaving(false);
     }
@@ -642,7 +1140,9 @@ export function JobsProvider({ children }) {
   const addCustomUnit = () => {
     const trimmed = newUnitInput.trim();
     if (!trimmed) return;
-    if (customUnits.some((u) => u.name.toLowerCase() === trimmed.toLowerCase())) {
+    if (
+      customUnits.some((u) => u.name.toLowerCase() === trimmed.toLowerCase())
+    ) {
       toast.error("That unit already exists.");
       return;
     }
@@ -665,162 +1165,492 @@ export function JobsProvider({ children }) {
   /* ── Setup / Org handlers ── */
   const handleLogoUpload = (e) => {
     const file = e.target.files?.[0];
-    if (file) { const reader = new FileReader(); reader.onload = (ev) => setLogoPreview(ev.target.result); reader.readAsDataURL(file); }
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setLogoPreview(ev.target.result);
+      reader.readAsDataURL(file);
+    }
   };
   const openDeptModal = (dept = null) => {
     if (dept) {
       setEditingDept(dept.id);
-      setDeptForm({ name: dept.name, head: dept.head, members: String(dept.members), description: dept.description || "", status: dept.status });
+      setDeptForm({
+        name: dept.name,
+        head: dept.head,
+        members: String(dept.members),
+        description: dept.description || "",
+        status: dept.status,
+      });
     } else {
       setEditingDept(null);
-      setDeptForm({ name: "", head: "", members: "", description: "", status: "active" });
+      setDeptForm({
+        name: "",
+        head: "",
+        members: "",
+        description: "",
+        status: "active",
+      });
     }
     setShowDeptModal(true);
   };
   const saveDept = () => {
     if (editingDept) {
-      setDepartments((ds) => ds.map((d) => d.id === editingDept ? { ...d, ...deptForm, members: Number(deptForm.members) || d.members } : d));
+      setDepartments((ds) =>
+        ds.map((d) =>
+          d.id === editingDept
+            ? {
+              ...d,
+              ...deptForm,
+              members: Number(deptForm.members) || d.members,
+            }
+            : d
+        )
+      );
     } else {
-      setDepartments((ds) => [...ds, { id: Date.now(), name: deptForm.name, head: deptForm.head, members: Number(deptForm.members) || 0, color: COLORS[ds.length % COLORS.length], status: deptForm.status, description: deptForm.description }]);
+      setDepartments((ds) => [
+        ...ds,
+        {
+          id: Date.now(),
+          name: deptForm.name,
+          head: deptForm.head,
+          members: Number(deptForm.members) || 0,
+          color: COLORS[ds.length % COLORS.length],
+          status: deptForm.status,
+          description: deptForm.description,
+        },
+      ]);
     }
     setShowDeptModal(false);
     showToast(editingDept ? "Department updated" : "Department created");
   };
-  const deleteDept = (id) => setDepartments((ds) => ds.filter((d) => d.id !== id));
-  const filteredDepts = departments.filter((d) => d.name.toLowerCase().includes(deptSearch.toLowerCase()));
+  const deleteDept = (id) =>
+    setDepartments((ds) => ds.filter((d) => d.id !== id));
+  const filteredDepts = departments.filter((d) =>
+    d.name.toLowerCase().includes(deptSearch.toLowerCase())
+  );
 
   /* ── Members handlers ── */
-  const memberDepts = [...new Set(allMembers.map((m) => m.department).filter(Boolean))];
+  const memberDepts = [
+    ...new Set(allMembers.map((m) => m.department).filter(Boolean)),
+  ];
   const filteredMembers = allMembers.filter((m) => {
-    const matchSearch = m.name.toLowerCase().includes(memberSearch.toLowerCase()) || m.email.toLowerCase().includes(memberSearch.toLowerCase());
-    const matchDept = memberDeptFilter === "all" || m.department === memberDeptFilter;
-    const matchStatus = memberStatusFilter === "all" || m.status === memberStatusFilter;
+    const matchSearch =
+      m.name.toLowerCase().includes(memberSearch.toLowerCase()) ||
+      m.email.toLowerCase().includes(memberSearch.toLowerCase());
+    const matchDept =
+      memberDeptFilter === "all" || m.department === memberDeptFilter;
+    const matchStatus =
+      memberStatusFilter === "all" || m.status === memberStatusFilter;
     return matchSearch && matchDept && matchStatus;
   });
-  const groupedMembers = memberDepts.reduce((acc, dept) => { const members = filteredMembers.filter((m) => m.department === dept); if (members.length > 0) acc[dept] = members; return acc; }, {});
+  const groupedMembers = memberDepts.reduce((acc, dept) => {
+    const members = filteredMembers.filter((m) => m.department === dept);
+    if (members.length > 0) acc[dept] = members;
+    return acc;
+  }, {});
   const ungrouped = filteredMembers.filter((m) => !m.department);
 
   const openInvite = (mode) => {
     setInviteMode(mode);
-    setInviteRows(mode === "bulk" ? [{ name: "", email: "", department: "" }, { name: "", email: "", department: "" }, { name: "", email: "", department: "" }] : [{ name: "", email: "", department: "" }]);
+    setInviteRows(
+      mode === "bulk"
+        ? [
+          { name: "", email: "", department: "" },
+          { name: "", email: "", department: "" },
+          { name: "", email: "", department: "" },
+        ]
+        : [{ name: "", email: "", department: "" }]
+    );
     setShowInviteModal(true);
   };
-  const updateInviteRow = (idx, field, val) => setInviteRows((rs) => rs.map((r, i) => (i === idx ? { ...r, [field]: val } : r)));
-  const addInviteRow = () => setInviteRows((rs) => [...rs, { name: "", email: "", department: "" }]);
-  const removeInviteRow = (idx) => setInviteRows((rs) => rs.filter((_, i) => i !== idx));
+  const updateInviteRow = (idx, field, val) =>
+    setInviteRows((rs) =>
+      rs.map((r, i) => (i === idx ? { ...r, [field]: val } : r))
+    );
+  const addInviteRow = () =>
+    setInviteRows((rs) => [...rs, { name: "", email: "", department: "" }]);
+  const removeInviteRow = (idx) =>
+    setInviteRows((rs) => rs.filter((_, i) => i !== idx));
   const sendInvites = () => {
     const valid = inviteRows.filter((r) => r.name.trim() && r.email.trim());
     if (valid.length === 0) return;
-    const newMembers = valid.map((r, i) => ({ id: Date.now() + i, name: r.name.trim(), email: r.email.trim(), department: r.department || "", status: "active", isHOD: false }));
+    const newMembers = valid.map((r, i) => ({
+      id: Date.now() + i,
+      name: r.name.trim(),
+      email: r.email.trim(),
+      department: r.department || "",
+      status: "active",
+      isHOD: false,
+    }));
     setAllMembers((ms) => [...ms, ...newMembers]);
     setShowInviteModal(false);
-    showToast(`${valid.length} invite${valid.length > 1 ? "s" : ""} sent successfully`);
+    showToast(
+      `${valid.length} invite${valid.length > 1 ? "s" : ""} sent successfully`
+    );
   };
-  const openEditMember = (m) => { setEditingMember(m.id); setEditMemberForm({ name: m.name, email: m.email, department: m.department, isHOD: m.isHOD }); };
-  const saveEditMember = () => { setAllMembers((ms) => ms.map((m) => (m.id === editingMember ? { ...m, ...editMemberForm } : m))); setEditingMember(null); showToast("Member updated"); };
-  const toggleMemberStatus = (id) => { setAllMembers((ms) => ms.map((m) => m.id === id ? { ...m, status: m.status === "active" ? "inactive" : "active" } : m)); showToast("Member status updated"); };
-  const deleteMember = (id) => { setAllMembers((ms) => ms.filter((m) => m.id !== id)); setActionMenuMember(null); showToast("Member removed"); };
+  const openEditMember = (m) => {
+    setEditingMember(m.id);
+    setEditMemberForm({
+      name: m.name,
+      email: m.email,
+      department: m.department,
+      isHOD: m.isHOD,
+    });
+  };
+  const saveEditMember = () => {
+    setAllMembers((ms) =>
+      ms.map((m) => (m.id === editingMember ? { ...m, ...editMemberForm } : m))
+    );
+    setEditingMember(null);
+    showToast("Member updated");
+  };
+  const toggleMemberStatus = (id) => {
+    setAllMembers((ms) =>
+      ms.map((m) =>
+        m.id === id
+          ? { ...m, status: m.status === "active" ? "inactive" : "active" }
+          : m
+      )
+    );
+    showToast("Member status updated");
+  };
+  const deleteMember = (id) => {
+    setAllMembers((ms) => ms.filter((m) => m.id !== id));
+    setActionMenuMember(null);
+    showToast("Member removed");
+  };
   const assignKraToMember = () => {
     if (!assignKraMemberKraId || !assignKraMemberModal) return;
     const member = allMembers.find((m) => m.id === assignKraMemberModal);
     const kra = allKras.find((k) => k.id === assignKraMemberKraId);
-    if (member && kra) addLog("assign", "KRA", kra.title, `Assigned to ${member.name}`);
-    setAssignKraMemberKraId(""); setAssignKraMemberModal(null);
+    if (member && kra)
+      addLog("assign", "KRA", kra.title, `Assigned to ${member.name}`);
+    setAssignKraMemberKraId("");
+    setAssignKraMemberModal(null);
     showToast("KRA assigned to member");
   };
   const assignKpiToMember = () => {
     if (!assignKpiMemberKpiId || !assignKpiMemberModal) return;
     const member = allMembers.find((m) => m.id === assignKpiMemberModal);
     const kpi = allKpis.find((p) => p.id === assignKpiMemberKpiId);
-    if (member && kpi) addLog("assign", "KPI", kpi.name, `Assigned to ${member.name}`);
-    setAssignKpiMemberKpiId(""); setAssignKpiMemberModal(null);
+    if (member && kpi)
+      addLog("assign", "KPI", kpi.name, `Assigned to ${member.name}`);
+    setAssignKpiMemberKpiId("");
+    setAssignKpiMemberModal(null);
     showToast("KPI assigned to member");
   };
 
-  const filteredJds = allJds.filter((j) => j.title.toLowerCase().includes(jdSearch.toLowerCase()));
-  const jdsByDept = (dept) => allJds.filter((j) => j.dept === dept).map((j) => j.id);
-  const jdsByRole = (role) => allJds.filter((j) => j.title === role).map((j) => j.id);
-  const jdsByMember = (member) => allJds.filter((j) => j.assigned.includes(member)).map((j) => j.id);
+  const filteredJds = allJds.filter((j) =>
+    j.title.toLowerCase().includes(jdSearch.toLowerCase())
+  );
+  const jdsByDept = (dept) =>
+    allJds.filter((j) => j.dept === dept).map((j) => j.id);
+  const jdsByRole = (role) =>
+    allJds.filter((j) => j.title === role).map((j) => j.id);
+  const jdsByMember = (member) =>
+    allJds.filter((j) => j.assigned.includes(member)).map((j) => j.id);
   const uniqueDepts = [...new Set(allJds.map((j) => j.dept))];
   const uniqueRoles = [...new Set(allJds.map((j) => j.title))];
-  const uniqueMembers = [...new Set(allJds.flatMap((j) => j.assigned))];
-  const kpiDeptFor = (p) => p.departmentName || allJds.find((j) => sameId(j.id, p.jdId))?.dept || "";
+  const uniqueMembers = escalateUsers.map((u) => ({
+    value: String(u.id),
+    label: u.full_name,
+  }));
+  const kpiDeptFor = (p) =>
+    p.departmentName || allJds.find((j) => sameId(j.id, p.jdId))?.dept || "";
   const uniqueKpiDepts = [...new Set(allKpis.map(kpiDeptFor).filter(Boolean))];
-  const uniqueKpiRoles = [...new Set(allKpis.map((p) => p.jdTitleFromApi || jdTitle(p.jdId)).filter((role) => role && role !== "—"))];
-  const uniqueKpiMembers = [...new Set(allKpis.flatMap((p) => p.assigneeNames || []).filter(Boolean))];
+  const uniqueKpiRoles = [
+    ...new Set(
+      allKpis
+        .map((p) => p.jdTitleFromApi || jdTitle(p.jdId))
+        .filter((role) => role && role !== "—")
+    ),
+  ];
+  const uniqueKpiMembers = [
+    ...new Set(allKpis.flatMap((p) => p.assigneeNames || []).filter(Boolean)),
+  ];
 
-  const applyListFilters = (items, deptF, roleF, memberF, searchVal, searchField) => {
+  const applyListFilters = (
+    items,
+    deptF,
+    roleF,
+    memberF,
+    searchVal,
+    searchField
+  ) => {
     return items.filter((item) => {
-      const matchSearch = item[searchField].toLowerCase().includes(searchVal.toLowerCase());
+      const matchSearch = item[searchField]
+        .toLowerCase()
+        .includes(searchVal.toLowerCase());
       const matchDept = deptF === "all" || jdsByDept(deptF).includes(item.jdId);
       const matchRole = roleF === "all" || jdsByRole(roleF).includes(item.jdId);
-      const matchMember = memberF === "all" || jdsByMember(memberF).includes(item.jdId);
+      const matchMember =
+        memberF === "all" || jdsByMember(memberF).includes(item.jdId);
       return matchSearch && matchDept && matchRole && matchMember;
     });
   };
-  const filteredKras = applyListFilters(allKras, kraDeptFilter, kraRoleFilter, kraMemberFilter, kraSearch, "title");
+  const filteredKras = applyListFilters(
+    allKras,
+    kraDeptFilter,
+    kraRoleFilter,
+    kraMemberFilter,
+    kraSearch,
+    "title"
+  );
   const filteredKpis = allKpis.filter((item) => {
-    const matchSearch = String(item.name || "").toLowerCase().includes(kpiSearch.toLowerCase());
+    const matchSearch = String(item.name || "")
+      .toLowerCase()
+      .includes(kpiSearch.toLowerCase());
     const itemDept = kpiDeptFor(item);
     const itemRole = item.jdTitleFromApi || jdTitle(item.jdId);
     const itemMembers = item.assigneeNames || [];
     const matchDept = kpiDeptFilter === "all" || itemDept === kpiDeptFilter;
     const matchRole = kpiRoleFilter === "all" || itemRole === kpiRoleFilter;
-    const matchMember = kpiMemberFilter === "all" || itemMembers.includes(kpiMemberFilter);
+    const matchMember =
+      kpiMemberFilter === "all" || itemMembers.includes(kpiMemberFilter);
     return matchSearch && matchDept && matchRole && matchMember;
   });
 
   const value = {
-    activeNav, setActiveNav, jobTab, setJobTab, view, setView, viewingJd, setViewingJd,
-    step, setStep, jdMethod, setJdMethod,
-    aiLoading, setAiLoading, kraAiDone, setKraAiDone, kpiAiLoading, setKpiAiLoading, kpiAiDone, setKpiAiDone,
-    allJds, setAllJds, allKras, setAllKras, allKpis, setAllKpis,
-    kpisLoading, kpisError, kpisSaving, loadKpis, refreshKpis,
-    kpiModalJdsLoading, kpiModalJdsError, kpiModalKras, kpiModalKrasLoading, kpiModalKrasError,
-    kpiKraSearch, setKpiKraSearch,
-    jdSearch, setJdSearch, kraSearch, setKraSearch, kpiSearch, setKpiSearch,
-    assignModal, setAssignModal, assignName, setAssignName,
-    expandedKra, setExpandedKra,
-    showAddKra, setShowAddKra, showAddKpi, setShowAddKpi, newKra, setNewKra, newKpi, setNewKpi,
-    kraDeptFilter, setKraDeptFilter, kraRoleFilter, setKraRoleFilter, kraMemberFilter, setKraMemberFilter,
-    kpiDeptFilter, setKpiDeptFilter, kpiRoleFilter, setKpiRoleFilter, kpiMemberFilter, setKpiMemberFilter,
-    kraViewMode, setKraViewMode, kpiViewMode, setKpiViewMode,
-    actionMenuJd, setActionMenuJd, actionMenuMember, setActionMenuMember,
-    editingJd, setEditingJd, editForm, setEditForm, ef,
-    setupTab, setSetupTab, logoPreview, setLogoPreview,
-    departments, setDepartments, showDeptModal, setShowDeptModal,
-    editingDept, setEditingDept, deptSearch, setDeptSearch, deptForm, setDeptForm, fileRef,
-    allMembers, setAllMembers, memberSearch, setMemberSearch,
-    memberDeptFilter, setMemberDeptFilter, memberStatusFilter, setMemberStatusFilter,
-    memberGroupView, setMemberGroupView, viewingMember, setViewingMember,
-    showInviteModal, setShowInviteModal, inviteMode, setInviteMode,
-    inviteRows, setInviteRows, editingMember, setEditingMember, editMemberForm, setEditMemberForm,
-    assignKraMemberModal, setAssignKraMemberModal, assignKraMemberKraId, setAssignKraMemberKraId,
-    assignKpiMemberModal, setAssignKpiMemberModal, assignKpiMemberKpiId, setAssignKpiMemberKpiId,
-    customUnits, setCustomUnits, newUnitInput, setNewUnitInput,
-    unitsLoading, unitsSaving, unitsError,
-    activityLogs, setActivityLogs,
-    logsLoading, logsError, logsPage, logsMeta, loadActivityLogs,
-    editingKraId, setEditingKraId, editKraForm, setEditKraForm,
-    editingKpiId, setEditingKpiId, editKpiForm, setEditKpiForm,
-    assignKraModal, setAssignKraModal, assignKraName, setAssignKraName,
-    assignKpiModal, setAssignKpiModal, assignKpiName, setAssignKpiName,
-    assignKpiUserIds, setAssignKpiUserIds, kpiAssignUsers, kpiAssignUsersLoading, kpiAssignUsersError, loadKpiAssignUsers,
-    jobForm, setJobForm, formKras, setFormKras, formKpis, setFormKpis, sf,
-    jdTitle, kraName, kraCountFor, kpiCountFor, krasForJd, initials, totalKpiWeight,
-    simulateAiJd, simulateAiKras, simulateAiKpis,
-    addFormKra, updFormKra, remFormKra, addFormKpi, updFormKpi, remFormKpi, canNext,
-    saveJd, publishJd, startEditJd, saveEditJd, cancelEditJd, resetCreate,
-    assignUser, saveNewKra, saveNewKpi, addLog,
-    toggleKraStatus, toggleKpiStatus, openEditKra, saveEditKra, openEditKpi, saveEditKpi,
-    assignToKra, assignToKpi, addCustomUnit, removeCustomUnit,
-    handleLogoUpload, openDeptModal, saveDept, deleteDept,
-    openInvite, updateInviteRow, addInviteRow, removeInviteRow, sendInvites,
-    openEditMember, saveEditMember, toggleMemberStatus, deleteMember,
-    assignKraToMember, assignKpiToMember,
-    filteredJds, filteredKras, filteredKpis, filteredDepts,
-    filteredMembers, groupedMembers, ungrouped, memberDepts,
-    uniqueDepts, uniqueRoles, uniqueMembers, uniqueKpiDepts, uniqueKpiRoles, uniqueKpiMembers,
+    activeNav,
+    setActiveNav,
+    jobTab,
+    setJobTab,
+    view,
+    setView,
+    viewingJd,
+    setViewingJd,
+    step,
+    setStep,
+    jdMethod,
+    setJdMethod,
+    aiLoading,
+    setAiLoading,
+    kraAiDone,
+    setKraAiDone,
+    kpiAiLoading,
+    setKpiAiLoading,
+    kpiAiDone,
+    setKpiAiDone,
+    allJds,
+    setAllJds,
+    allKras,
+    setAllKras,
+    allKpis,
+    setAllKpis,
+    kpisLoading,
+    kpisError,
+    kpisSaving,
+    loadKpis,
+    refreshKpis,
+    kpiModalJdsLoading,
+    kpiModalJdsError,
+    kpiModalKras,
+    kpiModalKrasLoading,
+    kpiModalKrasError,
+    kpiKraSearch,
+    setKpiKraSearch,
+    jdSearch,
+    setJdSearch,
+    kraSearch,
+    setKraSearch,
+    kpiSearch,
+    setKpiSearch,
+    assignModal,
+    setAssignModal,
+    assignUserId,
+    setAssignUserId,
+    setAssignUserName,
+    expandedKra,
+    setExpandedKra,
+    showAddKra,
+    setShowAddKra,
+    krasSaving,
+    showAddKpi,
+    setShowAddKpi,
+    newKra,
+    setNewKra,
+    newKpi,
+    setNewKpi,
+    kraDeptFilter,
+    setKraDeptFilter,
+    kraRoleFilter,
+    setKraRoleFilter,
+    kraMemberFilter,
+    setKraMemberFilter,
+    kpiDeptFilter,
+    setKpiDeptFilter,
+    kpiRoleFilter,
+    setKpiRoleFilter,
+    kpiMemberFilter,
+    setKpiMemberFilter,
+    kraViewMode,
+    setKraViewMode,
+    kpiViewMode,
+    setKpiViewMode,
+    actionMenuJd,
+    setActionMenuJd,
+    actionMenuMember,
+    setActionMenuMember,
+    editingJd,
+    setEditingJd,
+    editForm,
+    setEditForm,
+    ef,
+    setupTab,
+    setSetupTab,
+    logoPreview,
+    setLogoPreview,
+    departments,
+    setDepartments,
+    showDeptModal,
+    setShowDeptModal,
+    editingDept,
+    setEditingDept,
+    deptSearch,
+    setDeptSearch,
+    deptForm,
+    setDeptForm,
+    fileRef,
+    allMembers,
+    setAllMembers,
+    memberSearch,
+    setMemberSearch,
+    memberDeptFilter,
+    setMemberDeptFilter,
+    memberStatusFilter,
+    setMemberStatusFilter,
+    memberGroupView,
+    setMemberGroupView,
+    viewingMember,
+    setViewingMember,
+    showInviteModal,
+    setShowInviteModal,
+    inviteMode,
+    setInviteMode,
+    inviteRows,
+    setInviteRows,
+    editingMember,
+    setEditingMember,
+    editMemberForm,
+    setEditMemberForm,
+    assignKraMemberModal,
+    setAssignKraMemberModal,
+    assignKraMemberKraId,
+    setAssignKraMemberKraId,
+    assignKpiMemberModal,
+    setAssignKpiMemberModal,
+    assignKpiMemberKpiId,
+    setAssignKpiMemberKpiId,
+    customUnits,
+    setCustomUnits,
+    newUnitInput,
+    setNewUnitInput,
+    unitsLoading,
+    unitsSaving,
+    unitsError,
+    activityLogs,
+    setActivityLogs,
+    logsLoading,
+    logsError,
+    logsPage,
+    logsMeta,
+    loadActivityLogs,
+    editingKraId,
+    setEditingKraId,
+    editKraForm,
+    setEditKraForm,
+    editingKpiId,
+    setEditingKpiId,
+    editKpiForm,
+    setEditKpiForm,
+    assignKraModal,
+    setAssignKraModal,
+    assignKraName,
+    setAssignKraName,
+    assignKpiModal,
+    setAssignKpiModal,
+    assignKpiName,
+    setAssignKpiName,
+    assignKpiUserIds,
+    setAssignKpiUserIds,
+    kpiAssignUsers,
+    kpiAssignUsersLoading,
+    kpiAssignUsersError,
+    loadKpiAssignUsers,
+    jobForm,
+    setJobForm,
+    formKras,
+    setFormKras,
+    formKpis,
+    setFormKpis,
+    sf,
+    jdTitle,
+    kraName,
+    kraCountFor,
+    kpiCountFor,
+    krasForJd,
+    initials,
+    totalKpiWeight,
+    simulateAiJd,
+    simulateAiKras,
+    simulateAiKpis,
+    addFormKra,
+    updFormKra,
+    remFormKra,
+    addFormKpi,
+    updFormKpi,
+    remFormKpi,
+    canNext,
+    saveJd,
+    publishJd,
+    startEditJd,
+    saveEditJd,
+    cancelEditJd,
+    resetCreate,
+    assignUser,
+    saveNewKra,
+    saveNewKpi,
+    addLog,
+    toggleKraStatus,
+    toggleKpiStatus,
+    openEditKra,
+    saveEditKra,
+    openEditKpi,
+    saveEditKpi,
+    assignToKra,
+    assignToKpi,
+    addCustomUnit,
+    removeCustomUnit,
+    handleLogoUpload,
+    openDeptModal,
+    saveDept,
+    deleteDept,
+    openInvite,
+    updateInviteRow,
+    addInviteRow,
+    removeInviteRow,
+    sendInvites,
+    openEditMember,
+    saveEditMember,
+    toggleMemberStatus,
+    deleteMember,
+    assignKraToMember,
+    assignKpiToMember,
+    filteredJds,
+    filteredKras,
+    filteredKpis,
+    filteredDepts,
+    filteredMembers,
+    groupedMembers,
+    ungrouped,
+    memberDepts,
+    uniqueDepts,
+    uniqueRoles,
+    uniqueMembers,
+    escalateUsers,
+    uniqueKpiDepts,
+    uniqueKpiRoles,
+    uniqueKpiMembers,
   };
 
   return <JobsContext.Provider value={value}>{children}</JobsContext.Provider>;

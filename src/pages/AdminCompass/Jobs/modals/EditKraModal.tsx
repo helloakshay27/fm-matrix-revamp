@@ -1,11 +1,26 @@
 // @ts-nocheck
+import { useQueryClient } from "@tanstack/react-query";
 import { useJobs } from "../JobsContext";
 import { T } from "../constants";
 import { Fld, FI, FT, FS, Btn } from "../components/UI";
 
 export default function EditKraModal() {
-  const { editingKraId, setEditingKraId, editKraForm, setEditKraForm, saveEditKra } = useJobs();
+  const {
+    editingKraId,
+    setEditingKraId,
+    editKraForm,
+    setEditKraForm,
+    krasSaving,
+    saveEditKra,
+  } = useJobs();
+  const queryClient = useQueryClient();
   if (!editingKraId) return null;
+
+  const handleSave = async () => {
+    await saveEditKra();
+    queryClient.invalidateQueries({ queryKey: ["kras-list"] });
+  };
+
   return (
     <div
       style={{
@@ -125,8 +140,8 @@ export default function EditKraModal() {
           }}
         >
           <Btn onClick={() => setEditingKraId(null)}>Cancel</Btn>
-          <Btn primary onClick={saveEditKra}>
-            Save Changes
+          <Btn primary onClick={handleSave} disabled={krasSaving}>
+            {krasSaving ? "Saving…" : "Save Changes"}
           </Btn>
         </div>
       </div>

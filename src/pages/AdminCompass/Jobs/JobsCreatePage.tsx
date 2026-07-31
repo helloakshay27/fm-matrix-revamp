@@ -1,15 +1,30 @@
 // @ts-nocheck
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { useJobs } from "./JobsContext";
 import { T } from "./constants";
 import { I, ico } from "./icons";
 import { Btn } from "./components/UI";
 import Stepper from "./components/Stepper";
 import { StepDetails, StepDesc, StepKra, StepKpi, StepReview } from "./components/JobFormSteps";
+import { useCreateJob } from "./hooks/useCreateJob";
+import { useDepartments } from "./hooks/useDepartments";
+import { buildJobPayload } from "./api/jobsApi";
 
 export default function JobsCreatePage() {
   const navigate = useNavigate();
-  const { step, setStep, canNext, saveJd, resetCreate } = useJobs();
+  const { step, setStep, canNext, jobForm, formKras, formKpis, resetCreate } = useJobs();
+  const createJob = useCreateJob({
+    onSuccess: () => {
+      toast.success("Job description created successfully");
+      resetCreate();
+      navigate("/admin-compass/jobs");
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to create job description");
+    },
+  });
+  const { data: departments } = useDepartments();
 
   const handleCancel = () => {
     resetCreate();
@@ -17,8 +32,8 @@ export default function JobsCreatePage() {
   };
 
   const handleSave = () => {
-    saveJd();
-    navigate("/admin-compass/jobs");
+    const payload = buildJobPayload(jobForm, formKras, formKpis, departments ?? []);
+    createJob.mutate(payload);
   };
 
   return (
@@ -77,8 +92,8 @@ export default function JobsCreatePage() {
               Continue <I d="M9 18l6-6-6-6" size={14} stroke="#fff" />
             </Btn>
           ) : (
-            <Btn primary onClick={handleSave}>
-              <I d="M20 6L9 17l-5-5" size={14} stroke="#fff" /> Save
+            <Btn primary disabled={createJob.isPending} onClick={handleSave}>
+              <I d="M20 6L9 17l-5-5" size={14} stroke="#fff" /> {createJob.isPending ? "Saving..." : "Save"}
             </Btn>
           )}
         </div>

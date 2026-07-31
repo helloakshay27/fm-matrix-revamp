@@ -5,13 +5,16 @@ import {
   SH, FI, FS, FT, Fld, Btn, Loader, AiBar, StatusPill,
   card, g2, g3, COLORS, aBtn, smBtn, dashedBtn, gBtn,
 } from "../components/UI";
+import { useDepartments } from "../hooks/useDepartments";
+import { useEscalateUsers } from "../hooks/useEscalateUsers";
 import {
-  T, DEPARTMENTS, EMP_TYPES, EXP_LEVELS,
-  TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE,
+  T, EMP_TYPES, EXP_LEVELS,
+  KPI_UNITS, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE,
 } from "../constants";
 
 export function StepDetails() {
   const { jobForm, sf } = useJobs();
+  const { data: departments = [], isLoading: deptLoading } = useDepartments();
 
   return (
     <div style={card}>
@@ -29,10 +32,17 @@ export function StepDetails() {
           />
         </Fld>
         <Fld label="Department *">
-          <FS value={jobForm.dept} onChange={(e) => sf("dept", e.target.value)}>
-            <option value="">Select department</option>
-            {DEPARTMENTS.map((d) => (
-              <option key={d}>{d}</option>
+          <FS
+            value={jobForm.deptId || jobForm.dept || ""}
+            onChange={(e) => {
+              const selected = departments.find((d) => String(d.id) === String(e.target.value));
+              sf("deptId", e.target.value);
+              sf("dept", selected?.department_name || selected?.name || selected?.title || "");
+            }}
+          >
+            <option value="">{deptLoading ? "Loading..." : "Select department"}</option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.id}>{d.department_name || d.name || d.title || "Unnamed department"}</option>
             ))}
           </FS>
         </Fld>
@@ -317,9 +327,11 @@ export function StepDesc() {
 
 export function StepKra() {
   const {
-    kraAiDone, aiLoading, formKras, allMembers,
+    kraAiDone, aiLoading, formKras,
     addFormKra, updFormKra, remFormKra, simulateAiKras,
   } = useJobs();
+
+  const { data: users, isLoading: usersLoading } = useEscalateUsers();
 
   return (
     <div>
@@ -396,10 +408,12 @@ export function StepKra() {
                         updFormKra(kra.id, "assignee", e.target.value)
                       }
                     >
-                      <option value="">Select assignee</option>
-                      {allMembers.map((m) => (
-                        <option key={m.id} value={m.name}>
-                          {m.name}
+                      <option value="">
+                        {usersLoading ? "Loading users..." : "Select assignee"}
+                      </option>
+                      {(users || []).map((u) => (
+                        <option key={u.id} value={u.full_name}>
+                          {u.full_name}
                         </option>
                       ))}
                     </FS>
@@ -483,9 +497,11 @@ export function StepKra() {
 
 export function StepKpi() {
   const {
-    kpiAiDone, kpiAiLoading, formKras, formKpis, totalKpiWeight, allMembers,
+    kpiAiDone, kpiAiLoading, formKras, formKpis, totalKpiWeight,
     addFormKpi, updFormKpi, remFormKpi, simulateAiKpis, customUnits,
   } = useJobs();
+
+  const { data: users, isLoading: usersLoading } = useEscalateUsers();
 
   return (
     <div>
@@ -690,10 +706,12 @@ export function StepKpi() {
                           updFormKpi(kpi.id, "assignee", e.target.value)
                         }
                       >
-                        <option value="">Select assignee</option>
-                        {allMembers.map((m) => (
-                          <option key={m.id} value={m.name}>
-                            {m.name}
+                        <option value="">
+                          {usersLoading ? "Loading users..." : "Select assignee"}
+                        </option>
+                        {(users || []).map((u) => (
+                          <option key={u.id} value={u.full_name}>
+                            {u.full_name}
                           </option>
                         ))}
                       </FS>

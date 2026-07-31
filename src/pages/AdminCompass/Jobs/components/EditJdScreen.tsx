@@ -1,31 +1,59 @@
 // @ts-nocheck
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { useJobs } from "../JobsContext";
-import { T, COLORS, DEPARTMENTS, EMP_TYPES, EXP_LEVELS } from "../constants";
+import { useDepartments } from "../hooks/useDepartments";
+import { useUpdateJob } from "../hooks/useUpdateJob";
+import { buildEditJobPayload } from "../api/jobsApi";
+import { T, COLORS, EMP_TYPES, EXP_LEVELS } from "../constants";
 import { I, ico } from "../icons";
 import { card, SH, FI, FS, FT, Fld, Btn, StatusPill } from "./UI";
 
-export default function EditJdScreen() {
+export default function EditJdScreen({ jd: propJd, kras: propKras, kpis: propKpis }) {
   const navigate = useNavigate();
+  const { data: departments = [], isLoading: deptLoading } = useDepartments();
   const {
-    allJds, editingJd, editForm, ef,
-    saveEditJd, publishJd,
-    allKras, allKpis,
+    editingJd, editForm, ef,
+    publishJd,
+    allJds, allKras, allKpis,
   } = useJobs();
+  const updateJob = useUpdateJob({
+    onSuccess: (_data, variables) => {
+      toast.success("Job description updated successfully");
+      if (variables?.andPublish) {
+        publishJd(editingJd || jd.id);
+      }
+      navigate("/admin-compass/jobs");
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to update job description");
+    },
+  });
 
-  const jd = allJds.find((j) => j.id === editingJd);
+  const fromProps = propJd;
+  const linkedKras = propKras || allKras.filter((k) => k.jdId === editingJd);
+  const linkedKpis = propKpis || allKpis.filter((p) => p.jdId === editingJd);
+
+  const jd = fromProps ? propJd : allJds.find((j) => j.id === editingJd);
   if (!jd) return null;
 
   const handleBack = () => navigate("/admin-compass/jobs");
-  const handleSave = () => {
-    saveEditJd();
-    navigate("/admin-compass/jobs");
+  const selectedDeptValue = editForm.deptId || departments.find((d) => {
+    const label = [d.department_name, d.name, d.title].find(Boolean) || "";
+    return String(label).trim().toLowerCase() === String(editForm.dept || "").trim().toLowerCase();
+  })?.id || "";
+
+  const doSave = (andPublish) => {
+    const payload = buildEditJobPayload(editForm, departments);
+    updateJob.mutate({
+      jobId: editingJd || jd.id,
+      payload,
+      andPublish,
+    });
   };
-  const handleSaveAndPublish = () => {
-    saveEditJd();
-    publishJd(editingJd);
-    navigate("/admin-compass/jobs");
-  };
+
+  const handleSave = () => doSave(false);
+  const handleSaveAndPublish = () => doSave(true);
 
   return (
     <div>
@@ -71,9 +99,10 @@ export default function EditJdScreen() {
           {jd.status === "draft" && (
             <Btn
               primary
+              disabled={updateJob.isPending}
               onClick={handleSaveAndPublish}
             >
-              {ico.power} Save & Publish
+              {ico.power} {updateJob.isPending ? "Saving..." : "Save & Publish"}
             </Btn>
           )}
         </div>
@@ -94,12 +123,16 @@ export default function EditJdScreen() {
           </Fld>
           <Fld label="Department *">
             <FS
-              value={editForm.dept}
-              onChange={(e) => ef("dept", e.target.value)}
+              value={selectedDeptValue}
+              onChange={(e) => {
+                const selected = departments.find((d) => String(d.id) === String(e.target.value));
+                ef("deptId", e.target.value);
+                ef("dept", selected?.department_name || selected?.name || selected?.title || "");
+              }}
             >
-              <option value="">Select department</option>
-              {DEPARTMENTS.map((d) => (
-                <option key={d}>{d}</option>
+              <option value="">{deptLoading ? "Loading..." : "Select department"}</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>{d.department_name || d.name || d.title || "Unnamed department"}</option>
               ))}
             </FS>
           </Fld>
@@ -211,99 +244,97 @@ export default function EditJdScreen() {
           title="Linked KRAs & KPIs"
           sub="These are managed from the KRA and KPI tabs. Shown here for reference."
         />
-        {allKras.filter((k) => k.jdId === editingJd).length === 0 ? (
+        {linkedKras.length === 0 ? (
           <p style={{ fontSize: 13, color: T.inkMuted, margin: 0 }}>
             No KRAs linked to this role yet.
           </p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {allKras
-              .filter((k) => k.jdId === editingJd)
-              .map((kra, i) => {
-                const kraKpis = allKpis.filter((p) => p.kraId === kra.id);
-                return (
+            {linkedKras.map((kra, i) => {
+              const kraKpis = linkedKpis.filter((p) => p.kraId === kra.id);
+              return (
+                <div
+                  key={kra.id}
+                  style={{
+                    padding: "14px 18px",
+                    borderRadius: T.rmd,
+                    background: T.raised,
+                    border: `1px solid ${T.borderSoft}`,
+                    position: "relative",
+                    overflow: "hidden",
+                  }}
+                >
                   <div
-                    key={kra.id}
                     style={{
-                      padding: "14px 18px",
-                      borderRadius: T.rmd,
-                      background: T.raised,
-                      border: `1px solid ${T.borderSoft}`,
-                      position: "relative",
-                      overflow: "hidden",
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: 4,
+                      height: "100%",
+                      background: COLORS[i % 5],
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
                     }}
                   >
                     <div
                       style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        width: 4,
-                        height: "100%",
-                        background: COLORS[i % 5],
-                      }}
-                    />
-                    <div
-                      style={{
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "space-between",
+                        gap: 8,
                       }}
                     >
                       <div
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
+                          width: 20,
+                          height: 20,
+                          borderRadius: "50%",
+                          background: COLORS[i % 5],
+                          display: "grid",
+                          placeItems: "center",
+                          fontSize: 9,
+                          fontWeight: 700,
+                          flexShrink: 0,
                         }}
                       >
-                        <div
-                          style={{
-                            width: 20,
-                            height: 20,
-                            borderRadius: "50%",
-                            background: COLORS[i % 5],
-                            display: "grid",
-                            placeItems: "center",
-                            fontSize: 9,
-                            fontWeight: 700,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {i + 1}
-                        </div>
-                        <span style={{ fontSize: 13, fontWeight: 700 }}>
-                          {kra.title}
-                        </span>
-                        <StatusPill s={kra.status} />
+                        {i + 1}
                       </div>
-                      <div
+                      <span style={{ fontSize: 13, fontWeight: 700 }}>
+                        {kra.title}
+                      </span>
+                      <StatusPill s={kra.status} />
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        fontSize: 11.5,
+                      }}
+                    >
+                      <span
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          fontSize: 11.5,
+                          padding: "2px 8px",
+                          borderRadius: 999,
+                          background: T.surface,
+                          fontWeight: 700,
                         }}
                       >
-                        <span
-                          style={{
-                            padding: "2px 8px",
-                            borderRadius: 999,
-                            background: T.surface,
-                            fontWeight: 700,
-                          }}
-                        >
-                          {kra.weightage || 0}%
-                        </span>
-                        <span style={{ color: T.inkMuted }}>
-                          {kraKpis.length} KPI
-                          {kraKpis.length !== 1 ? "s" : ""}
-                        </span>
-                      </div>
+                        {kra.weightage || 0}%
+                      </span>
+                      <span style={{ color: T.inkMuted }}>
+                        {kraKpis.length} KPI
+                        {kraKpis.length !== 1 ? "s" : ""}
+                      </span>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -318,9 +349,9 @@ export default function EditJdScreen() {
           borderTop: `1px solid ${T.borderSoft}`,
         }}
       >
-        <Btn onClick={handleBack}>Cancel</Btn>
-        <Btn primary onClick={handleSave}>
-          <I d="M20 6L9 17l-5-5" size={14} stroke="#fff" /> Save Changes
+        <Btn onClick={handleBack} disabled={updateJob.isPending}>Cancel</Btn>
+        <Btn primary disabled={updateJob.isPending} onClick={handleSave}>
+          <I d="M20 6L9 17l-5-5" size={14} stroke="#fff" /> {updateJob.isPending ? "Saving..." : "Save Changes"}
         </Btn>
       </div>
     </div>
