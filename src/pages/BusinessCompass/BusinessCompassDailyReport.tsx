@@ -222,7 +222,6 @@ const ORIGINAL_DATA_OMIT_KEYS = [
   "completion_percent",
   "created_by_name",
   "milestone_title",
-  "expected_start_date",
   "task_allocation_times",
   // issue-side bookkeeping
   "url",
@@ -234,7 +233,6 @@ const ORIGINAL_DATA_OMIT_KEYS = [
   "created_by_id",
   "issue_type",
   "issue_type_name",
-  "start_date",
   "started_at",
   "resource_id",
   "resource_type",
@@ -2816,6 +2814,19 @@ const BusinessCompassDailyReport: React.FC = () => {
         originalData: sanitizeOriginalData(item.originalData),
       })),
     ].filter((a) => a.title !== "");
+
+    // Non-completed (unchecked) accomplishments
+    const nonCompletedAccomplishmentsPayload = visibleAccomplishments
+      .filter((a) => !a.completed)
+      .map((a) => ({
+        title: cleanReportText(a.text),
+        star: a.starred,
+        ...(a.ownerId != null
+          ? { owner_id: a.ownerId, owner_name: a.ownerName || "" }
+          : {}),
+      }))
+      .filter((a) => a.title !== "");
+
     const manualTomorrowPlan = planningItems
       .map((p) => ({
         title: cleanReportText(p.text),
@@ -2929,6 +2940,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                 base64: f.base64,
               })),
             },
+            non_completed_accomplishments: nonCompletedAccomplishmentsPayload,
             tasks_issues: mergedTasksIssues
               .filter(
                 (item) =>
@@ -2950,6 +2962,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                     : item.status,
                 type: item.type,
                 source_id: item.originalData?.id,
+                start_date: item.originalData?.estimated_start_date || item.originalData?.start_date || null,
+                end_date: item.originalData?.target_date || item.originalData?.end_date || null,
               })),
             tomorrow_plan_date: getNextWorkingDay(startDate),
             tomorrow_plan: tomorrowPlanPayload,
