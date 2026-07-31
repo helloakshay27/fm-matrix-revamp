@@ -1138,15 +1138,55 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   // Derive completed-today items that auto-populate Today's Accomplishments
   const autoAddedAccomplishments = useMemo(() => {
-    return mergedTasksIssues.filter(
-      (item) =>
+    const normalizeDate = (value: unknown) => {
+      if (!value) return null;
+      if (value instanceof Date) {
+        return value.toISOString().slice(0, 10);
+      }
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+          return trimmed.slice(0, 10);
+        }
+        const parsed = new Date(trimmed);
+        if (!Number.isNaN(parsed.getTime())) {
+          return parsed.toISOString().slice(0, 10);
+        }
+      }
+      return null;
+    };
+
+    return mergedTasksIssues.filter((item) => {
+      const originalData = item?.originalData || {};
+      const completedAt = normalizeDate(
+        originalData.completed_at ??
+        originalData.completed_at_date ??
+        originalData.completedAt ??
+        item.completed_at ??
+        item.completedAt
+      );
+      const targetDate = normalizeDate(
+        originalData.target_date ??
+        originalData.targetDate ??
+        originalData.due_date ??
+        originalData.end_date ??
+        item.target_date ??
+        item.targetDate
+      );
+      const isRelevantToReportDate =
+        (completedAt && completedAt === startDate) ||
+        (targetDate && targetDate === startDate);
+
+      return (
         (item.status === "completed" ||
           item.status === "closed" ||
           item.status === "done") &&
         !hiddenAutoIds.has(item.id) &&
         !!(item.title || "").trim() &&
-        !addedToTomorrowIds.has(item.id)
-    );
+        !addedToTomorrowIds.has(item.id) &&
+        isRelevantToReportDate
+      );
+    });
   }, [mergedTasksIssues, startDate, hiddenAutoIds, addedToTomorrowIds]);
 
   // Today's task/issue/todo records (any status) whose title exactly matches a manually-typed
