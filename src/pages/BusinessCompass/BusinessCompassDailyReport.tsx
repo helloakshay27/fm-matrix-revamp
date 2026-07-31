@@ -2816,6 +2816,19 @@ const BusinessCompassDailyReport: React.FC = () => {
         originalData: sanitizeOriginalData(item.originalData),
       })),
     ].filter((a) => a.title !== "");
+
+    // Non-completed (unchecked) accomplishments
+    const nonCompletedAccomplishmentsPayload = visibleAccomplishments
+      .filter((a) => !a.completed)
+      .map((a) => ({
+        title: cleanReportText(a.text),
+        star: a.starred,
+        ...(a.ownerId != null
+          ? { owner_id: a.ownerId, owner_name: a.ownerName || "" }
+          : {}),
+      }))
+      .filter((a) => a.title !== "");
+
     const manualTomorrowPlan = planningItems
       .map((p) => ({
         title: cleanReportText(p.text),
@@ -2929,6 +2942,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                 base64: f.base64,
               })),
             },
+            non_completed_accomplishments: nonCompletedAccomplishmentsPayload,
             tasks_issues: mergedTasksIssues
               .filter(
                 (item) =>
