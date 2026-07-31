@@ -222,7 +222,6 @@ const ORIGINAL_DATA_OMIT_KEYS = [
   "completion_percent",
   "created_by_name",
   "milestone_title",
-  "expected_start_date",
   "task_allocation_times",
   // issue-side bookkeeping
   "url",
@@ -234,7 +233,6 @@ const ORIGINAL_DATA_OMIT_KEYS = [
   "created_by_id",
   "issue_type",
   "issue_type_name",
-  "start_date",
   "started_at",
   "resource_id",
   "resource_type",
