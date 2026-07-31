@@ -11,9 +11,6 @@ import {
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  SEED_JDS,
-  SEED_KRAS,
-  SEED_KPIS,
   AI_KRAS,
   genAiKpis,
   DEPARTMENTS,
@@ -52,8 +49,10 @@ export function JobsProvider({ children }) {
   const [kraAiDone, setKraAiDone] = useState(false);
   const [kpiAiLoading, setKpiAiLoading] = useState(false);
   const [kpiAiDone, setKpiAiDone] = useState(false);
-  const [allJds, setAllJds] = useState(SEED_JDS);
-  const [allKras, setAllKras] = useState(SEED_KRAS);
+  // Seed/demo rows nahi — dono lists API se aati hain. (Seed ke ids real ids se
+  // takra jaate the, jisse KPI list me galat JD/KRA naam dikh sakte the.)
+  const [allJds, setAllJds] = useState([]);
+  const [allKras, setAllKras] = useState([]);
   const [allKpis, setAllKpis] = useState([]);
   const [kpisLoading, setKpisLoading] = useState(false);
   const [kpisError, setKpisError] = useState(null);
@@ -647,6 +646,21 @@ export function JobsProvider({ children }) {
     loadKpiModalJds();
   }, [jobTab, loadKpiModalJds]);
 
+  // KPI list "Linked KRA" column ke liye KRAs bhi chahiye — tab khulte hi
+  // ek baar fetch kar lete hain (mergeKras duplicate rows overwrite karta hai).
+  useEffect(() => {
+    if (jobTab !== "kpi") return;
+    let active = true;
+    fetchAllKras()
+      .then((rows) => {
+        if (active && Array.isArray(rows)) mergeKras(rows);
+      })
+      .catch((err) => console.error("Failed to load KRAs for KPI tab:", err));
+    return () => {
+      active = false;
+    };
+  }, [jobTab, mergeKras]);
+
   useEffect(() => {
     if (!showAddKpi && !editingKpiId) {
       setKpiModalKras([]);
@@ -699,10 +713,24 @@ export function JobsProvider({ children }) {
       )
       .reduce((sum, kpi) => sum + (Number(kpi.weightage) || 0), 0);
 
-  const exceedsKraWeightage = (kraId, weightage, excludeKpiId = null) => {
+  // Save ke waqt total server se verify karte hain — `allKpis` sirf current
+  // search ka subset ho sakta hai, isliye local sum bharosemand nahi.
+  const exceedsKraWeightage = async (kraId, weightage, excludeKpiId = null) => {
     if (!kraId) return false;
     const next = Number(weightage) || 0;
-    const used = kraWeightageUsed(kraId, excludeKpiId);
+    let used = kraWeightageUsed(kraId, excludeKpiId);
+    try {
+      const rows = await fetchKpis({ kraId });
+      if (Array.isArray(rows))
+        used = rows
+          .filter(
+            (kpi) =>
+              excludeKpiId === null || !sameId(kpi.id, excludeKpiId)
+          )
+          .reduce((sum, kpi) => sum + (Number(kpi.weightage) || 0), 0);
+    } catch {
+      // Network fail — local total par hi fallback.
+    }
     if (used + next <= 100) return false;
     const kraTitle =
       allKras.find((k) => sameId(k.id, kraId))?.title || "this KRA";
@@ -716,8 +744,17 @@ export function JobsProvider({ children }) {
   };
 
   const saveNewKpi = async () => {
-    if (!newKpi.jdId || !newKpi.kraId || !newKpi.name || !newKpi.target) return;
-    if (exceedsKraWeightage(newKpi.kraId, newKpi.weightage)) return;
+    const missing = [
+      !newKpi.jdId && "Job Description",
+      !newKpi.kraId && "Linked KRA",
+      !String(newKpi.name || "").trim() && "KPI Name",
+      !String(newKpi.target || "").trim() && "Target Value",
+    ].filter(Boolean);
+    if (missing.length) {
+      toast.error(`Please fill: ${missing.join(", ")}`);
+      return;
+    }
+    if (await exceedsKraWeightage(newKpi.kraId, newKpi.weightage)) return;
     const selectedJd = allJds.find((j) => sameId(j.id, newKpi.jdId));
     const selectedKra = allKras.find((k) => sameId(k.id, newKpi.kraId));
     const payloadForm = {
@@ -960,8 +997,16 @@ export function JobsProvider({ children }) {
   };
 
   const saveEditKpi = async () => {
+    const missing = [
+      !String(editKpiForm.name || "").trim() && "KPI Name",
+      !String(editKpiForm.target ?? "").trim() && "Target Value",
+    ].filter(Boolean);
+    if (missing.length) {
+      toast.error(`Please fill: ${missing.join(", ")}`);
+      return;
+    }
     if (
-      exceedsKraWeightage(
+      await exceedsKraWeightage(
         editKpiForm.kraId,
         editKpiForm.weightage,
         editingKpiId

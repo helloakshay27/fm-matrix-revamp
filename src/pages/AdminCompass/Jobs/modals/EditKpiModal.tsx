@@ -11,7 +11,7 @@ export default function EditKpiModal() {
     editingKpiId, setEditingKpiId, editKpiForm, setEditKpiForm, customUnits, saveEditKpi,
     allJds, kpisSaving, kpiAssignUsers, kpiAssignUsersLoading,
     kpiModalJdsLoading, kpiModalJdsError, kpiModalKras, kpiModalKrasLoading, kpiModalKrasError,
-    kraWeightageUsed,
+    kraWeightageUsed, kraName,
   } = useJobs();
   if (!editingKpiId) return null;
   const assigneeOptions = kpiAssignUsers;
@@ -22,6 +22,16 @@ export default function EditKpiModal() {
   const kraRemainingWeightage = Math.max(0, 100 - kraUsedWeightage);
   // Search + list ek hi input me — MemberSearchSelect khud filter karta hai.
   const editKras = kpiModalKras.map((k) => ({ id: k.id, name: k.title }));
+  // KPI ki current KRA agar list me na ho (e.g. inactive ho gayi), tab bhi
+  // uska naam dikhna chahiye — warna field khali lagta hai.
+  if (
+    editKpiForm.kraId &&
+    !editKras.some((k) => String(k.id) === String(editKpiForm.kraId))
+  )
+    editKras.unshift({
+      id: editKpiForm.kraId,
+      name: kraName(editKpiForm.kraId),
+    });
   const departmentOptions = departments.map((d) => ({
     id: d.id,
     name: d.department_name || d.name || d.title || "Unnamed department",
