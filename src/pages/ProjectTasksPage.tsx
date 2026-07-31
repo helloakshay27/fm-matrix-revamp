@@ -783,7 +783,7 @@ const ProjectTasksPage = () => {
         const path = location.pathname;
         if (path.includes("/projects/") && path.includes("/milestones/")) {
             return "all";
-        } else if (path === "/vas/tasks") {
+        } else if (path === "/vas/tasks" || path === "/business-compass/tasks") {
             return "my";
         }
         return "all";
