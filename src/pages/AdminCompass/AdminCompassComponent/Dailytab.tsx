@@ -943,7 +943,8 @@ const TasksIssuesTodoCard = ({
     rows: any[],
     showMemberBadges: boolean,
     emptyText?: string,
-    itemProps?: (item: any) => React.HTMLAttributes<HTMLLIElement> | undefined
+    itemProps?: (item: any) => React.HTMLAttributes<HTMLLIElement> | undefined,
+    showMeta?: boolean
   ) => React.ReactNode;
   isAbsent?: boolean;
   // Makes each row draggable so it can be dropped into Tomorrow's Plan.
@@ -1107,7 +1108,9 @@ const TasksIssuesTodoCard = ({
                     bucketItems,
                     showMemberBadges,
                     undefined,
-                    itemProps
+                    itemProps,
+                    // Date / overdue / effort meta sirf isi column me
+                    true
                   )}
                 </div>
               );
@@ -2855,7 +2858,11 @@ const DailyTab = ({
     _showMemberBadge = false,
     emptyText = "None recorded.",
     // Optional per-row props — used to make the Tasks column rows draggable.
-    itemProps?: (item: any) => React.HTMLAttributes<HTMLLIElement> | undefined
+    itemProps?: (item: any) => React.HTMLAttributes<HTMLLIElement> | undefined,
+    // Date / overdue / effort / active time sirf Tasks, Issues & To-Do column
+    // me dikhti hai — Accomplishments, Tomorrow's Plan aur Not Accomplished
+    // Plan me nahi.
+    showMeta = false
   ) => {
     if (!items.length) {
       return <p className="px-1 py-2 text-xs text-neutral-300 italic">{emptyText}</p>;
@@ -2931,7 +2938,7 @@ const DailyTab = ({
                 )}
               </div>
               {/* Target date + overdue + estimated effort + active time */}
-              <ReportItemMeta item={item} />
+              {showMeta && <ReportItemMeta item={item} />}
             </li>
           );
         })}
