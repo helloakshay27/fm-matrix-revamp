@@ -353,6 +353,7 @@ const normalizeReportData = (rd: any) => {
       accomplishments: [],
       tasks_issues: [],
       tomorrow_plan: [],
+      not_accomplished_plan: [],
       big_win: null,
       self_rating: null,
       total_score: null,
@@ -369,10 +370,25 @@ const normalizeReportData = (rd: any) => {
     accomplishments = rd.accomplishments.items;
   }
 
+  // Not Accomplished Plan — API `non_completed_accomplishments` bhejta hai.
+  // Plain array aur `{ items: [...] }` dono shapes accept karte hain, aur
+  // purane/alternate key naam bhi, taki backend jo bheje wahi chal jaaye.
+  const notAccomplishedRaw =
+    rd.non_completed_accomplishments ??
+    rd.not_accomplished_plan ??
+    rd.not_accomplished ??
+    null;
+  const not_accomplished_plan: any[] = Array.isArray(notAccomplishedRaw)
+    ? notAccomplishedRaw
+    : Array.isArray(notAccomplishedRaw?.items)
+      ? notAccomplishedRaw.items
+      : [];
+
   return {
     accomplishments,
     tasks_issues: Array.isArray(rd.tasks_issues) ? rd.tasks_issues : [],
     tomorrow_plan: Array.isArray(rd.tomorrow_plan) ? rd.tomorrow_plan : [],
+    not_accomplished_plan,
     big_win: rd.big_win ?? null,
     self_rating: rd.self_rating ?? null,
     total_score: rd.total_score ?? null,
@@ -592,15 +608,19 @@ const getMemberId = (member: any) =>
 const getMemberFilterKey = (name: any) =>
   String(name || "").trim().toLowerCase();
 
-// Kaam kiska hai — API rows par `owner_name` aata hai, purane payloads me
-// `member` / `member_name` / `user_name`. `name` ko jaan-boojh kar chhoda hai:
-// kai items par wo title hota hai, owner nahi.
+// Kaam kiska hai — manually added rows par `owner_name` aata hai, purane
+// payloads me `member` / `member_name` / `user_name`. Task/issue se linked rows
+// par owner_name nahi hota; unka owner `originalData.responsible_person` me
+// hota hai. `name` ko jaan-boojh kar chhoda hai: kai items par wo title hota
+// hai, owner nahi.
 const getItemMemberName = (item: any) =>
   String(
     item?.member ||
     item?.member_name ||
     item?.owner_name ||
     item?.user_name ||
+    item?.originalData?.responsible_person ||
+    item?.responsible_person ||
     ""
   ).trim();
 
@@ -784,16 +804,17 @@ const parseDateValue = (value: any): Date | null => {
   return isNaN(dt.getTime()) ? null : dt;
 };
 
-// Date used to decide if an item falls inside the selected range:
-// created_at first (when the task/issue/todo was raised), target date as fallback.
-const getItemRangeDate = (item: any, detail?: any): Date | null => {
+// Start date of an item — explicit start_date if the task/issue/todo has one,
+// warna created_at (jab item raise hua).
+const getItemStartDateValue = (item: any, detail?: any): Date | null => {
   const d = item?.originalData || detail || {};
   return (
+    parseDateValue(item?.start_date) ||
+    parseDateValue(d?.start_date) ||
+    parseDateValue(item?.from_date) ||
+    parseDateValue(d?.from_date) ||
     parseDateValue(item?.created_at) ||
-    parseDateValue(d?.created_at) ||
-    parseDateValue(item?.target_date) ||
-    parseDateValue(d?.target_date) ||
-    parseDateValue(d?.updated_at)
+    parseDateValue(d?.created_at)
   );
 };
 
@@ -807,6 +828,50 @@ const getItemTargetDateValue = (item: any, detail?: any): Date | null => {
     parseDateValue(d?.due_date) ||
     parseDateValue(d?.end_date)
   );
+};
+
+// Row ke paas khud dono dates (start + end) hain? Na hon to detail fetch karke
+// dates laani padti hain.
+const itemHasOwnDates = (item: any): boolean => {
+  const d = item?.originalData || {};
+  const hasStart = !!(
+    item?.start_date ||
+    item?.from_date ||
+    item?.created_at ||
+    d?.start_date ||
+    d?.from_date ||
+    d?.created_at
+  );
+  const hasEnd = !!(
+    item?.target_date ||
+    item?.due_date ||
+    item?.end_date ||
+    d?.target_date ||
+    d?.due_date ||
+    d?.end_date
+  );
+  return hasStart && hasEnd;
+};
+
+// Range filter (7 / 14 / 30 days) item ke start aur end date par chalta hai:
+// item window me hai agar uska [start, end] span window se overlap karta ho.
+// End date missing ho to start ko hi end maan lete hain (aur ulta bhi).
+// Dono dates na hon to item window ka nahi maana jaata — filter ka matlab hai
+// ki sirf us window ke items dikhein, to undated rows bahar rehte hain.
+const isItemInRange = (
+  item: any,
+  detail: any,
+  windowStart: Date,
+  windowEnd: Date
+): boolean => {
+  const start = getItemStartDateValue(item, detail);
+  const end = getItemTargetDateValue(item, detail);
+  const effectiveStart = start || end;
+  const effectiveEnd = end || start;
+  if (!effectiveStart || !effectiveEnd) return false;
+  if (effectiveEnd.getTime() < windowStart.getTime()) return false;
+  if (effectiveStart.getTime() > windowEnd.getTime()) return false;
+  return true;
 };
 
 // Overdue = explicit overdue status, or a past target date on a not-done item.
@@ -855,12 +920,14 @@ const TASK_STATUS_BUCKETS = [
   },
 ];
 
-// Start of the window: today - (days - 1), i.e. last N days including today.
-const getRangeStartDate = (days: number) => {
+// Window = last N days including today: [today - (days - 1) 00:00, today 23:59].
+const getRangeWindow = (days: number) => {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
   start.setDate(start.getDate() - (days - 1));
-  return start;
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
 };
 
 const TasksIssuesTodoCard = ({
@@ -887,37 +954,44 @@ const TasksIssuesTodoCard = ({
 
   const sourceItems = isAbsent ? [] : items;
 
-  // tasks_issues rows from the daily_meeting API carry no dates, so pull
-  // created_at / target_date on demand (cached in itemDetailCache).
+  // tasks_issues rows from the daily_meeting API carry no dates, so pull the
+  // start (created_at/start_date) and end (target/due/end) dates on demand —
+  // range filter dono par depend karta hai (cached in itemDetailCache).
+  const pendingDetailItems = useMemo(
+    () =>
+      sourceItems
+        .map((item) => ({
+          item,
+          type: getViewSourceType(item),
+          id: getViewSourceId(item),
+        }))
+        .filter(
+          ({ item, type, id }) =>
+            !item?.originalData &&
+            !itemHasOwnDates(item) &&
+            !!id &&
+            ["task", "issue", "todo"].includes(type)
+        )
+        .map(({ type, id }) => ({ type, id, key: `${type}:${id}` })),
+    [sourceItems]
+  );
+
   useEffect(() => {
     let active = true;
-    const pending = sourceItems
-      .map((item) => {
-        const type = getViewSourceType(item);
-        const id = getViewSourceId(item);
-        return { item, type, id, key: `${type}:${id}` };
-      })
-      .filter(
-        ({ item, type, id, key }) =>
-          !item?.originalData &&
-          !item?.created_at &&
-          !(key in details) &&
-          !!id &&
-          ["task", "issue", "todo"].includes(type)
-      );
+    const pending = pendingDetailItems.filter(({ key }) => !(key in details));
     if (!pending.length) return;
 
     Promise.all(
       pending.map(async ({ type, id, key }) => {
         const data = await fetchItemDetail(type, id);
-        return data ? ([key, data] as [string, any]) : null;
+        // `null` bhi store karte hain — isse pata chalta hai ki fetch ho chuka
+        // hai (bhale detail na mili), aur pending vs resolved me farq rehta hai.
+        return [key, data ?? null] as [string, any];
       })
     ).then((entries) => {
       if (!active) return;
-      const resolved = entries.filter(Boolean) as [string, any][];
-      if (!resolved.length) return;
       setDetails((prev) => {
-        const missing = resolved.filter(([key]) => !(key in prev));
+        const missing = entries.filter(([key]) => !(key in prev));
         if (!missing.length) return prev;
         const merged = { ...prev };
         missing.forEach(([key, value]) => {
@@ -930,18 +1004,24 @@ const TasksIssuesTodoCard = ({
     return () => {
       active = false;
     };
-  }, [sourceItems, details]);
+  }, [pendingDetailItems, details]);
 
   const filteredItems = useMemo(() => {
-    const start = getRangeStartDate(rangeDays);
+    const { start, end } = getRangeWindow(rangeDays);
+    // Jinki detail abhi fetch ho rahi hai unhe filter na karein, warna rows
+    // pehle dikhkar gayab hote hain. Fetch resolve hone par asli date par
+    // faisla ho jaata hai.
+    const awaitingDetail = new Set(
+      pendingDetailItems
+        .filter(({ key }) => !(key in details))
+        .map(({ key }) => key)
+    );
     return sourceItems.filter((item) => {
-      const detail = details[`${getViewSourceType(item)}:${getViewSourceId(item)}`];
-      const date = getItemRangeDate(item, detail);
-      // No date available for this item — keep it visible instead of dropping it.
-      if (!date) return true;
-      return date.getTime() >= start.getTime();
+      const key = `${getViewSourceType(item)}:${getViewSourceId(item)}`;
+      if (awaitingDetail.has(key)) return true;
+      return isItemInRange(item, details[key], start, end);
     });
-  }, [sourceItems, details, rangeDays]);
+  }, [sourceItems, details, rangeDays, pendingDetailItems]);
 
   // Bifurcate into Overdue / In Progress / Open / On Hold buckets.
   const bucketedItems = useMemo(() => {
@@ -3784,6 +3864,12 @@ const DailyTab = ({
                     const filteredTomorrowPlanRows = filterRowsForSelectedMember(
                       combinedTomorrowPlanRows
                     );
+                    // API se aane par ye bucket bhar jaayega; tab tak khaali
+                    // rehta hai to header render hi nahi hota.
+                    const filteredNotAccomplishedRows =
+                      filterRowsForSelectedMember(
+                        displayRd.not_accomplished_plan
+                      );
                     const showFilteredMemberBadges =
                       hasTeamRows && activeReportMember === "all";
 
@@ -4413,6 +4499,32 @@ const DailyTab = ({
                                   )}
                                 </div>
 
+                                {/* Third column = Not Accomplished Plan card
+                                    ke upar, Tomorrow's Plan card neeche. */}
+                                <div className="flex flex-col gap-4">
+                                <div className="bg-white border border-[#E8E2DE] rounded-xl p-0 overflow-hidden">
+                                  <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+                                    <AlertTriangle className="w-4 h-4 shrink-0 text-[#B4690E]" />
+                                    <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase min-w-0 truncate">
+                                      Not Accomplished Plan
+                                    </h4>
+                                    <span className="ml-auto shrink-0 rounded-full bg-[#F8E4C7] px-2 py-0.5 text-[9px] font-bold text-[#B4690E]">
+                                      {isAbsentReport
+                                        ? 0
+                                        : filteredNotAccomplishedRows.length}
+                                    </span>
+                                  </div>
+                                  <div className="p-4">
+                                    {renderAccomplishmentRows(
+                                      isAbsentReport
+                                        ? []
+                                        : filteredNotAccomplishedRows,
+                                      showFilteredMemberBadges,
+                                      "Nothing pending from the plan."
+                                    )}
+                                  </div>
+                                </div>
+
                                 <div
                                   onDragOver={(event) => {
                                     if (!isPlanDragActive) return;
@@ -4474,6 +4586,7 @@ const DailyTab = ({
                                         showFilteredMemberBadges
                                       )}
                                   </div>
+                                </div>
                                 </div>
                                 <div className="hidden bg-white border border-[#F0E8E3] rounded-xl p-4">
                                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
