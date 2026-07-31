@@ -174,36 +174,36 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
 
   // Transform API data to chart format
   const getChartData = (): OccupancyData[] => {
-    if (apiData?.data?.current) {
-      const current = apiData.data.current;
+    const currentDate = apiData?.data?.current_date;
+    if (currentDate) {
+      const currentOccupied = currentDate.occupied || {};
+      const currentVacant = currentDate.vacancy || {};
       // If yoy missing, fall back to zeros so compare view still renders both series
-      const yoy = apiData.data.yoy || {
-        two_wheeler: { total_occupied: 0, total_vacant: 0 },
-        four_wheeler: { total_occupied: 0, total_vacant: 0 },
-        electric_vehicle: { total_occupied: 0, total_vacant: 0 },
-      };
+      const previousDate = apiData?.data?.yoy?.previous_date;
+      const prevOccupied = previousDate?.occupied || {};
+      const prevVacant = previousDate?.vacancy || {};
 
       return [
         {
           category: '2W',
-          lastYearOccupied: yoy.two_wheeler?.total_occupied || 0,
-          lastYearVacant: yoy.two_wheeler?.total_vacant || 0,
-          thisYearOccupied: current.two_wheeler?.total_occupied || 0,
-          thisYearVacant: current.two_wheeler?.total_vacant || 0,
+          lastYearOccupied: prevOccupied['2w'] || 0,
+          lastYearVacant: prevVacant['2w'] || 0,
+          thisYearOccupied: currentOccupied['2w'] || 0,
+          thisYearVacant: currentVacant['2w'] || 0,
         },
         {
           category: '4W',
-          lastYearOccupied: yoy.four_wheeler?.total_occupied || 0,
-          lastYearVacant: yoy.four_wheeler?.total_vacant || 0,
-          thisYearOccupied: current.four_wheeler?.total_occupied || 0,
-          thisYearVacant: current.four_wheeler?.total_vacant || 0,
+          lastYearOccupied: prevOccupied['4w'] || 0,
+          lastYearVacant: prevVacant['4w'] || 0,
+          thisYearOccupied: currentOccupied['4w'] || 0,
+          thisYearVacant: currentVacant['4w'] || 0,
         },
         {
           category: 'EV',
-          lastYearOccupied: yoy.electric_vehicle?.total_occupied || 0,
-          lastYearVacant: yoy.electric_vehicle?.total_vacant || 0,
-          thisYearOccupied: current.electric_vehicle?.total_occupied || 0,
-          thisYearVacant: current.electric_vehicle?.total_vacant || 0,
+          lastYearOccupied: prevOccupied['electric_vehicle'] || 0,
+          lastYearVacant: prevVacant['electric_vehicle'] || 0,
+          thisYearOccupied: currentOccupied['electric_vehicle'] || 0,
+          thisYearVacant: currentVacant['electric_vehicle'] || 0,
         },
       ];
     }
@@ -238,7 +238,7 @@ export const ParkingOccupancyChart: React.FC<ParkingOccupancyChartProps> = ({
   };
 
   const chartData = getChartData();
-  const hasYoy = Boolean(apiData?.data?.yoy);
+  const hasYoy = Boolean(apiData?.data?.yoy?.previous_date);
 
   // Compute Y axis ticks dynamically based on data so labels are meaningful and visible
   const computeYAxisTicks = (data: OccupancyData[]) => {
