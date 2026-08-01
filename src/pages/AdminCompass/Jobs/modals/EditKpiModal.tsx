@@ -2,40 +2,23 @@
 import { useJobs } from "../JobsContext";
 import { T, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
 import { Fld, FI, FS, Btn } from "../components/UI";
-import MemberSearchSelect from "../components/MemberSearchSelect";
-import { useDepartments } from "../hooks/useDepartments";
 
+/**
+ * Sirf KPI ki apni details edit hoti hain. JD, Department, Assignee aur Linked
+ * KRA create ke waqt hi tay hote hain — baad me yahan se nahi badalte (assignee
+ * "Assign Person" flow se badalta hai, jo KRA bhi saath me handle karta hai).
+ */
 export default function EditKpiModal() {
-  const { data: departments = [], isLoading: deptLoading } = useDepartments();
   const {
     editingKpiId, setEditingKpiId, editKpiForm, setEditKpiForm, customUnits, saveEditKpi,
-    allJds, kpisSaving, kpiAssignUsers, kpiAssignUsersLoading,
-    kpiModalJdsLoading, kpiModalJdsError, kpiModalKras, kpiModalKrasLoading, kpiModalKrasError,
-    kraWeightageUsed, kraName,
+    kpisSaving, kraWeightageUsed,
   } = useJobs();
   if (!editingKpiId) return null;
-  const assigneeOptions = kpiAssignUsers;
   // Baaki KPIs ka weightage (khud ko chhodkar) — total 100% se upar nahi ja sakta.
   const kraUsedWeightage = editKpiForm.kraId
     ? kraWeightageUsed(editKpiForm.kraId, editingKpiId)
     : 0;
   const kraRemainingWeightage = Math.max(0, 100 - kraUsedWeightage);
-  // Search + list ek hi input me — MemberSearchSelect khud filter karta hai.
-  const editKras = kpiModalKras.map((k) => ({ id: k.id, name: k.title }));
-  // KPI ki current KRA agar list me na ho (e.g. inactive ho gayi), tab bhi
-  // uska naam dikhna chahiye — warna field khali lagta hai.
-  if (
-    editKpiForm.kraId &&
-    !editKras.some((k) => String(k.id) === String(editKpiForm.kraId))
-  )
-    editKras.unshift({
-      id: editKpiForm.kraId,
-      name: kraName(editKpiForm.kraId),
-    });
-  const departmentOptions = departments.map((d) => ({
-    id: d.id,
-    name: d.department_name || d.name || d.title || "Unnamed department",
-  }));
   return (
     <div
       style={{
@@ -76,96 +59,6 @@ export default function EditKpiModal() {
           Update the Key Performance Indicator details.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 16,
-            }}
-          >
-            <Fld label="Job Description">
-              <FS
-                value={editKpiForm.jdId || ""}
-                disabled={kpiModalJdsLoading || kpisSaving}
-                onChange={(e) =>
-                  setEditKpiForm((f) => ({
-                    ...f,
-                    jdId: e.target.value,
-                    departmentId:
-                      allJds.find((j) => String(j.id) === String(e.target.value))?.departmentId ||
-                      f.departmentId,
-                  }))
-                }
-              >
-                <option value="">{kpiModalJdsLoading ? "Loading JDs..." : "Select JD"}</option>
-                {allJds.map((j) => (
-                  <option key={j.id} value={j.id}>
-                    {j.title}
-                  </option>
-                ))}
-              </FS>
-              {kpiModalJdsError && (
-                <span style={{ fontSize: 11, color: T.danger }}>Could not load JDs: {kpiModalJdsError}</span>
-              )}
-            </Fld>
-            <Fld label="Department">
-              <MemberSearchSelect
-                value={editKpiForm.departmentId || ""}
-                options={departmentOptions}
-                onChange={(value) =>
-                  setEditKpiForm((f) => ({ ...f, departmentId: value }))
-                }
-                placeholder="Search and select department"
-                loading={deptLoading}
-                loadingText="Loading departments..."
-                emptyText="No departments found"
-                disabled={deptLoading || kpisSaving}
-              />
-            </Fld>
-          </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 16,
-            }}
-          >
-            <Fld label="Assignee Person">
-              <MemberSearchSelect
-                multiple
-                value={(editKpiForm.assigneeIds || []).map(String)}
-                options={assigneeOptions}
-                onChange={(values) =>
-                  setEditKpiForm((f) => ({
-                    ...f,
-                    assigneeIds: (values || [])
-                      .map(Number)
-                      .filter((id) => Number.isFinite(id)),
-                  }))
-                }
-                placeholder="Select assignees"
-                loading={kpiAssignUsersLoading}
-                disabled={kpisSaving || kpiAssignUsersLoading}
-              />
-            </Fld>
-            <Fld label="Linked KRA">
-              <MemberSearchSelect
-                value={editKpiForm.kraId || ""}
-                options={editKras}
-                onChange={(value) =>
-                  setEditKpiForm((f) => ({ ...f, kraId: value }))
-                }
-                placeholder="Search and select KRA"
-                loading={kpiModalKrasLoading}
-                loadingText="Loading KRAs..."
-                emptyText="No KRAs found"
-                disabled={kpisSaving || kpiModalKrasLoading}
-              />
-              {kpiModalKrasError && (
-                <span style={{ fontSize: 11, color: T.danger }}>Could not load KRAs: {kpiModalKrasError}</span>
-              )}
-            </Fld>
-          </div>
           <div
             style={{
               display: "grid",
@@ -263,25 +156,6 @@ export default function EditKpiModal() {
               <option value="automatic">Automatic</option>
             </FS>
           </Fld>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr",
-              gap: 16,
-            }}
-          >
-            <Fld label="Measurement Type">
-              <FS
-                value={editKpiForm.measurementType || "positive"}
-                onChange={(e) =>
-                  setEditKpiForm((f) => ({ ...f, measurementType: e.target.value }))
-                }
-              >
-                <option value="positive">Positive</option>
-                <option value="negative">Negative</option>
-              </FS>
-            </Fld>
-          </div>
           {editKpiForm.updateType === "automatic" && (
             <div
               style={{

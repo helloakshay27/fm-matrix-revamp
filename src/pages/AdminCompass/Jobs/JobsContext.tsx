@@ -27,6 +27,7 @@ import { fetchKpis, createKpi, updateKpi, toKpiPayload } from "./kpisApi";
 import { fetchJobDescriptions } from "./jobDescriptionsApi";
 import { fetchKras, fetchAllKras, createKra, updateKra, updateKraStatus } from "./krasApi";
 import { fetchEscalateToUsers } from "./usersApi";
+import { firstDefined } from "./apiClient";
 import { useEscalateUsers } from "./hooks/useEscalateUsers";
 
 const JobsContext = createContext(null);
@@ -1082,6 +1083,117 @@ export function JobsProvider({ children }) {
     loadKpiAssignUsers();
   }, [editingKpiId, kpiAssignUsers.length, loadKpiAssignUsers, showAddKpi]);
 
+  /** The fields that make one KRA a copy of another (assignee excluded). */
+  const kraShape = (kra) => ({
+    kraType: firstDefined(kra.kraType, kra.kra_type),
+    resourceType: firstDefined(kra.resourceType, kra.resource_type),
+    resourceId: firstDefined(kra.resourceId, kra.resource_id),
+    title: kra.title,
+    desc: kra.desc,
+    weightage: kra.weightage,
+    status: kra.status || "active",
+    jdId: kra.jdId,
+    effectiveFrom: firstDefined(kra.effectiveFrom, kra.effective_from),
+    effectiveTo: firstDefined(kra.effectiveTo, kra.effective_to),
+  });
+
+  const kraAssigneeOf = (kra) =>
+    firstDefined(kra?.assigneeId, kra?.assignee_id);
+
+  /** An existing copy of `kra` that already belongs to `assigneeId`, if any. */
+  const findKraCopyFor = (kra, assigneeId) =>
+    allKras.find(
+      (k) =>
+        !sameId(k.id, kra.id) &&
+        String(k.title || "").trim().toLowerCase() ===
+          String(kra.title || "").trim().toLowerCase() &&
+        sameId(k.jdId ?? "", kra.jdId ?? "") &&
+        sameId(kraAssigneeOf(k), assigneeId)
+    );
+
+  /**
+   * A KPI's KRA follows the KPI's assignment. A KRA holds a single
+   * `assignee_id`, so a KRA that already belongs to someone else is *copied*
+   * for the new assignee (the original owner keeps their KRA and its other
+   * KPIs) and the KPI is relinked to that copy.
+   * Returns the KRA id the KPI should point at, or null when nothing changed.
+   */
+  const assignKraForKpi = async (kraId, assigneeId, assigneeName) => {
+    if (!kraId || !assigneeId) return null;
+    const kra = allKras.find((k) => sameId(k.id, kraId));
+    if (!kra) return null;
+    const owner = kraAssigneeOf(kra);
+    const label = assigneeName || assigneeId;
+
+    // Already theirs — nothing to do.
+    if (owner !== undefined && owner !== null && owner !== "" && sameId(owner, assigneeId))
+      return null;
+
+    // Unowned KRA — just hand it over, no copy needed.
+    if (owner === undefined || owner === null || owner === "") {
+      const localPatch = {
+        assigneeId,
+        assignee_id: assigneeId,
+        assigneeName: assigneeName || "",
+      };
+      setAllKras((ks) =>
+        ks.map((k) => (sameId(k.id, kraId) ? { ...k, ...localPatch } : k))
+      );
+      try {
+        const updated = await updateKra(kraId, { ...kraShape(kra), assigneeId });
+        if (updated)
+          setAllKras((ks) =>
+            ks.map((k) => (sameId(k.id, kraId) ? { ...k, ...updated } : k))
+          );
+        patchKrasCache(kraId, { ...localPatch, ...(updated || {}) });
+        addLog("assign", "KRA", kra.title || "", `Assigned to ${label} (via KPI assignment)`);
+        return kraId;
+      } catch (err) {
+        setAllKras((ks) => ks.map((k) => (sameId(k.id, kraId) ? kra : k)));
+        toast.error(
+          `KPI assigned, but its KRA could not be: ${err?.message || "request failed"}`
+        );
+        return null;
+      }
+    }
+
+    // Owned by someone else — reuse an earlier copy if this member already has one.
+    const existingCopy = findKraCopyFor(kra, assigneeId);
+    if (existingCopy) return existingCopy.id;
+
+    try {
+      const created = await createKra({
+        ...kraShape(kra),
+        assigneeId,
+      });
+      if (!created) return null;
+      const copy = {
+        ...created,
+        assigneeId,
+        assignee_id: assigneeId,
+        assigneeName: assigneeName || "",
+      };
+      setAllKras((ks) => [copy, ...ks.filter((k) => !sameId(k.id, copy.id))]);
+      queryClient.setQueriesData({ queryKey: ["kras-list"] }, (current) =>
+        Array.isArray(current)
+          ? [copy, ...current.filter((k) => !sameId(k?.id, copy.id))]
+          : current
+      );
+      addLog(
+        "assign",
+        "KRA",
+        kra.title || "",
+        `Copied for ${label} (via KPI assignment)`
+      );
+      return copy.id;
+    } catch (err) {
+      toast.error(
+        `KPI assigned, but its KRA could not be copied: ${err?.message || "request failed"}`
+      );
+      return null;
+    }
+  };
+
   const assignToKpi = async () => {
     const selectedIds = assignKpiUserIds
       .map((id) => Number(id))
@@ -1121,10 +1233,39 @@ export function JobsProvider({ children }) {
         kpi.name || "",
         `Assigned to ${selectedUsers.map((user) => user.name).join(", ") || selectedIds.join(", ")}`
       );
+      // The KPI's KRA goes to the same person — copied first if it belongs to
+      // someone else, so the original owner keeps their KRA and its other KPIs.
+      const targetKraId = await assignKraForKpi(
+        kpi.kraId,
+        selectedIds[0],
+        selectedUsers[0]?.name
+      );
+      let kraLinked = false;
+      if (targetKraId && !sameId(targetKraId, kpi.kraId)) {
+        try {
+          const relinked = await updateKpi(assignKpiModal, { kra_id: targetKraId });
+          setAllKpis((ps) =>
+            ps.map((p) =>
+              sameId(p.id, assignKpiModal)
+                ? { ...p, kraId: targetKraId, ...(relinked || {}) }
+                : p
+            )
+          );
+          kraLinked = true;
+        } catch (err) {
+          toast.error(
+            `KRA copied, but the KPI could not be linked to it: ${err?.message || "request failed"}`
+          );
+        }
+      } else if (targetKraId) {
+        kraLinked = true;
+      }
       setAssignKpiUserIds([]);
       setAssignKpiName("");
       setAssignKpiModal(null);
-      showToast("Person assigned to KPI");
+      showToast(
+        kraLinked ? "Person assigned to KPI and its KRA" : "Person assigned to KPI"
+      );
     } catch (err) {
       setAllKpis(previous);
       toast.error(`Could not assign KPI: ${err?.message || "request failed"}`);
