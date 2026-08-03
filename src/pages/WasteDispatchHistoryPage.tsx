@@ -1,25 +1,61 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Eye, Trash2, RefreshCw, Package, Activity, Download, Recycle } from 'lucide-react';
+import { Eye, Download, Recycle, Truck, Trash2, RefreshCw, Package, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { DUMMY_DISPATCH_RECORDS, DispatchRecord } from '@/data/wasteDispatchDummyData';
 
+// Table 2 — Waste Dispatch List columns. "Checkbox" isn't listed here since
+// EnhancedTable renders its own selection column via the `selectable` prop.
 const columns = [
-  { key: 'actions', label: 'Actions' },
-  { key: 'dispatchId', label: 'Dispatch ID' },
-  { key: 'wasteItem', label: 'Waste Item' },
-  { key: 'category', label: 'Category' },
-  { key: 'dispatchWeight', label: 'Dispatch Weight' },
-  { key: 'destination', label: 'Destination' },
-  { key: 'vehicleNumber', label: 'Vehicle No.' },
-  { key: 'dispatchedBy', label: 'Dispatched By' },
-  { key: 'dispatchDate', label: 'Dispatch Date' },
-  { key: 'manifestNumber', label: 'Manifest No.' },
+  { key: 'actions', label: 'Action' },
+  { key: 'id', label: 'Id' },
+  { key: 'dispatch_datetime', label: 'Dispatch Date & Time' },
+  { key: 'waste_category', label: 'Waste Category' },
+  { key: 'waste_type', label: 'Waste Type' },
+  { key: 'total_generated_kg', label: 'Total Generated Weight (KG)' },
+  { key: 'dispatch_weight_kg', label: 'Dispatch Weight (KG)' },
+  { key: 'recycled_weight_kg', label: 'Recycled Weight (KG)' },
+  { key: 'total_generated_ltr', label: 'Total Generated Weight (L)' },
+  { key: 'dispatch_weight_ltr', label: 'Dispatch Weight (L)' },
+  { key: 'recycled_weight_ltr', label: 'Recycled Weight (L)' },
+  { key: 'vendor_name', label: 'Vendor Name' },
+  { key: 'vehicle_no', label: 'Vehicle No' },
+  { key: 'driver_name', label: 'Driver Name' },
+  { key: 'contact_no', label: 'Contact No' },
+  { key: 'destination_facility', label: 'Destination Facility' },
+  { key: 'disposal_method', label: 'Disposal Method' },
+  { key: 'supporting_documents', label: 'Supporting Documents' },
+  { key: 'vendor_acknowledge', label: 'Vendor Acknowledge' },
   { key: 'status', label: 'Status' },
+  { key: 'recycling_status', label: 'Recycling Status' },
 ];
+
+const renderDispatchCell = (item: DispatchRecord, key: string) => {
+  if (key === 'id') return item.dispatchId;
+  if (key === 'dispatch_datetime') return `${item.dispatchDate} ${item.dispatchTime}`.trim();
+  if (key === 'waste_category') return item.category;
+  if (key === 'waste_type') return item.wasteItem;
+  if (key === 'total_generated_kg') return item.totalGeneratedWeightKg != null ? `${item.totalGeneratedWeightKg} KG` : '-';
+  if (key === 'dispatch_weight_kg') return item.dispatchWeightKg != null ? `${item.dispatchWeightKg} KG` : '-';
+  if (key === 'recycled_weight_kg') return item.recycledWeightKg != null ? `${item.recycledWeightKg} KG` : '-';
+  if (key === 'total_generated_ltr') return item.totalGeneratedWeightLtr != null ? `${item.totalGeneratedWeightLtr} L` : '-';
+  if (key === 'dispatch_weight_ltr') return item.dispatchWeightLtr != null ? `${item.dispatchWeightLtr} L` : '-';
+  if (key === 'recycled_weight_ltr') return item.recycledWeightLtr != null ? `${item.recycledWeightLtr} L` : '-';
+  if (key === 'vendor_name') return item.destination;
+  if (key === 'vehicle_no') return item.vehicleNumber;
+  if (key === 'driver_name') return item.driverName;
+  if (key === 'contact_no') return item.contactNo;
+  if (key === 'destination_facility') return item.destinationFacility;
+  if (key === 'disposal_method') return item.disposalMethod;
+  if (key === 'supporting_documents') return item.supportingDocumentsCount > 0 ? `${item.supportingDocumentsCount} file(s)` : '-';
+  if (key === 'vendor_acknowledge') return item.vendorAcknowledge;
+  if (key === 'status') return item.status;
+  if (key === 'recycling_status') return item.recycleDetail?.recyclingStatus || 'Not Recycled';
+  return '-';
+};
 
 const WasteDispatchHistoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -43,6 +79,11 @@ const WasteDispatchHistoryPage: React.FC = () => {
   });
 
   const summaryCards = [
+    {
+      label: 'Total Dispatch Requests',
+      value: dispatchRecords.length,
+      icon: <Truck className="w-6 h-6 text-[#C72030]" />,
+    },
     {
       label: 'Hazardous Dispatched',
       value: dispatchRecords
@@ -87,11 +128,10 @@ const WasteDispatchHistoryPage: React.FC = () => {
 
   const handleExportSelected = () => {
     const rows = dispatchRecords.filter((r) => selectedItems.includes(r.id));
-    const headers = ['Dispatch ID', 'Waste Item', 'Category', 'Dispatch Weight', 'Destination', 'Vehicle No.', 'Dispatched By', 'Dispatch Date', 'Manifest No.', 'Status'];
-    const csvRows = rows.map((r) => [
-      r.dispatchId, r.wasteItem, r.category, r.dispatchWeight, r.destination,
-      r.vehicleNumber, r.dispatchedBy, r.dispatchDate, r.manifestNumber, r.status,
-    ]);
+    const headers = columns.filter((c) => c.key !== 'actions').map((c) => c.label);
+    const csvRows = rows.map((r) =>
+      columns.filter((c) => c.key !== 'actions').map((c) => renderDispatchCell(r, c.key))
+    );
     const csv = [headers, ...csvRows]
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       .join('\n');
@@ -115,7 +155,7 @@ const WasteDispatchHistoryPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         {summaryCards.map((card, i) => (
           <div key={i} className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-shadow duration-300">
             <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center shrink-0">
@@ -142,7 +182,7 @@ const WasteDispatchHistoryPage: React.FC = () => {
               </Button>
             ) : null;
           }
-          return (item as unknown as Record<string, string>)[key] || '-';
+          return renderDispatchCell(item, key);
         }}
         getItemId={(item) => item.id}
         selectable={true}

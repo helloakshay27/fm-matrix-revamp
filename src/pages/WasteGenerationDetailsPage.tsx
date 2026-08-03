@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft,
-  Trash,
   Edit,
   Package,
   User,
   ShoppingBag,
+  History,
+  FileCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -26,6 +27,25 @@ import {
 } from "../services/wasteGenerationAPI";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
+interface BagRow {
+  id: string;
+  category: string;
+  subCategory: string;
+  weight: string;
+}
+
+// Defensively pull a value out of a loosely-typed bag object by trying a list
+// of key-name patterns, since the API doesn't guarantee a fixed shape here.
+const extractBagField = (bagObj: Record<string, unknown>, patterns: RegExp[]): string | null => {
+  for (const key of Object.keys(bagObj)) {
+    if (patterns.some((p) => p.test(key))) {
+      const val = bagObj[key];
+      if (val !== null && val !== undefined && val !== "") return String(val);
+    }
+  }
+  return null;
+};
+
 export const WasteGenerationDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -34,6 +54,7 @@ export const WasteGenerationDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("waste-details");
+  const [bagRows, setBagRows] = useState<BagRow[]>([]);
 
   const hasData = (value: string | number | null | undefined | object) => {
     if (typeof value === "object" && value !== null) {
@@ -60,6 +81,23 @@ export const WasteGenerationDetailsPage = () => {
         const wasteGeneration = await fetchWasteGenerationById(parseInt(id));
 
         setWasteData(wasteGeneration);
+
+        const rows: BagRow[] = (wasteGeneration.waste_bag_details || []).map((bag: unknown, idx: number) => {
+          const bagObj = bag as Record<string, unknown>;
+          const category = extractBagField(bagObj, [/^category$/i, /category_name/i])
+            ?? wasteGeneration.category?.category_name
+            ?? "-";
+          const subCategory = extractBagField(bagObj, [/sub.?categ/i, /commodity/i])
+            ?? wasteGeneration.commodity?.category_name
+            ?? "-";
+          const weightVal = extractBagField(bagObj, [/value|weight/i]);
+          const weight =
+            weightVal !== null && !isNaN(Number(weightVal))
+              ? `${Number(weightVal)} kg`
+              : weightVal ?? "-";
+          return { id: `bag-${idx}`, category, subCategory, weight };
+        });
+        setBagRows(rows);
       } catch (err) {
         console.error("Error fetching waste generation details:", err);
         setError("Failed to fetch waste generation details");
@@ -84,9 +122,60 @@ export const WasteGenerationDetailsPage = () => {
     });
   };
 
-  const handleDelete = () => {
-    toast.info("Delete functionality not yet implemented.");
+  const handleCertificate = () => {
+    // TODO: wire this up to a real certificate-generation endpoint once the backend exposes one.
+    toast.info("Certificate generation is not yet available.");
   };
+
+  const handleDeleteBagRow = (rowId: string) => {
+    // Client-side only — no backend endpoint to persist this deletion yet.
+    setBagRows((prev) => prev.filter((r) => r.id !== rowId));
+    toast.success("Bag entry removed.");
+  };
+
+  // Logs tab — a best-effort activity history built from real timestamps
+  // already on the record. There's no dedicated audit-log API yet, so this
+  // isn't a complete history, just what can be honestly derived today.
+  // Computed unconditionally (before the loading/error early returns below)
+  // so the hook order stays stable across renders.
+  const logEntries = useMemo(() => {
+    if (!wasteData) return [];
+    const dispatchApplicable = hasData(wasteData.vendor?.company_name);
+    const entries: { date: string; activity: string; performedBy: string; remarks: string }[] = [];
+    if (wasteData.wg_date) {
+      entries.push({
+        date: new Date(wasteData.wg_date).toLocaleString(),
+        activity: "Waste Generated",
+        performedBy: wasteData.user_name || wasteData.created_by?.full_name || "-",
+        remarks: wasteData.category?.category_name ? `Category: ${wasteData.category.category_name}` : "-",
+      });
+    }
+    if (wasteData.updated_at && wasteData.updated_at !== wasteData.created_at) {
+      entries.push({
+        date: new Date(wasteData.updated_at).toLocaleString(),
+        activity: "Record Updated",
+        performedBy: wasteData.created_by?.full_name || "-",
+        remarks: "-",
+      });
+    }
+    if (dispatchApplicable) {
+      entries.push({
+        date: new Date(wasteData.updated_at || wasteData.wg_date).toLocaleString(),
+        activity: `Dispatched to ${wasteData.vendor?.company_name}`,
+        performedBy: wasteData.created_by?.full_name || "-",
+        remarks: wasteData.waste_unit != null ? `${wasteData.waste_unit} KG` : "-",
+      });
+    }
+    if (wasteData.recycled_unit > 0) {
+      entries.push({
+        date: new Date(wasteData.updated_at || wasteData.wg_date).toLocaleString(),
+        activity: "Recycling Confirmed",
+        performedBy: "-",
+        remarks: `${wasteData.recycled_unit} KG recycled`,
+      });
+    }
+    return entries;
+  }, [wasteData]);
 
   if (loading) {
     return (
@@ -167,23 +256,59 @@ export const WasteGenerationDetailsPage = () => {
     );
   };
 
+  const recycledPct =
+    wasteData.waste_unit > 0
+      ? `${Math.round((wasteData.recycled_unit / wasteData.waste_unit) * 100)}%`
+      : "0%";
+
+  // Same field set as the Waste Generation list page's columns
+  // (UtilityWasteGenerationDashboard.tsx), so this detail view shows
+  // everything the list shows for this record.
   const wasteDetailsFields: Field[] = [
+    { label: "Generation ID", value: wasteData.id },
+    {
+      label: "Date & Time",
+      value: wasteData.wg_date
+        ? `${wasteData.wg_date.split("T")[0]}${wasteData.created_at ? ` ${new Date(wasteData.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}` : ""}`
+        : undefined,
+    },
+    { label: "Building", value: wasteData.building_name },
+    // No dedicated "floor" field on the record — Area is the closest/most
+    // granular location field the API returns.
+    { label: "Floor", value: wasteData.area_name || wasteData.wing_name },
+    { label: "Waste Category", value: wasteData.category?.category_name },
+    { label: "Total Bags", value: wasteData.bag_counts != null ? wasteData.bag_counts.toString() : undefined },
+    { label: "Quantity (Kg)", value: wasteData.waste_unit != null ? wasteData.waste_unit : undefined },
+    { label: "Quantity (Ltr)", value: undefined },
+    { label: "Recycle %", value: recycledPct },
+    { label: "Status", value: wasteData.status },
+    { label: "Device Id", value: wasteData.device_id != null ? wasteData.device_id.toString() : undefined },
+    { label: "Remarks", value: (wasteData as unknown as Record<string, unknown>).remarks as string | undefined },
     { label: "Location", value: wasteData.location_details },
     { label: "Operational Name", value: wasteData.operational_landlord?.category_name },
-    { label: "Generated Unit", value: `${wasteData.waste_unit} KG` },
-    { label: "Recycled Unit", value: `${wasteData.recycled_unit} KG` },
-    {
-      label: "Recycled %",
-      value:
-        wasteData.waste_unit > 0
-          ? `${Math.round((wasteData.recycled_unit / wasteData.waste_unit) * 100)}%`
-          : "0%",
-    },
     { label: "Agency Name", value: wasteData.agency_name },
     { label: "Reference Number", value: wasteData.reference_number },
-    { label: "Building", value: wasteData.building_name },
-    { label: "Wing", value: wasteData.wing_name },
-    { label: "Area", value: wasteData.area_name },
+  ];
+
+  // "Dispatch" info only exists on this record once it's been sent to a
+  // vendor — shown only when that data is actually present.
+  const dispatchApplicable = hasData(wasteData.vendor?.company_name);
+  const dispatchFields: Field[] = [
+    { label: "Vendor / Facility", value: wasteData.vendor?.company_name },
+    { label: "Status", value: wasteData.status },
+    { label: "Dispatch Weight (Kg)", value: wasteData.waste_unit != null ? wasteData.waste_unit : undefined },
+    { label: "Recycled (Kg)", value: wasteData.recycled_unit != null ? wasteData.recycled_unit : undefined },
+  ];
+
+  // Table 1.2 — Waste Detail breakdown (single row, since one waste
+  // generation record only carries one category).
+  const wasteDetailTableRows = [
+    {
+      category: wasteData.category?.category_name || "-",
+      totalWeight: wasteData.waste_unit != null ? `${wasteData.waste_unit} kg` : "-",
+      dispatchWeight: dispatchApplicable && wasteData.waste_unit != null ? `${wasteData.waste_unit} kg` : "-",
+      recycleWeight: wasteData.recycled_unit != null ? `${wasteData.recycled_unit} kg` : "-",
+    },
   ];
 
   const userDetailsFields: Field[] = [
@@ -193,9 +318,9 @@ export const WasteGenerationDetailsPage = () => {
       label: "Client Name",
       value: wasteData.client_name || wasteData.vendor?.company_name || wasteData.agency_name,
     },
+    { label: "Email Id", value: wasteData.created_by?.email },
     { label: "Vendor", value: wasteData.vendor?.company_name },
     { label: "Created By", value: wasteData.created_by?.full_name },
-    { label: "Creator Email", value: wasteData.created_by?.email },
     {
       label: "Waste Date",
       value: wasteData.wg_date ? new Date(wasteData.wg_date).toLocaleDateString() : undefined,
@@ -211,8 +336,8 @@ export const WasteGenerationDetailsPage = () => {
   ];
 
   const bagDetailsFields: Field[] = [
-    { label: "Category", value: wasteData.commodity?.category_name },
-    { label: "Subcategory", value: wasteData.category?.category_name },
+    { label: "Category", value: wasteData.category?.category_name },
+    { label: "Subcategory", value: wasteData.commodity?.category_name },
     { label: "No. of Bags", value: wasteData.bag_counts != null ? wasteData.bag_counts.toString() : undefined },
     { label: "Device", value: wasteData.device_id != null ? wasteData.device_id.toString() : undefined },
     { label: "Status", value: wasteData.status || undefined },
@@ -241,6 +366,14 @@ export const WasteGenerationDetailsPage = () => {
                 Edit
               </Button>
             )}
+            <Button
+              onClick={handleCertificate}
+              variant="outline"
+              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
+            >
+              <FileCheck className="w-4 h-4 mr-2" />
+              Certificate
+            </Button>
           </div>
         </div>
       </div>
@@ -251,6 +384,7 @@ export const WasteGenerationDetailsPage = () => {
             { label: "Waste Details", value: "waste-details", icon: Package },
             { label: "User Details", value: "user-details", icon: User },
             { label: "Bag Details", value: "bag-details", icon: ShoppingBag },
+            { label: "Logs", value: "logs", icon: History },
           ].map((tab) => (
             <TabsTrigger
               key={tab.value}
@@ -267,6 +401,37 @@ export const WasteGenerationDetailsPage = () => {
           <DetailCard icon={Package} title="Waste Details">
             <FieldColumns fields={wasteDetailsFields} />
           </DetailCard>
+
+          {dispatchApplicable && (
+            <DetailCard icon={Package} title="Dispatch Details">
+              <FieldColumns fields={dispatchFields} />
+            </DetailCard>
+          )}
+
+          <DetailCard icon={Package} title="Waste Detail">
+            <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead>Category</TableHead>
+                    <TableHead>Total Weight</TableHead>
+                    <TableHead>Dispatch Weight</TableHead>
+                    <TableHead>Recycle Weight</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {wasteDetailTableRows.map((row, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="font-medium text-gray-900">{row.category}</TableCell>
+                      <TableCell>{row.totalWeight}</TableCell>
+                      <TableCell>{row.dispatchWeight}</TableCell>
+                      <TableCell>{row.recycleWeight}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </DetailCard>
         </TabsContent>
 
         <TabsContent value="user-details">
@@ -278,46 +443,88 @@ export const WasteGenerationDetailsPage = () => {
         <TabsContent value="bag-details">
           <DetailCard icon={ShoppingBag} title="Bag Details">
             <FieldColumns fields={bagDetailsFields} />
-            {wasteData.waste_bag_details && wasteData.waste_bag_details.length > 0 && (
-              <div className="mt-6">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                  Waste Bag Details
-                </h4>
-                <div className="border border-gray-200 rounded-md overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead>Bag</TableHead>
-                        <TableHead>Weight</TableHead>
+            <div className="mt-6">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                Bag Details Tab
+              </h4>
+              <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead>Category</TableHead>
+                      <TableHead>Sub Category</TableHead>
+                      <TableHead>Total Weight (unit)</TableHead>
+                      <TableHead>Delete</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {bagRows.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-gray-400 py-6">
+                          No bag entries.
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {wasteData.waste_bag_details.map((bag: unknown, idx: number) => {
-                        const bagObj = bag as Record<string, unknown>;
-                        const weightEntry = Object.entries(bagObj).find(([key]) =>
-                          /value|weight/i.test(key)
-                        );
-                        const weightVal = weightEntry ? weightEntry[1] : undefined;
-                        const displayWeight =
-                          weightVal !== null && weightVal !== undefined && !isNaN(Number(weightVal))
-                            ? `${Number(weightVal)} Kg`
-                            : String(weightVal ?? "-");
-                        return (
-                          <TableRow key={idx}>
-                            <TableCell className="font-medium text-gray-900">
-                              Bag {idx + 1}
-                            </TableCell>
-                            <TableCell className="text-gray-900">
-                              {displayWeight}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
+                    ) : (
+                      bagRows.map((row) => (
+                        <TableRow key={row.id}>
+                          <TableCell className="font-medium text-gray-900">{row.category}</TableCell>
+                          <TableCell>{row.subCategory}</TableCell>
+                          <TableCell>{row.weight}</TableCell>
+                          <TableCell>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteBagRow(row.id)}
+                              className="text-red-600 hover:underline text-sm font-medium"
+                            >
+                              Delete
+                            </button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
-            )}
+            </div>
+          </DetailCard>
+        </TabsContent>
+
+        <TabsContent value="logs">
+          <DetailCard icon={History} title="Logs">
+            <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead>Date</TableHead>
+                    <TableHead>Activity</TableHead>
+                    <TableHead>Performed By</TableHead>
+                    <TableHead>Remarks</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logEntries.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-gray-400 py-6">
+                        No activity recorded yet.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    logEntries.map((entry, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="whitespace-nowrap">{entry.date}</TableCell>
+                        <TableCell className="font-medium text-gray-900">{entry.activity}</TableCell>
+                        <TableCell>{entry.performedBy}</TableCell>
+                        <TableCell>{entry.remarks}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            <p className="text-xs text-gray-500 mt-3">
+              This history is derived from the timestamps available on this record. A dedicated
+              activity-log endpoint would be needed for a complete audit trail.
+            </p>
           </DetailCard>
         </TabsContent>
       </Tabs>

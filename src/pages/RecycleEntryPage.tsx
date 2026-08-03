@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import { toast } from 'sonner';
 import { DUMMY_DISPATCH_RECORDS, DispatchRecord } from '@/data/wasteDispatchDummyData';
@@ -47,52 +48,109 @@ const categoryBadgeClass = (category: string) => {
   return 'bg-gray-100 text-gray-700';
 };
 
-// "210 L" / "1.2 t" / "340 kg" -> { value: 210, unit: 'L' }
-const parseQuantity = (raw: string): { value: number; unit: string } => {
-  const match = raw.trim().match(/^([\d.,]+)\s*(.*)$/);
-  if (!match) return { value: 0, unit: '' };
-  return { value: parseFloat(match[1].replace(/,/g, '')) || 0, unit: match[2] || '' };
+// "250 Kg | 80 Litre" — always shows both units side by side; a unit the
+// record doesn't carry a number for just shows a dash instead of being hidden.
+const formatDual = (kg: number | null | undefined, ltr: number | null | undefined) => {
+  const kgPart = kg != null ? `${kg.toLocaleString('en-IN')} Kg` : '- Kg';
+  const ltrPart = ltr != null ? `${ltr.toLocaleString('en-IN')} Litre` : '- Litre';
+  return `${kgPart} | ${ltrPart}`;
 };
+
+const parseNum = (raw: string): number | null => {
+  if (!raw) return null;
+  const n = parseFloat(raw);
+  return isNaN(n) ? null : n;
+};
+
+type Field = { label: string; value: string | number | null | undefined };
+
+const hasData = (value: string | number | null | undefined) =>
+  value !== null && value !== undefined && value !== '';
+
+// Renders a field list as two side-by-side columns, matching the pattern
+// used on WasteDispatchDetailPage.tsx / WasteGenerationDetailsPage.tsx.
+const FieldColumns = ({ fields }: { fields: Field[] }) => {
+  const visible = fields.filter((f) => hasData(f.value));
+  if (visible.length === 0) {
+    return <p className="text-sm text-gray-500">No data available.</p>;
+  }
+  const midpoint = Math.ceil(visible.length / 2);
+  const colA = visible.slice(0, midpoint);
+  const colB = visible.slice(midpoint);
+  return (
+    <div className="flex flex-col sm:flex-row gap-10">
+      {[colA, colB].map((col, ci) => (
+        <div key={ci} className="flex flex-col gap-4 min-w-[280px] flex-1">
+          {col.map((field) => (
+            <div key={field.label} className="flex text-[14px] leading-snug min-w-0">
+              <div className="w-[200px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                {field.label}
+              </div>
+              <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                {String(field.value)}
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const CardShell = ({
+  title,
+  badge,
+  children,
+}: {
+  title: string;
+  badge?: React.ReactNode;
+  children: React.ReactNode;
+}) => (
+  <Card className="w-full bg-white rounded-lg shadow-sm border mb-6">
+    <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+      <h3 className="text-lg font-semibold uppercase text-black">{title}</h3>
+      {badge}
+    </div>
+    <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-4">{children}</div>
+  </Card>
+);
 
 const RecycleEntryPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
 
-  const initialRecord = useMemo(() => {
+  const selectedRecord: DispatchRecord | null = useMemo(() => {
     const fromState = (location.state as { record?: DispatchRecord } | null)?.record;
     if (fromState) return fromState;
     return DUMMY_DISPATCH_RECORDS.find((r) => r.id === id) ?? DUMMY_DISPATCH_RECORDS[0] ?? null;
   }, [location.state, id]);
 
-  const [selectedDispatchId, setSelectedDispatchId] = useState(initialRecord?.id ?? '');
   const [attachmentName, setAttachmentName] = useState('');
   const [formData, setFormData] = useState({
-    recycledQuantity: '',
+    recycledQuantityKg: '',
+    recycledQuantityLtr: '',
+    recyclingMethodKg: '',
+    recyclingMethodLtr: '',
     confirmationDate: '',
     recyclingStatus: '',
-    recyclingMethod: '',
     certificateNumber: '',
     confirmedBy: '',
     comments: '',
   });
 
-  const selectedRecord = useMemo(
-    () => DUMMY_DISPATCH_RECORDS.find((r) => r.id === selectedDispatchId) ?? null,
-    [selectedDispatchId]
-  );
+  const recycledQuantityKg = useMemo(() => parseNum(formData.recycledQuantityKg), [formData.recycledQuantityKg]);
+  const recycledQuantityLtr = useMemo(() => parseNum(formData.recycledQuantityLtr), [formData.recycledQuantityLtr]);
 
-  const dispatchedQuantity = useMemo(
-    () => (selectedRecord ? parseQuantity(selectedRecord.dispatchWeight) : { value: 0, unit: '' }),
-    [selectedRecord]
-  );
+  const wastageKg = useMemo(() => {
+    if (selectedRecord?.dispatchWeightKg == null || recycledQuantityKg == null) return null;
+    return Math.max(selectedRecord.dispatchWeightKg - recycledQuantityKg, 0);
+  }, [selectedRecord, recycledQuantityKg]);
 
-  const recycledQuantity = useMemo(() => parseQuantity(formData.recycledQuantity), [formData.recycledQuantity]);
-
-  const wastage = useMemo(() => {
-    if (!formData.recycledQuantity) return null;
-    return Math.max(dispatchedQuantity.value - recycledQuantity.value, 0);
-  }, [dispatchedQuantity, recycledQuantity, formData.recycledQuantity]);
+  const wastageLtr = useMemo(() => {
+    if (selectedRecord?.dispatchWeightLtr == null || recycledQuantityLtr == null) return null;
+    return Math.max(selectedRecord.dispatchWeightLtr - recycledQuantityLtr, 0);
+  }, [selectedRecord, recycledQuantityLtr]);
 
   const handleChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -106,11 +164,11 @@ const RecycleEntryPage: React.FC = () => {
 
   const handleSave = () => {
     if (!selectedRecord) {
-      toast.error('Validation Error: Select a dispatch to record recycling against.');
+      toast.error('Validation Error: No dispatch selected to record recycling against.');
       return;
     }
-    if (!formData.recycledQuantity) {
-      toast.error('Validation Error: Recycled Quantity is required.');
+    if (!formData.recycledQuantityKg && !formData.recycledQuantityLtr) {
+      toast.error('Validation Error: Enter a Recycled Quantity (Kg) or (Litre).');
       return;
     }
     if (!formData.confirmationDate) {
@@ -125,11 +183,14 @@ const RecycleEntryPage: React.FC = () => {
     // TODO: wire this up to a real recycle-entry API endpoint once the backend exposes one.
     const payload = {
       dispatch_id: selectedRecord.dispatchId,
-      recycled_quantity: formData.recycledQuantity,
-      wastage: wastage != null ? `${wastage} ${dispatchedQuantity.unit}` : null,
+      recycled_quantity_kg: recycledQuantityKg,
+      recycled_quantity_ltr: recycledQuantityLtr,
+      recycling_method_kg: formData.recyclingMethodKg || null,
+      recycling_method_ltr: formData.recyclingMethodLtr || null,
+      wastage_kg: wastageKg,
+      wastage_ltr: wastageLtr,
       confirmation_date: formData.confirmationDate,
       recycling_status: formData.recyclingStatus,
-      recycling_method: formData.recyclingMethod || null,
       certificate_number: formData.certificateNumber || null,
       confirmed_by: formData.confirmedBy || null,
       comments: formData.comments || null,
@@ -139,6 +200,61 @@ const RecycleEntryPage: React.FC = () => {
     toast.success('Recycle entry saved.');
     navigate('/maintenance/waste/dispatch');
   };
+
+  const dispatchFields: Field[] = selectedRecord
+    ? [
+        { label: 'Dispatch ID', value: selectedRecord.dispatchId },
+        { label: 'Waste Type', value: selectedRecord.wasteItem },
+        { label: 'Waste Category', value: selectedRecord.category },
+        { label: 'Status', value: selectedRecord.status },
+        {
+          label: 'Dispatch Date & Time',
+          value: `${selectedRecord.dispatchDate} ${selectedRecord.dispatchTime}`.trim(),
+        },
+        { label: 'Vendor / Facility', value: selectedRecord.destination },
+        { label: 'Destination Facility', value: selectedRecord.destinationFacility },
+        { label: 'Vehicle No.', value: selectedRecord.vehicleNumber },
+        { label: 'Driver Name', value: selectedRecord.driverName },
+        { label: 'Contact No.', value: selectedRecord.contactNo },
+        { label: 'Manifest No.', value: selectedRecord.manifestNumber },
+        { label: 'Site', value: selectedRecord.site },
+        { label: 'Disposal Method', value: selectedRecord.disposalMethod },
+        {
+          label: 'Supporting Documents',
+          value: selectedRecord.supportingDocumentsCount > 0 ? `${selectedRecord.supportingDocumentsCount} file(s)` : '-',
+        },
+        { label: 'Vendor Acknowledge', value: selectedRecord.vendorAcknowledge },
+        { label: 'Dispatched By', value: selectedRecord.dispatchedBy },
+        {
+          label: 'Total Generated Weight (Kg)',
+          value: selectedRecord.totalGeneratedWeightKg != null ? `${selectedRecord.totalGeneratedWeightKg} Kg` : undefined,
+        },
+        {
+          label: 'Total Generated Weight (Ltr)',
+          value: selectedRecord.totalGeneratedWeightLtr != null ? `${selectedRecord.totalGeneratedWeightLtr} Ltr` : undefined,
+        },
+        {
+          label: 'Dispatch Weight (Kg)',
+          value: selectedRecord.dispatchWeightKg != null ? `${selectedRecord.dispatchWeightKg} Kg` : undefined,
+        },
+        {
+          label: 'Dispatch Weight (Ltr)',
+          value: selectedRecord.dispatchWeightLtr != null ? `${selectedRecord.dispatchWeightLtr} Ltr` : undefined,
+        },
+      ]
+    : [];
+
+  if (!selectedRecord) {
+    return (
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <Button variant="ghost" onClick={handleBack} className="p-0 mb-4">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+        <div className="text-center text-gray-500 py-16">Dispatch record not found.</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -154,113 +270,120 @@ const RecycleEntryPage: React.FC = () => {
         </p>
       </div>
 
+      {/* Dispatch Details — all dispatch-related information */}
+      <CardShell
+        title="Dispatch Details"
+        badge={
+          <span className={`inline-block px-2.5 py-1 rounded text-xs font-semibold ${statusBadgeClass(selectedRecord.status)}`}>
+            {selectedRecord.status}
+          </span>
+        }
+      >
+        <div className="mb-3">
+          <span className={`inline-block px-2.5 py-1 rounded text-xs font-semibold ${categoryBadgeClass(selectedRecord.category)}`}>
+            {selectedRecord.category}
+          </span>
+        </div>
+        <FieldColumns fields={dispatchFields} />
+      </CardShell>
+
+      {/* Summary cards — both units shown together in each card */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-gray-400 bg-white">
+          <p className="text-xs text-gray-500 mb-1">Dispatch Quantity</p>
+          <p className="text-lg font-bold text-gray-900">
+            {formatDual(selectedRecord.dispatchWeightKg, selectedRecord.dispatchWeightLtr)}
+          </p>
+        </div>
+        <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-green-700 bg-white">
+          <p className="text-xs text-gray-500 mb-1">Recycled Quantity</p>
+          <p className="text-lg font-bold text-gray-900">
+            {formatDual(recycledQuantityKg, recycledQuantityLtr)}
+          </p>
+        </div>
+        <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-red-600 bg-white">
+          <p className="text-xs text-gray-500 mb-1">Wastage / Loss</p>
+          <p className="text-lg font-bold text-gray-900">
+            {formatDual(wastageKg, wastageLtr)}
+          </p>
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg border border-gray-200 p-6">
-        {/* Against Dispatch */}
-        
-
-        {/* Dispatch reference, auto-filled */}
-        {selectedRecord && (
-          <div className="mb-8">
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-base font-bold text-gray-900">
-                  {selectedRecord.dispatchId} · {selectedRecord.wasteItem}
-                </span>
-                <span className={`inline-block px-2.5 py-1 rounded text-xs font-semibold ${statusBadgeClass(selectedRecord.status)}`}>
-                  {selectedRecord.status}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Category</p>
-                  <span className={`inline-block px-2.5 py-1 rounded text-xs font-semibold ${categoryBadgeClass(selectedRecord.category)}`}>
-                    {selectedRecord.category}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Dispatch Weight</p>
-                  <p className="text-sm font-semibold text-gray-900">{selectedRecord.dispatchWeight}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Vendor / Facility</p>
-                  <p className="text-sm font-semibold text-gray-900">{selectedRecord.destination}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Dispatch Date</p>
-                  <p className="text-sm font-semibold text-gray-900">{selectedRecord.dispatchDate}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Vehicle No.</p>
-                  <p className="text-sm font-semibold text-gray-900">{selectedRecord.vehicleNumber}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Manifest No.</p>
-                  <p className="text-sm font-semibold text-brand">{selectedRecord.manifestNumber}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Site</p>
-                  <p className="text-sm font-semibold text-brand">{selectedRecord.site}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Dispatched By</p>
-                  <p className="text-sm font-semibold text-gray-900">{selectedRecord.dispatchedBy}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-            <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-gray-400">
-              <p className="text-xs text-gray-500 mb-1">Dispatched Quantity</p>
-              <p className="text-xl font-bold text-gray-900">
-                {dispatchedQuantity.value.toLocaleString('en-IN')} <span className="text-sm font-medium text-gray-500">{dispatchedQuantity.unit}</span>
-              </p>
-            </div>
-            <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-green-700">
-              <p className="text-xs text-gray-500 mb-1">Recycled Quantity</p>
-              <p className="text-xl font-bold text-gray-900">
-                {formData.recycledQuantity ? (
-                  <>
-                    {recycledQuantity.value.toLocaleString('en-IN')}{' '}
-                    <span className="text-sm font-medium text-gray-500">{recycledQuantity.unit || dispatchedQuantity.unit}</span>
-                  </>
-                ) : (
-                  <span className="text-gray-400">—</span>
-                )}
-              </p>
-            </div>
-            <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-red-600">
-              <p className="text-xs text-gray-500 mb-1">Wastage / Loss</p>
-              <p className="text-xl font-bold text-gray-900">
-                {wastage != null ? (
-                  <>
-                    {wastage.toLocaleString('en-IN')} <span className="text-sm font-medium text-gray-500">{dispatchedQuantity.unit}</span>
-                  </>
-                ) : (
-                  <span className="text-gray-400">—</span>
-                )}
-              </p>
-            </div>
-          </div>
-
         {/* Recycle Confirmation */}
-        <div className="mb-8 mt-6">
+        <div className="mb-8">
           <h2 className="text-base font-bold text-gray-900 mb-1">Recycle Confirmation</h2>
           <p className="text-xs text-gray-500 mb-4">
-            Enter the quantity the vendor confirms was recycled. Wastage is calculated automatically.
+            Enter the quantity the vendor confirms was recycled, per unit. Wastage is calculated automatically.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <TextField
-              label={<span>Recycled Quantity <span className="text-red-500">*</span></span>}
-              placeholder="e.g. 205 L"
-              value={formData.recycledQuantity}
-              onChange={(e) => handleChange('recycledQuantity', e.target.value)}
+              label="Recycled Quantity (Kg)"
+              placeholder="e.g. 250"
+              type="number"
+              value={formData.recycledQuantityKg}
+              onChange={(e) => handleChange('recycledQuantityKg', e.target.value)}
               fullWidth
               variant="outlined"
+              inputProps={{ min: '0' }}
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
             />
+            <TextField
+              label="Recycled Quantity (Litre)"
+              placeholder="e.g. 80"
+              type="number"
+              value={formData.recycledQuantityLtr}
+              onChange={(e) => handleChange('recycledQuantityLtr', e.target.value)}
+              fullWidth
+              variant="outlined"
+              inputProps={{ min: '0' }}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
+            <FormControl fullWidth>
+              <InputLabel shrink id="recycling-method-kg-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                Recycling Method (Kg)
+              </InputLabel>
+              <Select
+                labelId="recycling-method-kg-label"
+                value={formData.recyclingMethodKg}
+                onChange={(e: SelectChangeEvent<string>) => handleChange('recyclingMethodKg', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>Select Method</em>
+                </MenuItem>
+                {RECYCLING_METHOD_OPTIONS.map((opt) => (
+                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel shrink id="recycling-method-ltr-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                Recycling Method (Litre)
+              </InputLabel>
+              <Select
+                labelId="recycling-method-ltr-label"
+                value={formData.recyclingMethodLtr}
+                onChange={(e: SelectChangeEvent<string>) => handleChange('recyclingMethodLtr', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>Select Method</em>
+                </MenuItem>
+                {RECYCLING_METHOD_OPTIONS.map((opt) => (
+                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <TextField
               label={<span>Recycling Confirmation Date <span className="text-red-500">*</span></span>}
               type="date"
@@ -291,26 +414,6 @@ const RecycleEntryPage: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-            <FormControl fullWidth>
-              <InputLabel shrink id="recycling-method-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                Recycling Method
-              </InputLabel>
-              <Select
-                labelId="recycling-method-label"
-                value={formData.recyclingMethod}
-                onChange={(e: SelectChangeEvent<string>) => handleChange('recyclingMethod', e.target.value)}
-                displayEmpty
-                sx={fieldStyles}
-                MenuProps={selectMenuProps}
-              >
-                <MenuItem value="">
-                  <em>Select Method</em>
-                </MenuItem>
-                {RECYCLING_METHOD_OPTIONS.map((opt) => (
-                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
             <TextField
               label="Recycling Certificate No."
               placeholder="Enter certificate / reference no."
@@ -332,8 +435,6 @@ const RecycleEntryPage: React.FC = () => {
               InputProps={{ sx: fieldStyles }}
             />
           </div>
-
-         
         </div>
 
         {/* Attachment */}
