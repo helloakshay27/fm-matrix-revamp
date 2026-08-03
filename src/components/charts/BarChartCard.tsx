@@ -7,11 +7,12 @@ import {
   Tooltip,
   Legend,
   LabelList,
+  Cell,
   ResponsiveContainer,
   type TooltipProps,
   type LegendProps,
 } from "recharts";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
 import { cn } from "@/lib/utils";
@@ -78,16 +79,27 @@ export interface BarChartCardProps {
   series: BarSeriesConfig[];
   insight?: string;
   insightTone?: ChartInsightTone;
+  /** "banner" (default) = colored callout above the chart. "plain" = small sage text below it. */
+  insightVariant?: "banner" | "plain";
+  showInfoIcon?: boolean;
   unit?: string;
+  /** "vertical" (default) = columns growing up. "horizontal" = rows growing sideways (e.g. category comparisons). */
+  orientation?: "vertical" | "horizontal";
+  /** Stack all series into one bar per category instead of grouping them side by side. */
+  stacked?: boolean;
+  /** Override per-bar color by category index instead of by series (only for a single series). */
+  categoryColors?: string[];
+  valueDomain?: [number, number];
+  valueTicks?: number[];
   height?: number;
   className?: string;
 }
 
 /**
- * Reusable column bar-chart card — colors are drawn in a fixed order from the
+ * Reusable bar-chart card — colors are drawn in a fixed order from the
  * project's brand ANALYTICS_PALETTE (src/styles/chartPalette.ts), never per-value.
  * A single series never shows a legend (the card title already names it), per
- * multi-series comparisons in fm_matrix_phase10 (29).html.
+ * the comparison charts in fm_matrix_phase10 (29).html.
  */
 export function BarChartCard({
   title,
@@ -97,17 +109,61 @@ export function BarChartCard({
   series,
   insight,
   insightTone = "info",
+  insightVariant = "banner",
+  showInfoIcon = false,
   unit,
+  orientation = "vertical",
+  stacked = false,
+  categoryColors,
+  valueDomain,
+  valueTicks,
   height = 220,
   className,
 }: BarChartCardProps) {
   const showLegend = series.length > 1;
-  const showDirectLabels = data.length <= 6;
+  const showDirectLabels = data.length <= 6 && !stacked;
+  const isHorizontal = orientation === "horizontal";
+
+  const valueAxis = (
+    <XAxis
+      type={isHorizontal ? "number" : "category"}
+      dataKey={isHorizontal ? undefined : categoryKey}
+      axisLine={false}
+      tickLine={false}
+      domain={isHorizontal ? valueDomain ?? [0, "auto"] : undefined}
+      ticks={isHorizontal ? valueTicks : undefined}
+      tick={{ fontSize: 11, fill: "var(--color-text-light)" }}
+      tickFormatter={isHorizontal ? (value: number) => `${value}${unit ?? ""}` : undefined}
+    />
+  );
+
+  const categoryAxis = (
+    <YAxis
+      type={isHorizontal ? "category" : "number"}
+      dataKey={isHorizontal ? categoryKey : undefined}
+      axisLine={false}
+      tickLine={false}
+      width={isHorizontal ? 140 : 32}
+      domain={isHorizontal ? undefined : valueDomain}
+      ticks={isHorizontal ? undefined : valueTicks}
+      tick={{ fontSize: 11, fill: "var(--color-text-light)" }}
+      tickFormatter={isHorizontal ? undefined : (value: number) => `${value}${unit ?? ""}`}
+    />
+  );
 
   return (
-    <Card className={cn("border-brand-border", className)}>
+    <Card className={cn("border-brand-border relative", className)}>
+      {showInfoIcon && (
+        <button
+          type="button"
+          aria-label="How this is calculated"
+          className="absolute top-4 right-4 w-[18px] h-[18px] rounded-full border border-brand-green/60 bg-brand-bg flex items-center justify-center text-brand-green z-10"
+        >
+          <Info className="w-3 h-3" />
+        </button>
+      )}
       <CardHeader className="pb-2">
-        {insight && (
+        {insight && insightVariant === "banner" && (
           <div
             className={cn(
               "rounded-md px-3 py-2 text-brand-body-5 leading-relaxed",
@@ -129,36 +185,41 @@ export function BarChartCard({
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={height}>
-            <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border-subtle)" />
-              <XAxis
-                dataKey={categoryKey}
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 11, fill: "var(--color-text-light)" }}
+            <BarChart
+              data={data}
+              layout={isHorizontal ? "vertical" : "horizontal"}
+              margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+              barGap={4}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                horizontal={!isHorizontal}
+                vertical={isHorizontal}
+                stroke="var(--color-border-subtle)"
               />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                width={32}
-                tick={{ fontSize: 11, fill: "var(--color-text-light)" }}
-                tickFormatter={(value) => `${value}${unit ?? ""}`}
-              />
+              {valueAxis}
+              {categoryAxis}
               <Tooltip cursor={{ fill: "var(--color-primary)", opacity: 0.05 }} content={<BarTooltip unit={unit} />} />
               {showLegend && <Legend content={<BarLegend />} />}
-              {series.map((s, index) => (
+              {series.map((s, seriesIndex) => (
                 <Bar
                   key={s.dataKey}
                   dataKey={s.dataKey}
                   name={s.name}
-                  fill={ANALYTICS_PALETTE[index % ANALYTICS_PALETTE.length]}
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={40}
+                  fill={ANALYTICS_PALETTE[seriesIndex % ANALYTICS_PALETTE.length]}
+                  radius={isHorizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]}
+                  maxBarSize={isHorizontal ? 22 : 40}
+                  stackId={stacked ? "stack" : undefined}
                 >
+                  {categoryColors && series.length === 1 && !stacked
+                    ? data.map((_, categoryIndex) => (
+                        <Cell key={categoryIndex} fill={categoryColors[categoryIndex % categoryColors.length]} />
+                      ))
+                    : null}
                   {showDirectLabels && (
                     <LabelList
                       dataKey={s.dataKey}
-                      position="top"
+                      position={isHorizontal ? "right" : "top"}
                       formatter={(value: number) => `${value}${unit ?? ""}`}
                       style={{ fontSize: 11, fill: "var(--color-text)" }}
                     />
@@ -167,6 +228,10 @@ export function BarChartCard({
               ))}
             </BarChart>
           </ResponsiveContainer>
+        )}
+
+        {insight && insightVariant === "plain" && (
+          <p className="text-brand-body-5 text-brand-green leading-relaxed mt-3">{insight}</p>
         )}
       </CardContent>
     </Card>
