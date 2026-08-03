@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useJobs } from "../JobsContext";
 import { T } from "../constants";
@@ -14,9 +15,27 @@ export default function KraEntryModal() {
     escalateUsers,
     krasSaving,
     saveNewKra,
+    assigneeKraUsage,
+    loadAssigneeKraUsage,
   } = useJobs();
   const queryClient = useQueryClient();
+
+  // Assignee badalte hi uske baaki KRAs ka total le aate hain.
+  useEffect(() => {
+    if (!showAddKra) return;
+    loadAssigneeKraUsage(newKra.assigneeId);
+  }, [showAddKra, newKra.assigneeId, loadAssigneeKraUsage]);
+
   if (!showAddKra) return null;
+
+  const usageReady =
+    newKra.assigneeId &&
+    !assigneeKraUsage.loading &&
+    String(assigneeKraUsage.assigneeId) === String(newKra.assigneeId);
+  const usedByMember = usageReady ? assigneeKraUsage.used : 0;
+  const remainingForMember = Math.max(0, 100 - usedByMember);
+  const overLimit =
+    usageReady && Number(newKra.weightage || 0) > remainingForMember;
 
   const handleSave = async () => {
     await saveNewKra();
@@ -110,15 +129,31 @@ export default function KraEntryModal() {
                 }
               />
             </Fld>
-            <Fld label="KRA Weightage (%)">
+            <Fld
+              label="KRA Weightage (%)"
+              hint={
+                newKra.assigneeId
+                  ? assigneeKraUsage.loading
+                    ? "Checking member's total..."
+                    : `${usedByMember}% used by this member's other KRAs, ${remainingForMember}% left`
+                  : undefined
+              }
+            >
               <FI
                 type="number"
+                min={0}
+                max={usageReady ? remainingForMember : 100}
                 placeholder="e.g. 30"
                 value={newKra.weightage}
                 onChange={(e) =>
                   setNewKra((f) => ({ ...f, weightage: e.target.value }))
                 }
               />
+              {overLimit && (
+                <span style={{ fontSize: 11, color: T.danger }}>
+                  Exceeds 100% total for this member
+                </span>
+              )}
             </Fld>
           </div>
           <Fld label="Assignee Person">

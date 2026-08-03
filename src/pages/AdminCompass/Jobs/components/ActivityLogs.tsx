@@ -158,8 +158,14 @@ export default function ActivityLogs() {
               <span style={{ fontWeight: 600, fontSize: 12 }}>
                 {log.name}
               </span>
-              <span style={{ color: T.inkSoft, fontSize: 12 }}>
-                {log.detail}
+              <span
+                style={{
+                  color: log.detail ? T.inkSoft : T.inkMuted,
+                  fontSize: 12,
+                }}
+                title={log.detail || undefined}
+              >
+                {log.detail || "No field changes"}
               </span>
               <span style={{ fontSize: 12, color: T.inkSoft }}>
                 {log.user}

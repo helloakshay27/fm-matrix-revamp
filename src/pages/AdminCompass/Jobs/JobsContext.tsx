@@ -28,6 +28,7 @@ import { fetchJobDescriptions } from "./jobDescriptionsApi";
 import { fetchKras, fetchAllKras, createKra, updateKra, updateKraStatus } from "./krasApi";
 import { fetchEscalateToUsers } from "./usersApi";
 import { firstDefined } from "./apiClient";
+import { assignJobDescriptionMembers } from "./api/jobsApi";
 import { useEscalateUsers } from "./hooks/useEscalateUsers";
 
 const JobsContext = createContext(null);
@@ -66,11 +67,18 @@ export function JobsProvider({ children }) {
   const [kraSearch, setKraSearch] = useState("");
   const [kpiSearch, setKpiSearch] = useState("");
   const [assignModal, setAssignModal] = useState(null);
-  const [assignUserId, setAssignUserId] = useState(null);
-  const [assignUserName, setAssignUserName] = useState("");
+  // JD assign multi-select — API `assignee_ids` ki poori list leta hai.
+  const [assignJdUserIds, setAssignJdUserIds] = useState([]);
+  const [jdAssignSaving, setJdAssignSaving] = useState(false);
   const [expandedKra, setExpandedKra] = useState(null);
   const [showAddKra, setShowAddKra] = useState(false);
   const [krasSaving, setKrasSaving] = useState(false);
+  // KRA modals me dikhaya jane wala "member ka total weightage" hint.
+  const [assigneeKraUsage, setAssigneeKraUsage] = useState({
+    assigneeId: null,
+    used: 0,
+    loading: false,
+  });
   const [showAddKpi, setShowAddKpi] = useState(false);
   const [newKra, setNewKra] = useState({
     jdId: "",
@@ -519,23 +527,75 @@ export function JobsProvider({ children }) {
     setFormKpis([]);
   };
 
-  const assignUser = () => {
-    if (!assignUserId || !assignUserName.trim()) return;
-    setAllJds((j) =>
-      j.map((jd) =>
-        jd.id === assignModal
-          ? { ...jd, assigned: [...jd.assigned, assignUserName.trim()] }
-          : jd
-      )
+  /** JD row — pehle React Query wali list se, warna context ke allJds se. */
+  const jdRowById = (id) => {
+    const cached = queryClient.getQueryData(["jobs-list"]);
+    return (
+      (Array.isArray(cached) ? cached : []).find((j) => sameId(j?.id, id)) ||
+      allJds.find((j) => sameId(j.id, id))
     );
-    setAssignUserId(null);
-    setAssignUserName("");
-    setAssignModal(null);
-    showToast("Member assigned successfully");
+  };
+
+  // Modal khulte hi current assignees prefill ho jate hain, taki PUT se koi
+  // purana assignee galti se hat na jaye.
+  useEffect(() => {
+    if (!assignModal) return;
+    const row = jdRowById(assignModal);
+    setAssignJdUserIds((row?.assigneeIds || []).map(String));
+  }, [assignModal]);
+
+  /** PUT /job_descriptions/:id.json — `assignee_ids` poori list replace karta hai. */
+  const assignUser = async () => {
+    if (!assignModal) return;
+    const ids = assignJdUserIds
+      .map((id) => Number(id))
+      .filter((id) => Number.isFinite(id));
+    const row = jdRowById(assignModal);
+    const names = (escalateUsers || [])
+      .filter((u) => ids.some((id) => sameId(u.id, id)))
+      .map((u) => u.full_name || u.name)
+      .filter(Boolean);
+    setJdAssignSaving(true);
+    try {
+      await assignJobDescriptionMembers(assignModal, ids);
+      const patch = { assigned: names, assigneeIds: ids };
+      setAllJds((j) =>
+        j.map((jd) => (sameId(jd.id, assignModal) ? { ...jd, ...patch } : jd))
+      );
+      queryClient.setQueriesData({ queryKey: ["jobs-list"] }, (current) =>
+        Array.isArray(current)
+          ? current.map((jd) =>
+              sameId(jd?.id, assignModal) ? { ...jd, ...patch } : jd
+            )
+          : current
+      );
+      queryClient.invalidateQueries({ queryKey: ["jobs-list"] });
+      addLog(
+        "assign",
+        "JD",
+        row?.title || "",
+        ids.length
+          ? `Assigned to ${names.join(", ") || ids.join(", ")}`
+          : "All members removed"
+      );
+      setAssignJdUserIds([]);
+      setAssignModal(null);
+      showToast(
+        ids.length ? "Members assigned successfully" : "Members removed"
+      );
+    } catch (err) {
+      toast.error(
+        `Could not assign members: ${err?.response?.data?.message || err?.message || "request failed"}`
+      );
+    } finally {
+      setJdAssignSaving(false);
+    }
   };
 
   const saveNewKra = async () => {
     if (!newKra.jdId || !newKra.title) return;
+    if (await exceedsAssigneeKraWeightage(newKra.assigneeId, newKra.weightage))
+      return;
     const selectedJd = allJds.find((j) => sameId(j.id, newKra.jdId));
     setKrasSaving(true);
     try {
@@ -744,6 +804,84 @@ export function JobsProvider({ children }) {
     return true;
   };
 
+  /* ── Ek member ke saare KRAs ka total weightage 100% se zyada nahi ho sakta ── */
+
+  const localAssigneeKraTotal = (assigneeId, excludeKraId = null) =>
+    allKras
+      .filter(
+        (kra) =>
+          sameId(firstDefined(kra.assigneeId, kra.assignee_id), assigneeId) &&
+          String(kra.status || "active").toLowerCase() === "active" &&
+          (excludeKraId === null || !sameId(kra.id, excludeKraId))
+      )
+      .reduce((sum, kra) => sum + (Number(kra.weightage) || 0), 0);
+
+  /**
+   * Member ke active KRAs ka total server se lete hain — `allKras` sirf current
+   * filter/search ka subset ho sakta hai, isliye local sum bharosemand nahi.
+   */
+  const assigneeKraWeightageUsed = async (assigneeId, excludeKraId = null) => {
+    if (!assigneeId) return 0;
+    try {
+      const rows = await fetchKras({ assigneeId, kraType: null, status: "active" });
+      if (Array.isArray(rows))
+        return rows
+          .filter((kra) => excludeKraId === null || !sameId(kra.id, excludeKraId))
+          .reduce((sum, kra) => sum + (Number(kra.weightage) || 0), 0);
+    } catch {
+      // Network fail — local total par fallback.
+    }
+    return localAssigneeKraTotal(assigneeId, excludeKraId);
+  };
+
+  const memberNameById = (assigneeId) =>
+    (escalateUsers || []).find((u) => sameId(u.id, assigneeId))?.full_name ||
+    (escalateUsers || []).find((u) => sameId(u.id, assigneeId))?.name ||
+    "this member";
+
+  /** true = limit cross ho rahi hai (toast bhi dikha diya jata hai). */
+  const exceedsAssigneeKraWeightage = async (
+    assigneeId,
+    weightage,
+    excludeKraId = null,
+    memberName = ""
+  ) => {
+    if (!assigneeId) return false;
+    const next = Number(weightage) || 0;
+    const used = await assigneeKraWeightageUsed(assigneeId, excludeKraId);
+    if (used + next <= 100) return false;
+    toast.error(
+      `Total KRA weightage for ${memberName || memberNameById(assigneeId)} cannot exceed 100%. Already used: ${used}%, remaining: ${Math.max(
+        0,
+        100 - used
+      )}%.`
+    );
+    return true;
+  };
+
+  // KRA modals ka live hint — assignee chunte hi uska total dikh jata hai.
+  const loadAssigneeKraUsage = useCallback(
+    async (assigneeId, excludeKraId = null) => {
+      if (!assigneeId) {
+        setAssigneeKraUsage({ assigneeId: null, used: 0, loading: false });
+        return;
+      }
+      setAssigneeKraUsage({ assigneeId, used: 0, loading: true });
+      let used = 0;
+      try {
+        const rows = await fetchKras({ assigneeId, kraType: null, status: "active" });
+        if (Array.isArray(rows))
+          used = rows
+            .filter((kra) => excludeKraId === null || !sameId(kra.id, excludeKraId))
+            .reduce((sum, kra) => sum + (Number(kra.weightage) || 0), 0);
+      } catch {
+        used = 0;
+      }
+      setAssigneeKraUsage({ assigneeId, used, loading: false });
+    },
+    []
+  );
+
   const saveNewKpi = async () => {
     const missing = [
       !newKpi.jdId && "Job Description",
@@ -942,6 +1080,15 @@ export function JobsProvider({ children }) {
 
   const saveEditKra = async () => {
     if (!editingKraId || !editKraForm.title) return;
+    // Khud ko chhodkar baaki KRAs ka total — warna apna hi weightage do baar ginta.
+    if (
+      await exceedsAssigneeKraWeightage(
+        editKraForm.assigneeId,
+        editKraForm.weightage,
+        editingKraId
+      )
+    )
+      return;
     const previous = allKras;
     const selectedJd = allJds.find((j) => sameId(j.id, editKraForm.jdId));
     const localPatch = {
@@ -1204,6 +1351,28 @@ export function JobsProvider({ children }) {
     );
     const kpi = allKpis.find((p) => sameId(p.id, assignKpiModal));
     if (!kpi) return;
+    // KRA ki copy banne wali hai to pehle check — us member ka total 100% cross
+    // ho raha ho to poora assign rok dete hain (aadha-adhoora state se bachne ke liye).
+    const sourceKra = kpi.kraId
+      ? allKras.find((k) => sameId(k.id, kpi.kraId))
+      : null;
+    if (sourceKra) {
+      const owner = kraAssigneeOf(sourceKra);
+      const needsCopy =
+        owner !== undefined &&
+        !sameId(owner, selectedIds[0]) &&
+        !findKraCopyFor(sourceKra, selectedIds[0]);
+      if (
+        needsCopy &&
+        (await exceedsAssigneeKraWeightage(
+          selectedIds[0],
+          sourceKra.weightage,
+          null,
+          selectedUsers[0]?.name
+        ))
+      )
+        return;
+    }
     const previous = allKpis;
     setAllKpis((ps) =>
       ps.map((p) =>
@@ -1637,6 +1806,8 @@ export function JobsProvider({ children }) {
     kpiModalKrasLoading,
     kpiModalKrasError,
     kraWeightageUsed,
+    assigneeKraUsage,
+    loadAssigneeKraUsage,
     kpiKraSearch,
     setKpiKraSearch,
     jdSearch,
@@ -1647,9 +1818,9 @@ export function JobsProvider({ children }) {
     setKpiSearch,
     assignModal,
     setAssignModal,
-    assignUserId,
-    setAssignUserId,
-    setAssignUserName,
+    assignJdUserIds,
+    setAssignJdUserIds,
+    jdAssignSaving,
     expandedKra,
     setExpandedKra,
     showAddKra,

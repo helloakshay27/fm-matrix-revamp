@@ -125,8 +125,45 @@ function getDeptId(department) {
   return department.id ?? department.department_id ?? null;
 }
 
+/**
+ * Assignees ke liye API kai shapes bhejta hai — objects ki list, sirf ids, ya
+ * comma-separated names. Sab handle karke { ids, names } return karte hain.
+ */
+function mapJdAssignees(apiJd) {
+  const ids = [];
+  const names = [];
+  const raw = apiJd?.assignees ?? apiJd?.assigned_users ?? apiJd?.users;
+  if (Array.isArray(raw))
+    raw.forEach((entry) => {
+      if (entry && typeof entry === "object") {
+        const id = entry.id ?? entry.user_id;
+        if (id !== undefined && id !== null) ids.push(Number(id));
+        const name = entry.full_name || entry.name || entry.user_name || "";
+        if (name) names.push(String(name).trim());
+      } else if (entry !== undefined && entry !== null) {
+        ids.push(Number(entry));
+      }
+    });
+  if (!ids.length && Array.isArray(apiJd?.assignee_ids))
+    apiJd.assignee_ids.forEach((id) => {
+      if (id !== undefined && id !== null) ids.push(Number(id));
+    });
+  if (!names.length) {
+    const rawNames = apiJd?.assignee_names ?? apiJd?.assigned_to;
+    if (Array.isArray(rawNames))
+      names.push(...rawNames.filter(Boolean).map((n) => String(n).trim()));
+    else if (typeof rawNames === "string" && rawNames.trim())
+      names.push(...rawNames.split(",").map((n) => n.trim()).filter(Boolean));
+  }
+  return {
+    ids: [...new Set(ids.filter((id) => Number.isFinite(id)))],
+    names: names.filter(Boolean),
+  };
+}
+
 export function mapApiJdToUi(apiJd) {
   const department = apiJd.department || null;
+  const assignees = mapJdAssignees(apiJd);
   return {
     id: apiJd.id,
     title: apiJd.job_title || "—",
@@ -137,7 +174,8 @@ export function mapApiJdToUi(apiJd) {
     type: TYPE_MAP_REVERSE[apiJd.employment_type] || apiJd.employment_type || "—",
     status: apiJd.status || "active",
     created: formatDate(apiJd.created_at),
-    assigned: [],
+    assigned: assignees.names,
+    assigneeIds: assignees.ids,
     reportingTo: null,
     location: null,
     salaryMin: null,
@@ -325,6 +363,41 @@ export function buildEditJobPayload(editForm, departments) {
     skills: editForm.skills || null,
     nice_to_have: editForm.niceToHave || null,
   };
+}
+
+/**
+ * PUT {BASE_URL}/job_descriptions/:id.json?access_token=…
+ *   body: { "assignee_ids": [45532, 291179] }
+ * Poori list replace hoti hai — isliye caller ko existing + naye ids saath
+ * bhejne padte hain. Khali array bhejne se saare assignees hat jate hain.
+ */
+export async function assignJobDescriptionMembers(jobId, assigneeIds = []) {
+  const baseUrl = getBaseUrl();
+
+  if (!baseUrl) throw new Error("Base URL not found in localStorage");
+
+  const token = localStorage.getItem("token") || "";
+  const url = `https://${baseUrl}/job_descriptions/${jobId}.json?access_token=${encodeURIComponent(token)}`;
+
+  const ids = (assigneeIds || [])
+    .map((id) => Number(id))
+    .filter((id) => Number.isFinite(id));
+
+  const res = await axios.put(
+    url,
+    { assignee_ids: ids },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: getAuthHeader(),
+      },
+    }
+  );
+
+  const body = res.data;
+  if (body && body.success === false)
+    throw new Error(body?.message || "Failed to assign job description");
+  return body;
 }
 
 export async function updateJobDescription(jobId, payload) {

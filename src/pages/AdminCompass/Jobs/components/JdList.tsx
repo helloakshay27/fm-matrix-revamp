@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useJobs } from "../JobsContext";
 import { T, COLORS } from "../constants";
@@ -22,12 +23,31 @@ export default function JdList() {
     actionMenuJd, setActionMenuJd,
     setAssignModal,
     publishJd,
+    escalateUsers = [],
   } = useJobs();
 
   const { data: apiJds, isLoading, error } = useFetchJobs();
-  const filteredJds = (apiJds || []).filter((j) =>
-    j.title.toLowerCase().includes(jdSearch.toLowerCase())
+  // API kabhi sirf assignee ids bhejta hai — naam users list se resolve karte hain.
+  const nameById = useMemo(
+    () =>
+      new Map(
+        (escalateUsers || []).map((u) => [
+          String(u.id),
+          u.full_name || u.name || `User ${u.id}`,
+        ])
+      ),
+    [escalateUsers]
   );
+  const filteredJds = (apiJds || [])
+    .filter((j) => j.title.toLowerCase().includes(jdSearch.toLowerCase()))
+    .map((jd) => ({
+      ...jd,
+      assigned: jd.assigned?.length
+        ? jd.assigned
+        : (jd.assigneeIds || []).map(
+            (id) => nameById.get(String(id)) || `User ${id}`
+          ),
+    }));
 
   return (
     <div>
