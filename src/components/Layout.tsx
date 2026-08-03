@@ -254,6 +254,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "67" ||
       org_id === "112" ||
       org_id === "87" ||
+      org_id === "82" ||
       userEmail === "sumanta.karmakar@ltimindtree.com" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
@@ -370,8 +371,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "3" ||
       org_id === "67" ||
       org_id === "112" ||
-     org_id === "87" ||
-     userEmail === "sumanta.karmakar@ltimindtree.com" ||
+      org_id === "87" ||
+      org_id === "82" ||
+      userEmail === "sumanta.karmakar@ltimindtree.com" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
