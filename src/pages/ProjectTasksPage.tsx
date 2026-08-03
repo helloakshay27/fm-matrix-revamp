@@ -1498,8 +1498,12 @@ const ProjectTasksPage = () => {
 
         // Add global search filter (searches in title, task_code, and description)
         if (debouncedSearchTerm.trim()) {
+            // task_code is stored without the "T-" prefix (e.g. "T-23432" -> "23432")
+            const normalizedSearchTerm = debouncedSearchTerm
+                .trim()
+                .replace(/^t-/i, "");
             filters["q[id_or_title_or_task_code_or_description_cont]"] =
-                debouncedSearchTerm.trim();
+                normalizedSearchTerm;
         }
 
         return filters;
@@ -3361,6 +3365,7 @@ const ProjectTasksPage = () => {
                     storageKey="projects-table"
                     onSort={handleColumnSort}
                     onSearchChange={handleSearchChange}
+                    disableClientSearch
                     onFilterClick={() => setIsFilterModalOpen(true)}
                     // canAddRow={true}
                     loading={isLoading}
