@@ -1,5 +1,6 @@
 // @ts-nocheck
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { T, COLORS } from "../constants";
 export { COLORS };
 import { I, ico } from "../icons";
@@ -94,6 +95,193 @@ export const FilterSelect = ({ value, onChange, label, options = [] }) => (
     </select>
   </div>
 );
+
+/**
+ * FilterSelect ka searchable version — list lambi ho (departments, members)
+ * to type karke filter kiya ja sakta hai. `onChange` seedhe value string
+ * deta hai (native select event nahi).
+ */
+export const FilterSearchSelect = ({
+  value,
+  onChange,
+  label,
+  options = [],
+  emptyText = "No results found",
+  minWidth = 170,
+}) => {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const rootRef = useRef(null);
+  const inputRef = useRef(null);
+
+  const normalized = useMemo(
+    () =>
+      options.map((option) =>
+        typeof option === "string"
+          ? { value: option, label: option }
+          : {
+            value: String(option?.value ?? option?.id ?? ""),
+            label: String(option?.label ?? option?.name ?? ""),
+          }
+      ),
+    [options]
+  );
+
+  const selected = normalized.find(
+    (option) => String(option.value) === String(value ?? "")
+  );
+  const displayValue = selected?.label || label;
+
+  const filtered = useMemo(() => {
+    const text = query.trim().toLowerCase();
+    if (!text) return normalized;
+    return normalized.filter((option) =>
+      option.label.toLowerCase().includes(text)
+    );
+  }, [normalized, query]);
+
+  useEffect(() => {
+    const onPointerDown = (event) => {
+      if (!rootRef.current?.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    setQuery("");
+    window.setTimeout(() => inputRef.current?.focus(), 0);
+  }, [open]);
+
+  const pick = (nextValue) => {
+    onChange?.(nextValue);
+    setQuery("");
+    setOpen(false);
+  };
+
+  return (
+    <div ref={rootRef} style={{ position: "relative", minWidth }}>
+      <div
+        onClick={() => setOpen(true)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "0 10px 0 12px",
+          background: T.raised,
+          border: `1px solid ${open ? T.orange : T.borderSoft}`,
+          borderRadius: T.rmd,
+          minHeight: 40,
+          cursor: "pointer",
+          boxShadow: open ? `0 0 0 4px ${T.orangeSoft}` : "none",
+        }}
+      >
+        <input
+          ref={inputRef}
+          type="text"
+          readOnly={!open}
+          value={open ? query : displayValue}
+          placeholder={label}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setOpen(false);
+              e.currentTarget.blur();
+            }
+          }}
+          style={{
+            border: "none",
+            outline: "none",
+            background: "transparent",
+            flex: 1,
+            minWidth: 0,
+            fontSize: 12.5,
+            fontWeight: 500,
+            fontFamily: T.font,
+            color: T.ink,
+            cursor: open ? "text" : "pointer",
+          }}
+        />
+        <ChevronDown
+          size={15}
+          style={{
+            color: T.inkMuted,
+            flexShrink: 0,
+            transition: "transform .15s ease",
+            transform: open ? "rotate(180deg)" : "none",
+          }}
+        />
+      </div>
+
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: "calc(100% + 6px)",
+            zIndex: 80,
+            background: T.raised,
+            border: `1px solid ${T.borderSoft}`,
+            borderRadius: T.rmd,
+            boxShadow: "0 12px 32px rgba(44,44,44,.16)",
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ maxHeight: 240, overflowY: "auto", padding: 4 }}>
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                pick("all");
+              }}
+              style={filterOptionStyle(String(value ?? "all") === "all")}
+            >
+              {label}
+            </button>
+            {filtered.length === 0 ? (
+              <div style={{ padding: "10px 12px", fontSize: 12.5, color: T.inkMuted }}>
+                {emptyText}
+              </div>
+            ) : (
+              filtered.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    pick(option.value);
+                  }}
+                  style={filterOptionStyle(
+                    String(option.value) === String(value ?? "")
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const filterOptionStyle = (active) => ({
+  width: "100%",
+  display: "block",
+  border: "none",
+  borderRadius: 6,
+  background: active ? T.orangeSoft : "transparent",
+  color: active ? T.orange : T.ink,
+  padding: "8px 10px",
+  cursor: "pointer",
+  fontFamily: T.font,
+  fontSize: 12.5,
+  fontWeight: active ? 700 : 500,
+  textAlign: "left",
+});
 
 export const AiBar = ({ text, sub, onClick, label }) => (
   <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, background: T.warm, border: "1px solid rgba(218,119,86,.12)" }}>

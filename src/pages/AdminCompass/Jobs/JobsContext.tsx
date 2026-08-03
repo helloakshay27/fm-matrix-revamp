@@ -11,9 +11,6 @@ import {
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  SEED_JDS,
-  SEED_KRAS,
-  SEED_KPIS,
   AI_KRAS,
   genAiKpis,
   DEPARTMENTS,
@@ -28,8 +25,9 @@ import { fetchKpiUnits, saveKpiUnits } from "./kpiUnitsApi";
 import { fetchActivityLogs, LOGS_PER_PAGE } from "./activityLogsApi";
 import { fetchKpis, createKpi, updateKpi, toKpiPayload } from "./kpisApi";
 import { fetchJobDescriptions } from "./jobDescriptionsApi";
-import { fetchKras, createKra, updateKra, updateKraStatus } from "./krasApi";
-import { fetchUsersByOrganization } from "./usersApi";
+import { fetchKras, fetchAllKras, createKra, updateKra, updateKraStatus } from "./krasApi";
+import { fetchEscalateToUsers } from "./usersApi";
+import { firstDefined } from "./apiClient";
 import { useEscalateUsers } from "./hooks/useEscalateUsers";
 
 const JobsContext = createContext(null);
@@ -52,8 +50,10 @@ export function JobsProvider({ children }) {
   const [kraAiDone, setKraAiDone] = useState(false);
   const [kpiAiLoading, setKpiAiLoading] = useState(false);
   const [kpiAiDone, setKpiAiDone] = useState(false);
-  const [allJds, setAllJds] = useState(SEED_JDS);
-  const [allKras, setAllKras] = useState(SEED_KRAS);
+  // Seed/demo rows nahi — dono lists API se aati hain. (Seed ke ids real ids se
+  // takra jaate the, jisse KPI list me galat JD/KRA naam dikh sakte the.)
+  const [allJds, setAllJds] = useState([]);
+  const [allKras, setAllKras] = useState([]);
   const [allKpis, setAllKpis] = useState([]);
   const [kpisLoading, setKpisLoading] = useState(false);
   const [kpisError, setKpisError] = useState(null);
@@ -647,6 +647,21 @@ export function JobsProvider({ children }) {
     loadKpiModalJds();
   }, [jobTab, loadKpiModalJds]);
 
+  // KPI list "Linked KRA" column ke liye KRAs bhi chahiye — tab khulte hi
+  // ek baar fetch kar lete hain (mergeKras duplicate rows overwrite karta hai).
+  useEffect(() => {
+    if (jobTab !== "kpi") return;
+    let active = true;
+    fetchAllKras()
+      .then((rows) => {
+        if (active && Array.isArray(rows)) mergeKras(rows);
+      })
+      .catch((err) => console.error("Failed to load KRAs for KPI tab:", err));
+    return () => {
+      active = false;
+    };
+  }, [jobTab, mergeKras]);
+
   useEffect(() => {
     if (!showAddKpi && !editingKpiId) {
       setKpiModalKras([]);
@@ -654,76 +669,31 @@ export function JobsProvider({ children }) {
       return;
     }
 
-    const form = showAddKpi ? newKpi : editKpiForm;
-    if (!form?.jdId) {
-      setKpiModalKras([]);
-      setKpiModalKrasError(null);
-      setKpiModalKrasLoading(false);
-      return;
-    }
-
-    const selectedJd = allJds.find((j) => sameId(j.id, form.jdId));
-    const selectedKra = allKras.find((k) => sameId(k.id, form.kraId));
-    const departmentId =
-      toNum(form.departmentId) ||
-      toNum(selectedJd?.departmentId) ||
-      toNum(selectedJd?.deptId) ||
-      toNum(selectedKra?.departmentId);
-    const assigneeId = Array.isArray(form.assigneeIds)
-      ? toNum(form.assigneeIds[0])
-      : undefined;
-    if (!departmentId || !assigneeId) {
-      setKpiModalKras([]);
-      setKpiModalKrasError(null);
-      setKpiModalKrasLoading(false);
-      return;
-    }
+    // The Linked KRA picker lists every KRA from GET /kras.json — it is not
+    // scoped by JD / department / assignee. Searching is done client-side.
     let active = true;
-    setKpiModalKras([]);
     setKpiModalKrasLoading(true);
     setKpiModalKrasError(null);
-    const timer = window.setTimeout(async () => {
+    (async () => {
       try {
-        const rows = await fetchKras({
-          departmentId,
-          jobDescriptionId: form.jdId,
-          assigneeId,
-          search: kpiKraSearch,
-          kraType: "job",
-          status: "active",
-        });
+        const rows = await fetchAllKras();
         if (!active || rows === null) return;
         setKpiModalKras(rows);
         mergeKras(rows);
       } catch (err) {
         if (!active) return;
         console.error("Failed to load linked KRAs:", err);
+        setKpiModalKras([]);
         setKpiModalKrasError(err?.message || "request failed");
       } finally {
         if (active) setKpiModalKrasLoading(false);
       }
-    }, 300);
+    })();
 
     return () => {
       active = false;
-      window.clearTimeout(timer);
     };
-  }, [
-    allJds,
-    allKras,
-    editKpiForm.assigneeIds,
-    editKpiForm.departmentId,
-    editKpiForm.jdId,
-    editKpiForm.kraId,
-    editingKpiId,
-    kpiKraSearch,
-    mergeKras,
-    newKpi.assigneeIds,
-    newKpi.departmentId,
-    newKpi.jdId,
-    newKpi.kraId,
-    showAddKpi,
-  ]);
+  }, [editingKpiId, mergeKras, showAddKpi]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -732,8 +702,60 @@ export function JobsProvider({ children }) {
     return () => window.clearTimeout(timer);
   }, [refreshKpis]);
 
+  // Ek KRA ki saari KPIs ka weightage milakar 100% se zyada nahi ho sakta —
+  // chahe us KRA se 2 KPIs juddi hon ya 10. `excludeKpiId` edit ke waqt
+  // current KPI ko total se hata deta hai.
+  const kraWeightageUsed = (kraId, excludeKpiId = null) =>
+    allKpis
+      .filter(
+        (kpi) =>
+          sameId(kpi.kraId, kraId) &&
+          (excludeKpiId === null || !sameId(kpi.id, excludeKpiId))
+      )
+      .reduce((sum, kpi) => sum + (Number(kpi.weightage) || 0), 0);
+
+  // Save ke waqt total server se verify karte hain — `allKpis` sirf current
+  // search ka subset ho sakta hai, isliye local sum bharosemand nahi.
+  const exceedsKraWeightage = async (kraId, weightage, excludeKpiId = null) => {
+    if (!kraId) return false;
+    const next = Number(weightage) || 0;
+    let used = kraWeightageUsed(kraId, excludeKpiId);
+    try {
+      const rows = await fetchKpis({ kraId });
+      if (Array.isArray(rows))
+        used = rows
+          .filter(
+            (kpi) =>
+              excludeKpiId === null || !sameId(kpi.id, excludeKpiId)
+          )
+          .reduce((sum, kpi) => sum + (Number(kpi.weightage) || 0), 0);
+    } catch {
+      // Network fail — local total par hi fallback.
+    }
+    if (used + next <= 100) return false;
+    const kraTitle =
+      allKras.find((k) => sameId(k.id, kraId))?.title || "this KRA";
+    toast.error(
+      `Total KPI weightage for "${kraTitle}" cannot exceed 100%. Already used: ${used}%, remaining: ${Math.max(
+        0,
+        100 - used
+      )}%.`
+    );
+    return true;
+  };
+
   const saveNewKpi = async () => {
-    if (!newKpi.jdId || !newKpi.kraId || !newKpi.name || !newKpi.target) return;
+    const missing = [
+      !newKpi.jdId && "Job Description",
+      !newKpi.kraId && "Linked KRA",
+      !String(newKpi.name || "").trim() && "KPI Name",
+      !String(newKpi.target || "").trim() && "Target Value",
+    ].filter(Boolean);
+    if (missing.length) {
+      toast.error(`Please fill: ${missing.join(", ")}`);
+      return;
+    }
+    if (await exceedsKraWeightage(newKpi.kraId, newKpi.weightage)) return;
     const selectedJd = allJds.find((j) => sameId(j.id, newKpi.jdId));
     const selectedKra = allKras.find((k) => sameId(k.id, newKpi.kraId));
     const payloadForm = {
@@ -976,6 +998,22 @@ export function JobsProvider({ children }) {
   };
 
   const saveEditKpi = async () => {
+    const missing = [
+      !String(editKpiForm.name || "").trim() && "KPI Name",
+      !String(editKpiForm.target ?? "").trim() && "Target Value",
+    ].filter(Boolean);
+    if (missing.length) {
+      toast.error(`Please fill: ${missing.join(", ")}`);
+      return;
+    }
+    if (
+      await exceedsKraWeightage(
+        editKpiForm.kraId,
+        editKpiForm.weightage,
+        editingKpiId
+      )
+    )
+      return;
     const previous = allKpis;
     const localPatch = {
       ...editKpiForm,
@@ -1019,7 +1057,7 @@ export function JobsProvider({ children }) {
     setKpiAssignUsersLoading(true);
     setKpiAssignUsersError(null);
     try {
-      const users = await fetchUsersByOrganization();
+      const users = await fetchEscalateToUsers();
       if (users === null) return;
       setKpiAssignUsers(users);
     } catch (err) {
@@ -1044,6 +1082,117 @@ export function JobsProvider({ children }) {
     if ((!showAddKpi && !editingKpiId) || kpiAssignUsers.length > 0) return;
     loadKpiAssignUsers();
   }, [editingKpiId, kpiAssignUsers.length, loadKpiAssignUsers, showAddKpi]);
+
+  /** The fields that make one KRA a copy of another (assignee excluded). */
+  const kraShape = (kra) => ({
+    kraType: firstDefined(kra.kraType, kra.kra_type),
+    resourceType: firstDefined(kra.resourceType, kra.resource_type),
+    resourceId: firstDefined(kra.resourceId, kra.resource_id),
+    title: kra.title,
+    desc: kra.desc,
+    weightage: kra.weightage,
+    status: kra.status || "active",
+    jdId: kra.jdId,
+    effectiveFrom: firstDefined(kra.effectiveFrom, kra.effective_from),
+    effectiveTo: firstDefined(kra.effectiveTo, kra.effective_to),
+  });
+
+  const kraAssigneeOf = (kra) =>
+    firstDefined(kra?.assigneeId, kra?.assignee_id);
+
+  /** An existing copy of `kra` that already belongs to `assigneeId`, if any. */
+  const findKraCopyFor = (kra, assigneeId) =>
+    allKras.find(
+      (k) =>
+        !sameId(k.id, kra.id) &&
+        String(k.title || "").trim().toLowerCase() ===
+          String(kra.title || "").trim().toLowerCase() &&
+        sameId(k.jdId ?? "", kra.jdId ?? "") &&
+        sameId(kraAssigneeOf(k), assigneeId)
+    );
+
+  /**
+   * A KPI's KRA follows the KPI's assignment. A KRA holds a single
+   * `assignee_id`, so a KRA that already belongs to someone else is *copied*
+   * for the new assignee (the original owner keeps their KRA and its other
+   * KPIs) and the KPI is relinked to that copy.
+   * Returns the KRA id the KPI should point at, or null when nothing changed.
+   */
+  const assignKraForKpi = async (kraId, assigneeId, assigneeName) => {
+    if (!kraId || !assigneeId) return null;
+    const kra = allKras.find((k) => sameId(k.id, kraId));
+    if (!kra) return null;
+    const owner = kraAssigneeOf(kra);
+    const label = assigneeName || assigneeId;
+
+    // Already theirs — nothing to do.
+    if (owner !== undefined && owner !== null && owner !== "" && sameId(owner, assigneeId))
+      return null;
+
+    // Unowned KRA — just hand it over, no copy needed.
+    if (owner === undefined || owner === null || owner === "") {
+      const localPatch = {
+        assigneeId,
+        assignee_id: assigneeId,
+        assigneeName: assigneeName || "",
+      };
+      setAllKras((ks) =>
+        ks.map((k) => (sameId(k.id, kraId) ? { ...k, ...localPatch } : k))
+      );
+      try {
+        const updated = await updateKra(kraId, { ...kraShape(kra), assigneeId });
+        if (updated)
+          setAllKras((ks) =>
+            ks.map((k) => (sameId(k.id, kraId) ? { ...k, ...updated } : k))
+          );
+        patchKrasCache(kraId, { ...localPatch, ...(updated || {}) });
+        addLog("assign", "KRA", kra.title || "", `Assigned to ${label} (via KPI assignment)`);
+        return kraId;
+      } catch (err) {
+        setAllKras((ks) => ks.map((k) => (sameId(k.id, kraId) ? kra : k)));
+        toast.error(
+          `KPI assigned, but its KRA could not be: ${err?.message || "request failed"}`
+        );
+        return null;
+      }
+    }
+
+    // Owned by someone else — reuse an earlier copy if this member already has one.
+    const existingCopy = findKraCopyFor(kra, assigneeId);
+    if (existingCopy) return existingCopy.id;
+
+    try {
+      const created = await createKra({
+        ...kraShape(kra),
+        assigneeId,
+      });
+      if (!created) return null;
+      const copy = {
+        ...created,
+        assigneeId,
+        assignee_id: assigneeId,
+        assigneeName: assigneeName || "",
+      };
+      setAllKras((ks) => [copy, ...ks.filter((k) => !sameId(k.id, copy.id))]);
+      queryClient.setQueriesData({ queryKey: ["kras-list"] }, (current) =>
+        Array.isArray(current)
+          ? [copy, ...current.filter((k) => !sameId(k?.id, copy.id))]
+          : current
+      );
+      addLog(
+        "assign",
+        "KRA",
+        kra.title || "",
+        `Copied for ${label} (via KPI assignment)`
+      );
+      return copy.id;
+    } catch (err) {
+      toast.error(
+        `KPI assigned, but its KRA could not be copied: ${err?.message || "request failed"}`
+      );
+      return null;
+    }
+  };
 
   const assignToKpi = async () => {
     const selectedIds = assignKpiUserIds
@@ -1084,10 +1233,39 @@ export function JobsProvider({ children }) {
         kpi.name || "",
         `Assigned to ${selectedUsers.map((user) => user.name).join(", ") || selectedIds.join(", ")}`
       );
+      // The KPI's KRA goes to the same person — copied first if it belongs to
+      // someone else, so the original owner keeps their KRA and its other KPIs.
+      const targetKraId = await assignKraForKpi(
+        kpi.kraId,
+        selectedIds[0],
+        selectedUsers[0]?.name
+      );
+      let kraLinked = false;
+      if (targetKraId && !sameId(targetKraId, kpi.kraId)) {
+        try {
+          const relinked = await updateKpi(assignKpiModal, { kra_id: targetKraId });
+          setAllKpis((ps) =>
+            ps.map((p) =>
+              sameId(p.id, assignKpiModal)
+                ? { ...p, kraId: targetKraId, ...(relinked || {}) }
+                : p
+            )
+          );
+          kraLinked = true;
+        } catch (err) {
+          toast.error(
+            `KRA copied, but the KPI could not be linked to it: ${err?.message || "request failed"}`
+          );
+        }
+      } else if (targetKraId) {
+        kraLinked = true;
+      }
       setAssignKpiUserIds([]);
       setAssignKpiName("");
       setAssignKpiModal(null);
-      showToast("Person assigned to KPI");
+      showToast(
+        kraLinked ? "Person assigned to KPI and its KRA" : "Person assigned to KPI"
+      );
     } catch (err) {
       setAllKpis(previous);
       toast.error(`Could not assign KPI: ${err?.message || "request failed"}`);
@@ -1403,10 +1581,21 @@ export function JobsProvider({ children }) {
     const itemDept = kpiDeptFor(item);
     const itemRole = item.jdTitleFromApi || jdTitle(item.jdId);
     const itemMembers = item.assigneeNames || [];
-    const matchDept = kpiDeptFilter === "all" || itemDept === kpiDeptFilter;
+    // Filter ab departments API se aata hai (value = department id), lekin
+    // purane name-based selection ke liye fallback bhi rakha hai.
+    const matchDept =
+      kpiDeptFilter === "all" ||
+      String(item.departmentId ?? "") === String(kpiDeptFilter) ||
+      itemDept === kpiDeptFilter;
     const matchRole = kpiRoleFilter === "all" || itemRole === kpiRoleFilter;
+    // Member filter escalate-to-users API se aata hai (value = user id);
+    // purane name-based selection ke liye fallback bhi rakha hai.
     const matchMember =
-      kpiMemberFilter === "all" || itemMembers.includes(kpiMemberFilter);
+      kpiMemberFilter === "all" ||
+      (item.assigneeIds || []).some(
+        (id) => String(id) === String(kpiMemberFilter)
+      ) ||
+      itemMembers.includes(kpiMemberFilter);
     return matchSearch && matchDept && matchRole && matchMember;
   });
 
@@ -1447,6 +1636,7 @@ export function JobsProvider({ children }) {
     kpiModalKras,
     kpiModalKrasLoading,
     kpiModalKrasError,
+    kraWeightageUsed,
     kpiKraSearch,
     setKpiKraSearch,
     jdSearch,

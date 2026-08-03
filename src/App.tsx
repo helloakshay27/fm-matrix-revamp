@@ -1405,6 +1405,7 @@ const PulseContestRewardsDetails = lazy(() => import("./pages/PulseContestReward
 const PulseContestRewardCreate = lazy(() => import("./pages/PulseContestRewardCreate.tsx"));
 const PosthogDashboardPage = lazy(() => import("./features/posthog-dashboard/PosthogDashboardPage").then(m => ({ default: m.PosthogDashboardPage })));
 const FmAdoptionDashboardPage = lazy(() => import("./features/fm-adoption-dashboard/FmAdoptionDashboardPage").then(m => ({ default: m.FmAdoptionDashboardPage })));
+const RevampDashboardPage = lazy(() => import("./pages/RevampDashboardPage"));
 
 const queryClient = new QueryClient();
 
@@ -1738,6 +1739,10 @@ function App() {
                           <Route
                             path="/fm-adoption-dashboard"
                             element={<FmAdoptionDashboardPage />}
+                          />
+                          <Route
+                            path="/dashboard-revamp"
+                            element={<RevampDashboardPage />}
                           />
 
                           {/* Backend Routes */}

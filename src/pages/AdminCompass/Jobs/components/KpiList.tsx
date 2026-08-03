@@ -1,10 +1,24 @@
 // @ts-nocheck
+import { useMemo } from "react";
 import { useJobs } from "../JobsContext";
 import { T, COLORS } from "../constants";
 import { I, ico } from "../icons";
-import { card, gBtn, aBtn, Btn, FilterSelect } from "./UI";
+import { card, gBtn, aBtn, Btn, FilterSelect, FilterSearchSelect } from "./UI";
+import { useDepartments } from "../hooks/useDepartments";
 
 export default function KpiList() {
+  // Department list wahi GET /pms/company_setups/:id/departments.json se —
+  // KRA tab aur KPI modals ke saath consistent.
+  const { data: departments = [] } = useDepartments();
+  const departmentOptions = useMemo(
+    () =>
+      departments.map((dept) => ({
+        value: String(dept.id),
+        label:
+          dept.name || dept.department_name || dept.title || "Unnamed department",
+      })),
+    [departments]
+  );
   const {
     filteredKpis, allKpis, allJds, allKras,
     kpiSearch, setKpiSearch,
@@ -12,7 +26,7 @@ export default function KpiList() {
     kpiRoleFilter, setKpiRoleFilter,
     kpiMemberFilter, setKpiMemberFilter,
     kpiViewMode, setKpiViewMode,
-    uniqueKpiDepts, uniqueKpiRoles, uniqueKpiMembers,
+    uniqueKpiRoles, uniqueMembers,
     toggleKpiStatus, openEditKpi, setAssignKpiModal,
     setShowAddKpi,
     jdTitle, kraName,
@@ -32,9 +46,9 @@ export default function KpiList() {
               onChange={(e) => setKpiSearch(e.target.value)}
             />
           </div>
-          <FilterSelect value={kpiDeptFilter} onChange={(e) => setKpiDeptFilter(e.target.value)} label="All Departments" options={uniqueKpiDepts} />
-          <FilterSelect value={kpiRoleFilter} onChange={(e) => setKpiRoleFilter(e.target.value)} label="All Roles" options={uniqueKpiRoles} />
-          <FilterSelect value={kpiMemberFilter} onChange={(e) => setKpiMemberFilter(e.target.value)} label="All Members" options={uniqueKpiMembers} />
+          <FilterSearchSelect value={kpiDeptFilter} onChange={setKpiDeptFilter} label="All Departments" options={departmentOptions} emptyText="No departments found" />
+          {/* <FilterSelect value={kpiRoleFilter} onChange={(e) => setKpiRoleFilter(e.target.value)} label="All Roles" options={uniqueKpiRoles} /> */}
+          <FilterSearchSelect value={kpiMemberFilter} onChange={setKpiMemberFilter} label="All Members" options={uniqueMembers} emptyText="No members found" />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ padding: "6px 14px", borderRadius: 999, background: T.orangeSoft, fontSize: 12, fontWeight: 700, color: T.orange }}>

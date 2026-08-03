@@ -3,24 +3,27 @@ import { useJobs } from "../JobsContext";
 import { T, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
 import { Fld, FI, FS, Btn } from "../components/UI";
 import MemberSearchSelect from "../components/MemberSearchSelect";
+import { useDepartments } from "../hooks/useDepartments";
 
 export default function KpiEntryModal() {
+  const { data: departments = [], isLoading: deptLoading } = useDepartments();
   const {
-    showAddKpi, setShowAddKpi, newKpi, setNewKpi, allJds, krasForJd,
+    showAddKpi, setShowAddKpi, newKpi, setNewKpi, allJds,
     saveNewKpi, customUnits, kpisSaving, kpiAssignUsers, kpiAssignUsersLoading,
     kpiModalJdsLoading, kpiModalJdsError, kpiModalKras, kpiModalKrasLoading, kpiModalKrasError,
-    kpiKraSearch, setKpiKraSearch,
+    kraWeightageUsed,
   } = useJobs();
   if (!showAddKpi) return null;
   const assigneeOptions = kpiAssignUsers;
-  const kraOptions = newKpi.jdId ? kpiModalKras : krasForJd(newKpi.jdId);
-  const kraBlockedReason = !newKpi.jdId
-    ? "Select a job description to load KRAs"
-    : !newKpi.departmentId
-      ? "Enter department ID to load KRAs"
-      : !newKpi.assigneeIds?.[0]
-        ? "Select an assignee to load KRAs"
-        : "";
+  // Selected KRA me kitna weightage bacha hai — total 100% se upar nahi ja sakta.
+  const kraUsedWeightage = newKpi.kraId ? kraWeightageUsed(newKpi.kraId) : 0;
+  const kraRemainingWeightage = Math.max(0, 100 - kraUsedWeightage);
+  // Search + list ek hi input me — MemberSearchSelect khud filter karta hai.
+  const kraOptions = kpiModalKras.map((k) => ({ id: k.id, name: k.title }));
+  const departmentOptions = departments.map((d) => ({
+    id: d.id,
+    name: d.department_name || d.name || d.title || "Unnamed department",
+  }));
   return (
     <div
       style={{
@@ -64,7 +67,7 @@ export default function KpiEntryModal() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
+              gridTemplateColumns: "1fr 1fr",
               gap: 16,
             }}
           >
@@ -76,7 +79,6 @@ export default function KpiEntryModal() {
                   setNewKpi((f) => ({
                     ...f,
                     jdId: e.target.value,
-                    kraId: "",
                     departmentId:
                       allJds.find((j) => String(j.id) === String(e.target.value))?.departmentId ||
                       f.departmentId,
@@ -94,66 +96,69 @@ export default function KpiEntryModal() {
                 <span style={{ fontSize: 11, color: T.danger }}>Could not load JDs: {kpiModalJdsError}</span>
               )}
             </Fld>
-            <Fld label="Department ID">
-              <FI
-                type="number"
-                placeholder="e.g. 12"
+            <Fld label="Department">
+              <MemberSearchSelect
                 value={newKpi.departmentId || ""}
-                onChange={(e) =>
-                  setNewKpi((f) => ({ ...f, departmentId: e.target.value, kraId: "" }))
+                options={departmentOptions}
+                onChange={(value) =>
+                  setNewKpi((f) => ({ ...f, departmentId: value }))
                 }
+                placeholder="Search and select department"
+                loading={deptLoading}
+                loadingText="Loading departments..."
+                emptyText="No departments found"
+                disabled={deptLoading || kpisSaving}
               />
             </Fld>
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 16,
+            }}
+          >
             <Fld label="Assignee Person">
               <MemberSearchSelect
-                value={newKpi.assigneeIds?.[0] || ""}
+                multiple
+                value={(newKpi.assigneeIds || []).map(String)}
                 options={assigneeOptions}
-                onChange={(value, member) => {
+                onChange={(values) => {
+                  const ids = (values || [])
+                    .map(Number)
+                    .filter((id) => Number.isFinite(id));
                   setNewKpi((f) => ({
                     ...f,
-                    kraId: "",
-                    assignee: member?.name || "",
-                    assigneeIds: value ? [Number(value)] : [],
+                    assignee: assigneeOptions
+                      .filter((u) => ids.some((id) => Number(u.id) === id))
+                      .map((u) => u.name)
+                      .join(", "),
+                    assigneeIds: ids,
                   }));
                 }}
-                placeholder="Select assignee"
+                placeholder="Select assignees"
                 loading={kpiAssignUsersLoading}
                 disabled={kpisSaving || kpiAssignUsersLoading}
               />
             </Fld>
+            <Fld label="Linked KRA *">
+              <MemberSearchSelect
+                value={newKpi.kraId}
+                options={kraOptions}
+                onChange={(value) =>
+                  setNewKpi((f) => ({ ...f, kraId: value }))
+                }
+                placeholder="Search and select KRA"
+                loading={kpiModalKrasLoading}
+                loadingText="Loading KRAs..."
+                emptyText="No KRAs found"
+                disabled={kpisSaving || kpiModalKrasLoading}
+              />
+              {kpiModalKrasError && (
+                <span style={{ fontSize: 11, color: T.danger }}>Could not load KRAs: {kpiModalKrasError}</span>
+              )}
+            </Fld>
           </div>
-          <Fld label="Linked KRA *">
-            {kraBlockedReason ? (
-              <FI value="" placeholder={kraBlockedReason} disabled />
-            ) : (
-              <>
-                <FI
-                  placeholder="Search KRA"
-                  value={kpiKraSearch}
-                  onChange={(e) => setKpiKraSearch(e.target.value)}
-                  disabled={kpisSaving}
-                  style={{ minHeight: 38, marginBottom: 6 }}
-                />
-                <FS
-                  value={newKpi.kraId}
-                  disabled={kpiModalKrasLoading || kpisSaving}
-                  onChange={(e) =>
-                    setNewKpi((f) => ({ ...f, kraId: e.target.value }))
-                  }
-                >
-                  <option value="">{kpiModalKrasLoading ? "Loading KRAs..." : "Select KRA"}</option>
-                  {kraOptions.map((k) => (
-                    <option key={k.id} value={k.id}>
-                      {k.title}
-                    </option>
-                  ))}
-                </FS>
-              </>
-            )}
-            {kpiModalKrasError && (
-              <span style={{ fontSize: 11, color: T.danger }}>Could not load KRAs: {kpiModalKrasError}</span>
-            )}
-          </Fld>
           <div
             style={{
               display: "grid",
@@ -183,15 +188,30 @@ export default function KpiEntryModal() {
                 ))}
               </FS>
             </Fld>
-            <Fld label="KPI Weightage (%)">
+            <Fld
+              label="KPI Weightage (%)"
+              hint={
+                newKpi.kraId
+                  ? `${kraUsedWeightage}% used, ${kraRemainingWeightage}% left in this KRA`
+                  : undefined
+              }
+            >
               <FI
                 type="number"
+                min={0}
+                max={kraRemainingWeightage}
                 placeholder="e.g. 15"
                 value={newKpi.weightage}
                 onChange={(e) =>
                   setNewKpi((f) => ({ ...f, weightage: e.target.value }))
                 }
               />
+              {newKpi.kraId &&
+                Number(newKpi.weightage) > kraRemainingWeightage && (
+                  <span style={{ fontSize: 11, color: T.danger }}>
+                    Exceeds 100% total for this KRA
+                  </span>
+                )}
             </Fld>
           </div>
           <div

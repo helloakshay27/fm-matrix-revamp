@@ -58,6 +58,20 @@ export const fetchKras = async ({
 };
 
 /**
+ * GET {BASE_URL}/kras.json?access_token=…
+ * Unfiltered list — used by the "Linked KRA" pickers in the Add/Edit KPI
+ * modals, which must offer every KRA regardless of JD/department/assignee.
+ */
+export const fetchAllKras = async () => {
+  const { baseUrl, token } = getApiContext();
+  if (!baseUrl || !token) return null;
+  const res = await fetch(buildApiUrl("/kras.json"), { headers: apiHeaders() });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json().catch(() => []);
+  return unwrapRows(json, "kras").map(normalizeKra).filter(Boolean);
+};
+
+/**
  * POST {BASE_URL}/kras.json?access_token=…   body: form-urlencoded
  *   kra_type, resource_type, resource_id, title, description, weightage,
  *   status + job_description_id, assignee_id, effective_from, effective_to

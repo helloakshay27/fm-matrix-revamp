@@ -8,7 +8,11 @@ export interface Department {
 }
 
 export async function fetchDepartments(): Promise<Department[]> {
-  const baseUrl = (localStorage.getItem("baseUrl") || "").replace(/\/$/, "");
+  // localStorage may hold the host with or without a scheme — normalize both.
+  const baseUrl = (localStorage.getItem("baseUrl") || "")
+    .trim()
+    .replace(/\/+$/, "")
+    .replace(/^https?:\/\//, "");
   const selectedCompanyId = localStorage.getItem("selectedCompanyId");
   const selectedSiteId = localStorage.getItem("selectedSiteId");
   const storedUser = localStorage.getItem("user");
