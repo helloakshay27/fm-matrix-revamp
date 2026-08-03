@@ -164,11 +164,12 @@ export const Header = () => {
     email: "",
   };
   const userId = user.id;
+  // Club/localhost must NOT hide Dashboard / Executive / MSafe header links
+  // (localhost is treated as club for logo only via isClubSite).
   const isRestrictedUser =
     user?.email === "karan.balsara@zycus.com" ||
     org_id === "90" ||
-    isPulseSite ||
-    isClubSite; // Example condition for restricted user
+    isPulseSite;
 
   const assetSuggestions = [
     "sdcdsc",
@@ -380,25 +381,17 @@ export const Header = () => {
 
   const tempSwitchToEmployee = tempType === "pms_organization_admin";
 
-  const canShowMsafeForSelectedCompany =
-    selectedCompany?.id !== 294 || selectedCompany?.id === 145;
-  const canShowViMSafeDashboard =
-    isViSite && canShowMsafeForSelectedCompany && !isWebSite;
-  const canShowExternalMSafeDashboard =
-    !isViSite &&
-    canShowMsafeForSelectedCompany &&
-    (!isWebSite || selectedCompany?.id === 145);
-  const hasHeaderDashboardActions =
-    !isRestrictedUser &&
-    (!isViSite || canShowViMSafeDashboard || canShowExternalMSafeDashboard);
+  const canShowMsafeForSelectedCompany = selectedCompany?.id !== 294;
+  const canShowMSafeDashboard =
+    !isRestrictedUser && canShowMsafeForSelectedCompany;
+  const hasHeaderDashboardActions = !isRestrictedUser;
 
   const handleMSafeDashboard = () => {
-    if (isViSite || selectedCompany?.id === 145) {
-      navigate("/msafedashboard");
-      return;
-    }
+    navigate("/msafedashboard-legacy"); // old MSafe Dashboard UI
+  };
 
-    window.open("https://web.gophygital.work/msafedashboard", "_blank");
+  const handleMSafeDashboardRevamp = () => {
+    navigate("/msafedashboard"); // new MSafe Dashboard revamp
   };
 
   const logoClassName =
@@ -557,7 +550,7 @@ export const Header = () => {
 
           {/* Dashboard Button */}
           {!isRestrictedUser && (
-            <div className="hidden xl:flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-2">
               {!isViSite && (
                 <button
                   onClick={() => (window.location.href = "/dashboard")}
@@ -579,48 +572,24 @@ export const Header = () => {
                 </button>
               )}
 
-              {/* {isViSite && selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
-                <button
-                  onClick={() => navigate("/msafedashboard")}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-                >
-                  <Home className="w-4 h-4" />
-                  MSafe Dashboard
-                </button>
-              )}
 
-              {!isViSite && selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
+              {/* {canShowViMSafeDashboard && (
                 <button
-                  onClick={() =>
-                    window.open(
-                      "https://web.gophygital.work/msafedashboard",
-                      "_blank"
-                    )
-                  }
+                  onClick={handleMSafeDashboard}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <Home className="w-4 h-4" />
                   MSafe Dashboard
+
                 </button>
               )} */}
-
-              {canShowViMSafeDashboard && (
+              {canShowMSafeDashboard && (
                 <button
-                  onClick={handleMSafeDashboard}
+                  onClick={handleMSafeDashboardRevamp}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
-                  <Home className="w-4 h-4" />
-                  MSafe Dashboard
-                </button>
-              )}
-
-              {canShowExternalMSafeDashboard && (
-                <button
-                  onClick={handleMSafeDashboard}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-                >
-                  <Home className="w-4 h-4" />
-                  MSafe Dashboard
+                  <Shield className="w-4 h-4" />
+                  Msafe Dashboard Revamp
                 </button>
               )}
             </div>
@@ -780,7 +749,7 @@ export const Header = () => {
           {hasHeaderDashboardActions && (
             <DropdownMenu>
               <DropdownMenuTrigger
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#1a1a1a] transition-colors hover:bg-[#f6f4ee] hover:text-[#C72030] sm:h-10 sm:w-10 xl:hidden"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#1a1a1a] transition-colors hover:bg-[#f6f4ee] hover:text-[#C72030] sm:h-10 sm:w-10 lg:hidden"
                 aria-label="Dashboard shortcuts"
                 title="Dashboard shortcuts"
               >
@@ -808,11 +777,16 @@ export const Header = () => {
                     Executive Dashboard
                   </DropdownMenuItem>
                 )}
-                {(canShowViMSafeDashboard ||
-                  canShowExternalMSafeDashboard) && (
+                {/* {canShowMSafeDashboard && (
                     <DropdownMenuItem onClick={handleMSafeDashboard}>
                       <Home className="w-4 h-4 mr-2" />
                       MSafe Dashboard
+                    </DropdownMenuItem>
+                  )} */}
+                {canShowMSafeDashboard && (
+                    <DropdownMenuItem onClick={handleMSafeDashboardRevamp}>
+                      <Shield className="w-4 h-4 mr-2" />
+                      Msafe Dashboard Revamp
                     </DropdownMenuItem>
                   )}
               </DropdownMenuContent>

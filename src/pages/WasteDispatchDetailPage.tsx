@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileCheck, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,11 +30,45 @@ const categoryBadgeClass = (category: string) => {
   return 'bg-gray-100 text-gray-700';
 };
 
-// "210 L" / "1.2 t" / "340 kg" -> { value: 210, unit: 'L' }
-const parseQuantity = (raw: string): { value: number; unit: string } => {
-  const match = raw.trim().match(/^([\d.,]+)\s*(.*)$/);
-  if (!match) return { value: 0, unit: '' };
-  return { value: parseFloat(match[1].replace(/,/g, '')) || 0, unit: match[2] || '' };
+// "250 Kg | 80 Litre" — always shows both units side by side; a unit the
+// record doesn't carry a number for just shows a dash instead of being hidden.
+const formatDual = (kg: number | null | undefined, ltr: number | null | undefined) => {
+  const kgPart = kg != null ? `${kg.toLocaleString('en-IN')} Kg` : '- Kg';
+  const ltrPart = ltr != null ? `${ltr.toLocaleString('en-IN')} Litre` : '- Litre';
+  return `${kgPart} | ${ltrPart}`;
+};
+
+type Field = { label: string; value: string | number | null | undefined };
+
+const hasData = (value: string | number | null | undefined) =>
+  value !== null && value !== undefined && value !== '';
+
+const FieldColumns = ({ fields }: { fields: Field[] }) => {
+  const visible = fields.filter((f) => hasData(f.value));
+  if (visible.length === 0) {
+    return <p className="text-sm text-gray-500">No data available.</p>;
+  }
+  const midpoint = Math.ceil(visible.length / 2);
+  const colA = visible.slice(0, midpoint);
+  const colB = visible.slice(midpoint);
+  return (
+    <div className="flex flex-col sm:flex-row gap-10">
+      {[colA, colB].map((col, ci) => (
+        <div key={ci} className="flex flex-col gap-4 min-w-[280px] flex-1">
+          {col.map((field) => (
+            <div key={field.label} className="flex text-[14px] leading-snug min-w-0">
+              <div className="w-[200px] flex-shrink-0 text-[#6B6B6B] font-medium">
+                {field.label}
+              </div>
+              <div className="flex-1 text-[14px] font-semibold text-[#1A1A1A] break-words overflow-wrap-anywhere min-w-0">
+                {String(field.value)}
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
 };
 
 const CardShell = ({
@@ -76,26 +110,87 @@ const WasteDispatchDetailPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dispatch-details');
   const [weightEntries, setWeightEntries] = useState<WeightEntry[]>(record?.weightEntries ?? []);
 
-  const dispatchedQuantity = useMemo(
-    () => (record ? parseQuantity(record.dispatchWeight) : { value: 0, unit: '' }),
-    [record]
-  );
-  const recycledQuantity = useMemo(
-    () => (record?.recycleDetail ? parseQuantity(record.recycleDetail.recycledQuantity) : null),
-    [record]
-  );
-  const wastage = useMemo(() => {
-    if (!recycledQuantity) return null;
-    return Math.max(dispatchedQuantity.value - recycledQuantity.value, 0);
-  }, [dispatchedQuantity, recycledQuantity]);
+  const wastageKg = useMemo(() => {
+    if (!record || record.dispatchWeightKg == null || record.recycledWeightKg == null) return null;
+    return Math.max(record.dispatchWeightKg - record.recycledWeightKg, 0);
+  }, [record]);
+
+  const wastageLtr = useMemo(() => {
+    if (!record || record.dispatchWeightLtr == null || record.recycledWeightLtr == null) return null;
+    return Math.max(record.dispatchWeightLtr - record.recycledWeightLtr, 0);
+  }, [record]);
 
   const handleBack = () => navigate('/maintenance/waste/dispatch');
+
+  const handleCertificate = () => {
+    // TODO: wire this up to a real certificate-generation endpoint once the backend exposes one.
+    toast.info('Certificate generation is not yet available.');
+  };
 
   const handleDeleteWeightEntry = (entryId: string) => {
     // Client-side only — no backend endpoint to persist this deletion yet.
     setWeightEntries((prev) => prev.filter((e) => e.id !== entryId));
     toast.success('Weight entry removed.');
   };
+
+  // Every column shown on the Waste Dispatch List page (Table 2), plus the
+  // extra reference fields (Manifest No., Site) already tracked on this record.
+  const dispatchListFields: Field[] = record
+    ? [
+        { label: 'Id', value: record.dispatchId },
+        { label: 'Dispatch Date & Time', value: `${record.dispatchDate} ${record.dispatchTime}`.trim() },
+        { label: 'Waste Category', value: record.category },
+        { label: 'Waste Type', value: record.wasteItem },
+        { label: 'Total Generated Weight (KG)', value: record.totalGeneratedWeightKg != null ? `${record.totalGeneratedWeightKg} KG` : undefined },
+        { label: 'Dispatch Weight (KG)', value: record.dispatchWeightKg != null ? `${record.dispatchWeightKg} KG` : undefined },
+        { label: 'Recycled Weight (KG)', value: record.recycledWeightKg != null ? `${record.recycledWeightKg} KG` : undefined },
+        { label: 'Total Generated Weight (L)', value: record.totalGeneratedWeightLtr != null ? `${record.totalGeneratedWeightLtr} L` : undefined },
+        { label: 'Dispatch Weight (L)', value: record.dispatchWeightLtr != null ? `${record.dispatchWeightLtr} L` : undefined },
+        { label: 'Recycled Weight (L)', value: record.recycledWeightLtr != null ? `${record.recycledWeightLtr} L` : undefined },
+        { label: 'Vendor Name', value: record.destination },
+        { label: 'Vehicle No', value: record.vehicleNumber },
+        { label: 'Driver Name', value: record.driverName },
+        { label: 'Contact No', value: record.contactNo },
+        { label: 'Destination Facility', value: record.destinationFacility },
+        { label: 'Disposal Method', value: record.disposalMethod },
+        { label: 'Supporting Documents', value: record.supportingDocumentsCount > 0 ? `${record.supportingDocumentsCount} file(s)` : '-' },
+        { label: 'Vendor Acknowledge', value: record.vendorAcknowledge },
+        { label: 'Status', value: record.status },
+        { label: 'Recycling Status', value: record.recycleDetail?.recyclingStatus || 'Not Recycled' },
+        { label: 'Manifest No.', value: record.manifestNumber },
+        { label: 'Site', value: record.site },
+        { label: 'Dispatched By', value: record.dispatchedBy },
+      ]
+    : [];
+
+  // Logs tab — a best-effort activity history built from the timestamps and
+  // fields already on this record. There's no dedicated audit-log API yet,
+  // so this isn't a complete history, just what can be honestly derived today.
+  const logEntries = useMemo(() => {
+    if (!record) return [];
+    const entries: { date: string; activity: string; performedBy: string; remarks: string }[] = [];
+    entries.push({
+      date: `${record.dispatchDate} ${record.dispatchTime}`.trim(),
+      activity: 'Dispatch Created',
+      performedBy: record.dispatchedBy,
+      remarks: `Vehicle ${record.vehicleNumber}, Driver ${record.driverName}`,
+    });
+    entries.push({
+      date: `${record.dispatchDate} ${record.dispatchTime}`.trim(),
+      activity: `Status: ${record.status}`,
+      performedBy: '-',
+      remarks: `To ${record.destination}${record.destinationFacility ? ` (${record.destinationFacility})` : ''}`,
+    });
+    if (record.recycleDetail) {
+      entries.push({
+        date: record.recycleDetail.confirmationDate,
+        activity: 'Recycling Confirmed',
+        performedBy: record.recycleDetail.confirmedBy,
+        remarks: `${record.recycleDetail.recycledQuantity} recycled (${record.recycleDetail.recyclingStatus})`,
+      });
+    }
+    return entries;
+  }, [record]);
 
   if (!record) {
     return (
@@ -123,9 +218,36 @@ const WasteDispatchDetailPage: React.FC = () => {
             {record.dispatchId} · {record.wasteItem}
           </p>
         </div>
-        <span className={`inline-block px-2.5 py-1 rounded text-xs font-semibold ${statusBadgeClass(record.status)}`}>
-          {record.status}
-        </span>
+        <Button
+          onClick={handleCertificate}
+          variant="outline"
+          className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
+        >
+          <FileCheck className="w-4 h-4 mr-2" />
+          Certificate
+        </Button>
+      </div>
+
+      {/* Summary cards — both units shown together in each card */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-gray-400 bg-white">
+          <p className="text-xs text-gray-500 mb-1">Dispatch Quantity</p>
+          <p className="text-lg font-bold text-gray-900">
+            {formatDual(record.dispatchWeightKg, record.dispatchWeightLtr)}
+          </p>
+        </div>
+        <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-green-700 bg-white">
+          <p className="text-xs text-gray-500 mb-1">Recycled Quantity</p>
+          <p className="text-lg font-bold text-gray-900">
+            {formatDual(record.recycledWeightKg, record.recycledWeightLtr)}
+          </p>
+        </div>
+        <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-red-600 bg-white">
+          <p className="text-xs text-gray-500 mb-1">Wastage / Loss</p>
+          <p className="text-lg font-bold text-gray-900">
+            {formatDual(wastageKg, wastageLtr)}
+          </p>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -134,6 +256,7 @@ const WasteDispatchDetailPage: React.FC = () => {
             { label: 'Dispatch Details', value: 'dispatch-details' },
             { label: 'Recycle Detail', value: 'recycle-detail' },
             { label: 'Weight Table', value: 'weight-table' },
+            { label: 'Logs', value: 'logs' },
           ].map((tab) => (
             <TabsTrigger
               key={tab.value}
@@ -145,34 +268,17 @@ const WasteDispatchDetailPage: React.FC = () => {
           ))}
         </TabsList>
 
-        {/* Dispatch Details */}
+        {/* Dispatch Details — every field shown on the Dispatch List page */}
         <TabsContent value="dispatch-details">
           <CardShell
-            title="Dispatch Reference"
+            title="Dispatch Details"
             badge={
-              <span className={`inline-block px-2.5 py-1 rounded text-xs font-semibold ${statusBadgeClass(record.status)}`}>
-                {record.status}
+              <span className={`inline-block px-2.5 py-1 rounded text-xs font-semibold ${categoryBadgeClass(record.category)}`}>
+                {record.category}
               </span>
             }
           >
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Field label="Category">
-                <span className={`inline-block px-2.5 py-1 rounded text-xs font-semibold ${categoryBadgeClass(record.category)}`}>
-                  {record.category}
-                </span>
-              </Field>
-              <Field label="Dispatch Weight">{record.dispatchWeight}</Field>
-              <Field label="Vendor / Facility">{record.destination}</Field>
-              <Field label="Dispatch Date">{record.dispatchDate}</Field>
-              <Field label="Vehicle No.">{record.vehicleNumber}</Field>
-              <Field label="Manifest No.">
-                <span className="text-brand">{record.manifestNumber}</span>
-              </Field>
-              <Field label="Site">
-                <span className="text-brand">{record.site}</span>
-              </Field>
-              <Field label="Dispatched By">{record.dispatchedBy}</Field>
-            </div>
+            <FieldColumns fields={dispatchListFields} />
           </CardShell>
         </TabsContent>
 
@@ -180,45 +286,14 @@ const WasteDispatchDetailPage: React.FC = () => {
         <TabsContent value="recycle-detail">
           <CardShell title="Recycle Confirmation">
             {record.recycleDetail ? (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <Field label="Recycled Quantity">{record.recycleDetail.recycledQuantity}</Field>
-                  <Field label="Recycling Confirmation Date">{record.recycleDetail.confirmationDate}</Field>
-                  <Field label="Recycling Status">{record.recycleDetail.recyclingStatus}</Field>
-                  <Field label="Recycling Method">{record.recycleDetail.recyclingMethod}</Field>
-                  <Field label="Recycling Certificate No.">{record.recycleDetail.certificateNumber}</Field>
-                  <Field label="Confirmed By">{record.recycleDetail.confirmedBy}</Field>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-                  <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-gray-400 bg-white">
-                    <p className="text-xs text-gray-500 mb-1">Dispatched Quantity</p>
-                    <p className="text-xl font-bold text-gray-900">
-                      {dispatchedQuantity.value.toLocaleString('en-IN')}{' '}
-                      <span className="text-sm font-medium text-gray-500">{dispatchedQuantity.unit}</span>
-                    </p>
-                  </div>
-                  <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-green-700 bg-white">
-                    <p className="text-xs text-gray-500 mb-1">Recycled Quantity</p>
-                    <p className="text-xl font-bold text-gray-900">
-                      {recycledQuantity.value.toLocaleString('en-IN')}{' '}
-                      <span className="text-sm font-medium text-gray-500">{recycledQuantity.unit || dispatchedQuantity.unit}</span>
-                    </p>
-                  </div>
-                  <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-red-600 bg-white">
-                    <p className="text-xs text-gray-500 mb-1">Wastage / Loss</p>
-                    <p className="text-xl font-bold text-gray-900">
-                      {wastage != null ? (
-                        <>
-                          {wastage.toLocaleString('en-IN')} <span className="text-sm font-medium text-gray-500">{dispatchedQuantity.unit}</span>
-                        </>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-              </>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <Field label="Recycled Quantity">{record.recycleDetail.recycledQuantity}</Field>
+                <Field label="Recycling Confirmation Date">{record.recycleDetail.confirmationDate}</Field>
+                <Field label="Recycling Status">{record.recycleDetail.recyclingStatus}</Field>
+                <Field label="Recycling Method">{record.recycleDetail.recyclingMethod}</Field>
+                <Field label="Recycling Certificate No.">{record.recycleDetail.certificateNumber}</Field>
+                <Field label="Confirmed By">{record.recycleDetail.confirmedBy}</Field>
+              </div>
             ) : (
               <p className="text-sm text-gray-500">
                 No recycle confirmation has been recorded for this dispatch yet.
@@ -272,6 +347,46 @@ const WasteDispatchDetailPage: React.FC = () => {
                 </TableBody>
               </Table>
             </div>
+          </CardShell>
+        </TabsContent>
+
+        {/* Logs */}
+        <TabsContent value="logs">
+          <CardShell title="Logs">
+            <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead>Date</TableHead>
+                    <TableHead>Activity</TableHead>
+                    <TableHead>Performed By</TableHead>
+                    <TableHead>Remarks</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logEntries.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-gray-400 py-6">
+                        No activity recorded yet.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    logEntries.map((entry, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="whitespace-nowrap">{entry.date}</TableCell>
+                        <TableCell className="font-medium text-gray-900">{entry.activity}</TableCell>
+                        <TableCell>{entry.performedBy}</TableCell>
+                        <TableCell>{entry.remarks}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            <p className="text-xs text-gray-500 mt-3">
+              This history is derived from the fields available on this record. A dedicated
+              activity-log endpoint would be needed for a complete audit trail.
+            </p>
           </CardShell>
         </TabsContent>
       </Tabs>

@@ -39,6 +39,23 @@ export interface DispatchRecord {
   // Only present once a vendor has confirmed recycling — not every dispatch
   // has been recycled yet (e.g. still In Transit / Dispatched).
   recycleDetail?: RecycleDetail;
+
+  // Table 2 (Waste Dispatch List) fields. A single record only ever carries
+  // real numbers in ONE of the Kg/Ltr pairs (solid vs liquid waste) — the
+  // other unit is left null since the API has no such split for this record.
+  dispatchTime: string;
+  totalGeneratedWeightKg: number | null;
+  dispatchWeightKg: number | null;
+  recycledWeightKg: number | null;
+  totalGeneratedWeightLtr: number | null;
+  dispatchWeightLtr: number | null;
+  recycledWeightLtr: number | null;
+  driverName: string;
+  contactNo: string;
+  destinationFacility: string;
+  disposalMethod: string;
+  supportingDocumentsCount: number;
+  vendorAcknowledge: string;
 }
 
 export const DUMMY_DISPATCH_RECORDS: DispatchRecord[] = [
@@ -73,6 +90,19 @@ export const DUMMY_DISPATCH_RECORDS: DispatchRecord[] = [
       certificateNumber: 'RC-55210',
       confirmedBy: 'Ramesh Iyer',
     },
+    dispatchTime: '10:30 AM',
+    totalGeneratedWeightKg: null,
+    dispatchWeightKg: null,
+    recycledWeightKg: null,
+    totalGeneratedWeightLtr: 210,
+    dispatchWeightLtr: 210,
+    recycledWeightLtr: 205,
+    driverName: 'Ravi Kumar',
+    contactNo: '+91 98765 43210',
+    destinationFacility: 'EcoDispose Andheri Unit',
+    disposalMethod: 'Recycle',
+    supportingDocumentsCount: 2,
+    vendorAcknowledge: 'Acknowledged',
   },
   {
     id: 'DSP-1040',
@@ -97,6 +127,19 @@ export const DUMMY_DISPATCH_RECORDS: DispatchRecord[] = [
         weight: '340 kg',
       },
     ],
+    dispatchTime: '02:15 PM',
+    totalGeneratedWeightKg: 340,
+    dispatchWeightKg: 340,
+    recycledWeightKg: null,
+    totalGeneratedWeightLtr: null,
+    dispatchWeightLtr: null,
+    recycledWeightLtr: null,
+    driverName: 'Suresh Patil',
+    contactNo: '+91 98220 11223',
+    destinationFacility: 'GreenCycle Taloja Facility',
+    disposalMethod: 'Recycle',
+    supportingDocumentsCount: 1,
+    vendorAcknowledge: 'Pending',
   },
   {
     id: 'DSP-1039',
@@ -137,6 +180,19 @@ export const DUMMY_DISPATCH_RECORDS: DispatchRecord[] = [
       certificateNumber: 'RC-55198',
       confirmedBy: 'Priya Nair',
     },
+    dispatchTime: '11:00 AM',
+    totalGeneratedWeightKg: 1200,
+    dispatchWeightKg: 1200,
+    recycledWeightKg: 1100,
+    totalGeneratedWeightLtr: null,
+    dispatchWeightLtr: null,
+    recycledWeightLtr: null,
+    driverName: 'Anil Sharma',
+    contactNo: '+91 90040 55667',
+    destinationFacility: 'GreenCycle Taloja Facility',
+    disposalMethod: 'Recycle',
+    supportingDocumentsCount: 3,
+    vendorAcknowledge: 'Acknowledged',
   },
   {
     id: 'DSP-1038',
@@ -169,6 +225,19 @@ export const DUMMY_DISPATCH_RECORDS: DispatchRecord[] = [
         weight: '8.2 kg',
       },
     ],
+    dispatchTime: '09:45 AM',
+    totalGeneratedWeightKg: 2400,
+    dispatchWeightKg: 2400,
+    recycledWeightKg: null,
+    totalGeneratedWeightLtr: null,
+    dispatchWeightLtr: null,
+    recycledWeightLtr: null,
+    driverName: 'Mahesh Yadav',
+    contactNo: '+91 99870 22110',
+    destinationFacility: 'City Municipal Landfill Site 4',
+    disposalMethod: 'Landfill',
+    supportingDocumentsCount: 0,
+    vendorAcknowledge: 'Pending',
   },
   {
     id: 'DSP-1037',
@@ -201,5 +270,18 @@ export const DUMMY_DISPATCH_RECORDS: DispatchRecord[] = [
       certificateNumber: 'RC-55070',
       confirmedBy: 'Ramesh Iyer',
     },
+    dispatchTime: '04:20 PM',
+    totalGeneratedWeightKg: null,
+    dispatchWeightKg: null,
+    recycledWeightKg: null,
+    totalGeneratedWeightLtr: 85,
+    dispatchWeightLtr: 85,
+    recycledWeightLtr: 80,
+    driverName: 'Ravi Kumar',
+    contactNo: '+91 98765 43210',
+    destinationFacility: 'EcoDispose Andheri Unit',
+    disposalMethod: 'Incinerate',
+    supportingDocumentsCount: 1,
+    vendorAcknowledge: 'Acknowledged',
   },
 ];

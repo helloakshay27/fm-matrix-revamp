@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Truck, Trash2, RefreshCw, Percent, Package, Activity } from 'lucide-react';
+import { ArrowLeft, Truck, Trash2, RefreshCw, Droplet, Package, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import { toast } from 'sonner';
@@ -53,54 +53,45 @@ const DEPARTMENT_OPTIONS = [
   'Operations',
 ];
 
-// Same columns (minus the row-actions column) as the Waste Generation list
-// page (UtilityWasteGenerationDashboard.tsx), so the selected-items preview
-// here matches that table exactly.
+// Table 1.3 "Dispatch Table" columns — a subset of the Waste Generation list
+// page's columns (UtilityWasteGenerationDashboard.tsx), mapped the same way.
 const DISPATCH_ITEM_COLUMNS = [
-  { key: 'id', label: 'ID' },
-  { key: 'date', label: 'Date' },
-  { key: 'time', label: 'Time' },
-  { key: 'location', label: 'Location' },
+  { key: 'generation_id', label: 'Generation ID' },
+  { key: 'date_time', label: 'Date & Time' },
+  { key: 'building', label: 'Building' },
+  { key: 'floor', label: 'Floor' },
   { key: 'user_type', label: 'User Type' },
-  { key: 'client_name', label: 'Client / Tenant Name' },
-  { key: 'user_name', label: 'User Name' },
-  { key: 'email', label: 'Email Id' },
+  { key: 'client_name', label: 'Client Name' },
   { key: 'waste_category', label: 'Waste Category' },
-  { key: 'waste_subcategory', label: 'Waste Subcategory' },
-  { key: 'no_of_bags', label: 'No. of Bags' },
-  { key: 'total_weight', label: 'Total Weight (KG)' },
-  { key: 'device_name', label: 'Device Name / Tab ID' },
-  { key: 'status', label: 'Status' },
-  { key: 'entry_source', label: 'Entry Source' },
-  { key: 'recycled_pct', label: 'Recycled %' },
+  { key: 'total_bags', label: 'Total Bags' },
+  { key: 'quantity_kg', label: 'Quantity (Kg)' },
+  { key: 'quantity_ltr', label: 'Quantity (Ltr)' },
 ];
 
 const renderWasteGenerationCell = (item: WasteGeneration, key: string) => {
-  if (key === 'id') return item.id ?? '-';
-  if (key === 'date') return item.wg_date ? item.wg_date.split('T')[0] : '-';
-  if (key === 'time') {
+  if (key === 'generation_id') return item.id ?? '-';
+  if (key === 'date_time') {
+    const datePart = item.wg_date ? item.wg_date.split('T')[0] : null;
+    let timePart: string | null = null;
     if (item.created_at) {
-      try { return new Date(item.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); }
-      catch { return '-'; }
+      try { timePart = new Date(item.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); }
+      catch { timePart = null; }
     }
-    return '-';
+    if (!datePart && !timePart) return '-';
+    return [datePart, timePart].filter(Boolean).join(' ');
   }
-  if (key === 'location') return item.location_details || '-';
+  if (key === 'building') return item.building_name || '-';
+  // No dedicated "floor" field on the waste generation record — Area is the
+  // closest/most granular location field the API returns.
+  if (key === 'floor') return item.area_name || item.wing_name || '-';
   if (key === 'user_type') return item.user_type || item.resource_type || '-';
   if (key === 'client_name') return item.client_name || item.vendor?.company_name || item.agency_name || '-';
-  if (key === 'user_name') return item.user_name || item.created_by?.full_name || '-';
-  if (key === 'email') return item.created_by?.email || '-';
   if (key === 'waste_category') return item.category?.category_name || '-';
-  if (key === 'waste_subcategory') return item.commodity?.category_name || '-';
-  if (key === 'no_of_bags') return item.bag_counts != null ? item.bag_counts.toString() : '-';
-  if (key === 'total_weight') return item.waste_unit != null ? `${item.waste_unit} KG` : '-';
-  if (key === 'device_name') return item.device_id != null ? item.device_id.toString() : '-';
-  if (key === 'status') return item.status || '-';
-  if (key === 'entry_source') return (item as Record<string, unknown>).entry_source as string || '-';
-  if (key === 'recycled_pct') {
-    const pct = item.waste_unit > 0 ? Math.round((item.recycled_unit / item.waste_unit) * 100) : 0;
-    return `${pct}%`;
-  }
+  if (key === 'total_bags') return item.bag_counts != null ? item.bag_counts.toString() : '-';
+  // The API doesn't distinguish Kg vs Ltr — waste_unit is assumed to be in Kg
+  // (matching how this figure is labeled everywhere else in the app).
+  if (key === 'quantity_kg') return item.waste_unit != null ? `${item.waste_unit}` : '-';
+  if (key === 'quantity_ltr') return '-';
   return '-';
 };
 
@@ -127,8 +118,10 @@ const WasteDispatchPage: React.FC = () => {
     driverName: '',
     driverContact: '',
     dispatchDate: '',
-    dispatchWeight: '',
-    disposalMethod: '',
+    dispatchWeightKg: '',
+    disposalMethodKg: '',
+    dispatchWeightLtr: '',
+    disposalMethodLtr: '',
     manifestNumber: '',
     department: '',
     approvedBy: '',
@@ -180,22 +173,23 @@ const WasteDispatchPage: React.FC = () => {
     [items]
   );
 
-  // Summary cards mirroring the Waste Generation dashboard's card set, scoped to
-  // just the selected items (client-side, since dispatch has no aggregation API yet)
+  // Summary cards scoped to just the selected items (client-side, since
+  // dispatch has no aggregation API yet).
   const summaryCards = useMemo(() => {
-    const totalWaste = items.reduce((sum, item) => sum + (item.waste_unit || 0), 0);
+    const totalWasteKg = items.reduce((sum, item) => sum + (item.waste_unit || 0), 0);
     const totalRecycled = items.reduce((sum, item) => sum + (item.recycled_unit || 0), 0);
-    const wetWastePct = totalWaste > 0 ? Math.round((totalRecycled / totalWaste) * 100) : 0;
-    const dryWaste = Math.max(totalWaste - totalRecycled, 0);
+    const dryWaste = Math.max(totalWasteKg - totalRecycled, 0);
     const hazardousWaste = items
       .filter((item) => (item.category?.category_name || '').toLowerCase().includes('hazard'))
       .reduce((sum, item) => sum + (item.waste_unit || 0), 0);
 
     return [
-      { label: 'Total Waste', value: `${totalWaste.toLocaleString('en-IN')} KG`, icon: <Trash2 className="w-6 h-6 text-[#C72030]" /> },
-      // { label: 'Total Recycled', value: `${totalRecycled.toLocaleString('en-IN')} KG`, icon: <RefreshCw className="w-6 h-6 text-[#C72030]" /> },
-      { label: 'Wet Waste', value: `${wetWastePct}%`, icon: <Percent className="w-6 h-6 text-[#C72030]" /> },
+      { label: 'Total Weight (Kg)', value: `${totalWasteKg.toLocaleString('en-IN')} KG`, icon: <Trash2 className="w-6 h-6 text-[#C72030]" /> },
+      // The API doesn't return a separate litre-based quantity for waste
+      // generation records, so this can't be computed from real data yet.
+      { label: 'Total Weight (Litre)', value: '—', icon: <Droplet className="w-6 h-6 text-[#C72030]" /> },
       { label: 'Dry Waste', value: `${dryWaste.toLocaleString('en-IN')} KG`, icon: <Package className="w-6 h-6 text-[#C72030]" /> },
+      { label: 'Wet Waste', value: `${totalRecycled.toLocaleString('en-IN')} KG`, icon: <RefreshCw className="w-6 h-6 text-[#C72030]" /> },
       { label: 'Hazardous Waste', value: `${hazardousWaste.toLocaleString('en-IN')} KG`, icon: <Activity className="w-6 h-6 text-[#C72030]" /> },
     ];
   }, [items]);
@@ -231,16 +225,16 @@ const WasteDispatchPage: React.FC = () => {
       toast.error('Validation Error: Dispatch Date is required.');
       return;
     }
-    if (!formData.dispatchWeight) {
-      toast.error('Validation Error: Dispatch Weight is required.');
+    if (!formData.dispatchWeightKg) {
+      toast.error('Validation Error: Dispatch Weight (Kg) is required.');
       return;
     }
-    if (parseFloat(formData.dispatchWeight) > totalCaptured) {
-      toast.error('Dispatch Weight cannot exceed total waste captured for the selected items.');
+    if (parseFloat(formData.dispatchWeightKg) > totalCaptured) {
+      toast.error('Dispatch Weight (Kg) cannot exceed total waste captured for the selected items.');
       return;
     }
-    if (!formData.disposalMethod) {
-      toast.error('Validation Error: Disposal Method is required.');
+    if (!formData.disposalMethodKg) {
+      toast.error('Validation Error: Disposal Method (Kg) is required.');
       return;
     }
 
@@ -254,9 +248,11 @@ const WasteDispatchPage: React.FC = () => {
       driver_name: formData.driverName,
       driver_contact: formData.driverContact,
       dispatch_date: formData.dispatchDate,
-      total_waste_captured: totalCaptured,
-      dispatch_weight: parseFloat(formData.dispatchWeight),
-      disposal_method: formData.disposalMethod,
+      total_waste_captured_kg: totalCaptured,
+      dispatch_weight_kg: parseFloat(formData.dispatchWeightKg),
+      disposal_method_kg: formData.disposalMethodKg,
+      dispatch_weight_ltr: formData.dispatchWeightLtr ? parseFloat(formData.dispatchWeightLtr) : null,
+      disposal_method_ltr: formData.disposalMethodLtr || null,
       manifest_number: formData.manifestNumber,
       authorized_by_department: authorizeBy.department ? formData.department : null,
       authorized_by_user: authorizeBy.user ? formData.approvedBy : null,
@@ -447,48 +443,108 @@ const WasteDispatchPage: React.FC = () => {
         {/* Dispatch Details */}
         <div className="mb-8">
           <h2 className="text-base font-bold text-gray-900 mb-4">Dispatch Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <TextField
-              label={<span>Total Waste Captured (System) <span className="text-red-500">*</span></span>}
-              value={`${totalCaptured.toLocaleString('en-IN')} KG`}
-              fullWidth
-              variant="outlined"
-              disabled
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-            />
-            <TextField
-              label={<span>Dispatch Weight <span className="text-red-500">*</span></span>}
-              placeholder="e.g. 550"
-              type="number"
-              value={formData.dispatchWeight}
-              onChange={(e) => handleChange('dispatchWeight', e.target.value)}
-              fullWidth
-              variant="outlined"
-              inputProps={{ min: '0' }}
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-            />
-            <FormControl fullWidth>
-              <InputLabel shrink id="disposal-method-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                Disposal Method <span className="text-red-500">*</span>
-              </InputLabel>
-              <Select
-                labelId="disposal-method-label"
-                value={formData.disposalMethod}
-                onChange={(e: SelectChangeEvent<string>) => handleChange('disposalMethod', e.target.value)}
-                displayEmpty
-                sx={fieldStyles}
-                MenuProps={selectMenuProps}
-              >
-                <MenuItem value="">
-                  <em>Select Disposal Method</em>
-                </MenuItem>
-                {DISPOSAL_METHOD_OPTIONS.map((opt) => (
-                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+
+          {/* KG Section */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">KG Section</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <TextField
+                label={<span>Total Waste Captured (Kg) <span className="text-red-500">*</span></span>}
+                value={`${totalCaptured.toLocaleString('en-IN')} KG`}
+                fullWidth
+                variant="outlined"
+                disabled
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+              />
+              <TextField
+                label={<span>Dispatch Weight (Kg) <span className="text-red-500">*</span></span>}
+                placeholder="e.g. 550"
+                type="number"
+                value={formData.dispatchWeightKg}
+                onChange={(e) => handleChange('dispatchWeightKg', e.target.value)}
+                fullWidth
+                variant="outlined"
+                inputProps={{ min: '0' }}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+              />
+              <FormControl fullWidth>
+                <InputLabel shrink id="disposal-method-kg-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Disposal Method <span className="text-red-500">*</span>
+                </InputLabel>
+                <Select
+                  labelId="disposal-method-kg-label"
+                  value={formData.disposalMethodKg}
+                  onChange={(e: SelectChangeEvent<string>) => handleChange('disposalMethodKg', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select Disposal Method</em>
+                  </MenuItem>
+                  {DISPOSAL_METHOD_OPTIONS.map((opt) => (
+                    <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Dispatch weight cannot exceed total waste captured in the system for the selected items.
+            </p>
+          </div>
+
+          {/* Litre Section */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Litre Section</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <TextField
+                label="Total Waste Captured (Litre)"
+                value="—"
+                fullWidth
+                variant="outlined"
+                disabled
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+              />
+              <TextField
+                label="Dispatch Weight (Litre)"
+                placeholder="e.g. 210"
+                type="number"
+                value={formData.dispatchWeightLtr}
+                onChange={(e) => handleChange('dispatchWeightLtr', e.target.value)}
+                fullWidth
+                variant="outlined"
+                inputProps={{ min: '0' }}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+              />
+              <FormControl fullWidth>
+                <InputLabel shrink id="disposal-method-ltr-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Disposal Method
+                </InputLabel>
+                <Select
+                  labelId="disposal-method-ltr-label"
+                  value={formData.disposalMethodLtr}
+                  onChange={(e: SelectChangeEvent<string>) => handleChange('disposalMethodLtr', e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select Disposal Method</em>
+                  </MenuItem>
+                  {DISPOSAL_METHOD_OPTIONS.map((opt) => (
+                    <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </div>
+          </div>
+
+          {/* Shared across both sections */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <TextField
               label="Waste Transfer Note / Manifest No."
               placeholder="Enter manifest number"
@@ -500,9 +556,6 @@ const WasteDispatchPage: React.FC = () => {
               InputProps={{ sx: fieldStyles }}
             />
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Dispatch weight cannot exceed total waste captured in the system for the selected items.
-          </p>
         </div>
 
         {/* Authorized By */}
