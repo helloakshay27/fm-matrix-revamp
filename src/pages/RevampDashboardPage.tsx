@@ -29,10 +29,13 @@ import {
   FilterPillBar,
   DataTableCard,
   TableBadge,
+  TicketHeatmapCard,
+  StatListCard,
   type DataTableColumn,
   type TableBadgeTone,
 } from "@/components/charts";
 import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
+import { SafetyPanel } from "@/components/dashboard/SafetyPanel";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 const TICKETS_GRID_STORAGE_KEY = "revampTicketsGridLayout";
@@ -48,6 +51,26 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
   { i: "sla-breach", x: 6, y: 24, w: 6, h: 7, minW: 3, minH: 4 },
   { i: "resolved-age", x: 0, y: 31, w: 6, h: 6, minW: 3, minH: 3 },
   { i: "unresolved-age", x: 6, y: 31, w: 6, h: 6, minW: 3, minH: 3 },
+  { i: "ticket-heatmap", x: 0, y: 37, w: 12, h: 8, minW: 6, minH: 5 },
+  { i: "tech-workload", x: 0, y: 45, w: 12, h: 6, minW: 6, minH: 4 },
+  { i: "golden-open", x: 0, y: 51, w: 3, h: 3, minW: 2, minH: 3 },
+  { i: "redflag-open", x: 3, y: 51, w: 3, h: 3, minW: 2, minH: 3 },
+  { i: "golden-age", x: 6, y: 51, w: 3, h: 3, minW: 2, minH: 3 },
+  { i: "sitewide-age", x: 9, y: 51, w: 3, h: 3, minW: 2, minH: 3 },
+  { i: "golden-redflag-chart", x: 0, y: 54, w: 12, h: 6, minW: 6, minH: 4 },
+  { i: "golden-aged-table", x: 0, y: 60, w: 12, h: 5, minW: 6, minH: 4 },
+  { i: "godrej-distress", x: 0, y: 65, w: 12, h: 4, minW: 6, minH: 3 },
+  { i: "by-user", x: 0, y: 69, w: 4, h: 5, minW: 3, minH: 4 },
+  { i: "by-dept", x: 4, y: 69, w: 4, h: 5, minW: 3, minH: 4 },
+  { i: "by-tenant", x: 8, y: 69, w: 4, h: 5, minW: 3, minH: 4 },
+  { i: "location-volume", x: 0, y: 74, w: 12, h: 5, minW: 6, minH: 4 },
+  { i: "csat", x: 0, y: 79, w: 6, h: 3, minW: 3, minH: 3 },
+  { i: "escalation", x: 6, y: 79, w: 6, h: 3, minW: 3, minH: 3 },
+  { i: "source-origin", x: 0, y: 82, w: 12, h: 5, minW: 6, minH: 4 },
+  { i: "repeat-complaints", x: 0, y: 87, w: 12, h: 5, minW: 6, minH: 4 },
+  { i: "asset-linked-tickets", x: 0, y: 92, w: 12, h: 4, minW: 6, minH: 3 },
+  { i: "smart-insights", x: 0, y: 96, w: 12, h: 7, minW: 6, minH: 5 },
+  { i: "peak-hours", x: 0, y: 103, w: 12, h: 5, minW: 6, minH: 4 },
 ];
 
 function loadStoredLayout(): GridLayout.Layout[] | null {
@@ -413,6 +436,83 @@ const UNRESOLVED_AGE_TIER_DATA = [
   { tier: "48h+", count: 405 },
 ];
 
+const HEATMAP_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const HEATMAP_HOURS = Array.from({ length: 24 }, (_, i) => i);
+const HEATMAP_DATA: number[][] = HEATMAP_DAYS.map((_, dayIdx) =>
+  HEATMAP_HOURS.map((h) => {
+    const wave = Math.sin(((h - 3) / 24) * Math.PI * 2) * 5 + 5.5;
+    const jitter = ((dayIdx * 13 + h * 7) % 5) - 2;
+    return Math.max(0, Math.round(wave + jitter));
+  })
+);
+
+const TECH_WORKLOAD_DATA = [
+  { tech: "R. Verma", count: 34 },
+  { tech: "S. Khan", count: 27 },
+  { tech: "A. Singh", count: 19 },
+  { tech: "P. Nair", count: 17 },
+  { tech: "M. Joshi", count: 12 },
+];
+
+const TECH_WORKLOAD_COLORS = [
+  "#E7848E",
+  "#E7848E",
+  "#108C72",
+  "#108C72",
+  "#108C72",
+];
+
+const GOLDEN_REDFLAG_AGE_DATA = [
+  { person: "Abdul Ghaffar", golden: 26, redFlag: 17 },
+  { person: "Deepak Yadav", golden: 9, redFlag: 15 },
+  { person: "Vinayak Mane", golden: 13, redFlag: 18 },
+  { person: "Kshitij Rasal", golden: 17, redFlag: 17 },
+];
+
+const GOLDEN_AGED_ROWS = [
+  { id: "2189-10486", label: "Keyboard not working", ageDays: 39, tone: "red" as TableBadgeTone },
+  { id: "2189-10481", label: "AV timing issue", ageDays: 31, tone: "red" as TableBadgeTone },
+  { id: "2189-10508", label: "AV system issue", ageDays: 19, tone: "amber" as TableBadgeTone },
+];
+
+const LOCATION_TICKET_VOLUME_DATA = [
+  { location: "Business Bay", tickets: 230 },
+  { location: "Tower C", tickets: 145 },
+  { location: "Basement Parking", tickets: 95 },
+];
+
+const SOURCE_ORIGIN_DATA = [
+  { source: "Manual/Direct", tickets: 405 },
+  { source: "Asset", tickets: 150 },
+  { source: "Checklist", tickets: 90 },
+  { source: "Survey", tickets: 30 },
+  { source: "Patrolling", tickets: 5 },
+];
+
+const SOURCE_ORIGIN_COLORS = ["#798C5E", "#EDC488", "#6B9BCC", "#9EC8BA", "#E7848E"];
+
+const REPEAT_COMPLAINTS_DATA = [
+  { issue: "Godrej Living — AC not cooling", count: 3 },
+  { issue: "HSBC — Network Devices down", count: 2 },
+];
+
+const ASSET_LINKED_TICKETS_DATA = [
+  { asset: "DG Sync Panel", count: 5 },
+  { asset: "CCTV Camera", count: 3 },
+];
+
+const PEAK_COMPLAINT_HOURS_DATA = [
+  { hour: "8AM", count: 20 },
+  { hour: "10AM", count: 45 },
+  { hour: "12PM", count: 65 },
+  { hour: "2PM", count: 55 },
+  { hour: "4PM", count: 40 },
+  { hour: "6PM", count: 15 },
+  { hour: "8PM", count: 12 },
+];
+
+const PEAK_HOURS_COLORS = ["#108C72", "#EDC488", "#E7848E", "#E7848E", "#EDC488", "#108C72", "#108C72"];
+
 const CATEGORY_TABLE_COLUMNS: DataTableColumn<CategoryRow>[] = [
   { key: "category", header: "Category", render: (row) => <span className="font-semibold text-brand-text">{row.category}</span> },
   { key: "total", header: "Total", render: (row) => row.total },
@@ -455,6 +555,7 @@ export default function RevampDashboardPage() {
   const [redFlagActive, setRedFlagActive] = useState(false);
   const tabsRef = useRef<HTMLDivElement>(null);
   const isTicketsView = activeModule === "maintenance" && activeSubTab === "Ticket";
+  const isSafetyView = activeModule === "safety";
 
   const [ticketsLayout, setTicketsLayout] = useState<GridLayout.Layout[]>(DEFAULT_TICKETS_LAYOUT);
 
@@ -756,8 +857,236 @@ export default function RevampDashboardPage() {
                   className="h-full overflow-auto"
                 />
               </div>
+
+              <div key="ticket-heatmap" className="h-full">
+                <TicketHeatmapCard
+                  title="Ticket volume · hour × day"
+                  subtitle="When does demand actually spike?"
+                  days={HEATMAP_DAYS}
+                  hours={HEATMAP_HOURS}
+                  data={HEATMAP_DATA}
+                  insight="Shows whether certain shifts or days carry disproportionate load. Filter to any date range independently of the rest of the dashboard."
+                  className="h-full overflow-auto"
+                />
+              </div>
+
+              <div key="tech-workload" className="h-full">
+                <BarChartCard
+                  title="Technician workload"
+                  subtitle="Open tickets assigned · sorted highest to lowest · dashed line = team average"
+                  data={TECH_WORKLOAD_DATA}
+                  categoryKey="tech"
+                  orientation="horizontal"
+                  categoryColors={TECH_WORKLOAD_COLORS}
+                  series={[{ dataKey: "count", name: "Open Tickets" }]}
+                  showInfoIcon
+                  insightVariant="plain"
+                  insight="Shows who is carrying too much. A redistribution opportunity, not just a workload report."
+                  className="h-full overflow-auto"
+                />
+              </div>
+
+              <div key="golden-open" className="h-full">
+                <StatHeroCard tone="purple" label="Golden Open" value="7" accent="warning" subtitle="VIP/senior-priority tickets" className="h-full" />
+              </div>
+              <div key="redflag-open" className="h-full">
+                <StatHeroCard tone="teal" label="Red Flag Open" value="11" accent="error" subtitle="Separate manual flag" className="h-full" />
+              </div>
+              <div key="golden-age" className="h-full">
+                <StatHeroCard tone="peach" label="Golden Avg Age" value="22d" accent="error" subtitle="vs 15d site-wide" className="h-full" />
+              </div>
+              <div key="sitewide-age" className="h-full">
+                <StatHeroCard tone="blue" label="Site-wide Avg Age" value="15d" accent="info" subtitle="Benchmark line on chart below" className="h-full" />
+              </div>
+
+              <div key="golden-redflag-chart" className="h-full">
+                <BarChartCard
+                  title="Golden & Red Flag analysis — by person, by age"
+                  subtitle="Merged view: who applies each flag, and whether it actually changes ticket age · dashed line = site-wide avg (15d)"
+                  data={GOLDEN_REDFLAG_AGE_DATA}
+                  categoryKey="person"
+                  series={[
+                    { dataKey: "golden", name: "Golden avg age" },
+                    { dataKey: "redFlag", name: "Red Flag avg age" },
+                  ]}
+                  showInfoIcon
+                  insightVariant="plain"
+                  insight="Several Golden tickets are aging worse than the site-wide average — a VIP flag that doesn't speed up response is decorative, not operational. Abdul Ghaffar applies both flags far more than anyone else."
+                  className="h-full overflow-auto"
+                />
+              </div>
+
+              <div key="golden-aged-table" className="h-full">
+                <StatListCard
+                  title="Golden tickets aged past average"
+                  subtitle="Sitting longer than the site-wide 15d benchmark"
+                  rows={GOLDEN_AGED_ROWS.map((row) => ({
+                    label: `${row.id} · ${row.label}`,
+                    badge: { tone: row.tone, label: `${row.ageDays}d` },
+                  }))}
+                  note="These should be the first tickets touched each morning, not buried in the general queue."
+                  className="h-full overflow-auto"
+                />
+              </div>
+
+              <div key="godrej-distress" className="h-full">
+                <StatListCard
+                  title="Godrej Living is showing distress in two separate systems"
+                  subtitle="Same tenant, two independent signals — not a coincidence worth ignoring"
+                  borderTone="error"
+                  rows={[
+                    { label: "Ticket volume", badge: { tone: "red", label: "142 — highest of any tenant" } },
+                    { label: "OSR backlog (Value Added Services)", badge: { tone: "red", label: "Also the top account there" } },
+                  ]}
+                  note="A tenant leading in ticket volume AND service-request backlog at the same time points to an account-level relationship problem — worth a single conversation with this tenant, not two separate ones."
+                  className="h-full overflow-auto"
+                />
+              </div>
+
+              <div key="by-user" className="h-full">
+                <StatListCard
+                  title="By User"
+                  subtitle="Who's raising the most tickets"
+                  rows={[
+                    { label: "Parag Patil", value: "64" },
+                    { label: "Mahendra Lungare", value: "51" },
+                    { label: "Sadanand Gupta", value: "38" },
+                  ]}
+                  note="Worth checking whether Parag's volume is genuine reporting or logging on behalf of others."
+                  className="h-full overflow-auto"
+                />
+              </div>
+              <div key="by-dept" className="h-full">
+                <StatListCard
+                  title="By Department"
+                  subtitle="Which team generates the most volume"
+                  rows={[
+                    { label: "IT", value: "218" },
+                    { label: "Facilities", value: "184" },
+                    { label: "Admin", value: "96" },
+                  ]}
+                  note="Confirms the same Audio Video/IT dominance already seen in Category Comparison."
+                  className="h-full overflow-auto"
+                />
+              </div>
+              <div key="by-tenant" className="h-full">
+                <StatListCard
+                  title="By Tenant"
+                  subtitle="Which tenant raises the most"
+                  rows={[
+                    { label: "Godrej Living", badge: { tone: "red", label: "142 ⚠" } },
+                    { label: "HSBC", value: "98" },
+                    { label: "Deepak Gupta (Individual)", value: "41" },
+                  ]}
+                  note="See the callout above — this isn't just a ranking, it's half of a two-system pattern."
+                  className="h-full overflow-auto"
+                />
+              </div>
+
+              <div key="location-volume" className="h-full">
+                <BarChartCard
+                  title="Location-wise Ticket Volume"
+                  subtitle="Which floors/buildings generate the most tickets"
+                  data={LOCATION_TICKET_VOLUME_DATA}
+                  categoryKey="location"
+                  orientation="horizontal"
+                  series={[{ dataKey: "tickets", name: "Tickets" }]}
+                  showInfoIcon
+                  insightVariant="plain"
+                  insight="Business Bay leads volume — worth checking whether that's tenant density or an equipment/quality problem specific to that building."
+                  className="h-full overflow-auto"
+                />
+              </div>
+
+              <div key="csat" className="h-full">
+                <StatHeroCard tone="purple" label="Customer Satisfaction Score" value="3.1/5" accent="warning" subtitle="Post-resolution rating, tickets module" className="h-full" />
+              </div>
+              <div key="escalation" className="h-full">
+                <StatHeroCard tone="teal" label="Approaching Escalation" value="14" accent="error" subtitle="Tickets within 4 hours of breaching SLA" className="h-full" />
+              </div>
+
+              <div key="source-origin" className="h-full">
+                <BarChartCard
+                  title="Source-wise ticket origin"
+                  subtitle="Asset · Checklist · Survey · Patrolling — where tickets actually come from"
+                  data={SOURCE_ORIGIN_DATA}
+                  categoryKey="source"
+                  orientation="horizontal"
+                  categoryColors={SOURCE_ORIGIN_COLORS}
+                  series={[{ dataKey: "tickets", name: "Tickets" }]}
+                  showInfoIcon
+                  insightVariant="plain"
+                  insight='If Patrolling generates almost no tickets despite 41 completed patrols, that confirms the same "0 tickets from patrols" gap already flagged in Security.'
+                  className="h-full overflow-auto"
+                />
+              </div>
+
+              <div key="repeat-complaints" className="h-full">
+                <BarChartCard
+                  title="Repeat Complaints"
+                  subtitle="Same tenant, same issue, raised more than once — a fix that isn't holding"
+                  data={REPEAT_COMPLAINTS_DATA}
+                  categoryKey="issue"
+                  categoryColors={["#E7848E", "#EDC488"]}
+                  series={[{ dataKey: "count", name: "Occurrences" }]}
+                  showInfoIcon
+                  insightVariant="plain"
+                  insight="Not a separate finding from Vendor's Repeat Service Requests — same root cause, visible from two different tabs. Worth resolving once, not tracking twice."
+                  className="h-full overflow-auto"
+                />
+              </div>
+
+              <div key="asset-linked-tickets" className="h-full">
+                <BarChartCard
+                  title="Asset-Breakdown-Linked Tickets"
+                  subtitle="8 tickets total, traceable to just 2 repeat-offender assets"
+                  data={ASSET_LINKED_TICKETS_DATA}
+                  categoryKey="asset"
+                  categoryColors={["#E7848E", "#EDC488"]}
+                  series={[{ dataKey: "count", name: "Tickets" }]}
+                  showInfoIcon
+                  insightVariant="plain"
+                  insight="Same assets already flagged in Assets' Repeat Breakdown card. DG Sync Panel's 5 tickets are the ticket-side proof that repairing it again is treating a symptom, not the actual decision that needs making."
+                  className="h-full overflow-auto"
+                />
+              </div>
+
+              <div key="smart-insights" className="h-full">
+                <StatListCard
+                  title="🤖 Smart Insights — Ticket Module"
+                  subtitle="Grounded in this site's actual data, not generic templates"
+                  borderTone="warning"
+                  rows={[
+                    { label: "High Repeat Complaints", value: "Godrej Living AC (3x), HSBC Network (2x)" },
+                    { label: "Increasing SLA Breaches", value: "28% breach rate, 14 approaching" },
+                    { label: "Frequent Asset-Related Tickets", value: "DG Sync Panel: 5 tickets from 1 asset" },
+                    { label: "High Pending Critical Tickets", value: "Golden tickets aging past 15d benchmark" },
+                    { label: "Low Technician Closure Rate", value: "IT 218 vs Facilities 184" },
+                    { label: "Peak Complaint Hours Detected", value: "See pattern below" },
+                    { label: "High Reopened Tickets", value: "Repeat Complaints = reopened under new ID" },
+                  ]}
+                  className="h-full overflow-auto"
+                />
+              </div>
+
+              <div key="peak-hours" className="h-full">
+                <BarChartCard
+                  title="Peak Complaint Hours"
+                  subtitle="Hour-of-day ticket creation pattern"
+                  data={PEAK_COMPLAINT_HOURS_DATA}
+                  categoryKey="hour"
+                  categoryColors={PEAK_HOURS_COLORS}
+                  series={[{ dataKey: "count", name: "Tickets" }]}
+                  showInfoIcon
+                  insightVariant="plain"
+                  insight="Useful for scheduling technician shifts around actual complaint timing, not a flat roster."
+                  className="h-full overflow-auto"
+                />
+              </div>
             </ResponsiveGridLayout>
           </div>
+        ) : isSafetyView ? (
+          <SafetyPanel activeSection={activeSubTab} />
         ) : (
           <div className="bg-white border border-brand-border rounded-lg p-6">
             <h2 className="text-brand-body-3 font-bold text-brand-text uppercase tracking-wide mb-1">
