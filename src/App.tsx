@@ -979,6 +979,7 @@ const DirectPDFDownloadPage = lazy(() => import("./pages/DirectPDFDownloadPage")
 const DirectPDFDownloadAPIPage = lazy(() => import("./pages/DirectPDFDownloadAPIPage").then(m => ({ default: m.DirectPDFDownloadAPIPage })));
 const DeletedPRs = lazy(() => import("./pages/DeletedPRs").then(m => ({ default: m.DeletedPRs })));
 const MsafeDashboardVI = lazy(() => import("./pages/MsafeDashboardVI"));
+const MsafeDashboardPage = lazy(() => import("./features/msafe-dashboard/MsafeDashboardPage").then(m => ({ default: m.MsafeDashboardPage })));
 const DashboardMobile = lazy(() => import("./pages/DashboardMobile").then(m => ({ default: m.DashboardMobile })));
 const SafetyCheckAudit = lazy(() => import("./pages/SafetyCheckAudit"));
 const MsafeCirlce = lazy(() => import("./pages/MsafeCirlce"));
@@ -2048,6 +2049,15 @@ function App() {
 
                           <Route
                             path="/msafedashboard"
+                            element={
+                              <ProtectedRoute>
+                                <MsafeDashboardPage />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          <Route
+                            path="/msafedashboard-legacy"
                             element={
                               <ProtectedRoute>
                                 <MsafeDashboardVI />
