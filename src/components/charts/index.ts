@@ -23,3 +23,5 @@ export { TicketHeatmapCard } from './TicketHeatmapCard';
 export type { TicketHeatmapCardProps } from './TicketHeatmapCard';
 export { StatListCard } from './StatListCard';
 export type { StatListRow, StatListCardProps } from './StatListCard';
+export { IncidentTrendChartCard } from './IncidentTrendChartCard';
+export type { IncidentTrendDatum, IncidentTrendChartCardProps } from './IncidentTrendChartCard';

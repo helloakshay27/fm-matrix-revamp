@@ -8,6 +8,7 @@ import {
   DataTableCard,
   TableBadge,
   PermitTimelineChartCard,
+  IncidentTrendChartCard,
   type DataTableColumn,
   type TableBadgeTone,
   type PermitTimelinePoint,
@@ -337,27 +338,22 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
         </div>
       ),
     },
-  ];
-
-  const incidentsItems: SafetyGridItem[] = [
     {
-      key: "inc-trend",
-      layout: { x: 0, y: 0, w: 6, h: 6, minW: 4, minH: 4 },
+      key: "sohi-incident-trend",
+      layout: { x: 0, y: 9, w: 6, h: 6, minW: 4, minH: 4 },
       content: (
-        <BarChartCard
+        <IncidentTrendChartCard
           title="Incident Trend"
           subtitle="Are incidents rising?"
           data={INCIDENT_TREND_DATA}
-          categoryKey="month"
-          series={[{ dataKey: "incidents", name: "Incidents" }]}
-          height={180}
-          className="h-full"
+          height={200}
+          className="h-full no-drag"
         />
       ),
     },
     {
-      key: "inc-support-stat",
-      layout: { x: 6, y: 0, w: 6, h: 6, minW: 4, minH: 4 },
+      key: "sohi-incident-support",
+      layout: { x: 6, y: 9, w: 6, h: 6, minW: 4, minH: 4 },
       content: (
         <div className="bg-white border border-brand-border rounded-lg flex flex-col items-center justify-center text-center p-6 h-full">
           <div className="text-4xl font-bold text-brand-error">66%</div>
@@ -367,9 +363,12 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
         </div>
       ),
     },
+  ];
+
+  const incidentsItems: SafetyGridItem[] = [
     {
       key: "inc-nearmiss",
-      layout: { x: 0, y: 6, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
           tone="purple"
@@ -383,7 +382,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-sqft",
-      layout: { x: 3, y: 6, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 3, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
           tone="teal"
@@ -397,7 +396,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-ltir2",
-      layout: { x: 6, y: 6, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 6, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
           tone="peach"
@@ -411,7 +410,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-manhours",
-      layout: { x: 9, y: 6, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 9, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
           tone="blue"
@@ -425,7 +424,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-warning-banner",
-      layout: { x: 0, y: 9, w: 12, h: 3, minW: 4, minH: 2 },
+      layout: { x: 0, y: 3, w: 12, h: 3, minW: 4, minH: 2 },
       content: (
         <div className="rounded-lg border border-brand-warning bg-brand-warning-light px-3 py-2 text-brand-body-5 text-[#B8860B] h-full overflow-auto">
           Zero Near Miss / Good Catch reports alongside 5,800 incidents per million sq ft is a
@@ -438,7 +437,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-severity",
-      layout: { x: 0, y: 12, w: 4, h: 7, minW: 3, minH: 4 },
+      layout: { x: 0, y: 6, w: 4, h: 7, minW: 3, minH: 4 },
       content: (
         <PieChartCard
           title="Severity Distribution"
@@ -451,7 +450,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-closure-rate",
-      layout: { x: 4, y: 12, w: 4, h: 7, minW: 3, minH: 4 },
+      layout: { x: 4, y: 6, w: 4, h: 7, minW: 3, minH: 4 },
       content: (
         <StatHeroCard
           tone="peach"
@@ -465,7 +464,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-rootcause",
-      layout: { x: 8, y: 12, w: 4, h: 7, minW: 3, minH: 4 },
+      layout: { x: 8, y: 6, w: 4, h: 7, minW: 3, minH: 4 },
       content: (
         <PieChartCard
           title="Primary Root Cause"
@@ -478,7 +477,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-rootnote",
-      layout: { x: 0, y: 19, w: 12, h: 2, minW: 4, minH: 2 },
+      layout: { x: 0, y: 13, w: 12, h: 2, minW: 4, minH: 2 },
       content: (
         <p className="text-brand-body-5 text-brand-text-light">
           Root Cause is a different lens than the Category breakdown below — Category groups
@@ -489,7 +488,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-compliance",
-      layout: { x: 0, y: 21, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 0, y: 15, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
           tone="peach"
@@ -503,7 +502,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-status-breakdown",
-      layout: { x: 0, y: 24, w: 12, h: 9, minW: 6, minH: 6 },
+      layout: { x: 0, y: 18, w: 12, h: 9, minW: 6, minH: 6 },
       content: (
         <div className="bg-white border border-brand-border rounded-lg p-5 h-full overflow-auto">
           <div className="text-brand-body-3 font-bold text-brand-text">Incident Status Breakdown</div>
@@ -547,7 +546,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-closure-integrity",
-      layout: { x: 0, y: 33, w: 12, h: 4, minW: 6, minH: 3 },
+      layout: { x: 0, y: 27, w: 12, h: 4, minW: 6, minH: 3 },
       content: (
         <div className="bg-white border-l-4 border-brand-error border border-brand-border rounded-lg p-4 h-full overflow-auto">
           <div className="flex items-center justify-between">
@@ -573,7 +572,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-quiet-escalation",
-      layout: { x: 0, y: 37, w: 12, h: 6, minW: 6, minH: 4 },
+      layout: { x: 0, y: 31, w: 12, h: 6, minW: 6, minH: 4 },
       content: (
         <BarChartCard
           title="Quiet escalation — repeat Low Risk by location"
@@ -590,7 +589,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-table",
-      layout: { x: 0, y: 43, w: 12, h: 8, minW: 6, minH: 5 },
+      layout: { x: 0, y: 37, w: 12, h: 8, minW: 6, minH: 5 },
       content: (
         <DataTableCard
           title="Incidents Requiring Action"
@@ -604,7 +603,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-bodypart",
-      layout: { x: 0, y: 51, w: 12, h: 6, minW: 6, minH: 4 },
+      layout: { x: 0, y: 45, w: 12, h: 6, minW: 6, minH: 4 },
       content: (
         <BarChartCard
           title="Which category hurts which body part"
@@ -626,7 +625,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-bodyinjury",
-      layout: { x: 0, y: 57, w: 12, h: 9, minW: 6, minH: 6 },
+      layout: { x: 0, y: 51, w: 12, h: 9, minW: 6, minH: 6 },
       content: <BodyInjuryChartCard />,
     },
   ];

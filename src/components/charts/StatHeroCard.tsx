@@ -4,15 +4,11 @@ import { cn } from "@/lib/utils";
 export type StatHeroTone = "purple" | "teal" | "peach" | "blue";
 export type StatHeroAccent = "success" | "info" | "green" | "warning" | "error";
 
-const TONE_CLASSES: Record<StatHeroTone, string> = {
-  purple: "bg-brand-purple-bg",
-  teal: "bg-brand-teal-bg",
-  peach: "bg-brand-light",
-  blue: "",
-};
-
-const TONE_STYLE: Partial<Record<StatHeroTone, React.CSSProperties>> = {
-  blue: { backgroundColor: "rgba(var(--color-info-rgb), 0.12)" },
+const TONE_STYLE: Record<StatHeroTone, React.CSSProperties> = {
+  purple: { backgroundColor: "#EFEFFB" },
+  teal: { backgroundColor: "#B7DCD44D" },
+  peach: { backgroundColor: "#E3909026" },
+  blue: { backgroundColor: "#85BDF633" },
 };
 
 const ACCENT_TEXT_CLASSES: Record<StatHeroAccent, string> = {
@@ -62,19 +58,19 @@ export function StatHeroCard({
   return (
     <div
       onClick={onClick}
-      className={cn("relative rounded-xl p-4", onClick && "cursor-pointer", TONE_CLASSES[tone], className)}
+      className={cn("relative rounded-xl p-4", onClick && "cursor-pointer", className)}
       style={TONE_STYLE[tone]}
     >
       <button
         type="button"
         aria-label="How this is calculated"
         onClick={(e) => e.stopPropagation()}
-        className="absolute top-2 right-2 w-[18px] h-[18px] rounded-full border border-brand-green/60 bg-white/70 flex items-center justify-center text-brand-green"
+        className="absolute top-2 right-2 w-[18px] h-[18px] rounded-full border border-black/30 bg-white/70 flex items-center justify-center text-black"
       >
         <Info className="w-3 h-3" />
       </button>
 
-      <div className="text-brand-caption font-medium text-brand-green uppercase tracking-wide mb-1">{label}</div>
+      <div className="text-brand-caption font-medium text-black uppercase tracking-wide mb-1">{label}</div>
       <div className={cn("text-[22px] font-bold leading-none", ACCENT_TEXT_CLASSES[accent])}>{value}</div>
 
       {progress !== undefined && (
@@ -86,7 +82,7 @@ export function StatHeroCard({
         </div>
       )}
 
-      {subtitle && <div className="text-brand-caption text-brand-green mt-1">{subtitle}</div>}
+      {subtitle && <div className="text-brand-caption text-black mt-1">{subtitle}</div>}
     </div>
   );
 }
