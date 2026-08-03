@@ -625,8 +625,11 @@ export const AddPastBookings = () => {
 
                 let basePrice = 0;
 
-                // For requestable type, use slab_price from API; for others, use slot charges
-                if (isRequestableType && flexiblePriceData) {
+                // Complementary bookings: slot/base charges are waived, only accessories are chargeable
+                if (paymentMethod === 'complementary') {
+                    basePrice = 0;
+                } else if (isRequestableType && flexiblePriceData) {
+                    // For requestable type, use slab_price from API; for others, use slot charges
                     basePrice = flexiblePriceData.slab_price;
                 } else {
                     const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
@@ -1139,7 +1142,8 @@ export const AddPastBookings = () => {
                                             const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
                                             return total + ((accessory?.price || 0) * (quantity || 0));
                                         }, 0);
-                                        const subtotalWithAccessories = flexiblePriceData.slab_price + accessoryTotal;
+                                        const slabPrice = paymentMethod === 'complementary' ? 0 : flexiblePriceData.slab_price;
+                                        const subtotalWithAccessories = slabPrice + accessoryTotal;
                                         const calculatedDiscountAmount = discountType === 'percentage'
                                             ? (subtotalWithAccessories * (discountPercentage || 0)) / 100
                                             : (discountAmount || 0);
@@ -1154,8 +1158,13 @@ export const AddPastBookings = () => {
                                             <>
                                                 {/* Slab Price */}
                                                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                                                    <span className="text-gray-700">Base Price</span>
-                                                    <span className="font-medium">₹{flexiblePriceData.slab_price.toFixed(2)}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-gray-700">Base Price</span>
+                                                        {paymentMethod === 'complementary' && (
+                                                            <span className="text-sm text-gray-500">(Complementary)</span>
+                                                        )}
+                                                    </div>
+                                                    <span className="font-medium">₹{slabPrice.toFixed(2)}</span>
                                                 </div>
 
                                                 {/* Booking Duration */}
@@ -1273,9 +1282,10 @@ export const AddPastBookings = () => {
                                     const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge ?? 0;
                                     const slotsCount = selectedSlots.length;
                                     const hasSlots = slotsCount > 0;
+                                    const isComplementary = paymentMethod === 'complementary';
 
-                                    // Calculate slot total
-                                    const slotTotal = slotsCount * perSlotCharge;
+                                    // Calculate slot total (waived for complementary bookings)
+                                    const slotTotal = isComplementary ? 0 : slotsCount * perSlotCharge;
 
                                     // Calculate accessory total with quantities
                                     const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
@@ -1313,7 +1323,11 @@ export const AddPastBookings = () => {
                                                 <div className="flex justify-between items-center py-2 border-b border-gray-200">
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-gray-700">Slot Charges</span>
-                                                        <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
+                                                        {isComplementary ? (
+                                                            <span className="text-sm text-gray-500">(Complementary)</span>
+                                                        ) : (
+                                                            <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
+                                                        )}
                                                     </div>
                                                     <span className="font-medium">₹{slotTotal.toFixed(2)}</span>
                                                 </div>
