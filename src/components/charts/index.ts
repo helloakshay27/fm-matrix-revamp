@@ -5,3 +5,7 @@ export { CategoryWiseProactiveReactiveChart } from './CategoryWiseProactiveReact
 export { CategoryChart } from './CategoryChart';
 export { AgingMatrixChart } from './AgingMatrixChart';
 export { ResolutionTatChart } from './ResolutionTatChart';
+export { PieChartCard } from './PieChartCard';
+export type { PieChartDatum, PieChartCardProps, ChartInsightTone } from './PieChartCard';
+export { BarChartCard } from './BarChartCard';
+export type { BarSeriesConfig, BarChartCardProps } from './BarChartCard';
