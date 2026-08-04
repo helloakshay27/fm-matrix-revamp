@@ -24,6 +24,7 @@ export const CreateLockFunctionDialog = ({ open, onOpenChange, onLockFunctionCre
     module_id: '',
     lock_controller_id: '',
     phase_id: '',
+    react_link: '',
     parent_function: '',
   });
 
@@ -74,13 +75,14 @@ export const CreateLockFunctionDialog = ({ open, onOpenChange, onLockFunctionCre
       module_id: '',
       lock_controller_id: '',
       phase_id: '',
+      react_link: '',
       parent_function: '',
     });
   };
 
   const handleCreate = async () => {
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
 
     try {
@@ -92,13 +94,14 @@ export const CreateLockFunctionDialog = ({ open, onOpenChange, onLockFunctionCre
           module_id: parseInt(formData.module_id),
           lock_controller_id: formData.lock_controller_id ? parseInt(formData.lock_controller_id) : undefined,
           phase_id: formData.phase_id ? parseInt(formData.phase_id) : undefined,
+          react_link: formData.react_link || undefined,
           parent_function: formData.parent_function || undefined,
         }
       };
 
       // Use the lockFunctionService to create the function
       const createdFunction = await lockFunctionService.createLockFunction(payload);
-      
+
       if (createdFunction) {
         toast.success('Lock Function created successfully!');
         resetForm();
@@ -178,14 +181,42 @@ export const CreateLockFunctionDialog = ({ open, onOpenChange, onLockFunctionCre
               <SelectContent>
                 {modules.map((module) => (
                   <SelectItem key={module.id} value={module.id?.toString() || ''}>
-                    {module.name} 
+                    {module.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Lock Controller ID (Optional) */}
+          {/* React Link */}
+          <div className="space-y-2">
+            <Label htmlFor="react_link" className="text-sm font-medium">
+              React Link
+            </Label>
+            <Input
+              id="react_link"
+              type="text"
+              value={formData.react_link}
+              onChange={(e) => handleInputChange('react_link', e.target.value)}
+              placeholder="Enter react link (e.g., /settings/account/lock-function)"
+              className="w-full"
+            />
+          </div>
+
+          {/* Parent Function */}
+          <div className="space-y-2">
+            <Label htmlFor="parent_function" className="text-sm font-medium">
+              Parent Function
+            </Label>
+            <Input
+              id="parent_function"
+              type="text"
+              value={formData.parent_function}
+              onChange={(e) => handleInputChange('parent_function', e.target.value)}
+              placeholder="Enter parent function"
+              className="w-full"
+            />
+          </div>
 
         </div>
 
