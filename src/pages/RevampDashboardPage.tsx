@@ -604,11 +604,11 @@ const TECH_WORKLOAD_DATA = [
 ];
 
 const TECH_WORKLOAD_COLORS = [
-  "#E7848E",
-  "#E7848E",
-  "#108C72",
-  "#108C72",
-  "#108C72",
+  "#9EC8BA",
+  "#9EC8BA",
+  "#DA7756",
+  "#DA7756",
+  "#DA7756",
 ];
 
 const GOLDEN_REDFLAG_AGE_DATA = [
