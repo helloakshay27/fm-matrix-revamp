@@ -167,7 +167,8 @@ export const MobileSurveyLanding: React.FC = () => {
       try {
         setIsLoading(true);
         const response = await baseClient.get(
-          `survey_mappings/${mappingId}/survey.json`
+          `survey_mappings/${mappingId}/survey.json`,
+          { baseURL: "https://lockated-api.gophygital.work" }
         );
         const data = response.data;
         console.log("Survey data fetched:", data);
@@ -256,6 +257,7 @@ export const MobileSurveyLanding: React.FC = () => {
       case "smiley":
         return selectedRating !== null;
       case "date":
+      case "time":
         return currentQuestionValue.trim() !== "";
       default:
         return true;
@@ -1630,50 +1632,18 @@ export const MobileSurveyLanding: React.FC = () => {
           background: "linear-gradient(135deg, #f5f4ef 0%, #e8e4d9 100%)",
         }}
       >
-        {/* OIG Logo */}
-        <div className="flex justify-end">
-          <div className="w-40 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
-            {surveyData?.company_logo_url ? (
+        {/* Company Logo */}
+        {surveyData?.company_logo_url && (
+          <div className="flex justify-end">
+            <div className="w-40 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
               <img
                 src={surveyData.company_logo_url}
                 alt="Company Logo"
                 className="w-full h-full object-contain"
               />
-            ) : window.location.origin === "https://oig.gophygital.work" ? (
-              <img
-                src="/Without bkg.svg"
-                alt="OIG Logo"
-                className="w-full h-full object-contain"
-              />
-            ) : window.location.origin === "https://web.gophygital.work" &&
-              new URLSearchParams(window.location.search).get("org_id") ===
-                "3" ? (
-              <img
-                src="https://www.persistent.com/wp-content/themes/persistent/dist/images/Persistent-Header-Logo-Black_460dd8e4.svg"
-                alt="PSIPL Logo"
-                className="w-full h-full object-contain"
-              />
-            ) : window.location.origin === "https://web.gophygital.work" ? (
-              <img
-                src="/PSIPL-logo (1).png"
-                alt="PSIPL Logo"
-                className="w-full h-full object-contain"
-              />
-            ) : window.location.origin === "https://fm-matrix.lockated.com" ? (
-              <img
-                src="/gophygital-logo-min.jpg"
-                alt="gophygital Logo"
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <img
-                src="/gophygital-logo-min.jpg"
-                alt="gophygital Logo"
-                className="w-full h-full object-contain"
-              />
-            )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Coming soon illustration */}
         <div className="mb-8 flex justify-center">
@@ -1756,31 +1726,19 @@ export const MobileSurveyLanding: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
         {/* Header with Logo */}
-        <div className="bg-gray-50 py-4 px-4 text-center">
-          <div className="flex justify-center items-center">
-            <div className="w-20 h-20 sm:w-32 sm:h-28 flex items-center justify-center overflow-hidden">
-              {window.location.origin === "https://oig.gophygital.work" ? (
+        {surveyData?.company_logo_url && (
+          <div className="bg-gray-50 py-4 px-4 text-center">
+            <div className="flex justify-center items-center">
+              <div className="w-20 h-20 sm:w-32 sm:h-28 flex items-center justify-center overflow-hidden">
                 <img
-                  src="/Without bkg.svg"
-                  alt="OIG Logo"
+                  src={surveyData.company_logo_url}
+                  alt="Company Logo"
                   className="w-full h-full object-contain"
                 />
-              ) : window.location.origin === "https://web.gophygital.work" ? (
-                <img
-                  src="/PSIPL-logo (1).png"
-                  alt="PSIPL Logo"
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <img
-                  src="/gophygital-logo-min.jpg"
-                  alt="gophygital Logo"
-                  className="w-full h-full object-contain"
-                />
-              )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto">
@@ -2114,50 +2072,17 @@ export const MobileSurveyLanding: React.FC = () => {
                 </button>
               )}
           </div>
-          <div className="flex justify-end">
-            <div className="w-40 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
-              {surveyData?.company_logo_url ? (
+          {surveyData?.company_logo_url && (
+            <div className="flex justify-end">
+              <div className="w-40 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
                 <img
                   src={surveyData.company_logo_url}
                   alt="Company Logo"
                   className="w-full h-full object-contain"
                 />
-              ) : window.location.origin === "https://oig.gophygital.work" ? (
-                <img
-                  src="/Without bkg.svg"
-                  alt="OIG Logo"
-                  className="w-full h-full object-contain"
-                />
-              ) : window.location.origin === "https://web.gophygital.work" &&
-                new URLSearchParams(window.location.search).get("org_id") ===
-                  "3" ? (
-                <img
-                  src="https://www.persistent.com/wp-content/themes/persistent/dist/images/Persistent-Header-Logo-Black_460dd8e4.svg"
-                  alt="PSIPL Logo"
-                  className="w-full h-full object-contain"
-                />
-              ) : window.location.origin === "https://web.gophygital.work" ? (
-                <img
-                  src="/PSIPL-logo (1).png"
-                  alt="PSIPL Logo"
-                  className="w-full h-full object-contain"
-                />
-              ) : window.location.origin ===
-                "https://fm-matrix.lockated.com" ? (
-                <img
-                  src="/gophygital-logo-min.jpg"
-                  alt="gophygital Logo"
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <img
-                  src="/gophygital-logo-min.jpg"
-                  alt="gophygital Logo"
-                  className="w-full h-full object-contain"
-                />
-              )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -2648,6 +2573,44 @@ export const MobileSurveyLanding: React.FC = () => {
                         </>
                       )}
 
+                      {/* Time Question */}
+                      {currentQuestion.qtype === "time" && (
+                        <>
+                          <div className="mt-4">
+                            <input
+                              type="time"
+                              value={currentQuestionValue}
+                              onChange={(e) =>
+                                setCurrentQuestionValue(e.target.value)
+                              }
+                              className="w-full p-4 border-2 border-gray-300 bg-white text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const isSingleQuestion =
+                                (surveyData?.snag_checklist?.questions_count ??
+                                  0) === 1;
+                              const answerData = saveCurrentAnswer();
+                              if (isSingleQuestion) {
+                                handleSingleQuestionSubmit(answerData);
+                              } else {
+                                handleNextQuestion();
+                              }
+                            }}
+                            disabled={!isCurrentAnswerValid()}
+                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                          >
+                            {(surveyData?.snag_checklist?.questions_count ??
+                              0) === 1
+                              ? "Submit Survey"
+                              : "Continue"}
+                          </button>
+                        </>
+                      )}
+
                       {/* Emoji/Smiley Question */}
                       {(currentQuestion.qtype === "emoji" ||
                         currentQuestion.qtype === "smiley") &&
@@ -2897,27 +2860,31 @@ export const MobileSurveyLanding: React.FC = () => {
                                 }
                               }
 
-                              // Reset states immediately
-                              setShowGenericTags(false);
-                              setSelectedTags([]);
-                              setCurrentNegativeComments(""); // Reset only current question's comments
-                              setPendingNegativeType(null);
-                              setPendingNegativeAnswer(null);
-
                               // For single question negative responses, submit with complete data
                               if (isSingleQuestion && answerData) {
-                                handleSingleQuestionSubmitWithNegativeData(
+                                // Keep this screen mounted while submitting so the
+                                // main question page doesn't flash before the
+                                // thank-you navigation; the button shows the
+                                // "Submitting..." spinner meanwhile.
+                                await handleSingleQuestionSubmitWithNegativeData(
                                   answerData
                                 );
                               } else {
+                                // Reset states before moving on
+                                setShowGenericTags(false);
+                                setSelectedTags([]);
+                                setCurrentNegativeComments(""); // Reset only current question's comments
+                                setPendingNegativeType(null);
+                                setPendingNegativeAnswer(null);
                                 // For multi-question surveys, proceed to next question
                                 // Use moveToNextQuestion to avoid re-saving the answer
                                 moveToNextQuestion();
                               }
                             }}
                             disabled={
-                              selectedTags.length === 0 &&
-                              !getCurrentNegativeComments().trim()
+                              isSubmitting ||
+                              (selectedTags.length === 0 &&
+                                !getCurrentNegativeComments().trim())
                             }
                             className="w-full bg-black/90 hover:bg-black/100 disabled:bg-black/50 text-white/100 py-2 xs:py-2.5 px-3 xs:px-4 rounded-lg text-xs xs:text-sm font-medium transition-colors disabled:cursor-not-allowed"
                           >
