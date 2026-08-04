@@ -12,7 +12,7 @@ export type { BarSeriesConfig, BarChartCardProps } from './BarChartCard';
 export { ComboBarLineChartCard } from './ComboBarLineChartCard';
 export type { ComboSeriesConfig, ComboBarLineChartCardProps } from './ComboBarLineChartCard';
 export { StatHeroCard } from './StatHeroCard';
-export type { StatHeroCardProps, StatHeroTone, StatHeroAccent, StatHeroBorderAccent } from './StatHeroCard';
+export type { StatHeroCardProps, StatHeroTone, StatHeroAccent } from './StatHeroCard';
 export { FilterPillBar } from './FilterPillBar';
 export type { FilterPillBarProps } from './FilterPillBar';
 export { DataTableCard, TableBadge, TrendLabel } from './DataTableCard';

@@ -68,10 +68,12 @@ const STATUS_BREAKDOWN = [
   { label: "Total", value: 262, color: "text-brand-text" },
 ];
 
+const STATUS_TILE_BG_COLORS = ["#EFEFFB", "#B7DCD44D", "#E3909026", "#85BDF633", "#EFEFFB"];
+
 const CATEGORY_BARS = [
-  { label: "Nature", value: 144, pct: 55, color: "bg-brand-info" },
-  { label: "Environmental", value: 74, pct: 28, color: "bg-brand-green" },
-  { label: "Equipment Failure", value: 44, pct: 17, color: "bg-brand-error" },
+  { label: "Nature", value: 144, pct: 55 },
+  { label: "Environmental", value: 74, pct: 28 },
+  { label: "Equipment Failure", value: 44, pct: 17 },
 ];
 
 interface IncidentRow {
@@ -159,10 +161,10 @@ const PERMIT_RISK_WEIGHTED_DATA = [
 const PERMIT_RISK_COLORS = ["#E7848E", "#E7848E", "#EDC488", "#798C5E", "#798C5E"];
 
 const PERMIT_STATUS_BARS = [
-  { label: "Draft (stuck)", value: 52, pct: 54, color: "bg-brand-error" },
-  { label: "Expired", value: 16, pct: 16, color: "bg-brand-error" },
-  { label: "Open / Active", value: 9, pct: 9, color: "bg-brand-success" },
-  { label: "Closed", value: 13, pct: 13, color: "bg-brand-green" },
+  { label: "Draft (stuck)", value: 52, pct: 54 },
+  { label: "Expired", value: 16, pct: 16 },
+  { label: "Open / Active", value: 9, pct: 9 },
+  { label: "Closed", value: 13, pct: 13 },
 ];
 
 interface PermitExceptionRow {
@@ -511,10 +513,14 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-            {STATUS_BREAKDOWN.map((s) => (
-              <div key={s.label} className="border border-brand-border rounded-lg p-3 text-center bg-brand-bg">
+            {STATUS_BREAKDOWN.map((s, index) => (
+              <div
+                key={s.label}
+                className="rounded-lg p-3 text-center"
+                style={{ backgroundColor: STATUS_TILE_BG_COLORS[index % STATUS_TILE_BG_COLORS.length] }}
+              >
                 <div className={cn("text-xl font-bold", s.color)}>{s.value}</div>
-                <div className="text-brand-body-5 text-brand-text-light mt-0.5">{s.label}</div>
+                <div className="text-brand-body-5 text-black mt-0.5">{s.label}</div>
               </div>
             ))}
           </div>
@@ -535,7 +541,10 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
               <div key={bar.label} className="flex items-center gap-3">
                 <span className="w-32 text-brand-body-5 text-brand-text-light flex-shrink-0">{bar.label}</span>
                 <div className="flex-1 h-1.5 rounded-full bg-brand-muted overflow-hidden">
-                  <div className={cn("h-full rounded-full", bar.color)} style={{ width: `${bar.pct}%` }} />
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${bar.pct}%`, backgroundColor: bar.pct > 50 ? "#76CDC1" : "#E39090" }}
+                  />
                 </div>
                 <span className="text-brand-body-5 font-semibold text-brand-text w-8 text-right">{bar.value}</span>
               </div>
@@ -784,7 +793,10 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
               <div key={bar.label} className="flex items-center gap-3">
                 <span className="w-32 text-brand-body-5 text-brand-text-light flex-shrink-0">{bar.label}</span>
                 <div className="flex-1 h-1.5 rounded-full bg-brand-muted overflow-hidden">
-                  <div className={cn("h-full rounded-full", bar.color)} style={{ width: `${bar.pct}%` }} />
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${bar.pct}%`, backgroundColor: bar.pct > 15 ? "#76CDC1" : "#E39090" }}
+                  />
                 </div>
                 <span className="text-brand-body-5 font-semibold text-brand-text w-8 text-right">{bar.value}</span>
               </div>

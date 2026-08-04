@@ -3,13 +3,22 @@ import { cn } from "@/lib/utils";
 
 export type StatHeroTone = "purple" | "teal" | "peach" | "blue";
 export type StatHeroAccent = "success" | "info" | "green" | "warning" | "error" | "neutral";
-export type StatHeroBorderAccent = "warning" | "error" | "success" | "info";
 
 const TONE_STYLE: Record<StatHeroTone, React.CSSProperties> = {
   purple: { backgroundColor: "#EFEFFB" },
   teal: { backgroundColor: "#B7DCD44D" },
   peach: { backgroundColor: "#E3909026" },
   blue: { backgroundColor: "#85BDF633" },
+};
+
+// Darker shade of each tone's own base color (not the accent), used for the
+// progress-bar fill so the bar always reads as "this card's color, deepened"
+// rather than an unrelated semantic accent color.
+const TONE_PROGRESS_COLOR: Record<StatHeroTone, string> = {
+  purple: "#9B9BA3",
+  teal: "#778F8A",
+  peach: "#945E5E",
+  blue: "#567BA0",
 };
 
 const ACCENT_TEXT_CLASSES: Record<StatHeroAccent, string> = {
@@ -21,22 +30,6 @@ const ACCENT_TEXT_CLASSES: Record<StatHeroAccent, string> = {
   neutral: "text-brand-text",
 };
 
-const BORDER_ACCENT_CLASSES: Record<StatHeroBorderAccent, string> = {
-  warning: "border-2 border-brand-warning",
-  error: "border-2 border-brand-error",
-  success: "border-2 border-brand-success",
-  info: "border-2 border-brand-info",
-};
-
-const ACCENT_BAR_CLASSES: Record<StatHeroAccent, string> = {
-  success: "bg-brand-success",
-  info: "bg-brand-info",
-  green: "bg-brand-green",
-  warning: "bg-brand-warning",
-  error: "bg-brand-error",
-  neutral: "bg-brand-text-light",
-};
-
 export interface StatHeroCardProps {
   tone: StatHeroTone;
   label: string;
@@ -45,8 +38,6 @@ export interface StatHeroCardProps {
   subtitle?: string;
   /** 0-100 — renders a thin progress track under the value, in the accent color */
   progress?: number;
-  /** Full colored ring around the card — mirrors the ".ki" border-top accent seen on paired KPI cards (AMC coverage, MTTR/MTBF, etc). */
-  borderAccent?: StatHeroBorderAccent;
   onClick?: () => void;
   className?: string;
 }
@@ -64,19 +55,13 @@ export function StatHeroCard({
   accent,
   subtitle,
   progress,
-  borderAccent,
   onClick,
   className,
 }: StatHeroCardProps) {
   return (
     <div
       onClick={onClick}
-      className={cn(
-        "relative rounded-xl p-4",
-        onClick && "cursor-pointer",
-        borderAccent && BORDER_ACCENT_CLASSES[borderAccent],
-        className
-      )}
+      className={cn("relative rounded-xl p-4", onClick && "cursor-pointer", className)}
       style={TONE_STYLE[tone]}
     >
       <button
@@ -94,8 +79,11 @@ export function StatHeroCard({
       {progress !== undefined && (
         <div className="h-[3px] bg-white/60 rounded-full mt-1.5 overflow-hidden">
           <div
-            className={cn("h-full rounded-full", ACCENT_BAR_CLASSES[accent])}
-            style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+            className="h-full rounded-full"
+            style={{
+              width: `${Math.min(100, Math.max(0, progress))}%`,
+              backgroundColor: TONE_PROGRESS_COLOR[tone],
+            }}
           />
         </div>
       )}
