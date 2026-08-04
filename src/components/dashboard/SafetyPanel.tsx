@@ -453,7 +453,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
       layout: { x: 4, y: 6, w: 4, h: 7, minW: 3, minH: 4 },
       content: (
         <StatHeroCard
-          tone="peach"
+          tone="teal"
           label="Incident Closure Rate %"
           value="17.9%"
           accent="warning"
@@ -491,7 +491,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
       layout: { x: 0, y: 15, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
-          tone="peach"
+          tone="teal"
           label="⭐ Safety Compliance Score"
           value="48/100"
           accent="warning"
