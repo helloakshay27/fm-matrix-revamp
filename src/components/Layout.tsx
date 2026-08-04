@@ -65,7 +65,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     setCurrentUser(getUser());
   }, [location.pathname]);
 
-  // Scope the product-pages table CSS (see index.css) to /products and /product/* routes only
+  //  Scope the product-pages table CSS (see index.css) to /products and /product/* routes only
   useEffect(() => {
     const isProductRoute =
       location.pathname.startsWith("/products") ||
@@ -83,7 +83,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Detect Club Management routes
   const isClubManagementRoute =
     hostname === "club.lockated.com" ||
-     hostname === "localhost" ||
     hostname === "recess-club.panchshil.com" ||
     location.pathname.startsWith("/club-management");
 
