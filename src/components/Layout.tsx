@@ -83,6 +83,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Detect Club Management routes
   const isClubManagementRoute =
     hostname === "club.lockated.com" ||
+     hostname === "localhost" ||
     hostname === "recess-club.panchshil.com" ||
     location.pathname.startsWith("/club-management");
 
