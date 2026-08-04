@@ -149,6 +149,10 @@ const UtilityWasteGenerationSetupDashboard = lazy(() => import("./pages/UtilityW
 const AddWasteGenerationPage = lazy(() => import("./pages/AddWasteGenerationPage"));
 const EditWasteGenerationPage = lazy(() => import("./pages/EditWasteGenerationPage"));
 const WasteGenerationDetailsPage = lazy(() => import("./pages/WasteGenerationDetailsPage").then(m => ({ default: m.WasteGenerationDetailsPage })));
+const WasteDispatchPage = lazy(() => import("./pages/WasteDispatchPage"));
+const WasteDispatchHistoryPage = lazy(() => import("./pages/WasteDispatchHistoryPage"));
+const RecycleEntryPage = lazy(() => import("./pages/RecycleEntryPage"));
+const WasteDispatchDetailPage = lazy(() => import("./pages/WasteDispatchDetailPage"));
 
 // Import Survey pages
 const SurveyListDashboard = lazy(() => import("./pages/SurveyListDashboard").then(m => ({ default: m.SurveyListDashboard })));
@@ -975,6 +979,7 @@ const DirectPDFDownloadPage = lazy(() => import("./pages/DirectPDFDownloadPage")
 const DirectPDFDownloadAPIPage = lazy(() => import("./pages/DirectPDFDownloadAPIPage").then(m => ({ default: m.DirectPDFDownloadAPIPage })));
 const DeletedPRs = lazy(() => import("./pages/DeletedPRs").then(m => ({ default: m.DeletedPRs })));
 const MsafeDashboardVI = lazy(() => import("./pages/MsafeDashboardVI"));
+const MsafeDashboardPage = lazy(() => import("./features/msafe-dashboard/MsafeDashboardPage").then(m => ({ default: m.MsafeDashboardPage })));
 const DashboardMobile = lazy(() => import("./pages/DashboardMobile").then(m => ({ default: m.DashboardMobile })));
 const SafetyCheckAudit = lazy(() => import("./pages/SafetyCheckAudit"));
 const MsafeCirlce = lazy(() => import("./pages/MsafeCirlce"));
@@ -1401,6 +1406,7 @@ const PulseContestRewardsDetails = lazy(() => import("./pages/PulseContestReward
 const PulseContestRewardCreate = lazy(() => import("./pages/PulseContestRewardCreate.tsx"));
 const PosthogDashboardPage = lazy(() => import("./features/posthog-dashboard/PosthogDashboardPage").then(m => ({ default: m.PosthogDashboardPage })));
 const FmAdoptionDashboardPage = lazy(() => import("./features/fm-adoption-dashboard/FmAdoptionDashboardPage").then(m => ({ default: m.FmAdoptionDashboardPage })));
+const RevampDashboardPage = lazy(() => import("./pages/RevampDashboardPage"));
 
 const queryClient = new QueryClient();
 
@@ -1735,6 +1741,10 @@ function App() {
                             path="/fm-adoption-dashboard"
                             element={<FmAdoptionDashboardPage />}
                           />
+                          <Route
+                            path="/dashboard-revamp"
+                            element={<RevampDashboardPage />}
+                          />
 
                           {/* Backend Routes */}
                           <Route
@@ -2039,6 +2049,15 @@ function App() {
 
                           <Route
                             path="/msafedashboard"
+                            element={
+                              <ProtectedRoute>
+                                <MsafeDashboardPage />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          <Route
+                            path="/msafedashboard-legacy"
                             element={
                               <ProtectedRoute>
                                 <MsafeDashboardVI />
@@ -4396,12 +4415,28 @@ function App() {
                               element={<UtilityWasteGenerationSetupDashboard />}
                             />
                             <Route
+                              path="/maintenance/waste/dispatch"
+                              element={<WasteDispatchHistoryPage />}
+                            />
+                            <Route
+                              path="/maintenance/waste/dispatch/recycle-entry/:id"
+                              element={<RecycleEntryPage />}
+                            />
+                            <Route
+                              path="/maintenance/waste/dispatch/:id"
+                              element={<WasteDispatchDetailPage />}
+                            />
+                            <Route
                               path="/maintenance/waste/generation/add"
                               element={<AddWasteGenerationPage />}
                             />
                             <Route
                               path="/maintenance/waste/generation/edit/:id"
                               element={<EditWasteGenerationPage />}
+                            />
+                            <Route
+                              path="/maintenance/waste/generation/dispatch"
+                              element={<WasteDispatchPage />}
                             />
                             <Route
                               path="/maintenance/waste/generation/:id"

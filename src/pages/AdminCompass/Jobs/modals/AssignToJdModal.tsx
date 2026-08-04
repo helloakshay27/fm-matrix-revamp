@@ -1,11 +1,24 @@
 // @ts-nocheck
 import { useJobs } from "../JobsContext";
-import { T, KPI_UNITS, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
-import { Fld, FI, FT, FS, Btn } from "../components/UI";
+import { T } from "../constants";
+import { Fld, Btn } from "../components/UI";
+import MemberSearchSelect from "../components/MemberSearchSelect";
+import { useEscalateUsers } from "../hooks/useEscalateUsers";
 
 export default function AssignToJdModal() {
-  const { assignModal, setAssignModal, assignName, setAssignName, assignUser } = useJobs();
+  const {
+    assignModal, setAssignModal, assignJdUserIds, setAssignJdUserIds,
+    assignUser, jdAssignSaving,
+  } = useJobs();
+  const { data: escalateUsers = [], isLoading, error } = useEscalateUsers();
+
   if (!assignModal) return null;
+
+  const memberOptions = escalateUsers.map((u) => ({
+    id: u.id,
+    name: u.full_name || u.name || `User ${u.id}`,
+  }));
+
   return (
     <div
       style={{
@@ -41,13 +54,24 @@ export default function AssignToJdModal() {
           Assign Member
         </h3>
         <p style={{ fontSize: 12.5, color: T.inkMuted, marginBottom: 20 }}>
-          Add a team member for performance tracking.
+          Add team members for performance tracking.
         </p>
-        <Fld label="Member Name">
-          <FI
-            placeholder="e.g. Priya Sharma"
-            value={assignName}
-            onChange={(e) => setAssignName(e.target.value)}
+        <Fld
+          label="Members"
+          hint={
+            error
+              ? `Could not load users: ${error.message}`
+              : "Already assigned members pehle se selected hain — hataane ke liye unselect karein."
+          }
+        >
+          <MemberSearchSelect
+            multiple
+            value={assignJdUserIds}
+            options={memberOptions}
+            onChange={setAssignJdUserIds}
+            placeholder="Select members"
+            loading={isLoading}
+            disabled={isLoading || jdAssignSaving}
           />
         </Fld>
         <div
@@ -59,8 +83,8 @@ export default function AssignToJdModal() {
           }}
         >
           <Btn onClick={() => setAssignModal(null)}>Cancel</Btn>
-          <Btn primary onClick={assignUser}>
-            Assign
+          <Btn primary onClick={assignUser} disabled={isLoading || jdAssignSaving}>
+            {jdAssignSaving ? "Assigning..." : "Assign"}
           </Btn>
         </div>
       </div>

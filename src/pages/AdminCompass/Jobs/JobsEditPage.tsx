@@ -2,22 +2,54 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useJobs } from "./JobsContext";
+import { useFetchJobDetail } from "./hooks/useFetchJobDetail";
 import EditJdScreen from "./components/EditJdScreen";
 
 export default function JobsEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { allJds, startEditJd, setEditingJd } = useJobs();
+  const { setEditingJd, setEditForm } = useJobs();
+  const { data, isLoading, error } = useFetchJobDetail(Number(id));
 
   useEffect(() => {
-    const numericId = Number(id);
-    if (!allJds.some((j) => j.id === numericId)) {
-      navigate("/admin-compass/jobs", { replace: true });
-      return;
+    if (data) {
+      const jd = data.jd;
+      setEditForm({
+        title: jd.title || "",
+        dept: jd.dept || "",
+        deptId: jd.deptId || jd.departmentId || "",
+        reportingTo: jd.reportingTo || "",
+        type: jd.type || "",
+        level: jd.level || "",
+        location: jd.location || "",
+        salaryMin: jd.salaryMin ?? "",
+        salaryMax: jd.salaryMax ?? "",
+        summary: jd.summary || "",
+        responsibilities: jd.responsibilities || "",
+        qualifications: jd.qualifications || "",
+        skills: jd.skills || "",
+        niceToHave: jd.niceToHave || "",
+      });
+      setEditingJd(Number(id));
     }
-    startEditJd(numericId);
-    return () => setEditingJd(null);
-  }, [id, allJds]);
+  }, [data, id]);
 
-  return <EditJdScreen />;
+  useEffect(() => {
+    return () => setEditingJd(null);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div style={{ padding: 40, textAlign: "center", color: "#888", fontSize: 14 }}>
+        Loading job description…
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    navigate("/admin-compass/jobs", { replace: true });
+    return null;
+  }
+
+  return <EditJdScreen jd={data.jd} kras={data.kras} kpis={data.kpis} />;
 }

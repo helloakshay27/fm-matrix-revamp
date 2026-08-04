@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import {
   Plus, Upload, Eye, Trash2, Loader2, BarChart3,
   Calendar, Filter, RefreshCw, Leaf, Activity, Download,
-  Droplets, Percent, Package
+  Droplets, Percent, Package, Truck
 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -169,7 +169,8 @@ const UtilityWasteGenerationDashboard = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showActionPanel, setShowActionPanel] = useState(false);
-  
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
   // API states
   const [wasteGenerations, setWasteGenerations] = useState<WasteGeneration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -321,8 +322,26 @@ useEffect(() => {
 
   // Handlers
   const handleActionClick = () => setShowActionPanel(!showActionPanel);
-  const handleClearSelection = () => setShowActionPanel(false);
+  const handleClearSelection = () => {
+    setShowActionPanel(false);
+    setSelectedItems([]);
+  };
   const handleApplyFilters = (filters: WasteGenerationFilters) => { setActiveFilters(filters); setCurrentPage(1); };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedItems(checked ? wasteGenerations.map((item) => item.id.toString()) : []);
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    setSelectedItems((prev) =>
+      checked ? [...prev, itemId] : prev.filter((id) => id !== itemId)
+    );
+  };
+
+  const handleDispatch = () => {
+    const items = wasteGenerations.filter((item) => selectedItems.includes(item.id.toString()));
+    navigate('/maintenance/waste/generation/dispatch', { state: { items } });
+  };
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -388,12 +407,12 @@ useEffect(() => {
                 },
                 {
                   label: 'Total Recycled',
-                  value: listCounts ? `${listCounts.total_recycled.toLocaleString('en-IN')} KG` : '—',
+                  value: listCounts ? `${listCounts.recycling_percentage}%` : '—',
                   icon: <RefreshCw className="w-6 h-6 text-[#C72030]" />,
                 },
                 {
                   label: 'Wet Waste',
-                  value: listCounts ? `${listCounts.recycling_percentage}%` : '—',
+                  value: listCounts ? `${listCounts.total_recycled.toLocaleString('en-IN')} KG` : '—',
                   icon: <Percent className="w-6 h-6 text-[#C72030]" />,
                 },
                 {
@@ -426,53 +445,64 @@ useEffect(() => {
               loadingMessage="Loading..."
               columns={[
                 { key: 'actions', label: 'Actions' },
-                { key: 'id', label: 'ID' },
-                { key: 'date', label: 'Date' },
-                { key: 'time', label: 'Time' },
-                { key: 'location', label: 'Location' },
+                { key: 'generation_id', label: 'Generation ID' },
+                { key: 'date_time', label: 'Date & Time' },
+                { key: 'building', label: 'Building' },
+                { key: 'floor', label: 'Floor' },
                 { key: 'user_type', label: 'User Type' },
-                { key: 'client_name', label: 'Client / Tenant Name' },
+                { key: 'client_name', label: 'Client Name' },
                 { key: 'user_name', label: 'User Name' },
                 { key: 'email', label: 'Email Id' },
                 { key: 'waste_category', label: 'Waste Category' },
-                { key: 'waste_subcategory', label: 'Waste Subcategory' },
-                { key: 'no_of_bags', label: 'No. of Bags' },
-                { key: 'total_weight', label: 'Total Weight (KG)' },
-                { key: 'device_name', label: 'Device Name / Tab ID' },
+                { key: 'total_bags', label: 'Total Bags' },
+                { key: 'quantity_kg', label: 'Quantity (Kg)' },
+                { key: 'quantity_ltr', label: 'Quantity (Ltr)' },
+                { key: 'recycled_pct', label: 'Recycle %' },
                 { key: 'status', label: 'Status' },
-                { key: 'entry_source', label: 'Entry Source' },
-                { key: 'recycled_pct', label: 'Recycled %' },
+                { key: 'device_id', label: 'Device Id' },
+                { key: 'remarks', label: 'Remarks' },
               ]}
               renderCell={(item: WasteGeneration, key: string) => {
                 if (key === 'actions') return shouldShow("Waste Generation", "show") ? <Button variant="ghost" onClick={() => handleView(item.id)}><Eye className="h-4 w-4" /></Button> : null;
-                if (key === 'id') return item.id ?? '-';
-                if (key === 'date') return item.wg_date ? item.wg_date.split('T')[0] : '-';
-                if (key === 'time') {
+                if (key === 'generation_id') return item.id ?? '-';
+                if (key === 'date_time') {
+                  const datePart = item.wg_date ? item.wg_date.split('T')[0] : null;
+                  let timePart: string | null = null;
                   if (item.created_at) {
-                    try { return new Date(item.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); }
-                    catch { return '-'; }
+                    try { timePart = new Date(item.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); }
+                    catch { timePart = null; }
                   }
-                  return '-';
+                  if (!datePart && !timePart) return '-';
+                  return [datePart, timePart].filter(Boolean).join(' ');
                 }
-                if (key === 'location') return item.location_details || '-';
+                if (key === 'building') return item.building_name || '-';
+                // No dedicated "floor" field on the waste generation record — Area is
+                // the closest/most granular location field the API returns.
+                if (key === 'floor') return item.area_name || item.wing_name || '-';
                 if (key === 'user_type') return item.user_type || item.resource_type || '-';
                 if (key === 'client_name') return item.client_name || item.vendor?.company_name || item.agency_name || '-';
                 if (key === 'user_name') return item.user_name || item.created_by?.full_name || '-';
                 if (key === 'email') return item.created_by?.email || '-';
                 if (key === 'waste_category') return item.category?.category_name || '-';
-                if (key === 'waste_subcategory') return item.commodity?.category_name || '-';
-                if (key === 'no_of_bags') return item.bag_counts != null ? item.bag_counts.toString() : '-';
-                if (key === 'total_weight') return item.waste_unit != null ? `${item.waste_unit} KG` : '-';
-                if (key === 'device_name') return item.device_id != null ? item.device_id.toString() : '-';
-                if (key === 'status') return item.status || '-';
-                if (key === 'entry_source') return (item as Record<string, unknown>).entry_source as string || '-';
+                if (key === 'total_bags') return item.bag_counts != null ? item.bag_counts.toString() : '-';
+                // The API doesn't distinguish Kg vs Ltr — waste_unit is assumed to be
+                // in Kg (matching how this figure is labeled everywhere else in the app).
+                if (key === 'quantity_kg') return item.waste_unit != null ? `${item.waste_unit}` : '-';
+                if (key === 'quantity_ltr') return '-';
                 if (key === 'recycled_pct') {
                   const pct = item.waste_unit > 0 ? Math.round((item.recycled_unit / item.waste_unit) * 100) : 0;
                   return `${pct}%`;
                 }
+                if (key === 'status') return item.status || '-';
+                if (key === 'device_id') return item.device_id != null ? item.device_id.toString() : '-';
+                if (key === 'remarks') return (item as Record<string, unknown>).remarks as string || '-';
                 return '-';
               }}
               getItemId={(item) => item.id.toString()}
+              selectable={true}
+              selectedItems={selectedItems}
+              onSelectAll={handleSelectAll}
+              onSelectItem={handleSelectItem}
               onSearchChange={setSearchTerm}
               onFilterClick={() => setIsFilterModalOpen(true)}
               enableExport={true}
@@ -549,7 +579,12 @@ useEffect(() => {
       </div>
 
       {/* Action Panel */}
-      {showActionPanel && (
+      {selectedItems.length > 0 ? (
+        <SelectionPanel
+          actions={[{ label: 'Dispatch', icon: Truck, onClick: handleDispatch }]}
+          onClearSelection={handleClearSelection}
+        />
+      ) : showActionPanel && (
         <SelectionPanel
           onAdd={() => navigate('/maintenance/waste/generation/add')}
           onImport={() => setIsBulkUploadOpen(true)}

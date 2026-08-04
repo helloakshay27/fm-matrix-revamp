@@ -3,9 +3,22 @@ import { useJobs } from "../JobsContext";
 import { T, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
 import { Fld, FI, FS, Btn } from "../components/UI";
 
+/**
+ * Sirf KPI ki apni details edit hoti hain. JD, Department, Assignee aur Linked
+ * KRA create ke waqt hi tay hote hain — baad me yahan se nahi badalte (assignee
+ * "Assign Person" flow se badalta hai, jo KRA bhi saath me handle karta hai).
+ */
 export default function EditKpiModal() {
-  const { editingKpiId, setEditingKpiId, editKpiForm, setEditKpiForm, customUnits, saveEditKpi } = useJobs();
+  const {
+    editingKpiId, setEditingKpiId, editKpiForm, setEditKpiForm, customUnits, saveEditKpi,
+    kpisSaving, kraWeightageUsed,
+  } = useJobs();
   if (!editingKpiId) return null;
+  // Baaki KPIs ka weightage (khud ko chhodkar) — total 100% se upar nahi ja sakta.
+  const kraUsedWeightage = editKpiForm.kraId
+    ? kraWeightageUsed(editKpiForm.kraId, editingKpiId)
+    : 0;
+  const kraRemainingWeightage = Math.max(0, 100 - kraUsedWeightage);
   return (
     <div
       style={{
@@ -70,18 +83,33 @@ export default function EditKpiModal() {
               >
                 <option value="">Select</option>
                 {customUnits.map((u) => (
-                  <option key={u}>{u}</option>
+                  <option key={u.name}>{u.name}</option>
                 ))}
               </FS>
             </Fld>
-            <Fld label="KPI Weightage (%)">
+            <Fld
+              label="KPI Weightage (%)"
+              hint={
+                editKpiForm.kraId
+                  ? `${kraUsedWeightage}% used by other KPIs, ${kraRemainingWeightage}% left`
+                  : undefined
+              }
+            >
               <FI
                 type="number"
+                min={0}
+                max={kraRemainingWeightage}
                 value={editKpiForm.weightage || ""}
                 onChange={(e) =>
                   setEditKpiForm((f) => ({ ...f, weightage: e.target.value }))
                 }
               />
+              {editKpiForm.kraId &&
+                Number(editKpiForm.weightage) > kraRemainingWeightage && (
+                  <span style={{ fontSize: 11, color: T.danger }}>
+                    Exceeds 100% total for this KRA
+                  </span>
+                )}
             </Fld>
           </div>
           <div
@@ -117,7 +145,11 @@ export default function EditKpiModal() {
             <FS
               value={editKpiForm.updateType || "manual"}
               onChange={(e) =>
-                setEditKpiForm((f) => ({ ...f, updateType: e.target.value }))
+                setEditKpiForm((f) => ({
+                  ...f,
+                  updateType: e.target.value,
+                  dataSource: e.target.value === "manual" ? "" : f.dataSource,
+                }))
               }
             >
               <option value="manual">Manual Entry</option>
@@ -179,7 +211,7 @@ export default function EditKpiModal() {
         >
           <Btn onClick={() => setEditingKpiId(null)}>Cancel</Btn>
           <Btn primary onClick={saveEditKpi}>
-            Save Changes
+            {kpisSaving ? "Saving..." : "Save Changes"}
           </Btn>
         </div>
       </div>

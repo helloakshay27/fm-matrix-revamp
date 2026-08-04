@@ -1,11 +1,29 @@
 // @ts-nocheck
 import { useJobs } from "../JobsContext";
-import { T, KPI_UNITS, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
+import { T, TARGET_FREQ, DATA_SOURCES, MODULES_BY_SOURCE } from "../constants";
 import { Fld, FI, FS, Btn } from "../components/UI";
+import MemberSearchSelect from "../components/MemberSearchSelect";
+import { useDepartments } from "../hooks/useDepartments";
 
 export default function KpiEntryModal() {
-  const { showAddKpi, setShowAddKpi, newKpi, setNewKpi, allJds, krasForJd, allMembers, saveNewKpi } = useJobs();
+  const { data: departments = [], isLoading: deptLoading } = useDepartments();
+  const {
+    showAddKpi, setShowAddKpi, newKpi, setNewKpi, allJds,
+    saveNewKpi, customUnits, kpisSaving, kpiAssignUsers, kpiAssignUsersLoading,
+    kpiModalJdsLoading, kpiModalJdsError, kpiModalKras, kpiModalKrasLoading, kpiModalKrasError,
+    kraWeightageUsed,
+  } = useJobs();
   if (!showAddKpi) return null;
+  const assigneeOptions = kpiAssignUsers;
+  // Selected KRA me kitna weightage bacha hai — total 100% se upar nahi ja sakta.
+  const kraUsedWeightage = newKpi.kraId ? kraWeightageUsed(newKpi.kraId) : 0;
+  const kraRemainingWeightage = Math.max(0, 100 - kraUsedWeightage);
+  // Search + list ek hi input me — MemberSearchSelect khud filter karta hai.
+  const kraOptions = kpiModalKras.map((k) => ({ id: k.id, name: k.title }));
+  const departmentOptions = departments.map((d) => ({
+    id: d.id,
+    name: d.department_name || d.name || d.title || "Unnamed department",
+  }));
   return (
     <div
       style={{
@@ -56,36 +74,89 @@ export default function KpiEntryModal() {
             <Fld label="Job Description *">
               <FS
                 value={newKpi.jdId}
+                disabled={kpiModalJdsLoading || kpisSaving}
                 onChange={(e) =>
                   setNewKpi((f) => ({
                     ...f,
                     jdId: e.target.value,
-                    kraId: "",
+                    departmentId:
+                      allJds.find((j) => String(j.id) === String(e.target.value))?.departmentId ||
+                      f.departmentId,
                   }))
                 }
               >
-                <option value="">Select JD</option>
+                <option value="">{kpiModalJdsLoading ? "Loading JDs..." : "Select JD"}</option>
                 {allJds.map((j) => (
                   <option key={j.id} value={j.id}>
                     {j.title}
                   </option>
                 ))}
               </FS>
+              {kpiModalJdsError && (
+                <span style={{ fontSize: 11, color: T.danger }}>Could not load JDs: {kpiModalJdsError}</span>
+              )}
+            </Fld>
+            <Fld label="Department">
+              <MemberSearchSelect
+                value={newKpi.departmentId || ""}
+                options={departmentOptions}
+                onChange={(value) =>
+                  setNewKpi((f) => ({ ...f, departmentId: value }))
+                }
+                placeholder="Search and select department"
+                loading={deptLoading}
+                loadingText="Loading departments..."
+                emptyText="No departments found"
+                disabled={deptLoading || kpisSaving}
+              />
+            </Fld>
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 16,
+            }}
+          >
+            <Fld label="Assignee Person">
+              <MemberSearchSelect
+                multiple
+                value={(newKpi.assigneeIds || []).map(String)}
+                options={assigneeOptions}
+                onChange={(values) => {
+                  const ids = (values || [])
+                    .map(Number)
+                    .filter((id) => Number.isFinite(id));
+                  setNewKpi((f) => ({
+                    ...f,
+                    assignee: assigneeOptions
+                      .filter((u) => ids.some((id) => Number(u.id) === id))
+                      .map((u) => u.name)
+                      .join(", "),
+                    assigneeIds: ids,
+                  }));
+                }}
+                placeholder="Select assignees"
+                loading={kpiAssignUsersLoading}
+                disabled={kpisSaving || kpiAssignUsersLoading}
+              />
             </Fld>
             <Fld label="Linked KRA *">
-              <FS
+              <MemberSearchSelect
                 value={newKpi.kraId}
-                onChange={(e) =>
-                  setNewKpi((f) => ({ ...f, kraId: e.target.value }))
+                options={kraOptions}
+                onChange={(value) =>
+                  setNewKpi((f) => ({ ...f, kraId: value }))
                 }
-              >
-                <option value="">Select KRA</option>
-                {krasForJd(newKpi.jdId).map((k) => (
-                  <option key={k.id} value={k.id}>
-                    {k.title}
-                  </option>
-                ))}
-              </FS>
+                placeholder="Search and select KRA"
+                loading={kpiModalKrasLoading}
+                loadingText="Loading KRAs..."
+                emptyText="No KRAs found"
+                disabled={kpisSaving || kpiModalKrasLoading}
+              />
+              {kpiModalKrasError && (
+                <span style={{ fontSize: 11, color: T.danger }}>Could not load KRAs: {kpiModalKrasError}</span>
+              )}
             </Fld>
           </div>
           <div
@@ -112,37 +183,37 @@ export default function KpiEntryModal() {
                 }
               >
                 <option value="">Select</option>
-                {KPI_UNITS.map((u) => (
-                  <option key={u}>{u}</option>
+                {customUnits.map((u) => (
+                  <option key={u.name}>{u.name}</option>
                 ))}
               </FS>
             </Fld>
-            <Fld label="KPI Weightage (%)">
+            <Fld
+              label="KPI Weightage (%)"
+              hint={
+                newKpi.kraId
+                  ? `${kraUsedWeightage}% used, ${kraRemainingWeightage}% left in this KRA`
+                  : undefined
+              }
+            >
               <FI
                 type="number"
+                min={0}
+                max={kraRemainingWeightage}
                 placeholder="e.g. 15"
                 value={newKpi.weightage}
                 onChange={(e) =>
                   setNewKpi((f) => ({ ...f, weightage: e.target.value }))
                 }
               />
+              {newKpi.kraId &&
+                Number(newKpi.weightage) > kraRemainingWeightage && (
+                  <span style={{ fontSize: 11, color: T.danger }}>
+                    Exceeds 100% total for this KRA
+                  </span>
+                )}
             </Fld>
           </div>
-          <Fld label="Assignee Person">
-            <FS
-              value={newKpi.assignee || ""}
-              onChange={(e) =>
-                setNewKpi((f) => ({ ...f, assignee: e.target.value }))
-              }
-            >
-              <option value="">Select assignee</option>
-              {allMembers.map((m) => (
-                <option key={m.id} value={m.name}>
-                  {m.name}
-                </option>
-              ))}
-            </FS>
-          </Fld>
           <div
             style={{
               display: "grid",
@@ -273,7 +344,7 @@ export default function KpiEntryModal() {
         >
           <Btn onClick={() => setShowAddKpi(false)}>Cancel</Btn>
           <Btn primary onClick={saveNewKpi}>
-            Submit
+            {kpisSaving ? "Saving..." : "Submit"}
           </Btn>
         </div>
       </div>

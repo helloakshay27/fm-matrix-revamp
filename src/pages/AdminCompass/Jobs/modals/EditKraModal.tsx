@@ -1,11 +1,45 @@
 // @ts-nocheck
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useJobs } from "../JobsContext";
 import { T } from "../constants";
 import { Fld, FI, FT, FS, Btn } from "../components/UI";
 
 export default function EditKraModal() {
-  const { editingKraId, setEditingKraId, editKraForm, setEditKraForm, saveEditKra } = useJobs();
+  const {
+    editingKraId,
+    setEditingKraId,
+    editKraForm,
+    setEditKraForm,
+    krasSaving,
+    saveEditKra,
+    assigneeKraUsage,
+    loadAssigneeKraUsage,
+  } = useJobs();
+  const queryClient = useQueryClient();
+
+  // Is KRA ko chhodkar member ke baaki KRAs ka total.
+  useEffect(() => {
+    if (!editingKraId) return;
+    loadAssigneeKraUsage(editKraForm.assigneeId, editingKraId);
+  }, [editingKraId, editKraForm.assigneeId, loadAssigneeKraUsage]);
+
   if (!editingKraId) return null;
+
+  const usageReady =
+    editKraForm.assigneeId &&
+    !assigneeKraUsage.loading &&
+    String(assigneeKraUsage.assigneeId) === String(editKraForm.assigneeId);
+  const usedByMember = usageReady ? assigneeKraUsage.used : 0;
+  const remainingForMember = Math.max(0, 100 - usedByMember);
+  const overLimit =
+    usageReady && Number(editKraForm.weightage || 0) > remainingForMember;
+
+  const handleSave = async () => {
+    await saveEditKra();
+    queryClient.invalidateQueries({ queryKey: ["kras-list"] });
+  };
+
   return (
     <div
       style={{
@@ -59,14 +93,30 @@ export default function EditKraModal() {
                 }
               />
             </Fld>
-            <Fld label="KRA Weightage (%)">
+            <Fld
+              label="KRA Weightage (%)"
+              hint={
+                editKraForm.assigneeId
+                  ? assigneeKraUsage.loading
+                    ? "Checking member's total..."
+                    : `${usedByMember}% used by this member's other KRAs, ${remainingForMember}% left`
+                  : undefined
+              }
+            >
               <FI
                 type="number"
+                min={0}
+                max={usageReady ? remainingForMember : 100}
                 value={editKraForm.weightage || ""}
                 onChange={(e) =>
                   setEditKraForm((f) => ({ ...f, weightage: e.target.value }))
                 }
               />
+              {overLimit && (
+                <span style={{ fontSize: 11, color: T.danger }}>
+                  Exceeds 100% total for this member
+                </span>
+              )}
             </Fld>
           </div>
           <Fld label="Description">
@@ -125,8 +175,8 @@ export default function EditKraModal() {
           }}
         >
           <Btn onClick={() => setEditingKraId(null)}>Cancel</Btn>
-          <Btn primary onClick={saveEditKra}>
-            Save Changes
+          <Btn primary onClick={handleSave} disabled={krasSaving}>
+            {krasSaving ? "Saving…" : "Save Changes"}
           </Btn>
         </div>
       </div>

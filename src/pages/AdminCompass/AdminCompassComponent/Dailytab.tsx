@@ -3,6 +3,9 @@ import { createPortal } from "react-dom";
 import {
   Calendar,
   FileText,
+  FilePen,
+  CircleAlert,
+  ListTodo,
   NotepadText,
   ChevronDown,
   AlertTriangle,
@@ -26,12 +29,66 @@ import {
 import { cn } from "@/lib/utils";
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { getAuthHeaders, getBaseUrl } from "./Shared";
+import { isPatmBcLinked } from "@/utils/auth";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
 import AddIssueModal from "../../../components/AddIssueModal";
 import AddToDoModal from "../../../components/AddToDoModal";
 import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+
+// Task glyph — checklist rows inside a rounded frame. Lucide me iska boxed
+// variant nahi hai, isliye inline SVG (baaki icons jaisa hi currentColor +
+// stroke-2 pattern follow karta hai).
+export const TaskChecksIcon = ({
+  className = "",
+  ...rest
+}: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+    {...rest}
+  >
+    <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" />
+    <path d="m6.5 9.5 1.4 1.4 2.6-2.9" />
+    <path d="M13.5 9.8H18" />
+    <path d="m6.5 15.5 1.4 1.4 2.6-2.9" />
+    <path d="M13.5 15.8H18" />
+  </svg>
+);
+
+// Member badge ka color + initials — Daily Log ke detail modal me bhi wahi
+// rows dikhti hain, isliye ye module level par hain (dono jagah shared).
+export const getMemberBadgeClass = (name: any) => {
+  const colors = [
+    "bg-[#E7E3FF] text-[#6756C9]",
+    "bg-[#FFE2A8] text-[#8B5A00]",
+    "bg-[#BFEADF] text-[#0E6F5E]",
+    "bg-[#F0E8FF] text-[#7564C9]",
+    "bg-[#FFD9B5] text-[#A15305]",
+    "bg-[#DDEBFF] text-[#315FAD]",
+  ];
+  const seed = String(name || "")
+    .split("")
+    .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return colors[seed % colors.length];
+};
+
+export const getMemberShortName = (name: any) => {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return "";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+};
 
 // ── UI Components ──
 const BtnIcon = ({
@@ -84,6 +141,8 @@ const SearchableSelect = ({
   onChange,
   options,
   placeholder = "All",
+  disabled = false,
+  disabledHint,
 }: any) => {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
@@ -143,6 +202,14 @@ const SearchableSelect = ({
     return () => window.clearTimeout(timer);
   }, [open, isMenuMounted]);
 
+  // A select that becomes disabled while open must not leave its menu hanging.
+  React.useEffect(() => {
+    if (disabled) {
+      setOpen(false);
+      setSearch("");
+    }
+  }, [disabled]);
+
   const filteredOptions = options.filter((o: any) =>
     (o.label || "").toLowerCase().includes(search.toLowerCase())
   );
@@ -152,25 +219,35 @@ const SearchableSelect = ({
       ref={ref}
       className="relative w-full sm:w-auto"
       style={{ fontFamily: "'Poppins', sans-serif" }}
+      title={disabled ? disabledHint : undefined}
     >
       <div className="relative flex items-center min-w-0 sm:min-w-[160px]">
         <input
           type="text"
-          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 pr-8 text-sm font-medium text-neutral-700 shadow-sm focus:outline-none focus:border-[#CE7A5A]/60 hover:border-[#CE7A5A]/60 transition-all cursor-pointer placeholder:text-neutral-700"
+          disabled={disabled}
+          className={cn(
+            "w-full bg-white border border-gray-200 rounded-xl px-3 py-2 pr-8 text-sm font-medium text-neutral-700 shadow-sm focus:outline-none transition-all placeholder:text-neutral-700",
+            disabled
+              ? "cursor-not-allowed bg-gray-50 text-neutral-400 placeholder:text-neutral-400"
+              : "cursor-pointer focus:border-[#CE7A5A]/60 hover:border-[#CE7A5A]/60"
+          )}
           placeholder={placeholder}
           value={open ? search : displayValue}
           onClick={() => {
+            if (disabled) return;
             setOpen(true);
             setSearch("");
           }}
           onChange={(e) => {
+            if (disabled) return;
             setSearch(e.target.value);
             setOpen(true);
           }}
         />
         <ChevronDown
           className={cn(
-            "absolute right-3 w-4 h-4 text-neutral-400 transition-transform pointer-events-none",
+            "absolute right-3 w-4 h-4 transition-transform pointer-events-none",
+            disabled ? "text-neutral-300" : "text-neutral-400",
             open && "rotate-180"
           )}
         />
@@ -332,6 +409,7 @@ const normalizeReportData = (rd: any) => {
       accomplishments: [],
       tasks_issues: [],
       tomorrow_plan: [],
+      not_accomplished_plan: [],
       big_win: null,
       self_rating: null,
       total_score: null,
@@ -348,10 +426,25 @@ const normalizeReportData = (rd: any) => {
     accomplishments = rd.accomplishments.items;
   }
 
+  // Not Accomplished Plan — API `non_completed_accomplishments` bhejta hai.
+  // Plain array aur `{ items: [...] }` dono shapes accept karte hain, aur
+  // purane/alternate key naam bhi, taki backend jo bheje wahi chal jaaye.
+  const notAccomplishedRaw =
+    rd.non_completed_accomplishments ??
+    rd.not_accomplished_plan ??
+    rd.not_accomplished ??
+    null;
+  const not_accomplished_plan: any[] = Array.isArray(notAccomplishedRaw)
+    ? notAccomplishedRaw
+    : Array.isArray(notAccomplishedRaw?.items)
+      ? notAccomplishedRaw.items
+      : [];
+
   return {
     accomplishments,
     tasks_issues: Array.isArray(rd.tasks_issues) ? rd.tasks_issues : [],
     tomorrow_plan: Array.isArray(rd.tomorrow_plan) ? rd.tomorrow_plan : [],
+    not_accomplished_plan,
     big_win: rd.big_win ?? null,
     self_rating: rd.self_rating ?? null,
     total_score: rd.total_score ?? null,
@@ -497,7 +590,13 @@ export const ReportItemMeta = ({ item }: { item: any }) => {
   const status = (item?.status || d?.status || "").toLowerCase();
   const isDone = ["completed", "closed", "done"].includes(status);
   const targetRaw =
-    d?.target_date || d?.due_date || d?.end_date || item?.target_date;
+    d?.target_date ||
+    d?.due_date ||
+    d?.end_date ||
+    item?.target_date ||
+    item?.due_date ||
+    // tasks_issues rows carry end_date on the row itself (daily_meeting API).
+    item?.end_date;
   const dueDate = fmtItemDate(targetRaw);
   const overdueLabel = isDone ? null : getItemOverdueLabel(targetRaw);
   const effortEst = fmtItemHours(d?.total_allocated_hours || d?.estimated_hour);
@@ -571,6 +670,26 @@ const getMemberId = (member: any) =>
 const getMemberFilterKey = (name: any) =>
   String(name || "").trim().toLowerCase();
 
+// Row kis member ki hai — sirf explicit owner tagging se: manually added rows
+// par `owner_name`, purane payloads me `member` / `member_name` / `user_name`.
+//
+// `originalData.responsible_person` jaan-boojh kar NAHI padha jata: wo us
+// task/issue ka assignee hai, report kisne bheja usse koi lena-dena nahi. Usse
+// padhne par dusre logon ki rows (jaise Bilal ke naam ka task) report owner ke
+// card me un logon ki rows ban kar dikhti thin, aur member dropdown me aise
+// naam aa jate the jo us report owner ki team me hi nahi hain.
+// Tag na mile to row report owner ki maani jati hai (see `getRowMemberName`).
+//
+// `name` bhi chhoda hai: kai items par wo title hota hai, owner nahi.
+const getItemMemberName = (item: any) =>
+  String(
+    item?.member ||
+    item?.member_name ||
+    item?.owner_name ||
+    item?.user_name ||
+    ""
+  ).trim();
+
 const getMemberCalendar = (member: any) => {
   const calendar = member?.daily_calendar || member?.daily_calender;
   return Array.isArray(calendar) ? calendar : [];
@@ -617,9 +736,27 @@ const getSelectedMemberCalendarRow = (
   return mergeCalendarWithFallback(memberCalendar, fallbackRow);
 };
 
+// Row ka type pill. Sirf `type` par bharosa nahi karte — team member ki rows
+// (manager ke report me aane wali) kabhi `type` ke bina, sirf `source_type` /
+// `originalData.source_type` ke saath aati hain; unhe "note" dikhana galat hai.
 const getItemType = (item: any): string => {
   if (!item || typeof item !== "object") return "note";
-  return String(item.type || "note").toLowerCase();
+  const raw = String(
+    item.type ||
+      item.source_type ||
+      item.sourceType ||
+      item.originalData?.source_type ||
+      item.originalData?.sourceType ||
+      ""
+  ).toLowerCase();
+  const rawId = String(item.id || item.source_id || "").toLowerCase();
+
+  if (raw.includes("issue") || rawId.startsWith("issue-")) return "issue";
+  if (raw.includes("todo") || raw.includes("to_do") || rawId.startsWith("todo-"))
+    return "todo";
+  if (raw.includes("task") || rawId.startsWith("task-")) return "task";
+
+  return raw || "note";
 };
 
 const getViewSourceType = (item: any): string => {
@@ -751,16 +888,22 @@ const parseDateValue = (value: any): Date | null => {
   return isNaN(dt.getTime()) ? null : dt;
 };
 
-// Date used to decide if an item falls inside the selected range:
-// created_at first (when the task/issue/todo was raised), target date as fallback.
-const getItemRangeDate = (item: any, detail?: any): Date | null => {
+// Start date of an item — explicit start_date if the task/issue/todo has one,
+// warna created_at (jab item raise hua).
+const getItemStartDateValue = (item: any, detail?: any): Date | null => {
   const d = item?.originalData || detail || {};
   return (
+    parseDateValue(item?.start_date) ||
+    parseDateValue(d?.start_date) ||
+    // Tasks par start `expected_start_date` / `estimated_start_date` me aata hai.
+    parseDateValue(item?.expected_start_date) ||
+    parseDateValue(d?.expected_start_date) ||
+    parseDateValue(item?.estimated_start_date) ||
+    parseDateValue(d?.estimated_start_date) ||
+    parseDateValue(item?.from_date) ||
+    parseDateValue(d?.from_date) ||
     parseDateValue(item?.created_at) ||
-    parseDateValue(d?.created_at) ||
-    parseDateValue(item?.target_date) ||
-    parseDateValue(d?.target_date) ||
-    parseDateValue(d?.updated_at)
+    parseDateValue(d?.created_at)
   );
 };
 
@@ -770,21 +913,72 @@ const getItemTargetDateValue = (item: any, detail?: any): Date | null => {
   return (
     parseDateValue(item?.target_date) ||
     parseDateValue(item?.due_date) ||
+    // tasks_issues rows carry end_date on the row itself (daily_meeting API).
+    parseDateValue(item?.end_date) ||
     parseDateValue(d?.target_date) ||
     parseDateValue(d?.due_date) ||
     parseDateValue(d?.end_date)
   );
 };
 
-// Overdue = explicit overdue status, or a past target date on a not-done item.
-const isItemOverdue = (item: any, detail?: any): boolean => {
-  const status = String(getItemStatus(item)).toLowerCase();
-  if (isCompletedStatus(status)) return false;
-  if (status === "overdue" || status === "overdued") return true;
-  const target = getItemTargetDateValue(item, detail);
-  if (!target) return false;
-  target.setHours(23, 59, 59, 999);
-  return target.getTime() < Date.now();
+// Row ke paas khud dono dates (start + end) hain? Na hon to detail fetch karke
+// dates laani padti hain.
+const itemHasOwnDates = (item: any): boolean => {
+  const d = item?.originalData || {};
+  const hasStart = !!(
+    item?.start_date ||
+    item?.expected_start_date ||
+    item?.estimated_start_date ||
+    item?.from_date ||
+    item?.created_at ||
+    d?.start_date ||
+    d?.expected_start_date ||
+    d?.estimated_start_date ||
+    d?.from_date ||
+    d?.created_at
+  );
+  const hasEnd = !!(
+    item?.target_date ||
+    item?.due_date ||
+    item?.end_date ||
+    d?.target_date ||
+    d?.due_date ||
+    d?.end_date
+  );
+  return hasStart && hasEnd;
+};
+
+/**
+ * Range filter (7 / 14 / 30 days).
+ *
+ * Window = aaj se N din pehle tak, aaj included: [aaj-(N-1) 00:00, aaj 23:59].
+ * Item us window ka maana jata hai jab uska [start, end] span window ko touch
+ * karta ho — yaani:
+ *   • target date window ke andar ho (last N din me due / overdue hua), YA
+ *   • kaam window me ya usse pehle shuru hua ho aur ab bhi chal raha ho
+ *     (target aaj ya aage).
+ * Window se **purana** item (end window se pehle hi nikal gaya) bahar rehta hai,
+ * isliye 7 → 14 → 30 badalne par list aur count badalte hain.
+ *
+ * Sirf date-less pending rows chhoot jaati hain: unhe kisi window me rakha nahi
+ * ja sakta, aur chhupa dein to wo kahin dikhengi hi nahi — isliye har window me
+ * dikhati hain.
+ */
+const isItemInRange = (
+  item: any,
+  detail: any,
+  windowStart: Date,
+  windowEnd: Date
+): boolean => {
+  const start = getItemStartDateValue(item, detail);
+  const end = getItemTargetDateValue(item, detail);
+  const effectiveStart = start || end;
+  const effectiveEnd = end || start;
+  if (!effectiveStart || !effectiveEnd)
+    return !isCompletedStatus(getItemStatus(item));
+  if (effectiveEnd.getTime() < windowStart.getTime()) return false;
+  if (effectiveStart.getTime() > windowEnd.getTime()) return false;
+  return true;
 };
 
 const TASK_STATUS_BUCKETS = [
@@ -822,12 +1016,37 @@ const TASK_STATUS_BUCKETS = [
   },
 ];
 
-// Start of the window: today - (days - 1), i.e. last N days including today.
-const getRangeStartDate = (days: number) => {
+// Item ki representative date — target/due date, warna start date.
+const getItemGroupDate = (item: any, detail?: any): Date | null =>
+  getItemTargetDateValue(item, detail) || getItemStartDateValue(item, detail);
+
+const bucketItemsByStatus = (items: any[], details: Record<string, any>) => {
+  const groups: Record<string, any[]> = {};
+  TASK_STATUS_BUCKETS.forEach((bucket) => {
+    groups[bucket.key] = [];
+  });
+
+  items.forEach((item) => {
+    // Bucket item ke apne status se banta hai — Overdue sirf tab jab status
+    // hi "overdue" ho. Sirf target date nikal jane se open/in-progress item
+    // Overdue me nahi jata; uspar red "Xd Yh overdue" badge phir bhi dikhta hai
+    // (see getItemOverdueLabel), taki late hona saaf pata chale.
+    const status = String(getItemStatus(item)).toLowerCase();
+    const bucket = TASK_STATUS_BUCKETS.find((b) => b.statuses.includes(status));
+    groups[bucket ? bucket.key : "open"].push(item);
+  });
+
+  return groups;
+};
+
+// Window = last N days including today: [today - (days - 1) 00:00, today 23:59].
+const getRangeWindow = (days: number) => {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
   start.setDate(start.getDate() - (days - 1));
-  return start;
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
 };
 
 const TasksIssuesTodoCard = ({
@@ -835,52 +1054,64 @@ const TasksIssuesTodoCard = ({
   showMemberBadges,
   renderRows,
   isAbsent = false,
+  itemProps,
 }: {
   items: any[];
   showMemberBadges: boolean;
   renderRows: (
     rows: any[],
     showMemberBadges: boolean,
-    emptyText?: string
+    emptyText?: string,
+    itemProps?: (item: any) => React.HTMLAttributes<HTMLLIElement> | undefined,
+    showMeta?: boolean
   ) => React.ReactNode;
   isAbsent?: boolean;
+  // Makes each row draggable so it can be dropped into Tomorrow's Plan.
+  itemProps?: (item: any) => React.HTMLAttributes<HTMLLIElement> | undefined;
 }) => {
   const [rangeDays, setRangeDays] = useState(7);
   const [details, setDetails] = useState<Record<string, any>>({});
 
   const sourceItems = isAbsent ? [] : items;
 
-  // tasks_issues rows from the daily_meeting API carry no dates, so pull
-  // created_at / target_date on demand (cached in itemDetailCache).
+  // tasks_issues rows from the daily_meeting API carry no dates, so pull the
+  // start (created_at/start_date) and end (target/due/end) dates on demand —
+  // range filter dono par depend karta hai (cached in itemDetailCache).
+  const pendingDetailItems = useMemo(
+    () =>
+      sourceItems
+        .map((item) => ({
+          item,
+          type: getViewSourceType(item),
+          id: getViewSourceId(item),
+        }))
+        .filter(
+          ({ item, type, id }) =>
+            !item?.originalData &&
+            !itemHasOwnDates(item) &&
+            !!id &&
+            ["task", "issue", "todo"].includes(type)
+        )
+        .map(({ type, id }) => ({ type, id, key: `${type}:${id}` })),
+    [sourceItems]
+  );
+
   useEffect(() => {
     let active = true;
-    const pending = sourceItems
-      .map((item) => {
-        const type = getViewSourceType(item);
-        const id = getViewSourceId(item);
-        return { item, type, id, key: `${type}:${id}` };
-      })
-      .filter(
-        ({ item, type, id, key }) =>
-          !item?.originalData &&
-          !item?.created_at &&
-          !(key in details) &&
-          !!id &&
-          ["task", "issue", "todo"].includes(type)
-      );
+    const pending = pendingDetailItems.filter(({ key }) => !(key in details));
     if (!pending.length) return;
 
     Promise.all(
       pending.map(async ({ type, id, key }) => {
         const data = await fetchItemDetail(type, id);
-        return data ? ([key, data] as [string, any]) : null;
+        // `null` bhi store karte hain — isse pata chalta hai ki fetch ho chuka
+        // hai (bhale detail na mili), aur pending vs resolved me farq rehta hai.
+        return [key, data ?? null] as [string, any];
       })
     ).then((entries) => {
       if (!active) return;
-      const resolved = entries.filter(Boolean) as [string, any][];
-      if (!resolved.length) return;
       setDetails((prev) => {
-        const missing = resolved.filter(([key]) => !(key in prev));
+        const missing = entries.filter(([key]) => !(key in prev));
         if (!missing.length) return prev;
         const merged = { ...prev };
         missing.forEach(([key, value]) => {
@@ -893,41 +1124,63 @@ const TasksIssuesTodoCard = ({
     return () => {
       active = false;
     };
-  }, [sourceItems, details]);
+  }, [pendingDetailItems, details]);
 
   const filteredItems = useMemo(() => {
-    const start = getRangeStartDate(rangeDays);
+    const { start, end } = getRangeWindow(rangeDays);
+    // Jinki detail abhi fetch ho rahi hai unhe filter na karein, warna rows
+    // pehle dikhkar gayab hote hain. Fetch resolve hone par asli date par
+    // faisla ho jaata hai.
+    const awaitingDetail = new Set(
+      pendingDetailItems
+        .filter(({ key }) => !(key in details))
+        .map(({ key }) => key)
+    );
     return sourceItems.filter((item) => {
-      const detail = details[`${getViewSourceType(item)}:${getViewSourceId(item)}`];
-      const date = getItemRangeDate(item, detail);
-      // No date available for this item — keep it visible instead of dropping it.
-      if (!date) return true;
-      return date.getTime() >= start.getTime();
+      const key = `${getViewSourceType(item)}:${getViewSourceId(item)}`;
+      if (awaitingDetail.has(key)) return true;
+      return isItemInRange(item, details[key], start, end);
     });
-  }, [sourceItems, details, rangeDays]);
+  }, [sourceItems, details, rangeDays, pendingDetailItems]);
 
-  // Bifurcate into Overdue / In Progress / Open / On Hold buckets.
-  const bucketedItems = useMemo(() => {
-    const groups: Record<string, any[]> = {};
-    TASK_STATUS_BUCKETS.forEach((bucket) => {
-      groups[bucket.key] = [];
-    });
+  // Pehle date ke hisaab se group, phir har date ke andar
+  // Overdue / In Progress / Open / On Hold buckets.
+  const dateGroups = useMemo(() => {
+    const groups = new Map<
+      string,
+      { key: string; label: string; sortValue: number; items: any[] }
+    >();
 
     filteredItems.forEach((item) => {
       const detail =
         details[`${getViewSourceType(item)}:${getViewSourceId(item)}`];
-      if (isItemOverdue(item, detail)) {
-        groups.overdue.push(item);
-        return;
+      const date = getItemGroupDate(item, detail);
+      const key = date
+        ? `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+        : "no-date";
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          label: (date && fmtItemDate(date.toISOString())) || "No date",
+          sortValue: date
+            ? new Date(
+              date.getFullYear(),
+              date.getMonth(),
+              date.getDate()
+            ).getTime()
+            : Number.POSITIVE_INFINITY,
+          items: [],
+        });
       }
-      const status = String(getItemStatus(item)).toLowerCase();
-      const bucket = TASK_STATUS_BUCKETS.find((b) =>
-        b.statuses.includes(status)
-      );
-      groups[bucket ? bucket.key : "open"].push(item);
+      groups.get(key)!.items.push(item);
     });
 
-    return groups;
+    return Array.from(groups.values())
+      .sort((a, b) => a.sortValue - b.sortValue)
+      .map((group) => ({
+        ...group,
+        buckets: bucketItemsByStatus(group.items, details),
+      }));
   }, [filteredItems, details]);
 
   return (
@@ -957,39 +1210,63 @@ const TasksIssuesTodoCard = ({
         {filteredItems.length === 0 ? (
           renderRows([], showMemberBadges)
         ) : (
-          <div className="space-y-3">
-            {TASK_STATUS_BUCKETS.map((bucket) => {
-              const bucketItems = bucketedItems[bucket.key] || [];
-              if (!bucketItems.length) return null;
-              return (
-                <div key={bucket.key} className="space-y-1.5">
-                  <div
-                    className={cn(
-                      "flex items-center gap-2 px-2 py-1.5 rounded-[6px]",
-                      bucket.headerBg
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "flex-1 text-[10px] font-black uppercase tracking-wider",
-                        bucket.colorClass
-                      )}
-                    >
-                      {bucket.label}
-                    </span>
-                    <span
-                      className={cn(
-                        "rounded-full px-1.5 py-0.5 text-[9px] font-bold",
-                        bucket.pillBg
-                      )}
-                    >
-                      {bucketItems.length}
-                    </span>
-                  </div>
-                  {renderRows(bucketItems, showMemberBadges)}
+          <div className="space-y-4">
+            {dateGroups.map((group) => (
+              <div key={group.key} className="space-y-2">
+                {/* Date heading — items us din ki target (ya start) date par */}
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-3 h-3 shrink-0 text-neutral-400" />
+                  <span className="text-[11px] font-extrabold tracking-wide text-neutral-500">
+                    {group.label}
+                  </span>
+                  <span className="h-px flex-1 bg-[#EFE7E2]" />
+                  <span className="text-[10px] font-bold text-neutral-400">
+                    {group.items.length}
+                  </span>
                 </div>
-              );
-            })}
+                <div className="space-y-3">
+                  {TASK_STATUS_BUCKETS.map((bucket) => {
+                    const bucketItems = group.buckets[bucket.key] || [];
+                    if (!bucketItems.length) return null;
+                    return (
+                      <div key={bucket.key} className="space-y-1.5">
+                        <div
+                          className={cn(
+                            "flex items-center gap-2 px-2 py-1.5 rounded-[6px]",
+                            bucket.headerBg
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "flex-1 text-[10px] font-black uppercase tracking-wider",
+                              bucket.colorClass
+                            )}
+                          >
+                            {bucket.label}
+                          </span>
+                          <span
+                            className={cn(
+                              "rounded-full px-1.5 py-0.5 text-[9px] font-bold",
+                              bucket.pillBg
+                            )}
+                          >
+                            {bucketItems.length}
+                          </span>
+                        </div>
+                        {renderRows(
+                          bucketItems,
+                          showMemberBadges,
+                          undefined,
+                          itemProps,
+                          // Date / overdue / effort meta sirf isi column me
+                          true
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -1094,6 +1371,16 @@ const formatSelfRating = (rating: any): string => {
   return ratingText.includes("/") ? ratingText : `${ratingText}/10`;
 };
 
+// ── Report cards are titled by department, not by the HOD's own name ──
+// Falls back to the person's name when the department is missing or the API
+// sends the literal placeholder "No Department".
+const formatDepartmentLabel = (department: any, fallbackName?: any): string => {
+  const dept = String(department ?? "").trim();
+  const name = String(fallbackName ?? "").trim();
+  if (!dept || /^no\s*department$/i.test(dept)) return name || "No Department";
+  return /department$/i.test(dept) ? dept : `${dept} Department`;
+};
+
 // ── Strip missed-members prefix from textarea value before saving ──
 const stripMissedMembersPrefix = (text: string): string => {
   const missedHeaderMatch = text.match(
@@ -1176,12 +1463,16 @@ const DailyTab = ({
   const [selectedHod, setSelectedHod] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
   const [selectedProject, setSelectedProject] = useState("all");
+  // Tag/Project filters only exist when the org has PATM linked to Business
+  // Compass. Read once — the flag is written at organization-select time.
+  const patmBcLinked = React.useMemo(() => isPatmBcLinked(), []);
   const [dailyData, setDailyData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [calendarDateRow, setCalendarDateRow] = useState<any[]>([]);
   const isArrowNav = React.useRef(false);
   const [expandedReports, setExpandedReports] = useState<any[]>([]);
+  const [expandedDepartments, setExpandedDepartments] = useState<string[]>([]);
   const [reportMemberFilters, setReportMemberFilters] = useState<Record<string, string>>({});
   const [reportProjectFilters, setReportProjectFilters] = useState<Record<string, string>>({});
   const [selectedReports, setSelectedReports] = useState<any[]>([]);
@@ -1305,6 +1596,17 @@ const DailyTab = ({
     setSelectedMeetingIdState(meetingId);
     if (meetingId) onSelectedMeetingChange?.(String(meetingId));
   };
+
+  // Every dependent filter's option list is derived from the selected meeting's
+  // payload, so a selection carried across meetings would filter out everything.
+  useEffect(() => {
+    setSelectedMember("all");
+    setSelectedHod("all");
+    setSelectedTag("all");
+    setSelectedProject("all");
+    setReportMemberFilters({});
+    setReportProjectFilters({});
+  }, [selectedMeetingId]);
 
   const navigate = useNavigate();
 
@@ -1561,7 +1863,13 @@ const DailyTab = ({
   // ── updateJournal ──
   const updateJournal = async (
     report: any,
-    patch: { self_rating?: number; tomorrow_plan_item?: string }
+    patch: {
+      self_rating?: number;
+      tomorrow_plan_item?: string;
+      // Full row appended as-is (drag & drop from the Tasks column) so the plan
+      // entry keeps its task/issue identity instead of degrading to a title.
+      tomorrow_plan_entry?: any;
+    }
   ) => {
     // The card renders the member's OWN daily report (resolveRawSource →
     // daily_report.report_data), so updates must target that same record.
@@ -1580,15 +1888,18 @@ const DailyTab = ({
     const baseReportData =
       report.daily_report?.report_data || report.report_data || rawSource || {};
 
-    if (patch.tomorrow_plan_item) {
+    const planEntry =
+      patch.tomorrow_plan_entry ??
+      (patch.tomorrow_plan_item
+        ? { title: patch.tomorrow_plan_item.trim() }
+        : null);
+
+    if (planEntry) {
       const existingPlan: any[] = Array.isArray(baseReportData.tomorrow_plan)
         ? baseReportData.tomorrow_plan
         : [];
 
-      const updatedPlan = [
-        ...existingPlan,
-        { title: patch.tomorrow_plan_item.trim() },
-      ];
+      const updatedPlan = [...existingPlan, planEntry];
       const updatedReportData = {
         ...baseReportData,
         tomorrow_plan: updatedPlan,
@@ -1696,14 +2007,6 @@ const DailyTab = ({
     };
     setReportMemberFilters(clearCardFilter);
     setReportProjectFilters(clearCardFilter);
-    // Global Members filter is card ko force kar raha tha to wo bhi hata do
-    if (
-      selectedReporteeExpandId !== null &&
-      selectedReporteeExpandId !== undefined &&
-      String(selectedReporteeExpandId) === cardKey
-    ) {
-      setSelectedMember("all");
-    }
   };
 
   const buildCombinedData = (allReports: any[]) => {
@@ -2210,39 +2513,92 @@ const DailyTab = ({
         sensitivity: "base",
       })
     );
-  // HODs = top-level report owners that have reportees under them
-  // (fallback: every report owner, when nobody has reportees).
-  const hodReports = memberReports.filter(
-    (report: any) =>
-      Array.isArray(report.reportee_reports) && report.reportee_reports.length > 0
+  // `missed_members` carries no `department`, so resolve it from the report
+  // owners before any filter narrows `memberReports`.
+  const departmentByUserId = new Map<string, string>();
+  ((dailyData?.member_reports || dailyData?.reports || []) as any[]).forEach(
+    (report: any) => {
+      if (report?.user_id != null && report?.department)
+        departmentByUserId.set(String(report.user_id), report.department);
+    }
   );
+  const resolveDepartmentLabel = (entity: any): string => {
+    if (typeof entity === "string") return entity;
+    const entityId = String(entity?.user_id ?? entity?.id ?? "");
+    return formatDepartmentLabel(
+      entity?.department || departmentByUserId.get(entityId),
+      entity?.name
+    );
+  };
+  // Stable grouping key for the department filter. Unlike `resolveDepartmentLabel`
+  // this never falls back to a person's name — everyone without a real department
+  // collapses into a single "No Department" bucket.
+  const NO_DEPARTMENT_KEY = "No Department";
+  const resolveDepartmentKey = (entity: any): string => {
+    const entityId = String(entity?.user_id ?? entity?.id ?? "");
+    const raw = String(
+      entity?.department || departmentByUserId.get(entityId) || ""
+    ).trim();
+    return !raw || /^no\s*department$/i.test(raw) ? NO_DEPARTMENT_KEY : raw;
+  };
+
+  // The Members dropdown is scoped to the selected meeting: its participants are
+  // the report owners (and anyone listed as missed) — not every user in the org,
+  // which is what `membersList` holds.
+  const meetingMemberOptions = (() => {
+    const nameById = new Map<string, string>();
+    const addMember = (person: any) => {
+      const personId = person?.user_id ?? person?.id;
+      if (personId == null) return;
+      const key = String(personId);
+      const name = String(person?.name || "").trim();
+      if (!nameById.has(key)) nameById.set(key, name || `User ${key}`);
+    };
+    ((dailyData?.member_reports || dailyData?.reports || []) as any[]).forEach(
+      (report: any) => {
+        addMember(report);
+      }
+    );
+    ((dailyData?.missed_members || []) as any[]).forEach(addMember);
+    return Array.from(nameById.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) =>
+        a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+      );
+  })();
+  // Before the first payload lands there is nothing to scope to, so fall back to
+  // the org-wide list rather than rendering an empty dropdown.
+  const memberFilterOptions =
+    meetingMemberOptions.length > 0
+      ? meetingMemberOptions
+      : membersList.map((m: any) => ({ value: String(m.id), label: m.name }));
+
+  // One option per department, not per HOD — two HODs in the same department
+  // (e.g. Sadanand Gupta and Vinayak Mane both in Quality Assurance) previously
+  // produced two indistinguishable rows. Options come from every member, not just
+  // HODs, so departments without an HOD are still reachable.
+  const departmentFilterKeys = Array.from(
+    new Set(memberReports.map((report: any) => resolveDepartmentKey(report)))
+  ).sort((a: string, b: string) => {
+    // Keep the catch-all bucket last.
+    if (a === NO_DEPARTMENT_KEY) return 1;
+    if (b === NO_DEPARTMENT_KEY) return -1;
+    return a.localeCompare(b, undefined, { sensitivity: "base" });
+  });
   const hodOptions = [
-    { value: "all", label: "All HOD" },
-    ...(hodReports.length > 0 ? hodReports : memberReports).map((report: any) => ({
-      value: String(report.user_id),
-      label: report.department
-        ? `${(report.name || "").trim()} — ${report.department}`
-        : (report.name || "").trim() || `User ${report.user_id}`,
+    { value: "all", label: "All Departments" },
+    ...departmentFilterKeys.map((key: string) => ({
+      value: key,
+      label: key === NO_DEPARTMENT_KEY ? key : `${key} Department`,
     })),
   ];
 
   const getReportFilterItems = (report: any) => {
     const reportData = normalizeReportData(resolveRawSource(report));
-    const reporteeItems = Array.isArray(report.reportee_reports)
-      ? report.reportee_reports.flatMap((reportee: any) => {
-        const reporteeData = normalizeReportData(resolveRawSource(reportee));
-        return [
-          ...reporteeData.accomplishments,
-          ...reporteeData.tasks_issues,
-          ...reporteeData.tomorrow_plan,
-        ];
-      })
-      : [];
     return [
       ...reportData.accomplishments,
       ...reportData.tasks_issues,
       ...reportData.tomorrow_plan,
-      ...reporteeItems,
     ];
   };
   const addFilterOption = (map: Map<string, string>, label: string) => {
@@ -2310,48 +2666,15 @@ const DailyTab = ({
   );
   if (selectedHod !== "all") {
     memberReports = memberReports.filter(
-      (r: any) => String(r.user_id) === selectedHod
+      (r: any) => resolveDepartmentKey(r) === selectedHod
     );
     failedMembers = failedMembers.filter(
-      (m: any) => String(m.id || m.user_id) === selectedHod
+      (m: any) => resolveDepartmentKey(m) === selectedHod
     );
   }
-  // The picked member may be a reportee rather than a report owner (e.g. Uzair
-  // sits under Akshay). In that case show the HOD's card and force that card's
-  // member filter to the reportee, so only their rows are listed.
-  let selectedReporteeExpandId: any = null;
-  let selectedReporteeOwnerId: string | null = null;
-  let selectedReporteeMemberKey: string | null = null;
   if (selectedMember !== "all") {
-    const isOwnReport = memberReports.some(
+    memberReports = memberReports.filter(
       (r: any) => String(r.user_id) === selectedMember
-    );
-    if (!isOwnReport) {
-      const ownerReport = memberReports.find(
-        (r: any) =>
-          Array.isArray(r.reportee_reports) &&
-          r.reportee_reports.some(
-            (reportee: any) => String(reportee.user_id) === selectedMember
-          )
-      );
-      if (ownerReport) {
-        const reportee = ownerReport.reportee_reports.find(
-          (item: any) => String(item.user_id) === selectedMember
-        );
-        selectedReporteeOwnerId = String(ownerReport.user_id);
-        selectedReporteeExpandId =
-          ownerReport.journal_id || ownerReport.user_id;
-        selectedReporteeMemberKey = getMemberFilterKey(
-          reportee?.name || reportee?.email
-        );
-      }
-    }
-  }
-  if (selectedMember !== "all") {
-    memberReports = memberReports.filter((r: any) =>
-      selectedReporteeOwnerId
-        ? String(r.user_id) === selectedReporteeOwnerId
-        : String(r.user_id) === selectedMember
     );
     failedMembers = failedMembers.filter(
       (m: any) => String(m.id) === selectedMember
@@ -2372,17 +2695,6 @@ const DailyTab = ({
       })
     );
   }
-
-  // Reportee selected from the global Members filter → open the HOD's card
-  useEffect(() => {
-    if (selectedReporteeExpandId === null || selectedReporteeExpandId === undefined)
-      return;
-    setExpandedReports((prev) =>
-      prev.includes(selectedReporteeExpandId)
-        ? prev
-        : [...prev, selectedReporteeExpandId]
-    );
-  }, [selectedReporteeExpandId]);
 
   const getReportSelectionKey = (report: any) =>
     String(report?.journal_id || report?.user_id || "");
@@ -2429,6 +2741,26 @@ const DailyTab = ({
     }
   };
 
+  // Department card ka checkbox — us department ke saare reports ek saath
+  // select/deselect. Jo already meeting me check-in ho chuke hain (locked)
+  // unhe chhod deta hai.
+  const setDepartmentSelection = (reports: any[], checked: boolean) => {
+    const ids = reports
+      .filter((report: any) => report.checked_in_meeting !== true)
+      .map((report: any) => report.journal_id || report.user_id);
+    if (!ids.length) return;
+
+    setSelectedReports((prev) => {
+      if (checked) {
+        const existing = new Set(prev.map((id) => String(id)));
+        const additions = ids.filter((id: any) => !existing.has(String(id)));
+        return additions.length ? [...prev, ...additions] : prev;
+      }
+      const removing = new Set(ids.map((id: any) => String(id)));
+      return prev.filter((id) => !removing.has(String(id)));
+    });
+  };
+
   const handleFeedback = () => {
     navigate("/admin-compass/feedback-dashboard");
   };
@@ -2452,6 +2784,62 @@ const DailyTab = ({
       toast.success("Added to tomorrow's plan!");
       setQuickActionOpenId(null);
       setQuickActionText("");
+      await loadDailyData(true);
+    }
+  };
+
+  // ── Drag a Tasks/Issues/Todos row → drop it into Tomorrow's Plan ──
+  // Tomorrow's Plan is the only drop target, and only within the same report
+  // card (`cardId`), so nothing can be dragged across members.
+  const [draggedPlanItem, setDraggedPlanItem] = useState<{
+    cardId: any;
+    report: any;
+    item: any;
+  } | null>(null);
+  const [planDropTargetId, setPlanDropTargetId] = useState<any>(null);
+
+  const clearPlanDrag = () => {
+    setDraggedPlanItem(null);
+    setPlanDropTargetId(null);
+  };
+
+  const buildPlanEntryFromItem = (item: any) => {
+    const ownerName = getItemMemberName(item);
+    return {
+      title: getItemTitle(item),
+      is_starred: false,
+      source_type: item.source_type ?? item.sourceType ?? getViewSourceType(item),
+      source_id: item.source_id ?? item.sourceId ?? getViewSourceId(item),
+      ...(ownerName
+        ? { owner_name: ownerName, owner_id: item.owner_id ?? item.user_id }
+        : {}),
+    };
+  };
+
+  const handleDropItemToPlan = async (report: any, item: any) => {
+    const title = getItemTitle(item).trim();
+    if (!title) {
+      toast.error("This item has no title to add.");
+      return;
+    }
+
+    const currentPlan = normalizeReportData(resolveRawSource(report)).tomorrow_plan;
+    const alreadyPlanned = currentPlan.some(
+      (planItem: any) =>
+        getItemTitle(planItem).trim().toLowerCase() === title.toLowerCase()
+    );
+    if (alreadyPlanned) {
+      toast.info("Already in tomorrow's plan.");
+      return;
+    }
+
+    setIsSavingPlan(true);
+    const ok = await updateJournal(report, {
+      tomorrow_plan_entry: buildPlanEntryFromItem(item),
+    });
+    setIsSavingPlan(false);
+    if (ok) {
+      toast.success("Added to tomorrow's plan!");
       await loadDailyData(true);
     }
   };
@@ -2550,9 +2938,19 @@ const DailyTab = ({
                   ? "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30"
                   : "bg-gray-100 text-gray-600 border-gray-200";
 
+          const typeLabel =
+            type === "task"
+              ? "Task"
+              : type === "issue"
+                ? "Issue"
+                : type === "todo"
+                  ? "Todo"
+                  : "Note";
+
           return (
             <li
               key={index}
+              title={hasDetails ? `${typeLabel} · Click to open` : typeLabel}
               onClick={hasDetails ? () => handleViewTaskIssueTodoItem(item) : undefined}
               className={cn(
                 "flex flex-col rounded-[10px] border border-gray-100 bg-gray-50/70 transition-all",
@@ -2592,35 +2990,16 @@ const DailyTab = ({
     );
   };
 
-  const getMemberBadgeClass = (name: any) => {
-    const colors = [
-      "bg-[#E7E3FF] text-[#6756C9]",
-      "bg-[#FFE2A8] text-[#8B5A00]",
-      "bg-[#BFEADF] text-[#0E6F5E]",
-      "bg-[#F0E8FF] text-[#7564C9]",
-      "bg-[#FFD9B5] text-[#A15305]",
-      "bg-[#DDEBFF] text-[#315FAD]",
-    ];
-    const seed = String(name || "")
-      .split("")
-      .reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    return colors[seed % colors.length];
-  };
-
-  const getMemberShortName = (name: any) => {
-    const parts = String(name || "")
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
-    if (!parts.length) return "";
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-  };
-
   const renderAccomplishmentRows = (
     items: any[] = [],
     _showMemberBadge = false,
-    emptyText = "None recorded."
+    emptyText = "None recorded.",
+    // Optional per-row props — used to make the Tasks column rows draggable.
+    itemProps?: (item: any) => React.HTMLAttributes<HTMLLIElement> | undefined,
+    // Date / overdue / effort / active time sirf Tasks, Issues & To-Do column
+    // me dikhti hai — Accomplishments, Tomorrow's Plan aur Not Accomplished
+    // Plan me nahi.
+    showMeta = false
   ) => {
     if (!items.length) {
       return <p className="px-1 py-2 text-xs text-neutral-300 italic">{emptyText}</p>;
@@ -2631,9 +3010,20 @@ const DailyTab = ({
         {items.map((item: any, index: number) => {
           const type = getViewSourceType(item);
           const hasDetails = ["task", "issue", "todo"].includes(type);
-          // Design: tasks/issues use the orange notepad glyph, todos/notes the blue document glyph
-          const isNotepadLike = type === "task" || type === "issue";
-          const ItemIcon = isNotepadLike ? NotepadText : FileText;
+          // Design: tasks ka checklist glyph, issues ka alert-circle glyph aur
+          // todos ka list-todo glyph — teeno orange; notes ka blue
+          // document-with-pen glyph (notes ka type tag hata diya gaya hai,
+          // icon hi unhe identify karta hai).
+          const isNotepadLike = type !== "note";
+          const ItemIcon =
+            type === "task"
+              ? TaskChecksIcon
+              : type === "issue"
+                ? CircleAlert
+                : type === "todo"
+                  ? ListTodo
+                  : FilePen;
+          // Type ka tag hata diya gaya hai — icon hi item ka type batata hai.
           const typeLabel =
             type === "task"
               ? "Task"
@@ -2642,28 +3032,36 @@ const DailyTab = ({
                 : type === "todo"
                   ? "Todo"
                   : "Note";
-          const typeBadgeClass =
-            type === "task"
-              ? "bg-[#DA7756] text-white border-transparent"
-              : type === "issue"
-                ? "bg-violet-600 text-white border-transparent"
-                : type === "todo"
-                  ? "bg-amber-500 text-white border-transparent"
-                  : "bg-gray-500 text-white border-transparent";
-          const memberName = item.member || item.member_name || item.user_name || "";
+          // `__ownerTag` display-only fallback hai — report owner (HOD) ki apni
+          // rows par bhi badge dikhe (see `withOwnerTag`).
+          const memberName = getItemMemberName(item) || item?.__ownerTag || "";
+          const extraProps = itemProps?.(item);
+          // Poori row par hover tooltip — sirf icon par nahi, taki admin ko row
+          // ke kisi bhi hisse par hover karke pata chal jaye ki ye Task / Issue
+          // / Todo / Note hai, aur khulne wali rows par hint bhi mile.
+          const rowTooltip = hasDetails
+            ? `${typeLabel} · Click to open`
+            : typeLabel;
 
           return (
             <li
               key={`${getItemTitle(item)}-${memberName}-${index}`}
+              title={rowTooltip}
               onClick={hasDetails ? () => handleViewTaskIssueTodoItem(item) : undefined}
+              {...extraProps}
               className={cn(
                 "flex min-h-[54px] flex-col rounded-[10px] border border-[#ECEFF3] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]",
                 hasDetails &&
-                "row-action cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]"
+                "row-action cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]",
+                extraProps?.className
               )}
             >
               <div className="flex flex-1 items-center gap-3 px-4 py-3">
                 <ItemIcon
+                  // Draggable rows (Tasks column) ke global black override se
+                  // bachne ke liye — icon ka apna color rehna chahiye.
+                  data-icon-color="true"
+                  title={typeLabel}
                   className={cn(
                     "h-[18px] w-[18px] shrink-0",
                     isNotepadLike ? "text-[#F36A3D]" : "text-[#4BA3F2]"
@@ -2671,14 +3069,6 @@ const DailyTab = ({
                 />
                 <span className="min-w-0 flex-1 text-[13px] font-medium leading-[16px] text-[#2B2F38]">
                   {getItemTitle(item)}
-                </span>
-                <span
-                  className={cn(
-                    "shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-extrabold uppercase leading-none",
-                    typeBadgeClass
-                  )}
-                >
-                  {typeLabel}
                 </span>
                 {memberName && (
                   <span
@@ -2693,7 +3083,7 @@ const DailyTab = ({
                 )}
               </div>
               {/* Target date + overdue + estimated effort + active time */}
-              <ReportItemMeta item={item} />
+              {showMeta && <ReportItemMeta item={item} />}
             </li>
           );
         })}
@@ -2706,6 +3096,81 @@ const DailyTab = ({
       !isAdminAddedMissedPlanReport(report) &&
       (report.status !== "pending" || !!report.daily_report)
   );
+
+  // Report cards are grouped one level up by department — a department card
+  // opens to its managers, and each manager card opens to their own report.
+  const departmentGroups = (() => {
+    const groups = new Map<string, { key: string; label: string; reports: any[] }>();
+    visibleReports.forEach((report: any) => {
+      const key = resolveDepartmentKey(report);
+      if (!groups.has(key))
+        groups.set(key, {
+          key,
+          label: key === NO_DEPARTMENT_KEY ? key : `${key} Department`,
+          reports: [],
+        });
+      groups.get(key)!.reports.push(report);
+    });
+    return Array.from(groups.values()).sort((a, b) => {
+      // Keep the catch-all bucket last.
+      if (a.key === NO_DEPARTMENT_KEY) return 1;
+      if (b.key === NO_DEPARTMENT_KEY) return -1;
+      return a.label.localeCompare(b.label, undefined, { sensitivity: "base" });
+    });
+  })();
+
+  // Same one-level-up grouping for the "failed to submit" list. Keys are
+  // prefixed so a department card here doesn't share expand state with the
+  // report card of the same department above.
+  const failedMemberGroups = (() => {
+    const groups = new Map<string, { key: string; label: string; members: any[] }>();
+    failedMembers.forEach((member: any) => {
+      const key = resolveDepartmentKey(member);
+      if (!groups.has(key))
+        groups.set(key, {
+          key: `missed:${key}`,
+          label: key === NO_DEPARTMENT_KEY ? key : `${key} Department`,
+          members: [],
+        });
+      groups.get(key)!.members.push(member);
+    });
+    return Array.from(groups.values()).sort((a, b) => {
+      if (a.label === NO_DEPARTMENT_KEY) return 1;
+      if (b.label === NO_DEPARTMENT_KEY) return -1;
+      return a.label.localeCompare(b.label, undefined, { sensitivity: "base" });
+    });
+  })();
+
+  // Saare meeting members ek hi department ke hon to department-wise
+  // segregation ka matlab nahi — us case me department card skip karke
+  // member cards seedhe flat list me dikhte hain.
+  const showDepartmentGrouping =
+    new Set<string>([
+      ...visibleReports.map((report: any) => resolveDepartmentKey(report)),
+      ...failedMembers.map((member: any) => resolveDepartmentKey(member)),
+    ]).size > 1;
+
+  const toggleDepartment = (key: string) =>
+    setExpandedDepartments((prev) =>
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]
+    );
+
+  // Only one department in view (usually because the Department filter is set)
+  // → open it straight away instead of making the user click twice.
+  const soleDepartmentKey =
+    departmentGroups.length === 1 ? departmentGroups[0].key : null;
+  const soleFailedDepartmentKey =
+    failedMemberGroups.length === 1 ? failedMemberGroups[0].key : null;
+  useEffect(() => {
+    const keys = [soleDepartmentKey, soleFailedDepartmentKey].filter(
+      Boolean
+    ) as string[];
+    if (!keys.length) return;
+    setExpandedDepartments((prev) => {
+      const missing = keys.filter((key) => !prev.includes(key));
+      return missing.length ? [...prev, ...missing] : prev;
+    });
+  }, [soleDepartmentKey, soleFailedDepartmentKey]);
 
   const visibleReportIds = visibleReports.map((r: any) =>
     String(r.journal_id || r.user_id)
@@ -3081,31 +3546,42 @@ const DailyTab = ({
                 placeholder="All Members"
                 options={[
                   { value: "all", label: "All Members" },
-                  ...membersList.map((m: any) => ({
-                    value: m.id,
-                    label: m.name,
-                  })),
+                  ...memberFilterOptions,
                 ]}
               />
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
-              <SearchableSelect
-                value={selectedTag}
-                onChange={setSelectedTag}
-                placeholder="All Tags"
-                options={tagOptions}
-              />
-            </div>
+            {/* Tags + Projects filters — abhi ke liye comment kiye hain.
+                Ye far right me aate the, aur sirf tab jab org ka PATM Business
+                Compass se linked ho (tags/projects wahin se aate hain). Dono
+                mutually exclusive the — ek chuno to doosra "all" tak disabled.
 
-            <div className="flex shrink-0 items-center gap-2">
-              <SearchableSelect
-                value={selectedProject}
-                onChange={setSelectedProject}
-                placeholder="All Projects"
-                options={projectOptions}
-              />
+            {patmBcLinked && (
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 sm:ml-auto">
+              <div className="flex shrink-0 items-center gap-2">
+                <SearchableSelect
+                  value={selectedTag}
+                  onChange={setSelectedTag}
+                  placeholder="All Tags"
+                  options={tagOptions}
+                  disabled={selectedProject !== "all"}
+                  disabledHint="Clear the Project filter to filter by tag."
+                />
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                <SearchableSelect
+                  value={selectedProject}
+                  onChange={setSelectedProject}
+                  placeholder="All Projects"
+                  options={projectOptions}
+                  disabled={selectedTag !== "all"}
+                  disabledHint="Clear the Tag filter to filter by project."
+                />
+              </div>
             </div>
+            )}
+            */}
           </>
         )}
       </div>
@@ -3201,7 +3677,7 @@ const DailyTab = ({
                   setReportMemberFilters({});
                   setReportProjectFilters({});
                 }}
-                placeholder="Select HOD"
+                placeholder="Select Department"
                 options={hodOptions}
               />
             </div>
@@ -3265,10 +3741,98 @@ const DailyTab = ({
 
           {visibleReports.length > 0 && (
             <div>
-              {/* ══ Report Cards ══ */}
+              {/* ══ Department → Manager → Report ══ */}
               <div className="space-y-4">
-                {visibleReports
-                  .map((report: any) => {
+                {departmentGroups.map((group) => {
+                  const isDepartmentExpanded = expandedDepartments.includes(
+                    group.key
+                  );
+                  const managerCount = group.reports.length;
+                  // Locked (already checked-in) rows count as selected, exactly
+                  // like the per-member checkbox does.
+                  const selectedReportKeys = new Set(
+                    selectedReports.map((id) => String(id))
+                  );
+                  const groupSelectedCount = group.reports.filter(
+                    (report: any) =>
+                      report.checked_in_meeting === true ||
+                      selectedReportKeys.has(
+                        String(report.journal_id || report.user_id)
+                      )
+                  ).length;
+                  const isGroupFullySelected =
+                    managerCount > 0 && groupSelectedCount === managerCount;
+                  const isGroupPartiallySelected =
+                    groupSelectedCount > 0 && !isGroupFullySelected;
+                  const groupHasSelectableReports = group.reports.some(
+                    (report: any) => report.checked_in_meeting !== true
+                  );
+                  return (
+                    <div
+                      key={group.key}
+                      className={cn(
+                        showDepartmentGrouping &&
+                        "bg-white border border-[#F0E8E3] rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden"
+                      )}
+                    >
+                      {showDepartmentGrouping && (
+                        <div
+                          onClick={() => toggleDepartment(group.key)}
+                          className={cn(
+                            "flex min-h-[72px] w-full cursor-pointer items-center gap-3 px-5 py-5 text-left transition-colors hover:bg-[#FFF8F5]",
+                            isDepartmentExpanded && "border-b border-[#F0E8E3]"
+                          )}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isGroupFullySelected}
+                            disabled={!groupHasSelectableReports}
+                            ref={(element) => {
+                              if (element)
+                                element.indeterminate = isGroupPartiallySelected;
+                            }}
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={(event) => {
+                              event.stopPropagation();
+                              setDepartmentSelection(
+                                group.reports,
+                                event.target.checked
+                              );
+                            }}
+                            title={`Select all reports in ${group.label}`}
+                            className={cn(
+                              "h-[15px] w-[15px] shrink-0 rounded border-[#DADDE3] accent-[#CE7A5A]",
+                              groupHasSelectableReports
+                                ? "cursor-pointer"
+                                : "opacity-60 cursor-not-allowed"
+                            )}
+                          />
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF3EE]">
+                            <Users className="h-4 w-4 text-[#DA7756]" />
+                          </div>
+                          <span className="min-w-0 flex-1 truncate text-[15px] font-extrabold text-[#3E342F]">
+                            {group.label}
+                          </span>
+                          <span className="shrink-0 rounded-full bg-[#F4F1EE] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#6B625C]">
+                            {managerCount} Manager{managerCount === 1 ? "" : "s"}
+                          </span>
+                          <ChevronDown
+                            className={cn(
+                              "h-4 w-4 shrink-0 text-neutral-400 transition-transform",
+                              isDepartmentExpanded && "rotate-180"
+                            )}
+                          />
+                        </div>
+                      )}
+
+                      {(!showDepartmentGrouping || isDepartmentExpanded) && (
+                        <div
+                          className={cn(
+                            "space-y-4",
+                            showDepartmentGrouping && "bg-[#FBF9F7] p-3"
+                          )}
+                        >
+                          {group.reports.map((report: any) => {
                     const rId = report.journal_id || report.user_id;
                     const isExpanded = expandedReports.includes(rId);
                     const isFeedbackVisible =
@@ -3302,139 +3866,42 @@ const DailyTab = ({
                       ? "bg-red-50 text-red-700 border-red-100"
                       : "bg-green-50 text-green-700 border-green-100";
 
-                    const normalizedReportName = (report.name || "")
-                      .trim()
-                      .toLowerCase();
+                    // The manager's own daily report already carries their team
+                    // members' rows (each tagged with `member`), so nothing is
+                    // filtered out by owner name here.
+                    const userAccomplishments = displayRd.accomplishments;
 
-                    const userAccomplishments =
-                      displayRd.accomplishments.filter(
-                        (item: any) =>
-                          !item.member ||
-                          String(item.member).trim().toLowerCase() ===
-                          normalizedReportName
-                      );
-
-                    const userTasksIssues = displayRd.tasks_issues.filter(
-                      (item: any) =>
-                        !item.member ||
-                        String(item.member).trim().toLowerCase() ===
-                        normalizedReportName
-                    );
+                    const userTasksIssues = displayRd.tasks_issues;
                     const visibleTasksIssues = userTasksIssues.filter(
                       (item: any) => !isCompletedStatus(getItemStatus(item))
                     );
 
-                    const userTomorrowPlan = displayRd.tomorrow_plan.filter(
-                      (item: any) =>
-                        !item.member ||
-                        String(item.member).trim().toLowerCase() ===
-                        normalizedReportName
-                    );
+                    const userTomorrowPlan = displayRd.tomorrow_plan;
 
                     // ── NEW LOGIC FOR SCORING ──
-                    const reporteeReports = Array.isArray(report.reportee_reports)
-                      ? report.reportee_reports
-                      : [];
-                    const hasReporteeReports = reporteeReports.length > 0;
-                    const combinedAccomplishmentRows = hasReporteeReports
-                      ? [
-                        ...userAccomplishments.map((item: any) => ({
-                          ...item,
-                          member: report.name,
-                        })),
-                        ...reporteeReports.flatMap((reportee: any) => {
-                          const reporteeRaw = resolveRawSource(reportee);
-                          const reporteeData = normalizeReportData(reporteeRaw);
-                          const reporteeAbsent = isReportAbsent(
-                            reportee,
-                            reporteeRaw,
-                            reporteeData
-                          );
-                          if (reporteeAbsent) return [];
-                          return reporteeData.accomplishments.map((item: any) => ({
-                            ...item,
-                            member: reportee.name || item.member,
-                          }));
-                        }),
-                      ]
-                      : userAccomplishments;
-                    const combinedTasksIssueRows = hasReporteeReports
-                      ? [
-                        ...visibleTasksIssues.map((item: any) => ({
-                          ...item,
-                          member: report.name,
-                        })),
-                        ...reporteeReports.flatMap((reportee: any) => {
-                          const reporteeRaw = resolveRawSource(reportee);
-                          const reporteeData = normalizeReportData(reporteeRaw);
-                          const reporteeAbsent = isReportAbsent(
-                            reportee,
-                            reporteeRaw,
-                            reporteeData
-                          );
-                          if (reporteeAbsent) return [];
-                          return reporteeData.tasks_issues
-                            .filter((item: any) => !isCompletedStatus(getItemStatus(item)))
-                            .map((item: any) => ({
-                              ...item,
-                              member: reportee.name || item.member,
-                            }));
-                        }),
-                      ]
-                      : visibleTasksIssues;
-                    const combinedTomorrowPlanRows = hasReporteeReports
-                      ? [
-                        ...userTomorrowPlan.map((item: any) => ({
-                          ...item,
-                          member: report.name,
-                        })),
-                        ...reporteeReports.flatMap((reportee: any) => {
-                          const reporteeRaw = resolveRawSource(reportee);
-                          const reporteeData = normalizeReportData(reporteeRaw);
-                          const reporteeAbsent = isReportAbsent(
-                            reportee,
-                            reporteeRaw,
-                            reporteeData
-                          );
-                          if (reporteeAbsent) return [];
-                          return reporteeData.tomorrow_plan.map((item: any) => ({
-                            ...item,
-                            member: reportee.name || item.member,
-                          }));
-                        }),
-                      ]
-                      : userTomorrowPlan;
+                    // Rows come straight from the report owner's own payload —
+                    // each already carries its own `owner_name`; untagged rows
+                    // belong to the report owner.
+                    const combinedAccomplishmentRows = userAccomplishments;
+                    const combinedTasksIssueRows = visibleTasksIssues;
+                    const combinedTomorrowPlanRows = userTomorrowPlan;
                     const reportMemberKey = String(rId);
                     const allReportRows = [
                       ...combinedAccomplishmentRows,
                       ...combinedTasksIssueRows,
                       ...combinedTomorrowPlanRows,
                     ];
+                    const getRowMemberName = (item: any) =>
+                      getItemMemberName(item) || report.name;
                     const getRowMemberKey = (item: any) =>
-                      getMemberFilterKey(
-                        item.member ||
-                        item.member_name ||
-                        item.name ||
-                        item.email ||
-                        report.name
-                      );
+                      getMemberFilterKey(getRowMemberName(item));
 
                     // Raw per-card selections (before validating against options)
                     const selectedReportMember =
                       reportMemberFilters[reportMemberKey] || "all";
                     const selectedReportProject =
                       reportProjectFilters[reportMemberKey] || "all";
-                    // Global Members filter picked a reportee of this HOD →
-                    // lock this card's member filter to that reportee.
-                    // (a manual pick on this card still wins)
-                    const forcedReporteeMemberKey =
-                      selectedReporteeMemberKey &&
-                        selectedReporteeOwnerId === String(report.user_id) &&
-                        selectedReportMember === "all"
-                        ? selectedReporteeMemberKey
-                        : null;
-                    const memberScopeKey =
-                      forcedReporteeMemberKey ?? selectedReportMember;
+                    const memberScopeKey = selectedReportMember;
 
                     // Project list is scoped to the selected member — only the
                     // projects that member actually worked on stay selectable.
@@ -3466,22 +3933,42 @@ const DailyTab = ({
 
                     // Member list is scoped to the selected project — only members
                     // who actually have items on that project stay selectable.
-                    const hodMemberOption = {
-                      value: getMemberFilterKey(report.name || report.email),
-                      label: hasReporteeReports
-                        ? `${(report.name || report.email || "HOD").trim()} (HOD)`
-                        : report.name || report.email || "Member",
-                    };
-                    // HOD ka apna report bhi selectable rehna chahiye
-                    const baseMemberOptions = hasReporteeReports
-                      ? [
-                        hodMemberOption,
-                        ...reporteeReports.map((reportee: any) => ({
-                          value: getMemberFilterKey(reportee.name || reportee.email),
-                          label: reportee.name || reportee.email || "Reportee",
-                        })),
-                      ]
-                      : [hodMemberOption];
+                    // Options come from the rows themselves: the owner's report
+                    // already carries their team members' items, each tagged
+                    // with `member`.
+                    const ownerMemberKey = getMemberFilterKey(
+                      report.name || report.email
+                    );
+                    const memberLabelByKey = new Map<string, string>();
+                    memberLabelByKey.set(
+                      ownerMemberKey,
+                      report.name || report.email || "Member"
+                    );
+                    allReportRows.forEach((item: any) => {
+                      const label = String(getRowMemberName(item) || "").trim();
+                      if (!label) return;
+                      const key = getMemberFilterKey(label);
+                      if (!memberLabelByKey.has(key))
+                        memberLabelByKey.set(key, label);
+                    });
+                    const hasTeamRows = memberLabelByKey.size > 1;
+                    const baseMemberOptions = Array.from(
+                      memberLabelByKey.entries()
+                    )
+                      .map(([value, label]) => ({
+                        value,
+                        label:
+                          value === ownerMemberKey && hasTeamRows
+                            ? `${String(label).trim()} (HOD)`
+                            : label,
+                      }))
+                      .sort((a, b) => {
+                        if (a.value === ownerMemberKey) return -1;
+                        if (b.value === ownerMemberKey) return 1;
+                        return a.label.localeCompare(b.label, undefined, {
+                          sensitivity: "base",
+                        });
+                      });
                     const memberKeysInProject = new Set(
                       allReportRows
                         .filter(
@@ -3516,8 +4003,7 @@ const DailyTab = ({
 
                     const filterRowsForSelectedMember = (items: any[]) => {
                       return items.filter((item: any) => {
-                        const memberName =
-                          item.member || item.member_name || item.name || item.email || report.name;
+                        const memberName = getRowMemberName(item);
                         const matchesMember =
                           activeReportMember === "all" ||
                           getMemberFilterKey(memberName) === activeReportMember;
@@ -3540,17 +4026,62 @@ const DailyTab = ({
                         );
                       });
                     };
-                    const filteredAccomplishmentRows = filterRowsForSelectedMember(
-                      combinedAccomplishmentRows
+                    // Badge har row par dikhna chahiye — team member ki rows par
+                    // unka naam pehle se hota hai, aur jin par owner tag nahi hai
+                    // wo report owner (HOD) ki hain. `__ownerTag` sirf display ke
+                    // liye hai (asli `member`/`owner_name` fields chhedte nahi),
+                    // taki drag-to-plan aur save payload par koi asar na pade.
+                    const withOwnerTag = (items: any[] = []) =>
+                      items.map((item: any) =>
+                        getItemMemberName(item)
+                          ? item
+                          : { ...item, __ownerTag: report.name }
+                      );
+                    const filteredAccomplishmentRows = withOwnerTag(
+                      filterRowsForSelectedMember(combinedAccomplishmentRows)
                     );
-                    const filteredTasksIssueRows = filterRowsForSelectedMember(
-                      combinedTasksIssueRows
+                    const filteredTasksIssueRows = withOwnerTag(
+                      filterRowsForSelectedMember(combinedTasksIssueRows)
                     );
-                    const filteredTomorrowPlanRows = filterRowsForSelectedMember(
-                      combinedTomorrowPlanRows
+                    const filteredTomorrowPlanRows = withOwnerTag(
+                      filterRowsForSelectedMember(combinedTomorrowPlanRows)
+                    );
+                    // API se aane par ye bucket bhar jaayega; tab tak khaali
+                    // rehta hai to header render hi nahi hota.
+                    const filteredNotAccomplishedRows = withOwnerTag(
+                      filterRowsForSelectedMember(
+                        displayRd.not_accomplished_plan
+                      )
                     );
                     const showFilteredMemberBadges =
-                      hasReporteeReports && activeReportMember === "all";
+                      hasTeamRows && activeReportMember === "all";
+
+                    // ── Drag a Tasks/Issues/Todos row → drop into this card's
+                    // Tomorrow's Plan (the only drop target). Absent reports
+                    // have nothing to plan, so dragging stays off there.
+                    const canDragToPlan = !isAbsentReport;
+                    const taskDragProps = canDragToPlan
+                      ? (item: any) => ({
+                        draggable: true,
+                        className: "cursor-grab active:cursor-grabbing",
+                        onDragStart: (event: React.DragEvent<HTMLLIElement>) => {
+                          event.stopPropagation();
+                          event.dataTransfer.effectAllowed = "copy";
+                          event.dataTransfer.setData(
+                            "text/plain",
+                            getItemTitle(item)
+                          );
+                          setDraggedPlanItem({ cardId: rId, report, item });
+                        },
+                        onDragEnd: () => clearPlanDrag(),
+                      })
+                      : undefined;
+                    const isPlanDragActive =
+                      canDragToPlan &&
+                      !!draggedPlanItem &&
+                      String(draggedPlanItem.cardId) === String(rId);
+                    const isPlanDropHovered =
+                      isPlanDragActive && String(planDropTargetId) === String(rId);
 
                     const sections =
                       draftRaw?.sections ||
@@ -3666,8 +4197,12 @@ const DailyTab = ({
                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                  {/* Department parent card par dikh raha hai,
+                                      to member card ka heading member ka naam
+                                      hai — department nahi. */}
                                   <h3 className="font-bold text-[#202124] text-[18px] leading-[22px] truncate">
-                                    {report.name}
+                                    {report.name?.trim() ||
+                                      resolveDepartmentLabel(report)}
                                   </h3>
                                   {(report.name?.includes("HOD") ||
                                     report.name?.includes("TL")) && (
@@ -3835,17 +4370,24 @@ const DailyTab = ({
                                     placeholder="Member"
                                     options={reportMemberOptions}
                                   />
-                                  <SearchableSelect
-                                    value={activeReportProject}
-                                    onChange={(value: string) =>
-                                      setReportProjectFilters((prev) => ({
-                                        ...prev,
-                                        [reportMemberKey]: value,
-                                      }))
-                                    }
-                                    placeholder="Project"
-                                    options={reportProjectOptions}
-                                  />
+                                  {/* Per-card Project filter — abhi ke liye
+                                      comment kiya hai. Sirf tab dikhta tha jab
+                                      org ka PATM Business Compass se linked ho.
+
+                                  {patmBcLinked && (
+                                    <SearchableSelect
+                                      value={activeReportProject}
+                                      onChange={(value: string) =>
+                                        setReportProjectFilters((prev) => ({
+                                          ...prev,
+                                          [reportMemberKey]: value,
+                                        }))
+                                      }
+                                      placeholder="Project"
+                                      options={reportProjectOptions}
+                                    />
+                                  )}
+                                  */}
                                 </div>
                               </div>
 
@@ -3874,6 +4416,7 @@ const DailyTab = ({
                                   showMemberBadges={showFilteredMemberBadges}
                                   isAbsent={isAbsentReport}
                                   renderRows={renderAccomplishmentRows}
+                                  itemProps={taskDragProps}
                                 />
                                 <div className="hidden bg-white border border-[#F0E8E3] rounded-xl p-4">
                                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
@@ -4139,7 +4682,74 @@ const DailyTab = ({
                                   )}
                                 </div>
 
+                                {/* Third column = Not Accomplished Plan card
+                                    ke upar, Tomorrow's Plan card neeche. */}
+                                <div className="flex flex-col gap-4">
                                 <div className="bg-white border border-[#E8E2DE] rounded-xl p-0 overflow-hidden">
+                                  <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+                                    <AlertTriangle className="w-4 h-4 shrink-0 text-[#B4690E]" />
+                                    <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase min-w-0 truncate">
+                                      Not Accomplished Plan
+                                    </h4>
+                                    <span className="ml-auto shrink-0 rounded-full bg-[#F8E4C7] px-2 py-0.5 text-[9px] font-bold text-[#B4690E]">
+                                      {isAbsentReport
+                                        ? 0
+                                        : filteredNotAccomplishedRows.length}
+                                    </span>
+                                  </div>
+                                  <div className="p-4">
+                                    {renderAccomplishmentRows(
+                                      isAbsentReport
+                                        ? []
+                                        : filteredNotAccomplishedRows,
+                                      showFilteredMemberBadges,
+                                      "Nothing pending from the plan."
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div
+                                  onDragOver={(event) => {
+                                    if (!isPlanDragActive) return;
+                                    event.preventDefault();
+                                    event.dataTransfer.dropEffect = "copy";
+                                    setPlanDropTargetId(rId);
+                                  }}
+                                  onDragLeave={(event) => {
+                                    if (!isPlanDragActive) return;
+                                    // Ignore bubbling leaves from child rows.
+                                    if (
+                                      event.currentTarget.contains(
+                                        event.relatedTarget as Node
+                                      )
+                                    )
+                                      return;
+                                    setPlanDropTargetId((current: any) =>
+                                      String(current) === String(rId)
+                                        ? null
+                                        : current
+                                    );
+                                  }}
+                                  onDrop={(event) => {
+                                    if (!isPlanDragActive) return;
+                                    event.preventDefault();
+                                    const dropped = draggedPlanItem;
+                                    clearPlanDrag();
+                                    if (dropped)
+                                      handleDropItemToPlan(
+                                        dropped.report,
+                                        dropped.item
+                                      );
+                                  }}
+                                  className={cn(
+                                    "bg-white border rounded-xl p-0 overflow-hidden transition-colors",
+                                    isPlanDropHovered
+                                      ? "border-[#DA7756] bg-[#FFF8F5] ring-2 ring-[#DA7756]/20"
+                                      : isPlanDragActive
+                                        ? "border-dashed border-[#DA7756]/60"
+                                        : "border-[#E8E2DE]"
+                                  )}
+                                >
                                   <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
                                     <Calendar className="w-4 h-4 text-[#6b9bcc] shrink-0" />
                                     <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase">
@@ -4147,6 +4757,11 @@ const DailyTab = ({
                                     </h4>
                                   </div>
                                   <div className="p-4">
+                                    {isPlanDragActive && (
+                                      <p className="mb-3 rounded-[10px] border border-dashed border-[#DA7756]/60 bg-[#FFF8F5] px-3 py-2 text-[11px] font-bold text-[#DA7756]">
+                                        Drop here to add to tomorrow's plan
+                                      </p>
+                                    )}
                                     {isAbsentReport
                                       ? renderAccomplishmentRows([], false)
                                       : renderAccomplishmentRows(
@@ -4154,6 +4769,7 @@ const DailyTab = ({
                                         showFilteredMemberBadges
                                       )}
                                   </div>
+                                </div>
                                 </div>
                                 <div className="hidden bg-white border border-[#F0E8E3] rounded-xl p-4">
                                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
@@ -4226,238 +4842,6 @@ const DailyTab = ({
                                   )}
                                 </div>
                               </div>
-
-                              {false && reporteeReports.length > 0 && (
-                                <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 pb-3 border-b border-gray-100">
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
-                                        <Users className="w-4 h-4 text-indigo-600" />
-                                      </div>
-                                      <div>
-                                        <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                          Reportee Reports
-                                        </h4>
-                                        <p className="text-[10px] text-neutral-400 font-medium">
-                                          Reports submitted under {report.name}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <span className="self-start sm:self-auto px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-bold">
-                                      {reporteeReports.length} Reportee{reporteeReports.length > 1 ? "s" : ""}
-                                    </span>
-                                  </div>
-
-                                  <div className="space-y-4">
-                                    {reporteeReports.map((reportee: any) => {
-                                      const reporteeId = reportee.journal_id || reportee.user_id;
-                                      const reporteeExpandId = `reportee-${rId}-${reporteeId}`;
-                                      const isReporteeExpanded = expandedReports.includes(reporteeExpandId);
-                                      const reporteeRaw = resolveRawSource(reportee);
-                                      const reporteeData = normalizeReportData(reporteeRaw);
-                                      const reporteeAbsent = isReportAbsent(
-                                        reportee,
-                                        reporteeRaw,
-                                        reporteeData
-                                      );
-                                      const reporteeAbsentReason = getReportAbsentReason(
-                                        reportee,
-                                        reporteeRaw,
-                                        reporteeData
-                                      );
-                                      const reporteeSections =
-                                        reportee.daily_report?.report_data?.sections ||
-                                        reporteeRaw?.sections ||
-                                        reporteeData?.sections ||
-                                        {};
-                                      const reporteeGetScore = (value: any) =>
-                                        value !== undefined && value !== null && value !== ""
-                                          ? Number(value)
-                                          : 0;
-                                      const reporteeSelfRating = reporteeAbsent
-                                        ? 0
-                                        : reporteeRaw?.self_rating ??
-                                        reportee.daily_report?.self_rating ??
-                                        null;
-                                      const reporteeStatus = reportee.status || "pending";
-                                      const hasReporteeDraft = !!reportee.daily_report;
-                                      const reporteeIsPending =
-                                        reporteeStatus === "pending" && !hasReporteeDraft;
-
-                                      // Mirror the manager card's score chips / summary line
-                                      const reporteeKpiStr = `${reporteeAbsent ? 0 : reporteeGetScore(reporteeSections.kpi_achievement)}/20`;
-                                      const reporteeTasksIssuesStr = `${reporteeAbsent
-                                        ? 0
-                                        : reporteeGetScore(
-                                          reporteeSections.tasks_issues_todos ??
-                                          reporteeSections.tasks_issues
-                                        )
-                                        }/20`;
-                                      const reporteePlanStr = `${reporteeAbsent ? 0 : reporteeGetScore(reporteeSections.planning)}/20`;
-                                      const reporteeTimeStr = `${reporteeGetScore(reporteeSections.timing)}/20`;
-                                      const reporteeSelfRatingText =
-                                        formatSelfRating(reporteeSelfRating);
-                                      const reporteeTotalScoreValue = getReportTotalScore(
-                                        reportee,
-                                        reporteeRaw
-                                      );
-                                      const reporteeTotalScoreStr =
-                                        reporteeTotalScoreValue === null
-                                          ? "0"
-                                          : String(Math.round(reporteeTotalScoreValue));
-
-                                      return (
-                                        <div
-                                          key={reporteeId}
-                                          className="rounded-xl border border-indigo-100 bg-indigo-50/30 overflow-hidden"
-                                        >
-                                          <div
-                                            className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 p-4 cursor-pointer hover:bg-indigo-50/60 transition-colors"
-                                            onClick={() => toggleExpand(reporteeExpandId)}
-                                          >
-                                            <div className="min-w-0">
-                                              <div className="flex flex-wrap items-center gap-2 mb-1">
-                                                <h5 className="text-sm font-bold text-neutral-900 truncate">
-                                                  {reportee.name}
-                                                </h5>
-                                                {reportee.department && (
-                                                  <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
-                                                    {reportee.department}
-                                                  </span>
-                                                )}
-                                                {/* Pending reportees get the "Missed" tag on the right instead */}
-                                                {!reporteeIsPending && (
-                                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 bg-green-50 text-green-700 border-green-100">
-                                                    Submitted
-                                                  </span>
-                                                )}
-                                              </div>
-                                              <p className="text-[11px] text-neutral-400 truncate">
-                                                {reportee.email || "Reportee report"}
-                                                {reportee.submitted_at && (
-                                                  <span className="ml-1">
-                                                    - {formatDateTime(reportee.submitted_at)}
-                                                  </span>
-                                                )}
-                                              </p>
-                                            </div>
-
-                                            <div className="flex items-center gap-2 shrink-0 self-start sm:self-center ml-auto">
-                                              {/* Not submitted → "Missed"; attendance only applies to a submitted report */}
-                                              {reporteeIsPending && (
-                                                <span className="px-2.5 py-0.5 rounded-full border border-red-100 bg-red-50 text-red-700 text-[10px] font-bold shrink-0">
-                                                  Missed
-                                                </span>
-                                              )}
-                                              {!reporteeIsPending && (
-                                                <span
-                                                  className={cn(
-                                                    "px-2.5 py-0.5 rounded-full border text-[10px] font-bold shrink-0",
-                                                    reporteeAbsent
-                                                      ? "bg-red-50 text-red-700 border-red-100"
-                                                      : "bg-green-50 text-green-700 border-green-100"
-                                                  )}
-                                                >
-                                                  {reporteeAbsent ? "Absent" : "Present"}
-                                                  {reporteeAbsent &&
-                                                    reporteeAbsentReason.toLowerCase() !== "absent"
-                                                    ? `: ${reporteeAbsentReason}`
-                                                    : ""}
-                                                </span>
-                                              )}
-
-                                              <button
-                                                type="button"
-                                                onClick={(event) => {
-                                                  event.stopPropagation();
-                                                  toggleExpand(reporteeExpandId);
-                                                }}
-                                                className="flex items-center justify-center w-7 h-7 rounded-full bg-white text-indigo-500 border border-indigo-100 shrink-0 transition-transform"
-                                              >
-                                                <ChevronDown
-                                                  className={cn(
-                                                    "w-4 h-4 transition-transform",
-                                                    isReporteeExpanded && "rotate-180"
-                                                  )}
-                                                />
-                                              </button>
-                                            </div>
-                                          </div>
-
-                                          {isReporteeExpanded && (
-                                            <div className="border-t border-indigo-100 bg-white/70 p-4">
-                                              {reporteeIsPending ? (
-                                                <p className="text-xs text-neutral-400 italic">
-                                                  Report not submitted for this date.
-                                                </p>
-                                              ) : (
-                                                <>
-                                                  {/* Same score chips + summary line as the manager card */}
-                                                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                                                    <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                                      KPI: {reporteeKpiStr}
-                                                    </span>
-                                                    <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                                      Task, Issues &amp; To-do's: {reporteeTasksIssuesStr}
-                                                    </span>
-                                                    <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                                      Planning: {reporteePlanStr}
-                                                    </span>
-                                                    <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                                      Timing: {reporteeTimeStr}
-                                                    </span>
-                                                  </div>
-
-                                                  <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm mb-4">
-                                                    <span>
-                                                      ⭐ Self rating {reporteeSelfRatingText || "0/10"}
-                                                    </span>
-                                                    <span className="text-gray-400">
-                                                      Total Score: {reporteeTotalScoreStr}
-                                                    </span>
-                                                  </div>
-
-                                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                                    <div className="rounded-xl border border-gray-100 bg-white p-3">
-                                                      <h6 className="text-[10px] font-extrabold text-neutral-500 uppercase tracking-wider mb-2">
-                                                        Accomplishments
-                                                      </h6>
-                                                      {reporteeAbsent
-                                                        ? renderCompactReportItems([], "None recorded.")
-                                                        : renderCompactReportItems(reporteeData.accomplishments)}
-                                                    </div>
-                                                    <div className="rounded-xl border border-gray-100 bg-white p-3">
-                                                      <h6 className="text-[10px] font-extrabold text-neutral-500 uppercase tracking-wider mb-2">
-                                                        Tasks, Issues & Todos
-                                                      </h6>
-                                                      {reporteeAbsent
-                                                        ? renderCompactReportItems([], "None recorded.")
-                                                        : renderCompactReportItems(
-                                                          reporteeData.tasks_issues.filter(
-                                                            (item: any) =>
-                                                              !isCompletedStatus(getItemStatus(item))
-                                                          )
-                                                        )}
-                                                    </div>
-                                                    <div className="rounded-xl border border-gray-100 bg-white p-3">
-                                                      <h6 className="text-[10px] font-extrabold text-neutral-500 uppercase tracking-wider mb-2">
-                                                        Tomorrow's Plan
-                                                      </h6>
-                                                      {reporteeAbsent
-                                                        ? renderCompactReportItems([], "None recorded.")
-                                                        : renderCompactReportItems(reporteeData.tomorrow_plan)}
-                                                    </div>
-                                                  </div>
-                                                </>
-                                              )}
-                                            </div>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              )}
 
                               <div className="flex flex-wrap gap-2 pt-1">
                                 <button
@@ -4792,7 +5176,12 @@ const DailyTab = ({
                         )}
                       </div>
                     );
-                  })}
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -4813,7 +5202,54 @@ const DailyTab = ({
             </span>
           </div>
           <div className="space-y-4">
-            {failedMembers.map((member: any, i: number) => {
+            {failedMemberGroups.map((group) => {
+              const isDepartmentExpanded = expandedDepartments.includes(
+                group.key
+              );
+              const missedCount = group.members.length;
+              return (
+                <div
+                  key={group.key}
+                  className={cn(
+                    showDepartmentGrouping &&
+                    "bg-white border border-[#F0E8E3] rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden"
+                  )}
+                >
+                  {showDepartmentGrouping && (
+                    <button
+                      type="button"
+                      onClick={() => toggleDepartment(group.key)}
+                      className={cn(
+                        "flex min-h-[72px] w-full items-center gap-3 px-5 py-5 text-left transition-colors hover:bg-[#FFF8F5]",
+                        isDepartmentExpanded && "border-b border-[#F0E8E3]"
+                      )}
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF3EE]">
+                        <Users className="h-4 w-4 text-[#DA7756]" />
+                      </div>
+                      <span className="min-w-0 flex-1 truncate text-[15px] font-extrabold text-[#3E342F]">
+                        {group.label}
+                      </span>
+                      <span className="shrink-0 rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-red-600">
+                        {missedCount} Not Submitted
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 shrink-0 text-neutral-400 transition-transform",
+                          isDepartmentExpanded && "rotate-180"
+                        )}
+                      />
+                    </button>
+                  )}
+
+                  {(!showDepartmentGrouping || isDepartmentExpanded) && (
+                    <div
+                      className={cn(
+                        "space-y-4",
+                        showDepartmentGrouping && "bg-[#FBF9F7] p-3"
+                      )}
+                    >
+                      {group.members.map((member: any, i: number) => {
               const missedId = `missed-${member.id || member.user_id || member.name || i}`;
               const isMissedExpanded = expandedReports.includes(missedId);
               const isMissedFeedbackVisible =
@@ -4854,8 +5290,11 @@ const DailyTab = ({
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            {/* Department parent card par hai — yahan member ka
+                                naam hi heading hai. */}
                             <h3 className="font-bold text-[#202124] text-[18px] leading-[22px] truncate">
-                              {member.name || member}
+                              {member?.name?.trim() ||
+                                resolveDepartmentLabel(member)}
                             </h3>
                             {member.department && (
                               <span className="hidden border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
@@ -5333,6 +5772,11 @@ const DailyTab = ({
                           </div>
                         )}
                       </div>
+                    </div>
+                  )}
+                </div>
+              );
+                      })}
                     </div>
                   )}
                 </div>
