@@ -90,8 +90,12 @@ export interface BarChartCardProps {
   stacked?: boolean;
   /** Override per-bar color by category index instead of by series (only for a single series). */
   categoryColors?: string[];
+  /** Override the default per-series color order (only meaningful when series.length > 1). */
+  seriesColors?: string[];
   valueDomain?: [number, number];
   valueTicks?: number[];
+  /** Override the direct bar label text (e.g. "4/10" instead of the plotted "40%"). */
+  labelFormatter?: (value: number, index: number) => string;
   height?: number;
   className?: string;
 }
@@ -116,8 +120,10 @@ export function BarChartCard({
   orientation = "vertical",
   stacked = false,
   categoryColors,
+  seriesColors,
   valueDomain,
   valueTicks,
+  labelFormatter,
   height = 220,
   className,
 }: BarChartCardProps) {
@@ -126,6 +132,7 @@ export function BarChartCard({
   const isHorizontal = orientation === "horizontal";
   const isSingleSeries = series.length === 1 && !stacked;
   const resolvedCategoryColors = isSingleSeries ? categoryColors ?? BAR_SERIES_COLORS : categoryColors;
+  const resolvedSeriesColors = seriesColors ?? BAR_SERIES_COLORS;
 
   const valueAxis = (
     <XAxis
@@ -210,7 +217,7 @@ export function BarChartCard({
                   key={s.dataKey}
                   dataKey={s.dataKey}
                   name={s.name}
-                  fill={BAR_SERIES_COLORS[seriesIndex % BAR_SERIES_COLORS.length]}
+                  fill={resolvedSeriesColors[seriesIndex % resolvedSeriesColors.length]}
                   radius={isHorizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]}
                   maxBarSize={isHorizontal ? 22 : 40}
                   stackId={stacked ? "stack" : undefined}
@@ -223,7 +230,23 @@ export function BarChartCard({
                         />
                       ))
                     : null}
-                  {showDirectLabels && (
+                  {showDirectLabels && labelFormatter && (
+                    <LabelList
+                      dataKey={s.dataKey}
+                      position={isHorizontal ? "right" : "top"}
+                      content={(props: { x?: number; y?: number; width?: number; height?: number; value?: number; index?: number }) => {
+                        const { x = 0, y = 0, width = 0, height: barHeight = 0, value, index = 0 } = props;
+                        const labelX = isHorizontal ? x + width + 4 : x + width / 2;
+                        const labelY = isHorizontal ? y + barHeight / 2 + 4 : y - 6;
+                        return (
+                          <text x={labelX} y={labelY} fontSize={11} fill="var(--color-text)" textAnchor={isHorizontal ? "start" : "middle"}>
+                            {labelFormatter(Number(value), index)}
+                          </text>
+                        );
+                      }}
+                    />
+                  )}
+                  {showDirectLabels && !labelFormatter && (
                     <LabelList
                       dataKey={s.dataKey}
                       position={isHorizontal ? "right" : "top"}
