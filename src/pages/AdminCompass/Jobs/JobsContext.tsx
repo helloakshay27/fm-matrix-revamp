@@ -25,7 +25,14 @@ import { fetchKpiUnits, saveKpiUnits } from "./kpiUnitsApi";
 import { fetchActivityLogs, LOGS_PER_PAGE } from "./activityLogsApi";
 import { fetchKpis, createKpi, updateKpi, toKpiPayload } from "./kpisApi";
 import { fetchJobDescriptions } from "./jobDescriptionsApi";
-import { fetchKras, fetchAllKras, createKra, updateKra, updateKraStatus } from "./krasApi";
+import {
+  fetchKras,
+  fetchAllKras,
+  createKra,
+  updateKra,
+  updateKraStatus,
+  updateKraAssignees,
+} from "./krasApi";
 import { fetchEscalateToUsers } from "./usersApi";
 import { firstDefined } from "./apiClient";
 import { assignJobDescriptionMembers } from "./api/jobsApi";
@@ -87,6 +94,8 @@ export function JobsProvider({ children }) {
     weightage: "",
     assignee: "",
     assigneeId: "",
+    // Multiple assignees — API `assignee_ids[]` leta hai.
+    assigneeIds: [],
     effectiveFrom: "",
     effectiveTo: "",
     status: "active",
@@ -162,7 +171,9 @@ export function JobsProvider({ children }) {
   const [editKpiForm, setEditKpiForm] = useState({});
   const [assignKraModal, setAssignKraModal] = useState(null);
   const [assignKpiModal, setAssignKpiModal] = useState(null);
-  const [assignKraName, setAssignKraName] = useState("");
+  // KRA assign multi-select — persons `GET /pms/users/get_escalate_to_users.json`
+  // se aate hain (wahi list jo KPI assign use karta hai).
+  const [assignKraUserIds, setAssignKraUserIds] = useState([]);
   const [assignKpiName, setAssignKpiName] = useState("");
   const [assignKpiUserIds, setAssignKpiUserIds] = useState([]);
   const [kpiAssignUsers, setKpiAssignUsers] = useState([]);
@@ -594,8 +605,19 @@ export function JobsProvider({ children }) {
 
   const saveNewKra = async () => {
     if (!newKra.jdId || !newKra.title) return;
-    if (await exceedsAssigneeKraWeightage(newKra.assigneeId, newKra.weightage))
-      return;
+    // Har chune gaye member ka total KRA weightage 100% se upar nahi jana chahiye.
+    const newKraAssignees = (
+      newKra.assigneeIds?.length
+        ? newKra.assigneeIds
+        : newKra.assigneeId
+          ? [newKra.assigneeId]
+          : []
+    )
+      .map((id) => Number(id))
+      .filter((id) => Number.isFinite(id));
+    for (const id of newKraAssignees) {
+      if (await exceedsAssigneeKraWeightage(id, newKra.weightage)) return;
+    }
     const selectedJd = allJds.find((j) => sameId(j.id, newKra.jdId));
     setKrasSaving(true);
     try {
@@ -619,6 +641,7 @@ export function JobsProvider({ children }) {
         weightage: "",
         assignee: "",
         assigneeId: "",
+        assigneeIds: [],
         effectiveFrom: "",
         effectiveTo: "",
         status: "active",
@@ -1187,17 +1210,71 @@ export function JobsProvider({ children }) {
     }
   };
 
-  const assignToKra = () => {
-    if (!assignKraName.trim()) return;
-    addLog(
-      "assign",
-      "KRA",
-      allKras.find((k) => k.id === assignKraModal)?.title || "",
-      `Assigned to ${assignKraName.trim()}`
-    );
-    setAssignKraName("");
-    setAssignKraModal(null);
-    showToast("Person assigned to KRA");
+  /**
+   * KRA ke assignees update karta hai — `PATCH /kras/:id.json?access_token=…`
+   * (`updateKraAssignees`), sirf assignee fields ke saath. Multiple members
+   * `assignee_ids[]` me jate hain aur pehla `assignee_id` me (API ab tak single
+   * assignee rakhta aaya hai, isliye dono bhejte hain).
+   */
+  const assignToKra = async () => {
+    if (!assignKraModal) return;
+    const ids = assignKraUserIds
+      .map((id) => Number(id))
+      .filter((id) => Number.isFinite(id));
+    if (!ids.length) return;
+    // Row cache/state se milti hai; na mile to bhi assign rok nahi sakte —
+    // PATCH ke liye id kaafi hai (weightage guard tab skip ho jata hai).
+    const kra = kraRowById(assignKraModal) || { id: assignKraModal };
+    const nameOf = (id) =>
+      (kraAssignUsers || []).find((u) => sameId(u.id, id))?.name || String(id);
+    const names = ids.map(nameOf);
+
+    setKrasSaving(true);
+    try {
+      // Kisi bhi naye assignee ka total KRA weightage 100% cross na kare.
+      for (const id of ids) {
+        if (sameId(kraAssigneeOf(kra), id)) continue;
+        if (
+          await exceedsAssigneeKraWeightage(
+            id,
+            kra.weightage,
+            kra.id,
+            nameOf(id)
+          )
+        )
+          return;
+      }
+
+      const patch = {
+        assigneeId: ids[0],
+        assignee_id: ids[0],
+        assigneeIds: ids,
+        assignee_ids: ids,
+        assignee: names[0],
+        assignee_name: names[0],
+        assigneeNames: names,
+      };
+      const updated = await updateKraAssignees(kra.id, ids);
+      setAllKras((ks) =>
+        ks.map((k) =>
+          sameId(k.id, kra.id) ? { ...k, ...patch, ...(updated || {}) } : k
+        )
+      );
+      patchKrasCache(kra.id, { ...patch, ...(updated || {}) });
+      queryClient.invalidateQueries({ queryKey: ["kras-list"] });
+      addLog("assign", "KRA", kra.title || "", `Assigned to ${names.join(", ")}`);
+      setAssignKraUserIds([]);
+      setAssignKraModal(null);
+      showToast(
+        names.length > 1
+          ? `KRA assigned to ${names.length} members`
+          : "Person assigned to KRA"
+      );
+    } catch (err) {
+      toast.error(`Could not assign KRA: ${err?.message || "request failed"}`);
+    } finally {
+      setKrasSaving(false);
+    }
   };
 
   const loadKpiAssignUsers = useCallback(async () => {
@@ -1216,14 +1293,68 @@ export function JobsProvider({ children }) {
     }
   }, []);
 
+  // Prefill sirf modal khulne par ek baar — warna `allKpis`/`allKras` refresh
+  // hone par user ki selection wipe ho jaati thi (aur Assign button phir
+  // disabled ho jata tha, kyunki selection khali ho jaati thi).
+  const prefilledAssignKpiRef = useRef(null);
   useEffect(() => {
-    if (!assignKpiModal) return;
+    if (!assignKpiModal) {
+      prefilledAssignKpiRef.current = null;
+      return;
+    }
+    if (sameId(prefilledAssignKpiRef.current, assignKpiModal)) return;
+    prefilledAssignKpiRef.current = assignKpiModal;
     const currentKpi = allKpis.find((p) => sameId(p.id, assignKpiModal));
     setAssignKpiUserIds(
       (currentKpi?.assigneeIds || []).map((id) => String(id))
     );
     loadKpiAssignUsers();
   }, [allKpis, assignKpiModal, loadKpiAssignUsers]);
+
+  // KRA assign wahi persons list use karta hai (get_escalate_to_users).
+  const kraAssignUsers = kpiAssignUsers;
+
+  /**
+   * KRA row id se — pehle context ke `allKras` me, warna `["kras-list"]` query
+   * cache me. KRA tab ki list React Query se render hoti hai aur `allKras` sirf
+   * KPI tab par bharta hai, isliye sirf `allKras` par bharosa karne se assign
+   * chupchap kuch nahi karta tha (row hi na milti thi).
+   */
+  const kraRowById = (id) => {
+    if (!id) return null;
+    const fromState = allKras.find((k) => sameId(k.id, id));
+    if (fromState) return fromState;
+    const caches = queryClient.getQueriesData({ queryKey: ["kras-list"] });
+    for (const [, data] of caches) {
+      if (!Array.isArray(data)) continue;
+      const row = data.find((k) => sameId(k?.id, id));
+      if (row) return row;
+    }
+    return null;
+  };
+
+  // Modal khulte hi list load + KRA ke current assignees pre-selected.
+  // API multiple bheje (`assignee_ids`) to sab, warna single `assignee_id`.
+  const prefilledAssignKraRef = useRef(null);
+  useEffect(() => {
+    if (!assignKraModal) {
+      prefilledAssignKraRef.current = null;
+      return;
+    }
+    if (sameId(prefilledAssignKraRef.current, assignKraModal)) return;
+    prefilledAssignKraRef.current = assignKraModal;
+    const currentKra = kraRowById(assignKraModal);
+    const many = firstDefined(currentKra?.assigneeIds, currentKra?.assignee_ids);
+    const owner = firstDefined(currentKra?.assigneeId, currentKra?.assignee_id);
+    setAssignKraUserIds(
+      Array.isArray(many) && many.length
+        ? many.map((id) => String(id))
+        : owner !== undefined
+          ? [String(owner)]
+          : []
+    );
+    loadKpiAssignUsers();
+  }, [allKras, assignKraModal, loadKpiAssignUsers]);
 
   useEffect(() => {
     if ((!showAddKpi && !editingKpiId) || kpiAssignUsers.length > 0) return;
@@ -1688,14 +1819,23 @@ export function JobsProvider({ children }) {
   };
 
   const filteredJds = allJds.filter((j) =>
-    j.title.toLowerCase().includes(jdSearch.toLowerCase())
+    String(j.title || "").toLowerCase().includes(jdSearch.toLowerCase())
   );
   const jdsByDept = (dept) =>
     allJds.filter((j) => j.dept === dept).map((j) => j.id);
   const jdsByRole = (role) =>
     allJds.filter((j) => j.title === role).map((j) => j.id);
   const jdsByMember = (member) =>
-    allJds.filter((j) => j.assigned.includes(member)).map((j) => j.id);
+    allJds
+      .filter((j) => {
+        const assigned = Array.isArray(j.assigned) ? j.assigned : [];
+        const assignedIds = Array.isArray(j.assigneeIds) ? j.assigneeIds : [];
+        return (
+          assigned.some((value) => sameId(value, member)) ||
+          assignedIds.some((value) => sameId(value, member))
+        );
+      })
+      .map((j) => j.id);
   const uniqueDepts = [...new Set(allJds.map((j) => j.dept))];
   const uniqueRoles = [...new Set(allJds.map((j) => j.title))];
   const uniqueMembers = escalateUsers.map((u) => ({
@@ -1725,7 +1865,7 @@ export function JobsProvider({ children }) {
     searchField
   ) => {
     return items.filter((item) => {
-      const matchSearch = item[searchField]
+      const matchSearch = String(item[searchField] || "")
         .toLowerCase()
         .includes(searchVal.toLowerCase());
       const matchDept = deptF === "all" || jdsByDept(deptF).includes(item.jdId);
@@ -1926,8 +2066,9 @@ export function JobsProvider({ children }) {
     setEditKpiForm,
     assignKraModal,
     setAssignKraModal,
-    assignKraName,
-    setAssignKraName,
+    assignKraUserIds,
+    setAssignKraUserIds,
+    kraAssignUsers,
     assignKpiModal,
     setAssignKpiModal,
     assignKpiName,

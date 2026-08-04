@@ -72,36 +72,71 @@ export const fetchAllKras = async () => {
 };
 
 /**
- * POST {BASE_URL}/kras.json?access_token=…   body: form-urlencoded
- *   kra_type, resource_type, resource_id, title, description, weightage,
- *   status + job_description_id, assignee_id, effective_from, effective_to
+ * KRA kis cheez se linked hai — job description ke saath ho to `job`, warna
+ * `general`. JD linked hone par explicit `kraType` se bhi upar yahi rule chalta
+ * hai, taki purani rows update par sahi type me chali jayein.
+ */
+const kraTypeFor = (form = {}) => {
+  if (toNum(form.jdId) !== undefined) return "job";
+  return form.kraType || "general";
+};
+
+/** Chuni gayi assignee ids (form me array ho ya single). */
+const assigneeIdsOf = (form = {}) => {
+  const many = Array.isArray(form.assigneeIds)
+    ? form.assigneeIds.map(toNum).filter((id) => id !== undefined)
+    : [];
+  if (many.length) return many;
+  const single = toNum(form.assigneeId);
+  return single !== undefined ? [single] : [];
+};
+
+/**
+ * Assignee fields — `assignee_ids` ek asli JSON array jata hai (wahi shape jo
+ * KPI API me jata hai: `assignee_ids: [286725, 189037, 305677]`), aur
+ * `assignee_id` me pehla member, kyunki API single assignee bhi rakhta hai.
+ */
+const assigneePayload = (form = {}) => {
+  const ids = assigneeIdsOf(form);
+  if (!ids.length) return {};
+  return { assignee_id: ids[0], assignee_ids: ids };
+};
+
+/** Sirf bhare hue fields bhejte hain — khali/undefined skip. */
+const compact = (payload = {}) =>
+  Object.fromEntries(
+    Object.entries(payload).filter(
+      ([, value]) => value !== undefined && value !== null && value !== ""
+    )
+  );
+
+/**
+ * POST {BASE_URL}/kras.json?access_token=…   body: JSON
+ *   { kra_type, resource_type, resource_id, title, description, weightage,
+ *     status, job_description_id, assignee_id, assignee_ids: [...],
+ *     effective_from, effective_to }
  */
 export const createKra = async (form = {}) => {
   const { baseUrl, token } = getApiContext();
   if (!baseUrl || !token) return null;
-  const params = new URLSearchParams();
-  const put = (key, value) => {
-    if (value === undefined || value === null || value === "") return;
-    params.set(key, String(value));
+  const body = {
+    ...compact({
+      kra_type: kraTypeFor(form),
+      resource_type: form.resourceType || "Pms::Department",
+      resource_id: toNum(form.resourceId),
+      title: form.title,
+      description: form.desc || form.description,
+      weightage: toNum(form.weightage),
+      status: form.status || "active",
+      job_description_id: toNum(form.jdId),
+      effective_from: form.effectiveFrom,
+      effective_to: form.effectiveTo,
+    }),
+    ...assigneePayload(form),
   };
-  put("kra_type", form.kraType || "general");
-  put("resource_type", form.resourceType || "Pms::Department");
-  put("resource_id", toNum(form.resourceId));
-  put("title", form.title);
-  put("description", form.desc || form.description);
-  put("weightage", toNum(form.weightage));
-  put("status", form.status || "active");
-  put("job_description_id", toNum(form.jdId));
-  put("assignee_id", toNum(form.assigneeId));
-  put("effective_from", form.effectiveFrom);
-  put("effective_to", form.effectiveTo);
   try {
-    const res = await axios.post(buildApiUrl("/kras.json"), params, {
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Bearer ${token}`,
-      },
+    const res = await axios.post(buildApiUrl("/kras.json"), body, {
+      headers: apiHeaders(),
     });
     const json = res.data;
     const row = firstDefined(json?.data?.kra, json?.kra, json?.data, json);
@@ -112,36 +147,31 @@ export const createKra = async (form = {}) => {
 };
 
 /**
- * PATCH {BASE_URL}/kras/:id.json?access_token=…   body: form-urlencoded
- * Partial update of title, description, weightage, status, job_description_id,
- * assignee_id, effective_from / effective_to.
+ * PATCH {BASE_URL}/kras/:id.json?access_token=…   body: JSON
+ * Partial update — title, description, weightage, status, job_description_id,
+ * assignee_id + assignee_ids (array), effective_from / effective_to.
  */
 export const updateKra = async (id, form = {}) => {
   const { baseUrl, token } = getApiContext();
   if (!baseUrl || !token) return null;
-  const params = new URLSearchParams();
-  const put = (key, value) => {
-    if (value === undefined || value === null || value === "") return;
-    params.set(key, String(value));
+  const body = {
+    ...compact({
+      kra_type: kraTypeFor(form),
+      resource_type: form.resourceType || "Pms::Department",
+      resource_id: toNum(form.resourceId),
+      title: form.title,
+      description: form.desc || form.description,
+      weightage: toNum(form.weightage),
+      status: form.status || "active",
+      job_description_id: toNum(form.jdId),
+      effective_from: form.effectiveFrom,
+      effective_to: form.effectiveTo,
+    }),
+    ...assigneePayload(form),
   };
-  put("kra_type", form.kraType || "general");
-  put("resource_type", form.resourceType || "Pms::Department");
-  put("resource_id", toNum(form.resourceId));
-  put("title", form.title);
-  put("description", form.desc || form.description);
-  put("weightage", toNum(form.weightage));
-  put("status", form.status || "active");
-  put("job_description_id", toNum(form.jdId));
-  put("assignee_id", toNum(form.assigneeId));
-  put("effective_from", form.effectiveFrom);
-  put("effective_to", form.effectiveTo);
   try {
-    const res = await axios.patch(buildApiUrl(`/kras/${id}.json`), params, {
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Bearer ${token}`,
-      },
+    const res = await axios.patch(buildApiUrl(`/kras/${id}.json`), body, {
+      headers: apiHeaders(),
     });
     const json = res.data;
     const row = firstDefined(json?.data?.kra, json?.kra, json?.data, json);
@@ -170,6 +200,37 @@ export const updateKraStatus = async (id, status) => {
         },
       }
     );
+    const json = res.data;
+    const row = firstDefined(json?.data?.kra, json?.kra, json?.data, json);
+    return row && typeof row === "object" ? normalizeKra(row) : null;
+  } catch (err) {
+    throw new Error(readAxiosError(err));
+  }
+};
+
+/**
+ * PATCH {BASE_URL}/kras/:id.json?access_token=…   body: JSON
+ *   { "assignee_id": 286725, "assignee_ids": [286725, 189037, 305677] }
+ *
+ * Sirf assignee update karta hai — baaki fields (title, weightage, dates…)
+ * bheje hi nahi jate, taki galti se overwrite na hon. `assignee_ids` array me
+ * saare members (KPI API jaisa hi shape), aur `assignee_id` me pehla, kyunki
+ * API single assignee bhi rakhta hai. Khali list = assignee hata do.
+ */
+export const updateKraAssignees = async (id, assigneeIds = []) => {
+  const { baseUrl, token } = getApiContext();
+  if (!baseUrl || !token) return null;
+  const ids = (assigneeIds || [])
+    .map((value) => toNum(value))
+    .filter((value) => value !== undefined);
+  const body = {
+    assignee_id: ids.length ? ids[0] : null,
+    assignee_ids: ids,
+  };
+  try {
+    const res = await axios.patch(buildApiUrl(`/kras/${id}.json`), body, {
+      headers: apiHeaders(),
+    });
     const json = res.data;
     const row = firstDefined(json?.data?.kra, json?.kra, json?.data, json);
     return row && typeof row === "object" ? normalizeKra(row) : null;

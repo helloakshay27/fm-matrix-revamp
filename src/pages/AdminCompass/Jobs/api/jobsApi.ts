@@ -219,6 +219,13 @@ function mapApiKraToUi(apiKra) {
     desc: apiKra.description || "",
     weightage: Number(apiKra.weightage) || 0,
     assignee: apiKra.assignee_name || "",
+    // Assign modal current assignees ko in ids se pre-select karta hai.
+    assigneeId: apiKra.assignee_id ?? null,
+    assigneeIds: Array.isArray(apiKra.assignee_ids)
+      ? apiKra.assignee_ids
+      : apiKra.assignee_id != null
+        ? [apiKra.assignee_id]
+        : [],
     effectiveFrom: apiKra.effective_from || "",
     effectiveTo: apiKra.effective_to || "",
     status: apiKra.status || "active",

@@ -53,6 +53,11 @@ const normalizeAction = (raw) => {
 };
 
 // "Kra" / "PmsKra" / "kra" → "KRA"; keeps unknown types readable.
+const rawActionValue = (row) =>
+  String(
+    firstDefined(row?.action, row?.event, row?.log_type, row?.activity_type, row?.type) ?? ""
+  ).trim();
+
 const normalizeEntity = (raw) => {
   const value = String(raw ?? "").trim();
   if (!value) return "—";
@@ -128,6 +133,8 @@ const humanizeKey = (key) =>
 // Audit shor — inhe dikhane se log padhna mushkil hota hai, koi value nahi.
 const NOISE_KEYS = new Set([
   "id",
+  "name",
+  "title",
   "created_at",
   "updated_at",
   "created_by_id",
@@ -145,7 +152,10 @@ const RUBY_PAIR =
  * `detail` Ruby hash inspect string hoti hai — do shapes aate hain:
  *   {:title=>"test"}                        (create — naye record ke fields)
  *   {"archived"=>[false, true], …}          (update — [purana, naya] changes)
- * Dono ko { key, label, value } pairs me todte hain; `{}` par khali array.
+ *
+ * Dono ko pairs me todte hain: `{ key, label, value, from, to }`. Change pair
+ * par `from`/`to` bhi aate hain, taki UI purani value strike-through aur nayi
+ * value highlight kar ke dikha sake. `{}` par khali array.
  */
 const parseRubyHash = (raw) => {
   const text = String(raw ?? "").trim();
@@ -158,15 +168,47 @@ const parseRubyHash = (raw) => {
     const list = /^\[.*\]$/s.test(trimmed)
       ? splitRubyList(trimmed.slice(1, -1))
       : null;
+    // nil ko "—" dikhate hain (jaise archived_at: nil → date).
+    const parts = list
+      ? list.map((item) => formatRubyValue(item) || "—")
+      : null;
     return {
       key,
       label: humanizeKey(key),
-      // [purana, naya] → "purana → naya"; nil ko "—" dikhate hain.
-      value: list
-        ? list.map((item) => formatRubyValue(item) || "—").join(" → ")
-        : formatRubyValue(trimmed),
+      value: parts ? parts.join(" → ") : formatRubyValue(trimmed),
+      from: parts && parts.length > 1 ? parts[0] : undefined,
+      to: parts ? parts[parts.length - 1] : undefined,
     };
   });
+};
+
+/**
+ * UI ke liye detail — { text } (plain string) ya { changes: [...] }.
+ * Har change: `{ label, from, to, value, text }`
+ *   • from + to  → "Weightage 50 → 60" (purani strike-through, nayi highlight)
+ *   • value      → "Title: testing QA"
+ *   • text       → standalone label, jaise "Archived" / "Restored"
+ */
+const detailChanges = (raw) => {
+  const text = String(raw ?? "").trim();
+  if (!text) return [];
+  const pairs = parseRubyHash(text);
+  // Ruby hash nahi hai to poora text hi ek entry ban jata hai.
+  if (pairs === null) return [{ text }];
+  return pairs
+    .filter((pair) => !NOISE_KEYS.has(pair.key) && pair.value !== "")
+    .map((pair) => {
+      // archived: false → true ka matlab Archived; ulta Restored.
+      if (pair.key === "archived") {
+        if (pair.to === "true") return { text: "Archived" };
+        if (pair.to === "false")
+          return pair.from === "true" ? { text: "Restored" } : null;
+      }
+      if (pair.from !== undefined && pair.to !== undefined)
+        return { label: pair.label, from: pair.from, to: pair.to };
+      return { label: pair.label, value: pair.value };
+    })
+    .filter(Boolean);
 };
 
 /** "Archived: false → true · Weight: 100 → 49" — noise keys chhod kar. */
@@ -220,9 +262,8 @@ const userName = (row) => {
 
 const normalizeLog = (row, index) => ({
   id: firstDefined(row?.id, row?.log_id, `log-${index}`),
-  type: normalizeAction(
-    firstDefined(row?.action, row?.event, row?.log_type, row?.activity_type, row?.type)
-  ),
+  type: normalizeAction(rawActionValue(row)),
+  action: rawActionValue(row),
   entity: normalizeEntity(
     firstDefined(
       row?.entity,
@@ -250,7 +291,20 @@ const normalizeLog = (row, index) => ({
     ) ?? "—"
   ).trim(),
   entityId: firstDefined(row?.entity_id, row?.loggable_id, row?.record_id),
+  // `detail` = plain text (tooltip/export ke liye), `changes` = structured
+  // entries jo UI old → new style me render karta hai.
   detail: formatDetail(
+    firstDefined(
+      row?.detail,
+      row?.details,
+      row?.description,
+      row?.message,
+      row?.comment,
+      row?.remarks,
+      row?.notes
+    )
+  ),
+  changes: detailChanges(
     firstDefined(
       row?.detail,
       row?.details,
