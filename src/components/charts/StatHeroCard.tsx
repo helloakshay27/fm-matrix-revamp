@@ -2,7 +2,8 @@ import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type StatHeroTone = "purple" | "teal" | "peach" | "blue";
-export type StatHeroAccent = "success" | "info" | "green" | "warning" | "error";
+export type StatHeroAccent = "success" | "info" | "green" | "warning" | "error" | "neutral";
+export type StatHeroBorderAccent = "warning" | "error" | "success" | "info";
 
 const TONE_STYLE: Record<StatHeroTone, React.CSSProperties> = {
   purple: { backgroundColor: "#EFEFFB" },
@@ -17,6 +18,14 @@ const ACCENT_TEXT_CLASSES: Record<StatHeroAccent, string> = {
   green: "text-brand-green",
   warning: "text-[#8A5A00]",
   error: "text-brand-error",
+  neutral: "text-brand-text",
+};
+
+const BORDER_ACCENT_CLASSES: Record<StatHeroBorderAccent, string> = {
+  warning: "border-2 border-brand-warning",
+  error: "border-2 border-brand-error",
+  success: "border-2 border-brand-success",
+  info: "border-2 border-brand-info",
 };
 
 const ACCENT_BAR_CLASSES: Record<StatHeroAccent, string> = {
@@ -25,6 +34,7 @@ const ACCENT_BAR_CLASSES: Record<StatHeroAccent, string> = {
   green: "bg-brand-green",
   warning: "bg-brand-warning",
   error: "bg-brand-error",
+  neutral: "bg-brand-text-light",
 };
 
 export interface StatHeroCardProps {
@@ -35,6 +45,8 @@ export interface StatHeroCardProps {
   subtitle?: string;
   /** 0-100 — renders a thin progress track under the value, in the accent color */
   progress?: number;
+  /** Full colored ring around the card — mirrors the ".ki" border-top accent seen on paired KPI cards (AMC coverage, MTTR/MTBF, etc). */
+  borderAccent?: StatHeroBorderAccent;
   onClick?: () => void;
   className?: string;
 }
@@ -52,13 +64,19 @@ export function StatHeroCard({
   accent,
   subtitle,
   progress,
+  borderAccent,
   onClick,
   className,
 }: StatHeroCardProps) {
   return (
     <div
       onClick={onClick}
-      className={cn("relative rounded-xl p-4", onClick && "cursor-pointer", className)}
+      className={cn(
+        "relative rounded-xl p-4",
+        onClick && "cursor-pointer",
+        borderAccent && BORDER_ACCENT_CLASSES[borderAccent],
+        className
+      )}
       style={TONE_STYLE[tone]}
     >
       <button
