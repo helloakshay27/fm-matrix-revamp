@@ -3030,7 +3030,9 @@ const DailyTab = ({
                 : type === "todo"
                   ? "Todo"
                   : "Note";
-          const memberName = getItemMemberName(item);
+          // `__ownerTag` display-only fallback hai — report owner (HOD) ki apni
+          // rows par bhi badge dikhe (see `withOwnerTag`).
+          const memberName = getItemMemberName(item) || item?.__ownerTag || "";
           const extraProps = itemProps?.(item);
           // Poori row par hover tooltip — sirf icon par nahi, taki admin ko row
           // ke kisi bhi hisse par hover karke pata chal jaye ki ye Task / Issue
@@ -4022,21 +4024,33 @@ const DailyTab = ({
                         );
                       });
                     };
-                    const filteredAccomplishmentRows = filterRowsForSelectedMember(
-                      combinedAccomplishmentRows
+                    // Badge har row par dikhna chahiye — team member ki rows par
+                    // unka naam pehle se hota hai, aur jin par owner tag nahi hai
+                    // wo report owner (HOD) ki hain. `__ownerTag` sirf display ke
+                    // liye hai (asli `member`/`owner_name` fields chhedte nahi),
+                    // taki drag-to-plan aur save payload par koi asar na pade.
+                    const withOwnerTag = (items: any[] = []) =>
+                      items.map((item: any) =>
+                        getItemMemberName(item)
+                          ? item
+                          : { ...item, __ownerTag: report.name }
+                      );
+                    const filteredAccomplishmentRows = withOwnerTag(
+                      filterRowsForSelectedMember(combinedAccomplishmentRows)
                     );
-                    const filteredTasksIssueRows = filterRowsForSelectedMember(
-                      combinedTasksIssueRows
+                    const filteredTasksIssueRows = withOwnerTag(
+                      filterRowsForSelectedMember(combinedTasksIssueRows)
                     );
-                    const filteredTomorrowPlanRows = filterRowsForSelectedMember(
-                      combinedTomorrowPlanRows
+                    const filteredTomorrowPlanRows = withOwnerTag(
+                      filterRowsForSelectedMember(combinedTomorrowPlanRows)
                     );
                     // API se aane par ye bucket bhar jaayega; tab tak khaali
                     // rehta hai to header render hi nahi hota.
-                    const filteredNotAccomplishedRows =
+                    const filteredNotAccomplishedRows = withOwnerTag(
                       filterRowsForSelectedMember(
                         displayRd.not_accomplished_plan
-                      );
+                      )
+                    );
                     const showFilteredMemberBadges =
                       hasTeamRows && activeReportMember === "all";
 
