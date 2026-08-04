@@ -424,7 +424,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-warning-banner",
-      layout: { x: 0, y: 3, w: 12, h: 3, minW: 4, minH: 2 },
+      layout: { x: 0, y: 3, w: 12, h: 3, minW: 4, minH: 2, isResizable: false, isDraggable: false },
       content: (
         <div className="rounded-lg border border-brand-warning bg-brand-warning-light px-3 py-2 text-brand-body-5 text-[#B8860B] h-full overflow-auto">
           Zero Near Miss / Good Catch reports alongside 5,800 incidents per million sq ft is a
@@ -477,7 +477,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-rootnote",
-      layout: { x: 0, y: 13, w: 12, h: 2, minW: 4, minH: 2 },
+      layout: { x: 0, y: 13, w: 12, h: 2, minW: 4, minH: 2, isResizable: false, isDraggable: false },
       content: (
         <p className="text-brand-body-5 text-brand-text-light">
           Root Cause is a different lens than the Category breakdown below — Category groups

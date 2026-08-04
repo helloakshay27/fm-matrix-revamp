@@ -4,6 +4,7 @@ import {
   Area,
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,6 +15,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
+
+const BAR_SERIES_COLORS = ["#9EC8BA", "#8E7BE0", "#DA7756", "#798C5E", "#EDC488"];
 
 export interface IncidentTrendDatum {
   month: string;
@@ -136,12 +139,15 @@ export function IncidentTrendChartCard({
               <Bar
                 dataKey="incidents"
                 name="Incidents"
-                fill={ANALYTICS_PALETTE[0]}
                 radius={[4, 4, 0, 0]}
                 maxBarSize={40}
                 cursor={onBarClick ? "pointer" : undefined}
                 onClick={(barData) => onBarClick?.(barData as unknown as IncidentTrendDatum)}
-              />
+              >
+                {data.map((_, index) => (
+                  <Cell key={index} fill={BAR_SERIES_COLORS[index % BAR_SERIES_COLORS.length]} />
+                ))}
+              </Bar>
             </BarChart>
           )}
         </ResponsiveContainer>

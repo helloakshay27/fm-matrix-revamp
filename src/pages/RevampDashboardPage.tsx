@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import GridLayout, { Responsive, WidthProvider } from "react-grid-layout";
 import {
   RefreshCw,
@@ -82,6 +82,15 @@ function loadStoredLayout(): GridLayout.Layout[] | null {
   } catch {
     return null;
   }
+}
+
+// A saved layout can predate cards added later — reconcile it against the
+// current default so new/renamed cards fall back to their default size and
+// position instead of collapsing to react-grid-layout's w:1,h:1 default.
+function reconcileLayout(stored: GridLayout.Layout[] | null): GridLayout.Layout[] {
+  if (!stored) return DEFAULT_TICKETS_LAYOUT;
+  const storedById = new Map(stored.map((item) => [item.i, item]));
+  return DEFAULT_TICKETS_LAYOUT.map((defaultItem) => storedById.get(defaultItem.i) ?? defaultItem);
 }
 
 type ChipTone = "red" | "amber" | "green" | "grey";
@@ -557,12 +566,9 @@ export default function RevampDashboardPage() {
   const isTicketsView = activeModule === "maintenance" && activeSubTab === "Ticket";
   const isSafetyView = activeModule === "safety";
 
-  const [ticketsLayout, setTicketsLayout] = useState<GridLayout.Layout[]>(DEFAULT_TICKETS_LAYOUT);
-
-  useEffect(() => {
-    const stored = loadStoredLayout();
-    if (stored) setTicketsLayout(stored);
-  }, []);
+  const [ticketsLayout, setTicketsLayout] = useState<GridLayout.Layout[]>(() =>
+    reconcileLayout(loadStoredLayout())
+  );
 
   const persistTicketsLayout = (layout: GridLayout.Layout[]) => {
     setTicketsLayout(layout);
