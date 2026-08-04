@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import GridLayout, { Responsive, WidthProvider } from "react-grid-layout";
 import {
   RefreshCw,
@@ -202,6 +202,7 @@ const DEFAULT_TICKETS_LAYOUT: GridLayout.Layout[] = [
   { i: "vendor-data-hygiene-banner", x: 0, y: 523, w: 12, h: 2, minW: 6, minH: 2 },
 ];
 
+
 function loadStoredLayout(): GridLayout.Layout[] | null {
   try {
     const raw = localStorage.getItem(TICKETS_GRID_STORAGE_KEY);
@@ -294,9 +295,6 @@ const MODULES: ModuleDefinition[] = [
     summary: "AMC coverage, asset uptime and PPM checklist compliance.",
     subTabs: [
       "Tickets",
-      "Task",
-      "Schedule",
-      "Soft Service",
       "Assets",
       "Audit",
       "AMC",
@@ -1157,6 +1155,17 @@ export default function RevampDashboardPage() {
       activeSubTab === "Vendor");
   const isSafetyView = activeModule === "safety";
 
+  const maintenanceSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const registerMaintenanceSectionRef = (key: string) => (el: HTMLDivElement | null) => {
+    maintenanceSectionRefs.current[key] = el;
+  };
+
+  useEffect(() => {
+    if (!isTicketsView) return;
+    const el = maintenanceSectionRefs.current[activeSubTab];
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [activeSubTab, isTicketsView]);
+
   const [ticketsLayout, setTicketsLayout] = useState<GridLayout.Layout[]>(() =>
     reconcileLayout(loadStoredLayout())
   );
@@ -1304,6 +1313,7 @@ export default function RevampDashboardPage() {
               isResizable
             >
               <div key="hero-sla" className="h-full">
+                <div ref={registerMaintenanceSectionRef("Tickets")} className="h-0" />
                 <StatHeroCard
                   tone="purple"
                   label="Response SLA"
@@ -1683,6 +1693,7 @@ export default function RevampDashboardPage() {
               </div>
 
               <div key="assets-section-label" className="h-full flex items-center">
+                <div ref={registerMaintenanceSectionRef("Assets")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Asset Management Dashboard
                 </span>
@@ -1973,6 +1984,7 @@ export default function RevampDashboardPage() {
               </div>
 
               <div key="audit-section-label" className="h-full flex items-center">
+                <div ref={registerMaintenanceSectionRef("Audit")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Audit Dashboard
                 </span>
@@ -2176,6 +2188,7 @@ export default function RevampDashboardPage() {
               </div>
 
               <div key="amc-section-label" className="h-full flex items-center">
+                <div ref={registerMaintenanceSectionRef("AMC")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   AMC Contracts
                 </span>
@@ -2380,6 +2393,7 @@ export default function RevampDashboardPage() {
               </div>
 
               <div key="checklist-section-label" className="h-full flex items-center">
+                <div ref={registerMaintenanceSectionRef("Checklists")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Digital Checklist Dashboard
                 </span>
@@ -2594,6 +2608,7 @@ export default function RevampDashboardPage() {
               </div>
 
               <div key="inventory-section-label" className="h-full flex items-center">
+                <div ref={registerMaintenanceSectionRef("Inventory")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Inventory
                 </span>
@@ -2724,6 +2739,7 @@ export default function RevampDashboardPage() {
               </div>
 
               <div key="waste-section-label" className="h-full flex items-center gap-2">
+                <div ref={registerMaintenanceSectionRef("Waste")} className="h-0" />
                 <span className="text-sm">♻</span>
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Waste Operations
@@ -2908,6 +2924,7 @@ export default function RevampDashboardPage() {
               </div>
 
               <div key="attendance-section-label" className="h-full flex items-center">
+                <div ref={registerMaintenanceSectionRef("Attendance")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Attendance
                 </span>
@@ -3013,6 +3030,7 @@ export default function RevampDashboardPage() {
               </div>
 
               <div key="survey-section-label" className="h-full flex items-center">
+                <div ref={registerMaintenanceSectionRef("Survey")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Survey
                 </span>
@@ -3153,6 +3171,7 @@ export default function RevampDashboardPage() {
               </div>
 
               <div key="vendor-section-label" className="h-full flex items-center">
+                <div ref={registerMaintenanceSectionRef("Vendor")} className="h-0" />
                 <span className="text-brand-caption font-semibold text-brand-text-light uppercase tracking-wide">
                   Vendor Management
                 </span>
