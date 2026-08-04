@@ -4056,7 +4056,14 @@ export const AddSchedulePage = () => {
                                       <input
                                         type="checkbox"
                                         checked={isChecked}
-                                        onChange={() => {}}
+                                        onChange={() => {
+                                          setFormData(prev => ({
+                                            ...prev,
+                                            asset: isChecked
+                                              ? prev.asset.filter(id => id !== asset.id.toString())
+                                              : Array.from(new Set([...prev.asset, asset.id.toString()]))
+                                          }));
+                                        }}
                                         onClick={e => e.stopPropagation()}
                                         style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: '#da7756' }}
                                       />
