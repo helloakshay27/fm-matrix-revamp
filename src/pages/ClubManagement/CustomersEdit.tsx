@@ -16,103 +16,146 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { InputAdornment, TextField } from "@mui/material";
 import axios from "axios";
-import { Loader2, TrendingUp, Target, Users, DollarSign, ArrowLeft } from "lucide-react";
+import { Loader2, TrendingUp, Target, Users, DollarSign, BarChart3, Globe, ArrowLeft } from "lucide-react";
 
+// MARKET ANALYSIS TAB COMPONENT
 const MarketAnalysisTab = ({ productData }) => {
-    const analysisRows = productData?.extendedContent?.detailedMarketAnalysis;
-
-    if (!analysisRows || analysisRows.length === 0) {
-        return (
-            <div className="text-sm text-gray-500">
-                No market analysis data available.
-            </div>
-        );
-    }
-
     return (
-        <div className="space-y-6">
-            <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Market Analysis Overview</h3>
-                <table className="w-full border text-sm">
-                    <thead className="bg-gray-100">
-                        <tr>
-                            <th className="p-2 border text-left">Category</th>
-                            <th className="p-2 border text-left">Key Insights</th>
-                            <th className="p-2 border text-left">Data Points & Metrics</th>
-                            <th className="p-2 border text-left">Strategic Implications</th>
-                            <th className="p-2 border text-left">Priority Level</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {analysisRows.map((analysis, i) => (
-                            <tr key={i}>
-                                <td className="border p-2 font-medium">{analysis.category}</td>
-                                <td className="border p-2 whitespace-pre-line">{analysis.keyInsights}</td>
-                                <td className="border p-2 whitespace-pre-line">{analysis.dataPoints}</td>
-                                <td className="border p-2 whitespace-pre-line">{analysis.strategicImplications}</td>
-                                <td className="border p-2 text-center">{analysis.priorityLevel}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+        <div className="space-y-10">
+            <div className="bg-gray-200 text-gray-800 p-4 rounded-t-xl mb-0 flex justify-between items-center">
+                <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
+                    {productData?.name || 'Product'} - Market Analysis
+                </h2>
             </div>
-
-            <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Market Position Summary</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="w-8 h-8 bg-brand-light rounded-lg flex items-center justify-center">
-                                <TrendingUp className="w-4 h-4 text-brand" />
-                            </div>
-                            <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Market Share</h4>
+            {productData?.extendedContent?.detailedMarketAnalysis ? (
+                <div className="space-y-8">
+                    <div className="space-y-4">
+                        <div className="bg-gray-200 text-gray-800 px-4 py-2 font-semibold font-poppins text-sm uppercase italic">
+                            MARKET ANALYSIS OVERVIEW
                         </div>
-                        <div className="text-xl font-bold text-gray-800">
-                            {analysisRows.reduce((sum, item) => sum + (item.marketShare || 0), 0)}%
+                        <div className="overflow-x-auto border border-[#C4B89D] rounded-xl shadow-lg">
+                            <table className="w-full border-collapse text-[10px] bg-white text-left font-poppins">
+                                <thead>
+                                    <tr className="bg-gray-200 text-gray-800 font-semibold uppercase">
+                                        <th className="border border-[#C4B89D] p-2 w-[15%]">
+                                            Category
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[20%]">
+                                            Key Insights
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[30%]">
+                                            Data Points & Metrics
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[20%]">
+                                            Strategic Implications
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[15%]">
+                                            Priority Level
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {productData.extendedContent.detailedMarketAnalysis.map(
+                                        (analysis, i) => (
+                                            <tr
+                                                key={i}
+                                                className={`${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/50"} hover:bg-[#F6F4EE] transition-colors align-top`}
+                                            >
+                                                <td className="border border-[#C4B89D] p-2 font-semibold text-gray-700 break-words">
+                                                    {analysis.category}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/80 font-medium leading-relaxed whitespace-pre-line break-words">
+                                                    {analysis.keyInsights}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C] leading-relaxed whitespace-pre-line break-words">
+                                                    {analysis.dataPoints}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/70 font-medium italic whitespace-pre-line break-words">
+                                                    {analysis.strategicImplications}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/60 font-bold text-center">
+                                                    {analysis.priorityLevel}
+                                                </td>
+                                            </tr>
+                                        )
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
-                        <p className="text-xs text-gray-500">Current position</p>
                     </div>
 
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="w-8 h-8 bg-brand-light rounded-lg flex items-center justify-center">
-                                <Target className="w-4 h-4 text-brand" />
+                    <div className="space-y-4">
+                        <div className="bg-gray-200 text-gray-800 px-4 py-2 font-semibold font-poppins text-sm uppercase italic">
+                            MARKET POSITION SUMMARY
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <TrendingUp className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Market Share
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    {productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.marketShare || 0), 0)}%
+                                </div>
+                                <p className="text-xs text-gray-500">Current position</p>
                             </div>
-                            <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Growth Potential</h4>
-                        </div>
-                        <div className="text-xl font-bold text-gray-800">
-                            {analysisRows.reduce((sum, item) => sum + (item.growthPotential || 0), 0)}%
-                        </div>
-                        <p className="text-xs text-gray-500">Projected growth</p>
-                    </div>
 
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="w-8 h-8 bg-brand-light rounded-lg flex items-center justify-center">
-                                <Users className="w-4 h-4 text-brand" />
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <Target className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Growth Potential
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    {productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.growthPotential || 0), 0)}%
+                                </div>
+                                <p className="text-xs text-gray-500">Projected growth</p>
                             </div>
-                            <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Target Segments</h4>
-                        </div>
-                        <div className="text-xl font-bold text-gray-800">
-                            {analysisRows.length}
-                        </div>
-                        <p className="text-xs text-gray-500">Identified segments</p>
-                    </div>
 
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="w-8 h-8 bg-brand-light rounded-lg flex items-center justify-center">
-                                <DollarSign className="w-4 h-4 text-brand" />
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <Users className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Target Segments
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    {productData.extendedContent.detailedMarketAnalysis.length}
+                                </div>
+                                <p className="text-xs text-gray-500">Identified segments</p>
                             </div>
-                            <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Revenue Opportunity</h4>
+
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <DollarSign className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Revenue Opportunity
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    ${productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.revenueOpportunity || 0), 0)}M
+                                </div>
+                                <p className="text-xs text-gray-500">Potential value</p>
+                            </div>
                         </div>
-                        <div className="text-xl font-bold text-gray-800">
-                            ${analysisRows.reduce((sum, item) => sum + (item.revenueOpportunity || 0), 0)}M
-                        </div>
-                        <p className="text-xs text-gray-500">Potential value</p>
                     </div>
                 </div>
-            </div>
+            ) : (
+                <div className="p-20 text-center text-[#D3D1C7] font-semibold uppercase text-xl border-4 border-dashed border-[#D3D1C7] rounded-[3rem]">
+                    Market Analysis Data Coming Soon
+                </div>
+            )}
         </div>
     );
 };

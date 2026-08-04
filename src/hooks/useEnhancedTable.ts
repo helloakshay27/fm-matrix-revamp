@@ -132,24 +132,7 @@ export function useEnhancedTable<T>({
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
 
-      let comparison: number;
-
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        // Numeric columns (amounts, counts, etc.) — compare as numbers, not strings,
-        // so "100" doesn't sort before "20".
-        comparison = aValue - bValue;
-      } else if (aValue instanceof Date && bValue instanceof Date) {
-        comparison = aValue.getTime() - bValue.getTime();
-      } else {
-        // Text and date-string columns — `numeric: true` also makes embedded
-        // digit runs (e.g. "Item 2" vs "Item 10") sort naturally, and ISO date
-        // strings already sort correctly lexicographically.
-        comparison = String(aValue).localeCompare(String(bValue), undefined, {
-          numeric: true,
-          sensitivity: 'base',
-        });
-      }
-
+      const comparison = String(aValue).localeCompare(String(bValue));
       return sortState.direction === 'asc' ? comparison : -comparison;
     });
   }, [data, sortState]);
