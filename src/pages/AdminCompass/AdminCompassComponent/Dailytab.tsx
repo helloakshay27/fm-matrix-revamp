@@ -40,7 +40,7 @@ import { useNavigate } from "react-router-dom";
 // Task glyph — checklist rows inside a rounded frame. Lucide me iska boxed
 // variant nahi hai, isliye inline SVG (baaki icons jaisa hi currentColor +
 // stroke-2 pattern follow karta hai).
-const TaskChecksIcon = ({
+export const TaskChecksIcon = ({
   className = "",
   ...rest
 }: React.SVGProps<SVGSVGElement>) => (
@@ -62,6 +62,33 @@ const TaskChecksIcon = ({
     <path d="M13.5 15.8H18" />
   </svg>
 );
+
+// Member badge ka color + initials — Daily Log ke detail modal me bhi wahi
+// rows dikhti hain, isliye ye module level par hain (dono jagah shared).
+export const getMemberBadgeClass = (name: any) => {
+  const colors = [
+    "bg-[#E7E3FF] text-[#6756C9]",
+    "bg-[#FFE2A8] text-[#8B5A00]",
+    "bg-[#BFEADF] text-[#0E6F5E]",
+    "bg-[#F0E8FF] text-[#7564C9]",
+    "bg-[#FFD9B5] text-[#A15305]",
+    "bg-[#DDEBFF] text-[#315FAD]",
+  ];
+  const seed = String(name || "")
+    .split("")
+    .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return colors[seed % colors.length];
+};
+
+export const getMemberShortName = (name: any) => {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return "";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+};
 
 // ── UI Components ──
 const BtnIcon = ({
@@ -2961,31 +2988,6 @@ const DailyTab = ({
         })}
       </ul>
     );
-  };
-
-  const getMemberBadgeClass = (name: any) => {
-    const colors = [
-      "bg-[#E7E3FF] text-[#6756C9]",
-      "bg-[#FFE2A8] text-[#8B5A00]",
-      "bg-[#BFEADF] text-[#0E6F5E]",
-      "bg-[#F0E8FF] text-[#7564C9]",
-      "bg-[#FFD9B5] text-[#A15305]",
-      "bg-[#DDEBFF] text-[#315FAD]",
-    ];
-    const seed = String(name || "")
-      .split("")
-      .reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    return colors[seed % colors.length];
-  };
-
-  const getMemberShortName = (name: any) => {
-    const parts = String(name || "")
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
-    if (!parts.length) return "";
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
   };
 
   const renderAccomplishmentRows = (
