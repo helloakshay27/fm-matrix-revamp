@@ -80,6 +80,9 @@ export interface PieChartCardProps {
   /** "bottom" (default) renders the recharts legend under the donut. "right" renders a
    * value+percent stat list beside it, matching the "Ticket pool composition" panel. */
   legendPosition?: "bottom" | "right";
+  /** Override the default ANALYTICS_PALETTE-by-index colors — use when slices carry a
+   * fixed status meaning (e.g. In Use/Breakdown/Allocated) rather than an arbitrary category. */
+  colors?: string[];
   showInfoIcon?: boolean;
   height?: number;
   className?: string;
@@ -99,14 +102,16 @@ export function PieChartCard({
   insightVariant = "banner",
   centerLabel,
   legendPosition = "bottom",
+  colors,
   showInfoIcon = false,
   height = 240,
   className,
 }: PieChartCardProps) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
+  const palette = colors ?? ANALYTICS_PALETTE;
   const coloredData = data.map((d, index) => ({
     ...d,
-    color: ANALYTICS_PALETTE[index % ANALYTICS_PALETTE.length],
+    color: palette[index % palette.length],
   }));
 
   const donut = (

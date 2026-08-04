@@ -3,8 +3,10 @@ import type { GrowthWeek } from '../../data/metrics';
 export function GrowthChart({ weeks }: { weeks: GrowthWeek[] }) {
   const W = 560, H = 240, pl = 34, pr = 10, pt = 14, pb = 26;
   const n = weeks.length;
-  const maxUp = Math.max(...weeks.map((w) => w.nw + w.ret + w.res));
-  const maxDn = Math.max(...weeks.map((w) => w.dorm));
+  if (!n) return null;
+
+  const maxUp = Math.max(0, ...weeks.map((w) => w.nw + w.ret + w.res));
+  const maxDn = Math.max(0, ...weeks.map((w) => w.dorm));
   const bw = ((W - pl - pr) / n) * 0.6;
   const gap = (W - pl - pr) / n;
   const zero = pt + (H - pt - pb) * (maxUp / (maxUp + maxDn || 1));
@@ -28,10 +30,11 @@ export function GrowthChart({ weeks }: { weeks: GrowthWeek[] }) {
         });
         const hd = w.dorm * scaleDn;
         return (
-          <g key={i}>
+          <g key={w.label + i}>
+            <title>{`Week of ${w.label} · ${w.nw} new · ${w.ret} returning · ${w.res} resurrected · ${w.dorm} dormant`}</title>
             {rects}
             <rect x={x} y={zero} width={bw} height={Math.max(0, hd)} rx={1.5} fill="var(--phg-red)" opacity={0.92} />
-            <text x={x + bw / 2} y={H - 8} textAnchor="middle" fontSize={9.5} fill="#9b998f">W{i + 1}</text>
+            <text x={x + bw / 2} y={H - 8} textAnchor="middle" fontSize={9.5} fill="#9b998f">{w.label}</text>
           </g>
         );
       })}

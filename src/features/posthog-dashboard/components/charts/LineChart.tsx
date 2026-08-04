@@ -9,7 +9,10 @@ interface LineChartProps {
 
 /** Usage/adoption-trend line chart: solid current-period line + dashed projected tail, faint dashed previous period, gradient fill. */
 export function LineChart({ cur, prev, showPrev = true }: LineChartProps) {
+  const gid = `phg-lg${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const W = 640, H = 240, pl = 44, pr = 14, pt = 14, pb = 26;
+  // A single point can't be drawn as a line, and Math.max() of nothing is -Infinity.
+  if (cur.length < 2) return null;
   const all = [...cur, ...(prev ?? [])];
   const mx = Math.max(...all) * 1.12 || 1;
   const n = cur.length;
@@ -28,8 +31,6 @@ export function LineChart({ cur, prev, showPrev = true }: LineChartProps) {
   for (let i = 0; i < n - 1; i++) areaD += `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(cur[i]).toFixed(1)} `;
   areaD += `L${X(n - 2).toFixed(1)} ${H - pb} L${X(0).toFixed(1)} ${H - pb} Z`;
 
-  const gid = `phg-lg${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
-
   return (
     <svg className="phg-chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
       <defs>
@@ -44,7 +45,7 @@ export function LineChart({ cur, prev, showPrev = true }: LineChartProps) {
           <text x={pl - 8} y={g.y + 4} textAnchor="end" fontSize={10} fill="#9b998f">{fmtC(g.val)}</text>
         </g>
       ))}
-      {prev && showPrev && (
+      {prev && prev.length > 1 && showPrev && (
         <path d={pathStr(prev)} fill="none" stroke="#b0aea5" strokeWidth={2} strokeDasharray="5 4" opacity={0.8} />
       )}
       <path d={areaD} fill={`url(#${gid})`} />

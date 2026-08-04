@@ -2,7 +2,7 @@ import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type StatHeroTone = "purple" | "teal" | "peach" | "blue";
-export type StatHeroAccent = "success" | "info" | "green" | "warning" | "error";
+export type StatHeroAccent = "success" | "info" | "green" | "warning" | "error" | "neutral";
 
 const TONE_STYLE: Record<StatHeroTone, React.CSSProperties> = {
   purple: { backgroundColor: "#EFEFFB" },
@@ -11,20 +11,23 @@ const TONE_STYLE: Record<StatHeroTone, React.CSSProperties> = {
   blue: { backgroundColor: "#85BDF633" },
 };
 
+// Darker shade of each tone's own base color (not the accent), used for the
+// progress-bar fill so the bar always reads as "this card's color, deepened"
+// rather than an unrelated semantic accent color.
+const TONE_PROGRESS_COLOR: Record<StatHeroTone, string> = {
+  purple: "#9B9BA3",
+  teal: "#778F8A",
+  peach: "#945E5E",
+  blue: "#567BA0",
+};
+
 const ACCENT_TEXT_CLASSES: Record<StatHeroAccent, string> = {
   success: "text-brand-success",
   info: "text-brand-info",
   green: "text-brand-green",
   warning: "text-[#8A5A00]",
   error: "text-brand-error",
-};
-
-const ACCENT_BAR_CLASSES: Record<StatHeroAccent, string> = {
-  success: "bg-brand-success",
-  info: "bg-brand-info",
-  green: "bg-brand-green",
-  warning: "bg-brand-warning",
-  error: "bg-brand-error",
+  neutral: "text-brand-text",
 };
 
 export interface StatHeroCardProps {
@@ -76,8 +79,11 @@ export function StatHeroCard({
       {progress !== undefined && (
         <div className="h-[3px] bg-white/60 rounded-full mt-1.5 overflow-hidden">
           <div
-            className={cn("h-full rounded-full", ACCENT_BAR_CLASSES[accent])}
-            style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+            className="h-full rounded-full"
+            style={{
+              width: `${Math.min(100, Math.max(0, progress))}%`,
+              backgroundColor: TONE_PROGRESS_COLOR[tone],
+            }}
           />
         </div>
       )}

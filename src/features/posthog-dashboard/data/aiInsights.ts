@@ -1,11 +1,11 @@
-import { fmtC, pct } from './format';
+import { fmtC, pct, pctVal } from './format';
 import type {
-  UsageChartData, GrowthWeek, RoleShare, SiteHealthRow, RegionRow, FunnelData, FlowRow, PathRow,
+  UsageChartData, GrowthWeek, RoleShare, SiteHealthRow, FunnelData, FlowRow, PathRow,
 } from './metrics';
 
 export type ChartKey =
   | 'chart.usage' | 'chart.device' | 'chart.adoptTrend' | 'chart.growth' | 'chart.retention'
-  | 'chart.role' | 'chart.siteHealth' | 'chart.region' | 'chart.funnel' | 'chart.flowList' | 'chart.path';
+  | 'chart.role' | 'chart.siteHealth' | 'chart.funnel' | 'chart.flowList' | 'chart.path';
 
 export interface AIDataMap {
   'chart.usage': UsageChartData;
@@ -15,7 +15,6 @@ export interface AIDataMap {
   'chart.retention': { cohorts: (number | null)[][] };
   'chart.role': { roles: RoleShare[] };
   'chart.siteHealth': { rows: SiteHealthRow[] } | null;
-  'chart.region': { rows: RegionRow[] } | null;
   'chart.funnel': FunnelData;
   'chart.flowList': { rows: FlowRow[] };
   'chart.path': { rows: PathRow[] };
@@ -42,6 +41,7 @@ export function simInsight<K extends ChartKey>(chartKey: K, d: AIDataMap[K] | nu
   switch (chartKey) {
     case 'chart.usage': {
       const data = d as AIDataMap['chart.usage'];
+      if (!data.cur.length) return EMPTY_INSIGHT;
       const ct = sum(data.cur), pt = sum(data.prev), ch = chg(ct, pt);
       const pk = data.cur.indexOf(Math.max(...data.cur)), lo = data.cur.indexOf(Math.min(...data.cur));
       head = `${data.measure.charAt(0).toUpperCase() + data.measure.slice(1)} are ${ch >= 0 ? 'up ' : 'down '}${Math.abs(ch)}% versus the previous period across ${scope}.`;
@@ -61,6 +61,7 @@ export function simInsight<K extends ChartKey>(chartKey: K, d: AIDataMap[K] | nu
       const data = d as AIDataMap['chart.device'];
       const rows = data.rows.slice().sort((a, b) => b[1] - a[1]);
       const top = rows[0];
+      if (!top) return EMPTY_INSIGHT;
       const mob = (data.rows.find((r) => r[0] === 'Mobile') ?? ['', 0])[1] + (data.rows.find((r) => r[0] === 'Tablet') ?? ['', 0])[1];
       head = `${top[0]} is the main way people reach the app (${pct(top[1])} of sessions) in ${scope}.`;
       pts = [
@@ -76,6 +77,7 @@ export function simInsight<K extends ChartKey>(chartKey: K, d: AIDataMap[K] | nu
     }
     case 'chart.adoptTrend': {
       const data = d as AIDataMap['chart.adoptTrend'];
+      if (!data.cur.length) return EMPTY_INSIGHT;
       const f = data.cur[0], l = data.cur[data.cur.length - 1], ch = chg(l, f);
       head = `Weekly active users are ${ch >= 0 ? 'up ' : 'down '}${Math.abs(ch)}% over the 8-week window in ${scope}.`;
       pts = [
@@ -92,6 +94,7 @@ export function simInsight<K extends ChartKey>(chartKey: K, d: AIDataMap[K] | nu
     case 'chart.growth': {
       const data = d as AIDataMap['chart.growth'];
       const w = data.weeks[data.weeks.length - 1];
+      if (!w) return EMPTY_INSIGHT;
       const gains = w.nw + w.res, losses = w.dorm;
       head = `${gains > losses ? 'Gains are outpacing losses' : 'Losses are outpacing new + resurrected users'} in the latest week for ${scope}.`;
       pts = [
@@ -125,6 +128,7 @@ export function simInsight<K extends ChartKey>(chartKey: K, d: AIDataMap[K] | nu
       const data = d as AIDataMap['chart.role'];
       const rs = data.roles.slice().sort((a, b) => b.share - a.share);
       const top = rs[0], bot = rs[rs.length - 1];
+      if (!top || !bot) return EMPTY_INSIGHT;
       head = `${top.name} are the most engaged role (${pct(top.share)}), while ${bot.name} are the least (${pct(bot.share)}) in ${scope}.`;
       pts = [
         'A wide gap between roles means adoption is uneven — one group carries usage.',
@@ -137,41 +141,27 @@ export function simInsight<K extends ChartKey>(chartKey: K, d: AIDataMap[K] | nu
     }
     case 'chart.siteHealth': {
       const data = d as AIDataMap['chart.siteHealth'];
-      if (!data) { head = `No sites in scope for ${scope}.`; break; }
-      const rows = data.rows.slice().sort((a, b) => a.util - b.util);
-      const weak = rows[0];
-      const drops = data.rows.filter((r) => r.drop);
-      head = `The weakest site is ${weak.name} (${pct(weak.util)} seat utilisation) in ${scope}.`;
+      if (!data || !data.rows.length) { head = `No per-site data in scope for ${scope}.`; break; }
+      const rows = data.rows.slice().sort((a, b) => a.users - b.users);
+      const weak = rows[0], strong = rows[rows.length - 1];
+      const drops = rows.filter((r) => r.trend != null && r.trend <= -25);
+      head = `The quietest site is ${weak.name} (${fmtC(weak.users)} active users) in ${scope}.`;
       pts = [
         drops.length ? `${drops.length} site(s) flagged a sudden drop: ${drops.map((r) => r.name).join(', ')}.` : 'No sudden drops flagged this period.',
-        `Top and bottom sites differ by ${Math.round((rows[rows.length - 1].util - weak.util) * 100)} points of utilisation.`,
+        `Busiest site is ${strong.name} with ${fmtC(strong.users)} active users and ${fmtC(strong.sessions)} sessions.`,
       ];
       why = 'Site spread shows whether adoption is a portfolio habit or a few champion sites — a sudden-drop flag is the earliest churn warning available.';
       rec = drops.length
         ? `Contact the flagged site(s) — ${drops.map((r) => r.name).join(', ')} — this week; a sudden drop is a leading indicator, not noise.`
-        : `Pair ${weak.name} with the strongest site in its region for a practice transfer.`;
+        : `Pair ${weak.name} with ${strong.name} for a practice transfer.`;
       sug = `what should ${weak.name} focus on first?`;
-      break;
-    }
-    case 'chart.region': {
-      const data = d as AIDataMap['chart.region'];
-      if (!data) { head = `Region roll-up is not available for ${scope}.`; break; }
-      const rows = data.rows.slice().sort((a, b) => b.util - a.util);
-      const best = rows[0], worst = rows[rows.length - 1];
-      head = `${best.reg} leads on adoption (${pct(best.util)}), ${worst.reg} trails (${pct(worst.util)}).`;
-      pts = [
-        `Active users: ${rows.map((r) => `${r.reg} ${fmtC(r.wau)}`).join(', ')}.`,
-        `The gap between best and worst region is ${Math.round((best.util - worst.util) * 100)} points.`,
-      ];
-      why = 'Regional gaps compound: a trailing region drags portfolio utilisation and usually traces back to a handful of sites.';
-      rec = `Drill into ${worst.reg}'s site table to find the dragging sites, and replicate ${best.reg}'s operating rhythm there.`;
-      sug = `which sites are dragging ${worst.reg} down?`;
       break;
     }
     case 'chart.funnel': {
       const data = d as AIDataMap['chart.funnel'];
+      if (!data.reaches.length) return EMPTY_INSIGHT;
       const first = data.reaches[0], last = data.reaches[data.reaches.length - 1];
-      const overall = Math.round((last / first) * 100);
+      const overall = first ? Math.round((last / first) * 100) : 0;
       head = `The biggest drop-off in "${data.flowLabel}" is a ${data.worstDrop}% fall at "${data.steps[data.worst]}" in ${scope}.`;
       pts = [
         `Overall, ${overall}% of started runs reach the final step (${fmtC(last)} of ${fmtC(first)}).`,
@@ -184,25 +174,28 @@ export function simInsight<K extends ChartKey>(chartKey: K, d: AIDataMap[K] | nu
     }
     case 'chart.flowList': {
       const data = d as AIDataMap['chart.flowList'];
-      const byA = data.rows.slice().sort((a, b) => a.adopt - b.adopt);
-      const byC = data.rows.slice().sort((a, b) => a.comp - b.comp);
-      head = `"${byA[0].label}" has the lowest adoption (${pct(byA[0].adopt)}) and "${byC[0].label}" the lowest completion (${pct(byC[0].comp)}).`;
+      if (!data.rows.length) return EMPTY_INSIGHT;
+      const byUsers = data.rows.slice().sort((a, b) => b.users - a.users);
+      const byEvents = data.rows.slice().sort((a, b) => b.events - a.events);
+      const quiet = byUsers[byUsers.length - 1];
+      head = `"${byUsers[0].path}" is the most used screen in this module (${fmtC(byUsers[0].users)} users, ${fmtC(byUsers[0].sessions)} sessions) in ${scope}.`;
       pts = [
-        "Low adoption is a discovery/training problem; low completion is a friction problem — they need different fixes.",
-        `Highest-volume flow this period: "${data.rows.slice().sort((a, b) => b.vol - a.vol)[0].label}".`,
+        `Most event traffic sits on "${byEvents[0].path}" (${fmtC(byEvents[0].events)} events).`,
+        `The quietest screen is "${quiet.path}" with ${fmtC(quiet.users)} user(s) — either niche or undiscovered.`,
       ];
-      why = "Low adoption and low completion need different fixes — training won't remove friction, and UX polish won't create discovery.";
-      rec = `Start with "${byA[0].label}": run a short role-targeted training push; then walk the funnel of "${byC[0].label}" to find its friction step.`;
-      sug = 'is low adoption a training gap or a workflow-design gap?';
+      why = 'Screen-level spread separates a discovery problem (nobody arrives) from a friction problem (people arrive and stop).';
+      rec = `Check whether "${quiet.path}" is genuinely niche or simply hard to find; if it matters to the workflow, surface it from "${byUsers[0].path}".`;
+      sug = 'is low usage a training gap or a workflow-design gap?';
       break;
     }
     case 'chart.path': {
       const data = d as AIDataMap['chart.path'];
+      if (!data.rows.length) return EMPTY_INSIGHT;
       const byV = data.rows.slice().sort((a, b) => b.vis - a.vis);
       const byB = data.rows.slice().sort((a, b) => b.bo - a.bo);
       head = `Most sessions start at "${byV[0].path}" (${fmtC(byV[0].vis)} visitors) in ${scope}.`;
       pts = [
-        `"${byB[0].path}" has the highest bounce (${pct(byB[0].bo, 1)}) — people arrive but leave without acting.`,
+        `"${byB[0].path}" has the highest bounce (${pctVal(byB[0].bo)}) — people arrive but leave without acting.`,
         'The top entry point is a good candidate for surfacing key actions and nudges.',
       ];
       why = 'Entry pages are where habits form — high bounce on a work page means people arrive with intent and leave without acting.';

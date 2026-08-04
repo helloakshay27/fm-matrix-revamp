@@ -12,3 +12,8 @@ export function fmtDur(s: number): string {
 export function pct(x: number, d = 0): string {
   return (x * 100).toFixed(d) + '%';
 }
+
+/** For API values that already arrive as a percentage (0-100); `null` renders as an em dash. */
+export function pctVal(x: number | null | undefined, d = 1): string {
+  return x == null ? '—' : x.toFixed(d) + '%';
+}
