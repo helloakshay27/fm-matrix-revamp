@@ -1878,7 +1878,6 @@ export default function RevampDashboardPage() {
                     value="73%"
                     accent="warning"
                     subtitle="276 of 378 assets have an active AMC contract"
-                    borderAccent="warning"
                   />
                   <StatHeroCard
                     tone="teal"
@@ -1886,7 +1885,6 @@ export default function RevampDashboardPage() {
                     value="102"
                     accent="error"
                     subtitle="27% of portfolio, zero contract"
-                    borderAccent="error"
                   />
                 </div>
                 <p className="text-brand-body-5 text-brand-green leading-relaxed">
@@ -1903,7 +1901,6 @@ export default function RevampDashboardPage() {
                     value="34hrs"
                     accent="warning"
                     subtitle="Avg across DG Sync Panel + CCTV Camera repeat-breakdown history"
-                    borderAccent="warning"
                   />
                   <StatHeroCard
                     tone="teal"
@@ -1911,7 +1908,6 @@ export default function RevampDashboardPage() {
                     value="47d"
                     accent="error"
                     subtitle="DG Sync Panel: 3 breakdowns this year, ~47 days apart"
-                    borderAccent="error"
                   />
                 </div>
                 <p className="text-brand-body-5 text-brand-green leading-relaxed">
@@ -2202,25 +2198,25 @@ export default function RevampDashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                      <div className="text-center p-3 bg-brand-bg rounded-lg">
-                        <div className="text-brand-body-5 font-semibold text-brand-text">Upcoming Visits</div>
+                      <div className="text-center p-3 rounded-lg" style={{ backgroundColor: "#EFEFFB" }}>
+                        <div className="text-brand-body-5 font-semibold text-black">Upcoming Visits</div>
                         <div className="text-brand-h2 font-bold text-brand-info mt-1">23</div>
-                        <div className="text-brand-caption text-brand-text-light mt-1">Due in 30 days</div>
+                        <div className="text-brand-caption text-black mt-1">Due in 30 days</div>
                       </div>
-                      <div className="text-center p-3 bg-brand-bg rounded-lg">
-                        <div className="text-brand-body-5 font-semibold text-brand-text">Due / Missed</div>
+                      <div className="text-center p-3 rounded-lg" style={{ backgroundColor: "#B7DCD44D" }}>
+                        <div className="text-brand-body-5 font-semibold text-black">Due / Missed</div>
                         <div className="text-brand-h2 font-bold text-brand-error mt-1">128</div>
-                        <div className="text-brand-caption text-brand-text-light mt-1">Vendor non-compliance</div>
+                        <div className="text-brand-caption text-black mt-1">Vendor non-compliance</div>
                       </div>
-                      <div className="text-center p-3 bg-brand-bg rounded-lg">
-                        <div className="text-brand-body-5 font-semibold text-brand-text">Flagged AMCs</div>
+                      <div className="text-center p-3 rounded-lg" style={{ backgroundColor: "#E3909026" }}>
+                        <div className="text-brand-body-5 font-semibold text-black">Flagged AMCs</div>
                         <div className="text-brand-h2 font-bold text-[#8A5A00] mt-1">3</div>
-                        <div className="text-brand-caption text-brand-text-light mt-1">Under Observation</div>
+                        <div className="text-brand-caption text-black mt-1">Under Observation</div>
                       </div>
-                      <div className="text-center p-3 bg-brand-bg rounded-lg">
-                        <div className="text-brand-body-5 font-semibold text-brand-text">Never Serviced</div>
+                      <div className="text-center p-3 rounded-lg" style={{ backgroundColor: "#85BDF633" }}>
+                        <div className="text-brand-body-5 font-semibold text-black">Never Serviced</div>
                         <div className="text-brand-h2 font-bold text-brand-error mt-1">41</div>
-                        <div className="text-brand-caption text-brand-text-light mt-1">Active status, zero visits ever</div>
+                        <div className="text-brand-caption text-black mt-1">Active status, zero visits ever</div>
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -2342,7 +2338,6 @@ export default function RevampDashboardPage() {
                     value="17"
                     accent="error"
                     subtitle="Marked Critical, zero contract coverage"
-                    borderAccent="error"
                   />
                   <StatHeroCard
                     tone="teal"
@@ -2350,7 +2345,6 @@ export default function RevampDashboardPage() {
                     value="34"
                     accent="warning"
                     subtitle="Requested, not yet actioned by vendor"
-                    borderAccent="warning"
                   />
                 </div>
                 <p className="text-brand-body-5 text-brand-green leading-relaxed">
@@ -2482,7 +2476,6 @@ export default function RevampDashboardPage() {
                   value="31%"
                   accent="error"
                   subtitle="Completed ÷ Scheduled × 100, across PPM/AMC/Preparedness"
-                  borderAccent="error"
                 />
                 <StatHeroCard
                   tone="teal"
@@ -2490,7 +2483,6 @@ export default function RevampDashboardPage() {
                   value="58%"
                   accent="warning"
                   subtitle="Achieved ÷ Maximum Score — quality of completed inspections"
-                  borderAccent="warning"
                 />
               </div>
 
@@ -2622,7 +2614,6 @@ export default function RevampDashboardPage() {
                   value="25"
                   accent="success"
                   subtitle="13% of total"
-                  borderAccent="success"
                 />
                 <StatHeroCard
                   tone="peach"
@@ -2630,7 +2621,6 @@ export default function RevampDashboardPage() {
                   value="173"
                   accent="error"
                   subtitle="87% of total — striking ratio"
-                  borderAccent="error"
                 />
                 <StatHeroCard tone="blue" label="Ecofriendly" value="37" accent="info" subtitle="Tagged sustainable" />
               </div>
@@ -2674,7 +2664,6 @@ export default function RevampDashboardPage() {
                   value="42/100"
                   accent="warning"
                   subtitle="Composite: availability, turnover, dead stock, cost trend"
-                  borderAccent="warning"
                   className="h-full"
                 />
               </div>
@@ -2756,7 +2745,6 @@ export default function RevampDashboardPage() {
                   value="3"
                   accent="warning"
                   subtitle="Records pending dispatch approval"
-                  borderAccent="warning"
                 />
                 <StatHeroCard
                   tone="blue"
@@ -2764,7 +2752,6 @@ export default function RevampDashboardPage() {
                   value="2"
                   accent="error"
                   subtitle="Awaiting disposal confirmation"
-                  borderAccent="error"
                 />
               </div>
 
@@ -3043,7 +3030,6 @@ export default function RevampDashboardPage() {
                   value="1.11"
                   accent="error"
                   subtitle="Out of 5 · Washroom survey"
-                  borderAccent="error"
                 />
                 <StatHeroCard tone="teal" label="Total Questions" value="1" accent="neutral" subtitle="Help us keep our washrooms clean" />
                 <StatHeroCard
@@ -3052,7 +3038,6 @@ export default function RevampDashboardPage() {
                   value="15"
                   accent="success"
                   subtitle="26.8% of responses"
-                  borderAccent="success"
                 />
                 <StatHeroCard
                   tone="blue"
@@ -3060,7 +3045,6 @@ export default function RevampDashboardPage() {
                   value="41"
                   accent="error"
                   subtitle="73.2% of responses"
-                  borderAccent="error"
                 />
               </div>
 
@@ -3186,7 +3170,6 @@ export default function RevampDashboardPage() {
                   accent="warning"
                   subtitle="3 vendors flagged"
                   progress={72}
-                  borderAccent="warning"
                 />
                 <StatHeroCard
                   tone="peach"
@@ -3194,7 +3177,6 @@ export default function RevampDashboardPage() {
                   value="58%"
                   accent="warning"
                   subtitle="Distinct from response time — did the job finish on schedule"
-                  borderAccent="warning"
                 />
                 <StatHeroCard
                   tone="blue"
@@ -3203,7 +3185,6 @@ export default function RevampDashboardPage() {
                   accent="warning"
                   subtitle="128 AMC visits missed"
                   progress={64}
-                  borderAccent="warning"
                 />
                 <StatHeroCard
                   tone="purple"
@@ -3211,7 +3192,6 @@ export default function RevampDashboardPage() {
                   value="128"
                   accent="error"
                   subtitle="Missed visits · 104 active"
-                  borderAccent="error"
                 />
                 <StatHeroCard
                   tone="teal"
@@ -3219,7 +3199,6 @@ export default function RevampDashboardPage() {
                   value="47"
                   accent="warning"
                   subtitle="GRN · PR · approvals"
-                  borderAccent="warning"
                 />
                 <StatHeroCard
                   tone="peach"
@@ -3227,7 +3206,6 @@ export default function RevampDashboardPage() {
                   value="8"
                   accent="error"
                   subtitle="KYC expiring ≤ 30 days"
-                  borderAccent="error"
                 />
               </div>
 
