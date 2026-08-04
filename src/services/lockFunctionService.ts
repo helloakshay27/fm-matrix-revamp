@@ -9,6 +9,7 @@ export interface LockFunction {
   active: number;
   phase_id?: number;
   module_id: string;
+  react_link?: string;
   parent_function?: string;
   created_at: string;
   updated_at: string;
@@ -35,6 +36,7 @@ export interface CreateLockFunctionPayload {
     active: boolean;
     phase_id?: number;
     module_id: number;
+    react_link?: string;
     parent_function?: string;
   };
 }
@@ -47,6 +49,7 @@ export interface UpdateLockFunctionPayload {
     active: boolean;
     phase_id?: number;
     module_id: number;
+    react_link?: string;
     parent_function?: string;
   };
 }

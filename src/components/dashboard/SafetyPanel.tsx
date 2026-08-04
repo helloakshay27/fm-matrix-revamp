@@ -307,7 +307,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
       key: "sohi-contradiction",
       layout: { x: 0, y: 3, w: 12, h: 6, minW: 4, minH: 4 },
       content: (
-        <div className="rounded-lg border border-brand-error bg-brand-error-bg p-4 h-full">
+        <div className="rounded-lg bg-brand-error-bg p-4 h-full">
           <div className="text-brand-body-4 font-bold text-brand-text">
             SOHI score vs the number it doesn&apos;t include
           </div>
@@ -892,7 +892,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
   return (
     <div className="space-y-4">
       {/* Safety Alerts strip */}
-      <div className="rounded-lg border border-brand-error bg-brand-error-bg px-5 py-4">
+      <div className="rounded-lg bg-brand-error-bg px-5 py-4">
         <div className="flex items-center gap-2 text-brand-body-5 font-bold uppercase tracking-wide text-brand-error mb-3">
           <AlertTriangle className="w-3.5 h-3.5" />
           Safety Alerts
