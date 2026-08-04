@@ -14,7 +14,6 @@ import {
 } from "recharts";
 import { BarChart3, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
 import { cn } from "@/lib/utils";
 import type { ChartInsightTone } from "./PieChartCard";
 
@@ -22,6 +21,8 @@ export interface BarSeriesConfig {
   dataKey: string;
   name: string;
 }
+
+const BAR_SERIES_COLORS = ["#9EC8BA", "#8E7BE0", "#DA7756", "#798C5E", "#EDC488"];
 
 const INSIGHT_TONE_CLASSES: Record<ChartInsightTone, string> = {
   info: "text-[#2a5f8f]",
@@ -123,6 +124,8 @@ export function BarChartCard({
   const showLegend = series.length > 1;
   const showDirectLabels = data.length <= 6 && !stacked;
   const isHorizontal = orientation === "horizontal";
+  const isSingleSeries = series.length === 1 && !stacked;
+  const resolvedCategoryColors = isSingleSeries ? categoryColors ?? BAR_SERIES_COLORS : categoryColors;
 
   const valueAxis = (
     <XAxis
@@ -152,6 +155,7 @@ export function BarChartCard({
   );
 
   return (
+    <>
     <Card className={cn("border-brand-border relative", className)}>
       {showInfoIcon && (
         <button
@@ -206,14 +210,17 @@ export function BarChartCard({
                   key={s.dataKey}
                   dataKey={s.dataKey}
                   name={s.name}
-                  fill={ANALYTICS_PALETTE[seriesIndex % ANALYTICS_PALETTE.length]}
+                  fill={BAR_SERIES_COLORS[seriesIndex % BAR_SERIES_COLORS.length]}
                   radius={isHorizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]}
                   maxBarSize={isHorizontal ? 22 : 40}
                   stackId={stacked ? "stack" : undefined}
                 >
-                  {categoryColors && series.length === 1 && !stacked
+                  {isSingleSeries
                     ? data.map((_, categoryIndex) => (
-                        <Cell key={categoryIndex} fill={categoryColors[categoryIndex % categoryColors.length]} />
+                        <Cell
+                          key={categoryIndex}
+                          fill={resolvedCategoryColors![categoryIndex % resolvedCategoryColors!.length]}
+                        />
                       ))
                     : null}
                   {showDirectLabels && (
@@ -229,11 +236,12 @@ export function BarChartCard({
             </BarChart>
           </ResponsiveContainer>
         )}
-
-        {insight && insightVariant === "plain" && (
-          <p className="text-brand-body-5 text-brand-green leading-relaxed mt-3">{insight}</p>
-        )}
       </CardContent>
     </Card>
+
+    {insight && insightVariant === "plain" && (
+      <p className="text-brand-body-5 text-brand-green leading-relaxed mt-3">{insight}</p>
+    )}
+    </>
   );
 }
