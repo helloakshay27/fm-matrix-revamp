@@ -3,7 +3,12 @@ import { Plus, Loader2, Download, Upload, FileSpreadsheet, X, Pencil } from 'luc
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { EnhancedSelect } from '@/components/ui/enhanced-select';
+import {
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import {
@@ -34,6 +39,35 @@ interface GoldenQrRecord {
   fields_for?: string;
   [key: string]: any;
 }
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px 12px", sm: "10px 14px", md: "12px 14px" },
+  },
+  "& .MuiOutlinedInput-root": {
+    backgroundColor: "white",
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 export function GoldenQrSetupPage() {
   const dispatch = useAppDispatch();
@@ -477,7 +511,7 @@ export function GoldenQrSetupPage() {
         return (
           <button
             onClick={() => handleEditClick(item)}
-            className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-brand transition-colors"
+            className="p-1.5 rounded text-gray-900"
             title="Edit"
           >
             <Pencil className="w-4 h-4" />
@@ -715,8 +749,25 @@ export function GoldenQrSetupPage() {
       </Dialog>
 
       {/* Add / Edit Dialog */}
-      <Dialog open={showDialog} onOpenChange={(open) => { if (!open) resetForm(); setShowDialog(open); }}>
-        <DialogContent className="max-w-lg">
+      <Dialog
+        open={showDialog}
+        onOpenChange={(open) => { if (!open) resetForm(); setShowDialog(open); }}
+        modal={false}
+      >
+        <DialogContent
+          className="max-w-lg bg-white"
+          onPointerDownOutside={(e) => {
+            // Keep dialog open when interacting with the MUI select menu
+            if ((e.target as HTMLElement).closest(".MuiPopover-root, .MuiModal-root, .MuiMenu-root")) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            if ((e.target as HTMLElement).closest(".MuiPopover-root, .MuiModal-root, .MuiMenu-root")) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-gray-900">
               {isEditMode ? 'Edit Golden QR Setup' : 'Add Golden QR Setup'}
@@ -725,63 +776,120 @@ export function GoldenQrSetupPage() {
 
           <div className="space-y-4 py-2">
             {/* Building */}
-            <EnhancedSelect
-              label={<span>Building <span className="text-red-500">*</span></span>}
-              value={selectedBuilding}
-              onChange={(val) => setSelectedBuilding(String(val))}
-              options={buildings.data?.map((b) => ({ value: String(b.id), label: b.name })) || []}
-              placeholder="Search and Select Building"
-              searchable={true}
-              fullWidth
-            />
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="building-label">
+                Building <span className="text-red-500">*</span>
+              </InputLabel>
+              <MuiSelect
+                labelId="building-label"
+                label="Building"
+                value={selectedBuilding || ""}
+                onChange={(e) => setSelectedBuilding(String(e.target.value))}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>Select Building</em>
+                </MenuItem>
+                {buildings.data?.map((b) => (
+                  <MenuItem key={b.id} value={String(b.id)}>
+                    {b.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
 
             {/* Wing */}
-            <EnhancedSelect
-              label="Wing"
-              value={selectedWing}
-              onChange={(val) => setSelectedWing(String(val))}
-              options={wings.data?.map((w) => ({ value: String(w.id), label: w.name })) || []}
-              placeholder="Search and Select Wing"
-              searchable={true}
-              disabled={!selectedBuilding}
-              fullWidth
-            />
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="wing-label">Wing</InputLabel>
+              <MuiSelect
+                labelId="wing-label"
+                label="Wing"
+                value={selectedWing || ""}
+                onChange={(e) => setSelectedWing(String(e.target.value))}
+                disabled={!selectedBuilding}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>Select Wing</em>
+                </MenuItem>
+                {wings.data?.map((w) => (
+                  <MenuItem key={w.id} value={String(w.id)}>
+                    {w.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
 
             {/* Area */}
-            <EnhancedSelect
-              label="Area"
-              value={selectedArea}
-              onChange={(val) => setSelectedArea(String(val))}
-              options={areas.data?.map((a) => ({ value: String(a.id), label: a.name })) || []}
-              placeholder="Search and Select Area"
-              searchable={true}
-              disabled={!selectedBuilding}
-              fullWidth
-            />
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="area-label">Area</InputLabel>
+              <MuiSelect
+                labelId="area-label"
+                label="Area"
+                value={selectedArea || ""}
+                onChange={(e) => setSelectedArea(String(e.target.value))}
+                disabled={!selectedBuilding}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>Select Area</em>
+                </MenuItem>
+                {areas.data?.map((a) => (
+                  <MenuItem key={a.id} value={String(a.id)}>
+                    {a.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
 
             {/* Floor */}
-            <EnhancedSelect
-              label="Floor"
-              value={selectedFloor}
-              onChange={(val) => setSelectedFloor(String(val))}
-              options={floors.data?.map((f) => ({ value: String(f.id), label: f.name })) || []}
-              placeholder="Search and Select Floor"
-              searchable={true}
-              disabled={!selectedArea}
-              fullWidth
-            />
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="floor-label">Floor</InputLabel>
+              <MuiSelect
+                labelId="floor-label"
+                label="Floor"
+                value={selectedFloor || ""}
+                onChange={(e) => setSelectedFloor(String(e.target.value))}
+                disabled={!selectedArea}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>Select Floor</em>
+                </MenuItem>
+                {floors.data?.map((f) => (
+                  <MenuItem key={f.id} value={String(f.id)}>
+                    {f.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
 
             {/* Room */}
-            <EnhancedSelect
-              label="Room"
-              value={selectedRoom}
-              onChange={(val) => setSelectedRoom(String(val))}
-              options={rooms.data?.map((r) => ({ value: String(r.id), label: r.name })) || []}
-              placeholder="Search and Select Room"
-              searchable={true}
-              disabled={!selectedFloor}
-              fullWidth
-            />
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="room-label">Room</InputLabel>
+              <MuiSelect
+                labelId="room-label"
+                label="Room"
+                value={selectedRoom || ""}
+                onChange={(e) => setSelectedRoom(String(e.target.value))}
+                disabled={!selectedFloor}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>Select Room</em>
+                </MenuItem>
+                {rooms.data?.map((r) => (
+                  <MenuItem key={r.id} value={String(r.id)}>
+                    {r.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
 
             {/* Mark as Golden Ticket */}
             <div className="flex items-center gap-3 pt-1">

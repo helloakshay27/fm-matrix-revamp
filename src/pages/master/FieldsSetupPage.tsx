@@ -257,7 +257,6 @@ const FieldsSetupPage = () => {
               checked={item.isEnabled}
               onCheckedChange={() => handleToggleField(item.id)}
               disabled={item.isToggling}
-              className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
             />
           </div>
         );
