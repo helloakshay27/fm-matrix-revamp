@@ -616,7 +616,7 @@ export const LocationAccountPage = () => {
                         <Switch
                           checked={country.status}
                           onCheckedChange={(checked) => handleCountryStatusChange(index, checked)}
-                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                          className="data-[state=checked]:bg-brand data-[state=unchecked]:bg-gray-300"
                         />
                       </TableCell>
                     </TableRow>
@@ -731,7 +731,7 @@ export const LocationAccountPage = () => {
                         <Switch
                           checked={region.status}
                           onCheckedChange={(checked) => handleRegionStatusChange(index, checked)}
-                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                          className="data-[state=checked]:bg-brand data-[state=unchecked]:bg-gray-300"
                         />
                       </TableCell>
                     </TableRow>
@@ -914,7 +914,7 @@ export const LocationAccountPage = () => {
                         <Switch
                           checked={zone.status}
                           onCheckedChange={(checked) => handleZoneStatusChange(index, checked)}
-                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                          className="data-[state=checked]:bg-brand data-[state=unchecked]:bg-gray-300"
                         />
                       </TableCell>
                       <TableCell>
@@ -959,7 +959,7 @@ export const LocationAccountPage = () => {
                         <Switch
                           checked={site.status}
                           onCheckedChange={(checked) => handleSiteStatusChange(index, checked)}
-                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                          className="data-[state=checked]:bg-brand data-[state=unchecked]:bg-gray-300"
                         />
                       </TableCell>
                       <TableCell>
@@ -1000,7 +1000,7 @@ export const LocationAccountPage = () => {
                   />
                   <Button
                     onClick={handleSubmitEntity}
-                    className="bg-[#6B2C91] hover:bg-[#5A2478] text-white px-6"
+                    className="bg-brand hover:bg-brand-hover text-white px-6"
                   >
                     Submit
                   </Button>
@@ -1013,7 +1013,7 @@ export const LocationAccountPage = () => {
                   </Button>
                   <Button
                     onClick={handleImportEntity}
-                    className="bg-[#6B2C91] hover:bg-[#5A2478] text-white px-6"
+                    className="bg-brand hover:bg-brand-hover text-white px-6"
                   >
                     + Import
                   </Button>
@@ -1044,7 +1044,7 @@ export const LocationAccountPage = () => {
                         <Switch
                           checked={entity.status}
                           onCheckedChange={(checked) => handleEntityStatusChange(index, checked)}
-                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
+                          className="data-[state=checked]:bg-brand data-[state=unchecked]:bg-gray-300"
                         />
                       </TableCell>
                       <TableCell>{entity.entity}</TableCell>

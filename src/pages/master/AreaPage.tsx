@@ -466,7 +466,7 @@ export const AreaPage = () => {
                       <Switch
                         checked={area.active}
                         onCheckedChange={() => handleToggleStatus(area)}
-                        className="data-[state=checked]:bg-[#C72030]"
+                        className="data-[state=checked]:bg-brand"
                       />
                     );
                   default:
@@ -607,7 +607,7 @@ export const AreaPage = () => {
                     id="active"
                     checked={active}
                     onCheckedChange={setActive}
-                    className="data-[state=checked]:bg-[#C72030]"
+                    className="data-[state=checked]:bg-brand"
                   />
                   <span className="text-sm">{active ? 'Active' : 'Inactive'}</span>
                 </div>

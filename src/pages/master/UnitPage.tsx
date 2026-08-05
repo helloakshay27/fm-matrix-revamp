@@ -662,7 +662,7 @@ export const UnitPage = () => {
                       <Switch
                         checked={unit.active}
                         onCheckedChange={() => toggleActiveStatus(unit.id)}
-                        className="data-[state=checked]:bg-[#C72030]"
+                        className="data-[state=checked]:bg-brand"
                       />
                     );
                   case 'building':

@@ -915,7 +915,7 @@ export const RoomPage = () => {
                         <Switch
                           checked={room.active}
                           onCheckedChange={() => toggleRoomStatus(room.id)}
-                          className="data-[state=checked]:bg-[#C72030]"
+                          className="data-[state=checked]:bg-brand"
                         />
                       </TableCell>
                     </TableRow>

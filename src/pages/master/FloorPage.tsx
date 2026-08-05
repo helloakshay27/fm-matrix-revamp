@@ -456,7 +456,7 @@ export function FloorPage() {
                       <Switch
                         checked={floor.active}
                         onCheckedChange={() => toggleFloorStatus(floor.id)}
-                        className="data-[state=checked]:bg-[#C72030]"
+                        className="data-[state=checked]:bg-brand"
                       />
                     );
                   default:

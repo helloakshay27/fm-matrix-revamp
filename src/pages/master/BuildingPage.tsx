@@ -331,7 +331,7 @@ export function BuildingPage() {
       className="cursor-pointer"
     >
       {building[field] ? (
-        <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
+        <div className="w-5 h-5 bg-brand rounded flex items-center justify-center hover:bg-brand-hover transition-colors">
           <Check className="w-3 h-3 text-white" />
         </div>
       ) : (
@@ -380,7 +380,7 @@ export function BuildingPage() {
           <Switch
             checked={building.active}
             onCheckedChange={() => handleToggleStatus(building.id, 'active')}
-            className="data-[state=checked]:bg-[#C72030]"
+            className="data-[state=checked]:bg-brand"
           />
         );
       default:
@@ -893,7 +893,7 @@ export function BuildingPage() {
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
-                            className="data-[state=checked]:bg-[#C72030]"
+                            className="data-[state=checked]:bg-brand"
                           />
                         </FormControl>
                       </FormItem>

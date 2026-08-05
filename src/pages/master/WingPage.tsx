@@ -559,7 +559,7 @@ export function WingPage() {
                       <Switch
                         checked={wing.active}
                         onCheckedChange={() => handleToggleStatus(wing.id, wing.active)}
-                        className="data-[state=checked]:bg-[#C72030]"
+                        className="data-[state=checked]:bg-brand"
                       />
                     );
                   default:
