@@ -14,12 +14,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Edit, Trash2, Upload, Download } from 'lucide-react';
 import axios from 'axios';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { 
-  createResolutionEscalation, 
-  fetchResolutionEscalations, 
-  updateResolutionEscalation, 
+import {
+  createResolutionEscalation,
+  fetchResolutionEscalations,
+  updateResolutionEscalation,
   deleteResolutionEscalation,
-  clearState 
+  clearState
 } from '@/store/slices/resolutionEscalationSlice';
 import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
 import { toast } from 'sonner';
@@ -107,21 +107,21 @@ type ResolutionEscalationFormData = z.infer<typeof resolutionEscalationSchema>;
 
 export const ResolutionEscalationTab: React.FC = () => {
   const dispatch = useAppDispatch();
-  
-  const { 
-    loading, 
-    error, 
-    success, 
+
+  const {
+    loading,
+    error,
+    success,
     data: resolutionEscalations,
     fetchLoading,
     updateLoading,
     deleteLoading
   } = useAppSelector((state) => state.resolutionEscalation);
-  
+
   const { data: categories, loading: categoriesLoading } = useAppSelector((state) => state.helpdeskCategories);
 
   const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
-  const [escalationUsers, setEscalationUsers] = useState<{id: number; full_name: string}[]>([]);
+  const [escalationUsers, setEscalationUsers] = useState<{ id: number; full_name: string }[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');
   const [filteredRules, setFilteredRules] = useState(resolutionEscalations);
@@ -144,41 +144,51 @@ export const ResolutionEscalationTab: React.FC = () => {
     defaultValues: {
       categoryIds: [],
       escalationLevels: {
-        e1: { users: [], priorities: { 
-          p1: { days: 0, hours: 0, minutes: 0 }, 
-          p2: { days: 0, hours: 0, minutes: 0 }, 
-          p3: { days: 0, hours: 0, minutes: 0 }, 
-          p4: { days: 0, hours: 0, minutes: 0 }, 
-          p5: { days: 0, hours: 0, minutes: 0 } 
-        }},
-        e2: { users: [], priorities: { 
-          p1: { days: 0, hours: 0, minutes: 0 }, 
-          p2: { days: 0, hours: 0, minutes: 0 }, 
-          p3: { days: 0, hours: 0, minutes: 0 }, 
-          p4: { days: 0, hours: 0, minutes: 0 }, 
-          p5: { days: 0, hours: 0, minutes: 0 } 
-        }},
-        e3: { users: [], priorities: { 
-          p1: { days: 0, hours: 0, minutes: 0 }, 
-          p2: { days: 0, hours: 0, minutes: 0 }, 
-          p3: { days: 0, hours: 0, minutes: 0 }, 
-          p4: { days: 0, hours: 0, minutes: 0 }, 
-          p5: { days: 0, hours: 0, minutes: 0 } 
-        }},
-        e4: { users: [], priorities: { 
-          p1: { days: 0, hours: 0, minutes: 0 }, 
-          p2: { days: 0, hours: 0, minutes: 0 }, 
-          p3: { days: 0, hours: 0, minutes: 0 }, 
-          p4: { days: 0, hours: 0, minutes: 0 }, 
-          p5: { days: 0, hours: 0, minutes: 0 } 
-        }},
-        e5: { users: [], priorities: { 
-          p1: { days: 0, hours: 0, minutes: 0 }, 
-          p2: { days: 0, hours: 0, minutes: 0 }, 
-          p3: { days: 0, hours: 0, minutes: 0 }, 
-          p4: { days: 0, hours: 0, minutes: 0 }, 
-          p5: { days: 0, hours: 0, minutes: 0 } 
-        }},
+        e1: {
+          users: [], priorities: {
+            p1: { days: 0, hours: 0, minutes: 0 },
+            p2: { days: 0, hours: 0, minutes: 0 },
+            p3: { days: 0, hours: 0, minutes: 0 },
+            p4: { days: 0, hours: 0, minutes: 0 },
+            p5: { days: 0, hours: 0, minutes: 0 }
+          }
+        },
+        e2: {
+          users: [], priorities: {
+            p1: { days: 0, hours: 0, minutes: 0 },
+            p2: { days: 0, hours: 0, minutes: 0 },
+            p3: { days: 0, hours: 0, minutes: 0 },
+            p4: { days: 0, hours: 0, minutes: 0 },
+            p5: { days: 0, hours: 0, minutes: 0 }
+          }
+        },
+        e3: {
+          users: [], priorities: {
+            p1: { days: 0, hours: 0, minutes: 0 },
+            p2: { days: 0, hours: 0, minutes: 0 },
+            p3: { days: 0, hours: 0, minutes: 0 },
+            p4: { days: 0, hours: 0, minutes: 0 },
+            p5: { days: 0, hours: 0, minutes: 0 }
+          }
+        },
+        e4: {
+          users: [], priorities: {
+            p1: { days: 0, hours: 0, minutes: 0 },
+            p2: { days: 0, hours: 0, minutes: 0 },
+            p3: { days: 0, hours: 0, minutes: 0 },
+            p4: { days: 0, hours: 0, minutes: 0 },
+            p5: { days: 0, hours: 0, minutes: 0 }
+          }
+        },
+        e5: {
+          users: [], priorities: {
+            p1: { days: 0, hours: 0, minutes: 0 },
+            p2: { days: 0, hours: 0, minutes: 0 },
+            p3: { days: 0, hours: 0, minutes: 0 },
+            p4: { days: 0, hours: 0, minutes: 0 },
+            p5: { days: 0, hours: 0, minutes: 0 }
+          }
+        },
       }
     }
   });
@@ -268,7 +278,7 @@ export const ResolutionEscalationTab: React.FC = () => {
 
       // Get site_id from user account API response
       const siteId = userAccount.site_id;
-      
+
       const payload = {
         complaint_worker: {
           society_id: siteId,
@@ -328,26 +338,26 @@ export const ResolutionEscalationTab: React.FC = () => {
 
       console.log('Resolution escalation payload:', JSON.stringify(payload, null, 2));
       console.log('Using site ID from user account:', siteId);
-      
+
       await dispatch(createResolutionEscalation(payload)).unwrap();
     } catch (error: unknown) {
       // Handle 422 error specifically for category already taken
       console.log('Full error object:', error);
       console.log('Error type:', typeof error);
       console.log('Error stringified:', JSON.stringify(error, null, 2));
-      
+
       let errorMessage = 'Failed to create resolution escalation. Please try again.';
       let shouldShowCategoryTakenMessage = false;
-      
+
       // Try to extract error information from different possible structures
       if (typeof error === 'string') {
         errorMessage = error;
         // Check if string contains 422 or conflict indicators
-        shouldShowCategoryTakenMessage = error.includes('422') || 
-                                       error.toLowerCase().includes('already') ||
-                                       error.toLowerCase().includes('exists') ||
-                                       error.toLowerCase().includes('taken') ||
-                                       error.toLowerCase().includes('conflict');
+        shouldShowCategoryTakenMessage = error.includes('422') ||
+          error.toLowerCase().includes('already') ||
+          error.toLowerCase().includes('exists') ||
+          error.toLowerCase().includes('taken') ||
+          error.toLowerCase().includes('conflict');
       } else if (error && typeof error === 'object') {
         const errorObj = error as {
           status?: number;
@@ -367,17 +377,17 @@ export const ResolutionEscalationTab: React.FC = () => {
             category_id?: string[];
           };
         };
-        
+
         // Check for 422 status first
-        const statusIs422 = errorObj.status === 422 || 
-                           errorObj?.response?.status === 422 ||
-                           errorObj?.code === 422;
-        
+        const statusIs422 = errorObj.status === 422 ||
+          errorObj?.response?.status === 422 ||
+          errorObj?.code === 422;
+
         // Check for specific category_id error format: {category_id: ["has already been taken"]}
-        const hasCategoryIdError = errorObj?.category_id || 
-                                  errorObj?.response?.data?.category_id || 
-                                  errorObj?.data?.category_id;
-        
+        const hasCategoryIdError = errorObj?.category_id ||
+          errorObj?.response?.data?.category_id ||
+          errorObj?.data?.category_id;
+
         if (hasCategoryIdError && Array.isArray(hasCategoryIdError) && hasCategoryIdError.length > 0) {
           // Extract the actual error message from category_id array
           const categoryError = hasCategoryIdError[0];
@@ -385,36 +395,36 @@ export const ResolutionEscalationTab: React.FC = () => {
             shouldShowCategoryTakenMessage = true;
           }
         }
-        
+
         // Fallback checks for other error message formats
         const messageContains422 = errorObj?.message?.includes('422') ||
-                                  errorObj?.response?.data?.message?.includes('422') ||
-                                  errorObj?.data?.message?.includes('422');
-                                  
+          errorObj?.response?.data?.message?.includes('422') ||
+          errorObj?.data?.message?.includes('422');
+
         const hasConflictMessage = errorObj?.message?.toLowerCase().includes('already') ||
-                                 errorObj?.message?.toLowerCase().includes('exists') ||
-                                 errorObj?.message?.toLowerCase().includes('taken') ||
-                                 errorObj?.message?.toLowerCase().includes('conflict') ||
-                                 errorObj?.response?.data?.message?.toLowerCase().includes('already') ||
-                                 errorObj?.response?.data?.message?.toLowerCase().includes('exists') ||
-                                 errorObj?.response?.data?.message?.toLowerCase().includes('taken') ||
-                                 errorObj?.response?.data?.message?.toLowerCase().includes('conflict') ||
-                                 errorObj?.data?.message?.toLowerCase().includes('already') ||
-                                 errorObj?.data?.message?.toLowerCase().includes('exists') ||
-                                 errorObj?.data?.message?.toLowerCase().includes('taken') ||
-                                 errorObj?.data?.message?.toLowerCase().includes('conflict');
-        
+          errorObj?.message?.toLowerCase().includes('exists') ||
+          errorObj?.message?.toLowerCase().includes('taken') ||
+          errorObj?.message?.toLowerCase().includes('conflict') ||
+          errorObj?.response?.data?.message?.toLowerCase().includes('already') ||
+          errorObj?.response?.data?.message?.toLowerCase().includes('exists') ||
+          errorObj?.response?.data?.message?.toLowerCase().includes('taken') ||
+          errorObj?.response?.data?.message?.toLowerCase().includes('conflict') ||
+          errorObj?.data?.message?.toLowerCase().includes('already') ||
+          errorObj?.data?.message?.toLowerCase().includes('exists') ||
+          errorObj?.data?.message?.toLowerCase().includes('taken') ||
+          errorObj?.data?.message?.toLowerCase().includes('conflict');
+
         // Set flag if any condition matches
         shouldShowCategoryTakenMessage = shouldShowCategoryTakenMessage || statusIs422 || messageContains422 || hasConflictMessage;
-        
+
         // Extract error message from various possible locations
-        errorMessage = errorObj?.message || 
-                      errorObj?.response?.data?.message || 
-                      errorObj?.data?.message || 
-                      errorObj?.error || 
-                      'Failed to create resolution escalation. Please try again.';
+        errorMessage = errorObj?.message ||
+          errorObj?.response?.data?.message ||
+          errorObj?.data?.message ||
+          errorObj?.error ||
+          'Failed to create resolution escalation. Please try again.';
       }
-      
+
       if (shouldShowCategoryTakenMessage) {
         toast.error('Category name already exists. Please choose a different name!');
       } else {
@@ -425,7 +435,7 @@ export const ResolutionEscalationTab: React.FC = () => {
 
   const handleEdit = (rule: any) => {
     setEditingRule(rule);
-    
+
     // Helper function to safely parse escalate_to_users
     const safeParseUsers = (escalateToUsers: any): number[] => {
       if (!escalateToUsers) return [];
@@ -443,7 +453,7 @@ export const ResolutionEscalationTab: React.FC = () => {
       }
       return [];
     };
-    
+
     // Pre-populate form with existing data
     const formData: ResolutionEscalationFormData = {
       categoryIds: [rule.category_id],
@@ -752,10 +762,10 @@ export const ResolutionEscalationTab: React.FC = () => {
                               ...base,
                               fontSize: '14px',
                               padding: '8px 12px',
-                              backgroundColor: state.isSelected 
-                                ? '#3b82f6' 
-                                : state.isFocused 
-                                  ? '#e5e7eb' 
+                              backgroundColor: state.isSelected
+                                ? '#3b82f6'
+                                : state.isFocused
+                                  ? '#e5e7eb'
                                   : 'white',
                               color: state.isSelected ? 'white' : '#374151',
                               cursor: 'pointer',
@@ -869,12 +879,12 @@ export const ResolutionEscalationTab: React.FC = () => {
             <div className="space-y-0">
               {filteredRules.map((rule, index) => {
                 const categoryName = categories?.helpdesk_categories?.find(cat => cat.id === rule.category_id)?.name || 'Unknown';
-                
+
                 return (
                   <div key={rule.id} className="border-b last:border-b-0">
                     <div className="flex items-center justify-between p-4 bg-gray-50">
                       <div className="flex items-center space-x-4">
-                        <span className="font-semibold text-purple-600">Rule {index + 1}</span>
+                        <span className="font-semibold">Rule {index + 1}</span>
                         <div className="flex items-center space-x-4 text-sm">
                           <span><strong>Category Type:</strong> {categoryName}</span>
                         </div>
@@ -942,15 +952,15 @@ export const ResolutionEscalationTab: React.FC = () => {
                                 escalateToUsers = [];
                               }
                             }
-                            
+
                             // Ensure escalateToUsers is an array before mapping and handle both string and number IDs
-                            const userNames = Array.isArray(escalateToUsers) 
+                            const userNames = Array.isArray(escalateToUsers)
                               ? escalateToUsers.map((userId: string | number) => {
-                                  // Convert to number for comparison, as API might return strings
-                                  const userIdNum = typeof userId === 'string' ? parseInt(userId) : userId;
-                                  const user = escalationUsers?.find(u => u.id === userIdNum);
-                                  return user ? user.full_name : `User ${userId}`;
-                                }).join(', ')
+                                // Convert to number for comparison, as API might return strings
+                                const userIdNum = typeof userId === 'string' ? parseInt(userId) : userId;
+                                const user = escalationUsers?.find(u => u.id === userIdNum);
+                                return user ? user.full_name : `User ${userId}`;
+                              }).join(', ')
                               : '';
 
                             return (
@@ -1139,10 +1149,10 @@ export const ResolutionEscalationTab: React.FC = () => {
                               ...base,
                               fontSize: '14px',
                               padding: '8px 12px',
-                              backgroundColor: state.isSelected 
-                                ? '#3b82f6' 
-                                : state.isFocused 
-                                  ? '#e5e7eb' 
+                              backgroundColor: state.isSelected
+                                ? '#3b82f6'
+                                : state.isFocused
+                                  ? '#e5e7eb'
                                   : 'white',
                               color: state.isSelected ? 'white' : '#374151',
                               cursor: 'pointer',

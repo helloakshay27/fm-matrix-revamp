@@ -693,23 +693,23 @@ export const ClubGroupMembershipDashboard = () => {
       const statusMap = {
         pending: {
           label: "Pending",
-          className: "bg-yellow-500 text-black",
+          className: "bg-yellow-100 text-yellow-800",
         },
         approved: {
           label: "Approved",
-          className: "bg-green-500 text-black",
+          className: "bg-green-100 text-green-800",
         },
         rejected: {
           label: "Rejected",
-          className: "bg-red-500 text-white",
+          className: "bg-red-100 text-red-800",
         },
         draft: {
           label: "Draft",
-          className: "bg-gray-500 text-white",
+          className: "bg-gray-100 text-gray-800",
         },
         cancelled: {
           label: "Cancelled",
-          className: "bg-slate-500 text-white",
+          className: "bg-slate-100 text-slate-800",
         },
       };
 

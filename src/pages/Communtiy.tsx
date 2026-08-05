@@ -358,12 +358,6 @@ const Communtiy = () => {
                             '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
                                 backgroundColor: '#04A231',
                             },
-                            '& .MuiSwitch-switchBase:not(.Mui-checked)': {
-                                color: '#C72030',
-                            },
-                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
-                                backgroundColor: 'rgba(199, 32, 48, 0.5)',
-                            },
                         }}
                     />
                     {item.active ? "Active" : "Inactive"}
