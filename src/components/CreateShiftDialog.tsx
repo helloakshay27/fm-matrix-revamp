@@ -24,10 +24,13 @@ interface CreateShiftDialogProps {
 
 const fieldStyles = {
   "& .MuiOutlinedInput-root": {
-    height: 45,
-    backgroundColor: "white",
-    borderRadius: "8px",
-    "& fieldset": { borderColor: "#d1d5db" },
+    height: "45px !important",
+    backgroundColor: "#ffffff !important",
+    borderRadius: "8px !important",
+    "& fieldset": {
+      borderColor: "#d1d5db",
+      borderRadius: "8px",
+    },
     "&:hover fieldset": { borderColor: "#9ca3af" },
     "&.Mui-focused fieldset": {
       borderColor: "var(--color-primary)",
@@ -35,14 +38,19 @@ const fieldStyles = {
     },
   },
   "& .MuiSelect-select": {
-    padding: "10px 14px",
+    padding: "10px 14px !important",
     display: "flex",
     alignItems: "center",
+    backgroundColor: "transparent !important",
+  },
+  "& .MuiSvgIcon-root": {
+    color: "#6b7280",
   },
 };
 
 const selectMenuProps = {
   PaperProps: {
+    className: "disable-mui-select-search",
     style: {
       maxHeight: 224,
       overflowY: "auto" as const,
@@ -61,6 +69,7 @@ const selectMenuProps = {
     },
   },
   MenuListProps: {
+    "data-disable-mui-select-search": "true",
     style: {
       maxHeight: 224,
       overflowY: "auto" as const,
