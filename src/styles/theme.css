@@ -426,6 +426,14 @@ select:focus {
   color: var(--color-primary) !important;
 }
 
+/* MUI Radio - unchecked/base state. Several pages set inline
+   sx={{ color: '#C72030', ... }} for the *unchecked* ring specifically, which
+   the checked-only rule below never touches — force the base color too. */
+.MuiRadio-root,
+[class*="MuiRadio-root"] {
+  color: var(--color-primary) !important;
+}
+
 /* MUI Radio with any checked state - override inline sx styles */
 .MuiRadio-root.Mui-checked,
 [class*="MuiRadio-root"].Mui-checked {
