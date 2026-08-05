@@ -3,6 +3,7 @@ import { ArrowLeft, Lock, ShieldCheck } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { SecurityOverlays } from "./SecurityOverlays";
 import { useProductSecurity } from "./useProductSecurity";
+import { canViewProduct } from "./productVisibility";
 
 type ProductAccessState = {
   productName?: string;
@@ -45,14 +46,23 @@ const ProductAccessGate: React.FC = () => {
     security.faceAuthStatus === "verified" ||
     security.faceAuthStatus === "api_unavailable";
 
+  // Restricted products are only reachable by allow-listed users (or locally).
+  const isVisible = canViewProduct(productSlug);
+
   useEffect(() => {
-    if (!accessGranted) return;
+    if (!isVisible) {
+      navigate("/products", { replace: true });
+    }
+  }, [isVisible, navigate]);
+
+  useEffect(() => {
+    if (!isVisible || !accessGranted) return;
 
     navigate(targetPath, {
       replace: true,
       state: { faceAuthVerifiedAt: Date.now() },
     });
-  }, [accessGranted, navigate, targetPath]);
+  }, [isVisible, accessGranted, navigate, targetPath]);
 
   return (
     <div className="min-h-screen bg-[#F6F4EE] font-poppins text-[#2C2C2C]">

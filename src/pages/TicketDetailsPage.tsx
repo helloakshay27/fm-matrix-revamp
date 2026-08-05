@@ -5553,6 +5553,58 @@ export const TicketDetailsPage = () => {
                   </div>
                 </div>
 
+                {/* Parent Complaint Card - Only show if data exists */}
+                {ticketData?.parent_complaint && (
+                  <Card className="w-full bg-white rounded-lg shadow-sm border">
+                    <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <Ticket className="w-5 h-5" style={{ color: '#C72030' }} />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-black">
+                        Parent Complaint
+                      </h3>
+                    </div>
+                    <div className="bg-white overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-center">Action</TableHead>
+                            <TableHead>Ticket ID</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Sub Category</TableHead>
+                            <TableHead>Created By</TableHead>
+                            <TableHead>Assigned To</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell className="text-center">
+                              <button
+                                type="button"
+                                title="View Ticket"
+                                className="inline-flex items-center justify-center text-gray-600 hover:text-[#C72030]"
+                                onClick={() => navigate(`/maintenance/ticket/details/${ticketData.parent_complaint.id}`)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {ticketData.parent_complaint.id || '-'}
+                            </TableCell>
+                            <TableCell>{ticketData.parent_complaint.desc || '-'}</TableCell>
+                            <TableCell>{ticketData.parent_complaint.category_type || '-'}</TableCell>
+                            <TableCell>{ticketData.parent_complaint.sub_category_type || '-'}</TableCell>
+                            <TableCell>{ticketData.parent_complaint.created_by || '-'}</TableCell>
+                            <TableCell>{ticketData.parent_complaint.assigned_to || '-'}</TableCell>
+                            
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </Card>
+                )}
+
                 <Card className="w-full bg-white rounded-lg shadow-sm border">
                   {/* Header (consistent) */}
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
@@ -8989,6 +9041,57 @@ export const TicketDetailsPage = () => {
                 )}
               </div>
             </div>
+
+            {/* Parent Complaint Card - Only show if data exists */}
+            {ticketData?.parent_complaint && (
+              <Card className="w-full bg-white rounded-lg shadow-sm border">
+                <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <Ticket className="w-5 h-5" style={{ color: '#C72030' }} />
+                  </div>
+                  <h3 className="text-lg font-semibold uppercase text-black">
+                    Parent Complaint
+                  </h3>
+                </div>
+                <div className="bg-white overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Ticket ID</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Sub Category</TableHead>
+                        <TableHead>Created By</TableHead>
+                        <TableHead>Assigned To</TableHead>
+                        <TableHead className="text-center">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium">
+                          {ticketData.parent_complaint.id || '-'}
+                        </TableCell>
+                        <TableCell>{ticketData.parent_complaint.desc || '-'}</TableCell>
+                        <TableCell>{ticketData.parent_complaint.category_type || '-'}</TableCell>
+                        <TableCell>{ticketData.parent_complaint.sub_category_type || '-'}</TableCell>
+                        <TableCell>{ticketData.parent_complaint.created_by || '-'}</TableCell>
+                        <TableCell>{ticketData.parent_complaint.assigned_to || '-'}</TableCell>
+                        <TableCell className="text-center">
+                          <button
+                            type="button"
+                            title="View Ticket"
+                            className="inline-flex items-center justify-center text-gray-600 hover:text-[#C72030]"
+                            onClick={() => navigate(`/tickets/details/${ticketData.parent_complaint.id}`)}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
+            )}
 
             <Card className="w-full bg-white rounded-lg shadow-sm border">
               {/* Header (consistent) */}
