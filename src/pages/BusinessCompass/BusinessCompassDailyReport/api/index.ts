@@ -50,15 +50,15 @@ export const fetchTomorrowScheduled = async (
 
   const [tasksRes, issuesRes, todosRes] = await Promise.allSettled([
     axios.get(
-      `${urlBase(ctx.baseUrl)}/business_compass/tasks/my_tasks?${tasksParams}`,
+      `${urlBase(ctx.baseUrl)}/business_compass/tasks/my_tasks.json?${tasksParams}`,
       { headers }
     ),
     axios.get(
-      `${urlBase(ctx.baseUrl)}/business_compass/issues/my_issues?${issuesParams}`,
+      `${urlBase(ctx.baseUrl)}/business_compass/issues/my_issues.json?${issuesParams}`,
       { headers }
     ),
     axios.get(
-      `${urlBase(ctx.baseUrl)}/business_compass/todos/my_todos?${todosParams}`,
+      `${urlBase(ctx.baseUrl)}/business_compass/todos/my_todos.json?${todosParams}`,
       { headers }
     ),
   ]);
@@ -107,15 +107,15 @@ export const fetchCompletedItemsForDate = async (
   };
 
   const [tasks, issues, todos] = await Promise.all([
-    fetchAllPages(`${urlBase(ctx.baseUrl)}/business_compass/tasks/my_tasks`, {
+    fetchAllPages(`${urlBase(ctx.baseUrl)}/business_compass/tasks/my_tasks.json`, {
       "q[completed_at_gteq]": completedFrom,
       "q[completed_at_lteq]": completedTo,
     }, "tasks"),
-    fetchAllPages(`${urlBase(ctx.baseUrl)}/business_compass/issues/my_issues`, {
+    fetchAllPages(`${urlBase(ctx.baseUrl)}/business_compass/issues/my_issues.json`, {
       "q[completed_at_gteq]": completedFrom,
       "q[completed_at_lteq]": completedTo,
     }, "issues"),
-    fetchAllPages(`${urlBase(ctx.baseUrl)}/business_compass/todos/my_todos`, {
+    fetchAllPages(`${urlBase(ctx.baseUrl)}/business_compass/todos/my_todos.json`, {
       "q[completed_at_gteq]": completedFrom,
       "q[completed_at_lteq]": completedTo,
     }, "todos"),

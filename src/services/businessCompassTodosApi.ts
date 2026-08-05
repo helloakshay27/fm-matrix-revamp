@@ -24,7 +24,7 @@ export const fetchBusinessCompassTodos = async (
   }
 
   const response = await axios.get(
-    `https://${baseUrl}/business_compass/todos${my ? "/my_todos" : ""}?${params.toString()}`,
+    `https://${baseUrl}/business_compass/todos${my ? "/my_todos" : ""}.json?${params.toString()}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
