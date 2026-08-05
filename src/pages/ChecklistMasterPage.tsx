@@ -1816,7 +1816,7 @@ export const ChecklistMasterPage = () => {
             type="button"
             variant="outline"
             onClick={() => navigate('/master/checklist')}
-            className="text-gray-700 border-gray-300"
+            className="text-brand border-brand"
           >
             Cancel
           </Button>
