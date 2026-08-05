@@ -26,6 +26,7 @@ export const LockFunctionEdit = () => {
     lock_controller_id: '',
     phase_id: '',
     module_id: '',
+    react_link: '',
     parent_function: '',
   });
 
@@ -50,6 +51,7 @@ export const LockFunctionEdit = () => {
           lock_controller_id: lockFunctionData.lock_controller_id?.toString() || '',
           phase_id: lockFunctionData.phase_id?.toString() || '',
           module_id: lockFunctionData.module_id?.toString() || '',
+          react_link: lockFunctionData.react_link || '',
           parent_function: lockFunctionData.parent_function || '',
         });
       } catch (error: any) {
@@ -94,6 +96,7 @@ export const LockFunctionEdit = () => {
           lock_controller_id: formData.lock_controller_id ? parseInt(formData.lock_controller_id) : undefined,
           phase_id: formData.phase_id ? parseInt(formData.phase_id) : undefined,
           module_id: parseInt(formData.module_id),
+          react_link: formData.react_link.trim() || undefined,
           parent_function: formData.parent_function.trim() || undefined,
         }
       };
@@ -220,8 +223,27 @@ export const LockFunctionEdit = () => {
                 </SelectContent>
               </Select>
             </div>
-            
-            
+
+            <div className="space-y-2">
+              <Label htmlFor="react_link">React Link</Label>
+              <Input
+                id="react_link"
+                value={formData.react_link}
+                onChange={(e) => handleChange('react_link', e.target.value)}
+                placeholder="Enter react link (e.g., /settings/account/lock-function)"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="parent_function">Parent Function</Label>
+              <Input
+                id="parent_function"
+                value={formData.parent_function}
+                onChange={(e) => handleChange('parent_function', e.target.value)}
+                placeholder="Enter parent function"
+              />
+            </div>
+
           </CardContent>
         </Card>
 

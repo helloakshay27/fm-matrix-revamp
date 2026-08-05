@@ -2,17 +2,23 @@ import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type StatHeroTone = "purple" | "teal" | "peach" | "blue";
-export type StatHeroAccent = "success" | "info" | "green" | "warning" | "error";
+export type StatHeroAccent = "success" | "info" | "green" | "warning" | "error" | "neutral";
 
-const TONE_CLASSES: Record<StatHeroTone, string> = {
-  purple: "bg-brand-purple-bg",
-  teal: "bg-brand-teal-bg",
-  peach: "bg-brand-light",
-  blue: "",
+const TONE_STYLE: Record<StatHeroTone, React.CSSProperties> = {
+  purple: { backgroundColor: "#EFEFFB" },
+  teal: { backgroundColor: "#B7DCD44D" },
+  peach: { backgroundColor: "#E3909026" },
+  blue: { backgroundColor: "#85BDF633" },
 };
 
-const TONE_STYLE: Partial<Record<StatHeroTone, React.CSSProperties>> = {
-  blue: { backgroundColor: "rgba(var(--color-info-rgb), 0.12)" },
+// Darker shade of each tone's own base color (not the accent), used for the
+// progress-bar fill so the bar always reads as "this card's color, deepened"
+// rather than an unrelated semantic accent color.
+const TONE_PROGRESS_COLOR: Record<StatHeroTone, string> = {
+  purple: "#9B9BA3",
+  teal: "#778F8A",
+  peach: "#945E5E",
+  blue: "#567BA0",
 };
 
 const ACCENT_TEXT_CLASSES: Record<StatHeroAccent, string> = {
@@ -21,14 +27,7 @@ const ACCENT_TEXT_CLASSES: Record<StatHeroAccent, string> = {
   green: "text-brand-green",
   warning: "text-[#8A5A00]",
   error: "text-brand-error",
-};
-
-const ACCENT_BAR_CLASSES: Record<StatHeroAccent, string> = {
-  success: "bg-brand-success",
-  info: "bg-brand-info",
-  green: "bg-brand-green",
-  warning: "bg-brand-warning",
-  error: "bg-brand-error",
+  neutral: "text-brand-text",
 };
 
 export interface StatHeroCardProps {
@@ -62,31 +61,34 @@ export function StatHeroCard({
   return (
     <div
       onClick={onClick}
-      className={cn("relative rounded-xl p-4", onClick && "cursor-pointer", TONE_CLASSES[tone], className)}
+      className={cn("relative rounded-xl p-4", onClick && "cursor-pointer", className)}
       style={TONE_STYLE[tone]}
     >
       <button
         type="button"
         aria-label="How this is calculated"
         onClick={(e) => e.stopPropagation()}
-        className="absolute top-2 right-2 w-[18px] h-[18px] rounded-full border border-brand-green/60 bg-white/70 flex items-center justify-center text-brand-green"
+        className="absolute top-2 right-2 w-[18px] h-[18px] rounded-full border border-black/30 bg-white/70 flex items-center justify-center text-black"
       >
         <Info className="w-3 h-3" />
       </button>
 
-      <div className="text-brand-caption font-medium text-brand-green uppercase tracking-wide mb-1">{label}</div>
+      <div className="text-brand-caption font-medium text-black uppercase tracking-wide mb-1">{label}</div>
       <div className={cn("text-[22px] font-bold leading-none", ACCENT_TEXT_CLASSES[accent])}>{value}</div>
 
       {progress !== undefined && (
         <div className="h-[3px] bg-white/60 rounded-full mt-1.5 overflow-hidden">
           <div
-            className={cn("h-full rounded-full", ACCENT_BAR_CLASSES[accent])}
-            style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+            className="h-full rounded-full"
+            style={{
+              width: `${Math.min(100, Math.max(0, progress))}%`,
+              backgroundColor: TONE_PROGRESS_COLOR[tone],
+            }}
           />
         </div>
       )}
 
-      {subtitle && <div className="text-brand-caption text-brand-green mt-1">{subtitle}</div>}
+      {subtitle && <div className="text-brand-caption text-black mt-1">{subtitle}</div>}
     </div>
   );
 }

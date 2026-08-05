@@ -9,6 +9,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { getProductLandingPageUrl } from "./pages/products/landingPageUrls";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster, toast } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
@@ -979,6 +980,7 @@ const DirectPDFDownloadPage = lazy(() => import("./pages/DirectPDFDownloadPage")
 const DirectPDFDownloadAPIPage = lazy(() => import("./pages/DirectPDFDownloadAPIPage").then(m => ({ default: m.DirectPDFDownloadAPIPage })));
 const DeletedPRs = lazy(() => import("./pages/DeletedPRs").then(m => ({ default: m.DeletedPRs })));
 const MsafeDashboardVI = lazy(() => import("./pages/MsafeDashboardVI"));
+const MsafeDashboardPage = lazy(() => import("./features/msafe-dashboard/MsafeDashboardPage").then(m => ({ default: m.MsafeDashboardPage })));
 const DashboardMobile = lazy(() => import("./pages/DashboardMobile").then(m => ({ default: m.DashboardMobile })));
 const SafetyCheckAudit = lazy(() => import("./pages/SafetyCheckAudit"));
 const MsafeCirlce = lazy(() => import("./pages/MsafeCirlce"));
@@ -1543,11 +1545,21 @@ const ProductLandingButton: React.FC = () => {
   }
 
   const productPath = location.pathname.replace(/\/$/, "");
+  const productSlug = productPath.split("/").pop();
+  const externalLandingUrl = getProductLandingPageUrl(productSlug);
+
+  const openLandingPage = () => {
+    if (externalLandingUrl) {
+      window.open(externalLandingUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+    navigate(`${productPath}/landing`);
+  };
 
   return (
     <button
       type="button"
-      onClick={() => navigate(`${productPath}/landing`)}
+      onClick={openLandingPage}
       className="fixed right-6 top-28 z-50 rounded-full border border-[#DA7756]/30 bg-[#DA7756] px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-[#DA7756]/20 transition-all hover:bg-[#C9684B] focus:outline-none focus:ring-2 focus:ring-[#DA7756]/30"
     >
       Landing Page
@@ -2048,6 +2060,15 @@ function App() {
 
                           <Route
                             path="/msafedashboard"
+                            element={
+                              <ProtectedRoute>
+                                <MsafeDashboardPage />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          <Route
+                            path="/msafedashboard-legacy"
                             element={
                               <ProtectedRoute>
                                 <MsafeDashboardVI />

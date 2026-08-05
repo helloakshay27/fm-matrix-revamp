@@ -1,24 +1,23 @@
+// @ts-nocheck
 import { useJobs } from "../JobsContext";
 import { T } from "../constants";
-import { Fld, FS, Btn } from "../components/UI";
+import { Fld, Btn } from "../components/UI";
+import MemberSearchSelect from "../components/MemberSearchSelect";
 import { useEscalateUsers } from "../hooks/useEscalateUsers";
 
 export default function AssignToJdModal() {
-  const { assignModal, setAssignModal, assignUserId, setAssignUserId, setAssignUserName, assignUser } = useJobs();
+  const {
+    assignModal, setAssignModal, assignJdUserIds, setAssignJdUserIds,
+    assignUser, jdAssignSaving,
+  } = useJobs();
   const { data: escalateUsers = [], isLoading, error } = useEscalateUsers();
 
   if (!assignModal) return null;
 
-  const handleUserChange = (e) => {
-    const userId = e.target.value ? Number(e.target.value) : null;
-    setAssignUserId(userId);
-    if (userId) {
-      const selectedUser = escalateUsers.find((u) => u.id === userId);
-      setAssignUserName(selectedUser?.full_name || "");
-    } else {
-      setAssignUserName("");
-    }
-  };
+  const memberOptions = escalateUsers.map((u) => ({
+    id: u.id,
+    name: u.full_name || u.name || `User ${u.id}`,
+  }));
 
   return (
     <div
@@ -55,24 +54,25 @@ export default function AssignToJdModal() {
           Assign Member
         </h3>
         <p style={{ fontSize: 12.5, color: T.inkMuted, marginBottom: 20 }}>
-          Add a team member for performance tracking.
+          Add team members for performance tracking.
         </p>
         <Fld
-          label="Member"
-          hint={error ? `Could not load users: ${error.message}` : undefined}
+          label="Members"
+          hint={
+            error
+              ? `Could not load users: ${error.message}`
+              : "Already assigned members pehle se selected hain — hataane ke liye unselect karein."
+          }
         >
-          <FS
-            value={assignUserId || ""}
-            onChange={handleUserChange}
-            disabled={isLoading}
-          >
-            <option value="">Select member</option>
-            {escalateUsers.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.full_name}
-              </option>
-            ))}
-          </FS>
+          <MemberSearchSelect
+            multiple
+            value={assignJdUserIds}
+            options={memberOptions}
+            onChange={setAssignJdUserIds}
+            placeholder="Select members"
+            loading={isLoading}
+            disabled={isLoading || jdAssignSaving}
+          />
         </Fld>
         <div
           style={{
@@ -83,8 +83,8 @@ export default function AssignToJdModal() {
           }}
         >
           <Btn onClick={() => setAssignModal(null)}>Cancel</Btn>
-          <Btn primary onClick={assignUser} disabled={!assignUserId || isLoading}>
-            Assign
+          <Btn primary onClick={assignUser} disabled={isLoading || jdAssignSaving}>
+            {jdAssignSaving ? "Assigning..." : "Assign"}
           </Btn>
         </div>
       </div>

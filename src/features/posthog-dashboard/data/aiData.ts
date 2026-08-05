@@ -18,8 +18,6 @@ export function getAIData<K extends ChartKey>(chartKey: K, vm: ViewModel): AIDat
       return { roles: vm.adopt.roleShares } as AIDataMap[K];
     case 'chart.siteHealth':
       return (vm.siteHealth ? { rows: vm.siteHealth.rows } : null) as AIDataMap[K];
-    case 'chart.region':
-      return (vm.region ? { rows: vm.region.rows } : null) as AIDataMap[K];
     case 'chart.funnel':
       return vm.flows.funnel as AIDataMap[K];
     case 'chart.flowList':

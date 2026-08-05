@@ -1851,7 +1851,7 @@ const ProjectTaskCreateModal = ({
       const errors = error.response.data;
 
       Object.keys(errors).forEach((key) => {
-        toast.error(`${key} ${errors[key][0]}`);
+        toast.error(`${key} ${errors[key]}`);
       });
     } finally {
       setIsSubmitting(false);

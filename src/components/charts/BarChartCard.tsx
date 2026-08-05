@@ -14,7 +14,6 @@ import {
 } from "recharts";
 import { BarChart3, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
 import { cn } from "@/lib/utils";
 import type { ChartInsightTone } from "./PieChartCard";
 
@@ -22,6 +21,8 @@ export interface BarSeriesConfig {
   dataKey: string;
   name: string;
 }
+
+const BAR_SERIES_COLORS = ["#9EC8BA", "#8E7BE0", "#DA7756", "#798C5E", "#EDC488"];
 
 const INSIGHT_TONE_CLASSES: Record<ChartInsightTone, string> = {
   info: "text-[#2a5f8f]",
@@ -89,8 +90,12 @@ export interface BarChartCardProps {
   stacked?: boolean;
   /** Override per-bar color by category index instead of by series (only for a single series). */
   categoryColors?: string[];
+  /** Override the default per-series color order (only meaningful when series.length > 1). */
+  seriesColors?: string[];
   valueDomain?: [number, number];
   valueTicks?: number[];
+  /** Override the direct bar label text (e.g. "4/10" instead of the plotted "40%"). */
+  labelFormatter?: (value: number, index: number) => string;
   height?: number;
   className?: string;
 }
@@ -115,14 +120,19 @@ export function BarChartCard({
   orientation = "vertical",
   stacked = false,
   categoryColors,
+  seriesColors,
   valueDomain,
   valueTicks,
+  labelFormatter,
   height = 220,
   className,
 }: BarChartCardProps) {
   const showLegend = series.length > 1;
   const showDirectLabels = data.length <= 6 && !stacked;
   const isHorizontal = orientation === "horizontal";
+  const isSingleSeries = series.length === 1 && !stacked;
+  const resolvedCategoryColors = isSingleSeries ? categoryColors ?? BAR_SERIES_COLORS : categoryColors;
+  const resolvedSeriesColors = seriesColors ?? BAR_SERIES_COLORS;
 
   const valueAxis = (
     <XAxis
@@ -152,6 +162,7 @@ export function BarChartCard({
   );
 
   return (
+    <>
     <Card className={cn("border-brand-border relative", className)}>
       {showInfoIcon && (
         <button
@@ -206,17 +217,36 @@ export function BarChartCard({
                   key={s.dataKey}
                   dataKey={s.dataKey}
                   name={s.name}
-                  fill={ANALYTICS_PALETTE[seriesIndex % ANALYTICS_PALETTE.length]}
+                  fill={resolvedSeriesColors[seriesIndex % resolvedSeriesColors.length]}
                   radius={isHorizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]}
                   maxBarSize={isHorizontal ? 22 : 40}
                   stackId={stacked ? "stack" : undefined}
                 >
-                  {categoryColors && series.length === 1 && !stacked
+                  {isSingleSeries
                     ? data.map((_, categoryIndex) => (
-                        <Cell key={categoryIndex} fill={categoryColors[categoryIndex % categoryColors.length]} />
+                        <Cell
+                          key={categoryIndex}
+                          fill={resolvedCategoryColors![categoryIndex % resolvedCategoryColors!.length]}
+                        />
                       ))
                     : null}
-                  {showDirectLabels && (
+                  {showDirectLabels && labelFormatter && (
+                    <LabelList
+                      dataKey={s.dataKey}
+                      position={isHorizontal ? "right" : "top"}
+                      content={(props: { x?: number; y?: number; width?: number; height?: number; value?: number; index?: number }) => {
+                        const { x = 0, y = 0, width = 0, height: barHeight = 0, value, index = 0 } = props;
+                        const labelX = isHorizontal ? x + width + 4 : x + width / 2;
+                        const labelY = isHorizontal ? y + barHeight / 2 + 4 : y - 6;
+                        return (
+                          <text x={labelX} y={labelY} fontSize={11} fill="var(--color-text)" textAnchor={isHorizontal ? "start" : "middle"}>
+                            {labelFormatter(Number(value), index)}
+                          </text>
+                        );
+                      }}
+                    />
+                  )}
+                  {showDirectLabels && !labelFormatter && (
                     <LabelList
                       dataKey={s.dataKey}
                       position={isHorizontal ? "right" : "top"}
@@ -229,11 +259,12 @@ export function BarChartCard({
             </BarChart>
           </ResponsiveContainer>
         )}
-
-        {insight && insightVariant === "plain" && (
-          <p className="text-brand-body-5 text-brand-green leading-relaxed mt-3">{insight}</p>
-        )}
       </CardContent>
     </Card>
+
+    {insight && insightVariant === "plain" && (
+      <p className="text-brand-body-5 text-brand-green leading-relaxed mt-3">{insight}</p>
+    )}
+    </>
   );
 }

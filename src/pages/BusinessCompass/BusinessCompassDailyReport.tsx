@@ -158,6 +158,13 @@ interface AccomplishmentItem {
   // stays the owner of record even though it's submitted inside this report.
   ownerId?: number | string | null;
   ownerName?: string | null;
+  // Task / issue / todo reference — row ko Daily tab me clickable banata hai.
+  source_id?: number | string | null;
+  source_type?: string | null;
+  type?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  originalData?: any;
 }
 
 interface DailyReportDraft {
@@ -169,6 +176,9 @@ interface DailyReportDraft {
     starred: boolean;
     source_id?: number | null;
     source_type?: string | null;
+    type?: string | null;
+    start_date?: string | null;
+    end_date?: string | null;
   }[];
   selfRating?: number[];
   isAbsent?: boolean;
@@ -255,6 +265,41 @@ const sanitizeOriginalData = (data: any) => {
   const clone = { ...data };
   ORIGINAL_DATA_OMIT_KEYS.forEach((key) => delete clone[key]);
   return clone;
+};
+
+/**
+ * Task / issue / todo ka reference jo report ki har row ke saath jana chahiye.
+ * Daily tab (AdminCompass) isi se type ka icon/pill dikhata hai aur row par
+ * click hone par us task/issue/todo par redirect karta hai — isliye
+ * accomplishments aur tomorrow_plan me bhi wahi fields bhejte hain jo
+ * `tasks_issues` bhejta hai: type + source_id + start/end date.
+ * Row plain note ho (koi source na ho) to khali object, taki payload me
+ * bekaar nulls na jayein.
+ */
+const buildItemSourceRef = (item: any) => {
+  const original = item?.originalData ?? null;
+  const type = String(
+    item?.type ??
+    item?.source_type ??
+    item?.sourceType ??
+    original?.source_type ??
+    ""
+  ).toLowerCase();
+  const sourceId = item?.source_id ?? item?.sourceId ?? original?.id ?? null;
+  if (!type && sourceId == null) return {};
+  return {
+    ...(sourceId != null ? { source_id: sourceId } : {}),
+    // `type` Daily tab ka icon/pill padhta hai, `source_type` purane consumers ke liye.
+    ...(type ? { type, source_type: type } : {}),
+    start_date:
+      original?.estimated_start_date ??
+      original?.expected_start_date ??
+      original?.start_date ??
+      item?.start_date ??
+      null,
+    end_date:
+      original?.target_date ?? original?.end_date ?? item?.end_date ?? null,
+  };
 };
 
 const getNonEmptyReportItems = (
@@ -1445,6 +1490,10 @@ const BusinessCompassDailyReport: React.FC = () => {
             starred: false,
             ownerId: member?.user_id ?? null,
             ownerName: member?.name?.trim() || "",
+            // Reportee ki row ka task/issue/todo reference saath le jate hain,
+            // warna manager ke report me ye plain "note" ban jati thi.
+            ...buildItemSourceRef(item),
+            originalData: item?.originalData ?? null,
           },
           ...prev,
         ]
@@ -1466,6 +1515,10 @@ const BusinessCompassDailyReport: React.FC = () => {
             starred: false,
             ownerId: member?.user_id ?? null,
             ownerName: member?.name?.trim() || "",
+            // Same reason as borrowed accomplishments — type + id saath rehna
+            // chahiye taki Daily tab me icon sahi bane aur click par redirect ho.
+            ...buildItemSourceRef(item),
+            originalData: item?.originalData ?? null,
           },
           ...prev,
         ]
@@ -2297,6 +2350,11 @@ const BusinessCompassDailyReport: React.FC = () => {
         completed: false,
         starred: false,
         fromYesterday: true,
+        // Kal ke plan ka task/issue/todo reference saath aata hai — ye rows
+        // aage `non_completed_accomplishments` (Not Accomplished Plan) me jati
+        // hain, aur wahan bhi type + redirect chalna chahiye.
+        ...buildItemSourceRef(p),
+        ...(p.originalData ? { originalData: p.originalData } : {}),
       }));
     }
 
@@ -2315,6 +2373,9 @@ const BusinessCompassDailyReport: React.FC = () => {
           fromYesterday: false,
           ownerId: ach.owner_id ?? null,
           ownerName: ach.owner_name ?? null,
+          // Saved source reference wapas load karte hain, warna dobara save
+          // karne par type/id gum ho jate hain.
+          ...buildItemSourceRef(ach),
         }));
       }
 
@@ -2341,9 +2402,7 @@ const BusinessCompassDailyReport: React.FC = () => {
               id: `fetched-plan-${idx}`,
               text: getReportItemText(p),
               starred: p.is_starred ?? false,
-              ...(p.source_id != null
-                ? { source_id: p.source_id, source_type: p.source_type }
-                : {}),
+              ...buildItemSourceRef(p),
               ownerId: p.owner_id ?? null,
               ownerName: p.owner_name ?? null,
             })
@@ -2558,6 +2617,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                   fromYesterday: false,
                   ownerId: ach.owner_id ?? null,
                   ownerName: ach.owner_name ?? null,
+                  ...buildItemSourceRef(ach),
                 }));
               }
 
@@ -2583,9 +2643,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       id: `fetched-plan-${idx}`,
                       text: getReportItemText(p),
                       starred: p.is_starred ?? false,
-                      ...(p.source_id != null
-                        ? { source_id: p.source_id, source_type: p.source_type }
-                        : {}),
+                      ...buildItemSourceRef(p),
                       ownerId: p.owner_id ?? null,
                       ownerName: p.owner_name ?? null,
                     })
@@ -2631,9 +2689,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                   text: getReportItemText(p),
                   starred: p.is_starred ?? p.starred ?? false,
                   fromWeeklyPlan: true,
-                  ...(p.source_id != null
-                    ? { source_id: p.source_id, source_type: p.source_type }
-                    : {}),
+                  ...buildItemSourceRef(p),
                 }))
               );
             } else {
@@ -2805,12 +2861,17 @@ const BusinessCompassDailyReport: React.FC = () => {
           ...(a.ownerId != null
             ? { owner_id: a.ownerId, owner_name: a.ownerName || "" }
             : {}),
+          // type + source_id + dates, taki Daily tab row ko task/issue/todo
+          // pehchan sake aur click par us record par redirect kar sake.
+          ...buildItemSourceRef(a),
+          ...(a.originalData
+            ? { originalData: sanitizeOriginalData(a.originalData) }
+            : {}),
         })),
       ...autoAddedAccomplishments.map((item) => ({
         title: cleanReportText(item.title || ""),
         star: autoStarredIds.has(String(item.id)),
-        source_id: item.originalData?.id,
-        source_type: item.type,
+        ...buildItemSourceRef(item),
         originalData: sanitizeOriginalData(item.originalData),
       })),
     ].filter((a) => a.title !== "");
@@ -2824,6 +2885,10 @@ const BusinessCompassDailyReport: React.FC = () => {
         ...(a.ownerId != null
           ? { owner_id: a.ownerId, owner_name: a.ownerName || "" }
           : {}),
+        ...buildItemSourceRef(a),
+        ...(a.originalData
+          ? { originalData: sanitizeOriginalData(a.originalData) }
+          : {}),
       }))
       .filter((a) => a.title !== "");
 
@@ -2831,8 +2896,9 @@ const BusinessCompassDailyReport: React.FC = () => {
       .map((p) => ({
         title: cleanReportText(p.text),
         is_starred: p.starred,
-        ...(p.source_id != null
-          ? { source_id: p.source_id, source_type: p.source_type, originalData: sanitizeOriginalData(p.originalData) }
+        ...buildItemSourceRef(p),
+        ...(p.originalData
+          ? { originalData: sanitizeOriginalData(p.originalData) }
           : {}),
         ...(p.ownerId != null
           ? { owner_id: p.ownerId, owner_name: p.ownerName || "" }
@@ -2848,8 +2914,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       .map((item) => ({
         title: cleanReportText(item.title),
         is_starred: false,
-        source_id: item.originalData?.id ?? null,
-        source_type: item.type ?? null,
+        ...buildItemSourceRef(item),
         originalData: sanitizeOriginalData(item.originalData),
       }));
 
@@ -7225,6 +7290,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         completed: true,
                                         starred: false,
                                         fromYesterday: false,
+                                        ...buildItemSourceRef(ach),
                                       }))
                                     );
                                   } else {
@@ -7238,6 +7304,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         id: `fetched-plan-${idx}`,
                                         text: getReportItemText(p),
                                         starred: false,
+                                        ...buildItemSourceRef(p),
                                       }))
                                     );
                                   } else {

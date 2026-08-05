@@ -38,11 +38,14 @@ export function PostHogServiceActivity({ event, properties }: PostHogServiceActi
     };
   };
 
+  const propsString = properties ? JSON.stringify(properties) : null;
+
   useEffect(() => {
     if (posthog) {
-      posthog.capture(event, { ...getCommonContext(), ...(properties ?? {}) });
+      const parsedProps = propsString ? JSON.parse(propsString) : {};
+      posthog.capture(event, { ...getCommonContext(), ...parsedProps });
     }
-  }, [posthog, event, properties]);
+  }, [posthog, event, propsString]);
 
   return null;
 }

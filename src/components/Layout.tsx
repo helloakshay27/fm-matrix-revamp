@@ -65,7 +65,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     setCurrentUser(getUser());
   }, [location.pathname]);
 
-  // Scope the product-pages table CSS (see index.css) to /products and /product/* routes only
+  //  Scope the product-pages table CSS (see index.css) to /products and /product/* routes only
   useEffect(() => {
     const isProductRoute =
       location.pathname.startsWith("/products") ||

@@ -8,6 +8,7 @@ import {
   DataTableCard,
   TableBadge,
   PermitTimelineChartCard,
+  IncidentTrendChartCard,
   type DataTableColumn,
   type TableBadgeTone,
   type PermitTimelinePoint,
@@ -67,10 +68,12 @@ const STATUS_BREAKDOWN = [
   { label: "Total", value: 262, color: "text-brand-text" },
 ];
 
+const STATUS_TILE_BG_COLORS = ["#EFEFFB", "#B7DCD44D", "#E3909026", "#85BDF633", "#EFEFFB"];
+
 const CATEGORY_BARS = [
-  { label: "Nature", value: 144, pct: 55, color: "bg-brand-info" },
-  { label: "Environmental", value: 74, pct: 28, color: "bg-brand-green" },
-  { label: "Equipment Failure", value: 44, pct: 17, color: "bg-brand-error" },
+  { label: "Nature", value: 144, pct: 55 },
+  { label: "Environmental", value: 74, pct: 28 },
+  { label: "Equipment Failure", value: 44, pct: 17 },
 ];
 
 interface IncidentRow {
@@ -158,10 +161,10 @@ const PERMIT_RISK_WEIGHTED_DATA = [
 const PERMIT_RISK_COLORS = ["#E7848E", "#E7848E", "#EDC488", "#798C5E", "#798C5E"];
 
 const PERMIT_STATUS_BARS = [
-  { label: "Draft (stuck)", value: 52, pct: 54, color: "bg-brand-error" },
-  { label: "Expired", value: 16, pct: 16, color: "bg-brand-error" },
-  { label: "Open / Active", value: 9, pct: 9, color: "bg-brand-success" },
-  { label: "Closed", value: 13, pct: 13, color: "bg-brand-green" },
+  { label: "Draft (stuck)", value: 52, pct: 54 },
+  { label: "Expired", value: 16, pct: 16 },
+  { label: "Open / Active", value: 9, pct: 9 },
+  { label: "Closed", value: 13, pct: 13 },
 ];
 
 interface PermitExceptionRow {
@@ -304,7 +307,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
       key: "sohi-contradiction",
       layout: { x: 0, y: 3, w: 12, h: 6, minW: 4, minH: 4 },
       content: (
-        <div className="rounded-lg border border-brand-error bg-brand-error-bg p-4 h-full">
+        <div className="rounded-lg bg-brand-error-bg p-4 h-full">
           <div className="text-brand-body-4 font-bold text-brand-text">
             SOHI score vs the number it doesn&apos;t include
           </div>
@@ -337,27 +340,22 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
         </div>
       ),
     },
-  ];
-
-  const incidentsItems: SafetyGridItem[] = [
     {
-      key: "inc-trend",
-      layout: { x: 0, y: 0, w: 6, h: 6, minW: 4, minH: 4 },
+      key: "sohi-incident-trend",
+      layout: { x: 0, y: 9, w: 6, h: 6, minW: 4, minH: 4 },
       content: (
-        <BarChartCard
+        <IncidentTrendChartCard
           title="Incident Trend"
           subtitle="Are incidents rising?"
           data={INCIDENT_TREND_DATA}
-          categoryKey="month"
-          series={[{ dataKey: "incidents", name: "Incidents" }]}
-          height={180}
-          className="h-full"
+          height={200}
+          className="h-full no-drag"
         />
       ),
     },
     {
-      key: "inc-support-stat",
-      layout: { x: 6, y: 0, w: 6, h: 6, minW: 4, minH: 4 },
+      key: "sohi-incident-support",
+      layout: { x: 6, y: 9, w: 6, h: 6, minW: 4, minH: 4 },
       content: (
         <div className="bg-white border border-brand-border rounded-lg flex flex-col items-center justify-center text-center p-6 h-full">
           <div className="text-4xl font-bold text-brand-error">66%</div>
@@ -367,9 +365,12 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
         </div>
       ),
     },
+  ];
+
+  const incidentsItems: SafetyGridItem[] = [
     {
       key: "inc-nearmiss",
-      layout: { x: 0, y: 6, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
           tone="purple"
@@ -383,7 +384,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-sqft",
-      layout: { x: 3, y: 6, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 3, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
           tone="teal"
@@ -397,7 +398,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-ltir2",
-      layout: { x: 6, y: 6, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 6, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
           tone="peach"
@@ -411,7 +412,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-manhours",
-      layout: { x: 9, y: 6, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 9, y: 0, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
           tone="blue"
@@ -425,7 +426,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-warning-banner",
-      layout: { x: 0, y: 9, w: 12, h: 3, minW: 4, minH: 2 },
+      layout: { x: 0, y: 3, w: 12, h: 3, minW: 4, minH: 2, isResizable: false, isDraggable: false },
       content: (
         <div className="rounded-lg border border-brand-warning bg-brand-warning-light px-3 py-2 text-brand-body-5 text-[#B8860B] h-full overflow-auto">
           Zero Near Miss / Good Catch reports alongside 5,800 incidents per million sq ft is a
@@ -438,7 +439,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-severity",
-      layout: { x: 0, y: 12, w: 4, h: 7, minW: 3, minH: 4 },
+      layout: { x: 0, y: 6, w: 4, h: 7, minW: 3, minH: 4 },
       content: (
         <PieChartCard
           title="Severity Distribution"
@@ -451,10 +452,10 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-closure-rate",
-      layout: { x: 4, y: 12, w: 4, h: 7, minW: 3, minH: 4 },
+      layout: { x: 4, y: 6, w: 4, h: 7, minW: 3, minH: 4 },
       content: (
         <StatHeroCard
-          tone="peach"
+          tone="teal"
           label="Incident Closure Rate %"
           value="17.9%"
           accent="warning"
@@ -465,7 +466,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-rootcause",
-      layout: { x: 8, y: 12, w: 4, h: 7, minW: 3, minH: 4 },
+      layout: { x: 8, y: 6, w: 4, h: 7, minW: 3, minH: 4 },
       content: (
         <PieChartCard
           title="Primary Root Cause"
@@ -478,7 +479,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-rootnote",
-      layout: { x: 0, y: 19, w: 12, h: 2, minW: 4, minH: 2 },
+      layout: { x: 0, y: 13, w: 12, h: 2, minW: 4, minH: 2, isResizable: false, isDraggable: false },
       content: (
         <p className="text-brand-body-5 text-brand-text-light">
           Root Cause is a different lens than the Category breakdown below — Category groups
@@ -489,10 +490,10 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-compliance",
-      layout: { x: 0, y: 21, w: 3, h: 3, minW: 2, minH: 3 },
+      layout: { x: 0, y: 15, w: 3, h: 3, minW: 2, minH: 3 },
       content: (
         <StatHeroCard
-          tone="peach"
+          tone="teal"
           label="⭐ Safety Compliance Score"
           value="48/100"
           accent="warning"
@@ -503,7 +504,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-status-breakdown",
-      layout: { x: 0, y: 24, w: 12, h: 9, minW: 6, minH: 6 },
+      layout: { x: 0, y: 18, w: 12, h: 9, minW: 6, minH: 6 },
       content: (
         <div className="bg-white border border-brand-border rounded-lg p-5 h-full overflow-auto">
           <div className="text-brand-body-3 font-bold text-brand-text">Incident Status Breakdown</div>
@@ -512,10 +513,14 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-            {STATUS_BREAKDOWN.map((s) => (
-              <div key={s.label} className="border border-brand-border rounded-lg p-3 text-center bg-brand-bg">
+            {STATUS_BREAKDOWN.map((s, index) => (
+              <div
+                key={s.label}
+                className="rounded-lg p-3 text-center"
+                style={{ backgroundColor: STATUS_TILE_BG_COLORS[index % STATUS_TILE_BG_COLORS.length] }}
+              >
                 <div className={cn("text-xl font-bold", s.color)}>{s.value}</div>
-                <div className="text-brand-body-5 text-brand-text-light mt-0.5">{s.label}</div>
+                <div className="text-brand-body-5 text-black mt-0.5">{s.label}</div>
               </div>
             ))}
           </div>
@@ -536,7 +541,10 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
               <div key={bar.label} className="flex items-center gap-3">
                 <span className="w-32 text-brand-body-5 text-brand-text-light flex-shrink-0">{bar.label}</span>
                 <div className="flex-1 h-1.5 rounded-full bg-brand-muted overflow-hidden">
-                  <div className={cn("h-full rounded-full", bar.color)} style={{ width: `${bar.pct}%` }} />
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${bar.pct}%`, backgroundColor: bar.pct > 50 ? "#76CDC1" : "#E39090" }}
+                  />
                 </div>
                 <span className="text-brand-body-5 font-semibold text-brand-text w-8 text-right">{bar.value}</span>
               </div>
@@ -547,7 +555,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-closure-integrity",
-      layout: { x: 0, y: 33, w: 12, h: 4, minW: 6, minH: 3 },
+      layout: { x: 0, y: 27, w: 12, h: 4, minW: 6, minH: 3 },
       content: (
         <div className="bg-white border-l-4 border-brand-error border border-brand-border rounded-lg p-4 h-full overflow-auto">
           <div className="flex items-center justify-between">
@@ -573,7 +581,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-quiet-escalation",
-      layout: { x: 0, y: 37, w: 12, h: 6, minW: 6, minH: 4 },
+      layout: { x: 0, y: 31, w: 12, h: 6, minW: 6, minH: 4 },
       content: (
         <BarChartCard
           title="Quiet escalation — repeat Low Risk by location"
@@ -590,7 +598,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-table",
-      layout: { x: 0, y: 43, w: 12, h: 8, minW: 6, minH: 5 },
+      layout: { x: 0, y: 37, w: 12, h: 8, minW: 6, minH: 5 },
       content: (
         <DataTableCard
           title="Incidents Requiring Action"
@@ -604,7 +612,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-bodypart",
-      layout: { x: 0, y: 51, w: 12, h: 6, minW: 6, minH: 4 },
+      layout: { x: 0, y: 45, w: 12, h: 6, minW: 6, minH: 4 },
       content: (
         <BarChartCard
           title="Which category hurts which body part"
@@ -626,7 +634,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
     },
     {
       key: "inc-bodyinjury",
-      layout: { x: 0, y: 57, w: 12, h: 9, minW: 6, minH: 6 },
+      layout: { x: 0, y: 51, w: 12, h: 9, minW: 6, minH: 6 },
       content: <BodyInjuryChartCard />,
     },
   ];
@@ -785,7 +793,10 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
               <div key={bar.label} className="flex items-center gap-3">
                 <span className="w-32 text-brand-body-5 text-brand-text-light flex-shrink-0">{bar.label}</span>
                 <div className="flex-1 h-1.5 rounded-full bg-brand-muted overflow-hidden">
-                  <div className={cn("h-full rounded-full", bar.color)} style={{ width: `${bar.pct}%` }} />
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${bar.pct}%`, backgroundColor: bar.pct > 15 ? "#76CDC1" : "#E39090" }}
+                  />
                 </div>
                 <span className="text-brand-body-5 font-semibold text-brand-text w-8 text-right">{bar.value}</span>
               </div>
@@ -881,7 +892,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
   return (
     <div className="space-y-4">
       {/* Safety Alerts strip */}
-      <div className="rounded-lg border border-brand-error bg-brand-error-bg px-5 py-4">
+      <div className="rounded-lg bg-brand-error-bg px-5 py-4">
         <div className="flex items-center gap-2 text-brand-body-5 font-bold uppercase tracking-wide text-brand-error mb-3">
           <AlertTriangle className="w-3.5 h-3.5" />
           Safety Alerts

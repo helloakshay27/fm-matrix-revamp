@@ -1,12 +1,13 @@
 // @ts-nocheck
 import { useJobs } from "../JobsContext";
 import { T } from "../constants";
-import { Fld, FI, Btn } from "../components/UI";
+import { Fld, Btn } from "../components/UI";
 import MemberSearchSelect from "../components/MemberSearchSelect";
 
 export default function AssignPersonModal() {
   const {
-    assignKraModal, setAssignKraModal, assignKraName, setAssignKraName, assignToKra,
+    assignKraModal, setAssignKraModal, assignKraUserIds, setAssignKraUserIds,
+    kraAssignUsers, assignToKra, krasSaving,
     assignKpiModal, setAssignKpiModal, assignKpiUserIds, setAssignKpiUserIds,
     kpiAssignUsers, kpiAssignUsersLoading, kpiAssignUsersError, loadKpiAssignUsers,
     assignToKpi, kpisSaving,
@@ -50,10 +51,10 @@ export default function AssignPersonModal() {
             marginBottom: 4,
           }}
         >
-          Assign Person to {isKpiAssign ? "KPI" : "KRA"}
+          Assign {isKpiAssign ? "Person" : "Members"} to {isKpiAssign ? "KPI" : "KRA"}
         </h3>
         <p style={{ fontSize: 12.5, color: T.inkMuted, marginBottom: 20 }}>
-          Assign a team member to this {isKpiAssign ? "Key Performance Indicator" : "Key Result Area"}.
+          Assign team members to this {isKpiAssign ? "Key Performance Indicator" : "Key Result Area"}.
         </p>
         {isKpiAssign ? (
           <Fld
@@ -80,12 +81,28 @@ export default function AssignPersonModal() {
             )}
           </Fld>
         ) : (
-          <Fld label="Member Name">
-            <FI
-              placeholder="e.g. Priya Sharma"
-              value={assignKraName}
-              onChange={(e) => setAssignKraName(e.target.value)}
+          <Fld
+            label="Members"
+            hint={
+              kpiAssignUsersError
+                ? `Could not load users: ${kpiAssignUsersError}`
+                : "Ek se zyada member chun sakte hain — selection hi final list hai, unselect karne par member hat jayega."
+            }
+          >
+            <MemberSearchSelect
+              multiple
+              value={assignKraUserIds}
+              options={kraAssignUsers}
+              onChange={setAssignKraUserIds}
+              placeholder="Select members"
+              disabled={kpiAssignUsersLoading || krasSaving}
+              loading={kpiAssignUsersLoading}
             />
+            {kpiAssignUsersError && (
+              <Btn onClick={loadKpiAssignUsers} disabled={kpiAssignUsersLoading} style={{ marginTop: 4 }}>
+                Retry
+              </Btn>
+            )}
           </Fld>
         )}
         <div
@@ -100,9 +117,15 @@ export default function AssignPersonModal() {
           <Btn
             primary
             onClick={isKpiAssign ? assignToKpi : assignToKra}
-            disabled={isKpiAssign ? (!assignKpiUserIds.length || kpiAssignUsersLoading || kpisSaving) : !assignKraName.trim()}
+            // Loading flag button ko block nahi karta — jab tak list load ho rahi
+            // hai selection khali hoti hai, wahi check kaafi hai.
+            disabled={
+              isKpiAssign
+                ? !assignKpiUserIds.length || kpisSaving
+                : !assignKraUserIds.length || krasSaving
+            }
           >
-            {kpisSaving && isKpiAssign ? "Assigning..." : "Assign"}
+            {(isKpiAssign ? kpisSaving : krasSaving) ? "Assigning..." : "Assign"}
           </Btn>
         </div>
       </div>

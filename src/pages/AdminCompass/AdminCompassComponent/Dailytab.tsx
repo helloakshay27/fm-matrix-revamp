@@ -40,7 +40,7 @@ import { useNavigate } from "react-router-dom";
 // Task glyph — checklist rows inside a rounded frame. Lucide me iska boxed
 // variant nahi hai, isliye inline SVG (baaki icons jaisa hi currentColor +
 // stroke-2 pattern follow karta hai).
-const TaskChecksIcon = ({
+export const TaskChecksIcon = ({
   className = "",
   ...rest
 }: React.SVGProps<SVGSVGElement>) => (
@@ -62,6 +62,33 @@ const TaskChecksIcon = ({
     <path d="M13.5 15.8H18" />
   </svg>
 );
+
+// Member badge ka color + initials — Daily Log ke detail modal me bhi wahi
+// rows dikhti hain, isliye ye module level par hain (dono jagah shared).
+export const getMemberBadgeClass = (name: any) => {
+  const colors = [
+    "bg-[#E7E3FF] text-[#6756C9]",
+    "bg-[#FFE2A8] text-[#8B5A00]",
+    "bg-[#BFEADF] text-[#0E6F5E]",
+    "bg-[#F0E8FF] text-[#7564C9]",
+    "bg-[#FFD9B5] text-[#A15305]",
+    "bg-[#DDEBFF] text-[#315FAD]",
+  ];
+  const seed = String(name || "")
+    .split("")
+    .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return colors[seed % colors.length];
+};
+
+export const getMemberShortName = (name: any) => {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return "";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+};
 
 // ── UI Components ──
 const BtnIcon = ({
@@ -643,19 +670,23 @@ const getMemberId = (member: any) =>
 const getMemberFilterKey = (name: any) =>
   String(name || "").trim().toLowerCase();
 
-// Kaam kiska hai — manually added rows par `owner_name` aata hai, purane
-// payloads me `member` / `member_name` / `user_name`. Task/issue se linked rows
-// par owner_name nahi hota; unka owner `originalData.responsible_person` me
-// hota hai. `name` ko jaan-boojh kar chhoda hai: kai items par wo title hota
-// hai, owner nahi.
+// Row kis member ki hai — sirf explicit owner tagging se: manually added rows
+// par `owner_name`, purane payloads me `member` / `member_name` / `user_name`.
+//
+// `originalData.responsible_person` jaan-boojh kar NAHI padha jata: wo us
+// task/issue ka assignee hai, report kisne bheja usse koi lena-dena nahi. Usse
+// padhne par dusre logon ki rows (jaise Bilal ke naam ka task) report owner ke
+// card me un logon ki rows ban kar dikhti thin, aur member dropdown me aise
+// naam aa jate the jo us report owner ki team me hi nahi hain.
+// Tag na mile to row report owner ki maani jati hai (see `getRowMemberName`).
+//
+// `name` bhi chhoda hai: kai items par wo title hota hai, owner nahi.
 const getItemMemberName = (item: any) =>
   String(
     item?.member ||
     item?.member_name ||
     item?.owner_name ||
     item?.user_name ||
-    item?.originalData?.responsible_person ||
-    item?.responsible_person ||
     ""
   ).trim();
 
@@ -705,9 +736,27 @@ const getSelectedMemberCalendarRow = (
   return mergeCalendarWithFallback(memberCalendar, fallbackRow);
 };
 
+// Row ka type pill. Sirf `type` par bharosa nahi karte — team member ki rows
+// (manager ke report me aane wali) kabhi `type` ke bina, sirf `source_type` /
+// `originalData.source_type` ke saath aati hain; unhe "note" dikhana galat hai.
 const getItemType = (item: any): string => {
   if (!item || typeof item !== "object") return "note";
-  return String(item.type || "note").toLowerCase();
+  const raw = String(
+    item.type ||
+      item.source_type ||
+      item.sourceType ||
+      item.originalData?.source_type ||
+      item.originalData?.sourceType ||
+      ""
+  ).toLowerCase();
+  const rawId = String(item.id || item.source_id || "").toLowerCase();
+
+  if (raw.includes("issue") || rawId.startsWith("issue-")) return "issue";
+  if (raw.includes("todo") || raw.includes("to_do") || rawId.startsWith("todo-"))
+    return "todo";
+  if (raw.includes("task") || rawId.startsWith("task-")) return "task";
+
+  return raw || "note";
 };
 
 const getViewSourceType = (item: any): string => {
@@ -846,6 +895,11 @@ const getItemStartDateValue = (item: any, detail?: any): Date | null => {
   return (
     parseDateValue(item?.start_date) ||
     parseDateValue(d?.start_date) ||
+    // Tasks par start `expected_start_date` / `estimated_start_date` me aata hai.
+    parseDateValue(item?.expected_start_date) ||
+    parseDateValue(d?.expected_start_date) ||
+    parseDateValue(item?.estimated_start_date) ||
+    parseDateValue(d?.estimated_start_date) ||
     parseDateValue(item?.from_date) ||
     parseDateValue(d?.from_date) ||
     parseDateValue(item?.created_at) ||
@@ -873,9 +927,13 @@ const itemHasOwnDates = (item: any): boolean => {
   const d = item?.originalData || {};
   const hasStart = !!(
     item?.start_date ||
+    item?.expected_start_date ||
+    item?.estimated_start_date ||
     item?.from_date ||
     item?.created_at ||
     d?.start_date ||
+    d?.expected_start_date ||
+    d?.estimated_start_date ||
     d?.from_date ||
     d?.created_at
   );
@@ -890,11 +948,22 @@ const itemHasOwnDates = (item: any): boolean => {
   return hasStart && hasEnd;
 };
 
-// Range filter (7 / 14 / 30 days) item ke start aur end date par chalta hai:
-// item window me hai agar uska [start, end] span window se overlap karta ho.
-// End date missing ho to start ko hi end maan lete hain (aur ulta bhi).
-// Dono dates na hon to item window ka nahi maana jaata — filter ka matlab hai
-// ki sirf us window ke items dikhein, to undated rows bahar rehte hain.
+/**
+ * Range filter (7 / 14 / 30 days).
+ *
+ * Window = aaj se N din pehle tak, aaj included: [aaj-(N-1) 00:00, aaj 23:59].
+ * Item us window ka maana jata hai jab uska [start, end] span window ko touch
+ * karta ho — yaani:
+ *   • target date window ke andar ho (last N din me due / overdue hua), YA
+ *   • kaam window me ya usse pehle shuru hua ho aur ab bhi chal raha ho
+ *     (target aaj ya aage).
+ * Window se **purana** item (end window se pehle hi nikal gaya) bahar rehta hai,
+ * isliye 7 → 14 → 30 badalne par list aur count badalte hain.
+ *
+ * Sirf date-less pending rows chhoot jaati hain: unhe kisi window me rakha nahi
+ * ja sakta, aur chhupa dein to wo kahin dikhengi hi nahi — isliye har window me
+ * dikhati hain.
+ */
 const isItemInRange = (
   item: any,
   detail: any,
@@ -905,21 +974,11 @@ const isItemInRange = (
   const end = getItemTargetDateValue(item, detail);
   const effectiveStart = start || end;
   const effectiveEnd = end || start;
-  if (!effectiveStart || !effectiveEnd) return false;
+  if (!effectiveStart || !effectiveEnd)
+    return !isCompletedStatus(getItemStatus(item));
   if (effectiveEnd.getTime() < windowStart.getTime()) return false;
   if (effectiveStart.getTime() > windowEnd.getTime()) return false;
   return true;
-};
-
-// Overdue = explicit overdue status, or a past target date on a not-done item.
-const isItemOverdue = (item: any, detail?: any): boolean => {
-  const status = String(getItemStatus(item)).toLowerCase();
-  if (isCompletedStatus(status)) return false;
-  if (status === "overdue" || status === "overdued") return true;
-  const target = getItemTargetDateValue(item, detail);
-  if (!target) return false;
-  target.setHours(23, 59, 59, 999);
-  return target.getTime() < Date.now();
 };
 
 const TASK_STATUS_BUCKETS = [
@@ -968,12 +1027,10 @@ const bucketItemsByStatus = (items: any[], details: Record<string, any>) => {
   });
 
   items.forEach((item) => {
-    const detail =
-      details[`${getViewSourceType(item)}:${getViewSourceId(item)}`];
-    if (isItemOverdue(item, detail)) {
-      groups.overdue.push(item);
-      return;
-    }
+    // Bucket item ke apne status se banta hai — Overdue sirf tab jab status
+    // hi "overdue" ho. Sirf target date nikal jane se open/in-progress item
+    // Overdue me nahi jata; uspar red "Xd Yh overdue" badge phir bhi dikhta hai
+    // (see getItemOverdueLabel), taki late hona saaf pata chale.
     const status = String(getItemStatus(item)).toLowerCase();
     const bucket = TASK_STATUS_BUCKETS.find((b) => b.statuses.includes(status));
     groups[bucket ? bucket.key : "open"].push(item);
@@ -2881,9 +2938,19 @@ const DailyTab = ({
                   ? "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30"
                   : "bg-gray-100 text-gray-600 border-gray-200";
 
+          const typeLabel =
+            type === "task"
+              ? "Task"
+              : type === "issue"
+                ? "Issue"
+                : type === "todo"
+                  ? "Todo"
+                  : "Note";
+
           return (
             <li
               key={index}
+              title={hasDetails ? `${typeLabel} · Click to open` : typeLabel}
               onClick={hasDetails ? () => handleViewTaskIssueTodoItem(item) : undefined}
               className={cn(
                 "flex flex-col rounded-[10px] border border-gray-100 bg-gray-50/70 transition-all",
@@ -2921,31 +2988,6 @@ const DailyTab = ({
         })}
       </ul>
     );
-  };
-
-  const getMemberBadgeClass = (name: any) => {
-    const colors = [
-      "bg-[#E7E3FF] text-[#6756C9]",
-      "bg-[#FFE2A8] text-[#8B5A00]",
-      "bg-[#BFEADF] text-[#0E6F5E]",
-      "bg-[#F0E8FF] text-[#7564C9]",
-      "bg-[#FFD9B5] text-[#A15305]",
-      "bg-[#DDEBFF] text-[#315FAD]",
-    ];
-    const seed = String(name || "")
-      .split("")
-      .reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    return colors[seed % colors.length];
-  };
-
-  const getMemberShortName = (name: any) => {
-    const parts = String(name || "")
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
-    if (!parts.length) return "";
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
   };
 
   const renderAccomplishmentRows = (
@@ -2990,12 +3032,21 @@ const DailyTab = ({
                 : type === "todo"
                   ? "Todo"
                   : "Note";
-          const memberName = getItemMemberName(item);
+          // `__ownerTag` display-only fallback hai — report owner (HOD) ki apni
+          // rows par bhi badge dikhe (see `withOwnerTag`).
+          const memberName = getItemMemberName(item) || item?.__ownerTag || "";
           const extraProps = itemProps?.(item);
+          // Poori row par hover tooltip — sirf icon par nahi, taki admin ko row
+          // ke kisi bhi hisse par hover karke pata chal jaye ki ye Task / Issue
+          // / Todo / Note hai, aur khulne wali rows par hint bhi mile.
+          const rowTooltip = hasDetails
+            ? `${typeLabel} · Click to open`
+            : typeLabel;
 
           return (
             <li
               key={`${getItemTitle(item)}-${memberName}-${index}`}
+              title={rowTooltip}
               onClick={hasDetails ? () => handleViewTaskIssueTodoItem(item) : undefined}
               {...extraProps}
               className={cn(
@@ -3975,21 +4026,33 @@ const DailyTab = ({
                         );
                       });
                     };
-                    const filteredAccomplishmentRows = filterRowsForSelectedMember(
-                      combinedAccomplishmentRows
+                    // Badge har row par dikhna chahiye — team member ki rows par
+                    // unka naam pehle se hota hai, aur jin par owner tag nahi hai
+                    // wo report owner (HOD) ki hain. `__ownerTag` sirf display ke
+                    // liye hai (asli `member`/`owner_name` fields chhedte nahi),
+                    // taki drag-to-plan aur save payload par koi asar na pade.
+                    const withOwnerTag = (items: any[] = []) =>
+                      items.map((item: any) =>
+                        getItemMemberName(item)
+                          ? item
+                          : { ...item, __ownerTag: report.name }
+                      );
+                    const filteredAccomplishmentRows = withOwnerTag(
+                      filterRowsForSelectedMember(combinedAccomplishmentRows)
                     );
-                    const filteredTasksIssueRows = filterRowsForSelectedMember(
-                      combinedTasksIssueRows
+                    const filteredTasksIssueRows = withOwnerTag(
+                      filterRowsForSelectedMember(combinedTasksIssueRows)
                     );
-                    const filteredTomorrowPlanRows = filterRowsForSelectedMember(
-                      combinedTomorrowPlanRows
+                    const filteredTomorrowPlanRows = withOwnerTag(
+                      filterRowsForSelectedMember(combinedTomorrowPlanRows)
                     );
                     // API se aane par ye bucket bhar jaayega; tab tak khaali
                     // rehta hai to header render hi nahi hota.
-                    const filteredNotAccomplishedRows =
+                    const filteredNotAccomplishedRows = withOwnerTag(
                       filterRowsForSelectedMember(
                         displayRd.not_accomplished_plan
-                      );
+                      )
+                    );
                     const showFilteredMemberBadges =
                       hasTeamRows && activeReportMember === "all";
 

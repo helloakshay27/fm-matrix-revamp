@@ -1,7 +1,16 @@
 export function Footer() {
   return (
     <div className="phg-footer">
-      <b>Wireframe note.</b> Single-tenant customer view — shows only this customer's own employees; no cross-tenant data, no Lockated health/churn scores (those stay in the internal dashboard). All numbers are seeded sample data that recompute as you change <code>tier</code>, <code>scope</code>, <code>date range</code>, <code>device</code> and <code>module</code>. Every metric maps to a formula and instrumented events in the specification (§6–§7). Layout adapted from PostHog Web/Product Analytics; styled in Anthropic brand colours (Poppins / Lora, orange&nbsp;#d97757).
+      <b>Data note.</b> Every number on this page comes from the FM Adoption Analytics API
+      (<code>/fm/adoption/*</code>), computed from PostHog autocapture events for this tenant only —
+      no cross-tenant data. Because only autocapture is instrumented, some metrics are documented
+      proxies rather than exact measures: <code>U6</code> bounce is a session with ≤ 1 pageview,
+      <code>A4</code> dormancy uses a single 14-day cut, <code>A5</code> activation treats the first
+      event in range as first-seen, and all Layer-3 funnel steps are inferred from{' '}
+      <code>$pathname</code> patterns rather than <code>flow_started</code>/<code>flow_completed</code>{' '}
+      events. <code>A1</code> needs a licensed-seat count (billing data, entered in the control bar)
+      and <code>A8</code> shows share-of-active rather than share-of-provisioned. Modules and
+      sub-modules are derived dynamically from real path segments — nothing is hardcoded.
     </div>
   );
 }

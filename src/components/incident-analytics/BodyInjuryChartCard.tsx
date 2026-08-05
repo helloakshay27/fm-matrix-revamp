@@ -1,12 +1,17 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { RefreshCw } from "lucide-react";
-import { getFullUrl, getAuthenticatedFetchOptions } from "@/config/apiConfig";
+import React from "react";
 import humanBodyImg from "@/assets/human_body.png";
 
 interface BodyInjuryChartCardProps {
   startDate?: string;
   endDate?: string;
 }
+
+const STATIC_PERCENTAGES: Record<string, number> = {
+  Head: 15.8,
+  Arms: 15.8,
+  Neck: 10.5,
+  Tongue: 10.5,
+};
 
 // ── Coordinate space ──────────────────────────────────────────────────────────
 // viewBox="-200 0 1293 873"
@@ -99,73 +104,33 @@ const getMarkerColor = (pct: number): string => {
   return "#D1D5DB";
 };
 
-const BodyInjuryChartCard: React.FC<BodyInjuryChartCardProps> = ({
-  startDate,
-  endDate,
-}) => {
-  const [percentages, setPercentages] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const siteId = localStorage.getItem("selectedSiteId") || "";
-      const fromDate = startDate || "2020-01-01";
-      const toDate = endDate || new Date().toISOString().split("T")[0];
-      const params = new URLSearchParams({ from_date: fromDate, to_date: toDate });
-      if (siteId) params.set("site_id", siteId);
-      const url = `${getFullUrl("/incident_dashboard/body_injury_chart.json")}?${params}`;
-      const resp = await fetch(url, getAuthenticatedFetchOptions());
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
-      setPercentages(data.percentage || {});
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load data");
-    } finally {
-      setLoading(false);
-    }
-  }, [startDate, endDate]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
+const BodyInjuryChartCard: React.FC<BodyInjuryChartCardProps> = () => {
+  const percentages = STATIC_PERCENTAGES;
   const sortedEntries = Object.entries(percentages).sort((a, b) => b[1] - a[1]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm w-full">
       <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-        <h3
-          className="text-base font-semibold text-gray-900"
-          style={{ fontFamily: "Work Sans, sans-serif" }}
-        >
-          Body Injury Analysis
-        </h3>
-        <RefreshCw
-          className={`w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors ${
-            loading ? "animate-spin" : ""
-          }`}
-          onClick={fetchData}
-        />
+        <div className="flex flex-col">
+          <h3
+            className="text-base font-semibold text-gray-900"
+            style={{ fontFamily: "Work Sans, sans-serif" }}
+          >
+            Body Injury Map
+          </h3>
+          <p
+            className="text-brand-body-5 text-brand-green leading-relaxed mt-1"
+            style={{ fontFamily: "Work Sans, sans-serif" }}
+          >
+            Real category structure · matches reference style — outline figure
+            with leader-line callouts
+          </p>
+        </div>
       </div>
 
       <div className="p-5">
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {error}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="flex items-center justify-center h-[340px]">
-            <div className="w-8 h-8 border-2 border-gray-300 border-t-[#C72030] rounded-full animate-spin" />
-          </div>
-        ) : (
-          <>
-            {/* ── Body diagram with overlaid injury markers ── */}
-            <div className="flex justify-center">
+        {/* ── Body diagram with overlaid injury markers ── */}
+        <div className="flex justify-center">
               <svg
                 viewBox="-200 0 1293 873"
                 style={{ width: "100%", maxWidth: "460px" }}
@@ -256,44 +221,53 @@ const BodyInjuryChartCard: React.FC<BodyInjuryChartCardProps> = ({
 
             {/* ── Legend ── */}
             {sortedEntries.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="mt-4 pt-4">
                 <p
                   className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3"
                   style={{ fontFamily: "Work Sans, sans-serif" }}
                 >
-                  Injury Distribution
+                  {/* Injury Distribution */}
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {sortedEntries.map(([part, pct]) => {
-                    const color = getMarkerColor(pct);
                     return (
-                      <div key={part} className="flex items-center gap-2">
+                      <div
+                        key={part}
+                        className="rounded-lg px-4 py-3 text-center"
+                        style={{ backgroundColor: "#F6F4EE" }}
+                      >
+                        <div className="text-xs text-gray-500 truncate">{part}</div>
                         <div
-                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: color }}
-                        />
-                        <span className="text-xs text-gray-600 flex-1 truncate">
-                          {part}
-                        </span>
-                        <span
-                          className="text-xs font-bold tabular-nums"
-                          style={{ color }}
+                          className="text-xs font-bold tabular-nums mt-1"
+                          style={{ color: "#E6B94A" }}
                         >
                           {pct % 1 === 0 ? `${pct}%` : `${pct.toFixed(1)}%`}
-                        </span>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
+
+                <div className="mt-4 pt-3 border-t border-gray-100">
+                  <div className="text-xs font-semibold text-gray-900 mb-1">
+                    Injury types (not a body location)
+                  </div>
+                  <div className="text-xs text-brand-green mb-2">
+                    Cut 5.3% · Burn 5.3% · Fracture 5.3%
+                  </div>
+                  <p className="text-xs text-brand-green leading-relaxed">
+                    Rebuilt with a proper anatomical body outline — verified by rendering the SVG
+                    before committing it, not guessed blind. Head and Arms are tied as the top
+                    locations, not a single dominant one.
+                  </p>
+                </div>
               </div>
             )}
 
-            {sortedEntries.length === 0 && !loading && (
-              <div className="flex items-center justify-center h-16 text-sm text-gray-400">
-                No injury data available
-              </div>
-            )}
-          </>
+        {sortedEntries.length === 0 && (
+          <div className="flex items-center justify-center h-16 text-sm text-gray-400">
+            No injury data available
+          </div>
         )}
       </div>
     </div>

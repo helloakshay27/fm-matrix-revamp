@@ -459,8 +459,11 @@ export default function KraList() {
                     <div
                       style={{
                         display: "grid",
+                        // 7 columns = 7 children (bar, title, weightage, KPIs,
+                        // status, actions, chevron). Pehle 8 the, isliye right
+                        // side ek column khali reh jata tha aur icons dab jate the.
                         gridTemplateColumns:
-                          "4px 1fr 70px 130px 100px 80px 120px 36px",
+                          "4px minmax(0,1fr) 64px 96px 88px 108px 28px",
                         alignItems: "center",
                         gap: 12,
                         padding: "14px 16px 14px 0",
@@ -530,7 +533,11 @@ export default function KraList() {
                       </div>
                       <StatusPill s={kra.status} />
                       <div
-                        style={{ display: "flex", gap: 4 }}
+                        style={{
+                          display: "flex",
+                          gap: 6,
+                          justifySelf: "end",
+                        }}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button

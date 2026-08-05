@@ -7,6 +7,7 @@ import { InfoPopover } from './components/InfoPopover';
 import { AiPanel } from './components/AiPanel';
 import { Reveal } from './components/Reveal';
 import { Footer } from './components/Footer';
+import { SiteBreakdownSection } from './sections/SiteBreakdownSection';
 import { TrafficSection } from './sections/TrafficSection';
 import { AdoptionSection } from './sections/AdoptionSection';
 import { WorkflowSection } from './sections/WorkflowSection';
@@ -20,6 +21,7 @@ export function PosthogDashboardPage() {
         <div className="phg-wrap">
           {/* <TierNote /> */}
           {/* <BenchmarkNote /> */}
+          <Reveal><SiteBreakdownSection /></Reveal>
           <Reveal><TrafficSection /></Reveal>
           <Reveal><AdoptionSection /></Reveal>
           <Reveal><WorkflowSection /></Reveal>
