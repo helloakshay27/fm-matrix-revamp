@@ -550,16 +550,21 @@ const PitchDeckButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   </button>
 );
 
-// Office Online's free embed viewer has no SLA: its own "fetching your
-// file..." loader can hang forever with zero error surfaced (blocked
-// crawler UA, transient WOPI failures, etc), all outside our control. We
-// can't detect success/failure inside the cross-origin iframe, so after a
-// timeout we assume it failed and fall back to a guaranteed-working
-// download path instead of leaving the user staring at a dead spinner.
+// Office Online's free embed viewer has no SLA and two independent failure
+// modes we've hit in practice: (1) its own "fetching your file..." loader
+// can hang forever with zero error surfaced, and (2) it can outright refuse
+// to be framed, which Chrome renders as its own "This content is blocked.
+// Contact the site owner to fix the issue." interstitial *inside* the
+// iframe - content we can't see or detect from the parent page since it's
+// cross-origin. Because failures are invisible to us either way, the
+// preview is opt-in rather than the default: Download is the guaranteed
+// path shown first, and "Try online preview" is an explicit extra step
+// with a timeout fallback back to the same download prompt.
 const PREVIEW_TIMEOUT_MS = 9000;
 
 const PitchDeckModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const [attempt, setAttempt] = useState(0);
+  const [previewAttempt, setPreviewAttempt] = useState(0);
+  const [previewing, setPreviewing] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
 
   const officeViewerSrc = useMemo(() => {
@@ -568,15 +573,23 @@ const PitchDeckModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       absoluteUrl
     )}`;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [attempt]);
+  }, [previewAttempt]);
 
   React.useEffect(() => {
+    if (!previewing) return;
     setTimedOut(false);
     const timer = setTimeout(() => setTimedOut(true), PREVIEW_TIMEOUT_MS);
     return () => clearTimeout(timer);
-  }, [attempt]);
+  }, [previewing, previewAttempt]);
 
-  const retry = () => setAttempt((a) => a + 1);
+  const startPreview = () => {
+    setTimedOut(false);
+    setPreviewing(true);
+  };
+  const retry = () => {
+    setPreviewAttempt((a) => a + 1);
+    setTimedOut(false);
+  };
 
   return (
     <div
@@ -613,27 +626,63 @@ const PitchDeckModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           </div>
         </div>
         <div className="relative flex-1 bg-[#F6F4EE]">
-          {!timedOut && (
-            <iframe
-              key={attempt}
-              title="Life Compass Pitch Deck"
-              src={officeViewerSrc}
-              className="absolute inset-0 h-full w-full border-0"
-            />
-          )}
-          {timedOut && (
+          {!previewing && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-8 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#DA7756]/10">
                 <Presentation className="h-7 w-7 text-[#DA7756]" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-[#2C2C2C] font-poppins">
-                  Preview isn&apos;t loading
+                  Life_Blueprint_Pitch_Deck.pptx
                 </p>
                 <p className="mt-1 max-w-sm text-[12px] leading-relaxed text-[#2C2C2C]/60 font-poppins">
-                  The online preview service didn&apos;t respond in time.
-                  This is a limitation on its end, not the file - download
-                  it to view the slides, or try the preview again.
+                  Download the deck to view it locally, or try the online
+                  preview - note it can occasionally be blocked or slow to
+                  load on Microsoft&apos;s end.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={PITCH_DECK_URL}
+                  download
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#DA7756] px-4 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-[#C9684B]"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download Pitch Deck
+                </a>
+                <button
+                  type="button"
+                  onClick={startPreview}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#C4B89D]/60 bg-white px-4 py-2 text-[12px] font-semibold text-[#2C2C2C]/80 transition-colors hover:border-[#DA7756] hover:text-[#DA7756]"
+                >
+                  Try online preview
+                </button>
+              </div>
+            </div>
+          )}
+
+          {previewing && !timedOut && (
+            <iframe
+              key={previewAttempt}
+              title="Life Compass Pitch Deck"
+              src={officeViewerSrc}
+              className="absolute inset-0 h-full w-full border-0"
+            />
+          )}
+
+          {previewing && timedOut && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-8 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#DA7756]/10">
+                <Presentation className="h-7 w-7 text-[#DA7756]" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[#2C2C2C] font-poppins">
+                  Preview didn&apos;t load
+                </p>
+                <p className="mt-1 max-w-sm text-[12px] leading-relaxed text-[#2C2C2C]/60 font-poppins">
+                  Microsoft&apos;s online preview service either didn&apos;t
+                  respond or refused to load. This is a limitation on its
+                  end, not the file - download it to view the slides, or
+                  try the preview again.
                 </p>
               </div>
               <div className="flex items-center gap-2">
