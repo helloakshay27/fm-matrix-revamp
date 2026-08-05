@@ -817,7 +817,7 @@ export const AssetDashboard = () => {
           <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
             <TabsTrigger
               value="list"
-              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
               <svg
                 width="18"
@@ -838,7 +838,7 @@ export const AssetDashboard = () => {
             </TabsTrigger>
             <TabsTrigger
               value="analytics"
-              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
               <svg
                 width="16"
@@ -910,7 +910,7 @@ export const AssetDashboard = () => {
                         type="button"
                         onClick={() => handleRemoveFilter(key)}
                         title={`Remove ${displayKey} filter`}
-                        className="inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-sm text-gray-800 px-3 py-1 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#C72030]"
+                        className="inline-flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-sm text-gray-800 px-3 py-1 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand"
                       >
                         <span className="font-bold text-xs text-gray-600">{displayKey}</span>
                         <span className="text-gray-900 text-sm">{displayValue}</span>
@@ -925,7 +925,7 @@ export const AssetDashboard = () => {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handleClearAllFilters}
-                    className="text-sm text-[#C72030] hover:underline px-2 py-1"
+                    className="text-sm text-brand hover:underline px-2 py-1"
                   >
                     Clear all
                   </button>
