@@ -1,40 +1,35 @@
 import React, { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 import {
   FormControl,
   InputLabel,
-  MenuItem,
   Select as MuiSelect,
+  MenuItem,
   TextField,
 } from "@mui/material";
+import { X } from "lucide-react";
 
-export interface TrainingConductedFilters {
-  trainingName: string;
+export interface InvoiceApprovalsFilters {
+  id: string;
+  functionName: string;
+  createdBy: string;
   status: string;
-  site: string;
-  conductedBy: string;
 }
 
-interface TrainingConductedFilterDialogProps {
+interface InvoiceApprovalsFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  filters: TrainingConductedFilters;
-  onApplyFilters: (filters: TrainingConductedFilters) => void;
+  filters: InvoiceApprovalsFilters;
+  onApplyFilters: (filters: InvoiceApprovalsFilters) => void;
   onResetFilters: () => void;
 }
 
-const emptyFilters: TrainingConductedFilters = {
-  trainingName: "",
+const emptyFilters: InvoiceApprovalsFilters = {
+  id: "",
+  functionName: "",
+  createdBy: "",
   status: "",
-  site: "",
-  conductedBy: "",
 };
 
 const fieldStyles = {
@@ -47,6 +42,8 @@ const fieldStyles = {
   },
 };
 
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
 const selectMenuProps = {
   PaperProps: {
     style: {
@@ -64,15 +61,15 @@ const selectMenuProps = {
   disableEnforceFocus: true,
 };
 
-export const TrainingConductedFilterDialog = ({
+export const InvoiceApprovalsFilterDialog = ({
   isOpen,
   onClose,
   filters,
   onApplyFilters,
   onResetFilters,
-}: TrainingConductedFilterDialogProps) => {
+}: InvoiceApprovalsFilterDialogProps) => {
   const [localFilters, setLocalFilters] =
-    useState<TrainingConductedFilters>(filters);
+    useState<InvoiceApprovalsFilters>(filters);
 
   useEffect(() => {
     if (isOpen) {
@@ -91,31 +88,26 @@ export const TrainingConductedFilterDialog = ({
   };
 
   return (
+    // modal={false} lets portaled MUI Select menus receive clicks/scroll
+    // (Radix modal mode otherwise traps pointer events outside DialogContent).
     <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
       <DialogContent
         className="w-full sm:max-w-[500px] bg-white overflow-visible"
         onPointerDownOutside={(e) => {
-          if (
-            (e.target as HTMLElement).closest(
-              ".MuiPopover-root, .MuiModal-root, .MuiMenu-root"
-            )
-          ) {
+          // Keep dialog open when interacting with the MUI select menu
+          if ((e.target as HTMLElement).closest(".MuiPopover-root, .MuiModal-root, .MuiMenu-root")) {
             e.preventDefault();
           }
         }}
         onInteractOutside={(e) => {
-          if (
-            (e.target as HTMLElement).closest(
-              ".MuiPopover-root, .MuiModal-root, .MuiMenu-root"
-            )
-          ) {
+          if ((e.target as HTMLElement).closest(".MuiPopover-root, .MuiModal-root, .MuiMenu-root")) {
             e.preventDefault();
           }
         }}
       >
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
             <Button
               variant="ghost"
               size="sm"
@@ -129,68 +121,70 @@ export const TrainingConductedFilterDialog = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
           <TextField
-            label="Training Name"
-            value={localFilters.trainingName}
+            id="invoice-approval-id"
+            label="Id"
+            placeholder="Enter Id"
+            value={localFilters.id}
+            onChange={(e) =>
+              setLocalFilters((prev) => ({ ...prev, id: e.target.value }))
+            }
+            fullWidth
+            variant="outlined"
+            sx={fieldStyles}
+          />
+
+          <TextField
+            id="invoice-function"
+            label="Function"
+            placeholder="Enter Function"
+            value={localFilters.functionName}
             onChange={(e) =>
               setLocalFilters((prev) => ({
                 ...prev,
-                trainingName: e.target.value,
+                functionName: e.target.value,
               }))
             }
             fullWidth
             variant="outlined"
             sx={fieldStyles}
-            className="sm:col-span-2"
           />
 
-          <FormControl fullWidth variant="outlined" className="sm:col-span-2">
-            <InputLabel id="training-conducted-status-label">Status</InputLabel>
+          <TextField
+            id="invoice-created-by"
+            label="Created By"
+            placeholder="Enter Created By"
+            value={localFilters.createdBy}
+            onChange={(e) =>
+              setLocalFilters((prev) => ({
+                ...prev,
+                createdBy: e.target.value,
+              }))
+            }
+            fullWidth
+            variant="outlined"
+            sx={fieldStyles}
+          />
+
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="invoice-status-label">Status</InputLabel>
             <MuiSelect
-              labelId="training-conducted-status-label"
+              labelId="invoice-status-label"
               label="Status"
-              value={localFilters.status}
+              value={localFilters.status || "all"}
               onChange={(e) =>
                 setLocalFilters((prev) => ({
                   ...prev,
-                  status: e.target.value as string,
+                  status: e.target.value === "all" ? "" : e.target.value,
                 }))
               }
               sx={fieldStyles}
               MenuProps={selectMenuProps}
             >
-              <MenuItem value="">
-                <em>All</em>
-              </MenuItem>
-              <MenuItem value="completed">Completed</MenuItem>
-              <MenuItem value="in-progress">In Progress</MenuItem>
-              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="inactive">Inactive</MenuItem>
             </MuiSelect>
           </FormControl>
-
-          <TextField
-            label="Site"
-            value={localFilters.site}
-            onChange={(e) =>
-              setLocalFilters((prev) => ({ ...prev, site: e.target.value }))
-            }
-            fullWidth
-            variant="outlined"
-            sx={fieldStyles}
-          />
-
-          <TextField
-            label="Conducted By"
-            value={localFilters.conductedBy}
-            onChange={(e) =>
-              setLocalFilters((prev) => ({
-                ...prev,
-                conductedBy: e.target.value,
-              }))
-            }
-            fullWidth
-            variant="outlined"
-            sx={fieldStyles}
-          />
         </div>
 
         <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
@@ -198,14 +192,14 @@ export const TrainingConductedFilterDialog = ({
             onClick={handleApply}
             className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
           >
-            APPLY
+            Apply Filters
           </Button>
           <Button
             variant="outline"
             onClick={handleReset}
             className="border-brand text-brand px-8 w-full sm:w-auto"
           >
-            RESET
+            Reset
           </Button>
         </div>
       </DialogContent>

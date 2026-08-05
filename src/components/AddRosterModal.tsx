@@ -349,7 +349,7 @@ export const AddRosterModal: React.FC<AddRosterModalProps> = ({ isOpen, onClose,
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#8B5CF6]/10 text-[#8B5CF6] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-[#E5E0D3] text-brand flex items-center justify-center">
               <Calendar className="w-4 h-4" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900">Create Roster Template</h2>

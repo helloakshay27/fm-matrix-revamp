@@ -142,7 +142,7 @@ const PreventiveActionListPage = () => {
                 <Switch
                   checked={isActive}
                   onCheckedChange={() => handleToggleActive(row.id)}
-                  className="data-[state=checked]:bg-[#C72030]"
+                  className="disabled:data-[state=checked]:bg-gray-300 disabled:data-[state=unchecked]:bg-gray-200"
                 />
               </div>
             );

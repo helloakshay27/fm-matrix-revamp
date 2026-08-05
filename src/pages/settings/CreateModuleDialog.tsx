@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,20 +6,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2 } from "lucide-react";
-import { toast } from 'sonner';
-import { moduleService, CreateModulePayload } from '@/services/moduleService';
+import { Loader2, X } from "lucide-react";
+import { toast } from "sonner";
+import { moduleService, CreateModulePayload } from "@/services/moduleService";
+import { TextField } from "@mui/material";
 
 interface CreateModuleDialogProps {
   open: boolean;
@@ -27,60 +17,89 @@ interface CreateModuleDialogProps {
   onModuleCreated?: () => void;
 }
 
-export const CreateModuleDialog = ({ 
-  open, 
-  onOpenChange, 
-  onModuleCreated 
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px 12px", sm: "10px 14px", md: "12px 14px" },
+  },
+  "& .MuiOutlinedInput-root": {
+    backgroundColor: "white",
+  },
+};
+
+export const CreateModuleDialog = ({
+  open,
+  onOpenChange,
+  onModuleCreated,
 }: CreateModuleDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    abbreviation: '',
-    show_name: '',
-    module_type: '',
-    charged_per: '',
+    name: "",
+    abbreviation: "",
+    show_name: "",
+    module_type: "",
+    charged_per: "",
     no_of_licences: 10,
     min_billing: 1000,
     rate: 150,
     max_billing: 5000,
     total_billing: 2000,
-    rate_type: 'fixed',
+    rate_type: "fixed",
     active: true,
     phase_id: 1,
   });
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const validateForm = () => {
     if (!formData.name.trim()) {
-      toast.error('Module name is required');
+      toast.error("Module name is required");
       return false;
     }
     if (!formData.abbreviation.trim()) {
-      toast.error('Abbreviation is required');
+      toast.error("Abbreviation is required");
       return false;
     }
     if (!formData.show_name.trim()) {
-      toast.error('Display name is required');
+      toast.error("Display name is required");
       return false;
     }
     return true;
   };
 
+  const handleClose = () => {
+    setFormData({
+      name: "",
+      abbreviation: "",
+      show_name: "",
+      module_type: "",
+      charged_per: "",
+      no_of_licences: 10,
+      min_billing: 1000,
+      rate: 150,
+      max_billing: 5000,
+      total_billing: 2000,
+      rate_type: "fixed",
+      active: true,
+      phase_id: 1,
+    });
+    onOpenChange(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const payload: CreateModulePayload = {
         lock_module: {
@@ -97,120 +116,78 @@ export const CreateModuleDialog = ({
           rate_type: formData.rate_type,
           active: formData.active,
           phase_id: formData.phase_id,
-        }
+        },
       };
 
-      const response = await moduleService.createModule(payload);
-      
-        toast.success('Module created successfully');
-        onModuleCreated?.();
-        handleClose();
+      await moduleService.createModule(payload);
+      toast.success("Module created successfully");
+      onModuleCreated?.();
+      handleClose();
     } catch (error) {
-      console.error('Error creating module:', error);
-      toast.error('Failed to create module');
+      console.error("Error creating module:", error);
+      toast.error("Failed to create module");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleClose = () => {
-    setFormData({
-      name: '',
-      abbreviation: '',
-      show_name: '',
-      module_type: '',
-      charged_per: '',
-      no_of_licences: 10,
-      min_billing: 1000,
-      rate: 150,
-      max_billing: 5000,
-      total_billing: 2000,
-      rate_type: 'fixed',
-      active: true,
-      phase_id: 1,
-    });
-    onOpenChange(false);
-  };
-
-  const moduleTypeOptions = [
-    { value: 'standard', label: 'Standard' },
-    { value: 'premium', label: 'Premium' },
-    { value: 'enterprise', label: 'Enterprise' },
-    { value: 'custom', label: 'Custom' },
-  ];
-
-  const chargedPerOptions = [
-    { value: 'user', label: 'Per User' },
-    { value: 'license', label: 'Per License' },
-    { value: 'monthly', label: 'Monthly' },
-    { value: 'yearly', label: 'Yearly' },
-  ];
-
-  const rateTypeOptions = [
-    { value: 'fixed', label: 'Fixed' },
-    { value: 'variable', label: 'Variable' },
-    { value: 'tiered', label: 'Tiered' },
-  ];
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full sm:max-w-[500px] bg-white overflow-visible">
         <DialogHeader>
-          <DialogTitle>Create New Module</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-lg font-semibold">
+              Create New Module
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClose}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Basic Information */}
-            <div className="space-y-2">
-              <Label htmlFor="name">Module Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder="Enter module name"
-                required
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="abbreviation">Abbreviation *</Label>
-              <Input
-                id="abbreviation"
-                value={formData.abbreviation}
-                onChange={(e) => handleInputChange('abbreviation', e.target.value)}
-                placeholder="e.g., pms"
-                required
-              />
-            </div>
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+            <TextField
+              label="Module Name *"
+              value={formData.name}
+              onChange={(e) => handleInputChange("name", e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+            />
 
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="show_name">Display Name *</Label>
-              <Input
-                id="show_name"
-                value={formData.show_name}
-                onChange={(e) => handleInputChange('show_name', e.target.value)}
-                placeholder="Display name for the module"
-                required
-              />
-            </div>
+            <TextField
+              label="Abbreviation *"
+              value={formData.abbreviation}
+              onChange={(e) =>
+                handleInputChange("abbreviation", e.target.value)
+              }
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+            />
 
-       
+            <TextField
+              label="Display Name *"
+              value={formData.show_name}
+              onChange={(e) => handleInputChange("show_name", e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+              className="sm:col-span-2"
+            />
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[#C72030] hover:bg-[#A11D2A] text-white"
+              className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto disabled:!opacity-100"
             >
               {isSubmitting ? (
                 <>
@@ -218,8 +195,17 @@ export const CreateModuleDialog = ({
                   Creating...
                 </>
               ) : (
-                'Create Module'
+                "CREATE"
               )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="border-brand text-brand px-8 w-full sm:w-auto"
+            >
+              CANCEL
             </Button>
           </div>
         </form>

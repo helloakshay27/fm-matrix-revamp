@@ -1,32 +1,27 @@
 import React, { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 import { TextField } from "@mui/material";
+import { X } from "lucide-react";
 
-export interface GDNPendingApprovalFilters {
-  gdnId: string;
-  siteName: string;
-  level: string;
+export interface ApprovalMatrixFilters {
+  functionName: string;
+  createdBy: string;
+  id: string;
 }
 
-interface GDNPendingApprovalsFilterDialogProps {
+interface ApprovalMatrixFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  filters: GDNPendingApprovalFilters;
-  onApplyFilters: (filters: GDNPendingApprovalFilters) => void;
+  filters: ApprovalMatrixFilters;
+  onApplyFilters: (filters: ApprovalMatrixFilters) => void;
   onResetFilters: () => void;
 }
 
-const emptyFilters: GDNPendingApprovalFilters = {
-  gdnId: "",
-  siteName: "",
-  level: "",
+const emptyFilters: ApprovalMatrixFilters = {
+  functionName: "",
+  createdBy: "",
+  id: "",
 };
 
 const fieldStyles = {
@@ -39,15 +34,14 @@ const fieldStyles = {
   },
 };
 
-export const GDNPendingApprovalsFilterDialog = ({
+export const ApprovalMatrixFilterDialog = ({
   isOpen,
   onClose,
   filters,
   onApplyFilters,
   onResetFilters,
-}: GDNPendingApprovalsFilterDialogProps) => {
-  const [localFilters, setLocalFilters] =
-    useState<GDNPendingApprovalFilters>(filters);
+}: ApprovalMatrixFilterDialogProps) => {
+  const [localFilters, setLocalFilters] = useState<ApprovalMatrixFilters>(filters);
 
   useEffect(() => {
     if (isOpen) {
@@ -66,11 +60,24 @@ export const GDNPendingApprovalsFilterDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full sm:max-w-[500px] bg-white overflow-visible">
+    <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
+      <DialogContent
+        className="w-full sm:max-w-[500px] bg-white overflow-visible"
+        onPointerDownOutside={(e) => {
+          // Keep dialog open when interacting with the MUI select menu
+          if ((e.target as HTMLElement).closest(".MuiPopover-root, .MuiModal-root, .MuiMenu-root")) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if ((e.target as HTMLElement).closest(".MuiPopover-root, .MuiModal-root, .MuiMenu-root")) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
             <Button
               variant="ghost"
               size="sm"
@@ -84,10 +91,12 @@ export const GDNPendingApprovalsFilterDialog = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
           <TextField
-            label="GDN ID"
-            value={localFilters.gdnId}
+            id="approval-id"
+            label="Id"
+            placeholder="Enter Id"
+            value={localFilters.id}
             onChange={(e) =>
-              setLocalFilters((prev) => ({ ...prev, gdnId: e.target.value }))
+              setLocalFilters((prev) => ({ ...prev, id: e.target.value }))
             }
             fullWidth
             variant="outlined"
@@ -95,12 +104,14 @@ export const GDNPendingApprovalsFilterDialog = ({
           />
 
           <TextField
-            label="Site Name"
-            value={localFilters.siteName}
+            id="function-name"
+            label="Function"
+            placeholder="Enter Function"
+            value={localFilters.functionName}
             onChange={(e) =>
               setLocalFilters((prev) => ({
                 ...prev,
-                siteName: e.target.value,
+                functionName: e.target.value,
               }))
             }
             fullWidth
@@ -109,15 +120,19 @@ export const GDNPendingApprovalsFilterDialog = ({
           />
 
           <TextField
-            label="Level"
-            value={localFilters.level}
+            id="created-by"
+            label="Created By"
+            placeholder="Enter Created By"
+            value={localFilters.createdBy}
             onChange={(e) =>
-              setLocalFilters((prev) => ({ ...prev, level: e.target.value }))
+              setLocalFilters((prev) => ({
+                ...prev,
+                createdBy: e.target.value,
+              }))
             }
             fullWidth
             variant="outlined"
             sx={fieldStyles}
-            className="sm:col-span-2"
           />
         </div>
 
@@ -126,14 +141,14 @@ export const GDNPendingApprovalsFilterDialog = ({
             onClick={handleApply}
             className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
           >
-            APPLY
+            Apply Filters
           </Button>
           <Button
             variant="outline"
             onClick={handleReset}
             className="border-brand text-brand px-8 w-full sm:w-auto"
           >
-            RESET
+            Reset
           </Button>
         </div>
       </DialogContent>

@@ -1,13 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
-import { Search, Edit } from "lucide-react";
+import { Edit, Plus } from "lucide-react";
 import { apiClient } from "@/utils/apiClient";
 import { format } from "date-fns";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import {
+  ApprovalMatrixFilterDialog,
+  type ApprovalMatrixFilters,
+} from "@/components/ApprovalMatrixFilterDialog";
+
 interface ApprovalData {
   id: number;
   approval_function_name: string;
@@ -15,41 +28,162 @@ interface ApprovalData {
   created_by: string;
 }
 
+const columns: ColumnConfig[] = [
+  { key: "id", label: "Id", sortable: true, defaultVisible: true },
+  {
+    key: "approval_function_name",
+    label: "Function",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "created_at",
+    label: "Created On",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "created_by",
+    label: "Created by",
+    sortable: true,
+    defaultVisible: true,
+  },
+];
+
+const emptyFilters: ApprovalMatrixFilters = {
+  functionName: "",
+  createdBy: "",
+  id: "",
+};
+
 const ApprovalMatrixSetupPage = () => {
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
 
   const [approvalData, setApprovalData] = useState<ApprovalData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<ApprovalMatrixFilters>(emptyFilters);
 
   useEffect(() => {
     const fetchApprovalData = async () => {
       try {
         setLoading(true);
-        const params = searchQuery ? { 'q[approval_type_cont]': searchQuery } : {};
-        const response = await apiClient.get('/pms/admin/invoice_approvals.json', { params });
-        setApprovalData(response.data);
+        const response = await apiClient.get(
+          "/pms/admin/invoice_approvals.json"
+        );
+        setApprovalData(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
-        console.error('Error fetching approval data:', error);
+        console.error("Error fetching approval data:", error);
+        setApprovalData([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchApprovalData();
-  }, [searchQuery]);
+  }, []);
 
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), 'dd/MM/yyyy');
-    } catch (error) {
+      return format(new Date(dateString), "dd/MM/yyyy");
+    } catch {
       return dateString;
     }
   };
-  return <div className="p-8 min-h-screen bg-transparent">
-      {/* Breadcrumbs */}
-      <Breadcrumb className="mb-6">
+
+  const filteredData = useMemo(() => {
+    return approvalData.filter((item) => {
+      const id = String(item.id ?? "");
+      const functionName = String(item.approval_function_name || "").toLowerCase();
+      const createdBy = String(item.created_by || "").toLowerCase();
+      const createdAt = formatDate(item.created_at).toLowerCase();
+
+      if (filters.id && !id.includes(filters.id.trim())) {
+        return false;
+      }
+      if (
+        filters.functionName &&
+        !functionName.includes(filters.functionName.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        filters.createdBy &&
+        !createdBy.includes(filters.createdBy.toLowerCase())
+      ) {
+        return false;
+      }
+
+      if (searchTerm.trim()) {
+        const q = searchTerm.toLowerCase();
+        return (
+          id.includes(q) ||
+          functionName.includes(q) ||
+          createdBy.includes(q) ||
+          createdAt.includes(q)
+        );
+      }
+
+      return true;
+    });
+  }, [approvalData, filters, searchTerm]);
+
+  const handleApplyFilters = (nextFilters: ApprovalMatrixFilters) => {
+    setFilters(nextFilters);
+  };
+
+  const handleResetFilters = () => {
+    setFilters(emptyFilters);
+  };
+
+  const renderActions = (item: ApprovalData) => (
+    <div className="flex items-center justify-center gap-1">
+      {shouldShow("Approval Matrix", "update") && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 hover:bg-gray-100"
+          title="Edit"
+          onClick={() =>
+            navigate(`/settings/approval-matrix/setup/edit/${item.id}`)
+          }
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      )}
+    </div>
+  );
+
+  const renderCell = (item: ApprovalData, columnKey: string) => {
+    switch (columnKey) {
+      case "id":
+        return <span className="font-medium">{item.id}</span>;
+      case "approval_function_name":
+        return item.approval_function_name || "-";
+      case "created_at":
+        return formatDate(item.created_at);
+      case "created_by":
+        return item.created_by || "-";
+      default:
+        return "-";
+    }
+  };
+
+  const leftActions = shouldShow("Approval Matrix", "create") ? (
+    <Button
+      onClick={() => navigate("/settings/approval-matrix/setup/add")}
+      className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Add
+    </Button>
+  ) : null;
+
+  return (
+    <div className="p-6 sm:p-8 min-h-screen bg-transparent space-y-6">
+      <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink href="/" className="text-[#1a1a1a]">
@@ -64,103 +198,59 @@ const ApprovalMatrixSetupPage = () => {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink href="/settings/approval-matrix" className="text-[#1a1a1a]">
+            <BreadcrumbLink
+              href="/settings/approval-matrix"
+              className="text-[#1a1a1a]"
+            >
               Approval Matrix
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage className="text-[#C72030]">Setup</BreadcrumbPage>
+            <BreadcrumbPage className="text-brand">Setup</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
-      {/* Title */}
-      <Heading level="h1" className="text-[#1a1a1a] mb-6">
+      <Heading level="h1" className="text-[#1a1a1a]">
         APPROVAL MATRIX SETUP
       </Heading>
 
-      {/* Action Bar */}
-      <div className="flex justify-between items-center mb-6">
-        {shouldShow("Approval Matrix","create")&&(
-        <Button 
-          onClick={() => navigate('/settings/approval-matrix/setup/add')}
-          className="bg-[#C72030] hover:bg-[#A61B28] text-white"
-        >
-          + Add
-        </Button>)}
-        
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#C72030] w-64"
-          />
-        </div>
-      </div>
+      <EnhancedTable
+        data={filteredData}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        leftActions={leftActions}
+        storageKey="approval-matrix-setup-table"
+        emptyMessage={
+          searchTerm || Object.values(filters).some(Boolean)
+            ? "No approval matrices found matching your search"
+            : "No approval matrices found"
+        }
+        loading={loading}
+        loadingMessage="Loading approval matrices..."
+        enableSearch
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search..."
+        disableClientSearch
+        onFilterClick={() => setShowFilters(true)}
+        hideTableExport
+        pagination
+        pageSize={10}
+        getItemId={(item) => String(item.id)}
+      />
 
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-20">Edit</TableHead>
-              <TableHead className="w-20">Id</TableHead>
-              <TableHead>Function</TableHead>
-              <TableHead className="w-32">Created On</TableHead>
-              <TableHead className="w-32">Created by</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="pt-4 pb-16">
-                  <div className="w-full flex items-center justify-start gap-3 pl-4">
-                    <div
-                      className="h-5 w-5 rounded-full animate-spin"
-                      style={{
-                        border: "2px solid #000000",
-                        borderTopColor: "transparent",
-                      }}
-                    />
-                    <span className="text-sm text-black">
-                      Loading ...
-                    </span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : approvalData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-4">
-                </TableCell>
-              </TableRow>
-            ) : (
-              approvalData.map(item => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    {shouldShow("Approval Matrix","update")&&(
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="p-1"
-                      onClick={() => navigate(`/settings/approval-matrix/setup/edit/${item.id}`)}
-                    >
-                      <Edit className="w-4 h-4 text-[#1a1a1a]" />
-                    </Button>)}
-                  </TableCell>
-                  <TableCell className="font-medium">{item.id}</TableCell>
-                  <TableCell>{item.approval_function_name}</TableCell>
-                  <TableCell>{formatDate(item.created_at)}</TableCell>
-                  <TableCell>{item.created_by}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>;
+      <ApprovalMatrixFilterDialog
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+        filters={filters}
+        onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
+      />
+    </div>
+  );
 };
+
 export default ApprovalMatrixSetupPage;

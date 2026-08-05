@@ -1,16 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { TextField } from '@mui/material';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X } from 'lucide-react';
+import { Plus, RefreshCw, Edit, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
 import { EditMoveInOutModal } from '@/components/EditMoveInOutModal';
@@ -23,6 +19,12 @@ import { createMoveInOutPurpose } from '@/services/moveInOutPurposeAPI';
 import { createWorkType } from '@/services/workTypeAPI';
 import { createVisitorComment } from '@/services/visitorCommentAPI';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import {
+  VisitingPurposeFilterDialog,
+  type VisitingPurposeFilters,
+} from '@/components/VisitingPurposeFilterDialog';
 
 
 interface VisitingPurposeData {
@@ -71,6 +73,8 @@ export const VisitingPurposePage = () => {
   const { setCurrentSection } = useLayout();
   const [activeTab, setActiveTab] = useState('Visit Purpose');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<VisitingPurposeFilters>({ name: '', status: '' });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isMoveInOutModalOpen, setIsMoveInOutModalOpen] = useState(false);
   const [isWorkTypeModalOpen, setIsWorkTypeModalOpen] = useState(false);
@@ -312,32 +316,129 @@ export const VisitingPurposePage = () => {
   }, [setCurrentSection, toast]);
 
   // Filter functions for each tab data
-  const getFilteredData = () => {
+  const getFilteredData = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    const nameFilter = filters.name.trim().toLowerCase();
+    const statusFilter = filters.status.toLowerCase();
+
+    const matchesCommon = (name: string, status: boolean, createdOn: string, createdBy: string) => {
+      const statusLabel = status ? 'active' : 'inactive';
+      if (nameFilter && !name.toLowerCase().includes(nameFilter)) return false;
+      if (statusFilter && statusLabel !== statusFilter) return false;
+      if (q) {
+        return (
+          name.toLowerCase().includes(q) ||
+          createdBy.toLowerCase().includes(q) ||
+          createdOn.toLowerCase().includes(q) ||
+          statusLabel.includes(q)
+        );
+      }
+      return true;
+    };
+
     switch (activeTab) {
       case 'Visit Purpose':
-        return purposes.filter(item =>
-          item.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+        return purposes.filter((item) =>
+          matchesCommon(item.purpose, item.status, item.createdOn, item.createdBy)
         );
       case 'Move In/Out':
-        return moveInOutData.filter(item =>
-          item.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+        return moveInOutData.filter((item) =>
+          matchesCommon(item.purpose, item.status, item.createdOn, item.createdBy)
         );
       case 'Work Type':
-        return workTypeData.filter(item =>
-          item.workType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.staffType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        return workTypeData.filter((item) => {
+          const name = `${item.staffType} ${item.workType}`;
+          return matchesCommon(name, item.status, item.createdOn, item.createdBy);
+        });
       case 'Visitor Comment':
-        return commentsData.filter(item =>
-          item.comment.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+        return commentsData.filter((item) =>
+          matchesCommon(item.comment, item.status, item.createdOn, item.createdBy)
         );
       default:
         return [];
     }
+  }, [activeTab, purposes, moveInOutData, workTypeData, commentsData, searchTerm, filters]);
+
+  const tableColumns = useMemo((): ColumnConfig[] => {
+    switch (activeTab) {
+      case 'Work Type':
+        return [
+          { key: 'staffType', label: 'Staff Type', sortable: true, defaultVisible: true },
+          { key: 'workType', label: 'Work Type', sortable: true, defaultVisible: true },
+          { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
+          { key: 'createdOn', label: 'Created On', sortable: true, defaultVisible: true },
+        ];
+      case 'Visitor Comment':
+        return [
+          { key: 'comment', label: 'Comment', sortable: true, defaultVisible: true },
+          { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
+          { key: 'createdOn', label: 'Created On', sortable: true, defaultVisible: true },
+        ];
+      case 'Move In/Out':
+        return [
+          { key: 'purpose', label: 'Move In/Out Purpose', sortable: true, defaultVisible: true },
+          { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
+          { key: 'createdOn', label: 'Created On', sortable: true, defaultVisible: true },
+        ];
+      case 'Visit Purpose':
+      default:
+        return [
+          { key: 'purpose', label: 'Purpose', sortable: true, defaultVisible: true },
+          { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
+          { key: 'createdOn', label: 'Created On', sortable: true, defaultVisible: true },
+        ];
+    }
+  }, [activeTab]);
+
+  const renderTableCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case 'status':
+        return (
+          <span
+            className={`px-3 py-1 text-xs font-medium rounded-full ${
+              item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}
+          >
+            {item.status ? 'Active' : 'Inactive'}
+          </span>
+        );
+      case 'createdOn':
+        return <span className="text-sm text-gray-600">{item.createdOn}</span>;
+      case 'purpose':
+      case 'comment':
+      case 'staffType':
+      case 'workType':
+        return <span className="font-medium">{item[columnKey]}</span>;
+      default:
+        return item[columnKey] ?? '-';
+    }
+  };
+
+  const renderTableActions = (item: any) => {
+    if (activeTab === 'Visit Purpose' && !shouldShow('Visiting Purpose', 'update')) {
+      return null;
+    }
+
+    const onEdit = () => {
+      if (activeTab === 'Visit Purpose') handleEdit(item.id);
+      else if (activeTab === 'Move In/Out') handleEditMoveInOut(item.id);
+      else if (activeTab === 'Work Type') handleEditWorkType(item.id);
+      else handleEditVisitorComment(item.id);
+    };
+
+    return (
+      <div className="flex items-center justify-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 text-brand hover:bg-brand-selected"
+          onClick={onEdit}
+          title="Edit"
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      </div>
+    );
   };
 
   const handleAddPurpose = () => {
@@ -821,6 +922,8 @@ export const VisitingPurposePage = () => {
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
+    setSearchTerm('');
+    setFilters({ name: '', status: '' });
   };
 
   // Edit handlers for different types
@@ -891,6 +994,54 @@ export const VisitingPurposePage = () => {
     setEditingPurposes(newPurposes);
   };
 
+  const leftActions = (() => {
+    if (activeTab === 'Visit Purpose' && shouldShow('Visiting Purpose', 'create')) {
+      return (
+        <Button
+          onClick={handleAddPurpose}
+          className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Purpose
+        </Button>
+      );
+    }
+    if (activeTab === 'Move In/Out' && shouldShow('Visiting Purpose', 'create')) {
+      return (
+        <Button
+          onClick={handleMoveInOut}
+          className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Move In/Out
+        </Button>
+      );
+    }
+    if (activeTab === 'Work Type' && shouldShow('Visiting Purpose', 'create')) {
+      return (
+        <Button
+          onClick={handleWorkType}
+          className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Work Type
+        </Button>
+      );
+    }
+    if (activeTab === 'Visitor Comment' && commentsData.length === 0) {
+      return (
+        <Button
+          onClick={handleVisitorCategory}
+          className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Visitor Comment
+        </Button>
+      );
+    }
+    return null;
+  })();
+
   return (
     <>
       <div className="p-6 bg-gray-50 min-h-screen">
@@ -937,35 +1088,7 @@ export const VisitingPurposePage = () => {
             </div>
           )} */}
           
-          {loadingVisitorSetup ? (
-            <div className="bg-white rounded-lg border border-gray-200">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-[#f6f4ee]">
-                    <TableHead className="font-medium">Actions</TableHead>
-                    <TableHead className="font-medium">Visit Purpose</TableHead>
-                    <TableHead className="font-medium">Status</TableHead>
-                    <TableHead className="font-medium">Created On</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={4} className="pt-4 pb-16">
-                      <div className="w-full flex items-center justify-start gap-3 pl-4">
-                        <div
-                          className="h-5 w-5 rounded-full animate-spin"
-                          style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
-                        />
-                        <span className="text-sm text-black">Loading ...</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
           <div className="bg-white rounded-lg border border-gray-200">
-            {/* Tab Navigation */}
             <div className="flex border-b border-gray-200">
               {['Visit Purpose', 'Move In/Out', 'Work Type', 'Visitor Comment'].map((tab) => (
                 <button
@@ -973,7 +1096,7 @@ export const VisitingPurposePage = () => {
                   onClick={() => handleTabClick(tab)}
                   className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab
-                      ? 'border-primary text-primary bg-primary/5'
+                      ? 'border-brand text-brand bg-brand-selected'
                       : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -982,252 +1105,43 @@ export const VisitingPurposePage = () => {
               ))}
             </div>
 
-            {/* Action Buttons Bar */}
-            <div className="flex items-center gap-3 p-6 border-b border-gray-200">
-              {activeTab === 'Visit Purpose' && shouldShow("Visiting Purpose","create")&&(
-                <Button 
-                  onClick={handleAddPurpose}
-                 className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Purpose
-                </Button>
-              )}
-              
-              {activeTab === 'Move In/Out' && shouldShow("Visiting Purpose","create")&&(
-                <Button 
-                  onClick={handleMoveInOut}
-                  className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Move In/Out
-                </Button>
-              )}
-              
-              {activeTab === 'Work Type' && shouldShow("Visiting Purpose","create")&&(
-                <Button 
-                  onClick={handleWorkType}
-                 className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Work Type
-                </Button>
-              )}
-              
-              {activeTab === 'Visitor Comment' && commentsData.length === 0 && (
-                <Button 
-                  onClick={handleVisitorCategory}
-                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Visitor Comment
-                </Button>
-              )}
-
-              <div className="flex-1"></div>
-
-            </div>
-
-            {/* Tables for each tab */}
-            <div className="overflow-hidden">
-              {activeTab === 'Visit Purpose' && (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-[#f6f4ee]">
-                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[200px]">Purpose</TableHead>
-                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      {/* <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead> */}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {getFilteredData().length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                          No data available
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      getFilteredData().map((item) => (
-                        <TableRow key={item.id} className="hover:bg-gray-50">
-                          <TableCell className="px-4 py-3">
-                            {shouldShow("Visiting Purpose","update")&&(
-                            <button
-                              onClick={() => handleEdit(item.id)}
-                              className="p-1 hover:bg-gray-100 rounded"
-                              title="Edit"
-                            >
-                              <Edit className="w-4 h-4 text-black" />
-                            </button>)}
-                          </TableCell>
-                          <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
-                          <TableCell className="px-4 py-3 text-center">
-                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                              item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {item.status ? 'Active' : 'Inactive'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                          {/* <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell> */}
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              )}
-
-              {activeTab === 'Move In/Out' && (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-[#f6f4ee]">
-                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[200px]">Move In/Out Purpose</TableHead>
-                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      {/* <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead> */}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {getFilteredData().length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                          No data available
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      getFilteredData().map((item) => (
-                        <TableRow key={item.id} className="hover:bg-gray-50">
-                           <TableCell className="px-4 py-3">
-                             <button
-                               onClick={() => handleEditMoveInOut(item.id)}
-                               className="p-1 hover:bg-gray-100 rounded"
-                               title="Edit"
-                             >
-                               <Edit className="w-4 h-4 text-black" />
-                             </button>
-                           </TableCell>
-                          <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
-                          <TableCell className="px-4 py-3 text-center">
-                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                              item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {item.status ? 'Active' : 'Inactive'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                          {/* <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell> */}
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              )}
-
-              {activeTab === 'Work Type' && (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-[#f6f4ee]">
-                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[150px]">Staff Type</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[150px]">Work Type</TableHead>
-                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      {/* <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead> */}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {getFilteredData().length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                          No data available
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      getFilteredData().map((item) => (
-                        <TableRow key={item.id} className="hover:bg-gray-50">
-                           <TableCell className="px-4 py-3">
-                             <button
-                               onClick={() => handleEditWorkType(item.id)}
-                               className="p-1 hover:bg-gray-100 rounded"
-                               title="Edit"
-                             >
-                               <Edit className="w-4 h-4 text-black" />
-                             </button>
-                           </TableCell>
-                          <TableCell className="px-4 py-3 font-medium">{item.staffType}</TableCell>
-                          <TableCell className="px-4 py-3 font-medium">{item.workType}</TableCell>
-                          <TableCell className="px-4 py-3 text-center">
-                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                              item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {item.status ? 'Active' : 'Inactive'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                          {/* <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell> */}
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              )}
-
-              {activeTab === 'Visitor Comment' && (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-[#f6f4ee]">
-                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[300px]">Comment</TableHead>
-                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      {/* <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead> */}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {getFilteredData().length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                          No data available
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      getFilteredData().map((item) => (
-                        <TableRow key={item.id} className="hover:bg-gray-50">
-                           <TableCell className="px-4 py-3">
-                             <button
-                               onClick={() => handleEditVisitorComment(item.id)}
-                               className="p-1 hover:bg-gray-100 rounded"
-                               title="Edit"
-                             >
-                               <Edit className="w-4 h-4 text-black" />
-                             </button>
-                           </TableCell>
-                          <TableCell className="px-4 py-3 font-medium">{item.comment}</TableCell>
-                          <TableCell className="px-4 py-3 text-center">
-                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                              item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {item.status ? 'Active' : 'Inactive'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                          {/* <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell> */}
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              )}
+            <div className="p-6">
+              <EnhancedTable
+                data={getFilteredData}
+                columns={tableColumns}
+                renderCell={renderTableCell}
+                renderActions={renderTableActions}
+                leftActions={leftActions}
+                storageKey={`visiting-purpose-${activeTab}`}
+                emptyMessage={
+                  searchTerm || Object.values(filters).some(Boolean)
+                    ? 'No records found matching your search'
+                    : 'No data available'
+                }
+                loading={loadingVisitorSetup}
+                loadingMessage="Loading..."
+                enableSearch
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                searchPlaceholder="Search..."
+                disableClientSearch
+                onFilterClick={() => setShowFilters(true)}
+                hideTableExport
+                pagination
+                pageSize={10}
+                getItemId={(item) => String(item.id)}
+              />
             </div>
           </div>
-          )}
-        </div>
 
+          <VisitingPurposeFilterDialog
+            isOpen={showFilters}
+            onClose={() => setShowFilters(false)}
+            filters={filters}
+            onApplyFilters={setFilters}
+            onResetFilters={() => setFilters({ name: '', status: '' })}
+          />
+        </div>
       </div>
 
       {/* Add Purpose Modal */}

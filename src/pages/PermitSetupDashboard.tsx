@@ -1707,6 +1707,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, Edit, Trash2, X } from 'lucide-react';
 import { toast } from "sonner";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import {
+  PermitTypeFilterDialog,
+  type PermitTypeFilters,
+} from "@/components/PermitTypeFilterDialog";
 // import { API_CONFIG, getAuthenticatedFetchOptions, getFullUrl } from '@/config/apiConfig';
 import {
   FormControl,
@@ -1874,6 +1880,9 @@ export const PermitSetupDashboard = () => {
   // Type
   const [permitType, setPermitType] = useState('');
   const [editingTypeId, setEditingTypeId] = useState<number | null>(null);
+  const [typeSearchTerm, setTypeSearchTerm] = useState('');
+  const [showTypeFilters, setShowTypeFilters] = useState(false);
+  const [typeFilters, setTypeFilters] = useState<PermitTypeFilters>({ name: '' });
 
   // Activity
   const [permitActivity, setPermitActivity] = useState('');
@@ -2265,6 +2274,46 @@ export const PermitSetupDashboard = () => {
     setPermitType('');
     setEditingTypeId(null);
   };
+
+  const permitTypeColumns: ColumnConfig[] = [
+    { key: 'name', label: 'Permit Type', sortable: true, defaultVisible: true },
+  ];
+
+  const filteredPermitTypes = useMemo(() => {
+    return permitTypes.filter((type) => {
+      const name = String(type.name || '').toLowerCase();
+      if (typeFilters.name && !name.includes(typeFilters.name.toLowerCase())) {
+        return false;
+      }
+      if (typeSearchTerm.trim()) {
+        return name.includes(typeSearchTerm.toLowerCase());
+      }
+      return true;
+    });
+  }, [permitTypes, typeFilters, typeSearchTerm]);
+
+  const renderPermitTypeActions = (type: { id: number; name: string }) => (
+    <div className="flex items-center justify-center gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0 text-brand hover:bg-brand-selected"
+        onClick={() => startEditType(type)}
+        title="Edit"
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0 text-brand-error hover:bg-brand-error/10"
+        onClick={() => deleteType(type.id)}
+        title="Delete"
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
+    </div>
+  );
 
   // ACTIVITY
   const handlePermitActivitySubmit = async (e: React.FormEvent) => {
@@ -2759,8 +2808,7 @@ export const PermitSetupDashboard = () => {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                   className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
+                    className="bg-brand text-white hover:bg-brand-hover px-4 py-2"
                   >
                     {isSubmitting ? (editingTypeId ? 'Updating...' : 'Submitting...') : (editingTypeId ? 'Update' : 'Submit')}
                   </Button>
@@ -2768,37 +2816,40 @@ export const PermitSetupDashboard = () => {
               </div>
             </form>
 
-            <div className="bg-white rounded-lg border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
-                    <TableHead className="font-semibold text-gray-900 ">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow><TableCell colSpan={2} className="pt-4 pb-16"><div className="w-full flex items-center justify-start gap-3 pl-4"><div className="h-5 w-5 rounded-full animate-spin" style={{ border: "2px solid #000000", borderTopColor: "transparent" }} /><span className="text-sm text-black">Loading ...</span></div></TableCell></TableRow>
-                  ) : permitTypes.length === 0 ? (
-                    <TableRow><TableCell colSpan={2} className="text-center py-8 text-gray-500">No permit types found</TableCell></TableRow>
-                  ) : permitTypes.map((type) => (
-                    <TableRow key={type.id}>
-                      <TableCell className="py-4">{safeStr(type.name)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600" onClick={() => startEditType(type)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600" onClick={() => deleteType(type.id)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <EnhancedTable
+              data={filteredPermitTypes}
+              columns={permitTypeColumns}
+              renderCell={(item, columnKey) =>
+                columnKey === 'name' ? safeStr(item.name) : '-'
+              }
+              renderActions={renderPermitTypeActions}
+              storageKey="permit-setup-type-table"
+              emptyMessage={
+                typeSearchTerm || typeFilters.name
+                  ? 'No permit types found matching your search'
+                  : 'No permit types found'
+              }
+              loading={isLoading}
+              loadingMessage="Loading permit types..."
+              enableSearch
+              searchTerm={typeSearchTerm}
+              onSearchChange={setTypeSearchTerm}
+              searchPlaceholder="Search permit types..."
+              disableClientSearch
+              onFilterClick={() => setShowTypeFilters(true)}
+              hideTableExport
+              pagination
+              pageSize={10}
+              getItemId={(item) => String(item.id)}
+            />
+
+            <PermitTypeFilterDialog
+              isOpen={showTypeFilters}
+              onClose={() => setShowTypeFilters(false)}
+              filters={typeFilters}
+              onApplyFilters={setTypeFilters}
+              onResetFilters={() => setTypeFilters({ name: '' })}
+            />
           </TabsContent>
 
           {/* -------- Permit Activity -------- */}

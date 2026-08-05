@@ -15,26 +15,28 @@ import {
   TextField,
 } from "@mui/material";
 
-export interface TrainingConductedFilters {
-  trainingName: string;
+export interface LockModuleFilters {
+  name: string;
+  displayName: string;
+  abbreviation: string;
+  moduleType: string;
   status: string;
-  site: string;
-  conductedBy: string;
 }
 
-interface TrainingConductedFilterDialogProps {
+interface LockModuleFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  filters: TrainingConductedFilters;
-  onApplyFilters: (filters: TrainingConductedFilters) => void;
+  filters: LockModuleFilters;
+  onApplyFilters: (filters: LockModuleFilters) => void;
   onResetFilters: () => void;
 }
 
-const emptyFilters: TrainingConductedFilters = {
-  trainingName: "",
+const emptyFilters: LockModuleFilters = {
+  name: "",
+  displayName: "",
+  abbreviation: "",
+  moduleType: "",
   status: "",
-  site: "",
-  conductedBy: "",
 };
 
 const fieldStyles = {
@@ -64,15 +66,14 @@ const selectMenuProps = {
   disableEnforceFocus: true,
 };
 
-export const TrainingConductedFilterDialog = ({
+export const LockModuleFilterDialog = ({
   isOpen,
   onClose,
   filters,
   onApplyFilters,
   onResetFilters,
-}: TrainingConductedFilterDialogProps) => {
-  const [localFilters, setLocalFilters] =
-    useState<TrainingConductedFilters>(filters);
+}: LockModuleFilterDialogProps) => {
+  const [localFilters, setLocalFilters] = useState<LockModuleFilters>(filters);
 
   useEffect(() => {
     if (isOpen) {
@@ -129,30 +130,68 @@ export const TrainingConductedFilterDialog = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
           <TextField
-            label="Training Name"
-            value={localFilters.trainingName}
+            label="Name"
+            value={localFilters.name}
+            onChange={(e) =>
+              setLocalFilters((prev) => ({ ...prev, name: e.target.value }))
+            }
+            fullWidth
+            variant="outlined"
+            sx={fieldStyles}
+          />
+
+          <TextField
+            label="Display Name"
+            value={localFilters.displayName}
             onChange={(e) =>
               setLocalFilters((prev) => ({
                 ...prev,
-                trainingName: e.target.value,
+                displayName: e.target.value,
               }))
             }
             fullWidth
             variant="outlined"
             sx={fieldStyles}
-            className="sm:col-span-2"
+          />
+
+          <TextField
+            label="Abbreviation"
+            value={localFilters.abbreviation}
+            onChange={(e) =>
+              setLocalFilters((prev) => ({
+                ...prev,
+                abbreviation: e.target.value,
+              }))
+            }
+            fullWidth
+            variant="outlined"
+            sx={fieldStyles}
+          />
+
+          <TextField
+            label="Module Type"
+            value={localFilters.moduleType}
+            onChange={(e) =>
+              setLocalFilters((prev) => ({
+                ...prev,
+                moduleType: e.target.value,
+              }))
+            }
+            fullWidth
+            variant="outlined"
+            sx={fieldStyles}
           />
 
           <FormControl fullWidth variant="outlined" className="sm:col-span-2">
-            <InputLabel id="training-conducted-status-label">Status</InputLabel>
+            <InputLabel id="lock-module-status-label">Status</InputLabel>
             <MuiSelect
-              labelId="training-conducted-status-label"
+              labelId="lock-module-status-label"
               label="Status"
               value={localFilters.status}
               onChange={(e) =>
                 setLocalFilters((prev) => ({
                   ...prev,
-                  status: e.target.value as string,
+                  status: e.target.value,
                 }))
               }
               sx={fieldStyles}
@@ -161,36 +200,10 @@ export const TrainingConductedFilterDialog = ({
               <MenuItem value="">
                 <em>All</em>
               </MenuItem>
-              <MenuItem value="completed">Completed</MenuItem>
-              <MenuItem value="in-progress">In Progress</MenuItem>
-              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="inactive">Inactive</MenuItem>
             </MuiSelect>
           </FormControl>
-
-          <TextField
-            label="Site"
-            value={localFilters.site}
-            onChange={(e) =>
-              setLocalFilters((prev) => ({ ...prev, site: e.target.value }))
-            }
-            fullWidth
-            variant="outlined"
-            sx={fieldStyles}
-          />
-
-          <TextField
-            label="Conducted By"
-            value={localFilters.conductedBy}
-            onChange={(e) =>
-              setLocalFilters((prev) => ({
-                ...prev,
-                conductedBy: e.target.value,
-              }))
-            }
-            fullWidth
-            variant="outlined"
-            sx={fieldStyles}
-          />
         </div>
 
         <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">

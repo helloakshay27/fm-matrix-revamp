@@ -87,7 +87,7 @@ export const ViewViUserPage = () => {
                 <Button
                     variant="outline"
                     size="sm"
-                    className="flex items-center gap-2 border-gray-300"
+                    className="flex items-center gap-2 border-brand"
                     onClick={() => navigate(`/master/user/vi-users/edit/${id}`)}
                 >
                     <Edit2 className="w-4 h-4" />
@@ -110,7 +110,7 @@ export const ViewViUserPage = () => {
                                             className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
                                         />
                                     ) : (
-                                        <div className="w-full h-full bg-gradient-to-br from-[#C72030] to-[#a01828] rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+                                        <div className="w-full h-full bg-gradient-to-br from-[#DA7756] to-[#b85a3d] rounded-full flex items-center justify-center border-4 border-white shadow-lg">
                                             <span className="text-4xl font-bold text-white">
                                                 {user.firstname?.charAt(0)}{user.lastname?.charAt(0)}
                                             </span>

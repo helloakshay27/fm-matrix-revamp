@@ -1785,41 +1785,6 @@ export default function RevampDashboardPage() {
         </div>
       </div>
 
-      {/* Pill sub-navbar for the active module */}
-      <div className="flex flex-wrap gap-3 px-6 py-4">
-        {current.subTabs.map((subTab) => {
-          const isActive = subTab === activeSubTab;
-          return (
-            <button
-              key={subTab}
-              type="button"
-              onClick={() => setActiveSubTab(subTab)}
-              className={cn(
-                "rounded-full border px-5 py-2 text-brand-body-4 font-semibold transition-colors",
-                isActive
-                  ? "bg-brand text-white border-brand"
-                  : "bg-white text-brand-green border-brand-sidebar hover:bg-brand-light"
-              )}
-            >
-              {subTab}
-            </button>
-          );
-        })}
-      </div>
-
-      {activeModule === "maintenance" && activeSubTab === "Tickets" && (
-        <div className="px-6 pb-4">
-          <FilterPillBar
-            segments={["Today", "This Week", "This Month"]}
-            activeSegment={timeSegment}
-            onSegmentChange={setTimeSegment}
-            goldenActive={goldenActive}
-            onGoldenToggle={() => setGoldenActive((v) => !v)}
-            redFlagActive={redFlagActive}
-            onRedFlagToggle={() => setRedFlagActive((v) => !v)}
-          />
-        </div>
-      )}
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 pb-6">
@@ -1833,6 +1798,41 @@ export default function RevampDashboardPage() {
           onNavigate={navigateTo}
         />
         <div className="min-w-0 flex-1">
+        {/* Pill sub-navbar for the active module */}
+        <div className="flex flex-wrap gap-3 pt-4 pb-4">
+          {current.subTabs.map((subTab) => {
+            const isActive = subTab === activeSubTab;
+            return (
+              <button
+                key={subTab}
+                type="button"
+                onClick={() => setActiveSubTab(subTab)}
+                className={cn(
+                  "rounded-full border px-5 py-2 text-brand-body-4 font-semibold transition-colors",
+                  isActive
+                    ? "bg-brand text-white border-brand"
+                    : "bg-white text-brand-green border-brand-sidebar hover:bg-brand-light"
+                )}
+              >
+                {subTab}
+              </button>
+            );
+          })}
+        </div>
+
+        {activeModule === "maintenance" && activeSubTab === "Tickets" && (
+          <div className="pb-4">
+            <FilterPillBar
+              segments={["Today", "This Week", "This Month"]}
+              activeSegment={timeSegment}
+              onSegmentChange={setTimeSegment}
+              goldenActive={goldenActive}
+              onGoldenToggle={() => setGoldenActive((v) => !v)}
+              redFlagActive={redFlagActive}
+              onRedFlagToggle={() => setRedFlagActive((v) => !v)}
+            />
+          </div>
+        )}
         {isTicketsView ? (
           <>
           <div className="relative w-full">
