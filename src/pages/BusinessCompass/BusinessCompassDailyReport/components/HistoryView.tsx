@@ -303,7 +303,7 @@ export const HistoryView = () => {
 
                   {report.report_data?.past_kpis &&
                     report.report_data.past_kpis.length > 0 && (
-                      <div className="bc-history-section-card mb-6">
+                      <div className="bc-history-score-panel">
                         <div className="bc-history-section-header">
                           <div className="flex items-center gap-2">
                             <TrendingUp
@@ -349,7 +349,7 @@ export const HistoryView = () => {
                                       }}
                                     />
                                   </div>
-                                  <p className="text-xs text-gray-500 mt-1">
+                                  <p className="text-xs text-gray-500 mt-1 whitespace-nowrap">
                                     {kpi.actual_value} / {kpi.target_value}
                                   </p>
                                 </div>
