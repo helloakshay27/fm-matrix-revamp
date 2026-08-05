@@ -755,9 +755,8 @@ export function GoldenQrSetupPage() {
         modal={false}
       >
         <DialogContent
-          className="max-w-lg bg-white"
+          className="w-full sm:max-w-[500px] bg-white overflow-visible"
           onPointerDownOutside={(e) => {
-            // Keep dialog open when interacting with the MUI select menu
             if ((e.target as HTMLElement).closest(".MuiPopover-root, .MuiModal-root, .MuiMenu-root")) {
               e.preventDefault();
             }
@@ -769,20 +768,30 @@ export function GoldenQrSetupPage() {
           }}
         >
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-gray-900">
-              {isEditMode ? 'Edit Golden QR Setup' : 'Add Golden QR Setup'}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-semibold">
+                {isEditMode ? 'Edit Golden QR Setup' : 'Add Golden QR Setup'}
+              </DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  resetForm();
+                  setShowDialog(false);
+                }}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            {/* Building */}
-            <FormControl fullWidth variant="outlined">
-              <InputLabel id="building-label">
-                Building <span className="text-red-500">*</span>
-              </InputLabel>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+            <FormControl fullWidth variant="outlined" className="sm:col-span-2">
+              <InputLabel id="building-label">Building *</InputLabel>
               <MuiSelect
                 labelId="building-label"
-                label="Building"
+                label="Building *"
                 value={selectedBuilding || ""}
                 onChange={(e) => setSelectedBuilding(String(e.target.value))}
                 sx={fieldStyles}
@@ -799,7 +808,6 @@ export function GoldenQrSetupPage() {
               </MuiSelect>
             </FormControl>
 
-            {/* Wing */}
             <FormControl fullWidth variant="outlined">
               <InputLabel id="wing-label">Wing</InputLabel>
               <MuiSelect
@@ -822,7 +830,6 @@ export function GoldenQrSetupPage() {
               </MuiSelect>
             </FormControl>
 
-            {/* Area */}
             <FormControl fullWidth variant="outlined">
               <InputLabel id="area-label">Area</InputLabel>
               <MuiSelect
@@ -845,7 +852,6 @@ export function GoldenQrSetupPage() {
               </MuiSelect>
             </FormControl>
 
-            {/* Floor */}
             <FormControl fullWidth variant="outlined">
               <InputLabel id="floor-label">Floor</InputLabel>
               <MuiSelect
@@ -868,7 +874,6 @@ export function GoldenQrSetupPage() {
               </MuiSelect>
             </FormControl>
 
-            {/* Room */}
             <FormControl fullWidth variant="outlined">
               <InputLabel id="room-label">Room</InputLabel>
               <MuiSelect
@@ -891,8 +896,7 @@ export function GoldenQrSetupPage() {
               </MuiSelect>
             </FormControl>
 
-            {/* Mark as Golden Ticket */}
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex items-center gap-3 sm:col-span-2 pt-1">
               <Checkbox
                 id="mark-golden"
                 checked={markGolden}
@@ -906,8 +910,7 @@ export function GoldenQrSetupPage() {
               </Label>
             </div>
 
-            {/* Show Requester */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 sm:col-span-2">
               <Checkbox
                 id="show-requester"
                 checked={showRequester}
@@ -920,28 +923,34 @@ export function GoldenQrSetupPage() {
                 Show Requester
               </Label>
             </div>
+          </div>
 
-            {/* Actions */}
-            <div className="flex justify-end gap-3 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  resetForm();
-                  setShowDialog(false);
-                }}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="bg-brand hover:bg-brand-hover text-white"
-              >
-                {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Save
-              </Button>
-            </div>
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto disabled:!opacity-100"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'SAVE'
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                resetForm();
+                setShowDialog(false);
+              }}
+              disabled={isSubmitting}
+              className="border-brand text-brand px-8 w-full sm:w-auto"
+            >
+              CANCEL
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
