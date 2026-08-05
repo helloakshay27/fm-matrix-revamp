@@ -70,6 +70,33 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { cn } from "@/lib/utils";
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 type TabType = "status" | "setup" | "jd" | "samples";
 
@@ -489,32 +516,42 @@ const JobStatusTab = ({
       {/* Filters */}
       <div className="flex items-center gap-4">
         <div className="w-48">
-          <Select value={deptFilter} onValueChange={setDeptFilter}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Departments" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Departments</SelectItem>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="dept-filter-label">All Departments</InputLabel>
+            <MuiSelect
+              labelId="dept-filter-label"
+              label="All Departments"
+              value={deptFilter}
+              onChange={(e) => setDeptFilter(e.target.value)}
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
+            >
+              <MenuItem value="all">All Departments</MenuItem>
               {departments.map((dept) => (
-                <SelectItem key={dept} value={dept}>
+                <MenuItem key={dept} value={dept}>
                   {dept}
-                </SelectItem>
+                </MenuItem>
               ))}
-            </SelectContent>
-          </Select>
+            </MuiSelect>
+          </FormControl>
         </div>
 
         <div className="w-48">
-          <Select value={setupStatusFilter} onValueChange={setSetupStatusFilter}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Users" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Users</SelectItem>
-              <SelectItem value="complete">Setup Complete</SelectItem>
-              <SelectItem value="incomplete">Setup Incomplete</SelectItem>
-            </SelectContent>
-          </Select>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="setup-status-filter-label">All Users</InputLabel>
+            <MuiSelect
+              labelId="setup-status-filter-label"
+              label="All Users"
+              value={setupStatusFilter}
+              onChange={(e) => setSetupStatusFilter(e.target.value)}
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
+            >
+              <MenuItem value="all">All Users</MenuItem>
+              <MenuItem value="complete">Setup Complete</MenuItem>
+              <MenuItem value="incomplete">Setup Incomplete</MenuItem>
+            </MuiSelect>
+          </FormControl>
         </div>
 
         <Button
