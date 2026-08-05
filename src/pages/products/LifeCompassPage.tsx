@@ -22,6 +22,7 @@ import {
   XCircle,
   Download,
   X,
+  ExternalLink,
 } from "lucide-react";
 import {
   Tabs,
@@ -567,13 +568,28 @@ const PitchDeckModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [previewing, setPreviewing] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
 
+  const absoluteDeckUrl = useMemo(
+    () => `${window.location.origin}${PITCH_DECK_URL}`,
+    []
+  );
+
+  // view.aspx opened as a normal page (new tab) - not embedded in an
+  // iframe, so it can never trigger the "content blocked" framing
+  // interstitial that embed.aspx sometimes does.
+  const officeNewTabSrc = useMemo(
+    () =>
+      `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(
+        absoluteDeckUrl
+      )}`,
+    [absoluteDeckUrl]
+  );
+
   const officeViewerSrc = useMemo(() => {
-    const absoluteUrl = `${window.location.origin}${PITCH_DECK_URL}`;
     return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-      absoluteUrl
+      absoluteDeckUrl
     )}`;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [previewAttempt]);
+  }, [absoluteDeckUrl, previewAttempt]);
 
   React.useEffect(() => {
     if (!previewing) return;
@@ -636,27 +652,35 @@ const PitchDeckModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   Life_Blueprint_Pitch_Deck.pptx
                 </p>
                 <p className="mt-1 max-w-sm text-[12px] leading-relaxed text-[#2C2C2C]/60 font-poppins">
-                  Download the deck to view it locally, or try the online
-                  preview - note it can occasionally be blocked or slow to
-                  load on Microsoft&apos;s end.
+                  Open the preview in a new tab, or download the deck to
+                  view it locally.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <a
+                  href={officeNewTabSrc}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#DA7756] px-4 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-[#C9684B]"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Open Preview in
+                  New Tab
+                </a>
                 <a
                   href={PITCH_DECK_URL}
                   download
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#DA7756] px-4 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-[#C9684B]"
-                >
-                  <Download className="w-3.5 h-3.5" /> Download Pitch Deck
-                </a>
-                <button
-                  type="button"
-                  onClick={startPreview}
                   className="inline-flex items-center gap-1.5 rounded-full border border-[#C4B89D]/60 bg-white px-4 py-2 text-[12px] font-semibold text-[#2C2C2C]/80 transition-colors hover:border-[#DA7756] hover:text-[#DA7756]"
                 >
-                  Try online preview
-                </button>
+                  <Download className="w-3.5 h-3.5" /> Download
+                </a>
               </div>
+              <button
+                type="button"
+                onClick={startPreview}
+                className="text-[11px] font-medium text-[#2C2C2C]/40 underline decoration-dotted transition-colors hover:text-[#DA7756]"
+              >
+                Or try the inline preview here instead
+              </button>
             </div>
           )}
 
@@ -679,28 +703,36 @@ const PitchDeckModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   Preview didn&apos;t load
                 </p>
                 <p className="mt-1 max-w-sm text-[12px] leading-relaxed text-[#2C2C2C]/60 font-poppins">
-                  Microsoft&apos;s online preview service either didn&apos;t
-                  respond or refused to load. This is a limitation on its
-                  end, not the file - download it to view the slides, or
-                  try the preview again.
+                  The inline preview either didn&apos;t respond or refused
+                  to load. This is a limitation on Microsoft&apos;s end,
+                  not the file - try opening it in a new tab instead, or
+                  download it directly.
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <a
+                  href={officeNewTabSrc}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#DA7756] px-4 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-[#C9684B]"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Open in New Tab
+                </a>
                 <a
                   href={PITCH_DECK_URL}
                   download
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#DA7756] px-4 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-[#C9684B]"
-                >
-                  <Download className="w-3.5 h-3.5" /> Download Pitch Deck
-                </a>
-                <button
-                  type="button"
-                  onClick={retry}
                   className="inline-flex items-center gap-1.5 rounded-full border border-[#C4B89D]/60 bg-white px-4 py-2 text-[12px] font-semibold text-[#2C2C2C]/80 transition-colors hover:border-[#DA7756] hover:text-[#DA7756]"
                 >
-                  Try preview again
-                </button>
+                  <Download className="w-3.5 h-3.5" /> Download
+                </a>
               </div>
+              <button
+                type="button"
+                onClick={retry}
+                className="text-[11px] font-medium text-[#2C2C2C]/40 underline decoration-dotted transition-colors hover:text-[#DA7756]"
+              >
+                Try inline preview again
+              </button>
             </div>
           )}
         </div>
