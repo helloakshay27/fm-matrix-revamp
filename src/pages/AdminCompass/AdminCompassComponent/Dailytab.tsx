@@ -360,6 +360,38 @@ const getMemberResponsiblePrefill = (member: any) => {
   return id ? { id: String(id), name } : null;
 };
 
+const stripIgnoredDailyMeetingFields = (value: any): any => {
+  const ignoredNestedReportsKey = ["reportee", "reports"].join("_");
+
+  if (Array.isArray(value)) {
+    let changed = false;
+    const cleaned = value.map((item) => {
+      const next = stripIgnoredDailyMeetingFields(item);
+      if (next !== item) changed = true;
+      return next;
+    });
+    return changed ? cleaned : value;
+  }
+
+  if (!value || typeof value !== "object") return value;
+
+  let changed = false;
+  const cleaned: Record<string, any> = {};
+
+  Object.entries(value).forEach(([key, item]) => {
+    if (key === ignoredNestedReportsKey) {
+      changed = true;
+      return;
+    }
+
+    const next = stripIgnoredDailyMeetingFields(item);
+    if (next !== item) changed = true;
+    cleaned[key] = next;
+  });
+
+  return changed ? cleaned : value;
+};
+
 const fetchDailyMeetingData = async ({
   meetingId,
   dateStr,
@@ -376,7 +408,8 @@ const fetchDailyMeetingData = async ({
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return await res.json();
+  const json = await res.json();
+  return stripIgnoredDailyMeetingFields(json);
 };
 
 // ── Helpers ──

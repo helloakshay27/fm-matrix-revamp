@@ -508,10 +508,20 @@ export function EnhancedTable<T extends Record<string, any>>({
   // Paginate data if pagination is enabled
   const paginatedData = useMemo(() => {
     if (!pagination) return filteredData;
+    if (externalCurrentPage !== undefined || externalOnPageChange) {
+      return filteredData;
+    }
 
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
-  }, [filteredData, currentPage, pageSize, pagination]);
+  }, [
+    filteredData,
+    currentPage,
+    pageSize,
+    pagination,
+    externalCurrentPage,
+    externalOnPageChange,
+  ]);
 
   const sortedData = pagination ? paginatedData : filteredData;
   // Use external totalPages if provided, otherwise calculate from filtered data
