@@ -18,7 +18,7 @@ const AmenityDetailsPage = () => {
     const [amenity, setAmenity] = useState({
         name: "",
         document_url: ""
-    })
+    });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -34,13 +34,13 @@ const AmenityDetailsPage = () => {
             }
         };
         getAmenity();
-    }, [])
+    }, []);
 
     if (loading) {
         return (
             <div className="p-6 bg-white min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-4"></div>
                     <p className="text-gray-700">Loading amenity details...</p>
                 </div>
             </div>
@@ -52,7 +52,7 @@ const AmenityDetailsPage = () => {
             <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
                 <button
                     onClick={() => navigate(-1)}
-                    className="flex items-center gap-1 hover:text-gray-800 transition-colors"
+                    className="flex items-center gap-1 hover:text-brand transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />
                     <span>Back</span>
@@ -66,35 +66,27 @@ const AmenityDetailsPage = () => {
                     </h1>
                 </div>
 
-                <Card className="mb-6">
-                    <CardHeader
-                        className="bg-[#F6F4EE]"
-                        style={{ border: "1px solid #D9D9D9" }}
-                    >
-                        <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                            <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                <Card className="mb-6 border border-[#D9D9D9] overflow-hidden">
+                    <CardHeader className="bg-[#F6F4EE] border-b border-[#D9D9D9]">
+                        <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#000]">
+                            <span className="w-[40px] h-[40px] bg-brand-light text-brand rounded-full flex items-center justify-center text-md font-bold">
                                 D
                             </span>
                             DETAILS
                         </CardTitle>
                     </CardHeader>
-                    <CardContent
-                        className="px-[80px] py-[31px] bg-[#F6F7F7]"
-                        style={{ border: "1px solid #D9D9D9" }}
-                    >
+                    <CardContent className="px-[80px] py-[31px] bg-white">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <div className="flex">
                                     <span className="text-[#1A1A1A80] w-40 text-14">Name</span>
-                                    <span className="font-medium text-16"> {amenity.name}</span>
+                                    <span className="font-medium text-16">{amenity.name}</span>
                                 </div>
                                 <div className="flex">
                                     <span className="text-[#1A1A1A80] w-40 text-14">Icon</span>
-                                    <div
-                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
-                                    >
+                                    <div className="flex relative flex-col items-center border border-[#D9D9D9] rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md">
                                         <button
-                                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                            className="absolute top-2 right-2 z-10 p-1 text-brand hover:text-brand-hover rounded-full"
                                             title="View"
                                             type="button"
                                             onClick={() => {
@@ -109,7 +101,7 @@ const AmenityDetailsPage = () => {
                                         </button>
                                         <img
                                             src={amenity.document_url}
-                                            alt={"Banner Image"}
+                                            alt="Amenity Icon"
                                             className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                                         />
                                     </div>
@@ -119,7 +111,7 @@ const AmenityDetailsPage = () => {
                             <div className="space-y-4">
                                 <div className="flex">
                                     <span className="text-[#1A1A1A80] w-40 text-14">Site Name</span>
-                                    <span className="font-medium text-16"> {localStorage.getItem("selectedSiteName")}</span>
+                                    <span className="font-medium text-16">{localStorage.getItem("selectedSiteName")}</span>
                                 </div>
                             </div>
                         </div>
@@ -134,7 +126,7 @@ const AmenityDetailsPage = () => {
                 />
             </>
         </div>
-    )
-}
+    );
+};
 
-export default AmenityDetailsPage
+export default AmenityDetailsPage;
