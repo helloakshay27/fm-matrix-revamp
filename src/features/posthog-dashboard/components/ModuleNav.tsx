@@ -29,7 +29,7 @@ export function ModuleNav() {
             onClick={() => setModule(m.name)}
             title={`${fmtC(m.users)} users · ${fmtC(m.sessions)} sessions`}
           >
-            {m.name}<span className="phg-mcount">{fmtC(m.events)}</span>
+            {m.name}
           </button>
         ))}
         {rest.length > 0 && (
@@ -40,7 +40,7 @@ export function ModuleNav() {
           >
             <option value="">More ({rest.length})…</option>
             {rest.map((m) => (
-              <option key={m.name} value={m.name}>{m.name} · {fmtC(m.events)}</option>
+              <option key={m.name} value={m.name}>{m.name}</option>
             ))}
           </select>
         )}
