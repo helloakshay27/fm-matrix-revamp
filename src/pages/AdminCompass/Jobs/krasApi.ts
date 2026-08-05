@@ -21,6 +21,23 @@ export const normalizeKra = (row) => {
     firstDefined(row?.title, row?.name, row?.kra_name, nested?.title, nested?.name) ?? ""
   ).trim();
   if (!id || !title) return null;
+  const assignees = Array.isArray(row?.assignees)
+    ? row.assignees
+    : Array.isArray(nested?.assignees)
+      ? nested.assignees
+      : [];
+  const assigneeIds = Array.isArray(row?.assignee_ids)
+    ? row.assignee_ids.map(toNum).filter((value) => value !== undefined)
+    : assignees.map((user) => toNum(user?.id)).filter((value) => value !== undefined);
+  const singleAssigneeId = toNum(firstDefined(row?.assignee_id, nested?.assignee_id));
+  const normalizedAssigneeIds = assigneeIds.length
+    ? assigneeIds
+    : singleAssigneeId !== undefined
+      ? [singleAssigneeId]
+      : [];
+  const assigneeNames = assignees
+    .map((user) => String(user?.name || user?.full_name || "").trim())
+    .filter(Boolean);
 
   return {
     ...row,
@@ -30,6 +47,10 @@ export const normalizeKra = (row) => {
     weightage: toNum(firstDefined(row?.weight, row?.weightage, nested?.weightage)) ?? 0,
     departmentId: toNum(firstDefined(row?.department_id, row?.department?.id, nested?.department_id)),
     jdId: firstDefined(row?.job_description_id, row?.job_description?.id, nested?.job_description_id),
+    assigneeId: singleAssigneeId ?? normalizedAssigneeIds[0] ?? null,
+    assigneeIds: normalizedAssigneeIds,
+    assigneeNames,
+    assignee: firstDefined(row?.assignee_name, nested?.assignee_name, assigneeNames[0]),
     status: String(firstDefined(row?.status, nested?.status, "active")).toLowerCase(),
   };
 };
