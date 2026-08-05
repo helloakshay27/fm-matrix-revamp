@@ -2,17 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import { X, Plus, ArrowLeft, CheckCircle, Upload, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
@@ -31,7 +22,6 @@ import {
   Select as MuiSelect,
   FormControlLabel,
   Switch,
-  SelectChangeEvent,
 } from "@mui/material";
 
 // --- Interface Definitions ---
@@ -122,6 +112,21 @@ const textareaStyles = {
       borderColor: "#C72030",
     },
   },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    sx: {
+      backgroundColor: "#fff",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow: "0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06)",
+      zIndex: 9999,
+    },
+  },
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+  disablePortal: false,
 };
 
 export const EditSurveyPage = () => {
@@ -1713,7 +1718,7 @@ export const EditSurveyPage = () => {
                         <Label className="text-sm font-medium">
                           Question Text <span className="text-red-500">*</span>
                         </Label>
-                        <Textarea
+                        <TextField
                           value={question.text}
                           onChange={(e) =>
                             handleQuestionChange(
@@ -1723,47 +1728,67 @@ export const EditSurveyPage = () => {
                             )
                           }
                           placeholder="Enter your Question"
-                          className="min-h-20"
+                          fullWidth
+                          variant="outlined"
+                          multiline
+                          minRows={3}
                           required
+                          sx={textareaStyles}
+                          InputLabelProps={{
+                            shrink: true,
+                            sx: {
+                              "& .MuiInputLabel-asterisk": {
+                                color: "#ef4444",
+                              },
+                            },
+                          }}
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label>
-                          Select Answer Type{" "}
-                          <span className="text-red-500">*</span>
-                        </Label>
-                        <Select
-                          value={question.answerType}
-                          onValueChange={(value) =>
-                            handleQuestionChange(
-                              question.id!,
-                              "answerType",
-                              value
-                            )
-                          }
+                        <FormControl
+                          fullWidth
+                          required
+                          sx={{
+                            ...fieldStyles,
+                            "& .MuiInputLabel-asterisk": {
+                              color: "#ef4444",
+                            },
+                          }}
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose Answer Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="multiple-choice">
+                          <InputLabel id={`answer-type-label-${question.id}`}>
+                            Select Answer Type
+                          </InputLabel>
+                          <MuiSelect
+                            labelId={`answer-type-label-${question.id}`}
+                            value={question.answerType}
+                            label="Select Answer Type"
+                            onChange={(e) =>
+                              handleQuestionChange(
+                                question.id!,
+                                "answerType",
+                                e.target.value
+                              )
+                            }
+                            MenuProps={selectMenuProps}
+                          >
+                            <MenuItem value="multiple-choice">
                               Multiple Choice
-                            </SelectItem>
-                            <SelectItem value="rating">Rating</SelectItem>
-                            <SelectItem value="emojis">Emojis</SelectItem>
-                            <SelectItem value="input-box">Input Box</SelectItem>
-                             <SelectItem value="checkbox">Checkbox</SelectItem>
-                             <SelectItem value="date">Date</SelectItem>
-                             <SelectItem value="time">Time</SelectItem>
-                          </SelectContent>
-                        </Select>
+                            </MenuItem>
+                            <MenuItem value="rating">Rating</MenuItem>
+                            <MenuItem value="emojis">Emojis</MenuItem>
+                            <MenuItem value="input-box">Input Box</MenuItem>
+                            <MenuItem value="checkbox">Checkbox</MenuItem>
+                            <MenuItem value="date">Date</MenuItem>
+                            <MenuItem value="time">Time</MenuItem>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
 
                       {question.answerType === "input-box" && (
                         <div className="space-y-2">
                           <Label>Placeholder</Label>
-                          <Input
+                          <TextField
                             value={question.placeholderText || ""}
                             onChange={(e) =>
                               handleQuestionChange(
@@ -1773,6 +1798,9 @@ export const EditSurveyPage = () => {
                               )
                             }
                             placeholder="Enter placeholder"
+                            fullWidth
+                            variant="outlined"
+                            sx={fieldStyles}
                           />
                         </div>
                       )}
@@ -1780,9 +1808,9 @@ export const EditSurveyPage = () => {
                       {question.answerType === "input-box" && (
                         <div className="space-y-2">
                           <Label>Max Length</Label>
-                          <Input
+                          <TextField
                             type="number"
-                            min={0}
+                            inputProps={{ min: 0 }}
                             value={question.maxLength || ""}
                             onChange={(e) =>
                               handleQuestionChange(
@@ -1792,6 +1820,9 @@ export const EditSurveyPage = () => {
                               )
                             }
                             placeholder="Enter max length"
+                            fullWidth
+                            variant="outlined"
+                            sx={fieldStyles}
                           />
                         </div>
                       )}
@@ -1858,24 +1889,25 @@ export const EditSurveyPage = () => {
                                     },
                                   }}
                                 />
-                                <Select
+                                <MuiSelect
                                   value={option.type}
-                                  onValueChange={(value: "P" | "N") =>
+                                  onChange={(e) =>
                                     handleAnswerOptionTypeChange(
                                       question.id!,
                                       optionIndex,
-                                      value
+                                      e.target.value as "P" | "N"
                                     )
                                   }
+                                  sx={{
+                                    ...fieldStyles,
+                                    width: "80px",
+                                    minWidth: "80px",
+                                  }}
+                                  MenuProps={selectMenuProps}
                                 >
-                                  <SelectTrigger className="w-20">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="P">P</SelectItem>
-                                    <SelectItem value="N">N</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                  <MenuItem value="P">P</MenuItem>
+                                  <MenuItem value="N">N</MenuItem>
+                                </MuiSelect>
                                 <Button
                                   size="sm"
                                   variant="ghost"

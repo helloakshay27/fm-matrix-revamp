@@ -1,4 +1,4 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   fetchAdoptionEngagement,
   fetchAdoptionTrend,
@@ -196,31 +196,21 @@ export interface SiteLeagueEntry {
   data: TrafficSessionResponse | undefined;
 }
 
-/**
- * There is no per-site breakdown endpoint, so the site-wise table fans `traffic_session`
- * out one call per site. Only enabled on the "All sites" scope — a single-site scope
- * already has these numbers in the Layer-1 tiles.
- *
- * Rows stream in as each call lands rather than waiting for the whole fan-out, so
- * `loaded`/`total` drive a progress note next to the table.
- */
 export function useSiteLeague(f: QueryFilters, siteIds: string[], enabled: boolean) {
-  const results = useQueries({
-    queries: siteIds.map((siteId) => ({
-      queryKey: ['fm-adoption', 'traffic_session', f.from, f.to, siteId, f.devices.join(',')],
-      queryFn: () =>
-        fetchTrafficSession({ from: f.from, to: f.to, siteIds: [siteId], devices: f.devices }),
-      enabled: enabled && f.enabled,
-      ...CACHE,
-    })),
+  const query = useQuery({
+    queryKey: ['fm-adoption', 'traffic_session', f.from, f.to, siteIds.join(','), f.devices.join(',')],
+    queryFn: () =>
+      fetchTrafficSession({ from: f.from, to: f.to, siteIds: siteIds, devices: f.devices }),
+    enabled: enabled && f.enabled,
+    ...CACHE,
   });
 
   return {
-    entries: results.map((r, i) => ({ siteId: siteIds[i], data: r.data })) as SiteLeagueEntry[],
-    isLoading: enabled && results.some((r) => r.isLoading),
-    isError: results.some((r) => r.isError),
-    loaded: results.filter((r) => r.data !== undefined).length,
-    failed: results.filter((r) => r.isError).length,
+    entries: siteIds.map((siteId) => ({ siteId, data: query.data })) as SiteLeagueEntry[],
+    isLoading: enabled && query.isLoading,
+    isError: query.isError,
+    loaded: query.data !== undefined ? siteIds.length : 0,
+    failed: query.isError ? siteIds.length : 0,
     total: siteIds.length,
   };
 }

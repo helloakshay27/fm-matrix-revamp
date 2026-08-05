@@ -642,7 +642,7 @@ export const AddOccupantUserPage: React.FC = () => {
               <Button
                 type="button"
                 variant="outline"
-                className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-[#C72030]"
+                className="bg-white] text-[#C72030]  border-[#C72030]"
                 onClick={() => setShowAdditional((s) => !s)}
               >
                 {showAdditional ? '− Additional Info' : '+ Additional Info'}
@@ -834,14 +834,14 @@ export const AddOccupantUserPage: React.FC = () => {
         <Button
           onClick={handleSubmit}
           style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90 px-8 py-3 text-base font-medium rounded-lg"
+          className="text-white hover:bg-[#C72030]/90 px-8 py-3 text-base font-medium "
         >
           Submit
         </Button>
         <Button
           variant="outline"
           onClick={handleCancel}
-          className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 px-8 py-3 text-base font-medium rounded-lg"
+          className="bg-white text-brand hover:bg-gray-50 border-brand px-8 py-3 text-base font-medium "
         >
           Cancel
         </Button>

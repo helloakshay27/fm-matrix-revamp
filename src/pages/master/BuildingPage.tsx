@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import type { Building } from '@/store/slices/locationSlice';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
 import { Loader2, Plus, Edit, X, Check, Download, Upload, QrCode } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { fetchSites, fetchBuildings, createBuilding, updateBuilding } from '@/store/slices/locationSlice';
@@ -17,6 +16,34 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { buildingSchema, type BuildingFormData } from '@/schemas/buildingSchema';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 export function BuildingPage() {
   const dispatch = useAppDispatch();
@@ -304,7 +331,7 @@ export function BuildingPage() {
       className="cursor-pointer"
     >
       {building[field] ? (
-        <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
+        <div className="w-5 h-5 bg-brand rounded flex items-center justify-center hover:bg-brand-hover transition-colors">
           <Check className="w-3 h-3 text-white" />
         </div>
       ) : (
@@ -353,7 +380,7 @@ export function BuildingPage() {
           <Switch
             checked={building.active}
             onCheckedChange={() => handleToggleStatus(building.id, 'active')}
-            className="data-[state=checked]:bg-[#C72030]"
+            className="data-[state=checked]:bg-brand"
           />
         );
       default:
@@ -386,7 +413,7 @@ export function BuildingPage() {
               <Button
                 variant="outline"
                 onClick={handleDownloadTemplate}
-                  className="h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
+                  className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download Sample Format
@@ -396,7 +423,7 @@ export function BuildingPage() {
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
-                      className="h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
+                      className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     Import Buildings
@@ -456,16 +483,28 @@ export function BuildingPage() {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog} modal={false}>
                 {shouldShow("Building", "create") && (
                   <DialogTrigger asChild>
-                    <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg [&_svg]:text-white">
+                    <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap [&_svg]:text-white">
                       <Plus className="mr-2 h-4 w-4" />
                       Add Building
                     </Button>
                   </DialogTrigger>
                 )}
-                <DialogContent className="max-w-2xl">
+                <DialogContent
+                  className="max-w-2xl bg-white overflow-visible"
+                  onPointerDownOutside={(e) => {
+                    if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onInteractOutside={(e) => {
+                    if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
                   <DialogHeader>
                     <DialogTitle>Create New Building</DialogTitle>
                     <Button
@@ -485,20 +524,24 @@ export function BuildingPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Select Site</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select site" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
+                            <MuiFormControl fullWidth variant="outlined">
+                              <InputLabel id="create-site-label">Select Site *</InputLabel>
+                              <MuiSelect
+                                labelId="create-site-label"
+                                label="Select Site *"
+                                value={field.value}
+                                onChange={(e) => field.onChange(e.target.value)}
+                                sx={fieldStyles}
+                                MenuProps={selectMenuProps}
+                              >
+                                <MenuItem value=""><em>Select site</em></MenuItem>
                                 {sites?.data && Array.isArray(sites.data) && sites.data.map((site) => (
-                                  <SelectItem key={site.id} value={site.id.toString()}>
+                                  <MenuItem key={site.id} value={site.id.toString()}>
                                     {site.name}
-                                  </SelectItem>
+                                  </MenuItem>
                                 ))}
-                              </SelectContent>
-                            </Select>
+                              </MuiSelect>
+                            </MuiFormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -510,9 +553,15 @@ export function BuildingPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Building Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter building name" {...field} />
-                            </FormControl>
+                            <TextField
+                              label="Building Name *"
+                              variant="outlined"
+                              fullWidth
+                              placeholder="Enter building name"
+                              value={field.value}
+                              onChange={field.onChange}
+                              sx={fieldStyles}
+                            />
                             <FormMessage />
                           </FormItem>
                         )}
@@ -524,9 +573,15 @@ export function BuildingPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Other Details</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter additional details" {...field} />
-                            </FormControl>
+                            <TextField
+                              label="Other Details"
+                              variant="outlined"
+                              fullWidth
+                              placeholder="Enter additional details"
+                              value={field.value}
+                              onChange={field.onChange}
+                              sx={fieldStyles}
+                            />
                             <FormMessage />
                           </FormItem>
                         )}
@@ -652,8 +707,20 @@ export function BuildingPage() {
           </div>
 
           {/* Edit Dialog */}
-          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-            <DialogContent className="max-w-2xl">
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog} modal={false}>
+            <DialogContent
+              className="max-w-2xl bg-white overflow-visible"
+              onPointerDownOutside={(e) => {
+                if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                  e.preventDefault();
+                }
+              }}
+              onInteractOutside={(e) => {
+                if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                  e.preventDefault();
+                }
+              }}
+            >
               <DialogHeader>
                 <DialogTitle>Edit Building</DialogTitle>
                 <Button
@@ -673,20 +740,24 @@ export function BuildingPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Select Site</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select site" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
+                        <MuiFormControl fullWidth variant="outlined">
+                          <InputLabel id="edit-site-label">Select Site *</InputLabel>
+                          <MuiSelect
+                            labelId="edit-site-label"
+                            label="Select Site *"
+                            value={field.value}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            sx={fieldStyles}
+                            MenuProps={selectMenuProps}
+                          >
+                            <MenuItem value=""><em>Select site</em></MenuItem>
                             {sites.data && Array.isArray(sites.data) && sites.data.map((site) => (
-                              <SelectItem key={site.id} value={site.id.toString()}>
+                              <MenuItem key={site.id} value={site.id.toString()}>
                                 {site.name}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                          </SelectContent>
-                        </Select>
+                          </MuiSelect>
+                        </MuiFormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -698,9 +769,15 @@ export function BuildingPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Building Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter building name" {...field} />
-                        </FormControl>
+                        <TextField
+                          label="Building Name *"
+                          variant="outlined"
+                          fullWidth
+                          placeholder="Enter building name"
+                          value={field.value}
+                          onChange={field.onChange}
+                          sx={fieldStyles}
+                        />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -712,9 +789,15 @@ export function BuildingPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Other Details</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter additional details" {...field} />
-                        </FormControl>
+                        <TextField
+                          label="Other Details"
+                          variant="outlined"
+                          fullWidth
+                          placeholder="Enter additional details"
+                          value={field.value}
+                          onChange={field.onChange}
+                          sx={fieldStyles}
+                        />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -810,7 +893,7 @@ export function BuildingPage() {
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
-                            className="data-[state=checked]:bg-[#C72030]"
+                            className="data-[state=checked]:bg-brand"
                           />
                         </FormControl>
                       </FormItem>

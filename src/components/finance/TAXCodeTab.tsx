@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FormControl as MuiFormControl, TextField } from "@mui/material";
 import { Plus, Edit, Trash2, Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -20,6 +21,16 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { apiClient } from "@/utils/apiClient";
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
 
 export const TACCodeTab = () => {
   const [tacCodes, setTacCodes] = useState<any[]>([]);
@@ -264,8 +275,20 @@ export const TACCodeTab = () => {
       </div>
 
       {/* Create Modal */}
-      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} modal={false}>
+        <DialogContent
+          className="sm:max-w-[500px] bg-white overflow-visible"
+          onPointerDownOutside={(e) => {
+            if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Create TAX codes</DialogTitle>
             <DialogDescription>
@@ -273,32 +296,47 @@ export const TACCodeTab = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="code">Code *</Label>
-              <Input
-                id="code"
-                placeholder="Enter TAX codes"
-                value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-              />
+            <div>
+              <MuiFormControl fullWidth variant="outlined" required>
+                <TextField
+                  id="code"
+                  label="Code"
+                  variant="outlined"
+                  fullWidth
+                  placeholder="Enter TAX codes"
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  sx={fieldStyles}
+                />
+              </MuiFormControl>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                placeholder="Enter Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
+            <div>
+              <MuiFormControl fullWidth variant="outlined" required>
+                <TextField
+                  id="name"
+                  label="Name"
+                  variant="outlined"
+                  fullWidth
+                  placeholder="Enter Name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  sx={fieldStyles}
+                />
+              </MuiFormControl>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                placeholder="Enter Description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
+            <div>
+              <MuiFormControl fullWidth variant="outlined">
+                <TextField
+                  id="description"
+                  label="Description"
+                  variant="outlined"
+                  fullWidth
+                  placeholder="Enter Description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  sx={fieldStyles}
+                />
+              </MuiFormControl>
             </div>
             <div className="flex justify-end gap-3 pt-4">
               <Button
@@ -322,8 +360,20 @@ export const TACCodeTab = () => {
       </Dialog>
 
       {/* Edit Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen} modal={false}>
+        <DialogContent
+          className="sm:max-w-[500px] bg-white overflow-visible"
+          onPointerDownOutside={(e) => {
+            if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Edit TAX codes</DialogTitle>
             <DialogDescription>
@@ -331,32 +381,47 @@ export const TACCodeTab = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-code">Code *</Label>
-              <Input
-                id="edit-code"
-                placeholder="Enter TAX codes"
-                value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-              />
+            <div>
+              <MuiFormControl fullWidth variant="outlined" required>
+                <TextField
+                  id="edit-code"
+                  label="Code"
+                  variant="outlined"
+                  fullWidth
+                  placeholder="Enter TAX codes"
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  sx={fieldStyles}
+                />
+              </MuiFormControl>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Name *</Label>
-              <Input
-                id="edit-name"
-                placeholder="Enter Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
+            <div>
+              <MuiFormControl fullWidth variant="outlined" required>
+                <TextField
+                  id="edit-name"
+                  label="Name"
+                  variant="outlined"
+                  fullWidth
+                  placeholder="Enter Name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  sx={fieldStyles}
+                />
+              </MuiFormControl>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-description">Description</Label>
-              <Input
-                id="edit-description"
-                placeholder="Enter Description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
+            <div>
+              <MuiFormControl fullWidth variant="outlined">
+                <TextField
+                  id="edit-description"
+                  label="Description"
+                  variant="outlined"
+                  fullWidth
+                  placeholder="Enter Description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  sx={fieldStyles}
+                />
+              </MuiFormControl>
             </div>
             <div className="flex justify-end gap-3 pt-4">
               <Button

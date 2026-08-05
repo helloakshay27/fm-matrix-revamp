@@ -911,8 +911,8 @@ export function EnhancedTable<T extends Record<string, any>>({
             {onFilterClick && (
               <Button
                 variant="outline"
-                size="sm"
-                className="border-brand text-brand hover:bg-brand-selected h-8 px-2"
+                size="icon"
+                className="!rounded-lg h-8 w-8 border border-brand text-brand"
                 onClick={onFilterClick}
                 title="Filter"
               >
@@ -923,10 +923,10 @@ export function EnhancedTable<T extends Record<string, any>>({
             {!hideTableExport && enableExport && (
               <Button
                 variant="outline"
-                size="sm"
+                size="icon"
                 onClick={handleExportClick}
                 disabled={isExporting}
-                className="border-brand text-brand hover:bg-brand-selected h-8 px-2"
+                className="!rounded-lg h-8 w-8 border border-brand text-brand"
                 title={isExporting ? "Exporting..." : "Export"}
               >
                 {isExporting ? (
@@ -954,8 +954,8 @@ export function EnhancedTable<T extends Record<string, any>>({
             {onFilterClick && (
               <Button
                 variant="outline"
-                size="sm"
-                className="border-brand text-brand hover:bg-brand-selected flex items-center gap-2 rounded-lg"
+                size="icon"
+                className="!rounded-lg border border-brand text-brand"
                 onClick={onFilterClick}
                 title="Filter"
               >
@@ -968,16 +968,15 @@ export function EnhancedTable<T extends Record<string, any>>({
             {!hideTableExport && enableExport && (
               <Button
                 variant="outline"
-                size="sm"
+                size="icon"
                 onClick={handleExportClick}
                 disabled={isExporting}
-                className="border-brand text-brand hover:bg-brand-selected flex items-center gap-2 rounded-lg"
+                className="!rounded-lg border border-brand text-brand"
                 title={isExporting ? "Exporting..." : "Export"}
               >
                 {isExporting ? (
                   <>
                     <div className="animate-spin rounded-full border-2 border-current border-t-transparent w-4 h-4" />
-                    <span className="text-xs">Exporting...</span>
                   </>
                 ) : (
                   <Download className="w-4 h-4" />

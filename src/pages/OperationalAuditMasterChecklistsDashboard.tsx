@@ -154,18 +154,17 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 title={selectedFile ? selectedFile.name : "Choose File"}
-                className="h-9 px-3 flex items-center gap-2 rounded-lg border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                size="icon"
+                className="!rounded-lg border border-brand text-brand hover:bg-brand-selected"
                 variant="outline"
               >
                 <Upload className="w-4 h-4" />
-                <span className="text-sm max-w-[80px] truncate">
-                  {selectedFile ? selectedFile.name : "Choose"}
-                </span>
               </Button>
               <Button
                 onClick={handleDownloadSampleFormat}
                 title="Download Sample Format"
-                className="h-9 w-9 p-0 flex items-center justify-center rounded-lg border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                size="icon"
+                className="!rounded-lg border border-brand text-brand hover:bg-brand-selected"
                 variant="outline"
               >
                 <Download className="w-4 h-4" />
@@ -173,7 +172,8 @@ export const OperationalAuditMasterChecklistsDashboard = () => {
               <Button
                 onClick={handleImportQuestions}
                 title="Import Questions"
-                className="h-9 w-9 p-0 flex items-center justify-center rounded-lg border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                size="icon"
+                className="!rounded-lg border border-brand text-brand hover:bg-brand-selected"
                 variant="outline"
               >
                 <Upload className="w-4 h-4" />

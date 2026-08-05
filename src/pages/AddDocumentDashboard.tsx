@@ -638,8 +638,8 @@ export const AddDocumentDashboard = () => {
                     control={
                       <Radio
                         sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#da7756" },
                           "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
@@ -655,8 +655,8 @@ export const AddDocumentDashboard = () => {
                     control={
                       <Radio
                         sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#da7756" },
                           "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
@@ -688,8 +688,8 @@ export const AddDocumentDashboard = () => {
                     control={
                       <Radio
                         sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#da7756" },
                           "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
@@ -701,8 +701,8 @@ export const AddDocumentDashboard = () => {
                     control={
                       <Radio
                         sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#da7756" },
                           "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />

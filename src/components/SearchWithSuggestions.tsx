@@ -87,8 +87,8 @@ export const SearchWithSuggestions = ({
     const rect = inputRef.current?.getBoundingClientRect();
     if (!rect) return { top: 0, left: 0, width: 0 };
     return {
-      top: rect.bottom + window.scrollY,
-      left: rect.left + window.scrollX,
+      top: rect.bottom,
+      left: rect.left,
       width: rect.width,
     };
   };
@@ -117,14 +117,16 @@ export const SearchWithSuggestions = ({
         filteredSuggestions.length > 0 &&
         createPortal(
           <div
-            className="absolute bg-white border border-[#D1D5DB] z-[9999] overflow-hidden"
+            className="bg-white overflow-hidden"
             style={{
-              position: 'absolute',
+              position: 'fixed',
               top: `${getSuggestionBoxPosition().top + 1}px`,
               left: `${getSuggestionBoxPosition().left}px`,
               width: `${getSuggestionBoxPosition().width}px`,
-              borderRadius: '0px',
-              boxShadow: '0px 4px 8px rgba(0,0,0,0.1)',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+              zIndex: 9999,
               maxHeight: '160px'
             }}
           >

@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
 import { Switch } from '@/components/ui/switch';
 import { Plus, X, Edit, Check, ChevronLeft, ChevronRight, Download, Upload, Loader2, QrCode } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
@@ -21,6 +20,34 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { wingSchema, type WingFormData } from '@/schemas/wingSchema';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 export function WingPage() {
   const dispatch = useAppDispatch();
@@ -279,7 +306,7 @@ export function WingPage() {
               <Button
                 variant="outline"
                 onClick={handleDownloadTemplate}
-                className="h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
+                className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download Sample Format
@@ -289,7 +316,7 @@ export function WingPage() {
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
-                    className="h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
+                    className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     Import Wings
@@ -348,16 +375,28 @@ export function WingPage() {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog} modal={false}>
                 {shouldShow("Wing", "create") && (
                   <DialogTrigger asChild>
-                    <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg [&_svg]:text-white">
+                    <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap [&_svg]:text-white">
                       <Plus className="mr-2 h-4 w-4" />
                       Add Wing
                     </Button>
                   </DialogTrigger>
                 )}
-                <DialogContent className="max-w-2xl">
+                <DialogContent
+                  className="max-w-2xl bg-white overflow-visible"
+                  onPointerDownOutside={(e) => {
+                    if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onInteractOutside={(e) => {
+                    if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
                   <DialogHeader className="flex flex-row items-center justify-between pb-0">
                     <DialogTitle className="flex items-center gap-2">
                       <Plus className="w-5 h-5" />
@@ -379,9 +418,15 @@ export function WingPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Wing Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Enter wing name" {...field} />
-                              </FormControl>
+                              <TextField
+                                label="Wing Name *"
+                                variant="outlined"
+                                fullWidth
+                                placeholder="Enter wing name"
+                                value={field.value}
+                                onChange={field.onChange}
+                                sx={fieldStyles}
+                              />
                               <FormMessage />
                             </FormItem>
                           )}
@@ -393,20 +438,24 @@ export function WingPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Select Building</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select Building" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
+                              <MuiFormControl fullWidth variant="outlined">
+                                <InputLabel id="create-building-label">Select Building *</InputLabel>
+                                <MuiSelect
+                                  labelId="create-building-label"
+                                  label="Select Building *"
+                                  value={field.value}
+                                  onChange={(e) => field.onChange(e.target.value)}
+                                  sx={fieldStyles}
+                                  MenuProps={selectMenuProps}
+                                >
+                                  <MenuItem value=""><em>Select Building</em></MenuItem>
                                   {buildings.data.map((building) => (
-                                    <SelectItem key={building.id} value={building.id.toString()}>
+                                    <MenuItem key={building.id} value={building.id.toString()}>
                                       {building.name}
-                                    </SelectItem>
+                                    </MenuItem>
                                   ))}
-                                </SelectContent>
-                              </Select>
+                                </MuiSelect>
+                              </MuiFormControl>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -510,7 +559,7 @@ export function WingPage() {
                       <Switch
                         checked={wing.active}
                         onCheckedChange={() => handleToggleStatus(wing.id, wing.active)}
-                        className="data-[state=checked]:bg-[#C72030]"
+                        className="data-[state=checked]:bg-brand"
                       />
                     );
                   default:
@@ -554,8 +603,20 @@ export function WingPage() {
           </div>
 
           {/* Edit Dialog */}
-          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-            <DialogContent className="max-w-2xl">
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog} modal={false}>
+            <DialogContent
+              className="max-w-2xl bg-white overflow-visible"
+              onPointerDownOutside={(e) => {
+                if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                  e.preventDefault();
+                }
+              }}
+              onInteractOutside={(e) => {
+                if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                  e.preventDefault();
+                }
+              }}
+            >
               <DialogHeader className="flex flex-row items-center justify-between pb-0">
                 <DialogTitle>Edit Wing Details</DialogTitle>
                 <button
@@ -574,9 +635,15 @@ export function WingPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Wing Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter wing name" {...field} />
-                          </FormControl>
+                          <TextField
+                            label="Wing Name *"
+                            variant="outlined"
+                            fullWidth
+                            placeholder="Enter wing name"
+                            value={field.value}
+                            onChange={field.onChange}
+                            sx={fieldStyles}
+                          />
                           <FormMessage />
                         </FormItem>
                       )}
@@ -588,20 +655,24 @@ export function WingPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Select Building</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select Building" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="bg-white z-50">
+                          <MuiFormControl fullWidth variant="outlined">
+                            <InputLabel id="edit-building-label">Select Building *</InputLabel>
+                            <MuiSelect
+                              labelId="edit-building-label"
+                              label="Select Building *"
+                              value={field.value}
+                              onChange={(e) => field.onChange(e.target.value)}
+                              sx={fieldStyles}
+                              MenuProps={selectMenuProps}
+                            >
+                              <MenuItem value=""><em>Select Building</em></MenuItem>
                               {buildings.data.map((building) => (
-                                <SelectItem key={building.id} value={building.id.toString()}>
+                                <MenuItem key={building.id} value={building.id.toString()}>
                                   {building.name}
-                                </SelectItem>
+                                </MenuItem>
                               ))}
-                            </SelectContent>
-                          </Select>
+                            </MuiSelect>
+                          </MuiFormControl>
                           <FormMessage />
                         </FormItem>
                       )}

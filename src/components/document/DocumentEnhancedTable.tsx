@@ -266,8 +266,7 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
           <Button
             variant="outline"
             onClick={onFilterOpen}
-           className="fm-button-fix fm-button-brand bg-white text-orange-500 px-4 py-2 rounded-lg"
-          variant="ghost"
+            className="bg-transparent border border-[#da7756] text-[#da7756] hover:bg-[#da7756]/10 px-3 py-2 rounded-md"
           >
             <Filter className="w-4 h-4 " />
           </Button>
@@ -277,7 +276,7 @@ export const DocumentEnhancedTable: React.FC<DocumentEnhancedTableProps> = ({
             <Button
               variant="outline"
               onClick={() => setShowSortDropdown(!showSortDropdown)}
-                className="fm-button-fix fm-button-brand bg-white text-orange-500 px-4 py-2 rounded-lg"
+              className="bg-transparent border border-[#da7756] text-[#da7756] hover:bg-[#da7756]/10 px-3 py-2 rounded-md"
             >
               <svg
                 width="10"

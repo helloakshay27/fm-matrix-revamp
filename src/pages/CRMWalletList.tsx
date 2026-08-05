@@ -218,7 +218,7 @@ const CRMWalletList = () => {
         <>
             <Button
                 onClick={() => setShowActionPanel(true)}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2 border-0"
             >
                 <Plus className="w-4 h-4" />
                 Action
@@ -227,7 +227,7 @@ const CRMWalletList = () => {
                 onClick={() =>
                     setIsTransactionHistoryVisible(!isTransactionHistoryVisible)
                 }
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2 border-0"
             >
                 {isTransactionHistoryVisible ? "Wallet List" : "Transaction History"}
             </Button>

@@ -51,7 +51,19 @@ function weeklyParams(f: WeeklyFilters) {
 }
 
 async function get<T>(path: string, params: Record<string, string>): Promise<T> {
-  const res = await client.get<T>(`/fm/adoption/${path}`, { params });
+  // Build query string manually so site_id commas are NOT percent-encoded (%2C),
+  // matching the format the server expects: site_id=2189,2190,2191,...
+  const base = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (k === 'site_id') continue; // handle below
+    base.append(k, v);
+  }
+  let qs = base.toString();
+  if (params.site_id) {
+    // Append site_id with literal commas, not encoded
+    qs += (qs ? '&' : '') + 'site_id=' + params.site_id;
+  }
+  const res = await client.get<T>(`/fm/adoption/${path}?${qs}`);
   return res.data;
 }
 

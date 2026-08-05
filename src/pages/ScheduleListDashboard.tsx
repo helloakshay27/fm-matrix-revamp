@@ -477,7 +477,7 @@ export const ScheduleListDashboard = () => {
     {shouldShow("Schedule", "create") && (
       <Button
         onClick={handleActionClick}
-        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+        className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
       >
         <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
         Action
@@ -878,7 +878,6 @@ export const ScheduleListDashboard = () => {
             emptyMessage={isLoading ? "Loading schedules..." : (debouncedSearchQuery ? `No schedules found for "${debouncedSearchQuery}"` : "No schedules available")}
             disableClientSearch={true}
             searchStatus={isLoading ? 'Loading...' : (searchQuery !== debouncedSearchQuery ? 'Searching...' : `${schedules.length} schedule(s) found`)}
-            customSearchInput={true}
           />
 
           {/* Pagination */}

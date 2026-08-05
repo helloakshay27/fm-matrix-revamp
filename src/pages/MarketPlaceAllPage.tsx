@@ -3,6 +3,36 @@ import { useNavigate } from 'react-router-dom';
 import { Building, Target, Phone, Calculator, Download, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
 const MarketPlaceAllPage = () => {
   const navigate = useNavigate();
   const [installingApps, setInstallingApps] = useState<string[]>([]);
@@ -45,42 +75,73 @@ const MarketPlaceAllPage = () => {
       console.log(`App ${appId} installed successfully`);
     }, 2000);
   };
-  const MarketPlaceFilterModal = () => <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-      <DialogContent className="sm:max-w-md">
+  const MarketPlaceFilterModal = () => <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen} modal={false}>
+      <DialogContent
+        className="w-full sm:max-w-[500px] bg-white overflow-visible"
+        onPointerDownOutside={(e) => {
+          // Keep dialog open when interacting with the MUI select menu
+          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Filter Applications</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">Edition</label>
-            <select className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-              <option>All</option>
-              <option>Basic</option>
-              <option>Premium</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">Price</label>
-            <select className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-              <option>All</option>
-              <option>Free</option>
-              <option>Paid</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">Rating</label>
-            <select className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
-              <option>All</option>
-              <option>4+ Stars</option>
-              <option>3+ Stars</option>
-            </select>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="edition-label">Edition</InputLabel>
+            <MuiSelect
+              labelId="edition-label"
+              label="Edition"
+              value=""
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
+            >
+              <MenuItem value=""><em>All</em></MenuItem>
+              <MenuItem value="basic">Basic</MenuItem>
+              <MenuItem value="premium">Premium</MenuItem>
+            </MuiSelect>
+          </FormControl>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="price-label">Price</InputLabel>
+            <MuiSelect
+              labelId="price-label"
+              label="Price"
+              value=""
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
+            >
+              <MenuItem value=""><em>All</em></MenuItem>
+              <MenuItem value="free">Free</MenuItem>
+              <MenuItem value="paid">Paid</MenuItem>
+            </MuiSelect>
+          </FormControl>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="rating-label">Rating</InputLabel>
+            <MuiSelect
+              labelId="rating-label"
+              label="Rating"
+              value=""
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
+            >
+              <MenuItem value=""><em>All</em></MenuItem>
+              <MenuItem value="4">4+ Stars</MenuItem>
+              <MenuItem value="3">3+ Stars</MenuItem>
+            </MuiSelect>
+          </FormControl>
         </div>
-        <div className="flex gap-3 mt-6">
-          <Button onClick={() => setIsFilterOpen(false)} className="fm-button-fix fm-button-brand px-8 py-2">
+        <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
+          <Button onClick={() => setIsFilterOpen(false)} className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto">
             Apply Filters
           </Button>
-          <Button variant="outline" onClick={() => setIsFilterOpen(false)} className="fm-button-fix fm-button-outline px-8 py-2">
+          <Button variant="outline" onClick={() => setIsFilterOpen(false)} className="border-brand text-brand px-8 w-full sm:w-auto">
             Reset
           </Button>
         </div>
