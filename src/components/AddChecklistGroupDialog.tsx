@@ -55,7 +55,7 @@ export const AddChecklistGroupDialog = ({ open, onOpenChange }: AddChecklistGrou
         <div className="flex justify-end px-6 py-4 border-t border-gray-200">
           <Button
             onClick={handleSubmit}
-            className="bg-green-600 hover:bg-green-700 text-white px-6"
+            className="bg-brand hover:bg-brand-hover text-white px-6"
           >
             Submit
           </Button>

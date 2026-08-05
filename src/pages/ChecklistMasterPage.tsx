@@ -88,17 +88,42 @@ const fieldStyles = {
       borderColor: '#ddd',
     },
     '&:hover fieldset': {
-      borderColor: '#C72030',
+      borderColor: 'var(--color-primary)',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+      borderColor: 'var(--color-primary)',
     },
   },
   '& .MuiInputLabel-root': {
     fontSize: '14px',
     '&.Mui-focused': {
-      color: '#C72030',
+      color: 'var(--color-primary)',
     },
+  },
+};
+
+const textFieldStyles = {
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': {
+      borderColor: '#ddd',
+    },
+    '&:hover fieldset': {
+      borderColor: 'var(--color-primary)',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: 'var(--color-primary)',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    '&.Mui-focused': {
+      color: 'var(--color-primary)',
+    },
+    '&.Mui-focused span': {
+      color: 'var(--color-primary) !important',
+    },
+  },
+  '& .MuiFormLabel-asterisk': {
+    color: 'var(--color-primary)',
   },
 };
 
@@ -720,7 +745,7 @@ export const ChecklistMasterPage = () => {
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{
-                backgroundColor: '#C72030',
+                backgroundColor: 'var(--color-primary)',
                 borderRadius: '50%',
                 width: '32px',
                 height: '32px',
@@ -730,7 +755,7 @@ export const ChecklistMasterPage = () => {
               }}>
                 <Cog size={16} color="white" />
               </Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: 'var(--color-primary)' }}>
                 Basic Configuration
               </Typography>
             </Box>
@@ -749,27 +774,27 @@ export const ChecklistMasterPage = () => {
             >
               <FormControlLabel
                 value="PPM"
-                control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                 label="PPM"
               />
               <FormControlLabel
                 value="AMC"
-                control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                 label="AMC"
               />
               <FormControlLabel
                 value="Preparedness"
-                control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                 label="Preparedness"
               />
               <FormControlLabel
                 value="Hoto"
-                control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                 label="Hoto"
               />
               <FormControlLabel
                 value="Routine"
-                control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                 label="Routine"
               />
             </MuiRadioGroup>
@@ -788,17 +813,17 @@ export const ChecklistMasterPage = () => {
             >
               <FormControlLabel
                 value="Asset"
-                control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                 label="Asset"
               />
               <FormControlLabel
                 value="Service"
-                control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                 label="Service"
               />
               <FormControlLabel
                 value="Vendor"
-                control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                control={<Radio sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                 label="Vendor"
               />
             </MuiRadioGroup>
@@ -811,12 +836,12 @@ export const ChecklistMasterPage = () => {
             fullWidth
             value={formData.activityName}
             onChange={(e) => handleFormChange('activityName', e.target.value)}
-            sx={{ mb: 3 }}
+            sx={{ ...textFieldStyles, mb: 3 }}
           />
           <TextField
             label={
               <span style={{ fontSize: '16px' }}>
-                Description <span style={{ color: "red" }}>*</span>
+                Description <span style={{ color: "var(--color-primary)" }}>*</span>
               </span>
             }
             placeholder="Enter Description/SOP"
@@ -826,6 +851,7 @@ export const ChecklistMasterPage = () => {
             value={formData.description}
             onChange={(e) => handleFormChange('description', e.target.value)}
             sx={{
+              ...textFieldStyles,
               mb: 3,
               "& textarea": {
                 width: "100% !important",   // force full width
@@ -878,16 +904,16 @@ export const ChecklistMasterPage = () => {
                 variant="outlined"
                 onClick={addAttachment}
                 sx={{
-                  borderColor: '#C72030',
-                  color: '#C72030',
+                  borderColor: 'var(--color-primary)',
+                  color: 'var(--color-primary)',
                   textTransform: 'none',
                   fontFamily: 'Work Sans, sans-serif',
                   fontWeight: 500,
                   borderRadius: '0',
                   padding: '8px 16px',
                   '&:hover': {
-                    borderColor: '#B8252F',
-                    backgroundColor: 'rgba(199, 32, 48, 0.04)',
+                    borderColor: 'var(--color-primary)',
+                    backgroundColor: 'var(--color-primary-selected)',
                   },
                 }}
               >
@@ -982,8 +1008,8 @@ export const ChecklistMasterPage = () => {
         <div>
           {/* Header Outside the Box */}
           <div className="flex justify-between items-center p-6">
-            <div className="flex items-center gap-2 text-[#C72030] text-lg font-semibold">
-              <span className="bg-[#C72030] text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
+            <div className="flex items-center gap-2 text-brand text-lg font-semibold">
+              <span className="bg-brand text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
                 <Cog className="w-6 h-6" />
               </span>
               QUESTION SETUP
@@ -991,7 +1017,7 @@ export const ChecklistMasterPage = () => {
 
             <div className="flex items-center gap-4">
               {/* <div className="flex items-center gap-1">
-                <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${createNew ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+                <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${createNew ? 'bg-brand' : 'bg-gray-300'}`}>
                   <input
                     type="checkbox"
                     checked={createNew}
@@ -1003,7 +1029,7 @@ export const ChecklistMasterPage = () => {
                 <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Create Template</span>
               </div> */}
               <div className="flex items-center gap-1">
-                <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+                <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-brand' : 'bg-gray-300'}`}>
                   <input
                     type="checkbox"
                     checked={weightage}
@@ -1015,7 +1041,7 @@ export const ChecklistMasterPage = () => {
                 <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Weightage</span>
               </div>
               <div className="flex items-center gap-1">
-                <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+                <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-brand' : 'bg-gray-300'}`}>
                   <input
                     type="checkbox"
                     checked={autoTicket}
@@ -1027,7 +1053,7 @@ export const ChecklistMasterPage = () => {
                 <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Auto Ticket</span>
               </div>
               {/* <div className="flex items-center gap-1">
-                <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+                <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-brand' : 'bg-gray-300'}`}>
                   <input
                     type="checkbox"
                     checked={autoTicket}
@@ -1059,7 +1085,7 @@ export const ChecklistMasterPage = () => {
                       value="checklist"
                       control={
                         <Radio
-                          sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                          sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                         />
                       }
                       label="Checklist Level"
@@ -1068,7 +1094,7 @@ export const ChecklistMasterPage = () => {
                       value="question"
                       control={
                         <Radio
-                          sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                          sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                         />
                       }
                       label="Question Level"
@@ -1129,7 +1155,7 @@ export const ChecklistMasterPage = () => {
                   {sections.length > 1 && (
                     <IconButton
                       onClick={() => removeQuestionSection(section.id)}
-                      sx={{ color: '#C72030' }}
+                      sx={{ color: 'var(--color-primary)' }}
                     >
                       <X />
                     </IconButton>
@@ -1212,7 +1238,7 @@ export const ChecklistMasterPage = () => {
                             backgroundColor: 'rgba(255, 255, 255, 0.8)',
                             '&:hover': {
                               backgroundColor: 'rgba(255, 255, 255, 1)',
-                              color: '#C72030'
+                              color: 'var(--color-primary)'
                             }
                           }}
                           size="small"
@@ -1228,7 +1254,7 @@ export const ChecklistMasterPage = () => {
                               <MuiCheckbox
                                 checked={task.mandatory}
                                 onChange={(e) => updateTask(section.id, task.id, 'mandatory', e.target.checked)}
-                                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                               />
                             }
                             label="Mandatory"
@@ -1238,7 +1264,7 @@ export const ChecklistMasterPage = () => {
                               <MuiCheckbox
                                 checked={task.helpTextEnabled}
                                 onChange={(e) => updateTask(section.id, task.id, 'helpTextEnabled', e.target.checked)}
-                                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                               />
                             }
                             label="Help Text"
@@ -1248,7 +1274,7 @@ export const ChecklistMasterPage = () => {
                               <MuiCheckbox
                                 checked={task.reading}
                                 onChange={(e) => updateTask(section.id, task.id, 'reading', e.target.checked)}
-                                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                               />
                             }
                             label="Reading"
@@ -1259,7 +1285,7 @@ export const ChecklistMasterPage = () => {
                                 <MuiCheckbox
                                   checked={task.rating_enabled}
                                   onChange={(e) => updateTask(section.id, task.id, 'rating_enabled', e.target.checked)}
-                                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                  sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                 />
                               }
                               label="Rating"
@@ -1419,7 +1445,7 @@ export const ChecklistMasterPage = () => {
                                   placeholder="Enter option value"
                                   value={value.label}
                                   onChange={(e) => updateValue(section.id, task.id, valueIndex, 'label', e.target.value)}
-                                  label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
+                                  label={<span>Option{task.mandatory && <span style={{ color: 'var(--color-primary)' }}>&nbsp;*</span>}</span>}
                                   sx={{
                                     '& .MuiOutlinedInput-root': {
                                       backgroundColor: 'white'
@@ -1446,7 +1472,7 @@ export const ChecklistMasterPage = () => {
                                   <IconButton
                                     size="small"
                                     onClick={() => removeValue(section.id, task.id, valueIndex)}
-                                    sx={{ color: '#C72030' }}
+                                    sx={{ color: 'var(--color-primary)' }}
                                   >
                                     <X />
                                   </IconButton>
@@ -1461,13 +1487,13 @@ export const ChecklistMasterPage = () => {
                                 startIcon={<Plus />}
                                 onClick={() => addValue(section.id, task.id)}
                                 sx={{
-                                  color: '#C72030',
-                                  borderColor: '#C72030',
+                                  color: 'var(--color-primary)',
+                                  borderColor: 'var(--color-primary)',
                                   fontSize: '12px',
                                   padding: '4px 12px',
                                   '&:hover': {
-                                    borderColor: '#C72030',
-                                    backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                    borderColor: 'var(--color-primary)',
+                                    backgroundColor: 'var(--color-primary-selected)'
                                   }
                                 }}
                               >
@@ -1500,7 +1526,7 @@ export const ChecklistMasterPage = () => {
                                 <Radio
                                   checked={valueIndex === 0}
                                   name={`radio-${section.id}-${task.id}`}
-                                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                  sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                 />
 
                                 <TextField
@@ -1509,7 +1535,7 @@ export const ChecklistMasterPage = () => {
                                   placeholder="Enter option value"
                                   value={value.label}
                                   onChange={(e) => updateValue(section.id, task.id, valueIndex, 'label', e.target.value)}
-                                  label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
+                                  label={<span>Option{task.mandatory && <span style={{ color: 'var(--color-primary)' }}>&nbsp;*</span>}</span>}
                                   sx={{
                                     '& .MuiOutlinedInput-root': {
                                       backgroundColor: 'white'
@@ -1536,7 +1562,7 @@ export const ChecklistMasterPage = () => {
                                   <IconButton
                                     size="small"
                                     onClick={() => removeValue(section.id, task.id, valueIndex)}
-                                    sx={{ color: '#C72030' }}
+                                    sx={{ color: 'var(--color-primary)' }}
                                   >
                                     <X />
                                   </IconButton>
@@ -1551,13 +1577,13 @@ export const ChecklistMasterPage = () => {
                                 startIcon={<Plus />}
                                 onClick={() => addValue(section.id, task.id)}
                                 sx={{
-                                  color: '#C72030',
-                                  borderColor: '#C72030',
+                                  color: 'var(--color-primary)',
+                                  borderColor: 'var(--color-primary)',
                                   fontSize: '12px',
                                   padding: '4px 12px',
                                   '&:hover': {
-                                    borderColor: '#C72030',
-                                    backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                    borderColor: 'var(--color-primary)',
+                                    backgroundColor: 'var(--color-primary-selected)'
                                   }
                                 }}
                               >
@@ -1589,7 +1615,7 @@ export const ChecklistMasterPage = () => {
                               <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
                                 <MuiCheckbox
                                   checked={valueIndex === 0}
-                                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                  sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                 />
 
                                 <TextField
@@ -1604,7 +1630,7 @@ export const ChecklistMasterPage = () => {
                                       updateValue(section.id, task.id, valueIndex, 'label', e.target.value);
                                     }
                                   }}
-                                  label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
+                                  label={<span>Option{task.mandatory && <span style={{ color: 'var(--color-primary)' }}>&nbsp;*</span>}</span>}
                                   sx={{
                                     '& .MuiOutlinedInput-root': {
                                       backgroundColor: 'white'
@@ -1631,7 +1657,7 @@ export const ChecklistMasterPage = () => {
                                   <IconButton
                                     size="small"
                                     onClick={() => removeValue(section.id, task.id, valueIndex)}
-                                    sx={{ color: '#C72030' }}
+                                    sx={{ color: 'var(--color-primary)' }}
                                   >
                                     <X />
                                   </IconButton>
@@ -1655,13 +1681,13 @@ export const ChecklistMasterPage = () => {
                                   }
                                 }}
                                 sx={{
-                                  color: '#C72030',
-                                  borderColor: '#C72030',
+                                  color: 'var(--color-primary)',
+                                  borderColor: 'var(--color-primary)',
                                   fontSize: '12px',
                                   padding: '4px 12px',
                                   '&:hover': {
-                                    borderColor: '#C72030',
-                                    backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                    borderColor: 'var(--color-primary)',
+                                    backgroundColor: 'var(--color-primary-selected)'
                                   }
                                 }}
                               >
@@ -1698,7 +1724,7 @@ export const ChecklistMasterPage = () => {
                                       updateValue(section.id, task.id, valueIndex, 'label', e.target.value);
                                     }
                                   }}
-                                  label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
+                                  label={<span>Option{task.mandatory && <span style={{ color: 'var(--color-primary)' }}>&nbsp;*</span>}</span>}
                                   sx={{
                                     '& .MuiOutlinedInput-root': {
                                       backgroundColor: 'white'
@@ -1710,7 +1736,7 @@ export const ChecklistMasterPage = () => {
                                   <Typography
                                     variant="body2"
                                     sx={{
-                                      color: '#C72030',
+                                      color: 'var(--color-primary)',
                                       cursor: 'pointer',
                                       fontSize: '12px',
                                       minWidth: 'auto'
@@ -1739,13 +1765,13 @@ export const ChecklistMasterPage = () => {
                                   }
                                 }}
                                 sx={{
-                                  color: '#C72030',
-                                  borderColor: '#C72030',
+                                  color: 'var(--color-primary)',
+                                  borderColor: 'var(--color-primary)',
                                   fontSize: '12px',
                                   padding: '4px 12px',
                                   '&:hover': {
-                                    borderColor: '#C72030',
-                                    backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                    borderColor: 'var(--color-primary)',
+                                    backgroundColor: 'var(--color-primary-selected)'
                                   }
                                 }}
                               >
@@ -1765,7 +1791,7 @@ export const ChecklistMasterPage = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => addTaskToSection(section.id)}
-                    className="text-red-600 border-red-600 hover:bg-red-50"
+                    className="text-brand border-brand hover:bg-brand-light"
                   >
                     <Plus className="w-4 h-4 mr-1" />
                     Add Task
@@ -1781,7 +1807,7 @@ export const ChecklistMasterPage = () => {
           <Button
             type="submit"
             onClick={handleSubmit}
-            className="bg-red-600 text-white hover:bg-red-700"
+            className="bg-brand text-white hover:bg-brand-hover"
             disabled={createChecklistMutation.isPending}
           >
             {createChecklistMutation.isPending ? 'Creating...' : 'Create Checklist'}
