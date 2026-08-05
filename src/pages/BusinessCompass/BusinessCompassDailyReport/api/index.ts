@@ -320,33 +320,6 @@ export const fetchReportsList = async (
   return Array.isArray(response.data) ? response.data : response.data?.user_journals || [];
 };
 
-export const fetchPlanSource = async (
-  { baseUrl, token }: ApiContext,
-  type: string,
-  id: number
-) => {
-  const endpoint =
-    type === "task"
-      ? `${urlBase(baseUrl)}/task_managements/${id}.json`
-      : type === "issue"
-        ? `${urlBase(baseUrl)}/issues/${id}.json`
-        : `${urlBase(baseUrl)}/todos/${id}.json`;
-  try {
-    const res = await axios.get(endpoint, { headers: bearer(token) });
-    return {
-      key: `${type}:${id}`,
-      data:
-        type === "task"
-          ? res.data?.data || res.data
-          : type === "issue"
-            ? res.data?.issue || res.data
-            : res.data?.todo || res.data,
-    };
-  } catch {
-    return { key: `${type}:${id}`, data: null };
-  }
-};
-
 export const submitUserJournal = async (
   payload: Record<string, unknown>,
   currentReportId: number | null
