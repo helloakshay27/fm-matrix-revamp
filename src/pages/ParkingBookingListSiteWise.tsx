@@ -3234,14 +3234,14 @@ const ParkingBookingListSiteWise = () => {
                 setAnalyticsDraftRange(analyticsDateRange);
                 setIsAnalyticsFilterOpen(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-orange-500"
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-[#da7756]"
             >
-              <Calendar className="w-4 h-4 text-orange-500" />
-              <span className="text-sm font-medium text-orange-500">
+              <Calendar className="w-4 h-4 text-[#da7756]" />
+              <span className="text-sm font-medium text-[#da7756]">
                 {analyticsDateRange.rangeA.label} vs{" "}
                 {analyticsDateRange.rangeB.label}
               </span>
-              <Filter className="w-4 h-4 text-orange-500" />
+              <Filter className="w-4 h-4 text-[#da7756]" />
             </Button>
 
             <ParkingAnalyticsSelector

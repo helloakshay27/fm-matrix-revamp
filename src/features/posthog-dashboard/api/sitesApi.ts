@@ -30,31 +30,31 @@ function normalise(raw: ApiSite[]): Site[] {
 }
 
 /**
- * Every site on the tenant. `?all_sites=true` is what the rest of the app uses to get the
- * unscoped list (plain `/pms/sites.json` is scoped to the session's company and can come
- * back empty). Fetched directly rather than through the shared `site` Redux slice so this
- * page never overwrites the app-wide site switcher's list.
+ * Sites scoped to the logged-in user's selected organisation.
+ * Reads `selectedOrgId` / `organization_id` / `org_id` from localStorage and
+ * passes it to `/pms/sites.json` so only the relevant sites come back.
  *
- * If the unscoped list is unavailable we fall back to `allowed_sites` so the dropdown is
- * still usable, even though that list is narrower than "all sites".
+ * Falls back to `allowed_sites` if the scoped list is empty or unavailable.
  */
 export async function fetchAllSites(): Promise<Site[]> {
-  try {
-    const res = await apiClient.get(`${ENDPOINTS.SITES}?all_sites=true`);
-    const sites = normalise(readList<ApiSite>(res.data, 'sites', 'data'));
-    if (sites.length) return sites;
-  } catch {
-    // fall through to the scoped list below
-  }
+  const orgId =
+    localStorage.getItem('selectedOrgId') ??
+    localStorage.getItem('organization_id') ??
+    localStorage.getItem('org_id');
 
+  // Try the org-scoped call first
   try {
-    const res = await apiClient.get(ENDPOINTS.SITES);
+    const url = orgId
+      ? `${ENDPOINTS.SITES}?organization_id=${orgId}`
+      : `${ENDPOINTS.SITES}`;
+    const res = await apiClient.get(url);
     const sites = normalise(readList<ApiSite>(res.data, 'sites', 'data'));
     if (sites.length) return sites;
   } catch {
     // fall through to allowed_sites below
   }
 
+  // Fallback: allowed_sites for the current user
   const userId =
     localStorage.getItem('userId') ??
     sessionStorage.getItem('userId') ??

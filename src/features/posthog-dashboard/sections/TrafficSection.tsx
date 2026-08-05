@@ -49,7 +49,7 @@ export function TrafficSection() {
           }
         >
           <Guard status={status.traffic} empty={!hasUsage}>
-            <LineChart cur={traffic.chart.cur} prev={traffic.chart.prev} showPrev={state.prev} />
+            <LineChart cur={traffic.chart.cur} prev={traffic.chart.prev} showPrev={state.prev} labels={traffic.chart.labels} />
             <div className="phg-legend">
               <span><i style={{ background: 'var(--phg-orange)' }} /> Current period</span>
               <span><i className="dash" /> Previous period</span>

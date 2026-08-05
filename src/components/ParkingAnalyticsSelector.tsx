@@ -82,11 +82,11 @@ export function ParkingAnalyticsSelector({ onSelectionChange, dateRange }: Parki
       <PopoverTrigger asChild>
         <Button 
           variant="outline" 
-          className="flex items-center gap-2 bg-white border-orange-500 hover:bg-[#F6F4EE] text-orange-500"
+          className="flex items-center gap-2 bg-white border-[#da7756] hover:bg-[#F6F4EE] text-[#da7756]"
         >
-          <Car className="w-4 h-4 text-orange-500" />
-          Select Reports (<span className="text-orange-500">{selectedCount}</span>)
-          <ChevronDown className="w-4 h-4 text-orange-500" />
+          <Car className="w-4 h-4 text-[#da7756]" />
+          Select Reports (<span className="text-[#da7756]">{selectedCount}</span>)
+          <ChevronDown className="w-4 h-4 text-[#da7756]" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0 bg-white border border-[#C4B99D] shadow-lg z-50" align="end">

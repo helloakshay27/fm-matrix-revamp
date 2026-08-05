@@ -61,7 +61,9 @@ export function normalizeScope(
   groups: SiteGroup[]
 ): string {
   if (tier === 't1') {
-    return scope === 'all' || sites.some((s) => s.id === scope) ? scope : 'all';
+    if (scope === 'all') return 'all';
+    const validIds = scope.split(',').filter(id => sites.some(s => s.id === id));
+    return validIds.length > 0 ? validIds.join(',') : 'all';
   }
   if (tier === 't2') {
     return groups.some((g) => g.id === scope) ? scope : (groups[0]?.id ?? 'org');
@@ -72,7 +74,9 @@ export function normalizeScope(
 /** The sites the current tier + scope covers. Empty means "every site / whole tenant". */
 export function scopeSites(state: DashboardState, sites: Site[], groups: SiteGroup[]): Site[] {
   if (state.tier === 't1') {
-    return state.scope === 'all' ? sites.slice() : sites.filter((s) => s.id === state.scope);
+    if (state.scope === 'all') return sites.slice();
+    const selectedIds = new Set(state.scope.split(','));
+    return sites.filter((s) => selectedIds.has(s.id));
   }
   if (state.tier === 't3' && state.scope === 'org') return sites.slice();
   const g = groups.find((x) => x.id === state.scope);
@@ -83,7 +87,9 @@ export function scopeSites(state: DashboardState, sites: Site[], groups: SiteGro
 
 /** True when the scope is every site, so `site_id` can be omitted entirely. */
 export function isWholeTenant(state: DashboardState): boolean {
-  return (state.tier === 't1' && state.scope === 'all') || (state.tier === 't3' && state.scope === 'org');
+  // Management (t3) always passes site IDs explicitly so the API gets the exact org-scoped list.
+  // Only Site Manager "all" omits site_id (tenant-wide).
+  return state.tier === 't1' && state.scope === 'all';
 }
 
 export function scopeLabel(state: DashboardState, sites: Site[], groups: SiteGroup[]): string {
@@ -95,7 +101,11 @@ export function scopeLabel(state: DashboardState, sites: Site[], groups: SiteGro
     if (state.scope === 'all') {
       return `${sites.length ? `All sites · ${sites.length} sites` : 'Whole tenant'} · ${tierName}`;
     }
-    return `${scoped[0]?.name ?? 'Unknown site'} · ${tierName}`;
+    const names = scoped.map(s => s.name);
+    const label = names.length > 2 
+      ? `${names[0]}, ${names[1]} +${names.length - 2}`
+      : names.join(', ') || 'Unknown site';
+    return `${label} · ${tierName}`;
   }
 
   if (state.tier === 't3' && state.scope === 'org') {

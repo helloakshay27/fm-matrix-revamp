@@ -49,7 +49,7 @@ export const CreateRosterTemplateDashboard = () => {
         <div className="flex-1 bg-white rounded-lg border shadow-sm p-6">
           {/* Location Details Header */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+            <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center text-white font-bold text-sm">
               3
             </div>
             <h2 className="text-lg font-semibold text-orange-500 uppercase">LOCATION DETAILS</h2>

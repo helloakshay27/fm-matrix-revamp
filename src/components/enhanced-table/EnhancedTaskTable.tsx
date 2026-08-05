@@ -501,7 +501,12 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
 
   return (
     <div className="space-y-4">
-      <div className={cn("flex items-center justify-between gap-4", toolbarClassName)}>
+      <div
+        className={cn(
+          "flex items-center justify-between gap-4",
+          toolbarClassName
+        )}
+      >
         <div className="flex items-center gap-4 flex-1">
           {leftActions}
 
@@ -539,9 +544,9 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
 
           {onFilterClick && (
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="fm-button-fix !h-9 !w-9 !min-h-9 !p-0 !bg-[#fffaf6] hover:!bg-[#fdf0ea] !border !border-[#DA7756] !text-[#DA7756] !rounded-lg [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
+              className="h-9 w-11 min-h-9 p-0 flex items-center justify-center rounded-lg border border-[#DA7756] bg-[#fffaf6] hover:bg-[#fdf0ea] text-[#DA7756]"
               onClick={onFilterClick}
             >
               <Filter className="w-4 h-4" />
@@ -561,7 +566,10 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                         ? handleExport(columnVisibility)
                         : exportToExcel(
                             filteredData,
-                            visibleColumns.filter(col => col.key !== 'action' && col.key !== 'actions'),
+                            visibleColumns.filter(
+                              (col) =>
+                                col.key !== "action" && col.key !== "actions"
+                            ),
                             exportFileName
                           )
               }
@@ -584,7 +592,12 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      <div className={cn("rounded-lg border border-[#D5DbDB] overflow-hidden", tableWrapperClassName)}>
+      <div
+        className={cn(
+          "rounded-lg border border-[#D5DbDB] overflow-hidden",
+          tableWrapperClassName
+        )}
+      >
         <div className="overflow-x-auto enhancedTable">
           <DndContext
             sensors={sensors}

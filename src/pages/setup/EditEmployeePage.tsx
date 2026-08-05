@@ -263,7 +263,7 @@ export const EditEmployeePage = () => {
     file: File | null; 
   }) => (
     <div className="border rounded-lg p-4">
-      <h4 className="font-medium text-orange-500 mb-3">{title}</h4>
+      <h4 className="font-medium text-[#da7756] mb-3">{title}</h4>
       <div className="flex items-center gap-2">
         <input
           type="file"
@@ -273,7 +273,7 @@ export const EditEmployeePage = () => {
         />
         <label
           htmlFor={type}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-orange-600 border border-orange-200 rounded cursor-pointer hover:bg-orange-50"
+          className="flex items-center gap-2 px-3 py-2 text-sm text-[#da7756] border border-[#da7756] rounded cursor-pointer hover:bg-[#fdf0ea]"
         >
           Choose File
         </label>
@@ -330,10 +330,10 @@ export const EditEmployeePage = () => {
           {/* Basic Information */}
           <div className="bg-white rounded-lg border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center">
                 <span className="text-white text-sm">1</span>
               </div>
-              <h3 className="text-lg font-semibold text-orange-600">BASIC INFORMATION</h3>
+              <h3 className="text-lg font-semibold text-[#da7756]">BASIC INFORMATION</h3>
             </div>
             
             <div className="grid grid-cols-5 gap-4">
@@ -400,10 +400,10 @@ export const EditEmployeePage = () => {
           {/* Functional Details */}
           <div className="bg-white rounded-lg border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center">
                 <span className="text-white text-sm">2</span>
               </div>
-              <h3 className="text-lg font-semibold text-orange-600">FUNCTIONAL DETAILS</h3>
+              <h3 className="text-lg font-semibold text-[#da7756]">FUNCTIONAL DETAILS</h3>
             </div>
             
             <div className="grid grid-cols-4 gap-4">
@@ -474,10 +474,10 @@ export const EditEmployeePage = () => {
           {/* Seat Management */}
           <div className="bg-white rounded-lg border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center">
                 <span className="text-white text-sm">3</span>
               </div>
-              <h3 className="text-lg font-semibold text-orange-600">Seat Management</h3>
+              <h3 className="text-lg font-semibold text-[#da7756]">Seat Management</h3>
             </div>
             
             <div className="grid grid-cols-3 gap-4">
@@ -530,10 +530,10 @@ export const EditEmployeePage = () => {
           {/* Attachments */}
           <div className="bg-white rounded-lg border p-6">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center">
                 <Upload className="text-white w-4 h-4" />
               </div>
-              <h3 className="text-lg font-semibold text-orange-600">ATTACHMENTS</h3>
+              <h3 className="text-lg font-semibold text-[#da7756]">ATTACHMENTS</h3>
             </div>
             
             <div className="grid grid-cols-2 gap-6">

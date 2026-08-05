@@ -13,7 +13,7 @@ export function Header() {
           </div>
         </div>
         <div className="phg-hmeta">
-          <div className="phg-cust">PSIPL — Property Solutions (India)</div>
+          <div className="phg-cust">{localStorage.getItem('selectedOrg') ?? 'Organization'}</div>
           <div>{vm.scopeLabel}</div>
           {vm.generatedAt && (
             <span className="phg-badge-sample" title="generated_at from the traffic_session response">
