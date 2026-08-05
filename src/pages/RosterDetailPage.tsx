@@ -567,7 +567,7 @@ export const RosterDetailPage: React.FC = () => {
                     key={dept.id}
                     label={dept.department_name}
                     size="small"
-                    sx={{ backgroundColor: '#C72030', color: 'white' }}
+                    sx={{ backgroundColor: '#DA7756', color: 'white' }}
                   />
                 ))}
               </div>

@@ -151,6 +151,7 @@ export const MaterialMasterPage = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">Actions</TableHead>
                 <TableHead className="font-medium">Component Name</TableHead>
                 <TableHead className="font-medium">Category</TableHead>
                 <TableHead className="font-medium">Specification</TableHead>
@@ -161,7 +162,6 @@ export const MaterialMasterPage = () => {
                 <TableHead className="font-medium">Consumed In</TableHead>
                 <TableHead className="font-medium">CapEx</TableHead>
                 <TableHead className="font-medium">Tracking</TableHead>
-                <TableHead className="font-medium">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -182,16 +182,6 @@ export const MaterialMasterPage = () => {
                 </TableRow>
               ) : filteredMaterials.map((material) => (
                 <TableRow key={material.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{material.componentName}</TableCell>
-                  <TableCell>{material.category}</TableCell>
-                  <TableCell>{material.specification}</TableCell>
-                  <TableCell>{material.quantityUsed}</TableCell>
-                  <TableCell>{material.unitOfMeasure}</TableCell>
-                  <TableCell>₹{material.estimatedUnitCost.toLocaleString()}</TableCell>
-                  <TableCell>₹{material.totalEstimatedCost.toLocaleString()}</TableCell>
-                  <TableCell>{material.consumedIn}</TableCell>
-                  <TableCell>{material.includedInCapEx ? 'Yes' : 'No'}</TableCell>
-                  <TableCell>{material.inventoryTracking ? 'Yes' : 'No'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {shouldShow("Material Master -> EBom", "update") && (
@@ -226,6 +216,16 @@ export const MaterialMasterPage = () => {
                       </AlertDialog>
                     </div>
                   </TableCell>
+                  <TableCell className="font-medium">{material.componentName}</TableCell>
+                  <TableCell>{material.category}</TableCell>
+                  <TableCell>{material.specification}</TableCell>
+                  <TableCell>{material.quantityUsed}</TableCell>
+                  <TableCell>{material.unitOfMeasure}</TableCell>
+                  <TableCell>₹{material.estimatedUnitCost.toLocaleString()}</TableCell>
+                  <TableCell>₹{material.totalEstimatedCost.toLocaleString()}</TableCell>
+                  <TableCell>{material.consumedIn}</TableCell>
+                  <TableCell>{material.includedInCapEx ? 'Yes' : 'No'}</TableCell>
+                  <TableCell>{material.inventoryTracking ? 'Yes' : 'No'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
