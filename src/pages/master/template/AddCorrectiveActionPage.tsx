@@ -45,7 +45,7 @@ const AddCorrectiveActionPage = () => {
   };
 
   return (
-    
+
     <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50" style={{ fontFamily: 'Work Sans, sans-serif' }}>
       <div className="w-full max-w-none space-y-6">
         {/* Breadcrumb */}
@@ -61,7 +61,7 @@ const AddCorrectiveActionPage = () => {
           <span>{">"}</span>
           <span className="text-gray-900 font-medium">Add Template</span>
         </div>
-        
+
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
           ADD CORRECTIVE ACTION TEMPLATE
         </h1>
@@ -78,7 +78,7 @@ const AddCorrectiveActionPage = () => {
                     {...field}
                     label={
                       <span>
-                        Field Value <span style={{ color: 'red' }}>*</span>
+                        Field Value <span style={{ color: '#da7756' }}>*</span>
                       </span>
                     }
                     placeholder="Enter field value"
