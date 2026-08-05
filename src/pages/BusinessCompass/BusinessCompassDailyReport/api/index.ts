@@ -152,8 +152,8 @@ export const completeTask = async (
   status: string
 ) => {
   await axios.put(
-    `${urlBase(baseUrl)}/task_managements/${realId}.json`,
-    { task_management: { status } },
+    `${urlBase(baseUrl)}/business_compass/tasks/${realId}/update_status.json`,
+    { status },
     { headers: bearer(token) }
   );
 };
@@ -164,7 +164,7 @@ export const completeTodo = async (
   status: string
 ) => {
   await axios.put(
-    `${urlBase(baseUrl)}/todos/${realId}.json`,
+    `${urlBase(baseUrl)}/business_compass/todos/${realId}.json`,
     { todo: { status } },
     { headers: bearer(token) }
   );
@@ -176,8 +176,8 @@ export const completeIssue = async (
   status: string
 ) => {
   await axios.put(
-    `${urlBase(baseUrl)}/issues/${realId}.json`,
-    { issue: { status } },
+    `${urlBase(baseUrl)}/business_compass/issues/${realId}/update_status.json`,
+    { status },
     { headers: bearer(token) }
   );
 };
