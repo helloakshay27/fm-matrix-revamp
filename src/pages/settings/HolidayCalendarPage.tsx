@@ -860,7 +860,7 @@ export const HolidayCalendarPage = () => {
             {shouldShow("Holiday Calendar","create")&&(
             <DialogTrigger asChild>
           
-              <Button className='fm-button-fix fm-button-brand !rounded-md !px-4 !py-2 !text-sm !font-semibold text-white'>
+              <Button className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium">
                 <Plus className="w-4 h-4 mr-2 text-white" /> Add Holiday
               </Button>
             </DialogTrigger>)}
@@ -1074,10 +1074,11 @@ export const HolidayCalendarPage = () => {
                     <div className="flex justify-end mt-4">
                       <Button
                         type="button"
+                        variant="ghost"
                         onClick={handleAddRow}
-                        className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
+                        className="fm-button-fix fm-button-brand px-4 py-2"
                       >
-                        <Plus className="w-4 h-4 mr-1 text-white" /> Add
+                        <Plus className="w-4 h-4 mr-1" /> Add
                       </Button>
                     </div>
                   </CardContent>
@@ -1123,7 +1124,7 @@ export const HolidayCalendarPage = () => {
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   <Button
                     type="button"
-                    className="flex-1 bg-brand hover:bg-brand-hover text-white px-4 py-2"
+                    className="flex-1 bg-brand hover:bg-brand-hover text-white px-4 py-2 disabled:!opacity-100 disabled:!bg-brand"
                     disabled={isSubmitting || pendingHolidays.length === 0}
                     onClick={handleSubmit}
                   >
@@ -1131,7 +1132,7 @@ export const HolidayCalendarPage = () => {
                       ? 'Saving...'
                       : `Save ${pendingHolidays.length > 0 ? `(${pendingHolidays.length}) ` : ''}Holiday${pendingHolidays.length !== 1 ? 's' : ''}`}
                   </Button>
-                  <Button variant="outline" onClick={handleCancel} className="flex-1 h-11 border-brand text-brand">
+                  <Button variant="outline" onClick={handleCancel} className="flex-1 h-11 border-brand text-brand hover:bg-brand-selected hover:text-brand">
                     Cancel
                   </Button>
                 </div>

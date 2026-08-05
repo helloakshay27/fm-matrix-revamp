@@ -263,31 +263,37 @@ export const LockFunctionList = () => {
   // Render row function for enhanced table
   const renderRow = (lockFunction: LockFunctionItem) => ({
     actions: (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-1">
         {shouldShow("Lock Function","update")&&(
-        <button 
-          onClick={() => handleEdit(lockFunction.id)} 
-          className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleEdit(lockFunction.id)}
+          className="h-8 w-8 p-0 hover:bg-gray-100"
           title="Edit"
         >
           <Edit className="w-4 h-4" />
-        </button>)}
+        </Button>)}
         {shouldShow("Lock Function","show")&&(
-        <button 
-          onClick={() => handleView(lockFunction.id)} 
-          className="p-1 text-green-600 hover:bg-green-50 rounded" 
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleView(lockFunction.id)}
+          className="h-8 w-8 p-0 hover:bg-gray-100"
           title="View"
         >
           <Eye className="w-4 h-4" />
-        </button>)}
+        </Button>)}
         {shouldShow("Lock Function","destroy")&&(
-        <button 
-          onClick={() => handleDelete(lockFunction.id)} 
-          className="p-1 text-red-600 hover:bg-red-50 rounded" 
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleDelete(lockFunction.id)}
+          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
           title="Delete"
         >
           <Trash2 className="w-4 h-4" />
-        </button>)}
+        </Button>)}
       </div>
     ),
     functionName: (
@@ -447,7 +453,7 @@ export const LockFunctionList = () => {
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-[#E5E0D3] text-brand flex items-center justify-center">
             <Lock className="w-5 h-5" />
           </div>
           <div>
@@ -506,30 +512,30 @@ export const LockFunctionList = () => {
             enableExport={false}
             exportFileName="lock-function-data"
             leftActions={
-              <div className="flex items-center gap-2">
-                {shouldShow("Lock Function","create")&&(
-                <Button 
-                  onClick={handleAdd} 
-                  className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              shouldShow("Lock Function","create") ? (
+                <Button
+                  onClick={handleAdd}
+                  className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 mr-2" />
                   Add
-                </Button>)}
+                </Button>
+              ) : null
+            }
+            filterAdjacentActions={
+              <>
                 <Button
                   onClick={handleImportClick}
-                  className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                  variant="outline"
+                  size="icon"
+                  title={importing ? "Importing..." : "Import Excel"}
                   disabled={importing}
+                  className="!rounded-lg border border-brand text-brand hover:bg-brand-selected"
                 >
                   {importing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Importing...
-                    </>
+                    <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      Import Excel
-                    </>
+                    <Upload className="w-4 h-4" />
                   )}
                 </Button>
                 <input
@@ -539,7 +545,7 @@ export const LockFunctionList = () => {
                   ref={fileInputRef}
                   className="hidden"
                 />
-              </div>
+              </>
             }
             pagination={false}
             emptyMessage=""

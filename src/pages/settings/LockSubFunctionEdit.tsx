@@ -123,90 +123,88 @@ export const LockSubFunctionEdit = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" onClick={handleBack} className="p-2">
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={handleBack} className="p-2">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
-              <Key className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-wide uppercase">Edit Lock Sub Function</h1>
-              <p className="text-gray-600">Update lock sub function information</p>
-            </div>
+          <div className="w-10 h-10 rounded-full bg-[#E5E0D3] text-brand flex items-center justify-center">
+            <Key className="w-5 h-5" />
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleBack}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSave} 
-            disabled={saving}
-            className="bg-[#C72030] hover:bg-[#C72030]/90"
-          >
-            {saving ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            {saving ? 'Saving...' : 'Save Changes'}
-          </Button>
+          <div>
+            <h1 className="text-xl font-bold tracking-wide uppercase">Edit Lock Sub Function</h1>
+            <p className="text-gray-600">Update lock sub function information</p>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="sub_function_name">Sub Function Name *</Label>
-              <Input
-                id="sub_function_name"
-                value={formData.sub_function_name}
-                onChange={(e) => handleChange('sub_function_name', e.target.value)}
-                placeholder="Enter sub function name"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="Enter name/description"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="lock_function_id">Parent Lock Function *</Label>
-              <Select
-                value={formData.lock_function_id}
-                onValueChange={(value) => handleChange('lock_function_id', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select parent lock function" />
-                </SelectTrigger>
-                <SelectContent>
-                  {lockFunctions.map((func) => (
-                    <SelectItem key={func.id} value={func.id.toString()}>
-                      {func.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-  
-          </CardContent>
-        </Card>
+      <Card className="max-w-3xl">
+        <CardHeader>
+          <CardTitle>Basic Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="sub_function_name">Sub Function Name *</Label>
+            <Input
+              id="sub_function_name"
+              value={formData.sub_function_name}
+              onChange={(e) => handleChange('sub_function_name', e.target.value)}
+              placeholder="Enter sub function name"
+            />
+          </div>
 
-   
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              placeholder="Enter name/description"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="lock_function_id">Parent Lock Function *</Label>
+            <Select
+              value={formData.lock_function_id}
+              onValueChange={(value) => handleChange('lock_function_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select parent lock function" />
+              </SelectTrigger>
+              <SelectContent>
+                {lockFunctions.map((func) => (
+                  <SelectItem key={func.id} value={func.id.toString()}>
+                    {func.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex items-center gap-3 justify-center pt-2 max-w-3xl">
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-brand text-white hover:bg-brand-hover px-8"
+        >
+          {saving ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4 mr-2" />
+          )}
+          {saving ? 'Saving...' : 'Save Changes'}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleBack}
+          disabled={saving}
+          className="px-8 border-brand text-brand hover:bg-brand-selected hover:text-brand"
+        >
+          Cancel
+        </Button>
       </div>
     </div>
   );

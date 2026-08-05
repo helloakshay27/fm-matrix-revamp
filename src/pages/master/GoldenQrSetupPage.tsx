@@ -518,23 +518,24 @@ export function GoldenQrSetupPage() {
         handleExport={handleDownloadPdf}
         pagination={false}
         leftActions={
-          <div className="flex gap-3">
-            <Button
-              onClick={() => setShowDialog(true)}
-              className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add
-            </Button>
-            <Button
-              onClick={() => setShowImportDialog(true)}
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 h-9 px-4 text-sm font-medium"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              <span className="text-sm font-medium text-[#C72030]">Import</span>
-            </Button>
-          </div>
+          <Button
+            onClick={() => setShowDialog(true)}
+            className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        }
+        filterAdjacentActions={
+          <Button
+            onClick={() => setShowImportDialog(true)}
+            variant="outline"
+            size="icon"
+            className="!rounded-lg border border-brand text-brand hover:bg-brand-selected"
+            title="Import"
+          >
+            <Upload className="w-4 h-4" />
+          </Button>
         }
         // rightActions={
         //   <Button

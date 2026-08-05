@@ -148,106 +148,105 @@ export const LockFunctionEdit = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" onClick={handleBack} className="p-2">
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={handleBack} className="p-2">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
-              <Lock className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-wide uppercase">Edit Lock Function</h1>
-              <p className="text-gray-600">Update lock function information</p>
-            </div>
+          <div className="w-10 h-10 rounded-full bg-[#E5E0D3] text-brand flex items-center justify-center">
+            <Lock className="w-5 h-5" />
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleBack}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSave} 
-            disabled={saving}
-            className="bg-[#C72030] hover:bg-[#C72030]/90"
-          >
-            {saving ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            {saving ? 'Saving...' : 'Save Changes'}
-          </Button>
+          <div>
+            <h1 className="text-xl font-bold tracking-wide uppercase">Edit Lock Function</h1>
+            <p className="text-gray-600">Update lock function information</p>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Function Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="Enter function name"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="action_name">Action Name *</Label>
-              <Input
-                id="action_name"
-                value={formData.action_name}
-                onChange={(e) => handleChange('action_name', e.target.value)}
-                placeholder="Enter action name (e.g., unlock, pms_notices)"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="module_id">Module *</Label>
-              <Select value={formData.module_id} onValueChange={(value) => handleChange('module_id', value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select module" />
-                </SelectTrigger>
-                <SelectContent>
-                  {modules.map((module) => (
-                    <SelectItem key={module.id} value={module.id?.toString() || ''}>
-                      {module.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <Card className="max-w-3xl">
+        <CardHeader>
+          <CardTitle>Basic Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Function Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              placeholder="Enter function name"
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="react_link">React Link</Label>
-              <Input
-                id="react_link"
-                value={formData.react_link}
-                onChange={(e) => handleChange('react_link', e.target.value)}
-                placeholder="Enter react link (e.g., /settings/account/lock-function)"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="action_name">Action Name *</Label>
+            <Input
+              id="action_name"
+              value={formData.action_name}
+              onChange={(e) => handleChange('action_name', e.target.value)}
+              placeholder="Enter action name (e.g., unlock, pms_notices)"
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="parent_function">Parent Function</Label>
-              <Input
-                id="parent_function"
-                value={formData.parent_function}
-                onChange={(e) => handleChange('parent_function', e.target.value)}
-                placeholder="Enter parent function"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="module_id">Module *</Label>
+            <Select value={formData.module_id} onValueChange={(value) => handleChange('module_id', value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select module" />
+              </SelectTrigger>
+              <SelectContent>
+                {modules.map((module) => (
+                  <SelectItem key={module.id} value={module.id?.toString() || ''}>
+                    {module.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          </CardContent>
-        </Card>
+          <div className="space-y-2">
+            <Label htmlFor="react_link">React Link</Label>
+            <Input
+              id="react_link"
+              value={formData.react_link}
+              onChange={(e) => handleChange('react_link', e.target.value)}
+              placeholder="Enter react link (e.g., /settings/account/lock-function)"
+            />
+          </div>
 
-       
+          <div className="space-y-2">
+            <Label htmlFor="parent_function">Parent Function</Label>
+            <Input
+              id="parent_function"
+              value={formData.parent_function}
+              onChange={(e) => handleChange('parent_function', e.target.value)}
+              placeholder="Enter parent function"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex items-center gap-3 justify-center pt-2 max-w-3xl">
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-brand text-white hover:bg-brand-hover px-8"
+        >
+          {saving ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4 mr-2" />
+          )}
+          {saving ? 'Saving...' : 'Save Changes'}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleBack}
+          disabled={saving}
+          className="px-8 border-brand text-brand hover:bg-brand-selected hover:text-brand"
+        >
+          Cancel
+        </Button>
       </div>
     </div>
   );
