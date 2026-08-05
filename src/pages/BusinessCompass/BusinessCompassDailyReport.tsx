@@ -510,6 +510,15 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [hasMoreIssues, setHasMoreIssues] = useState(true);
   const [todosData, setTodosData] = useState<any>(null);
   const [todosLoading, setTodosLoading] = useState(false);
+  // Dedicated (non-paginated) list of items completed on the selected report date.
+  // The main tasks/issues lists are loaded page-by-page via infinite scroll, so
+  // filtering "completed today" out of that partially-loaded list misses records that
+  // live on pages the user hasn't scrolled to yet. Fetching by completed_at directly
+  // from the API guarantees every completed record for the date is accounted for.
+  const [completedTasksIssuesToday, setCompletedTasksIssuesToday] = useState<
+    any[]
+  >([]);
+  const [completedItemsLoading, setCompletedItemsLoading] = useState(false);
   const [tomorrowScheduledItems, setTomorrowScheduledItems] = useState<any[]>(
     []
   );
@@ -608,6 +617,157 @@ const BusinessCompassDailyReport: React.FC = () => {
   useEffect(() => {
     fetchTodos();
   }, [startDate, baseUrl, token, userId]);
+
+  // Fetch every task/issue/todo completed on `forDate` directly via the completed_at
+  // filter, looping through all pages. This is independent of the main infinite-scroll
+  // lists (mergedTasksIssues), which only hold whatever pages have been scrolled into
+  // view, and therefore can't be trusted to contain every completed record for the day.
+  const fetchCompletedItemsForDate = async (forDate: string) => {
+    if (!baseUrl || !token || !userId || !forDate) return;
+    setCompletedItemsLoading(true);
+    try {
+      const urlBase = `https://${baseUrl}`;
+      const completedFrom = `${forDate}T00:00:00`;
+      const completedTo = `${forDate}T23:59:59`;
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const fetchAllPages = async (
+        url: string,
+        baseParams: Record<string, string>,
+        dataKey: string
+      ) => {
+        const all: any[] = [];
+        let page = 1;
+        let totalPages = 1;
+        do {
+          const params = new URLSearchParams({ ...baseParams, page: String(page) });
+          const res = await axios.get(`${url}?${params.toString()}`, { headers });
+          const pageItems =
+            res.data?.[dataKey] || res.data?.data?.[dataKey] || [];
+          all.push(...pageItems);
+          totalPages =
+            res.data?.pagination?.total_pages ||
+            res.data?.data?.pagination?.total_pages ||
+            1;
+          page += 1;
+        } while (page <= totalPages);
+        return all;
+      };
+
+      const [tasks, issues, todos] = await Promise.all([
+        fetchAllPages(
+          `${urlBase}/task_managements/my_tasks.json`,
+          {
+            "q[completed_at_gteq]": completedFrom,
+            "q[completed_at_lteq]": completedTo,
+          },
+          "task_managements"
+        ),
+        fetchAllPages(
+          `${urlBase}/issues.json`,
+          {
+            "q[completed_at_gteq]": completedFrom,
+            "q[completed_at_lteq]": completedTo,
+            "q[responsible_person_id_eq]": userId.toString(),
+          },
+          "issues"
+        ),
+        fetchAllPages(
+          `${urlBase}/todos.json`,
+          {
+            "q[completed_at_gteq]": completedFrom,
+            "q[completed_at_lteq]": completedTo,
+            "q[user_id_eq]": userId.toString(),
+          },
+          "todos"
+        ),
+      ]);
+
+      const transformedTasks = tasks.map((task: any) => ({
+        id: `task-${task.id}`,
+        title: task.title,
+        type: "task",
+        status: task.status || "completed",
+        priority: task.priority || "Medium",
+        created_at: task.created_at,
+        responsible: task.responsible_person_id,
+        originalData: task,
+      }));
+
+      const transformedIssues = issues.map((issue: any) => ({
+        id: `issue-${issue.id}`,
+        title: issue.title,
+        type: "issue",
+        status: issue.status || "completed",
+        priority: issue.priority || "Medium",
+        created_at: issue.created_at,
+        responsible: issue.responsible_person_id,
+        originalData: issue,
+      }));
+
+      const transformedTodos = todos.map((todo: any) => {
+        if (todo.task_management) {
+          const task = todo.task_management;
+          return {
+            id: `task-${task.id}`,
+            title: task.title || todo.title,
+            type: "task",
+            status: task.status || "completed",
+            priority: task.priority || todo.priority || "Medium",
+            created_at: task.created_at,
+            responsible: task.responsible_person_id,
+            originalData: task,
+          };
+        }
+        return {
+          id: `todo-${todo.id}`,
+          title: todo.title,
+          type: "todo",
+          status: todo.status || "completed",
+          priority: todo.priority || "Medium",
+          created_at: todo.created_at,
+          responsible: todo.user_id,
+          originalData: todo,
+        };
+      });
+
+      // A todo promoted to a task is represented by the task; drop the duplicate
+      // task-shaped record that also came back from the tasks endpoint.
+      const todoPromotedTaskIds = new Set(
+        transformedTodos.filter((t) => t.type === "task").map((t) => t.id)
+      );
+      const dedupedTasks = transformedTasks.filter(
+        (t: any) => !todoPromotedTaskIds.has(t.id)
+      );
+
+      setCompletedTasksIssuesToday([
+        ...dedupedTasks,
+        ...transformedIssues,
+        ...transformedTodos,
+      ]);
+    } catch (err) {
+      console.error("Failed to fetch completed items for date:", err);
+    } finally {
+      setCompletedItemsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCompletedItemsForDate(startDate);
+  }, [startDate, baseUrl, token, userId]);
+
+  // Optimistically reflect a just-completed/reopened item in completedTasksIssuesToday
+  // so Today's Accomplishments updates instantly, without waiting on a full refetch.
+  const upsertCompletedItem = (item: any) => {
+    setCompletedTasksIssuesToday((prev) => {
+      const withoutItem = prev.filter((i) => i.id !== item.id);
+      return [...withoutItem, { ...item, status: "completed" }];
+    });
+  };
+
+  const removeCompletedItem = (itemId: string) => {
+    setCompletedTasksIssuesToday((prev) => prev.filter((i) => i.id !== itemId));
+  };
 
   const isRosterHoliday = (date: Date): boolean => {
     const jsDay = date.getDay();
@@ -1137,57 +1297,22 @@ const BusinessCompassDailyReport: React.FC = () => {
   }, [mergedTasksIssues, planningItems]);
 
   // Derive completed-today items that auto-populate Today's Accomplishments
+  // Derive completed-today items that auto-populate Today's Accomplishments.
+  // Sourced from the dedicated completed_at-filtered fetch (completedTasksIssuesToday)
+  // rather than the paginated mergedTasksIssues list, so records aren't missed just
+  // because their page hasn't been scrolled into view.
   const autoAddedAccomplishments = useMemo(() => {
-    const normalizeDate = (value: unknown) => {
-      if (!value) return null;
-      if (value instanceof Date) {
-        return value.toISOString().slice(0, 10);
-      }
-      if (typeof value === "string") {
-        const trimmed = value.trim();
-        if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
-          return trimmed.slice(0, 10);
-        }
-        const parsed = new Date(trimmed);
-        if (!Number.isNaN(parsed.getTime())) {
-          return parsed.toISOString().slice(0, 10);
-        }
-      }
-      return null;
-    };
-
-    return mergedTasksIssues.filter((item) => {
-      const originalData = item?.originalData || {};
-      const completedAt = normalizeDate(
-        originalData.completed_at ??
-        originalData.completed_at_date ??
-        originalData.completedAt ??
-        item.completed_at ??
-        item.completedAt
-      );
-      const targetDate = normalizeDate(
-        originalData.target_date ??
-        originalData.targetDate ??
-        originalData.due_date ??
-        originalData.end_date ??
-        item.target_date ??
-        item.targetDate
-      );
-      const isRelevantToReportDate =
-        (completedAt && completedAt === startDate) ||
-        (targetDate && targetDate === startDate);
-
+    return completedTasksIssuesToday.filter((item) => {
       return (
         (item.status === "completed" ||
           item.status === "closed" ||
           item.status === "done") &&
         !hiddenAutoIds.has(item.id) &&
         !!(item.title || "").trim() &&
-        !addedToTomorrowIds.has(item.id) &&
-        isRelevantToReportDate
+        !addedToTomorrowIds.has(item.id)
       );
     });
-  }, [mergedTasksIssues, startDate, hiddenAutoIds, addedToTomorrowIds]);
+  }, [completedTasksIssuesToday, hiddenAutoIds, addedToTomorrowIds]);
 
   // Today's task/issue/todo records (any status) whose title exactly matches a manually-typed
   // note — used to hide the duplicate note and to surface the matching record under "Plan for Today".
@@ -1772,6 +1897,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         prev.map((i) => (i.id === item.id ? { ...i, status: "completed" } : i))
       );
       setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
+      upsertCompletedItem(item);
 
       if (isTask) {
         await axios.put(
@@ -1803,6 +1929,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       setMergedTasksIssues((prev) =>
         prev.map((i) => (i.id === item.id ? { ...i, status: item.status } : i))
       );
+      removeCompletedItem(item.id);
     }
   };
 
@@ -1820,6 +1947,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       prev.map((i) => (i.id === item.id ? { ...i, status: "open" } : i))
     );
     setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: false }));
+    removeCompletedItem(item.id);
 
     try {
       if (isTask) {
@@ -1878,6 +2006,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       setMergedTasksIssues((prev) =>
         prev.map((i) => (i.id === item.id ? { ...i, status: item.status } : i))
       );
+      upsertCompletedItem(item);
     }
   };
 
@@ -1904,6 +2033,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         prev.map((i) => (i.id === item.id ? { ...i, status: "completed" } : i))
       );
       setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
+      upsertCompletedItem(item);
 
       if (isTask) {
         await axios.put(
@@ -8103,6 +8233,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         getTodos={() => {
           fetchTodos();
           fetchTomorrowScheduled(startDate);
+          fetchCompletedItemsForDate(startDate);
           completeAccomplishmentConversion();
         }}
         prefillData={{
@@ -8767,6 +8898,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                 setIsEditTaskModalOpen(false);
                 setEditTaskData(null);
                 fetchTasks();
+                fetchCompletedItemsForDate(startDate);
               }}
             />
           </div>
@@ -8783,6 +8915,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         issueData={editIssueData}
         onIssueUpdated={() => {
           fetchIssues();
+          fetchCompletedItemsForDate(startDate);
         }}
       />
 
@@ -8793,10 +8926,12 @@ const BusinessCompassDailyReport: React.FC = () => {
           setIsEditTodoModalOpen(false);
           setEditTodoData(null);
           fetchTodos();
+          fetchCompletedItemsForDate(startDate);
         }}
         getTodos={() => {
           fetchTodos();
           fetchTomorrowScheduled(startDate);
+          fetchCompletedItemsForDate(startDate);
         }}
         editingTodo={editTodoData}
         isEditMode={!!editTodoData}
