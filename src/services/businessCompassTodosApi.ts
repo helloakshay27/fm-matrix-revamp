@@ -13,6 +13,7 @@ const getBaseUrl = () => {
 export const fetchBusinessCompassTodos = async (
   page = 1,
   filters: Record<string, string> = {},
+  my = false,
 ) => {
   const token = getToken();
   const baseUrl = getBaseUrl();
@@ -23,7 +24,7 @@ export const fetchBusinessCompassTodos = async (
   }
 
   const response = await axios.get(
-    `https://${baseUrl}/business_compass/todos?${params.toString()}`,
+    `https://${baseUrl}/business_compass/todos${my ? "/my_todos" : ""}?${params.toString()}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

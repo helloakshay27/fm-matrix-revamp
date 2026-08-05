@@ -50,7 +50,6 @@ import {
   fetchCompletedItemsForDate,
   fetchExistingReport,
   fetchKpis,
-  fetchPlanSource,
   fetchReporteeReports,
   fetchReportsList,
   fetchRosterWorkingDays,
@@ -221,8 +220,6 @@ export interface DailyReportContextValue {
   setHiddenTomorrowScheduledIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   yesterdaySourceIds: Set<string>;
   setYesterdaySourceIds: React.Dispatch<React.SetStateAction<Set<string>>>;
-  planSourceCache: Record<string, any>;
-  setPlanSourceCache: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   user: any;
   userId: any;
   rosterWorkingDays: Record<string, string[]> | null;
@@ -503,7 +500,6 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
   const [tomorrowFetchDone, setTomorrowFetchDone] = useState(false);
   const [hiddenTomorrowScheduledIds, setHiddenTomorrowScheduledIds] = useState<Set<string>>(new Set());
   const [yesterdaySourceIds, setYesterdaySourceIds] = useState<Set<string>>(new Set());
-  const [planSourceCache, setPlanSourceCache] = useState<Record<string, any>>({});
 
   const user =
     typeof localStorage !== "undefined"
@@ -520,7 +516,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
       .then((days) => {
         if (days && typeof days === "object") setRosterWorkingDays(days);
       })
-      .catch(() => {});
+      .catch(() => { });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -851,7 +847,6 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const myIssuesFilter = `
   for_date=${startDate}
-  ${userId ? `&q[responsible_person_id_eq]=${userId}` : ""}
 `.replace(/\s+/g, "");
 
   const {
@@ -861,6 +856,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
   } = useBusinessCompassTasks({
     page: currentTasksPage,
     filters: { for_date: startDate },
+    my: true,
   });
 
   const {
@@ -871,6 +867,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
     page: currentIssuesPage,
     filters: myIssuesFilter,
     enabled: !!token && !!userId,
+    my: true,
   });
 
   const {
@@ -881,9 +878,9 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
     page: 1,
     filters: {
       for_date: startDate,
-      "q[user_id_eq]": userId?.toString() || "",
     },
     enabled: !!token && !!userId,
+    my: true,
   });
 
   useEffect(() => {
@@ -1346,18 +1343,18 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
       prev.some((a) => a.id === id)
         ? prev.filter((a) => a.id !== id)
         : [
-            {
-              id,
-              text,
-              completed: true,
-              starred: false,
-              ownerId: member?.user_id ?? null,
-              ownerName: member?.name?.trim() || "",
-              ...buildItemSourceRef(item),
-              originalData: item?.originalData ?? null,
-            },
-            ...prev,
-          ]
+          {
+            id,
+            text,
+            completed: true,
+            starred: false,
+            ownerId: member?.user_id ?? null,
+            ownerName: member?.name?.trim() || "",
+            ...buildItemSourceRef(item),
+            originalData: item?.originalData ?? null,
+          },
+          ...prev,
+        ]
     );
   };
 
@@ -1370,17 +1367,17 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
       prev.some((p) => p.id === id)
         ? prev.filter((p) => p.id !== id)
         : [
-            {
-              id,
-              text,
-              starred: false,
-              ownerId: member?.user_id ?? null,
-              ownerName: member?.name?.trim() || "",
-              ...buildItemSourceRef(item),
-              originalData: item?.originalData ?? null,
-            },
-            ...prev,
-          ]
+          {
+            id,
+            text,
+            starred: false,
+            ownerId: member?.user_id ?? null,
+            ownerName: member?.name?.trim() || "",
+            ...buildItemSourceRef(item),
+            originalData: item?.originalData ?? null,
+          },
+          ...prev,
+        ]
     );
   };
 
@@ -2102,6 +2099,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
           ownerId: ach.owner_id ?? null,
           ownerName: ach.owner_name ?? null,
           ...buildItemSourceRef(ach),
+          originalData: ach.originalData ?? null,
         }));
       }
 
@@ -2130,6 +2128,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
               ...buildItemSourceRef(p),
               ownerId: p.owner_id ?? null,
               ownerName: p.owner_name ?? null,
+              originalData: p.originalData ?? null,
             })
           )
         );
@@ -2296,6 +2295,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
                 ownerId: ach.owner_id ?? null,
                 ownerName: ach.owner_name ?? null,
                 ...buildItemSourceRef(ach),
+                originalData: ach.originalData ?? null,
               }));
             }
 
@@ -2323,6 +2323,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
                     ...buildItemSourceRef(p),
                     ownerId: p.owner_id ?? null,
                     ownerName: p.owner_name ?? null,
+                    originalData: p.originalData ?? null,
                   })
                 )
               );
@@ -2406,68 +2407,6 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
     fetchReportsListFn();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMonth, selectedYear, isLocallyDeletedReport]);
-
-  const fetchAndCachePlanSources = useCallback(
-    (pairs: { type: string; id: number }[]) => {
-      if (!baseUrl || !token || !pairs.length) return;
-      Promise.allSettled(
-        pairs.map(({ type, id }) => fetchPlanSource(apiCtx(), type, id))
-      ).then((results) => {
-        const newEntries: Record<string, any> = {};
-        for (const r of results) {
-          if (r.status === "fulfilled" && r.value?.data) {
-            newEntries[r.value.key] = r.value.data;
-          }
-        }
-        if (Object.keys(newEntries).length) {
-          setPlanSourceCache((prev) => ({ ...prev, ...newEntries }));
-        }
-      });
-    },
-    [baseUrl, token]
-  );
-
-  useEffect(() => {
-    if (!reportsList.length) return;
-    const seen = new Set<string>();
-    const toFetch: { type: string; id: number }[] = [];
-    for (const report of reportsList) {
-      for (const item of getNonEmptyReportItems(
-        report.report_data?.tomorrow_plan
-      ) as any[]) {
-        if (item?.source_id && item?.source_type) {
-          const key = `${item.source_type}:${item.source_id}`;
-          if (!seen.has(key) && !planSourceCache[key]) {
-            seen.add(key);
-            toFetch.push({ type: item.source_type, id: item.source_id });
-          }
-        }
-      }
-    }
-    fetchAndCachePlanSources(toFetch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reportsList]);
-
-  useEffect(() => {
-    if (!planningItems.length) return;
-    const seen = new Set<string>();
-    const toFetch: { type: string; id: number }[] = [];
-    for (const item of planningItems) {
-      if (item.source_id && item.source_type) {
-        const key = `${item.source_type}:${item.source_id}`;
-        const alreadyLive = mergedTasksIssues.some(
-          (t: any) =>
-            t.type === item.source_type && t.originalData?.id === item.source_id
-        );
-        if (!seen.has(key) && !planSourceCache[key] && !alreadyLive) {
-          seen.add(key);
-          toFetch.push({ type: item.source_type, id: item.source_id });
-        }
-      }
-    }
-    fetchAndCachePlanSources(toFetch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [planningItems]);
 
   const handleSubmit = async () => {
     const accomplishmentItemsPayload = [
@@ -2566,13 +2505,13 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
     );
     const scoreForPayload = isAbsent
       ? {
-          totalScore: finalDailyScore.timingScore,
-          kpiScore: 0,
-          accomplishmentsScore: 0,
-          tasksIssuesScore: 0,
-          planningScore: 0,
-          timingScore: finalDailyScore.timingScore,
-        }
+        totalScore: finalDailyScore.timingScore,
+        kpiScore: 0,
+        accomplishmentsScore: 0,
+        tasksIssuesScore: 0,
+        planningScore: 0,
+        timingScore: finalDailyScore.timingScore,
+      }
       : finalDailyScore;
 
     if (!isAbsent && accomplishmentItemsPayload.length === 0) {
@@ -3223,8 +3162,6 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
     setHiddenTomorrowScheduledIds,
     yesterdaySourceIds,
     setYesterdaySourceIds,
-    planSourceCache,
-    setPlanSourceCache,
     user,
     userId,
     rosterWorkingDays,
