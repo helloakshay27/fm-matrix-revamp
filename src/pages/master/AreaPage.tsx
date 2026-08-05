@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
@@ -22,18 +21,39 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
 import { apiClient } from "@/utils/apiClient";
 import { AddAreaDialog } from '@/components/AddAreaDialog';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 export const AreaPage = () => {
   const { shouldShow } = useDynamicPermissions();
@@ -319,7 +339,7 @@ export const AreaPage = () => {
               <Button
                 variant="outline"
                 onClick={handleDownloadTemplate}
-                className="h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
+                className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download Sample Format
@@ -327,7 +347,7 @@ export const AreaPage = () => {
 
               <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]">
+                  <Button variant="outline" className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]">
                     <Upload className="h-4 w-4 mr-2" />
                     Import Areas
                   </Button>
@@ -389,7 +409,7 @@ export const AreaPage = () => {
               {shouldShow("Area", "create") && (
                 <Button
                   onClick={() => setIsAddModalOpen(true)}
-                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg [&_svg]:text-white"
+                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap [&_svg]:text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Area
@@ -443,17 +463,11 @@ export const AreaPage = () => {
                     );
                   case 'status':
                     return (
-                      <button type="button" onClick={() => handleToggleStatus(area)} className="cursor-pointer">
-                        {area.active ? (
-                          <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
-                            <Check className="w-3 h-3 text-white" />
-                          </div>
-                        ) : (
-                          <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
-                            <span className="text-white text-xs">✗</span>
-                          </div>
-                        )}
-                      </button>
+                      <Switch
+                        checked={area.active}
+                        onCheckedChange={() => handleToggleStatus(area)}
+                        className="data-[state=checked]:bg-[#C72030]"
+                      />
                     );
                   default:
                     return area[columnKey] ?? '--';
@@ -499,8 +513,20 @@ export const AreaPage = () => {
 
 
         {/* Edit Modal */}
-        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-          <DialogContent className="max-w-2xl">
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen} modal={false}>
+          <DialogContent
+            className="max-w-2xl bg-white overflow-visible"
+            onPointerDownOutside={(e) => {
+              if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                e.preventDefault();
+              }
+            }}
+            onInteractOutside={(e) => {
+              if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                e.preventDefault();
+              }
+            }}
+          >
             <DialogHeader className="flex flex-row items-center justify-between pb-0">
               <DialogTitle>Edit Area Details</DialogTitle>
               <button
@@ -512,67 +538,76 @@ export const AreaPage = () => {
             </DialogHeader>
             <div className="grid grid-cols-2 gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Area Name</Label>
-                <Input
-                  id="name"
+                <TextField
+                  label="Area Name"
+                  variant="outlined"
+                  fullWidth
+                  placeholder="Enter Area Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter Area Name"
+                  sx={fieldStyles}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="building">Select Building</Label>
-                <Select
-                  value={buildingId}
-                  onValueChange={(value) => {
-                    setBuildingId(value);
-                    setWingId(''); // Reset wing when building changes
-                    if (value) {
-                      fetchWings(parseInt(value)); // Fetch wings for selected building
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white z-50">
+                <MuiFormControl fullWidth variant="outlined">
+                  <InputLabel id="edit-area-building-label">Select Building</InputLabel>
+                  <MuiSelect
+                    labelId="edit-area-building-label"
+                    label="Select Building"
+                    value={buildingId}
+                    onChange={(e) => {
+                      setBuildingId(e.target.value);
+                      setWingId(''); // Reset wing when building changes
+                      if (e.target.value) {
+                        fetchWings(parseInt(e.target.value)); // Fetch wings for selected building
+                      }
+                    }}
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value=""><em>Select Building</em></MenuItem>
                     {buildings.map((building) => (
-                      <SelectItem key={building.id} value={building.id.toString()}>
+                      <MenuItem key={building.id} value={building.id.toString()}>
                         {building.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="wing">Select Wing</Label>
-                <Select
-                  value={wingId}
-                  onValueChange={setWingId}
-                  disabled={!buildingId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Wing" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white z-50">
+                <MuiFormControl fullWidth variant="outlined">
+                  <InputLabel id="edit-area-wing-label">Select Wing</InputLabel>
+                  <MuiSelect
+                    labelId="edit-area-wing-label"
+                    label="Select Wing"
+                    value={wingId}
+                    onChange={(e) => setWingId(e.target.value)}
+                    disabled={!buildingId}
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value=""><em>Select Wing</em></MenuItem>
                     {wings.map((wing) => (
-                      <SelectItem key={wing.id} value={wing.id.toString()}>
+                      <MenuItem key={wing.id} value={wing.id.toString()}>
                         {wing.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="active">Status</Label>
+                <span className="block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Status
+                </span>
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="active"
                     checked={active}
                     onCheckedChange={setActive}
+                    className="data-[state=checked]:bg-[#C72030]"
                   />
                   <span className="text-sm">{active ? 'Active' : 'Inactive'}</span>
                 </div>
