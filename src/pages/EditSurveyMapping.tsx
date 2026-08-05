@@ -1607,9 +1607,10 @@ export const EditSurveyMapping = () => {
             <Button
               onClick={addSurveyMapping}
               disabled={isSubmitting}
-              className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white [&_svg]:!text-white"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 mr-2" />
               Add Location Configuration
             </Button>
           </div>
@@ -1748,7 +1749,8 @@ export const EditSurveyMapping = () => {
 
       <div className="flex items-center gap-3 justify-center pt-2">
         <Button
-          className="px-8 bg-brand hover:bg-brand-hover text-white"
+          variant="ghost"
+          className="fm-button-fix fm-button-brand px-8"
           onClick={handleSubmit}
           disabled={isSubmitting}
         >

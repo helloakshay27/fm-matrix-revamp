@@ -1702,9 +1702,9 @@ export const AddSurveyPage = () => {
               <Button
                 onClick={handleAddQuestion}
                 variant="outline"
-                className="border-dashed border-gray-300 hover:border-red-400 hover:text-red-600"
+                className="border-dashed border-brand hover:border-brand-hover hover:text-brand"
               >
-                <Plus className="w-4 h-4 mr-2" /> Add More Questions
+                <Plus className="w-4 h-4 mr-2 text-brand" /> Add More Questions
               </Button>
             </div>
           </div>
@@ -1724,7 +1724,7 @@ export const AddSurveyPage = () => {
             variant="outline"
             onClick={() => navigate(-1)}
             disabled={loading || isSubmitting}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2 h-auto disabled:opacity-50"
+            className="border-brand text-brand hover:bg-gray-50 px-8 py-2 h-auto disabled:opacity-50"
           >
             Cancel
           </Button>

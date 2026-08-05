@@ -50,6 +50,15 @@ import {
   ArrowRight,
 } from "lucide-react";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Table,
   TableBody,
   TableCell,
@@ -1044,19 +1053,40 @@ const JDTab = ({
   const [selectedJDs, setSelectedJDs] = useState<string[]>([]);
   const [jds, setJds] = useState<JobDescriptionItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
 
   const fetchJDs = useCallback(async () => {
     try {
       setLoading(true);
-      const url = getFullUrl(API_CONFIG.ENDPOINTS.JOB_DESCRIPTIONS);
-      const response = await axios.get(url, {
+      const url = new URL(getFullUrl(API_CONFIG.ENDPOINTS.JOB_DESCRIPTIONS));
+      url.searchParams.set("page", String(currentPage));
+      url.searchParams.set("per_page", String(pageSize));
+      const response = await axios.get(url.toString(), {
         headers: {
           Authorization: getAuthHeader(),
         },
       });
 
       if (response.data.success) {
-        setJds(response.data.data.job_descriptions);
+        const data = response.data.data || {};
+        const rows =
+          data.job_descriptions || response.data.job_descriptions || [];
+        const meta =
+          response.data.pagination ||
+          response.data.meta ||
+          data.pagination ||
+          data.meta ||
+          data;
+        const nextTotalPages =
+          Number(meta?.total_pages || meta?.pages || meta?.last_page) ||
+          (meta?.total_count
+            ? Math.ceil(Number(meta.total_count) / pageSize)
+            : 1);
+
+        setJds(rows);
+        setTotalPages(Math.max(1, nextTotalPages));
       } else {
         toast.error("Failed to fetch job descriptions");
       }
@@ -1066,11 +1096,20 @@ const JDTab = ({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     fetchJDs();
   }, [fetchJDs]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, assignmentFilter, userCountFilter, deptFilter]);
+
+  const handlePageChange = (page: number) => {
+    const safePage = Math.min(Math.max(page, 1), totalPages);
+    if (safePage !== currentPage) setCurrentPage(safePage);
+  };
 
   const handleDeleteJD = async (id: number) => {
     if (
@@ -1289,6 +1328,79 @@ const JDTab = ({
     );
   };
 
+  const renderPageNumbers = () => {
+    const maxVisiblePages = 5;
+    const pages: Array<number | string> = [];
+
+    if (totalPages <= maxVisiblePages) {
+      for (let page = 1; page <= totalPages; page += 1) pages.push(page);
+    } else {
+      const startPage = Math.max(1, currentPage - 2);
+      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+      if (startPage > 1) {
+        pages.push(1);
+        if (startPage > 2) pages.push("ellipsis-start");
+      }
+
+      for (let page = startPage; page <= endPage; page += 1) {
+        pages.push(page);
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) pages.push("ellipsis-end");
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+  const paginationControls =
+    totalPages > 1 ? (
+      <Pagination className="mt-6">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              onClick={() => handlePageChange(currentPage - 1)}
+              className={
+                currentPage === 1
+                  ? "pointer-events-none opacity-50"
+                  : "cursor-pointer"
+              }
+            />
+          </PaginationItem>
+
+          {renderPageNumbers().map((page, index) => (
+            <PaginationItem key={`${page}-${index}`}>
+              {typeof page === "string" ? (
+                <PaginationEllipsis />
+              ) : (
+                <PaginationLink
+                  onClick={() => handlePageChange(page)}
+                  isActive={currentPage === page}
+                  className="cursor-pointer"
+                >
+                  {page}
+                </PaginationLink>
+              )}
+            </PaginationItem>
+          ))}
+
+          <PaginationItem>
+            <PaginationNext
+              onClick={() => handlePageChange(currentPage + 1)}
+              className={
+                currentPage === totalPages
+                  ? "pointer-events-none opacity-50"
+                  : "cursor-pointer"
+              }
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    ) : null;
+
   return (
     <div className="p-6 min-h-screen bg-white">
       {/* Header */}
@@ -1390,9 +1502,15 @@ const JDTab = ({
           emptyMessage="No job descriptions yet"
           className="bg-white rounded-lg border overflow-hidden"
           loading={loading}
+          pagination
+          pageSize={pageSize}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
             Array(6)
               .fill(0)
@@ -1500,7 +1618,9 @@ const JDTab = ({
               </p>
             </div>
           )}
-        </div>
+          </div>
+          {paginationControls}
+        </>
       )}
 
       {/* Selection Info */}

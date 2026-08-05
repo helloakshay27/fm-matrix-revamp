@@ -89,7 +89,7 @@ export const LockFunctionView = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[#E5E0D3] text-brand flex items-center justify-center">
               <Lock className="w-5 h-5" />
             </div>
             <div>
@@ -99,17 +99,23 @@ export const LockFunctionView = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleEdit}>
-            <Edit className="w-4 h-4 mr-2" />
-            Edit
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleEdit}
+            title="Edit"
+            className="!rounded-lg h-9 w-9 border border-brand text-brand hover:bg-brand-selected"
+          >
+            <Edit className="w-4 h-4" />
           </Button>
           <Button
             variant="outline"
+            size="icon"
             onClick={handleDelete}
-            className="border-[#DA7756] bg-white text-[#DA7756] hover:bg-[#F2EEE9] hover:text-[#DA7756]"
+            title="Delete"
+            className="!rounded-lg h-9 w-9 border border-brand text-brand hover:bg-brand-selected"
           >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete
+            <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       </div>

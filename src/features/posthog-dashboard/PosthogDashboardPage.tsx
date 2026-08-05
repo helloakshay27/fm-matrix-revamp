@@ -21,7 +21,7 @@ export function PosthogDashboardPage() {
         <div className="phg-wrap">
           {/* <TierNote /> */}
           {/* <BenchmarkNote /> */}
-          <Reveal><SiteBreakdownSection /></Reveal>
+          {/* <Reveal><SiteBreakdownSection /></Reveal> */}
           <Reveal><TrafficSection /></Reveal>
           <Reveal><AdoptionSection /></Reveal>
           <Reveal><WorkflowSection /></Reveal>

@@ -27,7 +27,7 @@ export default function KpiList() {
     kpiMemberFilter, setKpiMemberFilter,
     kpiViewMode, setKpiViewMode,
     uniqueKpiRoles, uniqueMembers,
-    toggleKpiStatus, openEditKpi, setAssignKpiModal,
+    toggleKpiStatus, openEditKpi,
     setShowAddKpi,
     jdTitle, kraName,
     kpisLoading, kpisError, refreshKpis,
@@ -108,10 +108,6 @@ export default function KpiList() {
                     onMouseOver={(e) => { e.currentTarget.style.background = kpi.status === "active" ? "rgba(228,145,145,.1)" : T.orangeSoft; e.currentTarget.style.color = kpi.status === "active" ? T.danger : T.orange; }}
                     onMouseOut={(e) => { e.currentTarget.style.background = T.raised; e.currentTarget.style.color = T.inkMuted; }}
                   >{ico.power}</button>
-                  <button style={aBtn} title="Assign Person" onClick={() => setAssignKpiModal(kpi.id)}
-                    onMouseOver={(e) => { e.currentTarget.style.background = T.orangeSoft; e.currentTarget.style.color = T.orange; }}
-                    onMouseOut={(e) => { e.currentTarget.style.background = T.raised; e.currentTarget.style.color = T.inkMuted; }}
-                  >{ico.userPlus}</button>
                 </div>
               </div>
               <div style={{ fontSize: 11.5, color: T.inkMuted, marginBottom: 4 }}>
@@ -165,10 +161,6 @@ export default function KpiList() {
                   onMouseOver={(e) => { e.currentTarget.style.background = kpi.status === "active" ? "rgba(228,145,145,.1)" : T.orangeSoft; e.currentTarget.style.color = kpi.status === "active" ? T.danger : T.orange; }}
                   onMouseOut={(e) => { e.currentTarget.style.background = T.raised; e.currentTarget.style.color = T.inkMuted; }}
                 >{ico.power}</button>
-                <button style={aBtn} title="Assign Person" onClick={() => setAssignKpiModal(kpi.id)}
-                  onMouseOver={(e) => { e.currentTarget.style.background = T.orangeSoft; e.currentTarget.style.color = T.orange; }}
-                  onMouseOut={(e) => { e.currentTarget.style.background = T.raised; e.currentTarget.style.color = T.inkMuted; }}
-                >{ico.userPlus}</button>
               </div>
             </div>
           ))}

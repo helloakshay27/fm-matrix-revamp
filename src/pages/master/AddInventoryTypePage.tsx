@@ -234,7 +234,7 @@ const AddInventoryTypePage = () => {
           </div>
         </div>
         <div className="flex justify-center space-x-4 pt-4">
-          <Button type="submit" variant="outline" className="fm-button-fix fm-button-brand w-32">Save</Button>
+          <Button type="submit" variant="outline" className="bg-brand hover:bg-brand-hover text-white w-32">Save</Button>
           <Button type="button" variant="outline" className="w-32" onClick={() => navigate(basePath)}>Cancel</Button>
         </div>
       </form>

@@ -38,7 +38,7 @@
 //     {
 //       label: "Total Assets",
 //       value: stats.total_count,
-//       icon: <Package className="w-6 h-6 text-[#C72030]" />,
+//       icon: <Package className="w-6 h-6 text-brand" />,
 //       filterType: "total",
 //     },
 //     {
@@ -48,7 +48,7 @@
 //           ? stats.total_value.toLocaleString("en-IN")
 //           : stats.total_value,
 //       icon: (
-//         <span className="font-bold text-[18px] !text-[#C72030]">
+//         <span className="font-bold text-[18px] !text-brand">
 //           {localStorage.getItem("currency")}
 //         </span>
 //       ),
@@ -57,37 +57,37 @@
 //     {
 //       label: "Non IT Assets",
 //       value: stats.non_it_assets,
-//       icon: <Settings className="w-6 h-6 text-[#C72030]" />,
+//       icon: <Settings className="w-6 h-6 text-brand" />,
 //       filterType: "non_it",
 //     },
 //     {
 //       label: "IT Assets",
 //       value: stats.it_assets,
-//       icon: <Monitor className="w-6 h-6 text-[#C72030]" />,
+//       icon: <Monitor className="w-6 h-6 text-brand" />,
 //       filterType: "it",
 //     },
 //     {
 //       label: "In Use",
 //       value: stats.in_use_count,
-//       icon: <Settings className="w-6 h-6 text-[#C72030]" />,
+//       icon: <Settings className="w-6 h-6 text-brand" />,
 //       filterType: "in_use",
 //     },
 //     {
 //       label: "Breakdown",
 //       value: stats.breakdown_count,
-//       icon: <AlertTriangle className="w-6 h-6 text-[#C72030]" />,
+//       icon: <AlertTriangle className="w-6 h-6 text-brand" />,
 //       filterType: "breakdown",
 //     },
 //     {
 //       label: "In Store",
 //       value: stats.in_store,
-//       icon: <Package className="w-6 h-6 text-[#C72030]" />,
+//       icon: <Package className="w-6 h-6 text-brand" />,
 //       filterType: "in_store",
 //     },
 //     {
 //       label: "Allocated Assets",
 //       value: stats.allocated_count,
-//       icon: <Trash2 className="w-6 h-6 text-[#C72030]" />,
+//       icon: <Trash2 className="w-6 h-6 text-brand" />,
 //       filterType: "allocated",
 //     },
 //   ];
@@ -171,7 +171,7 @@ export const AssetStats: React.FC<AssetStatsProps> = ({
     {
       label: "Total Assets",
       value: stats.total_count,
-      icon: <Package className="w-6 h-6 text-[#C72030]" />,
+      icon: <Package className="w-6 h-6 text-brand" />,
       filterType: "total",
     },
     {
@@ -181,7 +181,7 @@ export const AssetStats: React.FC<AssetStatsProps> = ({
           ? stats.total_value.toLocaleString("en-IN")
           : stats.total_value,
       icon: (
-        <span className="font-bold text-[18px] text-[#C72030]">
+        <span className="font-bold text-[18px] text-brand">
           {localStorage.getItem("currency")}
         </span>
       ),
@@ -190,38 +190,38 @@ export const AssetStats: React.FC<AssetStatsProps> = ({
     {
       label: "Non IT Assets",
       value: stats.non_it_assets,
-      icon: <Settings className="w-6 h-6 text-[#C72030]" />,
+      icon: <Settings className="w-6 h-6 text-brand" />,
       filterType: "non_it",
     },
     {
       label: "IT Assets",
       value: stats.it_assets,
-      icon: <Monitor className="w-6 h-6 text-[#C72030]" />,
+      icon: <Monitor className="w-6 h-6 text-brand" />,
       filterType: "it",
     },
     {
       label: "In Use",
       value: stats.in_use_count,
-      icon: <Settings className="w-6 h-6 text-[#C72030]" />,
+      icon: <Settings className="w-6 h-6 text-brand" />,
       filterType: "in_use",
     },
     {
       label: "Breakdown",
       value: stats.breakdown_count,
-      icon: <AlertTriangle className="w-6 h-6 text-[#C72030]" />,
+      icon: <AlertTriangle className="w-6 h-6 text-brand" />,
       filterType: "breakdown",
     },
     {
       label: "In Store",
       value: stats.in_store,
-      icon: <Package className="w-6 h-6 text-[#C72030]" />,
+      icon: <Package className="w-6 h-6 text-brand" />,
       filterType: "in_store",
     },
     {
       // 🔁 Swappable card
       label: showDisposed ? "Disposed Assets" : "Allocated Assets",
       value: showDisposed ? stats.dispose_assets : stats.allocated_count,
-      icon: <Trash2 className="w-6 h-6 text-[#C72030]" />,
+      icon: <Trash2 className="w-6 h-6 text-brand" />,
       filterType: showDisposed ? "disposed" : "allocated",
       isSwappable: true,
     },

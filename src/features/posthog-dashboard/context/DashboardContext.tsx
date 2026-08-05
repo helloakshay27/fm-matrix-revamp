@@ -27,7 +27,6 @@ import {
 } from "../data/metrics";
 import {
   BM_DEFAULTS,
-  SITE_FANOUT_LIMIT,
   groupSites,
   type Site,
   type SiteGroup,
@@ -166,16 +165,16 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     [state, sites, groups]
   );
 
-  // A whole-tenant scope omits site_id so the API aggregates in one query; anything
-  // narrower sends the explicit id list for that site or company.
+  // Always pass the current user's site IDs so the API only returns data
+  // for sites belonging to the user's selected organisation.
   const siteIds = useMemo(
-    () => (isWholeTenant(state) ? [] : scopedSites.map((s) => s.id)),
-    [state, scopedSites]
+    () => scopedSites.map((s) => s.id),
+    [scopedSites]
   );
 
-  /** The site-wise table needs one call per site in scope, so it keeps the id list (capped). */
+  /** All site IDs in scope — sent as a single comma-separated API call. */
   const leagueSiteIds = useMemo(
-    () => scopedSites.slice(0, SITE_FANOUT_LIMIT).map((s) => s.id),
+    () => scopedSites.map((s) => s.id),
     [scopedSites]
   );
 

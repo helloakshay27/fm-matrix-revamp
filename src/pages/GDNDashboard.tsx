@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Eye, Plus } from "lucide-react";
@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { GDNFilterDialog, type GDNFilters } from "@/components/GDNFilterDialog";
 import {
   Pagination,
   PaginationContent,
@@ -35,6 +36,13 @@ interface GDNPagination {
 }
 
 const GDN_REQUEST_LIST_ENDPOINT = "/pms/srns/gdn_request_list.json";
+
+const emptyFilters: GDNFilters = {
+  status: "",
+  createdBy: "",
+  handedOverTo: "",
+  id: "",
+};
 
 const columns: ColumnConfig[] = [
   {
@@ -93,6 +101,9 @@ export const GDNDashboard = () => {
   const { shouldShow } = useDynamicPermissions();
   const [gdnData, setGdnData] = useState<GDNRequest[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<GDNFilters>(emptyFilters);
   const [pagination, setPagination] = useState<GDNPagination>({
     current_page: 1,
     total_pages: 0,
@@ -146,6 +157,50 @@ export const GDNDashboard = () => {
     fetchGdnRequests();
   }, []);
 
+  const filteredData = useMemo(() => {
+    return gdnData.filter((item) => {
+      if (filters.id && !String(item.id).includes(filters.id.trim())) {
+        return false;
+      }
+      if (
+        filters.status &&
+        item.status?.toLowerCase() !== filters.status.toLowerCase()
+      ) {
+        return false;
+      }
+      if (
+        filters.createdBy &&
+        !String(item.created_by || "")
+          .toLowerCase()
+          .includes(filters.createdBy.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        filters.handedOverTo &&
+        !String(item.handed_over_to || "")
+          .toLowerCase()
+          .includes(filters.handedOverTo.toLowerCase())
+      ) {
+        return false;
+      }
+
+      if (searchTerm.trim()) {
+        const q = searchTerm.toLowerCase();
+        return (
+          String(item.id).includes(q) ||
+          String(item.gdn_date || "").toLowerCase().includes(q) ||
+          String(item.status || "").toLowerCase().includes(q) ||
+          String(item.created_by || "").toLowerCase().includes(q) ||
+          String(item.handed_over_to || "").toLowerCase().includes(q) ||
+          String(item.created_at || "").toLowerCase().includes(q)
+        );
+      }
+
+      return true;
+    });
+  }, [gdnData, filters, searchTerm]);
+
   const getStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
       case "approved":
@@ -196,12 +251,21 @@ export const GDNDashboard = () => {
   const leftActions = shouldShow("GDN", "create") ? (
     <Button
       className="fm-button-fix fm-button-brand px-4 py-2"
+      variant="ghost"
       onClick={() => navigate("/finance/gdn/request-add")}
     >
       <Plus className="w-4 h-4 mr-2" />
       Add
     </Button>
   ) : null;
+
+  const handleApplyFilters = (nextFilters: GDNFilters) => {
+    setFilters(nextFilters);
+  };
+
+  const handleResetFilters = () => {
+    setFilters(emptyFilters);
+  };
 
   const handlePageChange = (page: number) => {
     if (
@@ -312,7 +376,7 @@ export const GDNDashboard = () => {
       <h1 className="text-2xl font-bold mb-6">GDN LIST</h1>
 
       <EnhancedTable
-        data={gdnData}
+        data={filteredData}
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
@@ -322,6 +386,12 @@ export const GDNDashboard = () => {
         loading={loading}
         loadingMessage="Loading GDN requests..."
         leftActions={leftActions}
+        enableSearch
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search..."
+        disableClientSearch
+        onFilterClick={() => setShowFilters(true)}
       />
 
       {pagination.total_pages > 1 && (
@@ -363,6 +433,14 @@ export const GDNDashboard = () => {
           </Pagination>
         </div>
       )}
+
+      <GDNFilterDialog
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+        filters={filters}
+        onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
+      />
     </div>
   );
 };

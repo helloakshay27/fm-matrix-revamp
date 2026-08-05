@@ -11,13 +11,14 @@ export default function KpiEntryModal() {
     showAddKpi, setShowAddKpi, newKpi, setNewKpi, allJds,
     saveNewKpi, customUnits, kpisSaving, kpiAssignUsers, kpiAssignUsersLoading,
     kpiModalJdsLoading, kpiModalJdsError, kpiModalKras, kpiModalKrasLoading, kpiModalKrasError,
-    kraWeightageUsed,
+    kraWeightageLimit, kraWeightageUsed,
   } = useJobs();
   if (!showAddKpi) return null;
   const assigneeOptions = kpiAssignUsers;
   // Selected KRA me kitna weightage bacha hai — total 100% se upar nahi ja sakta.
   const kraUsedWeightage = newKpi.kraId ? kraWeightageUsed(newKpi.kraId) : 0;
-  const kraRemainingWeightage = Math.max(0, 100 - kraUsedWeightage);
+  const kraTotalWeightage = newKpi.kraId ? kraWeightageLimit(newKpi.kraId) : 100;
+  const kraRemainingWeightage = Math.max(0, kraTotalWeightage - kraUsedWeightage);
   // Search + list ek hi input me — MemberSearchSelect khud filter karta hai.
   const kraOptions = kpiModalKras.map((k) => ({ id: k.id, name: k.title }));
   const departmentOptions = departments.map((d) => ({
@@ -192,7 +193,7 @@ export default function KpiEntryModal() {
               label="KPI Weightage (%)"
               hint={
                 newKpi.kraId
-                  ? `${kraUsedWeightage}% used, ${kraRemainingWeightage}% left in this KRA`
+                  ? `${kraUsedWeightage}% used, ${kraRemainingWeightage}% left of ${kraTotalWeightage}% KRA weightage`
                   : undefined
               }
             >
@@ -209,7 +210,7 @@ export default function KpiEntryModal() {
               {newKpi.kraId &&
                 Number(newKpi.weightage) > kraRemainingWeightage && (
                   <span style={{ fontSize: 11, color: T.danger }}>
-                    Exceeds 100% total for this KRA
+                    Exceeds {kraTotalWeightage}% total for this KRA
                   </span>
                 )}
             </Fld>

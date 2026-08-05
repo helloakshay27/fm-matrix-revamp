@@ -1,20 +1,18 @@
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchDeletionRequests } from "@/store/slices/pendingApprovalSlice";
 import { Eye, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select as MuiSelect,
+} from "@mui/material";
 import {
   Pagination,
   PaginationContent,
@@ -38,6 +36,33 @@ interface DeletionRequestRow {
   user_id?: number | string;
   delete_request_id?: number | string;
 }
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px 12px", sm: "10px 14px", md: "12px 14px" },
+  },
+  "& .MuiOutlinedInput-root": {
+    backgroundColor: "white",
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 const columns: ColumnConfig[] = [
   {
@@ -431,49 +456,79 @@ export const PRDeletionRequests = () => {
         </Pagination>
       </div>
 
-      <Dialog open={showFilters} onOpenChange={setShowFilters}>
-        <DialogContent className="sm:max-w-md bg-white">
+      <Dialog open={showFilters} onOpenChange={setShowFilters} modal={false}>
+        <DialogContent
+          className="w-full sm:max-w-[500px] bg-white overflow-visible"
+          onPointerDownOutside={(e) => {
+            if (
+              (e.target as HTMLElement).closest(
+                ".MuiPopover-root, .MuiModal-root, .MuiMenu-root"
+              )
+            ) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            if (
+              (e.target as HTMLElement).closest(
+                ".MuiPopover-root, .MuiModal-root, .MuiMenu-root"
+              )
+            ) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <div className="flex items-center justify-between">
-              <DialogTitle>Filters</DialogTitle>
+              <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowFilters(false)}
-                className="h-8 w-8 p-0"
+                className="h-6 w-6 p-0"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Type</Label>
-              <Select value={draftTypeFilter} onValueChange={setDraftTypeFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="Material PR">Material PR</SelectItem>
-                  <SelectItem value="Service PR">Service PR</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
+          <div className="grid grid-cols-1 gap-4 py-4">
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="pr-deletion-type-label">Type</InputLabel>
+              <MuiSelect
+                labelId="pr-deletion-type-label"
+                label="Type"
+                value={draftTypeFilter === "all" ? "" : draftTypeFilter}
+                onChange={(e) =>
+                  setDraftTypeFilter(
+                    (e.target.value as string) || "all"
+                  )
+                }
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="">
+                  <em>All</em>
+                </MenuItem>
+                <MenuItem value="Material PR">Material PR</MenuItem>
+                <MenuItem value="Service PR">Service PR</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
+
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
             <Button
-              variant="outline"
-              className="h-9"
-              onClick={handleResetFilters}
+              onClick={handleApplyFilters}
+              className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
             >
-              Reset
+              APPLY
             </Button>
             <Button
-              className="h-9 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-              onClick={handleApplyFilters}
+              variant="outline"
+              onClick={handleResetFilters}
+              className="border-brand text-brand px-8 w-full sm:w-auto"
             >
-              Apply
+              RESET
             </Button>
           </div>
         </DialogContent>

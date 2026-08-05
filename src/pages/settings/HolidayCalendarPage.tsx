@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from '@/components/ui/switch';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -20,7 +12,6 @@ import { useApiConfig } from '@/hooks/useApiConfig';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import { userService } from '@/services/userService';
-import ReactSelect from 'react-select';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +30,45 @@ import { cn } from '@/lib/utils';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import {
+  Checkbox,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select as MuiSelect,
+  TextField,
+} from '@mui/material';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+const placeholderText = (text: string) => (
+  <span style={{ color: '#9ca3af' }}>{text}</span>
+);
+
 interface Holiday {
   id: string;
   holidayName: string;
@@ -830,15 +860,28 @@ export const HolidayCalendarPage = () => {
               setSelectedCustomers([]);
             }
             setIsAddDialogOpen(open);
-          }}>
+          }} modal={false}>
             {shouldShow("Holiday Calendar","create")&&(
             <DialogTrigger asChild>
           
-              <Button className='fm-button-fix fm-button-brand !rounded-md !px-4 !py-2 !text-sm !font-semibold'>
-                <Plus className="w-4 h-4 mr-2" /> Add Holiday
+              <Button className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium">
+                <Plus className="w-4 h-4 mr-2 text-white" /> Add Holiday
               </Button>
             </DialogTrigger>)}
-            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto" aria-describedby="add-holiday-dialog-description">
+            <DialogContent
+              className="max-w-6xl max-h-[90vh] overflow-y-auto bg-white"
+              aria-describedby="add-holiday-dialog-description"
+              onPointerDownOutside={(e) => {
+                if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                  e.preventDefault();
+                }
+              }}
+              onInteractOutside={(e) => {
+                if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                  e.preventDefault();
+                }
+              }}
+            >
               <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <DialogTitle className="text-lg font-semibold text-gray-900">ADD HOLIDAY</DialogTitle>
                 <Button
@@ -858,11 +901,11 @@ export const HolidayCalendarPage = () => {
                 {/* Input Row */}
                 <Card>
                   <CardContent className="pt-5 pb-4">
-                    <div className="grid grid-cols-6 gap-3 items-end">
+                    <div className="grid grid-cols-6 gap-3 items-start">
                       {/* Holiday Name */}
                       <div className="space-y-1">
                         <Label className="text-sm font-semibold">Holiday Name <span className="text-red-500">*</span></Label>
-                        <Input
+                        <TextField
                           type="text"
                           placeholder="Enter Holiday Name"
                           value={holidayName}
@@ -873,104 +916,134 @@ export const HolidayCalendarPage = () => {
                               setAddRowError('');
                             }
                           }}
-                          className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0 text-sm"
-                          style={{ borderRadius: '4px' }}
+                          fullWidth
+                          variant="outlined"
+                          sx={fieldStyles}
                         />
                       </div>
 
                       {/* Date */}
                       <div className="space-y-1">
                         <Label className="text-sm font-semibold">Date <span className="text-red-500">*</span></Label>
-                        <Input
+                        <TextField
                           type="date"
                           value={date ? format(date, 'yyyy-MM-dd') : ''}
-                          min={format(new Date(), 'yyyy-MM-dd')}
+                          inputProps={{ min: format(new Date(), 'yyyy-MM-dd') }}
                           onChange={(e) => {
                             setDate(e.target.value ? new Date(e.target.value) : undefined);
                             setAddRowError('');
                           }}
-                          className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0 text-sm"
-                          style={{ borderRadius: '4px' }}
+                          fullWidth
+                          variant="outlined"
+                          sx={fieldStyles}
                         />
                       </div>
 
                       {/* Recurring */}
                       <div className="space-y-1">
-                        <Label className="text-sm font-semibold">Recurring <span className="text-red-500">*</span></Label>
-                        <ReactSelect
-                          options={[
-                            { value: 'yes', label: 'Yes' },
-                            { value: 'no', label: 'No' },
-                          ]}
-                          value={recurring ? { value: recurring, label: recurring === 'yes' ? 'Yes' : 'No' } : null}
-                          onChange={(sel) => { setRecurring(sel ? sel.value : ''); setAddRowError(''); }}
-                          placeholder="Select..."
-                          isClearable
-                          styles={{
-                            control: (base) => ({ ...base, minHeight: '40px', border: '1px solid #d1d5db', boxShadow: 'none', fontSize: '14px', '&:hover': { border: '1px solid #cbd5e1' } }),
-                            option: (base, state) => ({ ...base, backgroundColor: state.isSelected ? '#dbeafe' : state.isFocused ? '#f0f9ff' : 'white', color: state.isSelected ? '#1e40af' : '#374151' }),
-                          }}
-                        />
+                        <Label className="text-sm font-semibold">
+                          Recurring <span className="text-red-500">*</span>
+                        </Label>
+                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                          <MuiSelect
+                            displayEmpty
+                            value={recurring}
+                            onChange={(e) => { setRecurring(e.target.value); setAddRowError(''); }}
+                            MenuProps={selectMenuProps}
+                            renderValue={(selected) => {
+                              if (!selected) return placeholderText('Select...');
+                              return selected === 'yes' ? 'Yes' : 'No';
+                            }}
+                          >
+                            <MenuItem value="yes">Yes</MenuItem>
+                            <MenuItem value="no">No</MenuItem>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
 
                       {/* Holiday Type */}
                       <div className="space-y-1">
-                        <Label className="text-sm font-semibold">Holiday Type <span className="text-red-500">*</span></Label>
-                        <ReactSelect
-                          options={[
-                            { value: 'public', label: 'Public' },
-                            { value: 'festival', label: 'Festival' },
-                            { value: 'maintenance', label: 'Maintenance' },
-                          ]}
-                          value={selectedType ? { value: selectedType, label: selectedType.charAt(0).toUpperCase() + selectedType.slice(1) } : null}
-                          onChange={(sel) => { setSelectedType(sel ? sel.value : ''); setAddRowError(''); }}
-                          placeholder="Select..."
-                          isClearable
-                          styles={{
-                            control: (base) => ({ ...base, minHeight: '40px', border: '1px solid #d1d5db', boxShadow: 'none', fontSize: '14px', '&:hover': { border: '1px solid #cbd5e1' } }),
-                            option: (base, state) => ({ ...base, backgroundColor: state.isSelected ? '#dbeafe' : state.isFocused ? '#f0f9ff' : 'white', color: state.isSelected ? '#1e40af' : '#374151' }),
-                          }}
-                        />
+                        <Label className="text-sm font-semibold">
+                          Holiday Type <span className="text-red-500">*</span>
+                        </Label>
+                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                          <MuiSelect
+                            displayEmpty
+                            value={selectedType}
+                            onChange={(e) => { setSelectedType(e.target.value); setAddRowError(''); }}
+                            MenuProps={selectMenuProps}
+                            renderValue={(selected) => {
+                              if (!selected) return placeholderText('Select...');
+                              return String(selected).charAt(0).toUpperCase() + String(selected).slice(1);
+                            }}
+                          >
+                            <MenuItem value="public">Public</MenuItem>
+                            <MenuItem value="festival">Festival</MenuItem>
+                            <MenuItem value="maintenance">Maintenance</MenuItem>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
 
                       {/* Select Sites */}
                       <div className="space-y-1">
-                        <Label className="text-sm font-semibold">Select Sites <span className="text-red-500">*</span></Label>
-                        <ReactSelect
-                          isMulti
-                          options={siteOptions.map(s => ({ value: s.id, label: s.name }))}
-                          value={siteOptions.filter(s => selectedSites.includes(s.id)).map(s => ({ value: s.id, label: s.name }))}
-                          onChange={(sel) => { setSelectedSites(sel ? sel.map(s => s.value) : []); setAddRowError(''); }}
-                          placeholder="Select sites..."
-                          isLoading={loadingSites}
-                          isDisabled={loadingSites}
-                          styles={{
-                            control: (base) => ({ ...base, minHeight: '40px', border: '1px solid #d1d5db', boxShadow: 'none', fontSize: '14px', '&:hover': { border: '1px solid #cbd5e1' } }),
-                            multiValue: (base) => ({ ...base, backgroundColor: '#f1f5f9' }),
-                            multiValueLabel: (base) => ({ ...base, color: '#334155', fontSize: '12px' }),
-                            multiValueRemove: (base) => ({ ...base, color: '#64748b' }),
-                            option: (base, state) => ({ ...base, backgroundColor: state.isSelected ? '#dbeafe' : state.isFocused ? '#f0f9ff' : 'white', color: state.isSelected ? '#1e40af' : '#374151' }),
-                          }}
-                        />
+                        <Label className="text-sm font-semibold">
+                          Select Sites <span className="text-red-500">*</span>
+                        </Label>
+                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                          <MuiSelect
+                            displayEmpty
+                            multiple
+                            value={selectedSites}
+                            onChange={(e) => { setSelectedSites(e.target.value as number[]); setAddRowError(''); }}
+                            renderValue={(selected) => {
+                              const labels = siteOptions
+                                .filter(s => (selected as number[]).includes(s.id))
+                                .map(s => s.name);
+                              return labels.length > 0
+                                ? labels.join(', ')
+                                : placeholderText(loadingSites ? 'Loading...' : 'Select...');
+                            }}
+                            MenuProps={selectMenuProps}
+                            disabled={loadingSites}
+                          >
+                            {siteOptions.map(s => (
+                              <MenuItem key={s.id} value={s.id}>
+                                <Checkbox size="small" checked={selectedSites.includes(s.id)} />
+                                {s.name}
+                              </MenuItem>
+                            ))}
+                          </MuiSelect>
+                        </FormControl>
                       </div>
 
                       {/* Select Module */}
                       <div className="space-y-1">
-                        <Label className="text-sm font-semibold">Select Module <span className="text-red-500">*</span></Label>
-                        <ReactSelect
-                          isMulti
-                          options={customerOptions.map(o => ({ value: o, label: o.charAt(0).toUpperCase() + o.slice(1) }))}
-                          value={customerOptions.filter(o => selectedCustomers.includes(o)).map(o => ({ value: o, label: o.charAt(0).toUpperCase() + o.slice(1) }))}
-                          onChange={(sel) => { setSelectedCustomers(sel ? sel.map(s => s.value) : []); setAddRowError(''); }}
-                          placeholder="Select modules..."
-                          styles={{
-                            control: (base) => ({ ...base, minHeight: '40px', border: '1px solid #d1d5db', boxShadow: 'none', fontSize: '14px', '&:hover': { border: '1px solid #cbd5e1' } }),
-                            multiValue: (base) => ({ ...base, backgroundColor: '#f1f5f9' }),
-                            multiValueLabel: (base) => ({ ...base, color: '#334155', fontSize: '12px' }),
-                            multiValueRemove: (base) => ({ ...base, color: '#64748b' }),
-                            option: (base, state) => ({ ...base, backgroundColor: state.isSelected ? '#dbeafe' : state.isFocused ? '#f0f9ff' : 'white', color: state.isSelected ? '#1e40af' : '#374151' }),
-                          }}
-                        />
+                        <Label className="text-sm font-semibold">
+                          Select Module <span className="text-red-500">*</span>
+                        </Label>
+                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                          <MuiSelect
+                            displayEmpty
+                            multiple
+                            value={selectedCustomers}
+                            onChange={(e) => { setSelectedCustomers(e.target.value as string[]); setAddRowError(''); }}
+                            renderValue={(selected) => {
+                              const labels = (selected as string[])
+                                .map(m => m.charAt(0).toUpperCase() + m.slice(1));
+                              return labels.length > 0
+                                ? labels.join(', ')
+                                : placeholderText('Select...');
+                            }}
+                            MenuProps={selectMenuProps}
+                          >
+                            {customerOptions.map(o => (
+                              <MenuItem key={o} value={o}>
+                                <Checkbox size="small" checked={selectedCustomers.includes(o)} />
+                                {o.charAt(0).toUpperCase() + o.slice(1)}
+                              </MenuItem>
+                            ))}
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                     </div>
 
@@ -983,9 +1056,9 @@ export const HolidayCalendarPage = () => {
                     <div className="flex justify-end mt-4">
                       <Button
                         type="button"
+                        variant="ghost"
                         onClick={handleAddRow}
-                      className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
+                        className="fm-button-fix fm-button-brand px-4 py-2"
                       >
                         <Plus className="w-4 h-4 mr-1" /> Add
                       </Button>
@@ -1033,8 +1106,7 @@ export const HolidayCalendarPage = () => {
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   <Button
                     type="button"
-                    className="fm-button-fix fm-button-brand px-4 py-2"
-                    variant="ghost"
+                    className="flex-1 bg-brand hover:bg-brand-hover text-white px-4 py-2 disabled:!opacity-100 disabled:!bg-brand"
                     disabled={isSubmitting || pendingHolidays.length === 0}
                     onClick={handleSubmit}
                   >
@@ -1042,7 +1114,7 @@ export const HolidayCalendarPage = () => {
                       ? 'Saving...'
                       : `Save ${pendingHolidays.length > 0 ? `(${pendingHolidays.length}) ` : ''}Holiday${pendingHolidays.length !== 1 ? 's' : ''}`}
                   </Button>
-                  <Button variant="outline" onClick={handleCancel} className="flex-1 h-11">
+                  <Button variant="outline" onClick={handleCancel} className="flex-1 h-11 border-brand text-brand hover:bg-brand-selected hover:text-brand">
                     Cancel
                   </Button>
                 </div>
@@ -1053,90 +1125,150 @@ export const HolidayCalendarPage = () => {
       />
       )}
 
-      {/* Filter Modal */}
-      <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-        <DialogContent className="max-w-lg" aria-describedby="filter-dialog-description">
-          <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <DialogTitle className="text-lg font-semibold">Filter Holidays</DialogTitle>
-            <Button variant="ghost" size="sm" onClick={() => setIsFilterOpen(false)} className="h-6 w-6 p-0">
-              <X className="h-4 w-4" />
-            </Button>
+      {/* Filter Modal — matches SnaggingFilterDialog */}
+      <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen} modal={false}>
+        <DialogContent
+          className="w-full sm:max-w-[500px] bg-white overflow-visible"
+          aria-describedby="filter-dialog-description"
+          onPointerDownOutside={(e) => {
+            if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+              e.preventDefault();
+            }
+          }}
+        >
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
+              <Button variant="ghost" size="sm" onClick={() => setIsFilterOpen(false)} className="h-6 w-6 p-0">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
             <div id="filter-dialog-description" className="sr-only">Filter holidays by various criteria</div>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>By Name</Label>
-              <Input
-                placeholder="Search by name..."
-                value={filterName}
-                onChange={e => setFilterName(e.target.value)}
-                className="h-10"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>By Holiday Type</Label>
-              <ReactSelect
-                isClearable
-                options={[
-                  { value: 'Public', label: 'Public' },
-                  { value: 'Festival', label: 'Festival' },
-                  { value: 'National', label: 'National' },
-                ]}
-                value={filterType ? { value: filterType, label: filterType } : null}
-                onChange={opt => setFilterType(opt?.value || '')}
-                placeholder="Select type..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>By Status</Label>
-              <ReactSelect
-                isClearable
-                options={[
-                  { value: 'active', label: 'Active' },
-                  { value: 'inactive', label: 'Inactive' },
-                ]}
-                value={filterStatus ? { value: filterStatus, label: filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1) } : null}
-                onChange={opt => setFilterStatus(opt?.value || '')}
-                placeholder="Select status..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>By Location (text)</Label>
-              <Input
-                placeholder="Filter by location..."
-                value={filterLocation}
-                onChange={e => setFilterLocation(e.target.value)}
-                className="h-10"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>By Sites</Label>
-              <ReactSelect
-                isMulti
-                options={siteOptions.map(s => ({ value: s.id, label: s.name }))}
-                value={siteOptions.filter(s => filterSiteIds.includes(s.id)).map(s => ({ value: s.id, label: s.name }))}
-                onChange={opts => setFilterSiteIds(opts ? opts.map((o: {value: number}) => o.value) : [])}
-                placeholder="Select sites..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>By Module</Label>
-              <ReactSelect
-                isMulti
-                options={customerOptions.map(o => ({ value: o, label: o.charAt(0).toUpperCase() + o.slice(1) }))}
-                value={filterModules.map(m => ({ value: m, label: m.charAt(0).toUpperCase() + m.slice(1) }))}
-                onChange={opts => setFilterModules(opts ? opts.map((o: {value: string}) => o.value) : [])}
-                placeholder="Select modules..."
-              />
-            </div>
-            <div className="flex gap-3 pt-2">
-              <Button onClick={handleApplyFilters} className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost">
-                Apply Filters
-              </Button>
-              <Button variant="outline" onClick={handleClearFilters} className="flex-1">
-                Clear Filters
-              </Button>
-            </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+            <TextField
+              label="Name"
+              value={filterName}
+              onChange={e => setFilterName(e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+            />
+
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="holiday-filter-type-label">Holiday Type</InputLabel>
+              <MuiSelect
+                labelId="holiday-filter-type-label"
+                label="Holiday Type"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value=""><em>Select Type</em></MenuItem>
+                <MenuItem value="Public">Public</MenuItem>
+                <MenuItem value="Festival">Festival</MenuItem>
+                <MenuItem value="National">National</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="holiday-filter-status-label">Status</InputLabel>
+              <MuiSelect
+                labelId="holiday-filter-status-label"
+                label="Status"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value=""><em>Select Status</em></MenuItem>
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <TextField
+              label="Location"
+              value={filterLocation}
+              onChange={e => setFilterLocation(e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+            />
+
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="holiday-filter-sites-label">Sites</InputLabel>
+              <MuiSelect
+                labelId="holiday-filter-sites-label"
+                label="Sites"
+                multiple
+                value={filterSiteIds}
+                onChange={(e) => setFilterSiteIds(e.target.value as number[])}
+                renderValue={(selected) => {
+                  const labels = siteOptions
+                    .filter(s => (selected as number[]).includes(s.id))
+                    .map(s => s.name);
+                  return labels.length > 0 ? labels.join(', ') : '';
+                }}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                {siteOptions.map(s => (
+                  <MenuItem key={s.id} value={s.id}>
+                    <Checkbox size="small" checked={filterSiteIds.includes(s.id)} />
+                    {s.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="holiday-filter-module-label">Module</InputLabel>
+              <MuiSelect
+                labelId="holiday-filter-module-label"
+                label="Module"
+                multiple
+                value={filterModules}
+                onChange={(e) => setFilterModules(e.target.value as string[])}
+                renderValue={(selected) => {
+                  const labels = (selected as string[])
+                    .map(m => m.charAt(0).toUpperCase() + m.slice(1));
+                  return labels.length > 0 ? labels.join(', ') : '';
+                }}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                {customerOptions.map(o => (
+                  <MenuItem key={o} value={o}>
+                    <Checkbox size="small" checked={filterModules.includes(o)} />
+                    {o.charAt(0).toUpperCase() + o.slice(1)}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
+            <Button
+              onClick={handleApplyFilters}
+              className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
+            >
+              APPLY
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleClearFilters}
+              className="border-brand text-brand px-8 w-full sm:w-auto"
+            >
+              RESET
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -1154,8 +1286,21 @@ export const HolidayCalendarPage = () => {
           setEditingHoliday(null);
         }
         setIsEditDialogOpen(open);
-      }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="edit-holiday-dialog-description">
+      }} modal={false}>
+        <DialogContent
+          className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white"
+          aria-describedby="edit-holiday-dialog-description"
+          onPointerDownOutside={(e) => {
+            if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <DialogTitle className="text-lg font-semibold text-gray-900">EDIT HOLIDAY</DialogTitle>
             <Button
@@ -1181,10 +1326,10 @@ export const HolidayCalendarPage = () => {
               <Card>
                 <CardContent className="space-y-6 pt-6">
                   {/* First Row */}
-                  <div className="grid grid-cols-3 gap-6">
+                  <div className="grid grid-cols-3 gap-6 items-start">
                     <div className="space-y-2">
                       <Label htmlFor="edit-holiday-name">Holiday Name <span className="text-red-500">*</span></Label>
-                      <Input
+                      <TextField
                         id="edit-holiday-name"
                         placeholder="Enter Holiday Name"
                         value={holidayName}
@@ -1194,18 +1339,19 @@ export const HolidayCalendarPage = () => {
                             setHolidayName(value);
                           }
                         }}
-                        className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0"
-                        style={{ borderRadius: '4px' }}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="edit-date">Date <span className="text-red-500">*</span></Label>
-                      <Input
+                      <TextField
                         id="edit-date"
                         type="date"
                         placeholder="Select date"
                         value={date ? format(date, "yyyy-MM-dd") : ''}
-                        min={format(new Date(), "yyyy-MM-dd")}
+                        inputProps={{ min: format(new Date(), "yyyy-MM-dd") }}
                         onChange={(e) => {
                           if (e.target.value) {
                             setDate(new Date(e.target.value));
@@ -1213,221 +1359,113 @@ export const HolidayCalendarPage = () => {
                             setDate(undefined);
                           }
                         }}
-                        className="h-10 border-gray-300 focus:border-gray-500 focus:ring-0"
-                        style={{ borderRadius: '4px' }}
+                        fullWidth
+                        variant="outlined"
+                        sx={fieldStyles}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-recurring">Recurring <span className="text-red-500">*</span></Label>
-                      <ReactSelect
-                        id="edit-recurring"
-                        options={[
-                          { value: 'yes', label: 'Yes' },
-                          { value: 'no', label: 'No' }
-                        ]}
-                        value={recurring ? { value: recurring, label: recurring === 'yes' ? 'Yes' : 'No' } : null}
-                        onChange={(selected) => {
-                          setRecurring(selected ? selected.value : '');
-                        }}
-                        placeholder="Select"
-                        isClearable
-                        styles={{
-                          control: (base, state) => ({
-                            ...base,
-                            borderColor: '#d1d5db',
-                            '&:hover': {
-                              borderColor: '#cbd5e1'
-                            },
-                            boxShadow: 'none',
-                            fontSize: '14px',
-                            minHeight: '40px'
-                          }),
-                          placeholder: (base) => ({
-                            ...base,
-                            color: '#9CA3AF'
-                          }),
-                          option: (base, state) => ({
-                            ...base,
-                            backgroundColor: state.isSelected 
-                              ? '#dbeafe' 
-                              : state.isFocused 
-                              ? '#f0f9ff' 
-                              : 'white',
-                            color: state.isSelected ? '#1e40af' : '#374151',
-                            '&:hover': {
-                              backgroundColor: '#f0f9ff'
-                            }
-                          })
-                        }}
-                      />
+                      <Label>
+                        Recurring <span className="text-red-500">*</span>
+                      </Label>
+                      <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                        <MuiSelect
+                          displayEmpty
+                          value={recurring}
+                          onChange={(e) => setRecurring(e.target.value)}
+                          MenuProps={selectMenuProps}
+                          renderValue={(selected) => {
+                            if (!selected) return placeholderText('Select...');
+                            return selected === 'yes' ? 'Yes' : 'No';
+                          }}
+                        >
+                          <MenuItem value="yes">Yes</MenuItem>
+                          <MenuItem value="no">No</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   </div>
                   
                   {/* Second Row */}
                   <div className="grid grid-cols-3 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="edit-holiday-type">Holiday Type <span className="text-red-500">*</span></Label>
-                      <ReactSelect
-                        id="edit-holiday-type"
-                        options={[
-                          { value: 'public', label: 'Public' },
-                          { value: 'festival', label: 'Festival' },
-                          { value: 'maintenance', label: 'Maintenance' }
-                        ]}
-                        value={selectedType ? { value: selectedType, label: selectedType.charAt(0).toUpperCase() + selectedType.slice(1) } : null}
-                        onChange={(selected) => {
-                          setSelectedType(selected ? selected.value : '');
-                        }}
-                        placeholder="Select type"
-                        isClearable
-                        styles={{
-                          control: (base, state) => ({
-                            ...base,
-                            borderColor: '#d1d5db',
-                            '&:hover': {
-                              borderColor: '#cbd5e1'
-                            },
-                            boxShadow: 'none',
-                            fontSize: '14px',
-                            minHeight: '40px'
-                          }),
-                          placeholder: (base) => ({
-                            ...base,
-                            color: '#9CA3AF'
-                          }),
-                          option: (base, state) => ({
-                            ...base,
-                            backgroundColor: state.isSelected 
-                              ? '#dbeafe' 
-                              : state.isFocused 
-                              ? '#f0f9ff' 
-                              : 'white',
-                            color: state.isSelected ? '#1e40af' : '#374151',
-                            '&:hover': {
-                              backgroundColor: '#f0f9ff'
-                            }
-                          })
-                        }}
-                      />
+                      <Label>
+                        Holiday Type <span className="text-red-500">*</span>
+                      </Label>
+                      <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                        <MuiSelect
+                          displayEmpty
+                          value={selectedType}
+                          onChange={(e) => setSelectedType(e.target.value)}
+                          MenuProps={selectMenuProps}
+                          renderValue={(selected) => {
+                            if (!selected) return placeholderText('Select...');
+                            return String(selected).charAt(0).toUpperCase() + String(selected).slice(1);
+                          }}
+                        >
+                          <MenuItem value="public">Public</MenuItem>
+                          <MenuItem value="festival">Festival</MenuItem>
+                          <MenuItem value="maintenance">Maintenance</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-sites">Select Sites <span className="text-red-500">*</span></Label>
-                      <ReactSelect
-                        id="edit-sites"
-                        placeholder="Select sites"
-                        isMulti
-                        isLoading={loadingSites}
-                        value={siteOptions.filter(site => selectedSites.includes(site.id))}
-                        onChange={(selectedOptions) => {
-                          const ids = selectedOptions ? selectedOptions.map(option => option.id) : [];
-                          setSelectedSites(ids);
-                        }}
-                        options={siteOptions}
-                        getOptionLabel={(option) => option.name}
-                        getOptionValue={(option) => option.id.toString()}
-                        styles={{
-                          control: (base, state) => ({
-                            ...base,
-                            borderColor: '#d1d5db',
-                            '&:hover': {
-                              borderColor: '#cbd5e1'
-                            },
-                            boxShadow: 'none',
-                            fontSize: '14px',
-                            minHeight: '40px'
-                          }),
-                          placeholder: (base) => ({
-                            ...base,
-                            color: '#9CA3AF'
-                          }),
-                          multiValue: (base) => ({
-                            ...base,
-                            backgroundColor: '#f1f5f9'
-                          }),
-                          multiValueLabel: (base) => ({
-                            ...base,
-                            color: '#334155'
-                          }),
-                          multiValueRemove: (base) => ({
-                            ...base,
-                            color: '#64748b',
-                            '&:hover': {
-                              backgroundColor: '#e2e8f0',
-                              color: '#475569'
-                            }
-                          }),
-                          option: (base, state) => ({
-                            ...base,
-                            backgroundColor: state.isSelected 
-                              ? '#dbeafe' 
-                              : state.isFocused 
-                              ? '#f0f9ff' 
-                              : 'white',
-                            color: state.isSelected ? '#1e40af' : '#374151',
-                            '&:hover': {
-                              backgroundColor: '#f0f9ff'
-                            }
-                          })
-                        }}
-                      />
+                      <Label>
+                        Select Sites <span className="text-red-500">*</span>
+                      </Label>
+                      <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                        <MuiSelect
+                          displayEmpty
+                          multiple
+                          value={selectedSites}
+                          onChange={(e) => setSelectedSites(e.target.value as number[])}
+                          renderValue={(selected) => {
+                            const labels = siteOptions
+                              .filter(site => (selected as number[]).includes(site.id))
+                              .map(site => site.name);
+                            return labels.length > 0
+                              ? labels.join(', ')
+                              : placeholderText(loadingSites ? 'Loading...' : 'Select...');
+                          }}
+                          MenuProps={selectMenuProps}
+                          disabled={loadingSites}
+                        >
+                          {siteOptions.map(site => (
+                            <MenuItem key={site.id} value={site.id}>
+                              <Checkbox size="small" checked={selectedSites.includes(site.id)} />
+                              {site.name}
+                            </MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="edit-modules">Select Module <span className="text-red-500">*</span></Label>
-                      <ReactSelect
-                        id="edit-modules"
-                        placeholder="Select module"
-                        isMulti
-                        value={customerOptions.filter(customer => selectedCustomers.includes(customer)).map(customer => ({ value: customer, label: customer.charAt(0).toUpperCase() + customer.slice(1) }))}
-                        onChange={(selectedOptions) => {
-                          const values = selectedOptions ? selectedOptions.map(option => option.value) : [];
-                          setSelectedCustomers(values);
-                        }}
-                        options={customerOptions.map(customer => ({ value: customer, label: customer.charAt(0).toUpperCase() + customer.slice(1) }))}
-                        styles={{
-                          control: (base, state) => ({
-                            ...base,
-                            borderColor: '#d1d5db',
-                            '&:hover': {
-                              borderColor: '#cbd5e1'
-                            },
-                            boxShadow: 'none',
-                            fontSize: '14px',
-                            minHeight: '40px'
-                          }),
-                          placeholder: (base) => ({
-                            ...base,
-                            color: '#9CA3AF'
-                          }),
-                          multiValue: (base) => ({
-                            ...base,
-                            backgroundColor: '#f1f5f9'
-                          }),
-                          multiValueLabel: (base) => ({
-                            ...base,
-                            color: '#334155'
-                          }),
-                          multiValueRemove: (base) => ({
-                            ...base,
-                            color: '#64748b',
-                            '&:hover': {
-                              backgroundColor: '#e2e8f0',
-                              color: '#475569'
-                            }
-                          }),
-                          option: (base, state) => ({
-                            ...base,
-                            backgroundColor: state.isSelected 
-                              ? '#dbeafe' 
-                              : state.isFocused 
-                              ? '#f0f9ff' 
-                              : 'white',
-                            color: state.isSelected ? '#1e40af' : '#374151',
-                            '&:hover': {
-                              backgroundColor: '#f0f9ff'
-                            }
-                          })
-                        }}
-                      />
+                      <Label>
+                        Select Module <span className="text-red-500">*</span>
+                      </Label>
+                      <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                        <MuiSelect
+                          displayEmpty
+                          multiple
+                          value={selectedCustomers}
+                          onChange={(e) => setSelectedCustomers(e.target.value as string[])}
+                          renderValue={(selected) => {
+                            const labels = (selected as string[])
+                              .map(customer => customer.charAt(0).toUpperCase() + customer.slice(1));
+                            return labels.length > 0
+                              ? labels.join(', ')
+                              : placeholderText('Select...');
+                          }}
+                          MenuProps={selectMenuProps}
+                        >
+                          {customerOptions.map(customer => (
+                            <MenuItem key={customer} value={customer}>
+                              <Checkbox size="small" checked={selectedCustomers.includes(customer)} />
+                              {customer.charAt(0).toUpperCase() + customer.slice(1)}
+                            </MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   </div>
                 </CardContent>
@@ -1435,18 +1473,17 @@ export const HolidayCalendarPage = () => {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                <Button 
-                  variant="ghost"
-                  onClick={handleUpdate} 
-                  className="fm-button-fix fm-button-brand px-4 py-2"
+                <Button
+                  onClick={handleUpdate}
+                  className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
                   disabled={isSubmitting || loadingEditData}
                 >
                   {isSubmitting ? 'Updating Holiday...' : 'Update Holiday'}
                 </Button>
-                <Button 
-                  variant="ghost"
-                  onClick={handleEditCancel} 
-                  className="fm-button-fix fm-button-brand px-4 py-2"
+                <Button
+                  variant="outline"
+                  onClick={handleEditCancel}
+                  className="border-brand text-brand px-4 py-2"
                 >
                   Cancel
                 </Button>

@@ -19,6 +19,7 @@ import {
   ChartAreaIcon,
   Shield,
   Menu,
+  Activity,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -554,7 +555,7 @@ export const Header = () => {
               {!isViSite && (
                 <button
                   onClick={() => (window.location.href = "/dashboard")}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <ChartArea className="w-4 h-4" />
                   Dashboard
@@ -565,7 +566,7 @@ export const Header = () => {
                   onClick={() =>
                     (window.location.href = "/dashboard-executive")
                   }
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <ChartAreaIcon className="w-4 h-4" />
                   Executive Dashboard
@@ -586,10 +587,19 @@ export const Header = () => {
               {canShowMSafeDashboard && (
                 <button
                   onClick={handleMSafeDashboardRevamp}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <Shield className="w-4 h-4" />
                   Msafe Dashboard Revamp
+                </button>
+              )}
+              {!isViSite && (
+                <button
+                  onClick={() => (window.location.href = "/posthog-dashboard")}
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <Activity className="w-4 h-4" />
+                  Usage Analytics
                 </button>
               )}
             </div>

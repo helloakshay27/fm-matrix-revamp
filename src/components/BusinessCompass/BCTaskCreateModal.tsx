@@ -319,6 +319,7 @@ interface BCTaskCreateModalProps {
   baseUrl: string;
   token: string;
   prefilledDate?: { year: number; month: number; date: number };
+  prefilledTitle?: string;
   dateResetKey?: number;
 }
 
@@ -328,6 +329,7 @@ const SimpleTaskForm = ({
   onClose,
   onSuccess,
   prefilledDate,
+  prefilledTitle,
   dateResetKey,
 }: {
   baseUrl: string;
@@ -335,11 +337,12 @@ const SimpleTaskForm = ({
   onClose: () => void;
   onSuccess?: () => void;
   prefilledDate?: { year: number; month: number; date: number };
+  prefilledTitle?: string;
   dateResetKey?: number;
 }) => {
   const [users, setUsers] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    taskTitle: "",
+    taskTitle: prefilledTitle || "",
     description: "",
     responsiblePerson: "",
     responsiblePersonName: "",
@@ -365,6 +368,9 @@ const SimpleTaskForm = ({
     } else {
       const t = new Date();
       setStartDate({ year: t.getFullYear(), month: t.getMonth(), date: t.getDate() });
+    }
+    if (prefilledTitle) {
+      setFormData((prev) => ({ ...prev, taskTitle: prefilledTitle }));
     }
   }, [dateResetKey]);
   const [endDate, setEndDate] = useState<any>(null);
@@ -947,6 +953,7 @@ const BCTaskCreateModal = ({
   baseUrl,
   token,
   prefilledDate,
+  prefilledTitle,
   dateResetKey,
 }: BCTaskCreateModalProps) => {
   return (
@@ -990,6 +997,7 @@ const BCTaskCreateModal = ({
             onClose={onClose}
             onSuccess={onSuccess}
             prefilledDate={prefilledDate}
+            prefilledTitle={prefilledTitle}
             dateResetKey={dateResetKey}
           />
         </div>

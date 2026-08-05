@@ -724,7 +724,7 @@ export default function UtilityDailyReadingsDashboard() {
               <Button
                 onClick={handleFilterReset}
                 variant="outline"
-                className="border-brand text-brand hover:bg-brand hover:text-white px-8 py-2"
+                className="border-brand text-brand hover:bg-brand-selected hover:text-brand px-8 py-2"
               >
                 Reset
               </Button>

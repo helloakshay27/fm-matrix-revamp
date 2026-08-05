@@ -8,6 +8,7 @@ import { buildEditJobPayload } from "../api/jobsApi";
 import { T, COLORS, EMP_TYPES, EXP_LEVELS } from "../constants";
 import { I, ico } from "../icons";
 import { card, SH, FI, FS, FT, Fld, Btn, StatusPill } from "./UI";
+import MemberSearchSelect from "./MemberSearchSelect";
 
 export default function EditJdScreen({ jd: propJd, kras: propKras, kpis: propKpis }) {
   const navigate = useNavigate();
@@ -42,6 +43,10 @@ export default function EditJdScreen({ jd: propJd, kras: propKras, kpis: propKpi
     const label = [d.department_name, d.name, d.title].find(Boolean) || "";
     return String(label).trim().toLowerCase() === String(editForm.dept || "").trim().toLowerCase();
   })?.id || "";
+  const departmentOptions = departments.map((d) => ({
+    id: d.id,
+    name: d.department_name || d.name || d.title || "Unnamed department",
+  }));
 
   const doSave = (andPublish) => {
     const payload = buildEditJobPayload(editForm, departments);
@@ -122,19 +127,19 @@ export default function EditJdScreen({ jd: propJd, kras: propKras, kpis: propKpi
             />
           </Fld>
           <Fld label="Department *">
-            <FS
+            <MemberSearchSelect
               value={selectedDeptValue}
-              onChange={(e) => {
-                const selected = departments.find((d) => String(d.id) === String(e.target.value));
-                ef("deptId", e.target.value);
-                ef("dept", selected?.department_name || selected?.name || selected?.title || "");
+              options={departmentOptions}
+              onChange={(value, selected) => {
+                ef("deptId", value);
+                ef("dept", selected?.name || "");
               }}
-            >
-              <option value="">{deptLoading ? "Loading..." : "Select department"}</option>
-              {departments.map((d) => (
-                <option key={d.id} value={d.id}>{d.department_name || d.name || d.title || "Unnamed department"}</option>
-              ))}
-            </FS>
+              placeholder="Search and select department"
+              loading={deptLoading}
+              loadingText="Loading departments..."
+              emptyText="No departments found"
+              disabled={deptLoading || updateJob.isPending}
+            />
           </Fld>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 18 }}>

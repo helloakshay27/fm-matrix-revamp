@@ -74,7 +74,7 @@ export const FitoutChecklistFilterDialog = ({ isOpen, onClose }: FitoutChecklist
           <Button
             variant="outline"
             onClick={handleReset}
-            className="px-8 border-brand text-brand hover:bg-brand hover:text-white"
+            className="px-8 border-brand text-brand hover:bg-brand-selected hover:text-brand"
           >
             Reset
           </Button>

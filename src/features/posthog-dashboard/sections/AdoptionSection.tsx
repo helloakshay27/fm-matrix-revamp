@@ -32,7 +32,7 @@ export function AdoptionSection() {
           head={<CardHead cr={`A3 · Adoption trend · Last ${TREND_WEEKS} weeks`} ct="Weekly active users" cd="Are more of your people using the app week over week?" />}
         >
           <Guard status={status.adopt} empty={!adopt.trendChart.cur.some((v) => v > 0)}>
-            <LineChart cur={adopt.trendChart.cur} prev={adopt.trendChart.prev} showPrev={state.prev} />
+            <LineChart cur={adopt.trendChart.cur} prev={adopt.trendChart.prev} showPrev={state.prev} labels={adopt.trendChart.labels} />
             <div className="phg-legend">
               <span><i style={{ background: 'var(--phg-orange)' }} /> Last {TREND_WEEKS} weeks</span>
               <span><i className="dash" /> Prior {TREND_WEEKS} weeks</span>

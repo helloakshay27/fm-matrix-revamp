@@ -281,7 +281,7 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
         <Button
           variant="outline"
           onClick={handleReset}
-          className="border-brand text-brand hover:bg-brand hover:text-white"
+          className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
         >
           Reset
         </Button>

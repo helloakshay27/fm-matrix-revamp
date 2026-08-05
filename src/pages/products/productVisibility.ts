@@ -14,6 +14,7 @@ export const RESTRICTED_PRODUCT_EMAILS: Record<string, string[]> = {
   "life-compass": [
     "chetan.bafna@lockated.com",
     "adhip.shetty@lockated.com",
+    "binal.doshi@lockated.com"
   ],
 };
 

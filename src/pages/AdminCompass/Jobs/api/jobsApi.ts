@@ -212,37 +212,66 @@ export async function fetchJobDescriptions() {
 }
 
 function mapApiKraToUi(apiKra) {
+  const assignees = Array.isArray(apiKra.assignees) ? apiKra.assignees : [];
+  const assigneeIdsFromUsers = assignees
+    .map((user) => user?.id ?? user?.user_id)
+    .filter((id) => id !== undefined && id !== null);
+  const assigneeNamesFromUsers = assignees
+    .map((user) => user?.name || user?.full_name)
+    .filter(Boolean);
+  const assigneeIds = assigneeIdsFromUsers.length
+    ? assigneeIdsFromUsers
+    : Array.isArray(apiKra.assignee_ids)
+      ? apiKra.assignee_ids
+      : apiKra.assignee_id != null
+        ? [apiKra.assignee_id]
+        : [];
+
   return {
     id: apiKra.id,
     jdId: apiKra.job_description_id ?? null,
     title: apiKra.title || "—",
     desc: apiKra.description || "",
     weightage: Number(apiKra.weightage) || 0,
-    assignee: apiKra.assignee_name || "",
+    assignee: apiKra.assignee_name || assigneeNamesFromUsers[0] || "",
+    assigneeNames: assigneeNamesFromUsers,
     // Assign modal current assignees ko in ids se pre-select karta hai.
-    assigneeId: apiKra.assignee_id ?? null,
-    assigneeIds: Array.isArray(apiKra.assignee_ids)
-      ? apiKra.assignee_ids
-      : apiKra.assignee_id != null
-        ? [apiKra.assignee_id]
-        : [],
+    assigneeId: apiKra.assignee_id ?? assigneeIds[0] ?? null,
+    assigneeIds,
+    assignees,
     effectiveFrom: apiKra.effective_from || "",
     effectiveTo: apiKra.effective_to || "",
     status: apiKra.status || "active",
     departmentName: apiKra.department_name || "",
     roleTitle: apiKra.job_title || "",
-    kpis: (apiKra.kpis || []).map((apiKpi) => ({
-      id: apiKpi.id,
-      name: apiKpi.name || "—",
-      unit: apiKpi.unit || "",
-      weight: Number(apiKpi.weight || apiKpi.weightage) || 0,
-      targetValue: apiKpi.target_value || "",
-      frequency: apiKpi.frequency || "",
-      measurementType: apiKpi.measurement_type || "positive",
-      dataSource: apiKpi.data_source || "",
-      moduleName: apiKpi.module_name || "",
-      status: apiKpi.status || "active",
-    })),
+    kpis: (apiKra.kpis || []).map((apiKpi) => {
+      const kpiAssignees = Array.isArray(apiKpi.assignees)
+        ? apiKpi.assignees
+        : [];
+      return {
+        id: apiKpi.id,
+        kraId: apiKra.id,
+        jdId: apiKra.job_description_id ?? null,
+        name: apiKpi.name || "—",
+        unit: apiKpi.unit || "",
+        weight: Number(apiKpi.weight || apiKpi.weightage) || 0,
+        weightage: Number(apiKpi.weight || apiKpi.weightage) || 0,
+        targetValue: apiKpi.target_value || "",
+        target: apiKpi.target_value || "",
+        frequency: apiKpi.frequency || "",
+        freq: apiKpi.frequency || "",
+        measurementType: apiKpi.measurement_type || "positive",
+        dataSource: apiKpi.data_source || "",
+        moduleName: apiKpi.module_name || "",
+        status: apiKpi.status || "active",
+        assigneeIds: kpiAssignees
+          .map((user) => user?.id ?? user?.user_id)
+          .filter((id) => id !== undefined && id !== null),
+        assigneeNames: kpiAssignees
+          .map((user) => user?.name || user?.full_name)
+          .filter(Boolean),
+      };
+    }),
     kpiCount: apiKra.kpis_count ?? (apiKra.kpis || []).length,
   };
 }

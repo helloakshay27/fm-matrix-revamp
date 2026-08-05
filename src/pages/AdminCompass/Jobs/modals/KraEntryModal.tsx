@@ -182,7 +182,6 @@ export default function KraEntryModal() {
                 setNewKra((f) => ({
                   ...f,
                   assigneeIds: values || [],
-                  // Pehla member `assignee_id` me jata hai (API dono leta hai).
                   assigneeId: values?.[0] || "",
                 }))
               }

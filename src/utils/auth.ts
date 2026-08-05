@@ -268,12 +268,12 @@ const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
   hostname.includes("lockated.gophygital.work") ||
-  hostname.includes("community.gophygital.work") ||  hostname === "localhost" ;
+  hostname.includes("community.gophygital.work")   ;
 
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
-  hostname === "fm-matrix.lockated.com"  ;
+  hostname === "fm-matrix.lockated.com" ||  hostname === "localhost";
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
@@ -306,7 +306,7 @@ export const getOrganizationsByEmail = async (
 
   if (isViSite) {
     const response = await fetch(
-      `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
+      `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {

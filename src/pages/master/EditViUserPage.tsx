@@ -327,7 +327,7 @@ export const EditViUserPage = () => {
                           webEnabled: checked,
                         }))
                       }
-                      className="data-[state=checked]:bg-[#C72030]"
+                      className="data-[state=checked]:bg-[#C72030] disabled:data-[state=checked]:bg-gray-300 disabled:data-[state=unchecked]:bg-gray-200"
                     />
                   </div>
                 </div>

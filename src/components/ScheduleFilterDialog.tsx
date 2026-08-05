@@ -202,15 +202,14 @@ export const ScheduleFilterDialog = ({
           <div className="flex justify-end gap-3 pt-10">
             <Button
               onClick={handleApply}
-              variant="ghost"
-              className="fm-button-fix fm-button-brand px-4 py-2"
+              className="bg-brand text-white hover:bg-brand-hover px-4 py-2"
             >
               Apply Filters
             </Button>
             <Button
               onClick={handleReset}
               variant="outline"
-              className="border-brand text-brand hover:bg-brand hover:text-white"
+              className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
             >
               Reset
             </Button>

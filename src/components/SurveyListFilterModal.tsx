@@ -1,15 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { X, Loader2, Check, ChevronsUpDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
+import { X } from 'lucide-react';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 interface FilterModalProps {
   open: boolean;
@@ -45,7 +68,6 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
   
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
-  const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
 
   // Fetch categories when modal opens
   useEffect(() => {
@@ -120,8 +142,20 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl min-h-[200px]">
+    <Dialog open={open} onOpenChange={onClose} modal={false}>
+      <DialogContent
+        className="max-w-2xl min-h-[200px] bg-white overflow-visible"
+        onPointerDownOutside={(e) => {
+          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader className="relative">
           <DialogTitle className="text-xl text-slate-950 font-normal">FILTER BY</DialogTitle>
           <button
@@ -138,121 +172,59 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
             <h3 className="text-lg font-semibold text-[#C72030] mb-4">Question Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               {/* Survey Name Filter */}
-              <div className="space-y-2">
-                <Label htmlFor="surveyName">Title</Label>
-                <Input
+              <div>
+                <TextField
                   id="surveyName"
+                  label="Title"
+                  variant="outlined"
+                  fullWidth
                   placeholder="Enter Title"
                   value={filters.surveyName}
                   onChange={(e) => handleInputChange('surveyName', e.target.value)}
-                  className="h-10 border-gray-300 focus-visible:border-gray-500 text-black"
+                  sx={fieldStyles}
                 />
               </div>
 
               {/* Category Filter */}
-              <div className="space-y-2">
-                <Label htmlFor="category">Ticket Category</Label>
-                <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={categoryPopoverOpen}
-                      className="!h-10 w-full justify-between text-left font-normal !border-gray hover:!border-gray focus:!border-gray focus-visible:!border-black !text-black bg-white hover:bg-white focus:bg-white px-3 py-2 rounded-md shadow-sm sm:!h-10"
-                      disabled={loadingCategories}
-                    >
-                      {filters.categoryId === 'all' 
-                        ? "All Categories" 
-                        : categories.find((category) => category.id.toString() === filters.categoryId)?.name || "Select Category"
-                      }
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 max-h-80" align="start">
-                    <Command>
-                      <CommandInput placeholder="Search categories..." className="h-9" />
-                      <CommandEmpty>No category found.</CommandEmpty>
-                      <div className="max-h-60 overflow-y-auto overscroll-contain scroll-smooth" 
-                           style={{ 
-                             scrollbarWidth: 'thin',
-                             scrollBehavior: 'smooth',
-                           }}
-                           onWheel={(e) => {
-                             e.stopPropagation();
-                             const container = e.currentTarget;
-                             container.scrollTop += e.deltaY;
-                           }}
-                      >
-                        <CommandGroup className="h-auto">
-                          <CommandItem
-                            value="all-categories"
-                            onSelect={() => {
-                              handleInputChange('categoryId', 'all');
-                              setCategoryPopoverOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                filters.categoryId === 'all' ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            All Categories
-                          </CommandItem>
-                          {loadingCategories ? (
-                            <div className="flex items-center gap-2 p-2 text-sm text-gray-500">
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              Loading categories...
-                            </div>
-                          ) : (
-                            Array.isArray(categories) && categories.map((category) => (
-                              <CommandItem
-                                key={category.id}
-                                value={category.name.toLowerCase()}
-                                onSelect={() => {
-                                  handleInputChange('categoryId', category.id.toString());
-                                  setCategoryPopoverOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    filters.categoryId === category.id.toString() ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {category.name}
-                              </CommandItem>
-                            ))
-                          )}
-                        </CommandGroup>
-                      </div>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+              <div>
+                <MuiFormControl fullWidth variant="outlined">
+                  <InputLabel id="filter-category-label">Ticket Category</InputLabel>
+                  <MuiSelect
+                    labelId="filter-category-label"
+                    label="Ticket Category"
+                    value={filters.categoryId}
+                    onChange={(e) => handleInputChange('categoryId', e.target.value)}
+                    disabled={loadingCategories}
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value="all">All Categories</MenuItem>
+                    {Array.isArray(categories) && categories.map((category) => (
+                      <MenuItem key={category.id} value={category.id.toString()}>
+                        {category.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
 
               {/* Check Type Filter */}
-              <div className="space-y-2">
-                <Label htmlFor="checkType">Check Type</Label>
-                <Select
-                  value={filters.checkType}
-                  onValueChange={(value) => handleInputChange('checkType', value)}
-                >
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Check Type" />
-                  </SelectTrigger>
-                  <SelectContent 
-                    side="bottom" 
-                    align="start" 
-                    className="z-[9999] max-h-48 overflow-y-auto"
-                    avoidCollisions={false}
-                    sideOffset={4}
+              <div>
+                <MuiFormControl fullWidth variant="outlined">
+                  <InputLabel id="filter-check-type-label">Check Type</InputLabel>
+                  <MuiSelect
+                    labelId="filter-check-type-label"
+                    label="Check Type"
+                    value={filters.checkType}
+                    onChange={(e) => handleInputChange('checkType', e.target.value)}
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
                   >
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="patrolling">Patrolling</SelectItem>
-                    <SelectItem value="survey">Survey</SelectItem>
-                  </SelectContent>
-                </Select>
+                    <MenuItem value="all">All Types</MenuItem>
+                    <MenuItem value="patrolling">Patrolling</MenuItem>
+                    <MenuItem value="survey">Survey</MenuItem>
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
             </div>
           </div>

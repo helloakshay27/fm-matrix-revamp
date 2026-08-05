@@ -21,6 +21,23 @@ export const normalizeKra = (row) => {
     firstDefined(row?.title, row?.name, row?.kra_name, nested?.title, nested?.name) ?? ""
   ).trim();
   if (!id || !title) return null;
+  const assignees = Array.isArray(row?.assignees)
+    ? row.assignees
+    : Array.isArray(nested?.assignees)
+      ? nested.assignees
+      : [];
+  const assigneeIds = Array.isArray(row?.assignee_ids)
+    ? row.assignee_ids.map(toNum).filter((value) => value !== undefined)
+    : assignees.map((user) => toNum(user?.id)).filter((value) => value !== undefined);
+  const singleAssigneeId = toNum(firstDefined(row?.assignee_id, nested?.assignee_id));
+  const normalizedAssigneeIds = assigneeIds.length
+    ? assigneeIds
+    : singleAssigneeId !== undefined
+      ? [singleAssigneeId]
+      : [];
+  const assigneeNames = assignees
+    .map((user) => String(user?.name || user?.full_name || "").trim())
+    .filter(Boolean);
 
   return {
     ...row,
@@ -30,6 +47,10 @@ export const normalizeKra = (row) => {
     weightage: toNum(firstDefined(row?.weight, row?.weightage, nested?.weightage)) ?? 0,
     departmentId: toNum(firstDefined(row?.department_id, row?.department?.id, nested?.department_id)),
     jdId: firstDefined(row?.job_description_id, row?.job_description?.id, nested?.job_description_id),
+    assigneeId: singleAssigneeId ?? normalizedAssigneeIds[0] ?? null,
+    assigneeIds: normalizedAssigneeIds,
+    assigneeNames,
+    assignee: firstDefined(row?.assignee_name, nested?.assignee_name, assigneeNames[0]),
     status: String(firstDefined(row?.status, nested?.status, "active")).toLowerCase(),
   };
 };
@@ -93,13 +114,12 @@ const assigneeIdsOf = (form = {}) => {
 
 /**
  * Assignee fields — `assignee_ids` ek asli JSON array jata hai (wahi shape jo
- * KPI API me jata hai: `assignee_ids: [286725, 189037, 305677]`), aur
- * `assignee_id` me pehla member, kyunki API single assignee bhi rakhta hai.
+ * KPI API me jata hai: `assignee_ids: [286725, 189037, 305677]`).
  */
 const assigneePayload = (form = {}) => {
   const ids = assigneeIdsOf(form);
   if (!ids.length) return {};
-  return { assignee_id: ids[0], assignee_ids: ids };
+  return { assignee_ids: ids };
 };
 
 /** Sirf bhare hue fields bhejte hain — khali/undefined skip. */
@@ -113,7 +133,7 @@ const compact = (payload = {}) =>
 /**
  * POST {BASE_URL}/kras.json?access_token=…   body: JSON
  *   { kra_type, resource_type, resource_id, title, description, weightage,
- *     status, job_description_id, assignee_id, assignee_ids: [...],
+ *     status, job_description_id, assignee_ids: [...],
  *     effective_from, effective_to }
  */
 export const createKra = async (form = {}) => {
@@ -149,7 +169,7 @@ export const createKra = async (form = {}) => {
 /**
  * PATCH {BASE_URL}/kras/:id.json?access_token=…   body: JSON
  * Partial update — title, description, weightage, status, job_description_id,
- * assignee_id + assignee_ids (array), effective_from / effective_to.
+ * assignee_ids (array), effective_from / effective_to.
  */
 export const updateKra = async (id, form = {}) => {
   const { baseUrl, token } = getApiContext();
@@ -210,12 +230,11 @@ export const updateKraStatus = async (id, status) => {
 
 /**
  * PATCH {BASE_URL}/kras/:id.json?access_token=…   body: JSON
- *   { "assignee_id": 286725, "assignee_ids": [286725, 189037, 305677] }
+ *   { "assignee_ids": [286725, 189037, 305677] }
  *
  * Sirf assignee update karta hai — baaki fields (title, weightage, dates…)
  * bheje hi nahi jate, taki galti se overwrite na hon. `assignee_ids` array me
- * saare members (KPI API jaisa hi shape), aur `assignee_id` me pehla, kyunki
- * API single assignee bhi rakhta hai. Khali list = assignee hata do.
+ * saare members (KPI API jaisa hi shape). Khali list = assignee hata do.
  */
 export const updateKraAssignees = async (id, assigneeIds = []) => {
   const { baseUrl, token } = getApiContext();
@@ -223,10 +242,7 @@ export const updateKraAssignees = async (id, assigneeIds = []) => {
   const ids = (assigneeIds || [])
     .map((value) => toNum(value))
     .filter((value) => value !== undefined);
-  const body = {
-    assignee_id: ids.length ? ids[0] : null,
-    assignee_ids: ids,
-  };
+  const body = { assignee_ids: ids };
   try {
     const res = await axios.patch(buildApiUrl(`/kras/${id}.json`), body, {
       headers: apiHeaders(),
