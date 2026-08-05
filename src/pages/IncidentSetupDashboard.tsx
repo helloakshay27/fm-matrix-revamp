@@ -2254,7 +2254,7 @@ export const IncidentSetupDashboard = () => {
       <Button
         variant="ghost"
         size="sm"
-        className="h-8 w-8 p-0 text-brand-error hover:bg-brand-error/10"
+        className="h-8 w-8 p-0 text-black hover:bg-black/10"
         onClick={() =>
           selectedCategory === 'Escalations'
             ? handleDeleteEscalation(item)
