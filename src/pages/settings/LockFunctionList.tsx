@@ -8,6 +8,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { CreateLockFunctionDialog } from './CreateLockFunctionDialog';
+import { EditLockFunctionDialog } from './EditLockFunctionDialog';
 import { CreateFunctionDialog } from './CreateFunctionDialog';
 import { lockFunctionService, LockFunction as ApiLockFunctionItem } from '@/services/lockFunctionService';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
@@ -157,6 +158,8 @@ export const LockFunctionList = () => {
   const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingLockFunctionId, setEditingLockFunctionId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return Number(params.get('page')) || 1;
@@ -194,6 +197,16 @@ export const LockFunctionList = () => {
   useEffect(() => {
     fetchLockFunctionData();
   }, []);
+
+  // Open edit popup when redirected from legacy /edit/:id route
+  useEffect(() => {
+    const editId = (location.state as { editLockFunctionId?: number } | null)?.editLockFunctionId;
+    if (editId) {
+      setEditingLockFunctionId(editId);
+      setIsEditDialogOpen(true);
+      navigate(location.pathname + location.search, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, location.search, navigate]);
 
  // Reset to page 1 only when search changes
   const prevSearchRef = useRef('');
@@ -340,8 +353,8 @@ export const LockFunctionList = () => {
   };
 
   const handleEdit = (id: number) => {
-    console.log('Edit lock function:', id);
-    navigate(`/settings/account/lock-function/edit/${id}`);
+    setEditingLockFunctionId(id);
+    setIsEditDialogOpen(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -636,6 +649,21 @@ export const LockFunctionList = () => {
         onOpenChange={setIsCreateDialogOpen}
         onLockFunctionCreated={() => {
           setIsCreateDialogOpen(false);
+          fetchLockFunctionData();
+        }}
+      />
+
+      {/* Edit Lock Function Dialog */}
+      <EditLockFunctionDialog
+        open={isEditDialogOpen}
+        onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) setEditingLockFunctionId(null);
+        }}
+        lockFunctionId={editingLockFunctionId}
+        onLockFunctionUpdated={() => {
+          setIsEditDialogOpen(false);
+          setEditingLockFunctionId(null);
           fetchLockFunctionData();
         }}
       />

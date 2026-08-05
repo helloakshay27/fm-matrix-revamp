@@ -33,7 +33,9 @@ export const LockSubFunctionView = () => {
   }, [id]);
 
   const handleEdit = () => {
-    navigate(`/settings/account/lock-sub-function/edit/${id}`);
+    navigate('/settings/account/lock-sub-function', {
+      state: { editLockSubFunctionId: Number(id) },
+    });
   };
 
   const handleDelete = async () => {
