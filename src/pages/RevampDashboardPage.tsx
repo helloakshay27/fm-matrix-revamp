@@ -562,11 +562,11 @@ const SLA_BREACH_TREND_DATA = [
 ];
 
 const AGE_TIER_COLORS = [
-  ANALYTICS_PALETTE[1],
+  ANALYTICS_PALETTE[3],
   ANALYTICS_PALETTE[2],
-  ANALYTICS_PALETTE[4],
+  ANALYTICS_PALETTE[2],
   ANALYTICS_PALETTE[0],
-  ANALYTICS_PALETTE[6],
+  ANALYTICS_PALETTE[3],
 ];
 
 const RESOLVED_AGE_TIER_DATA = [
@@ -638,7 +638,7 @@ const SOURCE_ORIGIN_DATA = [
   { source: "Patrolling", tickets: 5 },
 ];
 
-const SOURCE_ORIGIN_COLORS = ["#798C5E", "#EDC488", "#6B9BCC", "#9EC8BA", "#E7848E"];
+const SOURCE_ORIGIN_COLORS = ["#8E7BE0", "#8E7BE0", "#6B9BCC", "#9EC8BA", "#8E7BE0"];
 
 const REPEAT_COMPLAINTS_DATA = [
   { issue: "Godrej Living — AC not cooling", count: 3 },
@@ -660,7 +660,7 @@ const PEAK_COMPLAINT_HOURS_DATA = [
   { hour: "8PM", count: 12 },
 ];
 
-const PEAK_HOURS_COLORS = ["#108C72", "#EDC488", "#E7848E", "#E7848E", "#EDC488", "#108C72", "#108C72"];
+const PEAK_HOURS_COLORS = ["#9EC8BA", "#DA7756", "#DA7756", "#DA7756", "#DA7756", "#9EC8BA", "#9EC8BA"];
 
 const CATEGORY_TABLE_COLUMNS: DataTableColumn<CategoryRow>[] = [
   { key: "category", header: "Category", render: (row) => <span className="font-semibold text-brand-text">{row.category}</span> },
@@ -721,7 +721,7 @@ const BREAKDOWN_BY_ALLOCATION_DATA = [
   { team: "Common Area", count: 11 },
   { team: "Security", count: 8 },
 ];
-const BREAKDOWN_BY_ALLOCATION_COLORS = [BRAND_HEX.err, BRAND_HEX.warn, BRAND_HEX.warn, BRAND_HEX.green, BRAND_HEX.green];
+const BREAKDOWN_BY_ALLOCATION_COLORS = ["#DA7756", "#DA7756", "#DA7756", "#8E7BE0", "#8E7BE0"];
 
 const CATEGORY_ASSET_BREAKDOWN_DATA = [
   { category: "IT", count: 124 },
@@ -734,12 +734,12 @@ const CATEGORY_ASSET_BREAKDOWN_DATA = [
 ];
 const CATEGORY_ASSET_BREAKDOWN_COLORS = [
   BRAND_HEX.blue,
-  BRAND_HEX.green,
+  "#8E7BE0",
   BRAND_HEX.orange,
-  BRAND_HEX.warn,
-  BRAND_HEX.err,
+  "#8E7BE0",
+  "#8E7BE0",
   BRAND_HEX.teal,
-  BRAND_HEX.dark,
+  "#9EC8BA",
 ];
 
 const ASSET_LIFECYCLE_DATA = [
@@ -749,7 +749,6 @@ const ASSET_LIFECYCLE_DATA = [
   { name: "In Store", value: 3 },
   { name: "Disposed", value: 2 },
 ];
-const ASSET_LIFECYCLE_COLORS = [BRAND_HEX.ok, BRAND_HEX.err, BRAND_HEX.blue, BRAND_HEX.green, BRAND_HEX.dark];
 
 const REPAIR_COST_RATIO_DATA = [
   { asset: "DG Sync Panel", ratio: 39 },
@@ -757,7 +756,7 @@ const REPAIR_COST_RATIO_DATA = [
   { asset: "UPS Room Panel", ratio: 9 },
   { asset: "AC Compressor", ratio: 6 },
 ];
-const REPAIR_COST_RATIO_COLORS = [BRAND_HEX.err, BRAND_HEX.warn, BRAND_HEX.ok, BRAND_HEX.ok];
+const REPAIR_COST_RATIO_COLORS = ["#DA7756", "#DA7756", "#8E7BE0", "#8E7BE0"];
 
 const COST_BY_CATEGORY_DATA = [
   { category: "IT", value: 14.2 },
@@ -795,7 +794,6 @@ const AUDIT_STATUS_OVERVIEW_DATA = [
   { name: "Pending", value: 1 },
   { name: "Overdue", value: 22 },
 ];
-const AUDIT_STATUS_OVERVIEW_COLORS = [BRAND_HEX.ok, BRAND_HEX.green, BRAND_HEX.err];
 
 const AUDIT_COMPLETION_DATA = [
   { type: "Asset Audit", pct: 0, fraction: "0/27" },
@@ -837,7 +835,7 @@ const AMC_URGENCY_LANES = [
   },
 ];
 const AMC_URGENCY_STATUS_COLORS = {
-  criticalExpired: "#8B0000",
+  criticalExpired: "#DA7756",
   nonCriticalExpired: BRAND_HEX.warn,
   criticalUpcoming: BRAND_HEX.ok,
   nonCriticalUpcoming: BRAND_HEX.teal,
@@ -856,7 +854,7 @@ const AMC_VENDOR_CONCENTRATION_DATA = [
   { vendor: "Reliance Digital", pct: 28 },
   { vendor: "Oizom Instruments", pct: 19 },
 ];
-const AMC_VENDOR_CONCENTRATION_COLORS = [BRAND_HEX.err, BRAND_HEX.err, BRAND_HEX.warn, BRAND_HEX.warn, BRAND_HEX.green];
+const AMC_VENDOR_CONCENTRATION_COLORS = ["#DA7756", "#DA7756", "#DA7756", "#DA7756", "#9EC8BA"];
 
 const AMC_SERVICE_ASSET_SPLIT_DATA = [
   { type: "Service AMCs", total: 150, missed: 8 },
@@ -869,7 +867,7 @@ const AMC_COVERAGE_BY_CATEGORY_DATA = [
   { category: "Meter", pct: 42 },
   { category: "Furniture", pct: 31 },
 ];
-const AMC_COVERAGE_BY_CATEGORY_COLORS = [BRAND_HEX.ok, BRAND_HEX.ok, BRAND_HEX.warn, BRAND_HEX.err];
+const AMC_COVERAGE_BY_CATEGORY_COLORS = ["#8E7BE0", "#8E7BE0", "#9EC8BA", "#9EC8BA"];
 
 const AMC_COST_TREND_DATA = [
   { month: "Jan", cost: 6.8 },
@@ -911,9 +909,7 @@ const CHECKLIST_SITEWISE_COMPLIANCE_DATA = [
   { site: "Rooftop", compliance: 28 },
   { site: "Basement", compliance: 22 },
 ];
-const CHECKLIST_SITEWISE_COMPLIANCE_COLORS = CHECKLIST_SITEWISE_COMPLIANCE_DATA.map((row) =>
-  row.compliance >= 55 ? BRAND_HEX.ok : row.compliance >= 35 ? BRAND_HEX.warn : BRAND_HEX.err
-);
+const CHECKLIST_SITEWISE_COMPLIANCE_COLORS = ["#9EC8BA", "#8E7BE0", "#8E7BE0", "#8E7BE0", "#8E7BE0", "#8E7BE0"];
 
 const CHECKLIST_MONTHLY_TREND_DATA = [
   { month: "Jan", completed: 420, pending: 580 },
@@ -1059,7 +1055,7 @@ const SURVEY_WEEKLY_CSAT_DATA = [
   { week: "Jan11-Jan17", csat: 1.11 },
   { week: "Feb8-Feb14", csat: 5.0 },
 ];
-const SURVEY_WEEKLY_CSAT_COLORS = [BRAND_HEX.err, BRAND_HEX.ok, BRAND_HEX.err, BRAND_HEX.green];
+const SURVEY_WEEKLY_CSAT_COLORS = ["#9EC8BA", "#8E7BE0", "#9EC8BA", "#DA7756"];
 
 interface SurveyWeeklyRow {
   week: string;
@@ -1925,6 +1921,7 @@ export default function RevampDashboardPage() {
                   showInfoIcon
                   insightVariant="plain"
                   insight="Repair & Maintenance and General Tickets are stacked with Pending + In Progress and almost no Closed — nobody has picked most of these up yet. Air Conditioner and FSC are mostly Closed — a different, healthier shape entirely."
+                  seriesColors={["#9EC8BA", "#8E7BE0", "#DA7756", "#9EC8BA"]}
                   series={[
                     { dataKey: "pending", name: "Pending" },
                     { dataKey: "inProgress", name: "In Progress" },
@@ -1971,6 +1968,7 @@ export default function RevampDashboardPage() {
                   subtitle="Every breach, 12 months · not just what's due soon"
                   data={SLA_BREACH_TREND_DATA}
                   categoryKey="month"
+                  categoryColors={["#9EC8BA", "#8E7BE0", "#DA7756", "#8E7BE0", "#8E7BE0"]}
                   series={[{ dataKey: "breaches", name: "Breaches" }]}
                   showInfoIcon
                   height={140}
@@ -2190,7 +2188,7 @@ export default function RevampDashboardPage() {
                   subtitle="Same tenant, same issue, raised more than once — a fix that isn't holding"
                   data={REPEAT_COMPLAINTS_DATA}
                   categoryKey="issue"
-                  categoryColors={["#E7848E", "#EDC488"]}
+                  categoryColors={["#DA7756", "#DA7756"]}
                   series={[{ dataKey: "count", name: "Occurrences" }]}
                   showInfoIcon
                   insightVariant="plain"
@@ -2205,7 +2203,7 @@ export default function RevampDashboardPage() {
                   subtitle="8 tickets total, traceable to just 2 repeat-offender assets"
                   data={ASSET_LINKED_TICKETS_DATA}
                   categoryKey="asset"
-                  categoryColors={["#E7848E", "#EDC488"]}
+                  categoryColors={["#DA7756", "#DA7756"]}
                   series={[{ dataKey: "count", name: "Tickets" }]}
                   showInfoIcon
                   insightVariant="plain"
@@ -2322,9 +2320,9 @@ export default function RevampDashboardPage() {
                   title="Breakdown rate vs acceptable range"
                   subtitle="378 total assets · acceptable: 5–10%"
                   segments={[
-                    { value: 70, color: BRAND_HEX.ok },
-                    { value: 15, color: BRAND_HEX.warn },
-                    { value: 15, color: BRAND_HEX.err },
+                    { value: 70, color: "#E39090" },
+                    { value: 15, color: "#CDCAF5" },
+                    { value: 15, color: "#76CDC1" },
                   ]}
                   centerValue="100"
                   centerLabel="Total"
@@ -2357,7 +2355,7 @@ export default function RevampDashboardPage() {
                   categoryKey="category"
                   orientation="horizontal"
                   unit="%"
-                  categoryColors={[BRAND_HEX.err, BRAND_HEX.ok]}
+                  categoryColors={["#DA7756", "#9EC8BA"]}
                   series={[{ dataKey: "rate", name: "Breakdown rate" }]}
                   showInfoIcon
                   insightVariant="plain"
@@ -2416,7 +2414,6 @@ export default function RevampDashboardPage() {
                   title="Asset Lifecycle Status"
                   subtitle="In Use · Breakdown · Allocated · In Store · Disposed"
                   data={ASSET_LIFECYCLE_DATA}
-                  colors={ASSET_LIFECYCLE_COLORS}
                   centerLabel="378"
                   showInfoIcon
                   insightVariant="plain"
@@ -2501,6 +2498,7 @@ export default function RevampDashboardPage() {
                   categoryKey="category"
                   orientation="horizontal"
                   unit="L"
+                  categoryColors={["#9EC8BA", "#8E7BE0", "#DA7756", "#8E7BE0"]}
                   series={[{ dataKey: "value", name: "₹L" }]}
                   showInfoIcon
                   insightVariant="plain"
@@ -2591,7 +2589,6 @@ export default function RevampDashboardPage() {
                   title="Audit Status Overview"
                   subtitle="Scheduled · Conducted · Pending · Overdue"
                   data={AUDIT_STATUS_OVERVIEW_DATA}
-                  colors={AUDIT_STATUS_OVERVIEW_COLORS}
                   centerLabel="27"
                   showInfoIcon
                   insightVariant="plain"
@@ -2706,7 +2703,7 @@ export default function RevampDashboardPage() {
                   orientation="horizontal"
                   unit="%"
                   valueDomain={[0, 100]}
-                  categoryColors={[BRAND_HEX.warn, BRAND_HEX.warn, BRAND_HEX.warn]}
+                  categoryColors={[BRAND_HEX.warn, BRAND_HEX.warn, "#DA7756"]}
                   series={[{ dataKey: "pct", name: "Completion" }]}
                   labelFormatter={(_value, index) => AUDIT_COMPLETION_DATA[index]?.fraction ?? ""}
                   showInfoIcon
@@ -2877,7 +2874,7 @@ export default function RevampDashboardPage() {
                   subtitle="364 total contracts, previously treated as one pool"
                   data={AMC_SERVICE_ASSET_SPLIT_DATA}
                   categoryKey="type"
-                  seriesColors={[BRAND_HEX.blue, BRAND_HEX.err]}
+                  seriesColors={[BRAND_HEX.blue, "#9EC8BA"]}
                   series={[
                     { dataKey: "total", name: "Total Contracts" },
                     { dataKey: "missed", name: "Missed Visits" },
@@ -2994,7 +2991,7 @@ export default function RevampDashboardPage() {
                   categoryKey="type"
                   orientation="horizontal"
                   stacked
-                  seriesColors={[BRAND_HEX.ok, BRAND_HEX.warn, BRAND_HEX.err]}
+                  seriesColors={["#9EC8BA", "#DA7756", "#8E7BE0"]}
                   series={[
                     { dataKey: "completed", name: "Completed" },
                     { dataKey: "open", name: "Open" },
@@ -3056,7 +3053,7 @@ export default function RevampDashboardPage() {
                   data={CHECKLIST_TOP10_COMPLETED_DATA}
                   categoryKey="checklist"
                   orientation="horizontal"
-                  categoryColors={CHECKLIST_TOP10_COMPLETED_DATA.map(() => BRAND_HEX.ok)}
+                  categoryColors={CHECKLIST_TOP10_COMPLETED_DATA.map(() => "#9EC8BA")}
                   series={[{ dataKey: "completions", name: "Completions" }]}
                   showInfoIcon
                   className="h-full overflow-auto"
@@ -3210,7 +3207,7 @@ export default function RevampDashboardPage() {
                   subtitle="Consumable vs Sparse · Technical vs Non-Technical · Critical vs Non-Critical"
                   data={INVENTORY_TYPE_BREAKDOWN_DATA}
                   categoryKey="type"
-                  seriesColors={[BRAND_HEX.err, BRAND_HEX.ok]}
+                  seriesColors={["#8E7BE0", "#DA7756"]}
                   series={[
                     { dataKey: "critical", name: "Critical" },
                     { dataKey: "nonCritical", name: "Non-Critical" },
@@ -3272,7 +3269,7 @@ export default function RevampDashboardPage() {
                   data={INVENTORY_DEADSTOCK_DATA}
                   categoryKey="category"
                   orientation="horizontal"
-                  categoryColors={INVENTORY_DEADSTOCK_DATA.map(() => BRAND_HEX.err)}
+                  categoryColors={INVENTORY_DEADSTOCK_DATA.map(() => "#9EC8BA")}
                   series={[{ dataKey: "value", name: "Value at risk" }]}
                   showInfoIcon
                   insightVariant="plain"
