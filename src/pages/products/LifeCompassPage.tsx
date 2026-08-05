@@ -22,6 +22,7 @@ import {
   XCircle,
   Download,
   X,
+  ExternalLink,
 } from "lucide-react";
 import {
   Tabs,
@@ -550,16 +551,61 @@ const PitchDeckButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   </button>
 );
 
+// Office Online's free embed viewer has no SLA and two independent failure
+// modes we've hit in practice: (1) its own "fetching your file..." loader
+// can hang forever with zero error surfaced, and (2) it can outright refuse
+// to be framed, which Chrome renders as its own "This content is blocked.
+// Contact the site owner to fix the issue." interstitial *inside* the
+// iframe - content we can't see or detect from the parent page since it's
+// cross-origin. Because failures are invisible to us either way, the
+// preview is opt-in rather than the default: Download is the guaranteed
+// path shown first, and "Try online preview" is an explicit extra step
+// with a timeout fallback back to the same download prompt.
+const PREVIEW_TIMEOUT_MS = 9000;
+
 const PitchDeckModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  // Office Online's viewer needs a publicly reachable URL - it can't fetch
-  // from localhost, so the iframe will 404 there and the Download link is
-  // the working path in local dev. In a deployed environment it renders inline.
+  const [previewAttempt, setPreviewAttempt] = useState(0);
+  const [previewing, setPreviewing] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
+
+  const absoluteDeckUrl = useMemo(
+    () => `${window.location.origin}${PITCH_DECK_URL}`,
+    []
+  );
+
+  // view.aspx opened as a normal page (new tab) - not embedded in an
+  // iframe, so it can never trigger the "content blocked" framing
+  // interstitial that embed.aspx sometimes does.
+  const officeNewTabSrc = useMemo(
+    () =>
+      `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(
+        absoluteDeckUrl
+      )}`,
+    [absoluteDeckUrl]
+  );
+
   const officeViewerSrc = useMemo(() => {
-    const absoluteUrl = `${window.location.origin}${PITCH_DECK_URL}`;
     return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-      absoluteUrl
+      absoluteDeckUrl
     )}`;
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [absoluteDeckUrl, previewAttempt]);
+
+  React.useEffect(() => {
+    if (!previewing) return;
+    setTimedOut(false);
+    const timer = setTimeout(() => setTimedOut(true), PREVIEW_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [previewing, previewAttempt]);
+
+  const startPreview = () => {
+    setTimedOut(false);
+    setPreviewing(true);
+  };
+  const retry = () => {
+    setPreviewAttempt((a) => a + 1);
+    setTimedOut(false);
+  };
 
   return (
     <div
@@ -596,15 +642,99 @@ const PitchDeckModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           </div>
         </div>
         <div className="relative flex-1 bg-[#F6F4EE]">
-          <iframe
-            title="Life Compass Pitch Deck"
-            src={officeViewerSrc}
-            className="absolute inset-0 h-full w-full border-0"
-          />
-        </div>
-        <div className="border-t border-[#E5E7EB] bg-white px-5 py-2 text-center text-[10px] text-[#2C2C2C]/50 font-poppins">
-          Preview requires the app to be running on a public URL (e.g. not
-          localhost). Use Download above if the preview above stays blank.
+          {!previewing && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-8 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#DA7756]/10">
+                <Presentation className="h-7 w-7 text-[#DA7756]" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[#2C2C2C] font-poppins">
+                  Life_Blueprint_Pitch_Deck.pptx
+                </p>
+                <p className="mt-1 max-w-sm text-[12px] leading-relaxed text-[#2C2C2C]/60 font-poppins">
+                  Open the preview in a new tab, or download the deck to
+                  view it locally.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <a
+                  href={officeNewTabSrc}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#DA7756] px-4 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-[#C9684B]"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Open Preview in
+                  New Tab
+                </a>
+                <a
+                  href={PITCH_DECK_URL}
+                  download
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#C4B89D]/60 bg-white px-4 py-2 text-[12px] font-semibold text-[#2C2C2C]/80 transition-colors hover:border-[#DA7756] hover:text-[#DA7756]"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download
+                </a>
+              </div>
+              <button
+                type="button"
+                onClick={startPreview}
+                className="text-[11px] font-medium text-[#2C2C2C]/40 underline decoration-dotted transition-colors hover:text-[#DA7756]"
+              >
+                Or try the inline preview here instead
+              </button>
+            </div>
+          )}
+
+          {previewing && !timedOut && (
+            <iframe
+              key={previewAttempt}
+              title="Life Compass Pitch Deck"
+              src={officeViewerSrc}
+              className="absolute inset-0 h-full w-full border-0"
+            />
+          )}
+
+          {previewing && timedOut && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-8 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#DA7756]/10">
+                <Presentation className="h-7 w-7 text-[#DA7756]" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[#2C2C2C] font-poppins">
+                  Preview didn&apos;t load
+                </p>
+                <p className="mt-1 max-w-sm text-[12px] leading-relaxed text-[#2C2C2C]/60 font-poppins">
+                  The inline preview either didn&apos;t respond or refused
+                  to load. This is a limitation on Microsoft&apos;s end,
+                  not the file - try opening it in a new tab instead, or
+                  download it directly.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <a
+                  href={officeNewTabSrc}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#DA7756] px-4 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-[#C9684B]"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Open in New Tab
+                </a>
+                <a
+                  href={PITCH_DECK_URL}
+                  download
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#C4B89D]/60 bg-white px-4 py-2 text-[12px] font-semibold text-[#2C2C2C]/80 transition-colors hover:border-[#DA7756] hover:text-[#DA7756]"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download
+                </a>
+              </div>
+              <button
+                type="button"
+                onClick={retry}
+                className="text-[11px] font-medium text-[#2C2C2C]/40 underline decoration-dotted transition-colors hover:text-[#DA7756]"
+              >
+                Try inline preview again
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
