@@ -10,8 +10,9 @@ import {
 } from "recharts";
 import { PieChart as PieChartIcon, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ANALYTICS_PALETTE } from "@/styles/chartPalette";
 import { cn } from "@/lib/utils";
+
+const PIE_SLICE_COLORS = ["#CDCAF5", "#76CDC1", "#E39090"];
 
 export interface PieChartDatum {
   name: string;
@@ -108,7 +109,7 @@ export function PieChartCard({
   className,
 }: PieChartCardProps) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
-  const palette = colors ?? ANALYTICS_PALETTE;
+  const palette = colors ?? PIE_SLICE_COLORS;
   const coloredData = data.map((d, index) => ({
     ...d,
     color: palette[index % palette.length],

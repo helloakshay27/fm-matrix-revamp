@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useJobs } from "../JobsContext";
 import { T } from "../constants";
 import { Fld, FI, FT, FS, Btn } from "../components/UI";
+import MemberSearchSelect from "../components/MemberSearchSelect";
 
 export default function KraEntryModal() {
   const {
@@ -20,18 +21,31 @@ export default function KraEntryModal() {
   } = useJobs();
   const queryClient = useQueryClient();
 
+  // Weightage hint pehle chune gaye member ka dikhate hain (validation save par
+  // har member ke liye chalti hai).
+  const primaryAssigneeId = newKra.assigneeIds?.[0] || newKra.assigneeId || "";
+
   // Assignee badalte hi uske baaki KRAs ka total le aate hain.
   useEffect(() => {
     if (!showAddKra) return;
-    loadAssigneeKraUsage(newKra.assigneeId);
-  }, [showAddKra, newKra.assigneeId, loadAssigneeKraUsage]);
+    loadAssigneeKraUsage(primaryAssigneeId);
+  }, [showAddKra, primaryAssigneeId, loadAssigneeKraUsage]);
 
   if (!showAddKra) return null;
 
+  const memberOptions = (escalateUsers || []).map((u) => ({
+    id: u.id,
+    name: u.full_name || u.name || `User ${u.id}`,
+    email: u.email,
+  }));
+  const primaryAssigneeName =
+    memberOptions.find((u) => String(u.id) === String(primaryAssigneeId))?.name ||
+    "this member";
+
   const usageReady =
-    newKra.assigneeId &&
+    primaryAssigneeId &&
     !assigneeKraUsage.loading &&
-    String(assigneeKraUsage.assigneeId) === String(newKra.assigneeId);
+    String(assigneeKraUsage.assigneeId) === String(primaryAssigneeId);
   const usedByMember = usageReady ? assigneeKraUsage.used : 0;
   const remainingForMember = Math.max(0, 100 - usedByMember);
   const overLimit =
@@ -132,10 +146,10 @@ export default function KraEntryModal() {
             <Fld
               label="KRA Weightage (%)"
               hint={
-                newKra.assigneeId
+                primaryAssigneeId
                   ? assigneeKraUsage.loading
                     ? "Checking member's total..."
-                    : `${usedByMember}% used by this member's other KRAs, ${remainingForMember}% left`
+                    : `${usedByMember}% used by ${primaryAssigneeName}'s other KRAs, ${remainingForMember}% left`
                   : undefined
               }
             >
@@ -156,20 +170,24 @@ export default function KraEntryModal() {
               )}
             </Fld>
           </div>
-          <Fld label="Assignee Person">
-            <FS
-              value={newKra.assigneeId || ""}
-              onChange={(e) =>
-                setNewKra((f) => ({ ...f, assigneeId: e.target.value }))
+          <Fld
+            label="Assignee Person(s)"
+            hint="Ek se zyada member chun sakte hain."
+          >
+            <MemberSearchSelect
+              multiple
+              value={(newKra.assigneeIds || []).map(String)}
+              options={memberOptions}
+              onChange={(values) =>
+                setNewKra((f) => ({
+                  ...f,
+                  assigneeIds: values || [],
+                  assigneeId: values?.[0] || "",
+                }))
               }
-            >
-              <option value="">Select assignee</option>
-              {escalateUsers.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.full_name || u.name}
-                </option>
-              ))}
-            </FS>
+              placeholder="Select assignees"
+              disabled={krasSaving}
+            />
           </Fld>
           <Fld label="Description">
             <FT

@@ -148,7 +148,7 @@ const PERMIT_LEVEL_BOTTLENECK_DATA = [
   { level: "Level 615", count: 3 },
 ];
 
-const PERMIT_LEVEL_COLORS = ["#E7848E", "#EDC488", "#798C5E"];
+const PERMIT_LEVEL_COLORS = ["#9EC8BA", "#8E7BE0", "#DA7756"];
 
 const PERMIT_RISK_WEIGHTED_DATA = [
   { type: "Height Work", count: 23 },
@@ -158,7 +158,7 @@ const PERMIT_RISK_WEIGHTED_DATA = [
   { type: "Radiology", count: 5 },
 ];
 
-const PERMIT_RISK_COLORS = ["#E7848E", "#E7848E", "#EDC488", "#798C5E", "#798C5E"];
+const PERMIT_RISK_COLORS = ["#9EC8BA", "#8E7BE0", "#DA7756", "#DA7756", "#DA7756"];
 
 const PERMIT_STATUS_BARS = [
   { label: "Draft (stuck)", value: 52, pct: 54 },
@@ -307,7 +307,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
       key: "sohi-contradiction",
       layout: { x: 0, y: 3, w: 12, h: 6, minW: 4, minH: 4 },
       content: (
-        <div className="rounded-lg border border-brand-error bg-brand-error-bg p-4 h-full">
+        <div className="rounded-lg bg-brand-error-bg p-4 h-full">
           <div className="text-brand-body-4 font-bold text-brand-text">
             SOHI score vs the number it doesn&apos;t include
           </div>
@@ -557,7 +557,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
       key: "inc-closure-integrity",
       layout: { x: 0, y: 27, w: 12, h: 4, minW: 6, minH: 3 },
       content: (
-        <div className="bg-white border-l-4 border-brand-error border border-brand-border rounded-lg p-4 h-full overflow-auto">
+        <div className="bg-white rounded-lg p-4 h-full overflow-auto">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-brand-body-4 font-bold text-brand-text">Closure integrity score</div>
@@ -589,6 +589,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
           data={QUIET_ESCALATION_DATA}
           categoryKey="location"
           orientation="horizontal"
+          categoryColors={["#9EC8BA", "#8E7BE0", "#DA7756", "#DA7756", "#DA7756"]}
           series={[{ dataKey: "count", name: "Incidents" }]}
           insightVariant="plain"
           insight='Low Risk dominates the raw count and gets ignored in favor of rarer severe incidents. A location that keeps generating "Low Risk" incidents over and over is quietly escalating toward something serious — the severity label resets every time, so nobody aggregates it by place.'
@@ -697,7 +698,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
       key: "permit-closed-check",
       layout: { x: 0, y: 12, w: 12, h: 5, minW: 6, minH: 4 },
       content: (
-        <div className="bg-white border-l-4 border-brand-error border border-brand-border rounded-lg p-4 h-full overflow-auto">
+        <div className="bg-white rounded-lg p-4 h-full overflow-auto">
           <div className="text-brand-body-4 font-bold text-brand-text">Is &quot;Closed&quot; actually closed?</div>
           <div className="text-brand-body-5 text-brand-text-light mt-0.5 mb-3">
             Permits marked Closed or Extended, crossed against their own approval status
@@ -762,7 +763,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
       key: "permit-repeat-extensions",
       layout: { x: 0, y: 29, w: 12, h: 4, minW: 6, minH: 3 },
       content: (
-        <div className="bg-white border-l-4 border-brand-warning border border-brand-border rounded-lg p-4 h-full overflow-auto">
+        <div className="bg-white rounded-lg p-4 h-full overflow-auto">
           <div className="text-brand-body-4 font-bold text-brand-text">Repeat extensions</div>
           <div className="text-brand-body-5 text-brand-text-light mt-0.5 mb-3">
             Same permit extended more than once — never re-approved as fresh
@@ -892,7 +893,7 @@ export function SafetyPanel({ activeSection }: SafetyPanelProps) {
   return (
     <div className="space-y-4">
       {/* Safety Alerts strip */}
-      <div className="rounded-lg border border-brand-error bg-brand-error-bg px-5 py-4">
+      <div className="rounded-lg bg-brand-error-bg px-5 py-4">
         <div className="flex items-center gap-2 text-brand-body-5 font-bold uppercase tracking-wide text-brand-error mb-3">
           <AlertTriangle className="w-3.5 h-3.5" />
           Safety Alerts

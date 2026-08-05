@@ -666,6 +666,10 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
   const [hasMoreTasks, setHasMoreTasks] = useState(true);
   const [hasMoreIssues, setHasMoreIssues] = useState(true);
+  const [completedTasksIssuesToday, setCompletedTasksIssuesToday] = useState<
+    any[]
+  >([]);
+  const [completedItemsLoading, setCompletedItemsLoading] = useState(false);
   const [tomorrowScheduledItems, setTomorrowScheduledItems] = useState<any[]>(
     []
   );
@@ -836,6 +840,149 @@ const BusinessCompassDailyReport: React.FC = () => {
   useEffect(() => {
     fetchTomorrowScheduled(startDate);
   }, [startDate, baseUrl, token, userId]);
+
+  const fetchCompletedItemsForDate = async (forDate: string) => {
+    if (!baseUrl || !token || !userId || !forDate) return;
+    setCompletedItemsLoading(true);
+    try {
+      const completedFrom = `${forDate}T00:00:00`;
+      const completedTo = `${forDate}T23:59:59`;
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const fetchAllPages = async (
+        url: string,
+        baseParams: Record<string, string>,
+        dataKey: string
+      ) => {
+        const all: any[] = [];
+        let page = 1;
+        let totalPages = 1;
+        do {
+          const params = new URLSearchParams({ ...baseParams, page: String(page) });
+          const res = await axios.get(`${url}?${params.toString()}`, { headers });
+          const pageItems =
+            res.data?.[dataKey] || res.data?.data?.[dataKey] || [];
+          all.push(...pageItems);
+          totalPages = res.data?.meta?.total_pages || 1;
+          page += 1;
+        } while (page <= totalPages);
+        return all;
+      };
+
+      const [tasks, issues, todos] = await Promise.all([
+        fetchAllPages(
+          `https://${baseUrl}/business_compass/tasks`,
+          {
+            "q[completed_at_gteq]": completedFrom,
+            "q[completed_at_lteq]": completedTo,
+          },
+          "tasks"
+        ),
+        fetchAllPages(
+          `https://${baseUrl}/business_compass/issues`,
+          {
+            "q[completed_at_gteq]": completedFrom,
+            "q[completed_at_lteq]": completedTo,
+            "q[responsible_person_id_eq]": userId.toString(),
+          },
+          "issues"
+        ),
+        fetchAllPages(
+          `https://${baseUrl}/business_compass/todos`,
+          {
+            "q[completed_at_gteq]": completedFrom,
+            "q[completed_at_lteq]": completedTo,
+            "q[user_id_eq]": userId.toString(),
+          },
+          "todos"
+        ),
+      ]);
+
+      const transformedTasks = tasks.map((task: any) => ({
+        id: `task-${task.id}`,
+        title: task.title,
+        type: "task",
+        status: task.status || "completed",
+        priority: task.priority || "Medium",
+        created_at: task.created_at,
+        responsible: task.responsible_person_id,
+        originalData: task,
+      }));
+
+      const transformedIssues = issues.map((issue: any) => ({
+        id: `issue-${issue.id}`,
+        title: issue.title,
+        type: "issue",
+        status: issue.status || "completed",
+        priority: issue.priority || "Medium",
+        created_at: issue.created_at,
+        responsible: issue.responsible_person_id,
+        originalData: issue,
+      }));
+
+      const transformedTodos = todos.map((todo: any) => {
+        if (todo.task_management) {
+          const task = todo.task_management;
+          return {
+            id: `task-${task.id}`,
+            title: task.title || todo.title,
+            type: "task",
+            status: task.status || "completed",
+            priority: task.priority || todo.priority || "Medium",
+            created_at: task.created_at,
+            responsible: task.responsible_person_id,
+            originalData: task,
+          };
+        }
+        return {
+          id: `todo-${todo.id}`,
+          title: todo.title,
+          type: "todo",
+          status: todo.status || "completed",
+          priority: todo.priority || "Medium",
+          created_at: todo.created_at,
+          responsible: todo.user_id,
+          originalData: todo,
+        };
+      });
+
+      // A todo promoted to a task is represented by the task; drop the duplicate
+      // task-shaped record that also came back from the tasks endpoint.
+      const todoPromotedTaskIds = new Set(
+        transformedTodos.filter((t) => t.type === "task").map((t) => t.id)
+      );
+      const dedupedTasks = transformedTasks.filter(
+        (t: any) => !todoPromotedTaskIds.has(t.id)
+      );
+
+      setCompletedTasksIssuesToday([
+        ...dedupedTasks,
+        ...transformedIssues,
+        ...transformedTodos,
+      ]);
+    } catch (err) {
+      console.error("Failed to fetch completed items for date:", err);
+    } finally {
+      setCompletedItemsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCompletedItemsForDate(startDate);
+  }, [startDate, baseUrl, token, userId]);
+
+  // Optimistically reflect a just-completed/reopened item in completedTasksIssuesToday
+  // so Today's Accomplishments updates instantly, without waiting on a full refetch.
+  const upsertCompletedItem = (item: any) => {
+    setCompletedTasksIssuesToday((prev) => {
+      const withoutItem = prev.filter((i) => i.id !== item.id);
+      return [...withoutItem, { ...item, status: "completed" }];
+    });
+  };
+
+  const removeCompletedItem = (itemId: string) => {
+    setCompletedTasksIssuesToday((prev) => prev.filter((i) => i.id !== itemId));
+  };
 
   const buildDraftStorageKey = React.useCallback(
     (date: string, draftUserId: string | number | null | undefined = userId) =>
@@ -1191,58 +1338,17 @@ const BusinessCompassDailyReport: React.FC = () => {
     return ids;
   }, [mergedTasksIssues, planningItems]);
 
-  // Derive completed-today items that auto-populate Today's Accomplishments
+
   const autoAddedAccomplishments = useMemo(() => {
-    const normalizeDate = (value: unknown) => {
-      if (!value) return null;
-      if (value instanceof Date) {
-        return value.toISOString().slice(0, 10);
-      }
-      if (typeof value === "string") {
-        const trimmed = value.trim();
-        if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
-          return trimmed.slice(0, 10);
-        }
-        const parsed = new Date(trimmed);
-        if (!Number.isNaN(parsed.getTime())) {
-          return parsed.toISOString().slice(0, 10);
-        }
-      }
-      return null;
-    };
-
-    return mergedTasksIssues.filter((item) => {
-      const originalData = item?.originalData || {};
-      const completedAt = normalizeDate(
-        originalData.completed_at ??
-        originalData.completed_at_date ??
-        originalData.completedAt ??
-        item.completed_at ??
-        item.completedAt
-      );
-      const targetDate = normalizeDate(
-        originalData.target_date ??
-        originalData.targetDate ??
-        originalData.due_date ??
-        originalData.end_date ??
-        item.target_date ??
-        item.targetDate
-      );
-      const isRelevantToReportDate =
-        (completedAt && completedAt === startDate) ||
-        (targetDate && targetDate === startDate);
-
+    return completedTasksIssuesToday.filter((item) => {
       return (
-        (item.status === "completed" ||
-          item.status === "closed" ||
-          item.status === "done") &&
+        isCompleted(item.status) &&
         !hiddenAutoIds.has(item.id) &&
         !!(item.title || "").trim() &&
-        !addedToTomorrowIds.has(item.id) &&
-        isRelevantToReportDate
+        !addedToTomorrowIds.has(item.id)
       );
     });
-  }, [mergedTasksIssues, startDate, hiddenAutoIds, addedToTomorrowIds]);
+  }, [completedTasksIssuesToday, hiddenAutoIds, addedToTomorrowIds]);
 
   // Filter manual accomplishments to exclude items already shown in the auto-added section.
   // This prevents duplicates when a saved report's payload (which merged auto+manual) is reloaded.
@@ -1787,6 +1893,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         prev.map((i) => (i.id === item.id ? { ...i, status: "completed" } : i))
       );
       setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
+      upsertCompletedItem(item);
 
       if (isTask) {
         await axios.put(
@@ -1818,6 +1925,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       setMergedTasksIssues((prev) =>
         prev.map((i) => (i.id === item.id ? { ...i, status: item.status } : i))
       );
+      removeCompletedItem(item.id);
     }
   };
 
@@ -1831,6 +1939,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     setMergedTasksIssues((prev) =>
       prev.map((i) => (i.id === item.id ? { ...i, status: "open" } : i))
     );
+    removeCompletedItem(item.id);
     setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: false }));
 
     try {
@@ -1890,6 +1999,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       setMergedTasksIssues((prev) =>
         prev.map((i) => (i.id === item.id ? { ...i, status: item.status } : i))
       );
+      upsertCompletedItem(item);
     }
   };
 
@@ -1913,6 +2023,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         prev.map((i) => (i.id === item.id ? { ...i, status: "completed" } : i))
       );
       setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
+      upsertCompletedItem(item);
 
       if (isTask) {
         await axios.put(
@@ -8457,7 +8568,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             <BCTaskCreateModal
               isOpen={isTaskCreateModalOpen}
               onClose={() => { setIsFromPlan(false); setIsTaskCreateModalOpen(false); }}
-              onSuccess={() => { setIsFromPlan(false); fetchTasks(); fetchIssues(); refetchTodos(); }}
+              onSuccess={() => { setIsFromPlan(false); fetchTasks(); fetchIssues(); refetchTodos(); fetchCompletedItemsForDate(startDate); }}
               baseUrl={baseUrl || ""}
               token={token || ""}
               prefilledDate={isFromPlan ? nextDayObj : undefined}
@@ -8466,7 +8577,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             <BCIssueCreateModal
               isOpen={isIssueCreateModalOpen}
               onClose={() => { setIsFromPlan(false); setIsIssueCreateModalOpen(false); }}
-              onSuccess={() => { setIsFromPlan(false); fetchTasks(); fetchIssues(); refetchTodos(); }}
+              onSuccess={() => { setIsFromPlan(false); fetchTasks(); fetchIssues(); refetchTodos(); fetchCompletedItemsForDate(startDate); }}
               baseUrl={baseUrl || ""}
               token={token || ""}
               prefilledDate={isFromPlan ? nextDayObj : undefined}
@@ -8475,7 +8586,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             <BCTodoCreateModal
               isOpen={isTodoCreateModalOpen}
               onClose={() => { setIsFromPlan(false); setIsTodoCreateModalOpen(false); }}
-              onSuccess={() => { setIsFromPlan(false); fetchTasks(); fetchIssues(); refetchTodos(); }}
+              onSuccess={() => { setIsFromPlan(false); fetchTasks(); fetchIssues(); refetchTodos(); fetchCompletedItemsForDate(startDate); }}
               prefilledDate={isFromPlan ? nextDayStr : undefined}
               dateResetKey={planDateResetKey}
             />
@@ -8490,7 +8601,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           setIsEditTaskModalOpen(false);
           setEditTaskData(null);
         }}
-        onSuccess={() => { fetchTasks(); fetchIssues(); refetchTodos(); }}
+        onSuccess={() => { fetchTasks(); fetchIssues(); refetchTodos(); fetchCompletedItemsForDate(startDate); }}
         baseUrl={baseUrl || ""}
         token={token || ""}
         editData={editTaskData}
@@ -8503,7 +8614,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           setIsEditIssueModalOpen(false);
           setEditIssueData(null);
         }}
-        onSuccess={() => { fetchTasks(); fetchIssues(); refetchTodos(); }}
+        onSuccess={() => { fetchTasks(); fetchIssues(); refetchTodos(); fetchCompletedItemsForDate(startDate); }}
         baseUrl={baseUrl || ""}
         token={token || ""}
         editData={editIssueData}
@@ -8516,7 +8627,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           setIsEditTodoModalOpen(false);
           setEditTodoData(null);
         }}
-        onSuccess={() => { fetchTasks(); fetchIssues(); refetchTodos(); }}
+        onSuccess={() => { fetchTasks(); fetchIssues(); refetchTodos(); fetchCompletedItemsForDate(startDate); }}
         editData={editTodoData}
       />
 

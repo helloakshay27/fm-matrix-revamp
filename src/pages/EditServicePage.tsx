@@ -429,11 +429,12 @@ export const EditServicePage = () => {
 
             <Button
               type="button"
+              variant="secondary"
               onClick={() => document.getElementById('file-upload')?.click()}
-              className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center"
+              className="!bg-[#f6f4ee] !text-brand !border-none hover:!bg-[#f0ebe0] text-sm flex items-center justify-center"
               disabled={isSubmitting}
             >
-              <Upload className="w-4 h-4 mr-1" />
+              <Upload className="w-4 h-4 mr-1 !text-brand" />
               Upload Files
             </Button>
 

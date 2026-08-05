@@ -93,7 +93,7 @@ const TrainingFilterDialog: React.FC<TrainingFilterDialogProps> = ({
         <Button
           onClick={handleReset}
           variant="outline"
-          className="border-brand text-brand hover:bg-brand hover:text-white"
+          className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
           disabled={!provided}
         >
           Reset

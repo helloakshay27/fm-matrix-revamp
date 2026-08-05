@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import GridLayout, { Responsive, WidthProvider } from "react-grid-layout";
 import {
   RefreshCw,
@@ -18,6 +18,8 @@ import {
   BarChart3,
   ChevronDown,
   RotateCcw,
+  Lightbulb,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -560,11 +562,11 @@ const SLA_BREACH_TREND_DATA = [
 ];
 
 const AGE_TIER_COLORS = [
-  ANALYTICS_PALETTE[1],
+  ANALYTICS_PALETTE[3],
   ANALYTICS_PALETTE[2],
-  ANALYTICS_PALETTE[4],
+  ANALYTICS_PALETTE[2],
   ANALYTICS_PALETTE[0],
-  ANALYTICS_PALETTE[6],
+  ANALYTICS_PALETTE[3],
 ];
 
 const RESOLVED_AGE_TIER_DATA = [
@@ -602,11 +604,11 @@ const TECH_WORKLOAD_DATA = [
 ];
 
 const TECH_WORKLOAD_COLORS = [
-  "#E7848E",
-  "#E7848E",
-  "#108C72",
-  "#108C72",
-  "#108C72",
+  "#9EC8BA",
+  "#9EC8BA",
+  "#DA7756",
+  "#DA7756",
+  "#DA7756",
 ];
 
 const GOLDEN_REDFLAG_AGE_DATA = [
@@ -636,7 +638,7 @@ const SOURCE_ORIGIN_DATA = [
   { source: "Patrolling", tickets: 5 },
 ];
 
-const SOURCE_ORIGIN_COLORS = ["#798C5E", "#EDC488", "#6B9BCC", "#9EC8BA", "#E7848E"];
+const SOURCE_ORIGIN_COLORS = ["#8E7BE0", "#8E7BE0", "#6B9BCC", "#9EC8BA", "#8E7BE0"];
 
 const REPEAT_COMPLAINTS_DATA = [
   { issue: "Godrej Living — AC not cooling", count: 3 },
@@ -658,7 +660,7 @@ const PEAK_COMPLAINT_HOURS_DATA = [
   { hour: "8PM", count: 12 },
 ];
 
-const PEAK_HOURS_COLORS = ["#108C72", "#EDC488", "#E7848E", "#E7848E", "#EDC488", "#108C72", "#108C72"];
+const PEAK_HOURS_COLORS = ["#9EC8BA", "#DA7756", "#DA7756", "#DA7756", "#DA7756", "#9EC8BA", "#9EC8BA"];
 
 const CATEGORY_TABLE_COLUMNS: DataTableColumn<CategoryRow>[] = [
   { key: "category", header: "Category", render: (row) => <span className="font-semibold text-brand-text">{row.category}</span> },
@@ -719,7 +721,7 @@ const BREAKDOWN_BY_ALLOCATION_DATA = [
   { team: "Common Area", count: 11 },
   { team: "Security", count: 8 },
 ];
-const BREAKDOWN_BY_ALLOCATION_COLORS = [BRAND_HEX.err, BRAND_HEX.warn, BRAND_HEX.warn, BRAND_HEX.green, BRAND_HEX.green];
+const BREAKDOWN_BY_ALLOCATION_COLORS = ["#DA7756", "#DA7756", "#DA7756", "#8E7BE0", "#8E7BE0"];
 
 const CATEGORY_ASSET_BREAKDOWN_DATA = [
   { category: "IT", count: 124 },
@@ -732,12 +734,12 @@ const CATEGORY_ASSET_BREAKDOWN_DATA = [
 ];
 const CATEGORY_ASSET_BREAKDOWN_COLORS = [
   BRAND_HEX.blue,
-  BRAND_HEX.green,
+  "#8E7BE0",
   BRAND_HEX.orange,
-  BRAND_HEX.warn,
-  BRAND_HEX.err,
+  "#8E7BE0",
+  "#8E7BE0",
   BRAND_HEX.teal,
-  BRAND_HEX.dark,
+  "#9EC8BA",
 ];
 
 const ASSET_LIFECYCLE_DATA = [
@@ -747,7 +749,6 @@ const ASSET_LIFECYCLE_DATA = [
   { name: "In Store", value: 3 },
   { name: "Disposed", value: 2 },
 ];
-const ASSET_LIFECYCLE_COLORS = [BRAND_HEX.ok, BRAND_HEX.err, BRAND_HEX.blue, BRAND_HEX.green, BRAND_HEX.dark];
 
 const REPAIR_COST_RATIO_DATA = [
   { asset: "DG Sync Panel", ratio: 39 },
@@ -755,7 +756,7 @@ const REPAIR_COST_RATIO_DATA = [
   { asset: "UPS Room Panel", ratio: 9 },
   { asset: "AC Compressor", ratio: 6 },
 ];
-const REPAIR_COST_RATIO_COLORS = [BRAND_HEX.err, BRAND_HEX.warn, BRAND_HEX.ok, BRAND_HEX.ok];
+const REPAIR_COST_RATIO_COLORS = ["#DA7756", "#DA7756", "#8E7BE0", "#8E7BE0"];
 
 const COST_BY_CATEGORY_DATA = [
   { category: "IT", value: 14.2 },
@@ -793,7 +794,6 @@ const AUDIT_STATUS_OVERVIEW_DATA = [
   { name: "Pending", value: 1 },
   { name: "Overdue", value: 22 },
 ];
-const AUDIT_STATUS_OVERVIEW_COLORS = [BRAND_HEX.ok, BRAND_HEX.green, BRAND_HEX.err];
 
 const AUDIT_COMPLETION_DATA = [
   { type: "Asset Audit", pct: 0, fraction: "0/27" },
@@ -835,7 +835,7 @@ const AMC_URGENCY_LANES = [
   },
 ];
 const AMC_URGENCY_STATUS_COLORS = {
-  criticalExpired: "#8B0000",
+  criticalExpired: "#DA7756",
   nonCriticalExpired: BRAND_HEX.warn,
   criticalUpcoming: BRAND_HEX.ok,
   nonCriticalUpcoming: BRAND_HEX.teal,
@@ -854,7 +854,7 @@ const AMC_VENDOR_CONCENTRATION_DATA = [
   { vendor: "Reliance Digital", pct: 28 },
   { vendor: "Oizom Instruments", pct: 19 },
 ];
-const AMC_VENDOR_CONCENTRATION_COLORS = [BRAND_HEX.err, BRAND_HEX.err, BRAND_HEX.warn, BRAND_HEX.warn, BRAND_HEX.green];
+const AMC_VENDOR_CONCENTRATION_COLORS = ["#DA7756", "#DA7756", "#DA7756", "#DA7756", "#9EC8BA"];
 
 const AMC_SERVICE_ASSET_SPLIT_DATA = [
   { type: "Service AMCs", total: 150, missed: 8 },
@@ -867,7 +867,7 @@ const AMC_COVERAGE_BY_CATEGORY_DATA = [
   { category: "Meter", pct: 42 },
   { category: "Furniture", pct: 31 },
 ];
-const AMC_COVERAGE_BY_CATEGORY_COLORS = [BRAND_HEX.ok, BRAND_HEX.ok, BRAND_HEX.warn, BRAND_HEX.err];
+const AMC_COVERAGE_BY_CATEGORY_COLORS = ["#8E7BE0", "#8E7BE0", "#9EC8BA", "#9EC8BA"];
 
 const AMC_COST_TREND_DATA = [
   { month: "Jan", cost: 6.8 },
@@ -909,9 +909,7 @@ const CHECKLIST_SITEWISE_COMPLIANCE_DATA = [
   { site: "Rooftop", compliance: 28 },
   { site: "Basement", compliance: 22 },
 ];
-const CHECKLIST_SITEWISE_COMPLIANCE_COLORS = CHECKLIST_SITEWISE_COMPLIANCE_DATA.map((row) =>
-  row.compliance >= 55 ? BRAND_HEX.ok : row.compliance >= 35 ? BRAND_HEX.warn : BRAND_HEX.err
-);
+const CHECKLIST_SITEWISE_COMPLIANCE_COLORS = ["#9EC8BA", "#8E7BE0", "#8E7BE0", "#8E7BE0", "#8E7BE0", "#8E7BE0"];
 
 const CHECKLIST_MONTHLY_TREND_DATA = [
   { month: "Jan", completed: 420, pending: 580 },
@@ -1057,7 +1055,7 @@ const SURVEY_WEEKLY_CSAT_DATA = [
   { week: "Jan11-Jan17", csat: 1.11 },
   { week: "Feb8-Feb14", csat: 5.0 },
 ];
-const SURVEY_WEEKLY_CSAT_COLORS = [BRAND_HEX.err, BRAND_HEX.ok, BRAND_HEX.err, BRAND_HEX.green];
+const SURVEY_WEEKLY_CSAT_COLORS = ["#9EC8BA", "#8E7BE0", "#9EC8BA", "#DA7756"];
 
 interface SurveyWeeklyRow {
   week: string;
@@ -1133,6 +1131,530 @@ const VENDOR_RESPONSE_TREND_DATA = [
   { month: "Jun", powerTech: 3.2, connexions: 4.8, unicorn: 6.1, helpTest: 11.4 },
 ];
 
+const INSIGHT_ITEM_TONE_STYLES = {
+  err: { bg: "rgba(231,132,142,0.16)", color: "#E7848E" },
+  warn: { bg: "rgba(237,196,136,0.22)", color: "#7A4F00" },
+  ok: { bg: "rgba(16,140,114,0.12)", color: "#108C72" },
+} as const;
+
+const INSIGHT_CATEGORY_TONE_STYLES = {
+  err: { bg: "rgba(231,132,142,0.16)", color: "#E7848E" },
+  warn: { bg: "rgba(237,196,136,0.22)", color: "#7A4F00" },
+  terra: { bg: "rgba(218,119,86,0.16)", color: "#A34A30" },
+  purple: { bg: "rgba(206,203,246,0.3)", color: "#4B4780" },
+  info: { bg: "rgba(107,155,204,0.18)", color: "#3A6A9A" },
+  sage: { bg: "rgba(121,140,94,0.16)", color: "#798C5E" },
+  ok: { bg: "rgba(16,140,114,0.12)", color: "#108C72" },
+} as const;
+
+type InsightTone = keyof typeof INSIGHT_CATEGORY_TONE_STYLES;
+
+interface InsightItem {
+  priority: "P1" | "P2" | "P3";
+  priorityTone: keyof typeof INSIGHT_ITEM_TONE_STYLES;
+  label: string;
+  age: string;
+  isNew?: boolean;
+  module: string;
+  subTab: string;
+}
+
+interface InsightCategory {
+  key: string;
+  title: string;
+  count: number;
+  summary: string;
+  tone: InsightTone;
+  items: InsightItem[];
+}
+
+const INSIGHT_CATEGORIES: InsightCategory[] = [
+  {
+    key: "critical",
+    title: "Critical",
+    count: 5,
+    summary: "5 items · P1 leadership action required",
+    tone: "err",
+    items: [
+      { priority: "P1", priorityTone: "err", label: "16 Permits Expired", age: "15m", isNew: true, module: "safety", subTab: "Permits" },
+      { priority: "P1", priorityTone: "err", label: "950 Utility Bills Pending", age: "2h", module: "finance", subTab: "Invoices" },
+      { priority: "P1", priorityTone: "err", label: "Patrol Gap Since Jan 2026", age: "Today", module: "security", subTab: "Patrol" },
+      { priority: "P1", priorityTone: "err", label: "27 Asset Audits Overdue", age: "2m", isNew: true, module: "maintenance", subTab: "Audit" },
+      { priority: "P1", priorityTone: "err", label: "2 Invoices > 90 Days", age: "Yesterday", module: "finance", subTab: "Invoices" },
+    ],
+  },
+  {
+    key: "attention",
+    title: "Attention Needed",
+    count: 5,
+    summary: "Human intervention required this week",
+    tone: "warn",
+    items: [
+      { priority: "P2", priorityTone: "warn", label: "128 AMC Visits Missed", age: "Today", module: "maintenance", subTab: "AMC" },
+      { priority: "P2", priorityTone: "warn", label: "73% Washroom Negative", age: "1h", isNew: true, module: "crm", subTab: "Overview" },
+      { priority: "P2", priorityTone: "warn", label: "Solar Feed Stale", age: "2h", module: "utility", subTab: "Solar Generator" },
+      { priority: "P2", priorityTone: "warn", label: "8 Vendor KYC Expiring", age: "Today", module: "maintenance", subTab: "Vendor" },
+      { priority: "P2", priorityTone: "warn", label: "0 Vendor Audits Conducted", age: "Yesterday", module: "maintenance", subTab: "Vendor" },
+    ],
+  },
+  {
+    key: "op-backlog",
+    title: "Operational Backlog",
+    count: 5,
+    summary: "Workflow queues accumulating across modules",
+    tone: "terra",
+    items: [
+      { priority: "P2", priorityTone: "warn", label: "130+ Draft PRs Abandoned", age: "Today", module: "finance", subTab: "Procurement" },
+      { priority: "P2", priorityTone: "warn", label: "55 Permit Drafts Stuck", age: "Today", module: "safety", subTab: "Permits" },
+      { priority: "P2", priorityTone: "warn", label: "15+ Approvals Pending at SI Level", age: "Today", module: "finance", subTab: "Overview" },
+      { priority: "P2", priorityTone: "warn", label: "3 HOTO Pending — 2 Vendor→FM, 1 FM→User", age: "Today", module: "transitioning", subTab: "HOTO" },
+      { priority: "P2", priorityTone: "warn", label: "38 Open Snags — Survey 16, Permit 22", age: "Today", module: "transitioning", subTab: "Snagging" },
+    ],
+  },
+  {
+    key: "data-quality",
+    title: "Data Quality",
+    count: 5,
+    summary: "Data integrity blocking reporting accuracy",
+    tone: "purple",
+    items: [
+      { priority: "P3", priorityTone: "ok", label: "Waste Vendor Field Blank on All Records", age: "Yesterday", module: "maintenance", subTab: "Waste" },
+      { priority: "P3", priorityTone: "ok", label: "Negative Meter Readings × 2", age: "2h", module: "utility", subTab: "Daily Readings" },
+      { priority: "P3", priorityTone: "ok", label: "Vohra × 6 Duplicate Bills", age: "Today", module: "utility", subTab: "Energy" },
+      { priority: "P3", priorityTone: "ok", label: "Events + Broadcast APIs Broken", age: "Today", module: "crm", subTab: "Overview" },
+      { priority: "P3", priorityTone: "ok", label: "Lead Module — Seed Data Only", age: "Today", module: "crm", subTab: "Overview" },
+    ],
+  },
+  {
+    key: "predictions",
+    title: "Predictions",
+    count: 1,
+    summary: "Leading indicators signalling deterioration",
+    tone: "info",
+    items: [
+      { priority: "P2", priorityTone: "warn", label: "AMC Miss (128) + 63 Breakdowns — Link Unconfirmed", age: "Today", module: "maintenance", subTab: "AMC" },
+    ],
+  },
+  {
+    key: "recommendations",
+    title: "Recommendations",
+    count: 5,
+    summary: "Actions expected to improve portfolio health",
+    tone: "sage",
+    items: [
+      { priority: "P2", priorityTone: "warn", label: "Renew Expired Permits", age: "Today", module: "safety", subTab: "Permits" },
+      { priority: "P2", priorityTone: "warn", label: "Start Asset Audit Programme", age: "2h", module: "maintenance", subTab: "Audit" },
+      { priority: "P2", priorityTone: "warn", label: "Resolve Billing Backlog", age: "Yesterday", module: "finance", subTab: "Invoices" },
+      { priority: "P2", priorityTone: "warn", label: "Restore Solar Feed", age: "2h", module: "utility", subTab: "Solar Generator" },
+      { priority: "P2", priorityTone: "warn", label: "Validate Meter Imports", age: "Today", module: "utility", subTab: "Daily Readings" },
+    ],
+  },
+  {
+    key: "positive",
+    title: "Positive Signals",
+    count: 3,
+    summary: "Evidence of effective operational execution",
+    tone: "ok",
+    items: [
+      { priority: "P3", priorityTone: "ok", label: "24 Zero Incident Days", age: "Today", module: "safety", subTab: "Incidents" },
+      { priority: "P3", priorityTone: "ok", label: "LTIR 0.00", age: "Today", module: "safety", subTab: "SOHI" },
+      { priority: "P3", priorityTone: "ok", label: "Waste Recycling 43%", age: "Yesterday", module: "maintenance", subTab: "Waste" },
+    ],
+  },
+  {
+    key: "anomalies",
+    title: "Anomalies",
+    count: 3,
+    summary: "Unusual readings requiring investigation",
+    tone: "warn",
+    items: [
+      { priority: "P2", priorityTone: "warn", label: "Negative Meter Readings × 2", age: "2h", module: "utility", subTab: "Daily Readings" },
+      { priority: "P2", priorityTone: "warn", label: "Common Area Consumption +12%", age: "Today", module: "utility", subTab: "Energy" },
+      { priority: "P2", priorityTone: "warn", label: "0 Patrol Tickets Generated", age: "Today", module: "security", subTab: "Patrol" },
+    ],
+  },
+  {
+    key: "escalations",
+    title: "Escalations",
+    count: 2,
+    summary: "Executive action required — cannot delegate",
+    tone: "err",
+    items: [
+      { priority: "P1", priorityTone: "err", label: "Audit Programme Stalled — Escalate Now", age: "Today", module: "maintenance", subTab: "Audit" },
+      { priority: "P1", priorityTone: "err", label: "Phantom Routes Inflating Patrol — Deactivate Import 12", age: "Today", module: "security", subTab: "Patrol" },
+    ],
+  },
+  {
+    key: "recently-changed",
+    title: "Recently Changed",
+    count: 0,
+    summary: "Audit trail · no recent changes",
+    tone: "purple",
+    items: [],
+  },
+];
+
+const INSIGHT_GLOW_TOTAL = INSIGHT_CATEGORIES.slice(0, 5).reduce((sum, cat) => sum + cat.count, 0);
+
+// Per-module insight datasets — sourced from irInsightDatasets in fm_matrix_phase10 (29).html.
+// Each module's Insights rail is grounded in that module's own tickets/assets/rows (not the
+// generic cross-module list above), matching the reference's tab-aware "GLOBAL INSIGHTS RAIL".
+const INSIGHT_CATEGORY_ORDER = [
+  "critical",
+  "attention",
+  "op-backlog",
+  "data-quality",
+  "predictions",
+  "recommendations",
+  "positive",
+  "anomalies",
+  "escalations",
+  "recently-changed",
+] as const;
+
+interface ModuleInsightHealth {
+  critical: number;
+  dueWeek: number;
+  escalated: number;
+  badge: string;
+  badgeTone: InsightTone;
+}
+
+interface ModuleInsightDataset {
+  title: string;
+  subtitle: string;
+  health: ModuleInsightHealth;
+  items: Partial<Record<(typeof INSIGHT_CATEGORY_ORDER)[number], InsightItem[]>>;
+}
+
+const MODULE_INSIGHT_DATASETS: Record<string, ModuleInsightDataset> = {
+  maintenance: {
+    title: "Maintenance Intelligence",
+    subtitle: "4 active insights",
+    health: { critical: 2, dueWeek: 2, escalated: 0, badge: "HIGH RISK", badgeTone: "err" },
+    items: {
+      critical: [
+        { priority: "P1", priorityTone: "err", label: "128 AMC Visits Missed", age: "Today", module: "maintenance", subTab: "AMC" },
+        { priority: "P1", priorityTone: "err", label: "676 PPM Overdue", age: "Today", module: "maintenance", subTab: "Checklists" },
+      ],
+      attention: [
+        { priority: "P2", priorityTone: "warn", label: "63 Asset Breakdowns", age: "Today", module: "maintenance", subTab: "Assets" },
+        { priority: "P2", priorityTone: "warn", label: "SLA Breach 28%", age: "Today", module: "maintenance", subTab: "Tickets" },
+      ],
+    },
+  },
+  safety: {
+    title: "Safety Intelligence",
+    subtitle: "4 active insights",
+    health: { critical: 1, dueWeek: 1, escalated: 2, badge: "WATCH", badgeTone: "warn" },
+    items: {
+      critical: [
+        { priority: "P1", priorityTone: "err", label: "16 Permits Expired", age: "Today", module: "safety", subTab: "Permits" },
+      ],
+      attention: [
+        { priority: "P2", priorityTone: "warn", label: "55 Draft Permits Stuck", age: "Today", module: "safety", subTab: "Permits" },
+      ],
+      positive: [
+        { priority: "P3", priorityTone: "ok", label: "24 Zero Incident Days", age: "Today", module: "safety", subTab: "Incidents" },
+        { priority: "P3", priorityTone: "ok", label: "LTIR 0.00", age: "Today", module: "safety", subTab: "SOHI" },
+      ],
+    },
+  },
+  finance: {
+    title: "Financial Intelligence",
+    subtitle: "4 active insights",
+    health: { critical: 2, dueWeek: 2, escalated: 0, badge: "HIGH RISK", badgeTone: "err" },
+    items: {
+      critical: [
+        { priority: "P1", priorityTone: "err", label: "950 Utility Bills Pending", age: "Today", module: "finance", subTab: "Invoices" },
+        { priority: "P1", priorityTone: "err", label: "2 Invoices > 90 Days", age: "Today", module: "finance", subTab: "Invoices" },
+      ],
+      attention: [
+        { priority: "P2", priorityTone: "warn", label: "130 Draft PRs", age: "Today", module: "finance", subTab: "Procurement" },
+        { priority: "P2", priorityTone: "warn", label: "WO API Error", age: "Today", module: "finance", subTab: "Overview" },
+      ],
+    },
+  },
+  utility: {
+    title: "Utility Intelligence",
+    subtitle: "3 active insights",
+    health: { critical: 1, dueWeek: 2, escalated: 0, badge: "WATCH", badgeTone: "warn" },
+    items: {
+      critical: [
+        { priority: "P1", priorityTone: "err", label: "Solar Feed Stale", age: "Today", module: "utility", subTab: "Solar Generator" },
+      ],
+      attention: [
+        { priority: "P2", priorityTone: "warn", label: "Meter Anomalies", age: "Today", module: "utility", subTab: "Daily Readings" },
+        { priority: "P2", priorityTone: "warn", label: "Water Monitoring Gap", age: "Today", module: "utility", subTab: "Water" },
+      ],
+    },
+  },
+  crm: {
+    title: "Tenant Intelligence",
+    subtitle: "2 active insights",
+    health: { critical: 1, dueWeek: 1, escalated: 0, badge: "WATCH", badgeTone: "warn" },
+    items: {
+      critical: [
+        { priority: "P1", priorityTone: "err", label: "73% Washroom Negative", age: "Today", module: "crm", subTab: "Overview" },
+      ],
+      attention: [
+        { priority: "P2", priorityTone: "warn", label: "Loyalty Redemption 0%", age: "Today", module: "crm", subTab: "Overview" },
+      ],
+    },
+  },
+  security: {
+    title: "Security Intelligence",
+    subtitle: "3 active insights",
+    health: { critical: 1, dueWeek: 2, escalated: 0, badge: "HIGH RISK", badgeTone: "err" },
+    items: {
+      critical: [
+        { priority: "P1", priorityTone: "err", label: "Patrol Gap Since Jan 2026", age: "Today", module: "security", subTab: "Patrol" },
+      ],
+      attention: [
+        { priority: "P2", priorityTone: "warn", label: "2 Credentials Expired", age: "Today", module: "security", subTab: "Staff" },
+        { priority: "P2", priorityTone: "warn", label: "0 Patrol Tickets Generated", age: "Today", module: "security", subTab: "Patrol" },
+      ],
+    },
+  },
+  vas: {
+    title: "VAS Intelligence",
+    subtitle: "2 active insights",
+    health: { critical: 1, dueWeek: 1, escalated: 0, badge: "WATCH", badgeTone: "warn" },
+    items: {
+      critical: [
+        { priority: "P1", priorityTone: "err", label: "OSR 15 Months Pending", age: "Today", module: "vas", subTab: "OSR" },
+      ],
+      attention: [
+        { priority: "P2", priorityTone: "warn", label: "Loyalty Unredeemed", age: "Today", module: "vas", subTab: "F&B" },
+      ],
+    },
+  },
+  transitioning: {
+    title: "Transition Intelligence",
+    subtitle: "2 active insights",
+    health: { critical: 1, dueWeek: 1, escalated: 0, badge: "WATCH", badgeTone: "warn" },
+    items: {
+      critical: [
+        { priority: "P1", priorityTone: "err", label: "38 Open Snags", age: "Today", module: "transitioning", subTab: "Snagging" },
+      ],
+      attention: [
+        { priority: "P2", priorityTone: "warn", label: "5 Violations", age: "Today", module: "transitioning", subTab: "Snagging" },
+      ],
+    },
+  },
+};
+
+const DEFAULT_INSIGHT_HEALTH: ModuleInsightHealth = { critical: 5, dueWeek: 12, escalated: 2, badge: "HIGH RISK", badgeTone: "err" };
+
+interface InsightRailData {
+  title: string;
+  subtitle: string;
+  health: ModuleInsightHealth;
+  categories: InsightCategory[];
+}
+
+// Mirrors updateInsightsForTab() in fm_matrix_phase10 (29).html: modules with a dedicated
+// dataset show only their own non-empty categories; everything else falls back to the
+// generic cross-module list (the reference's "management" / useExisting tab).
+function getInsightRailData(moduleKey: string): InsightRailData {
+  const dataset = MODULE_INSIGHT_DATASETS[moduleKey];
+  if (!dataset) {
+    return { title: "Insights", subtitle: "Portfolio Intelligence", health: DEFAULT_INSIGHT_HEALTH, categories: INSIGHT_CATEGORIES };
+  }
+  const categories: InsightCategory[] = INSIGHT_CATEGORY_ORDER.flatMap((key) => {
+    const items = dataset.items[key];
+    if (!items || items.length === 0) return [];
+    const reference = INSIGHT_CATEGORIES.find((c) => c.key === key);
+    return [
+      {
+        key,
+        title: reference?.title ?? key,
+        tone: reference?.tone ?? "warn",
+        count: items.length,
+        summary: `${items.length} item${items.length === 1 ? "" : "s"}`,
+        items,
+      },
+    ];
+  });
+  return { title: dataset.title, subtitle: dataset.subtitle, health: dataset.health, categories };
+}
+
+interface InsightsRailProps {
+  collapsed: boolean;
+  onToggle: () => void;
+  data: InsightRailData;
+  activeCategory: string;
+  onCategoryChange: (key: string) => void;
+  onNavigate: (module: string, subTab: string) => void;
+}
+
+function InsightsRail({ collapsed, onToggle, data, activeCategory, onCategoryChange, onNavigate }: InsightsRailProps) {
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        onClick={onToggle}
+        title="Expand Insights panel"
+        aria-label="Expand Insights panel"
+        className="sticky top-4 flex w-[68px] flex-col items-center gap-2 rounded-lg border border-brand-border bg-white px-2 py-4 transition-shadow hover:shadow-md"
+        style={{ boxShadow: "0 0 20px 2px rgba(218,119,86,0.4)" }}
+      >
+        <span
+          className="flex h-9 w-9 items-center justify-center rounded-full"
+          style={{ background: "rgba(218,119,86,0.15)", color: "#DA7756" }}
+        >
+          <Lightbulb className="h-4 w-4" />
+        </span>
+        <span className="text-brand-body-5 font-semibold text-brand-text">Insights</span>
+        <span className="animate-pulse rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ background: "#E7848E" }}>
+          {INSIGHT_GLOW_TOTAL}
+        </span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="sticky top-4 flex w-[300px] max-h-[calc(100vh-230px)] flex-shrink-0 flex-col overflow-y-auto rounded-lg border border-brand-border bg-white">
+      <div className="flex items-center justify-between border-b border-brand-border px-4 py-3">
+        <div>
+          <div className="flex items-center gap-1.5 text-brand-body-3 font-bold text-brand-text">
+            <Lightbulb className="h-4 w-4 text-brand" />
+            {data.title}
+          </div>
+          <div className="text-brand-body-5 text-brand-text-light">{data.subtitle}</div>
+        </div>
+        <button
+          type="button"
+          onClick={onToggle}
+          title="Collapse insights rail"
+          aria-label="Collapse insights rail"
+          className="rounded p-1 text-brand-text-light transition-colors hover:text-brand-text"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="m-3 rounded-lg border px-3 py-2.5" style={{ borderColor: "#C4B89D", background: "#F6F4EE" }}>
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-bold" style={{ color: "#2C2C2C" }}>Intelligence Health</span>
+          <span
+            className="rounded-full px-2 py-0.5 text-[9px] font-bold"
+            style={{ background: INSIGHT_CATEGORY_TONE_STYLES[data.health.badgeTone].bg, color: INSIGHT_CATEGORY_TONE_STYLES[data.health.badgeTone].color }}
+          >
+            {data.health.badge}
+          </span>
+        </div>
+        <div className="mt-1 flex items-center gap-1.5 text-[10px]" style={{ color: "#798C5E" }}>
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: "#108C72" }} />
+          Monitoring
+        </div>
+        <div className="mt-2 flex items-center gap-5">
+          <div>
+            <div className="text-brand-h2 font-bold" style={{ color: "#E7848E" }}>{data.health.critical}</div>
+            <div className="text-[9px]" style={{ color: "#888780" }}>Critical</div>
+          </div>
+          <div>
+            <div className="text-brand-h2 font-bold" style={{ color: "#EDC488" }}>{data.health.dueWeek}</div>
+            <div className="text-[9px]" style={{ color: "#888780" }}>Due This Week</div>
+          </div>
+          <div>
+            <div className="text-brand-h2 font-bold" style={{ color: "#5A54A8" }}>{data.health.escalated}</div>
+            <div className="text-[9px]" style={{ color: "#888780" }}>Escalated</div>
+          </div>
+        </div>
+        <div className="mt-2 flex items-center justify-between text-[9px]" style={{ color: "#888780" }}>
+          <span>Last Refresh</span>
+          <span className="font-semibold" style={{ color: "#2C2C2C" }}>2 min ago</span>
+        </div>
+      </div>
+
+      <div className="mx-3 mb-3 rounded-lg border px-3 py-2.5" style={{ borderColor: "#C4B89D", background: "#F6F4EE" }}>
+        <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#2C2C2C" }}>Today's Executive Brief</div>
+        <div className="mb-2 text-[10px]" style={{ color: "#798C5E" }}>Auto-generated portfolio summary</div>
+        <div className="flex flex-col gap-1.5 text-[10px] leading-relaxed" style={{ color: "#2C2C2C" }}>
+          <div className="flex gap-1.5">
+            <span className="flex-shrink-0 font-bold" style={{ color: "#E7848E" }}>•</span>
+            <span>Compliance deterioration across permits, audits and vendor accountability now spans multiple workflows.</span>
+          </div>
+          <div className="flex gap-1.5">
+            <span className="flex-shrink-0 font-bold" style={{ color: "#E7848E" }}>•</span>
+            <span>Utility billing at ~950 records is the highest unresolved financial exposure on the portfolio.</span>
+          </div>
+          <div className="flex gap-1.5">
+            <span className="flex-shrink-0 font-bold" style={{ color: "#DA7756" }}>•</span>
+            <span>128 AMC misses and 63 current asset breakdowns are tracked separately — a real trend link isn't confirmed yet, worth watching both together.</span>
+          </div>
+          <div className="flex gap-1.5">
+            <span className="flex-shrink-0 font-bold" style={{ color: "#EDC488" }}>•</span>
+            <span>Two escalations exceed operational thresholds and cannot be resolved without leadership intervention.</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="pb-2">
+        {data.categories.map((cat) => {
+          const isOpen = activeCategory === cat.key;
+          const tone = INSIGHT_CATEGORY_TONE_STYLES[cat.tone];
+          return (
+            <div key={cat.key} className="mb-1 px-1">
+              <button
+                type="button"
+                onClick={() => onCategoryChange(isOpen ? "" : cat.key)}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-brand-light"
+              >
+                <span className="flex-1 text-left text-brand-body-4 font-semibold text-brand-text">{cat.title}</span>
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: tone.bg, color: tone.color }}>
+                  {cat.count}
+                </span>
+                <ChevronDown className={cn("h-3.5 w-3.5 text-brand-text-light transition-transform", isOpen && "rotate-180")} />
+              </button>
+              {isOpen && (
+                <div className="pl-2 pr-1">
+                  <div className="mb-1 text-[10px]" style={{ color: "#798C5E" }}>{cat.summary}</div>
+                  {cat.items.length === 0 ? (
+                    <div className="px-1 py-1.5 text-[10px] italic" style={{ color: "#798C5E" }}>
+                      No recent structural changes detected.
+                    </div>
+                  ) : (
+                    cat.items.map((item, idx) => {
+                      const p = INSIGHT_ITEM_TONE_STYLES[item.priorityTone];
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => onNavigate(item.module, item.subTab)}
+                          className="flex w-full items-center justify-between gap-2 rounded px-1.5 py-1 text-left transition-colors hover:bg-brand-light"
+                        >
+                          <span className="text-brand-body-5 leading-snug text-brand-text">
+                            <span className="mr-1 rounded px-1 py-px text-[9px] font-bold" style={{ background: p.bg, color: p.color }}>
+                              {item.priority}
+                            </span>
+                            {item.label}
+                          </span>
+                          <span className="flex flex-shrink-0 items-center gap-1.5">
+                            {item.isNew && (
+                              <span className="rounded px-1 py-px text-[8px] font-bold" style={{ background: "rgba(16,140,114,0.12)", color: "#108C72" }}>
+                                <span className="mr-0.5 inline-block h-1 w-1 animate-pulse rounded-full bg-current" />
+                                NEW
+                              </span>
+                            )}
+                            <span className="text-[9px]" style={{ color: "#888780" }}>{item.age}</span>
+                            <span className="text-[10px]" style={{ color: "#798C5E" }}>→</span>
+                          </span>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function RevampDashboardPage() {
   const [activeModule, setActiveModule] = useState<string>(MODULES[0].key);
   const current = MODULES.find((m) => m.key === activeModule) ?? MODULES[0];
@@ -1140,6 +1662,12 @@ export default function RevampDashboardPage() {
   const [timeSegment, setTimeSegment] = useState("Today");
   const [goldenActive, setGoldenActive] = useState(false);
   const [redFlagActive, setRedFlagActive] = useState(false);
+  const [railCollapsed, setRailCollapsed] = useState(false);
+  const [activeInsightCategory, setActiveInsightCategory] = useState("critical");
+  const insightRailData = useMemo(() => getInsightRailData(activeModule), [activeModule]);
+  useEffect(() => {
+    setActiveInsightCategory(insightRailData.categories[0]?.key ?? "");
+  }, [insightRailData]);
   const tabsRef = useRef<HTMLDivElement>(null);
   const isTicketsView =
     activeModule === "maintenance" &&
@@ -1159,11 +1687,16 @@ export default function RevampDashboardPage() {
   const registerMaintenanceSectionRef = (key: string) => (el: HTMLDivElement | null) => {
     maintenanceSectionRefs.current[key] = el;
   };
+  const navRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isTicketsView) return;
     const el = maintenanceSectionRefs.current[activeSubTab];
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const container = scrollRef.current;
+    if (!el || !container) return;
+    const top = el.getBoundingClientRect().top - container.getBoundingClientRect().top - 12;
+    container.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
   }, [activeSubTab, isTicketsView]);
 
   const [ticketsLayout, setTicketsLayout] = useState<GridLayout.Layout[]>(() =>
@@ -1190,8 +1723,14 @@ export default function RevampDashboardPage() {
     setActiveSubTab(nextModule?.subTabs[0] ?? "");
   };
 
+  const navigateTo = (moduleKey: string, subTab: string) => {
+    setActiveModule(moduleKey);
+    setActiveSubTab(subTab);
+  };
+
   return (
-    <div className="bg-brand-bg min-h-screen">
+    <div className="bg-brand-bg h-screen flex flex-col overflow-hidden">
+      <div ref={navRef} className="flex-shrink-0 z-30 bg-brand-bg">
       {/* Title bar */}
       <div className="flex items-center justify-between bg-white border-b border-brand-border px-6 py-4">
         <h1 className="text-brand-h2 font-bold text-brand-text">Dashboard View</h1>
@@ -1268,8 +1807,8 @@ export default function RevampDashboardPage() {
         })}
       </div>
 
-      <div className="px-6 pb-6">
-        {isTicketsView && (
+      {activeModule === "maintenance" && activeSubTab === "Tickets" && (
+        <div className="px-6 pb-4">
           <FilterPillBar
             segments={["Today", "This Week", "This Month"]}
             activeSegment={timeSegment}
@@ -1278,10 +1817,22 @@ export default function RevampDashboardPage() {
             onGoldenToggle={() => setGoldenActive((v) => !v)}
             redFlagActive={redFlagActive}
             onRedFlagToggle={() => setRedFlagActive((v) => !v)}
-            className="mb-4"
           />
-        )}
+        </div>
+      )}
+      </div>
 
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 pb-6">
+        <div className="flex items-start gap-4">
+        <InsightsRail
+          collapsed={railCollapsed}
+          onToggle={() => setRailCollapsed((v) => !v)}
+          data={insightRailData}
+          activeCategory={activeInsightCategory}
+          onCategoryChange={setActiveInsightCategory}
+          onNavigate={navigateTo}
+        />
+        <div className="min-w-0 flex-1">
         {isTicketsView ? (
           <>
           <div className="relative w-full">
@@ -1370,6 +1921,7 @@ export default function RevampDashboardPage() {
                   showInfoIcon
                   insightVariant="plain"
                   insight="Repair & Maintenance and General Tickets are stacked with Pending + In Progress and almost no Closed — nobody has picked most of these up yet. Air Conditioner and FSC are mostly Closed — a different, healthier shape entirely."
+                  seriesColors={["#9EC8BA", "#8E7BE0", "#DA7756", "#9EC8BA"]}
                   series={[
                     { dataKey: "pending", name: "Pending" },
                     { dataKey: "inProgress", name: "In Progress" },
@@ -1416,6 +1968,7 @@ export default function RevampDashboardPage() {
                   subtitle="Every breach, 12 months · not just what's due soon"
                   data={SLA_BREACH_TREND_DATA}
                   categoryKey="month"
+                  categoryColors={["#9EC8BA", "#8E7BE0", "#DA7756", "#8E7BE0", "#8E7BE0"]}
                   series={[{ dataKey: "breaches", name: "Breaches" }]}
                   showInfoIcon
                   height={140}
@@ -1635,7 +2188,7 @@ export default function RevampDashboardPage() {
                   subtitle="Same tenant, same issue, raised more than once — a fix that isn't holding"
                   data={REPEAT_COMPLAINTS_DATA}
                   categoryKey="issue"
-                  categoryColors={["#E7848E", "#EDC488"]}
+                  categoryColors={["#DA7756", "#DA7756"]}
                   series={[{ dataKey: "count", name: "Occurrences" }]}
                   showInfoIcon
                   insightVariant="plain"
@@ -1650,7 +2203,7 @@ export default function RevampDashboardPage() {
                   subtitle="8 tickets total, traceable to just 2 repeat-offender assets"
                   data={ASSET_LINKED_TICKETS_DATA}
                   categoryKey="asset"
-                  categoryColors={["#E7848E", "#EDC488"]}
+                  categoryColors={["#DA7756", "#DA7756"]}
                   series={[{ dataKey: "count", name: "Tickets" }]}
                   showInfoIcon
                   insightVariant="plain"
@@ -1767,9 +2320,9 @@ export default function RevampDashboardPage() {
                   title="Breakdown rate vs acceptable range"
                   subtitle="378 total assets · acceptable: 5–10%"
                   segments={[
-                    { value: 70, color: BRAND_HEX.ok },
-                    { value: 15, color: BRAND_HEX.warn },
-                    { value: 15, color: BRAND_HEX.err },
+                    { value: 70, color: "#E39090" },
+                    { value: 15, color: "#CDCAF5" },
+                    { value: 15, color: "#76CDC1" },
                   ]}
                   centerValue="100"
                   centerLabel="Total"
@@ -1802,7 +2355,7 @@ export default function RevampDashboardPage() {
                   categoryKey="category"
                   orientation="horizontal"
                   unit="%"
-                  categoryColors={[BRAND_HEX.err, BRAND_HEX.ok]}
+                  categoryColors={["#DA7756", "#9EC8BA"]}
                   series={[{ dataKey: "rate", name: "Breakdown rate" }]}
                   showInfoIcon
                   insightVariant="plain"
@@ -1861,7 +2414,6 @@ export default function RevampDashboardPage() {
                   title="Asset Lifecycle Status"
                   subtitle="In Use · Breakdown · Allocated · In Store · Disposed"
                   data={ASSET_LIFECYCLE_DATA}
-                  colors={ASSET_LIFECYCLE_COLORS}
                   centerLabel="378"
                   showInfoIcon
                   insightVariant="plain"
@@ -1878,6 +2430,7 @@ export default function RevampDashboardPage() {
                     value="73%"
                     accent="warning"
                     subtitle="276 of 378 assets have an active AMC contract"
+                    borderAccent="warning"
                   />
                   <StatHeroCard
                     tone="teal"
@@ -1885,6 +2438,7 @@ export default function RevampDashboardPage() {
                     value="102"
                     accent="error"
                     subtitle="27% of portfolio, zero contract"
+                    borderAccent="error"
                   />
                 </div>
                 <p className="text-brand-body-5 text-brand-green leading-relaxed">
@@ -1901,6 +2455,7 @@ export default function RevampDashboardPage() {
                     value="34hrs"
                     accent="warning"
                     subtitle="Avg across DG Sync Panel + CCTV Camera repeat-breakdown history"
+                    borderAccent="warning"
                   />
                   <StatHeroCard
                     tone="teal"
@@ -1908,6 +2463,7 @@ export default function RevampDashboardPage() {
                     value="47d"
                     accent="error"
                     subtitle="DG Sync Panel: 3 breakdowns this year, ~47 days apart"
+                    borderAccent="error"
                   />
                 </div>
                 <p className="text-brand-body-5 text-brand-green leading-relaxed">
@@ -1942,6 +2498,7 @@ export default function RevampDashboardPage() {
                   categoryKey="category"
                   orientation="horizontal"
                   unit="L"
+                  categoryColors={["#9EC8BA", "#8E7BE0", "#DA7756", "#8E7BE0"]}
                   series={[{ dataKey: "value", name: "₹L" }]}
                   showInfoIcon
                   insightVariant="plain"
@@ -2032,7 +2589,6 @@ export default function RevampDashboardPage() {
                   title="Audit Status Overview"
                   subtitle="Scheduled · Conducted · Pending · Overdue"
                   data={AUDIT_STATUS_OVERVIEW_DATA}
-                  colors={AUDIT_STATUS_OVERVIEW_COLORS}
                   centerLabel="27"
                   showInfoIcon
                   insightVariant="plain"
@@ -2147,7 +2703,7 @@ export default function RevampDashboardPage() {
                   orientation="horizontal"
                   unit="%"
                   valueDomain={[0, 100]}
-                  categoryColors={[BRAND_HEX.warn, BRAND_HEX.warn, BRAND_HEX.warn]}
+                  categoryColors={[BRAND_HEX.warn, BRAND_HEX.warn, "#DA7756"]}
                   series={[{ dataKey: "pct", name: "Completion" }]}
                   labelFormatter={(_value, index) => AUDIT_COMPLETION_DATA[index]?.fraction ?? ""}
                   showInfoIcon
@@ -2198,25 +2754,25 @@ export default function RevampDashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                      <div className="text-center p-3 rounded-lg" style={{ backgroundColor: "#EFEFFB" }}>
-                        <div className="text-brand-body-5 font-semibold text-black">Upcoming Visits</div>
+                      <div className="text-center p-3 bg-brand-bg rounded-lg">
+                        <div className="text-brand-body-5 font-semibold text-brand-text">Upcoming Visits</div>
                         <div className="text-brand-h2 font-bold text-brand-info mt-1">23</div>
-                        <div className="text-brand-caption text-black mt-1">Due in 30 days</div>
+                        <div className="text-brand-caption text-brand-text-light mt-1">Due in 30 days</div>
                       </div>
-                      <div className="text-center p-3 rounded-lg" style={{ backgroundColor: "#B7DCD44D" }}>
-                        <div className="text-brand-body-5 font-semibold text-black">Due / Missed</div>
+                      <div className="text-center p-3 bg-brand-bg rounded-lg">
+                        <div className="text-brand-body-5 font-semibold text-brand-text">Due / Missed</div>
                         <div className="text-brand-h2 font-bold text-brand-error mt-1">128</div>
-                        <div className="text-brand-caption text-black mt-1">Vendor non-compliance</div>
+                        <div className="text-brand-caption text-brand-text-light mt-1">Vendor non-compliance</div>
                       </div>
-                      <div className="text-center p-3 rounded-lg" style={{ backgroundColor: "#E3909026" }}>
-                        <div className="text-brand-body-5 font-semibold text-black">Flagged AMCs</div>
+                      <div className="text-center p-3 bg-brand-bg rounded-lg">
+                        <div className="text-brand-body-5 font-semibold text-brand-text">Flagged AMCs</div>
                         <div className="text-brand-h2 font-bold text-[#8A5A00] mt-1">3</div>
-                        <div className="text-brand-caption text-black mt-1">Under Observation</div>
+                        <div className="text-brand-caption text-brand-text-light mt-1">Under Observation</div>
                       </div>
-                      <div className="text-center p-3 rounded-lg" style={{ backgroundColor: "#85BDF633" }}>
-                        <div className="text-brand-body-5 font-semibold text-black">Never Serviced</div>
+                      <div className="text-center p-3 bg-brand-bg rounded-lg">
+                        <div className="text-brand-body-5 font-semibold text-brand-text">Never Serviced</div>
                         <div className="text-brand-h2 font-bold text-brand-error mt-1">41</div>
-                        <div className="text-brand-caption text-black mt-1">Active status, zero visits ever</div>
+                        <div className="text-brand-caption text-brand-text-light mt-1">Active status, zero visits ever</div>
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -2318,7 +2874,7 @@ export default function RevampDashboardPage() {
                   subtitle="364 total contracts, previously treated as one pool"
                   data={AMC_SERVICE_ASSET_SPLIT_DATA}
                   categoryKey="type"
-                  seriesColors={[BRAND_HEX.blue, BRAND_HEX.err]}
+                  seriesColors={[BRAND_HEX.blue, "#9EC8BA"]}
                   series={[
                     { dataKey: "total", name: "Total Contracts" },
                     { dataKey: "missed", name: "Missed Visits" },
@@ -2338,6 +2894,7 @@ export default function RevampDashboardPage() {
                     value="17"
                     accent="error"
                     subtitle="Marked Critical, zero contract coverage"
+                    borderAccent="error"
                   />
                   <StatHeroCard
                     tone="teal"
@@ -2345,6 +2902,7 @@ export default function RevampDashboardPage() {
                     value="34"
                     accent="warning"
                     subtitle="Requested, not yet actioned by vendor"
+                    borderAccent="warning"
                   />
                 </div>
                 <p className="text-brand-body-5 text-brand-green leading-relaxed">
@@ -2433,7 +2991,7 @@ export default function RevampDashboardPage() {
                   categoryKey="type"
                   orientation="horizontal"
                   stacked
-                  seriesColors={[BRAND_HEX.ok, BRAND_HEX.warn, BRAND_HEX.err]}
+                  seriesColors={["#9EC8BA", "#DA7756", "#8E7BE0"]}
                   series={[
                     { dataKey: "completed", name: "Completed" },
                     { dataKey: "open", name: "Open" },
@@ -2476,6 +3034,7 @@ export default function RevampDashboardPage() {
                   value="31%"
                   accent="error"
                   subtitle="Completed ÷ Scheduled × 100, across PPM/AMC/Preparedness"
+                  borderAccent="error"
                 />
                 <StatHeroCard
                   tone="teal"
@@ -2483,6 +3042,7 @@ export default function RevampDashboardPage() {
                   value="58%"
                   accent="warning"
                   subtitle="Achieved ÷ Maximum Score — quality of completed inspections"
+                  borderAccent="warning"
                 />
               </div>
 
@@ -2493,7 +3053,7 @@ export default function RevampDashboardPage() {
                   data={CHECKLIST_TOP10_COMPLETED_DATA}
                   categoryKey="checklist"
                   orientation="horizontal"
-                  categoryColors={CHECKLIST_TOP10_COMPLETED_DATA.map(() => BRAND_HEX.ok)}
+                  categoryColors={CHECKLIST_TOP10_COMPLETED_DATA.map(() => "#9EC8BA")}
                   series={[{ dataKey: "completions", name: "Completions" }]}
                   showInfoIcon
                   className="h-full overflow-auto"
@@ -2614,6 +3174,7 @@ export default function RevampDashboardPage() {
                   value="25"
                   accent="success"
                   subtitle="13% of total"
+                  borderAccent="success"
                 />
                 <StatHeroCard
                   tone="peach"
@@ -2621,6 +3182,7 @@ export default function RevampDashboardPage() {
                   value="173"
                   accent="error"
                   subtitle="87% of total — striking ratio"
+                  borderAccent="error"
                 />
                 <StatHeroCard tone="blue" label="Ecofriendly" value="37" accent="info" subtitle="Tagged sustainable" />
               </div>
@@ -2645,7 +3207,7 @@ export default function RevampDashboardPage() {
                   subtitle="Consumable vs Sparse · Technical vs Non-Technical · Critical vs Non-Critical"
                   data={INVENTORY_TYPE_BREAKDOWN_DATA}
                   categoryKey="type"
-                  seriesColors={[BRAND_HEX.err, BRAND_HEX.ok]}
+                  seriesColors={["#8E7BE0", "#DA7756"]}
                   series={[
                     { dataKey: "critical", name: "Critical" },
                     { dataKey: "nonCritical", name: "Non-Critical" },
@@ -2664,6 +3226,7 @@ export default function RevampDashboardPage() {
                   value="42/100"
                   accent="warning"
                   subtitle="Composite: availability, turnover, dead stock, cost trend"
+                  borderAccent="warning"
                   className="h-full"
                 />
               </div>
@@ -2706,7 +3269,7 @@ export default function RevampDashboardPage() {
                   data={INVENTORY_DEADSTOCK_DATA}
                   categoryKey="category"
                   orientation="horizontal"
-                  categoryColors={INVENTORY_DEADSTOCK_DATA.map(() => BRAND_HEX.err)}
+                  categoryColors={INVENTORY_DEADSTOCK_DATA.map(() => "#9EC8BA")}
                   series={[{ dataKey: "value", name: "Value at risk" }]}
                   showInfoIcon
                   insightVariant="plain"
@@ -2745,6 +3308,7 @@ export default function RevampDashboardPage() {
                   value="3"
                   accent="warning"
                   subtitle="Records pending dispatch approval"
+                  borderAccent="warning"
                 />
                 <StatHeroCard
                   tone="blue"
@@ -2752,6 +3316,7 @@ export default function RevampDashboardPage() {
                   value="2"
                   accent="error"
                   subtitle="Awaiting disposal confirmation"
+                  borderAccent="error"
                 />
               </div>
 
@@ -3030,6 +3595,7 @@ export default function RevampDashboardPage() {
                   value="1.11"
                   accent="error"
                   subtitle="Out of 5 · Washroom survey"
+                  borderAccent="error"
                 />
                 <StatHeroCard tone="teal" label="Total Questions" value="1" accent="neutral" subtitle="Help us keep our washrooms clean" />
                 <StatHeroCard
@@ -3038,6 +3604,7 @@ export default function RevampDashboardPage() {
                   value="15"
                   accent="success"
                   subtitle="26.8% of responses"
+                  borderAccent="success"
                 />
                 <StatHeroCard
                   tone="blue"
@@ -3045,6 +3612,7 @@ export default function RevampDashboardPage() {
                   value="41"
                   accent="error"
                   subtitle="73.2% of responses"
+                  borderAccent="error"
                 />
               </div>
 
@@ -3170,6 +3738,7 @@ export default function RevampDashboardPage() {
                   accent="warning"
                   subtitle="3 vendors flagged"
                   progress={72}
+                  borderAccent="warning"
                 />
                 <StatHeroCard
                   tone="peach"
@@ -3177,6 +3746,7 @@ export default function RevampDashboardPage() {
                   value="58%"
                   accent="warning"
                   subtitle="Distinct from response time — did the job finish on schedule"
+                  borderAccent="warning"
                 />
                 <StatHeroCard
                   tone="blue"
@@ -3185,6 +3755,7 @@ export default function RevampDashboardPage() {
                   accent="warning"
                   subtitle="128 AMC visits missed"
                   progress={64}
+                  borderAccent="warning"
                 />
                 <StatHeroCard
                   tone="purple"
@@ -3192,6 +3763,7 @@ export default function RevampDashboardPage() {
                   value="128"
                   accent="error"
                   subtitle="Missed visits · 104 active"
+                  borderAccent="error"
                 />
                 <StatHeroCard
                   tone="teal"
@@ -3199,6 +3771,7 @@ export default function RevampDashboardPage() {
                   value="47"
                   accent="warning"
                   subtitle="GRN · PR · approvals"
+                  borderAccent="warning"
                 />
                 <StatHeroCard
                   tone="peach"
@@ -3206,6 +3779,7 @@ export default function RevampDashboardPage() {
                   value="8"
                   accent="error"
                   subtitle="KYC expiring ≤ 30 days"
+                  borderAccent="error"
                 />
               </div>
 
@@ -3352,6 +3926,8 @@ export default function RevampDashboardPage() {
             </div>
           </div>
         )}
+        </div>
+        </div>
       </div>
     </div>
   );

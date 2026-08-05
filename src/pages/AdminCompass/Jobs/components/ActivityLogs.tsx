@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useEffect } from "react";
 import { useJobs } from "../JobsContext";
 import { T } from "../constants";
 import { ico } from "../icons";
@@ -24,7 +25,18 @@ const actionLabels = {
 };
 
 export default function ActivityLogs() {
-  const { activityLogs } = useJobs();
+  const {
+    activityLogs,
+    logsLoading,
+    logsError,
+    logsPage,
+    logsMeta,
+    loadActivityLogs,
+  } = useJobs();
+
+  useEffect(() => {
+    loadActivityLogs(1);
+  }, [loadActivityLogs]);
 
   return (
     <div>
@@ -52,7 +64,7 @@ export default function ActivityLogs() {
             color: T.orange,
           }}
         >
-          {activityLogs.length} entries
+          {logsMeta.total ?? activityLogs.length} entries
         </div>
       </div>
       <div
@@ -66,9 +78,10 @@ export default function ActivityLogs() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "130px 70px 110px 1fr 1fr 110px",
-            gap: 10,
-            padding: "12px 20px",
+            gridTemplateColumns: "112px 106px 62px 190px minmax(360px, 1fr) 130px",
+            justifyContent: "start",
+            gap: 8,
+            padding: "12px 14px",
             fontSize: 11,
             fontWeight: 700,
             color: T.inkMuted,
@@ -84,7 +97,29 @@ export default function ActivityLogs() {
           <span>Detail</span>
           <span>By</span>
         </div>
-        {activityLogs.length === 0 ? (
+        {logsLoading ? (
+          <div
+            style={{
+              padding: "48px 20px",
+              textAlign: "center",
+              fontSize: 13,
+              color: T.inkMuted,
+            }}
+          >
+            Loading activity logs...
+          </div>
+        ) : logsError ? (
+          <div
+            style={{
+              padding: "48px 20px",
+              textAlign: "center",
+              fontSize: 13,
+              color: T.danger,
+            }}
+          >
+            Could not load activity logs: {logsError}
+          </div>
+        ) : activityLogs.length === 0 ? (
           <div
             style={{
               padding: "48px 20px",
@@ -101,9 +136,10 @@ export default function ActivityLogs() {
               key={log.id}
               style={{
                 display: "grid",
-                gridTemplateColumns: "130px 70px 110px 1fr 1fr 110px",
-                gap: 10,
-                padding: "12px 20px",
+                gridTemplateColumns: "112px 106px 62px 190px minmax(360px, 1fr) 130px",
+                justifyContent: "start",
+                gap: 8,
+                padding: "12px 14px",
                 fontSize: 12.5,
                 borderBottom:
                   i < activityLogs.length - 1
@@ -133,11 +169,12 @@ export default function ActivityLogs() {
                   borderRadius: 999,
                   fontSize: 10,
                   fontWeight: 700,
+                  justifySelf: "start",
                   background: `${actionColors[log.type] || T.kpiCream}30`,
                   color: actionColors[log.type] || T.ink,
                 }}
               >
-                {actionLabels[log.type] || log.type}
+                {log.action || actionLabels[log.type] || log.type}
               </span>
               <span
                 style={{
@@ -145,6 +182,7 @@ export default function ActivityLogs() {
                   borderRadius: 999,
                   fontSize: 10,
                   fontWeight: 600,
+                  justifySelf: "start",
                   background:
                     log.entity === "KRA"
                       ? T.kpiBlue
@@ -158,14 +196,66 @@ export default function ActivityLogs() {
               <span style={{ fontWeight: 600, fontSize: 12 }}>
                 {log.name}
               </span>
+              {/* Detail — "Weightage 50 → 60": label muted, purani value
+                  strike-through, nayi value highlighted. */}
               <span
                 style={{
-                  color: log.detail ? T.inkSoft : T.inkMuted,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  gap: 6,
+                  minWidth: 0,
                   fontSize: 12,
+                  color: T.inkSoft,
                 }}
                 title={log.detail || undefined}
               >
-                {log.detail || "No field changes"}
+                {(log.changes?.length ? log.changes : null)?.map(
+                  (change, ci) => (
+                    <span
+                      key={ci}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 5,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {change.label && (
+                        <span style={{ color: T.inkMuted, fontWeight: 600, whiteSpace: "nowrap" }}>
+                          {change.label}
+                        </span>
+                      )}
+                      {change.from !== undefined && change.to !== undefined ? (
+                        <>
+                          <span
+                            style={{
+                              color: T.inkMuted,
+                              textDecoration: "line-through",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {change.from}
+                          </span>
+                          <span style={{ color: T.inkMuted }}>→</span>
+                          <span style={{ color: T.growth, fontWeight: 700, whiteSpace: "nowrap" }}>
+                            {change.to}
+                          </span>
+                        </>
+                      ) : change.value !== undefined ? (
+                        <span style={{ color: T.ink, fontWeight: 600, whiteSpace: "nowrap" }}>
+                          {change.value}
+                        </span>
+                      ) : (
+                        <span style={{ color: T.ink, fontWeight: 600 }}>
+                          {change.text}
+                        </span>
+                      )}
+                    </span>
+                  )
+                ) || (
+                  <span style={{ color: T.inkMuted }}>No field changes</span>
+                )}
               </span>
               <span style={{ fontSize: 12, color: T.inkSoft }}>
                 {log.user}
@@ -174,6 +264,51 @@ export default function ActivityLogs() {
           ))
         )}
       </div>
+      {(logsPage > 1 || logsMeta.hasMore) && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 8,
+            marginTop: 14,
+          }}
+        >
+          <button
+            type="button"
+            disabled={logsLoading || logsPage <= 1}
+            onClick={() => loadActivityLogs(logsPage - 1)}
+            style={{
+              padding: "8px 12px",
+              borderRadius: T.rsm,
+              border: `1px solid ${T.borderSoft}`,
+              background: T.raised,
+              color: logsPage <= 1 ? T.inkMuted : T.ink,
+              cursor: logsLoading || logsPage <= 1 ? "not-allowed" : "pointer",
+              fontSize: 12,
+              fontWeight: 700,
+            }}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            disabled={logsLoading || !logsMeta.hasMore}
+            onClick={() => loadActivityLogs(logsPage + 1)}
+            style={{
+              padding: "8px 12px",
+              borderRadius: T.rsm,
+              border: `1px solid ${T.borderSoft}`,
+              background: T.raised,
+              color: !logsMeta.hasMore ? T.inkMuted : T.ink,
+              cursor: logsLoading || !logsMeta.hasMore ? "not-allowed" : "pointer",
+              fontSize: 12,
+              fontWeight: 700,
+            }}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }

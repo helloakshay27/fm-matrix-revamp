@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, X, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
 
 interface Condition {
   id: string;
@@ -20,6 +18,34 @@ interface RewardOutcome {
   subRewardOutcome: string;
   parameter: string;
 }
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting any transform that mispositions it.
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 export const LoyaltyRuleEngineDashboard = () => {
   const navigate = useNavigate();
@@ -150,12 +176,14 @@ export const LoyaltyRuleEngineDashboard = () => {
         <div className="bg-gray-50 p-4 rounded-lg">
           <h2 className="text-lg font-semibold mb-4">"New Rule"</h2>
           <div className="max-w-md">
-            <Label className="text-sm font-medium">Enter Rule Name</Label>
-            <Input
+            <TextField
+              label="Enter Rule Name"
+              variant="outlined"
+              fullWidth
               value={ruleName}
               onChange={(e) => setRuleName(e.target.value)}
-              className="mt-1"
               placeholder="Enter rule name"
+              sx={fieldStyles}
             />
           </div>
         </div>
@@ -166,7 +194,7 @@ export const LoyaltyRuleEngineDashboard = () => {
         <h2 className="text-lg font-semibold text-[#C72030] mb-6">Set Rule Conditions</h2>
         
         {conditions.map((condition, index) => (
-          <div key={condition.id} className="mb-6 p-4 border border-gray-200 rounded-lg">
+          <div key={condition.id} className="mb-6 p-4 border border-[#C72030] rounded-lg">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-medium text-[#C72030]">Condition {index + 1}</h3>
               {conditions.length > 1 && (
@@ -184,20 +212,22 @@ export const LoyaltyRuleEngineDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
               {/* Master Attribute */}
               <div>
-                <Label className="text-sm font-medium text-[#C72030]">Master Attribute*</Label>
-                <Select
-                  value={condition.masterAttribute}
-                  onValueChange={(value) => updateCondition(condition.id, 'masterAttribute', value)}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Master Attribute" />
-                  </SelectTrigger>
-                  <SelectContent>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id={`master-attribute-${condition.id}`}>Master Attribute *</InputLabel>
+                  <MuiSelect
+                    labelId={`master-attribute-${condition.id}`}
+                    label="Master Attribute *"
+                    value={condition.masterAttribute}
+                    onChange={(e) => updateCondition(condition.id, 'masterAttribute', e.target.value)}
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value=""><em>Select Master Attribute</em></MenuItem>
                     {masterAttributes.map((attr) => (
-                      <SelectItem key={attr} value={attr}>{attr}</SelectItem>
+                      <MenuItem key={attr} value={attr}>{attr}</MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </FormControl>
               </div>
 
               <div className="flex justify-center">
@@ -206,20 +236,22 @@ export const LoyaltyRuleEngineDashboard = () => {
 
               {/* Sub Attribute */}
               <div>
-                <Label className="text-sm font-medium text-[#C72030]">Sub Attribute*</Label>
-                <Select
-                  value={condition.subAttribute}
-                  onValueChange={(value) => updateCondition(condition.id, 'subAttribute', value)}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Sub Attribute" />
-                  </SelectTrigger>
-                  <SelectContent>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id={`sub-attribute-${condition.id}`}>Sub Attribute *</InputLabel>
+                  <MuiSelect
+                    labelId={`sub-attribute-${condition.id}`}
+                    label="Sub Attribute *"
+                    value={condition.subAttribute}
+                    onChange={(e) => updateCondition(condition.id, 'subAttribute', e.target.value)}
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value=""><em>Select Sub Attribute</em></MenuItem>
                     {subAttributes.map((attr) => (
-                      <SelectItem key={attr} value={attr}>{attr}</SelectItem>
+                      <MenuItem key={attr} value={attr}>{attr}</MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </FormControl>
               </div>
             </div>
 
@@ -228,20 +260,22 @@ export const LoyaltyRuleEngineDashboard = () => {
               <h4 className="font-medium text-[#C72030] mb-4">Operator</h4>
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                 <div>
-                  <Label className="text-sm font-medium text-[#C72030]">Master Operator*</Label>
-                  <Select
-                    value={condition.masterOperator}
-                    onValueChange={(value) => updateCondition(condition.id, 'masterOperator', value)}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select Master Operator" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id={`master-operator-${condition.id}`}>Master Operator *</InputLabel>
+                    <MuiSelect
+                      labelId={`master-operator-${condition.id}`}
+                      label="Master Operator *"
+                      value={condition.masterOperator}
+                      onChange={(e) => updateCondition(condition.id, 'masterOperator', e.target.value)}
+                      sx={fieldStyles}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Master Operator</em></MenuItem>
                       {operators.map((op) => (
-                        <SelectItem key={op} value={op}>{op}</SelectItem>
+                        <MenuItem key={op} value={op}>{op}</MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
 
                 <div className="flex justify-center">
@@ -249,20 +283,22 @@ export const LoyaltyRuleEngineDashboard = () => {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium text-[#C72030]">Sub Operator*</Label>
-                  <Select
-                    value={condition.subOperator}
-                    onValueChange={(value) => updateCondition(condition.id, 'subOperator', value)}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select Sub Operator" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id={`sub-operator-${condition.id}`}>Sub Operator *</InputLabel>
+                    <MuiSelect
+                      labelId={`sub-operator-${condition.id}`}
+                      label="Sub Operator *"
+                      value={condition.subOperator}
+                      onChange={(e) => updateCondition(condition.id, 'subOperator', e.target.value)}
+                      sx={fieldStyles}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Sub Operator</em></MenuItem>
                       {operators.map((op) => (
-                        <SelectItem key={op} value={op}>{op}</SelectItem>
+                        <MenuItem key={op} value={op}>{op}</MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
               </div>
             </div>
@@ -271,12 +307,14 @@ export const LoyaltyRuleEngineDashboard = () => {
             <div className="mt-6">
               <h4 className="font-medium text-[#C72030] mb-4">Value</h4>
               <div className="max-w-md">
-                <Label className="text-sm font-medium text-[#C72030]">Value*</Label>
-                <Input
+                <TextField
+                  label="Value *"
+                  variant="outlined"
+                  fullWidth
                   value={condition.value}
                   onChange={(e) => updateCondition(condition.id, 'value', e.target.value)}
-                  className="mt-1"
                   placeholder="Enter Input Value"
+                  sx={fieldStyles}
                 />
               </div>
             </div>
@@ -287,7 +325,7 @@ export const LoyaltyRuleEngineDashboard = () => {
         <Button
           onClick={addCondition}
           variant="ghost"
-          className="text-green-600 hover:text-green-700"
+          className="text-[#C72030] hover:text-[#A01A28]"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Additional Condition
@@ -297,23 +335,25 @@ export const LoyaltyRuleEngineDashboard = () => {
       {/* THEN Section */}
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-[#C72030] mb-6">THEN</h2>
-        <div className="p-4 border border-gray-200 rounded-lg">
+        <div className="p-4 border border-[#C72030] rounded-lg">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
-              <Label className="text-sm font-medium text-[#C72030]">Master Reward Outcome*</Label>
-              <Select
-                value={rewardOutcome.masterRewardOutcome}
-                onValueChange={(value) => setRewardOutcome({...rewardOutcome, masterRewardOutcome: value})}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select Master Reward Outcome" />
-                </SelectTrigger>
-                <SelectContent>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="master-reward-outcome-label">Master Reward Outcome *</InputLabel>
+                <MuiSelect
+                  labelId="master-reward-outcome-label"
+                  label="Master Reward Outcome *"
+                  value={rewardOutcome.masterRewardOutcome}
+                  onChange={(e) => setRewardOutcome({...rewardOutcome, masterRewardOutcome: e.target.value})}
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value=""><em>Select Master Reward Outcome</em></MenuItem>
                   {rewardOutcomes.map((outcome) => (
-                    <SelectItem key={outcome} value={outcome}>{outcome}</SelectItem>
+                    <MenuItem key={outcome} value={outcome}>{outcome}</MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div className="flex justify-center">
@@ -321,29 +361,33 @@ export const LoyaltyRuleEngineDashboard = () => {
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-[#C72030]">Sub Reward Outcome*</Label>
-              <Select
-                value={rewardOutcome.subRewardOutcome}
-                onValueChange={(value) => setRewardOutcome({...rewardOutcome, subRewardOutcome: value})}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select Sub Reward Outcome" />
-                </SelectTrigger>
-                <SelectContent>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="sub-reward-outcome-label">Sub Reward Outcome *</InputLabel>
+                <MuiSelect
+                  labelId="sub-reward-outcome-label"
+                  label="Sub Reward Outcome *"
+                  value={rewardOutcome.subRewardOutcome}
+                  onChange={(e) => setRewardOutcome({...rewardOutcome, subRewardOutcome: e.target.value})}
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value=""><em>Select Sub Reward Outcome</em></MenuItem>
                   {rewardOutcomes.map((outcome) => (
-                    <SelectItem key={outcome} value={outcome}>{outcome}</SelectItem>
+                    <MenuItem key={outcome} value={outcome}>{outcome}</MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-[#C72030]">Parameter*</Label>
-              <Input
+              <TextField
+                label="Parameter *"
+                variant="outlined"
+                fullWidth
                 value={rewardOutcome.parameter}
                 onChange={(e) => setRewardOutcome({...rewardOutcome, parameter: e.target.value})}
-                className="mt-1"
                 placeholder="Enter Parameter Value"
+                sx={fieldStyles}
               />
             </div>
           </div>

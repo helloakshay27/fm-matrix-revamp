@@ -6,65 +6,90 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState, AppDispatch } from "@/store/store";
-import { fetchAllowedSites } from "@/store/slices/siteSlice";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   DEFAULT_STATE,
   normalizeScope,
   scopeLabel as computeScopeLabel,
-  scopeSites,
-  seats,
-  core,
   buildTraffic,
   buildAdopt,
   buildSiteHealth,
-  buildRegion,
   buildFlows,
+  isWholeTenant,
+  scopeSites,
+  toModuleOptions,
   type DashboardState,
   type TrafficData,
   type AdoptData,
   type SiteHealthData,
-  type RegionData,
   type FlowsData,
-  type Core,
+  type ModuleOption,
 } from "../data/metrics";
-import { rngFor } from "../data/rng";
 import {
-  SITES as MOCK_SITES,
-  REGIONS as MOCK_REGIONS,
   BM_DEFAULTS,
+  groupSites,
   type Site,
+  type SiteGroup,
 } from "../data/constants";
-import type { Tier, Device, DateRange } from "../data/constants";
-import { getUser } from "@/utils/auth";
+import type { DateRange, Device, Tier } from "../data/constants";
+import type { DeviceType } from "../api/adoptionApi";
+import {
+  dateRangeFor,
+  useAllSites,
+  useCompanyNames,
+  useAdoptionEngagement,
+  useAdoptionTrend,
+  useGrowth,
+  useModuleTree,
+  useRetention,
+  useRoles,
+  useSiteLeague,
+  useSubModuleTree,
+  useTrafficSession,
+  useUsageAndDistribution,
+  useWorkflowUsage,
+  type QueryFilters,
+} from "../api/queries";
 
-/** Maps the Redux site-slice shape (same one src/components/Header.tsx's site switcher uses)
- * onto the wireframe's Site model — region/seats are simulated since the real data has neither. */
-function toDashboardSites(apiSites: { id: number; name: string }[]): Site[] {
-  return apiSites.map((s, i) => {
-    const r = rngFor(`allowed-site|${s.id}`);
-    return {
-      id: String(s.id),
-      name: s.name,
-      region: MOCK_REGIONS[i % MOCK_REGIONS.length],
-      seats: Math.round(40 + r() * 100),
-    };
-  });
+function deviceParam(dev: Device): DeviceType[] {
+  if (dev === "desktop") return ["Desktop"];
+  if (dev === "mobile") return ["Mobile"];
+  return [];
+}
+
+export interface SectionStatus {
+  loading: boolean;
+  error: Error | null;
 }
 
 export interface ViewModel {
   state: DashboardState;
   scopeLabel: string;
-  core: Core;
   traffic: TrafficData;
   adopt: AdoptData;
   siteHealth: SiteHealthData | null;
-  region: RegionData | null;
   flows: FlowsData;
-  totalSeats: number;
   sites: Site[];
-  regions: string[];
+  /** The sites the current tier + scope covers. */
+  scopedSites: Site[];
+  /** Companies the site list groups into — the Regional tier's options. */
+  groups: SiteGroup[];
+  /** True while the site-list fetch is still in flight. */
+  sitesLoading: boolean;
+  /** Layer-3 module tree, derived server-side from real `$pathname` segments. */
+  modules: ModuleOption[];
+  subModules: ModuleOption[];
+  status: {
+    traffic: SectionStatus;
+    adopt: SectionStatus;
+    flows: SectionStatus;
+    siteHealth: SectionStatus;
+  };
+  /** Progress of the per-site `traffic_session` fan-out behind the site-wise table. */
+  siteLeague: { loaded: number; failed: number; total: number; skipped: number };
+  /** `generated_at` of the Layer-1 response — the freshness stamp shown in the header. */
+  generatedAt: string | null;
+  range: { from: string; to: string };
 }
 
 interface InfoPopoverState {
@@ -81,9 +106,12 @@ interface DashboardContextValue {
   setScope: (scope: string) => void;
   setDate: (date: DateRange) => void;
   setDev: (dev: Device) => void;
-  setMod: (mod: string) => void;
+  setModule: (module: string) => void;
+  setSubModule: (subModule: string) => void;
   setSessTab: (tab: DashboardState["sessTab"]) => void;
+  setLicensedSeats: (seats: number | null) => void;
   togglePrev: () => void;
+  refreshAll: () => void;
   benchmarks: Record<string, number | null>;
   getBenchmark: (id: string) => number | null;
   setBenchmark: (id: string, value: number | null) => void;
@@ -105,88 +133,231 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [infoPopover, setInfoPopover] = useState<InfoPopoverState | null>(null);
   const [aiPanel, setAiPanel] = useState<AiPanelState | null>(null);
 
-  // Same Redux site slice src/components/Header.tsx's site-switcher reads from. This route
-  // renders outside <Layout>/<Header>, so Header never mounts here to populate it — fetch it directly.
-  const dispatch = useDispatch<AppDispatch>();
-  const { sites: reduxSites, selectedSite } = useSelector(
-    (s: RootState) => s.site
-  );
-  const userId = getUser()?.id;
+  // Every site on the tenant (/pms/sites.json), deliberately NOT allowed_sites — the scope
+  // dropdown lists all sites regardless of what the signed-in user is assigned to.
+  const sitesQ = useAllSites();
+  const companiesQ = useCompanyNames();
+  const sites = useMemo<Site[]>(() => sitesQ.data ?? [], [sitesQ.data]);
 
-  useEffect(() => {
-    if (userId) dispatch(fetchAllowedSites(userId));
-  }, [userId, dispatch]);
-
-  // Fall back to the wireframe's mock sites while the allowed-sites call is loading, errored, or empty.
-  const sites = useMemo<Site[]>(
-    () => (reduxSites?.length ? toDashboardSites(reduxSites) : MOCK_SITES),
-    [reduxSites]
+  // The Regional tier groups by company — the one real hierarchy above a site. Sites with
+  // no company_id simply don't appear in a group, so the tier degrades instead of faking one.
+  const groups = useMemo<SiteGroup[]>(
+    () => groupSites(sites, companiesQ.data ?? {}),
+    [sites, companiesQ.data]
   );
 
-  const regions = useMemo(
-    () => Array.from(new Set(sites.map((s) => s.region))),
-    [sites]
-  );
-  const preferredSiteId = selectedSite ? String(selectedSite.id) : undefined;
+  // Hold the analytics calls until the site list has settled — otherwise every endpoint
+  // fires once for the whole tenant and again with the real site_id list.
+  const sitesSettled = !sitesQ.isLoading;
 
-  // Keep the current scope valid whenever the allowed-sites list changes (e.g. once the fetch resolves),
-  // preferring the API's selected_site so the dropdown opens on the user's actual current site.
+  // Keep the current scope valid for the tier once the site/company lists resolve.
   useEffect(() => {
     setState((s) => {
-      const next = normalizeScope(
-        s.tier,
-        s.scope,
-        sites,
-        regions,
-        preferredSiteId
-      );
+      const next = normalizeScope(s.tier, s.scope, sites, groups);
       return next === s.scope ? s : { ...s, scope: next };
     });
-  }, [sites, regions, preferredSiteId]);
+  }, [sites, groups]);
 
-  const vm = useMemo<ViewModel>(() => {
-    const scopedSites = scopeSites(state, sites);
-    const c = core(state, sites);
-    return {
+  const { from, to } = useMemo(() => dateRangeFor(state.date), [state.date]);
+
+  const scopedSites = useMemo(
+    () => scopeSites(state, sites, groups),
+    [state, sites, groups]
+  );
+
+  // Always pass the current user's site IDs so the API only returns data
+  // for sites belonging to the user's selected organisation.
+  const siteIds = useMemo(
+    () => scopedSites.map((s) => s.id),
+    [scopedSites]
+  );
+
+  /** All site IDs in scope — sent as a single comma-separated API call. */
+  const leagueSiteIds = useMemo(
+    () => scopedSites.map((s) => s.id),
+    [scopedSites]
+  );
+
+  const filters = useMemo<QueryFilters>(
+    () => ({
+      enabled: sitesSettled,
+      from,
+      to,
+      siteIds,
+      devices: deviceParam(state.dev),
+      licensedSeats: state.licensedSeats,
+      module: state.module,
+      subModule: state.subModule,
+    }),
+    [sitesSettled, from, to, siteIds, state.dev, state.licensedSeats, state.module, state.subModule]
+  );
+
+  /** A disabled query reports isLoading=false, so treat "not started yet" as loading too. */
+  const pending = !sitesSettled;
+
+  /* --------------------------------------------------------- the 9 endpoints */
+
+  const trafficQ = useTrafficSession(filters);
+  const usageQ = useUsageAndDistribution(filters);
+  const engagementQ = useAdoptionEngagement(filters);
+  const trendQ = useAdoptionTrend(filters);
+  const growthQ = useGrowth(filters);
+  const retentionQ = useRetention(filters);
+  const rolesQ = useRoles(filters);
+  const moduleTreeQ = useModuleTree(filters);
+  const subModuleTreeQ = useSubModuleTree(filters);
+  const workflowQ = useWorkflowUsage(filters);
+
+  const league = useSiteLeague(filters, leagueSiteIds, scopedSites.length > 1);
+
+  const modules = useMemo(() => toModuleOptions(moduleTreeQ.data?.tree), [moduleTreeQ.data]);
+  const subModules = useMemo(
+    () => toModuleOptions(subModuleTreeQ.data?.tree),
+    [subModuleTreeQ.data]
+  );
+
+  // The module list is dynamic, so the initial selection has to wait for the tree.
+  useEffect(() => {
+    if (!modules.length) return;
+    setState((s) => {
+      if (s.module && modules.some((m) => m.name === s.module)) return s;
+      return { ...s, module: modules[0].name, subModule: null };
+    });
+  }, [modules]);
+
+  // Same for the sub-module: default to the busiest one under the selected module.
+  useEffect(() => {
+    if (!state.module) return;
+    setState((s) => {
+      if (s.subModule && subModules.some((m) => m.name === s.subModule)) return s;
+      const first = subModules[0]?.name ?? null;
+      return s.subModule === first ? s : { ...s, subModule: first };
+    });
+  }, [subModules, state.module]);
+
+  const vm = useMemo<ViewModel>(
+    () => ({
       state,
-      scopeLabel: computeScopeLabel(state, sites, regions),
-      core: c,
-      traffic: buildTraffic(state, c),
-      adopt: buildAdopt(state, c),
-      siteHealth: buildSiteHealth(state, sites),
-      region: buildRegion(state, sites, regions),
-      flows: buildFlows(state, c),
-      totalSeats: seats(scopedSites),
+      scopeLabel: computeScopeLabel(state, sites, groups),
+      traffic: buildTraffic(state, from, to, trafficQ.data, usageQ.data),
+      adopt: buildAdopt(
+        state,
+        to,
+        engagementQ.data,
+        trendQ.data,
+        growthQ.data,
+        retentionQ.data,
+        rolesQ.data
+      ),
+      siteHealth: buildSiteHealth(league.entries, sites),
+      flows: buildFlows(state, workflowQ.data),
       sites,
-      regions,
-    };
+      scopedSites,
+      groups,
+      sitesLoading: sitesQ.isLoading,
+      modules,
+      subModules,
+      status: {
+        traffic: {
+          loading: pending || trafficQ.isLoading || usageQ.isLoading,
+          error: (trafficQ.error ?? usageQ.error) as Error | null,
+        },
+        adopt: {
+          loading:
+            pending ||
+            engagementQ.isLoading ||
+            trendQ.isLoading ||
+            growthQ.isLoading ||
+            retentionQ.isLoading ||
+            rolesQ.isLoading,
+          error: (engagementQ.error ??
+            trendQ.error ??
+            growthQ.error ??
+            retentionQ.error ??
+            rolesQ.error) as Error | null,
+        },
+        flows: {
+          // `!state.module && modules.length` is the one render between the tree arriving
+          // and the effect below picking a default module.
+          loading:
+            pending ||
+            moduleTreeQ.isLoading ||
+            workflowQ.isLoading ||
+            (!state.module && modules.length > 0),
+          error: (moduleTreeQ.error ?? workflowQ.error) as Error | null,
+        },
+        siteHealth: { loading: pending || league.isLoading, error: null },
+      },
+      siteLeague: {
+        loaded: league.loaded,
+        failed: league.failed,
+        total: league.total,
+        skipped: Math.max(0, scopedSites.length - league.total),
+      },
+      generatedAt: trafficQ.data?.meta.generated_at ?? null,
+      range: { from, to },
+    }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    state.tier,
-    state.scope,
-    state.date,
-    state.dev,
-    state.mod,
-    state.sessTab,
-    state.prev,
-    sites,
-    regions,
-  ]);
+    [
+      state,
+      sites,
+      scopedSites,
+      groups,
+      pending,
+      from,
+      to,
+      modules,
+      subModules,
+      trafficQ.data,
+      trafficQ.isLoading,
+      trafficQ.error,
+      usageQ.data,
+      usageQ.isLoading,
+      usageQ.error,
+      engagementQ.data,
+      engagementQ.isLoading,
+      engagementQ.error,
+      trendQ.data,
+      trendQ.isLoading,
+      trendQ.error,
+      growthQ.data,
+      growthQ.isLoading,
+      growthQ.error,
+      retentionQ.data,
+      retentionQ.isLoading,
+      retentionQ.error,
+      rolesQ.data,
+      rolesQ.isLoading,
+      rolesQ.error,
+      moduleTreeQ.data,
+      moduleTreeQ.isLoading,
+      moduleTreeQ.error,
+      workflowQ.data,
+      workflowQ.isLoading,
+      workflowQ.error,
+      league.entries,
+      league.isLoading,
+      league.loaded,
+      league.failed,
+      league.total,
+    ]
+  );
+
+  const queryClient = useQueryClient();
 
   const value: DashboardContextValue = {
     vm,
     setTier: (tier) =>
-      setState((s) => ({
-        ...s,
-        tier,
-        scope: normalizeScope(tier, s.scope, sites, regions, preferredSiteId),
-      })),
+      setState((s) => ({ ...s, tier, scope: normalizeScope(tier, s.scope, sites, groups) })),
     setScope: (scope) => setState((s) => ({ ...s, scope })),
     setDate: (date) => setState((s) => ({ ...s, date })),
     setDev: (dev) => setState((s) => ({ ...s, dev })),
-    setMod: (mod) => setState((s) => ({ ...s, mod })),
+    setModule: (module) => setState((s) => ({ ...s, module, subModule: null })),
+    setSubModule: (subModule) => setState((s) => ({ ...s, subModule })),
     setSessTab: (sessTab) => setState((s) => ({ ...s, sessTab })),
+    setLicensedSeats: (licensedSeats) => setState((s) => ({ ...s, licensedSeats })),
     togglePrev: () => setState((s) => ({ ...s, prev: !s.prev })),
+    refreshAll: () => queryClient.invalidateQueries({ queryKey: ["fm-adoption"] }),
     benchmarks,
     getBenchmark: (id) =>
       id in benchmarks

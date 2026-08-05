@@ -5,6 +5,7 @@ import {
   SH, FI, FS, FT, Fld, Btn, Loader, AiBar, StatusPill,
   card, g2, g3, COLORS, aBtn, smBtn, dashedBtn, gBtn,
 } from "../components/UI";
+import MemberSearchSelect from "../components/MemberSearchSelect";
 import { useDepartments } from "../hooks/useDepartments";
 import { useEscalateUsers } from "../hooks/useEscalateUsers";
 import {
@@ -15,6 +16,10 @@ import {
 export function StepDetails() {
   const { jobForm, sf } = useJobs();
   const { data: departments = [], isLoading: deptLoading } = useDepartments();
+  const departmentOptions = departments.map((d) => ({
+    id: d.id,
+    name: d.department_name || d.name || d.title || "Unnamed department",
+  }));
 
   return (
     <div style={card}>
@@ -32,19 +37,19 @@ export function StepDetails() {
           />
         </Fld>
         <Fld label="Department *">
-          <FS
+          <MemberSearchSelect
             value={jobForm.deptId || jobForm.dept || ""}
-            onChange={(e) => {
-              const selected = departments.find((d) => String(d.id) === String(e.target.value));
-              sf("deptId", e.target.value);
-              sf("dept", selected?.department_name || selected?.name || selected?.title || "");
+            options={departmentOptions}
+            onChange={(value, selected) => {
+              sf("deptId", value);
+              sf("dept", selected?.name || "");
             }}
-          >
-            <option value="">{deptLoading ? "Loading..." : "Select department"}</option>
-            {departments.map((d) => (
-              <option key={d.id} value={d.id}>{d.department_name || d.name || d.title || "Unnamed department"}</option>
-            ))}
-          </FS>
+            placeholder="Search and select department"
+            loading={deptLoading}
+            loadingText="Loading departments..."
+            emptyText="No departments found"
+            disabled={deptLoading}
+          />
         </Fld>
       </div>
       <div style={g2}>
@@ -128,9 +133,12 @@ export function StepDesc() {
               overflow: "hidden",
             }}
             onClick={() => {
-              jobForm.title
+              jobForm.title && jobForm.deptId && jobForm.level && jobForm.type
                 ? simulateAiJd()
-                : showToast("Please fill Job Title first", "error");
+                : showToast(
+                    "Please fill job title, department, experience level, and employment type first",
+                    "error"
+                  );
             }}
             onMouseOver={(e) => (e.currentTarget.style.boxShadow = T.aiGlow)}
             onMouseOut={(e) => (e.currentTarget.style.boxShadow = "none")}
@@ -332,6 +340,11 @@ export function StepKra() {
   } = useJobs();
 
   const { data: users, isLoading: usersLoading } = useEscalateUsers();
+  const userOptions = (users || []).map((u) => ({
+    id: u.id,
+    name: u.full_name || u.name || `User ${u.id}`,
+    email: u.email,
+  }));
 
   return (
     <div>
@@ -402,21 +415,27 @@ export function StepKra() {
                     />
                   </Fld>
                   <Fld label="Assignee Person">
-                    <FS
-                      value={kra.assignee || ""}
-                      onChange={(e) =>
-                        updFormKra(kra.id, "assignee", e.target.value)
+                    <MemberSearchSelect
+                      value={
+                        kra.assigneeId ||
+                        userOptions.find(
+                          (u) =>
+                            String(u.name).trim() ===
+                            String(kra.assignee || "").trim()
+                        )?.id ||
+                        ""
                       }
-                    >
-                      <option value="">
-                        {usersLoading ? "Loading users..." : "Select assignee"}
-                      </option>
-                      {(users || []).map((u) => (
-                        <option key={u.id} value={u.full_name}>
-                          {u.full_name}
-                        </option>
-                      ))}
-                    </FS>
+                      options={userOptions}
+                      onChange={(value, selected) => {
+                        updFormKra(kra.id, "assigneeId", value);
+                        updFormKra(kra.id, "assignee", selected?.name || "");
+                      }}
+                      placeholder="Select assignee"
+                      loading={usersLoading}
+                      loadingText="Loading users..."
+                      emptyText="No users found"
+                      disabled={usersLoading}
+                    />
                   </Fld>
                 </div>
                 <div
@@ -502,6 +521,22 @@ export function StepKpi() {
   } = useJobs();
 
   const { data: users, isLoading: usersLoading } = useEscalateUsers();
+  const totalKraWeightage = formKras.reduce(
+    (sum, kra) => sum + (Number(kra.weightage) || 0),
+    0
+  );
+  const unitOptions = [
+    ...customUnits.map((u) => u.name),
+    ...formKpis.map((kpi) => kpi.unit),
+  ]
+    .map((unit) => String(unit || "").trim())
+    .filter(Boolean)
+    .filter(
+      (unit, index, units) =>
+        units.findIndex(
+          (item) => item.toLowerCase() === unit.toLowerCase()
+        ) === index
+    );
 
   return (
     <div>
@@ -533,14 +568,14 @@ export function StepKpi() {
                 fontSize: 13,
                 fontWeight: 700,
                 color:
-                  totalKpiWeight === 100
+                  totalKpiWeight === totalKraWeightage
                     ? T.growth
-                    : totalKpiWeight > 100
+                    : totalKpiWeight > totalKraWeightage
                       ? T.error
                       : T.orange,
               }}
             >
-              {totalKpiWeight}% / 100%
+              {totalKpiWeight}% / {totalKraWeightage}%
             </span>
           </div>
           <div
@@ -554,12 +589,12 @@ export function StepKpi() {
             <div
               style={{
                 height: "100%",
-                width: `${Math.min(totalKpiWeight, 100)}%`,
+                width: `${totalKraWeightage ? Math.min((totalKpiWeight / totalKraWeightage) * 100, 100) : 0}%`,
                 borderRadius: 3,
                 background:
-                  totalKpiWeight === 100
+                  totalKpiWeight === totalKraWeightage
                     ? T.growth
-                    : totalKpiWeight > 100
+                    : totalKpiWeight > totalKraWeightage
                       ? T.error
                       : T.orange,
                 transition: "width .3s",
@@ -571,6 +606,15 @@ export function StepKpi() {
 
       {formKras.map((kra, kraIdx) => {
         const kraKpis = formKpis.filter((p) => p.kraIdx === kraIdx);
+        const kraLimit = Number(kra.weightage) || 0;
+        const kraKpiTotal = kraKpis.reduce(
+          (sum, item) => sum + (Number(item.weightage) || 0),
+          0
+        );
+        const currentKpiUsed = (kpiId) =>
+          kraKpis
+            .filter((item) => item.id !== kpiId)
+            .reduce((sum, item) => sum + (Number(item.weightage) || 0), 0);
         return (
           <div key={kra.id} style={{ marginBottom: 24 }}>
             <div
@@ -672,23 +716,32 @@ export function StepKpi() {
                         }
                       >
                         <option value="">Select unit</option>
-                        {customUnits.map((u) => (
-                          <option key={u.name}>{u.name}</option>
+                        {unitOptions.map((unit) => (
+                          <option key={unit} value={unit}>
+                            {unit}
+                          </option>
                         ))}
                       </FS>
                     </Fld>
                     <Fld
                       label="KPI Weightage (%)"
-                      hint="Distribute 100% across all KPIs"
+                      hint={`${kraKpiTotal}% used, ${Math.max(0, kraLimit - kraKpiTotal)}% left of ${kraLimit}% KRA weightage`}
                     >
                       <FI
                         type="number"
+                        min={0}
+                        max={Math.max(0, kraLimit - currentKpiUsed(kpi.id))}
                         placeholder="e.g. 15"
                         value={kpi.weightage}
                         onChange={(e) =>
                           updFormKpi(kpi.id, "weightage", e.target.value)
                         }
                       />
+                      {Number(kpi.weightage) > Math.max(0, kraLimit - currentKpiUsed(kpi.id)) && (
+                        <span style={{ fontSize: 11, color: T.danger }}>
+                          Exceeds {kraLimit}% total for this KRA
+                        </span>
+                      )}
                     </Fld>
                   </div>
                   <div

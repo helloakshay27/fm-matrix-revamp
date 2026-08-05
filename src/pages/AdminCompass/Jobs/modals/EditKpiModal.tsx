@@ -11,14 +11,15 @@ import { Fld, FI, FS, Btn } from "../components/UI";
 export default function EditKpiModal() {
   const {
     editingKpiId, setEditingKpiId, editKpiForm, setEditKpiForm, customUnits, saveEditKpi,
-    kpisSaving, kraWeightageUsed,
+    kpisSaving, kraWeightageLimit, kraWeightageUsed,
   } = useJobs();
   if (!editingKpiId) return null;
   // Baaki KPIs ka weightage (khud ko chhodkar) — total 100% se upar nahi ja sakta.
   const kraUsedWeightage = editKpiForm.kraId
     ? kraWeightageUsed(editKpiForm.kraId, editingKpiId)
     : 0;
-  const kraRemainingWeightage = Math.max(0, 100 - kraUsedWeightage);
+  const kraTotalWeightage = editKpiForm.kraId ? kraWeightageLimit(editKpiForm.kraId) : 100;
+  const kraRemainingWeightage = Math.max(0, kraTotalWeightage - kraUsedWeightage);
   return (
     <div
       style={{
@@ -91,7 +92,7 @@ export default function EditKpiModal() {
               label="KPI Weightage (%)"
               hint={
                 editKpiForm.kraId
-                  ? `${kraUsedWeightage}% used by other KPIs, ${kraRemainingWeightage}% left`
+                  ? `${kraUsedWeightage}% used by other KPIs, ${kraRemainingWeightage}% left of ${kraTotalWeightage}% KRA weightage`
                   : undefined
               }
             >
@@ -107,7 +108,7 @@ export default function EditKpiModal() {
               {editKpiForm.kraId &&
                 Number(editKpiForm.weightage) > kraRemainingWeightage && (
                   <span style={{ fontSize: 11, color: T.danger }}>
-                    Exceeds 100% total for this KRA
+                    Exceeds {kraTotalWeightage}% total for this KRA
                   </span>
                 )}
             </Fld>

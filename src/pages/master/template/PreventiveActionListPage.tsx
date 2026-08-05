@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { Plus, Pencil } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -138,15 +139,11 @@ const PreventiveActionListPage = () => {
               : isActiveValue(row.active);
             return (
               <div className="flex items-center justify-center">
-                <div
-                  className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}
-                  onClick={() => handleToggleActive(row.id)}
-                  aria-label={isActive ? 'Deactivate' : 'Activate'}
-                >
-                  <span
-                    className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'}`}
-                  />
-                </div>
+                <Switch
+                  checked={isActive}
+                  onCheckedChange={() => handleToggleActive(row.id)}
+                  className="data-[state=checked]:bg-[#C72030]"
+                />
               </div>
             );
           }
