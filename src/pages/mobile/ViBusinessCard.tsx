@@ -120,7 +120,7 @@ export const ViBusinessCard: React.FC = () => {
         }
 
         const response = await fetch(
-          `https://live-api.gophygital.work/pms/users/user_info.json?${params.toString()}`
+          `https://live-api.gophygital.work/pms/users/user_info_by_enc_id.json?${params.toString()}`
         );
 
         if (!response.ok) {
