@@ -985,11 +985,6 @@ export function JobsProvider({ children }) {
     }
   }, []);
 
-  // First page on mount; the tab also exposes explicit refresh + paging.
-  useEffect(() => {
-    loadActivityLogs(1);
-  }, [loadActivityLogs]);
-
   // Local mutations in this module are still client-side, so a new entry is
   // prepended optimistically. The server list wins on the next fetch.
   const addLog = (type, entity, name, detail) => {
@@ -1213,8 +1208,7 @@ export function JobsProvider({ children }) {
   /**
    * KRA ke assignees update karta hai — `PATCH /kras/:id.json?access_token=…`
    * (`updateKraAssignees`), sirf assignee fields ke saath. Multiple members
-   * `assignee_ids[]` me jate hain aur pehla `assignee_id` me (API ab tak single
-   * assignee rakhta aaya hai, isliye dono bhejte hain).
+   * `assignee_ids[]` me jate hain.
    */
   const assignToKra = async () => {
     if (!assignKraModal) return;
@@ -1247,7 +1241,6 @@ export function JobsProvider({ children }) {
 
       const patch = {
         assigneeId: ids[0],
-        assignee_id: ids[0],
         assigneeIds: ids,
         assignee_ids: ids,
         assignee: names[0],

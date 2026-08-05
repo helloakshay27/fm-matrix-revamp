@@ -2,9 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/utils/apiClient';
@@ -14,6 +12,34 @@ interface AddAreaDialogProps {
   onOpenChange: (open: boolean) => void;
   onAreaAdded: () => void;
 }
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 export const AddAreaDialog = ({ open, onOpenChange, onAreaAdded }: AddAreaDialogProps) => {
   const [selectedBuilding, setSelectedBuilding] = useState('');
@@ -135,8 +161,20 @@ export const AddAreaDialog = ({ open, onOpenChange, onAreaAdded }: AddAreaDialog
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
+      <DialogContent
+        className="max-w-2xl bg-white overflow-visible"
+        onPointerDownOutside={(e) => {
+          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader className="flex flex-row items-center justify-between pb-0">
           <DialogTitle>Add Area</DialogTitle>
           <button
@@ -149,51 +187,57 @@ export const AddAreaDialog = ({ open, onOpenChange, onAreaAdded }: AddAreaDialog
         
         <div className="grid grid-cols-3 gap-4 py-4">
           <div>
-            <Label htmlFor="building" className="text-sm font-medium mb-2 block">
-              Select Building
-            </Label>
-            <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
-              <SelectTrigger className="focus:ring-[#C72030] focus:border-[#C72030]">
-                <SelectValue placeholder="Select Building" />
-              </SelectTrigger>
-              <SelectContent className="bg-white z-50">
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="add-area-building-label">Select Building</InputLabel>
+              <MuiSelect
+                labelId="add-area-building-label"
+                label="Select Building"
+                value={selectedBuilding}
+                onChange={(e) => setSelectedBuilding(e.target.value)}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value=""><em>Select Building</em></MenuItem>
                 {buildings.map((building) => (
-                  <SelectItem key={building.id} value={building.id.toString()}>
+                  <MenuItem key={building.id} value={building.id.toString()}>
                     {building.name}
-                  </SelectItem>
+                  </MenuItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div>
-            <Label htmlFor="wing" className="text-sm font-medium mb-2 block">
-              Select Wing
-            </Label>
-            <Select value={selectedWing} onValueChange={setSelectedWing} disabled={!selectedBuilding}>
-              <SelectTrigger className="focus:ring-[#C72030] focus:border-[#C72030]">
-                <SelectValue placeholder="Select Wing" />
-              </SelectTrigger>
-              <SelectContent className="bg-white z-50">
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="add-area-wing-label">Select Wing</InputLabel>
+              <MuiSelect
+                labelId="add-area-wing-label"
+                label="Select Wing"
+                value={selectedWing}
+                onChange={(e) => setSelectedWing(e.target.value)}
+                disabled={!selectedBuilding}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value=""><em>Select Wing</em></MenuItem>
                 {wings.map((wing) => (
-                  <SelectItem key={wing.id} value={wing.id.toString()}>
+                  <MenuItem key={wing.id} value={wing.id.toString()}>
                     {wing.name}
-                  </SelectItem>
+                  </MenuItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div>
-            <Label htmlFor="areaName" className="text-sm font-medium mb-2 block">
-              Area Name
-            </Label>
-            <Input
-              id="areaName"
+            <TextField
+              label="Area Name"
+              variant="outlined"
+              fullWidth
               placeholder="Enter Area Name"
               value={areaName}
               onChange={(e) => setAreaName(e.target.value)}
-              className="focus:ring-[#C72030] focus:border-[#C72030]"
+              sx={fieldStyles}
             />
           </div>
         </div>
@@ -203,7 +247,7 @@ export const AddAreaDialog = ({ open, onOpenChange, onAreaAdded }: AddAreaDialog
             type="button"
             variant="outline"
             onClick={handleClose}
-            className="border-gray-300"
+            className="border-brand"
           >
             Cancel
           </Button>

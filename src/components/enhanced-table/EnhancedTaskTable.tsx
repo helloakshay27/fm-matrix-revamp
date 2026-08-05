@@ -545,9 +545,10 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
           {onFilterClick && (
             <Button
               variant="outline"
-              size="sm"
-              className="h-9 w-11 min-h-9 p-0 flex items-center justify-center rounded-lg border border-[#DA7756] bg-[#fffaf6] hover:bg-[#fdf0ea] text-[#DA7756]"
+              size="icon"
+              className="!rounded-lg border border-brand text-brand"
               onClick={onFilterClick}
+              title="Filter"
             >
               <Filter className="w-4 h-4" />
             </Button>
@@ -557,7 +558,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
           {!hideTableExport && enableExport && (
             <Button
               variant="outline"
-              size="sm"
+              size="icon"
               onClick={
                 exportFileName === "schedules"
                   ? handleSchedulesExport
@@ -573,7 +574,8 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                             exportFileName
                           )
               }
-              className="h-9 w-9 min-h-9 p-0 flex items-center justify-center rounded-lg border border-[#DA7756] bg-[#fffaf6] hover:bg-[#fdf0ea] text-[#DA7756]"
+              className="!rounded-lg border border-brand text-brand"
+              title="Export"
             >
               <Download className="w-4 h-4" />
             </Button>

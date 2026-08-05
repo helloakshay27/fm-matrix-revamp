@@ -427,7 +427,7 @@ const LoyaltyRuleEngineDetailPage = () => {
           <div className="ml-auto">
             <button 
               onClick={handleInstallClick}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+              className="bg-[#C72030] hover:bg-[#A01A28] text-white px-6 py-2 rounded-lg font-medium transition-colors border border-white"
             >
               Install
             </button>

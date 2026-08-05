@@ -662,14 +662,14 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({
           <Button
             onClick={handleApply}
             disabled={isLoading}
-            className="fm-button-fix fm-button-brand px-4 py-2"
+            className="bg-brand text-white hover:bg-brand-hover px-4 py-2"
           >
             {isLoading ? 'Applying...' : 'Apply Filter'}
           </Button>
           <Button
             variant="outline"
             onClick={handleClear}
-            className="border-brand text-brand hover:bg-brand hover:text-white"
+            className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
           >
             Reset
           </Button>

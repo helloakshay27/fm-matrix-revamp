@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, FileIcon, FileSpreadsheet, FileText, Loader2, X } from 'lucide-react';
+import { ArrowLeft, FileIcon, FileSpreadsheet, FileText, Loader2, Plus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { LocationSelector } from '@/components/service/LocationSelector';
@@ -406,25 +406,24 @@ export const AddServicePage = () => {
               disabled={isSubmitting}
             />
             <div className="flex items-center justify-center gap-2 mb-4">
-              <span
-                className="text-[#C72030] font-medium"
-                style={{ fontSize: '14px' }}
-              >
+              <span className="text-brand font-medium text-sm">
                 Choose File
               </span>
-              <span className="text-gray-500" style={{ fontSize: '14px' }}>
+              <span className="text-gray-500 text-sm">
                 {selectedFiles.length > 0 ? `${selectedFiles.length} file(s) selected` : 'No file chosen'}
               </span>
             </div>
 
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => document.getElementById('file-upload')?.click()}
-              className={`bg-[#f6f4ee] text-[#C72030] px-4 py-2 rounded text-sm flex items-center justify-center ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className="!bg-[#f6f4ee] !text-brand !border-none hover:!bg-[#f0ebe0] text-sm flex items-center justify-center"
               disabled={isSubmitting}
             >
-              <span className="text-lg mr-2">+</span> Upload Files
-            </button>
+              <Plus className="w-4 h-4 mr-1 !text-brand" />
+              Upload Files
+            </Button>
             <div className="mt-4 w-full max-w-[520px]">
               <div className="text-[12px] text-gray-700 border border-gray-200 rounded-md bg-gray-50 px-3 py-2">
                 <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">

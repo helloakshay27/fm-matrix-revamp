@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit, Square, Plus, X, Check, Download, Upload, Loader2 } from 'lucide-react';
+import { FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
+import { Edit, Square, Plus, X, Download, Upload, Loader2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import {
   fetchBuildings,
@@ -20,6 +19,34 @@ import {
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 export const UnitPage = () => {
   const dispatch = useAppDispatch();
@@ -348,7 +375,7 @@ export const UnitPage = () => {
               <Button
                 variant="outline"
                 onClick={handleDownloadTemplate}
-                className="h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
+                className="h-9 px-4 text-sm font-medium whitespace-nowrap  border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download Sample Format
@@ -358,7 +385,7 @@ export const UnitPage = () => {
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
-                    className="h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
+                    className="h-9 px-4 text-sm font-medium whitespace-nowrap  border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     Import Units
@@ -421,13 +448,25 @@ export const UnitPage = () => {
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 {shouldShow("Unit", "create") && (
                   <DialogTrigger asChild>
-                    <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap rounded-lg [&_svg]:text-white">
+                    <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap  [&_svg]:text-white">
                       <Plus className="w-4 h-4 mr-2" />
                       Add Unit
                     </Button>
                   </DialogTrigger>
                 )}
-                <DialogContent className="max-w-2xl">
+                <DialogContent
+                  className="max-w-2xl bg-white overflow-visible"
+                  onPointerDownOutside={(e) => {
+                    if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onInteractOutside={(e) => {
+                    if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
                   <DialogHeader className="flex flex-row items-center justify-between pb-0">
                     <DialogTitle className="flex items-center gap-2">
                       <Square className="w-5 h-5" />
@@ -441,121 +480,135 @@ export const UnitPage = () => {
                     </button>
                   </DialogHeader>
                   <div className="grid grid-cols-2 gap-4 py-4">
-                    <div className="space-y-2">
-                      <Label>Select Building</Label>
-                      <Select
-                        value={newUnit.building}
-                        onValueChange={(value) => {
-                          const updatedNewUnit = { ...newUnit, building: value, wing: '', area: '', floor: '' };
-                          setNewUnit(updatedNewUnit);
-                          if (value) {
-                            dispatch(fetchWings(parseInt(value)));
-                            dispatch(fetchAreas({ buildingId: parseInt(value), wingId: undefined }));
-                            dispatch(fetchFloors({ buildingId: parseInt(value), wingId: undefined, areaId: undefined }));
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Building" />
-                        </SelectTrigger>
-                        <SelectContent>
+                    <div>
+                      <MuiFormControl fullWidth variant="outlined">
+                        <InputLabel id="add-unit-building-label">Select Building</InputLabel>
+                        <MuiSelect
+                          labelId="add-unit-building-label"
+                          label="Select Building"
+                          value={newUnit.building}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const updatedNewUnit = { ...newUnit, building: value, wing: '', area: '', floor: '' };
+                            setNewUnit(updatedNewUnit);
+                            if (value) {
+                              dispatch(fetchWings(parseInt(value)));
+                              dispatch(fetchAreas({ buildingId: parseInt(value), wingId: undefined }));
+                              dispatch(fetchFloors({ buildingId: parseInt(value), wingId: undefined, areaId: undefined }));
+                            }
+                          }}
+                          sx={fieldStyles}
+                          MenuProps={selectMenuProps}
+                        >
+                          <MenuItem value=""><em>Select Building</em></MenuItem>
                           {buildings.data.map((building) => (
-                            <SelectItem key={building.id} value={building.id.toString()}>
+                            <MenuItem key={building.id} value={building.id.toString()}>
                               {building.name}
-                            </SelectItem>
+                            </MenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </MuiFormControl>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Select Wing</Label>
-                      <Select
-                        value={newUnit.wing}
-                        onValueChange={(value) => {
-                          const updatedNewUnit = { ...newUnit, wing: value, area: '', floor: '' };
-                          setNewUnit(updatedNewUnit);
-                          if (updatedNewUnit.building) {
-                            dispatch(fetchAreas({ buildingId: parseInt(updatedNewUnit.building), wingId: value ? parseInt(value) : undefined }));
-                            dispatch(fetchFloors({
-                              buildingId: parseInt(updatedNewUnit.building),
-                              wingId: value ? parseInt(value) : undefined,
-                              areaId: undefined
-                            }));
-                          }
-                        }}
-                        disabled={!newUnit.building}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Wing" />
-                        </SelectTrigger>
-                        <SelectContent>
+                    <div>
+                      <MuiFormControl fullWidth variant="outlined">
+                        <InputLabel id="add-unit-wing-label">Select Wing</InputLabel>
+                        <MuiSelect
+                          labelId="add-unit-wing-label"
+                          label="Select Wing"
+                          value={newUnit.wing}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const updatedNewUnit = { ...newUnit, wing: value, area: '', floor: '' };
+                            setNewUnit(updatedNewUnit);
+                            if (updatedNewUnit.building) {
+                              dispatch(fetchAreas({ buildingId: parseInt(updatedNewUnit.building), wingId: value ? parseInt(value) : undefined }));
+                              dispatch(fetchFloors({
+                                buildingId: parseInt(updatedNewUnit.building),
+                                wingId: value ? parseInt(value) : undefined,
+                                areaId: undefined
+                              }));
+                            }
+                          }}
+                          disabled={!newUnit.building}
+                          sx={fieldStyles}
+                          MenuProps={selectMenuProps}
+                        >
+                          <MenuItem value=""><em>Select Wing</em></MenuItem>
                           {wings.data.map((wing) => (
-                            <SelectItem key={wing.id} value={wing.id.toString()}>
+                            <MenuItem key={wing.id} value={wing.id.toString()}>
                               {wing.name}
-                            </SelectItem>
+                            </MenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </MuiFormControl>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Select Area</Label>
-                      <Select
-                        value={newUnit.area}
-                        onValueChange={(value) => {
-                          const updatedNewUnit = { ...newUnit, area: value, floor: '' };
-                          setNewUnit(updatedNewUnit);
-                          if (updatedNewUnit.building) {
-                            dispatch(fetchFloors({
-                              buildingId: parseInt(updatedNewUnit.building),
-                              wingId: updatedNewUnit.wing ? parseInt(updatedNewUnit.wing) : undefined,
-                              areaId: value ? parseInt(value) : undefined
-                            }));
-                          }
-                        }}
-                        disabled={!newUnit.building}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Area" />
-                        </SelectTrigger>
-                        <SelectContent>
+                    <div>
+                      <MuiFormControl fullWidth variant="outlined">
+                        <InputLabel id="add-unit-area-label">Select Area</InputLabel>
+                        <MuiSelect
+                          labelId="add-unit-area-label"
+                          label="Select Area"
+                          value={newUnit.area}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const updatedNewUnit = { ...newUnit, area: value, floor: '' };
+                            setNewUnit(updatedNewUnit);
+                            if (updatedNewUnit.building) {
+                              dispatch(fetchFloors({
+                                buildingId: parseInt(updatedNewUnit.building),
+                                wingId: updatedNewUnit.wing ? parseInt(updatedNewUnit.wing) : undefined,
+                                areaId: value ? parseInt(value) : undefined
+                              }));
+                            }
+                          }}
+                          disabled={!newUnit.building}
+                          sx={fieldStyles}
+                          MenuProps={selectMenuProps}
+                        >
+                          <MenuItem value=""><em>Select Area</em></MenuItem>
                           {areas.data.map((area) => (
-                            <SelectItem key={area.id} value={area.id.toString()}>
+                            <MenuItem key={area.id} value={area.id.toString()}>
                               {area.name}
-                            </SelectItem>
+                            </MenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </MuiFormControl>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Select Floor</Label>
-                      <Select
-                        value={newUnit.floor}
-                        onValueChange={(value) => setNewUnit(prev => ({ ...prev, floor: value }))}
-                        disabled={!newUnit.building}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Floor" />
-                        </SelectTrigger>
-                        <SelectContent>
+                    <div>
+                      <MuiFormControl fullWidth variant="outlined">
+                        <InputLabel id="add-unit-floor-label">Select Floor</InputLabel>
+                        <MuiSelect
+                          labelId="add-unit-floor-label"
+                          label="Select Floor"
+                          value={newUnit.floor}
+                          onChange={(e) => setNewUnit(prev => ({ ...prev, floor: e.target.value }))}
+                          disabled={!newUnit.building}
+                          sx={fieldStyles}
+                          MenuProps={selectMenuProps}
+                        >
+                          <MenuItem value=""><em>Select Floor</em></MenuItem>
                           {floors.data.map((floor) => (
-                            <SelectItem key={floor.id} value={floor.id.toString()}>
+                            <MenuItem key={floor.id} value={floor.id.toString()}>
                               {floor.name}
-                            </SelectItem>
+                            </MenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </MuiFormControl>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="unitName">Unit Name</Label>
-                      <Input
+                    <div>
+                      <TextField
                         id="unitName"
+                        label="Unit Name"
+                        variant="outlined"
+                        fullWidth
                         value={newUnit.unitName}
                         onChange={(e) => setNewUnit(prev => ({ ...prev, unitName: e.target.value }))}
                         placeholder="Enter Unit Name"
+                        sx={fieldStyles}
                       />
                     </div>
 
@@ -577,7 +630,7 @@ export const UnitPage = () => {
                         setIsAddDialogOpen(false);
                         setNewUnit({ building: '', wing: '', area: '', floor: '', unitName: '', areaSize: '' });
                       }}
-                      className="border-gray-300"
+                      className="border-brand"
                     >
                       Cancel
                     </Button>
@@ -606,17 +659,11 @@ export const UnitPage = () => {
                 switch (columnKey) {
                   case 'status':
                     return (
-                      <button type="button" onClick={() => toggleActiveStatus(unit.id)} className="cursor-pointer">
-                        {unit.active ? (
-                          <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
-                            <Check className="w-3 h-3 text-white" />
-                          </div>
-                        ) : (
-                          <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
-                            <span className="text-white text-xs">✗</span>
-                          </div>
-                        )}
-                      </button>
+                      <Switch
+                        checked={unit.active}
+                        onCheckedChange={() => toggleActiveStatus(unit.id)}
+                        className="data-[state=checked]:bg-[#C72030]"
+                      />
                     );
                   case 'building':
                     return unit.building?.name || 'N/A';
@@ -672,8 +719,20 @@ export const UnitPage = () => {
         </div>
 
         {/* Edit Details Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-2xl">
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} modal={false}>
+          <DialogContent
+            className="max-w-2xl bg-white overflow-visible"
+            onPointerDownOutside={(e) => {
+              if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                e.preventDefault();
+              }
+            }}
+            onInteractOutside={(e) => {
+              if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                e.preventDefault();
+              }
+            }}
+          >
             <DialogHeader className="flex flex-row items-center justify-between pb-0">
               <DialogTitle>Edit Details</DialogTitle>
               <button
@@ -684,121 +743,135 @@ export const UnitPage = () => {
               </button>
             </DialogHeader>
             <div className="grid grid-cols-2 gap-4 py-4">
-              <div className="space-y-2">
-                <Label>Select Building</Label>
-                <Select
-                  value={editUnit.building}
-                  onValueChange={(value) => {
-                    const updatedEditUnit = { ...editUnit, building: value, wing: '', area: '', floor: '' };
-                    setEditUnit(updatedEditUnit);
-                    if (value) {
-                      dispatch(fetchWings(parseInt(value)));
-                      dispatch(fetchAreas({ buildingId: parseInt(value), wingId: undefined }));
-                      dispatch(fetchFloors({ buildingId: parseInt(value), wingId: undefined, areaId: undefined }));
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white z-50">
+              <div>
+                <MuiFormControl fullWidth variant="outlined">
+                  <InputLabel id="edit-unit-building-label">Select Building</InputLabel>
+                  <MuiSelect
+                    labelId="edit-unit-building-label"
+                    label="Select Building"
+                    value={editUnit.building}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const updatedEditUnit = { ...editUnit, building: value, wing: '', area: '', floor: '' };
+                      setEditUnit(updatedEditUnit);
+                      if (value) {
+                        dispatch(fetchWings(parseInt(value)));
+                        dispatch(fetchAreas({ buildingId: parseInt(value), wingId: undefined }));
+                        dispatch(fetchFloors({ buildingId: parseInt(value), wingId: undefined, areaId: undefined }));
+                      }
+                    }}
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value=""><em>Select Building</em></MenuItem>
                     {buildings.data.map((building) => (
-                      <SelectItem key={building.id} value={building.id.toString()}>
+                      <MenuItem key={building.id} value={building.id.toString()}>
                         {building.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
 
-              <div className="space-y-2">
-                <Label>Select Wing</Label>
-                <Select
-                  value={editUnit.wing}
-                  onValueChange={(value) => {
-                    const updatedEditUnit = { ...editUnit, wing: value, area: '', floor: '' };
-                    setEditUnit(updatedEditUnit);
-                    if (updatedEditUnit.building) {
-                      dispatch(fetchAreas({ buildingId: parseInt(updatedEditUnit.building), wingId: value ? parseInt(value) : undefined }));
-                      dispatch(fetchFloors({
-                        buildingId: parseInt(updatedEditUnit.building),
-                        wingId: value ? parseInt(value) : undefined,
-                        areaId: undefined
-                      }));
-                    }
-                  }}
-                  disabled={!editUnit.building}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Wing" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white z-50">
+              <div>
+                <MuiFormControl fullWidth variant="outlined">
+                  <InputLabel id="edit-unit-wing-label">Select Wing</InputLabel>
+                  <MuiSelect
+                    labelId="edit-unit-wing-label"
+                    label="Select Wing"
+                    value={editUnit.wing}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const updatedEditUnit = { ...editUnit, wing: value, area: '', floor: '' };
+                      setEditUnit(updatedEditUnit);
+                      if (updatedEditUnit.building) {
+                        dispatch(fetchAreas({ buildingId: parseInt(updatedEditUnit.building), wingId: value ? parseInt(value) : undefined }));
+                        dispatch(fetchFloors({
+                          buildingId: parseInt(updatedEditUnit.building),
+                          wingId: value ? parseInt(value) : undefined,
+                          areaId: undefined
+                        }));
+                      }
+                    }}
+                    disabled={!editUnit.building}
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value=""><em>Select Wing</em></MenuItem>
                     {wings.data.map((wing) => (
-                      <SelectItem key={wing.id} value={wing.id.toString()}>
+                      <MenuItem key={wing.id} value={wing.id.toString()}>
                         {wing.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
 
-              <div className="space-y-2">
-                <Label>Select Area</Label>
-                <Select
-                  value={editUnit.area}
-                  onValueChange={(value) => {
-                    const updatedEditUnit = { ...editUnit, area: value, floor: '' };
-                    setEditUnit(updatedEditUnit);
-                    if (updatedEditUnit.building) {
-                      dispatch(fetchFloors({
-                        buildingId: parseInt(updatedEditUnit.building),
-                        wingId: updatedEditUnit.wing ? parseInt(updatedEditUnit.wing) : undefined,
-                        areaId: value ? parseInt(value) : undefined
-                      }));
-                    }
-                  }}
-                  disabled={!editUnit.building}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Area" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white z-50">
+              <div>
+                <MuiFormControl fullWidth variant="outlined">
+                  <InputLabel id="edit-unit-area-label">Select Area</InputLabel>
+                  <MuiSelect
+                    labelId="edit-unit-area-label"
+                    label="Select Area"
+                    value={editUnit.area}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const updatedEditUnit = { ...editUnit, area: value, floor: '' };
+                      setEditUnit(updatedEditUnit);
+                      if (updatedEditUnit.building) {
+                        dispatch(fetchFloors({
+                          buildingId: parseInt(updatedEditUnit.building),
+                          wingId: updatedEditUnit.wing ? parseInt(updatedEditUnit.wing) : undefined,
+                          areaId: value ? parseInt(value) : undefined
+                        }));
+                      }
+                    }}
+                    disabled={!editUnit.building}
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value=""><em>Select Area</em></MenuItem>
                     {areas.data.map((area) => (
-                      <SelectItem key={area.id} value={area.id.toString()}>
+                      <MenuItem key={area.id} value={area.id.toString()}>
                         {area.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
 
-              <div className="space-y-2">
-                <Label>Select Floor</Label>
-                <Select
-                  value={editUnit.floor}
-                  onValueChange={(value) => setEditUnit(prev => ({ ...prev, floor: value }))}
-                  disabled={!editUnit.building}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Floor" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white z-50">
+              <div>
+                <MuiFormControl fullWidth variant="outlined">
+                  <InputLabel id="edit-unit-floor-label">Select Floor</InputLabel>
+                  <MuiSelect
+                    labelId="edit-unit-floor-label"
+                    label="Select Floor"
+                    value={editUnit.floor}
+                    onChange={(e) => setEditUnit(prev => ({ ...prev, floor: e.target.value }))}
+                    disabled={!editUnit.building}
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value=""><em>Select Floor</em></MenuItem>
                     {floors.data.map((floor) => (
-                      <SelectItem key={floor.id} value={floor.id.toString()}>
+                      <MenuItem key={floor.id} value={floor.id.toString()}>
                         {floor.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="editUnitName">Unit Name</Label>
-                <Input
+              <div>
+                <TextField
                   id="editUnitName"
+                  label="Unit Name"
+                  variant="outlined"
+                  fullWidth
                   value={editUnit.unitName}
                   onChange={(e) => setEditUnit(prev => ({ ...prev, unitName: e.target.value }))}
                   placeholder="Enter Unit Name"
+                  sx={fieldStyles}
                 />
               </div>
 

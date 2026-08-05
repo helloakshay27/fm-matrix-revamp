@@ -559,7 +559,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
         <div className="space-y-6 py-4">
           {/* Asset Details Section */}
           <div>
-            <h3 className="text-sm font-medium text-[#C72030] mb-4">Asset Details</h3>
+            <h3 className="text-sm font-medium text-brand mb-4">Asset Details</h3>
             <div className="grid grid-cols-2 gap-6">
               <TextField
                 label="Asset Name"
@@ -674,7 +674,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
 
           {/* Location Details Section */}
           <div>
-            <h3 className="text-sm font-medium text-[#C72030] mb-4">Location Details</h3>
+            <h3 className="text-sm font-medium text-brand mb-4">Location Details</h3>
             <div className="grid grid-cols-2 gap-6">
               <FormControl fullWidth variant="outlined">
                 <InputLabel id="site-label" shrink>Site</InputLabel>
@@ -805,7 +805,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
 
           {/* Allocation Section */}
           <div>
-            <h3 className="text-sm font-medium text-[#C72030] mb-4">Allocation</h3>
+            <h3 className="text-sm font-medium text-brand mb-4">Allocation</h3>
             <AllocateToSection
               allocateTo={allocationType}
               setAllocateTo={setAllocationType}
@@ -817,10 +817,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-2 pt-6">
-            <Button variant="ghost" onClick={handleSubmit} className="fm-button-fix fm-button-brand px-4 py-2">
+            <Button onClick={handleSubmit} className="bg-brand text-white hover:bg-brand-hover px-4 py-2">
               Apply Filters
             </Button>
-            <Button variant="outline" onClick={handleReset} className="border-brand text-brand hover:bg-brand hover:text-white">
+            <Button variant="outline" onClick={handleReset} className="border-brand text-brand hover:bg-brand-selected hover:text-brand">
               Reset
             </Button>
           </div>

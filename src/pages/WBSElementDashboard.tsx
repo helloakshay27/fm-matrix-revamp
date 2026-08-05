@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Download, Plus, Edit, Trash2 } from "lucide-react";
 import { AddWBSDialog } from "@/components/AddWBSDialog";
 import { BulkUploadDialog } from "@/components/BulkUploadDialog";
+import { WBSFilterDialog, type WBSFilters } from "@/components/WBSFilterDialog";
 import { toast } from "sonner";
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -19,6 +20,8 @@ interface WBSElement {
   wbs_name: string;
   wbs_code: string;
   site: string;
+  site_name?: string;
+  gl_code?: string;
 }
 
 const columns: ColumnConfig[] = [
@@ -30,6 +33,14 @@ const columns: ColumnConfig[] = [
   { key: 'site_name', label: 'Site', sortable: true, defaultVisible: true },
 ];
 
+const emptyFilters: WBSFilters = {
+  plantCode: "",
+  category: "",
+  wbsName: "",
+  wbsCode: "",
+  site: "",
+};
+
 export const WBSElementDashboard = () => {
   const dispatch = useAppDispatch();
   const { shouldShow } = useDynamicPermissions();
@@ -39,6 +50,9 @@ export const WBSElementDashboard = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<WBSFilters>(emptyFilters);
+  const [searchTerm, setSearchTerm] = useState("");
   const [wbsData, setWbsData] = useState<WBSElement[]>([]);
   const [selectedWBS, setSelectedWBS] = useState<WBSElement | null>(null);
   const [loading, setLoading] = useState(false);
@@ -58,6 +72,46 @@ export const WBSElementDashboard = () => {
   useEffect(() => {
     fetchWbsData();
   }, [dispatch, baseUrl, token]);
+
+  const filteredData = useMemo(() => {
+    return wbsData.filter((item) => {
+      const plantCode = String(item.plant_code || "").toLowerCase();
+      const category = String(item.category || "").toLowerCase();
+      const wbsName = String(item.wbs_name || "").toLowerCase();
+      const wbsCode = String(item.wbs_code || "").toLowerCase();
+      const site = String(item.site_name || item.site || "").toLowerCase();
+
+      if (filters.plantCode && !plantCode.includes(filters.plantCode.toLowerCase())) {
+        return false;
+      }
+      if (filters.category && !category.includes(filters.category.toLowerCase())) {
+        return false;
+      }
+      if (filters.wbsName && !wbsName.includes(filters.wbsName.toLowerCase())) {
+        return false;
+      }
+      if (filters.wbsCode && !wbsCode.includes(filters.wbsCode.toLowerCase())) {
+        return false;
+      }
+      if (filters.site && !site.includes(filters.site.toLowerCase())) {
+        return false;
+      }
+
+      if (searchTerm.trim()) {
+        const q = searchTerm.toLowerCase();
+        return (
+          plantCode.includes(q) ||
+          category.includes(q) ||
+          wbsName.includes(q) ||
+          wbsCode.includes(q) ||
+          site.includes(q) ||
+          String(item.category_wbs_code || "").toLowerCase().includes(q)
+        );
+      }
+
+      return true;
+    });
+  }, [wbsData, filters, searchTerm]);
 
   const handleAddWBS = async (data: Omit<WBSElement, 'id'>) => {
     const payload = {
@@ -126,6 +180,14 @@ export const WBSElementDashboard = () => {
     }
   };
 
+  const handleApplyFilters = (nextFilters: WBSFilters) => {
+    setFilters(nextFilters);
+  };
+
+  const handleResetFilters = () => {
+    setFilters(emptyFilters);
+  };
+
   const renderActions = (item: WBSElement) => (
     <div className="flex gap-2 justify-center">
       {shouldShow("WBS", "update") && (
@@ -153,7 +215,6 @@ export const WBSElementDashboard = () => {
 
   const leftAction = shouldShow("WBS", "create") ? (
     <Button
-      style={{ backgroundColor: '#C72030' }}
       className="fm-button-fix fm-button-brand px-4 py-2"
       variant="ghost"
       onClick={() => setIsAddDialogOpen(true)}
@@ -168,8 +229,8 @@ export const WBSElementDashboard = () => {
       onClick={() => setIsBulkUploadOpen(true)}
       title="Import"
       variant="outline"
-      size="sm"
-      className="h-9 w-9 p-0 rounded-lg border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+      size="icon"
+      className="!rounded-lg border border-brand text-brand hover:bg-brand-selected"
     >
       <Download className="w-4 h-4" />
     </Button>
@@ -185,7 +246,7 @@ export const WBSElementDashboard = () => {
   return (
     <div className="p-6">
       <EnhancedTable
-        data={wbsData}
+        data={filteredData}
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
@@ -197,6 +258,12 @@ export const WBSElementDashboard = () => {
         loadingMessage="Loading..."
         pagination={true}
         pageSize={10}
+        enableSearch
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search..."
+        disableClientSearch
+        onFilterClick={() => setShowFilters(true)}
         hideTableExport={true}
         hideTableSearch={false}
         hideColumnsButton={false}
@@ -223,6 +290,14 @@ export const WBSElementDashboard = () => {
         onOpenChange={setIsBulkUploadOpen}
         title="Bulk Upload WBS"
         onImport={handleBulkImport}
+      />
+
+      <WBSFilterDialog
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+        filters={filters}
+        onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
       />
     </div>
   );

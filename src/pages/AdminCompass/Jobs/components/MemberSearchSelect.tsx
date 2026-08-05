@@ -30,12 +30,29 @@ export default function MemberSearchSelect({
     : selected?.name || "";
   const filtered = useMemo(() => {
     const text = query.trim().toLowerCase();
-    if (!text) return options;
-    return options.filter((option) => {
+    const visibleOptions = !text ? options : options.filter((option) => {
       const haystack = `${option.name || ""} ${option.email || ""}`.toLowerCase();
       return haystack.includes(text);
     });
-  }, [options, query]);
+
+    if (!multiple || selectedValues.length === 0) return visibleOptions;
+
+    const selectedOrder = new Map(
+      selectedValues.map((id, index) => [String(id), index])
+    );
+
+    return [...visibleOptions].sort((a, b) => {
+      const aOrder = selectedOrder.get(String(a.id));
+      const bOrder = selectedOrder.get(String(b.id));
+      const aSelected = aOrder !== undefined;
+      const bSelected = bOrder !== undefined;
+
+      if (aSelected && bSelected) return aOrder - bOrder;
+      if (aSelected) return -1;
+      if (bSelected) return 1;
+      return 0;
+    });
+  }, [multiple, options, query, selectedValues]);
 
   useEffect(() => {
     const onPointerDown = (event) => {

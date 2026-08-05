@@ -187,14 +187,14 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
           <Button 
             onClick={handleExport}
             variant="outline"
-            className="bg-white border-brand text-brand hover:bg-brand hover:text-white px-8"
+            className="bg-white border-brand text-brand hover:bg-brand-selected hover:text-brand px-8"
           >
             Export
           </Button>
           <Button 
             onClick={handleReset}
             variant="outline"
-            className="bg-white border-brand text-brand hover:bg-brand hover:text-white px-8"
+            className="bg-white border-brand text-brand hover:bg-brand-selected hover:text-brand px-8"
           >
             Reset
           </Button>
