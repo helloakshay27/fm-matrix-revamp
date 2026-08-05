@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClipboardList, Eye } from "lucide-react";
 import { toast } from "sonner";
@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import {
+  GDNPendingApprovalsFilterDialog,
+  type GDNPendingApprovalFilters,
+} from "@/components/GDNPendingApprovalsFilterDialog";
 import {
   Pagination,
   PaginationContent,
@@ -17,6 +21,12 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+
+const emptyFilters: GDNPendingApprovalFilters = {
+  gdnId: "",
+  siteName: "",
+  level: "",
+};
 
 interface GDNPendingApproval {
   gdnId: number;
@@ -114,6 +124,10 @@ export const GDNPendingApprovalsDashboard = () => {
     GDNPendingApproval[]
   >([]);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] =
+    useState<GDNPendingApprovalFilters>(emptyFilters);
   const [pagination, setPagination] = useState<GDNPagination>({
     current_page: 1,
     total_pages: 0,
@@ -167,6 +181,48 @@ export const GDNPendingApprovalsDashboard = () => {
   useEffect(() => {
     fetchPendingApprovals();
   }, [fetchPendingApprovals]);
+
+  const filteredData = useMemo(() => {
+    return pendingApprovalsData.filter((item) => {
+      if (
+        filters.gdnId &&
+        !String(item.gdnId).includes(filters.gdnId.trim())
+      ) {
+        return false;
+      }
+      if (
+        filters.siteName &&
+        !item.siteName.toLowerCase().includes(filters.siteName.toLowerCase())
+      ) {
+        return false;
+      }
+      if (
+        filters.level &&
+        !item.level.toLowerCase().includes(filters.level.toLowerCase())
+      ) {
+        return false;
+      }
+
+      if (searchTerm.trim()) {
+        const q = searchTerm.toLowerCase();
+        return (
+          String(item.gdnId).includes(q) ||
+          item.siteName.toLowerCase().includes(q) ||
+          item.level.toLowerCase().includes(q)
+        );
+      }
+
+      return true;
+    });
+  }, [pendingApprovalsData, filters, searchTerm]);
+
+  const handleApplyFilters = (nextFilters: GDNPendingApprovalFilters) => {
+    setFilters(nextFilters);
+  };
+
+  const handleResetFilters = () => {
+    setFilters(emptyFilters);
+  };
 
   const handleView = (item: GDNPendingApproval) => {
     const queryParams = new URLSearchParams();
@@ -316,7 +372,7 @@ export const GDNPendingApprovalsDashboard = () => {
 
       <Card className="shadow-sm border border-border">
         <div className="flex items-center gap-3 px-6 pt-6 pb-3">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-brand">
             <ClipboardList className="w-4 h-4" />
           </div>
           <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
@@ -325,15 +381,19 @@ export const GDNPendingApprovalsDashboard = () => {
         </div>
         <CardContent>
           <EnhancedTable
-            data={pendingApprovalsData}
+            data={filteredData}
             columns={columns}
             renderCell={renderCell}
             renderActions={renderActions}
             storageKey="gdn-pending-approvals"
             emptyMessage="No pending approvals found"
-            hideColumnsButton={true}
             hideTableExport={true}
-            hideTableSearch={true}
+            enableSearch
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search pending approvals..."
+            disableClientSearch
+            onFilterClick={() => setShowFilters(true)}
             loading={loading}
             loadingMessage="Loading GDN pending approvals..."
           />
@@ -379,6 +439,14 @@ export const GDNPendingApprovalsDashboard = () => {
           </Pagination>
         </div>
       )}
+
+      <GDNPendingApprovalsFilterDialog
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+        filters={filters}
+        onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
+      />
     </div>
   );
 };

@@ -8,6 +8,10 @@ import { format } from 'date-fns';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 import { useProcurementEvents } from '@/components/PostHogProcurementEvents';
+import {
+  TempRequestFilterDialog,
+  type TempRequestFilters,
+} from '@/components/TempRequestFilterDialog';
 
 interface PRData {
   id: string;
@@ -33,6 +37,10 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
 ];
+
+const emptyFilters: TempRequestFilters = {
+  type: '',
+};
 
 const formattedData = (data: unknown[]): PRData[] => {
   return (data || []).map((raw) => {
@@ -67,6 +75,8 @@ export const AutoSavedPRDashboard = () => {
     return Number(params.get('page')) || 1;
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<TempRequestFilters>(emptyFilters);
   const [savedPR, setSavedPR] = useState<PRData[]>([]);
   const [loading, setLoading] = useState(true);
   const procurementEvents = useProcurementEvents();
@@ -107,6 +117,10 @@ export const AutoSavedPRDashboard = () => {
   const filteredData = [...savedPR]
     .reverse()
     .filter((item) => {
+      if (filters.type && item.type !== filters.type) {
+        return false;
+      }
+
       const q = searchTerm.toLowerCase();
       return (
         !q ||
@@ -166,6 +180,16 @@ export const AutoSavedPRDashboard = () => {
     navigate(`${location.pathname}?page=${page}`, { replace: true });
   };
 
+  const handleApplyFilters = (nextFilters: TempRequestFilters) => {
+    setFilters(nextFilters);
+    setCurrentPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setFilters(emptyFilters);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-3">Temp Requests</h1>
@@ -193,8 +217,17 @@ export const AutoSavedPRDashboard = () => {
           currentPage={currentPage}
           onPageChange={handlePageChange}
           getItemId={(item) => String(item.id)}
+          onFilterClick={() => setShowFilters(true)}
         />
       </div>
+
+      <TempRequestFilterDialog
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+        filters={filters}
+        onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
+      />
     </div>
   );
 };

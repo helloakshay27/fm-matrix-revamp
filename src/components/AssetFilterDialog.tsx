@@ -820,7 +820,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
             <Button variant="ghost" onClick={handleSubmit} className="fm-button-fix fm-button-brand px-4 py-2">
               Apply Filters
             </Button>
-            <Button variant="outline" onClick={handleReset} className="border-brand text-brand hover:bg-brand hover:text-white">
+            <Button variant="outline" onClick={handleReset} className="border-brand text-brand hover:bg-brand-selected hover:text-brand">
               Reset
             </Button>
           </div>

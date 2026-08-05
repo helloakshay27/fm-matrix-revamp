@@ -8456,17 +8456,13 @@ export const TicketDetailsPage = () => {
 
                     {/* Submit Comment Button (centered) */}
                     <div className="flex justify-center mt-6 pb-6">
-                      <button
-                        type="button"
+                      <Button
                         onClick={handleSubmitComment}
                         disabled={submittingComment}
-                        className={`bg-brand text-white text-[12px] font-medium px-6 py-2 transition-colors ${submittingComment
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'hover:bg-[#A01828]'
-                          }`}
+                        className="text-[12px] font-medium px-6 py-2"
                       >
                         {submittingComment ? 'Submitting...' : 'Submit Comment'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </Card>

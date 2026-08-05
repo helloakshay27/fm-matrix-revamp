@@ -8,6 +8,10 @@ import { API_CONFIG } from "@/config/apiConfig";
 import { apiClient } from "@/utils/apiClient";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import {
+  TrainingConductedFilterDialog,
+  type TrainingConductedFilters,
+} from "@/components/TrainingConductedFilterDialog";
+import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -49,23 +53,44 @@ export const TrainingConductedDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<TrainingConductedFilters>({
+    trainingName: "",
+    status: "",
+    site: "",
+    conductedBy: "",
+  });
 
   useEffect(() => {
     fetchAuditsConducted();
-  }, [currentPage]);
+  }, [currentPage, filters]);
 
   const fetchAuditsConducted = async () => {
     try {
       setLoading(true);
+      const params: Record<string, string | number> = {
+        page: currentPage,
+        per_page: 20,
+        "q[custom_form_checklist_for_eq]": "Training",
+      };
+
+      if (filters.trainingName.trim()) {
+        params["q[form_name_cont]"] = filters.trainingName.trim();
+      }
+      if (filters.status.trim()) {
+        params["q[status_cont]"] = filters.status.trim();
+      }
+      if (filters.site.trim()) {
+        params["q[site_cont]"] = filters.site.trim();
+      }
+      if (filters.conductedBy.trim()) {
+        params["q[conducted_by_cont]"] = filters.conductedBy.trim();
+      }
+
       const response = await apiClient.get<AuditConductedResponse>(
         "/pms/custom_forms/audits_conducted.json",
-        {
-          params: {
-            page: currentPage,
-            per_page: 20,
-            "q[custom_form_checklist_for_eq]": "Training",
-          },
-        }
+        { params }
       );
       setConductedData(response.data.occurrences);
       setTotalPages(response.data.total_pages);
@@ -260,6 +285,34 @@ export const TrainingConductedDashboard = () => {
     }
   };
 
+  const handleApplyFilters = (nextFilters: TrainingConductedFilters) => {
+    setFilters(nextFilters);
+    setCurrentPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      trainingName: "",
+      status: "",
+      site: "",
+      conductedBy: "",
+    });
+    setCurrentPage(1);
+  };
+
+  const filteredData = searchTerm.trim()
+    ? conductedData.filter((item) => {
+        const q = searchTerm.toLowerCase();
+        return (
+          item.form_name?.toLowerCase().includes(q) ||
+          item.conducted_by?.toLowerCase().includes(q) ||
+          item.status?.toLowerCase().includes(q) ||
+          item.site?.toLowerCase().includes(q) ||
+          String(item.id).includes(q)
+        );
+      })
+    : conductedData;
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -309,7 +362,7 @@ export const TrainingConductedDashboard = () => {
         <>
           <div className="overflow-x-auto">
             <EnhancedTable
-              data={conductedData}
+              data={filteredData}
               columns={columns}
               renderCell={renderCell}
               selectable={true}
@@ -320,6 +373,12 @@ export const TrainingConductedDashboard = () => {
               storageKey="training-conducted-table"
               className="w-full"
               pagination={false}
+              enableSearch
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              searchPlaceholder="Search..."
+              disableClientSearch
+              onFilterClick={() => setShowFilters(true)}
               emptyMessage=""
             />
           </div>
@@ -413,6 +472,14 @@ export const TrainingConductedDashboard = () => {
           )}
         </>
       )}
+
+      <TrainingConductedFilterDialog
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+        filters={filters}
+        onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
+      />
     </div>
   );
 };

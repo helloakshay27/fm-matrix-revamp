@@ -91,14 +91,14 @@ export const UtilityEVConsumptionFilterDialog = ({
           <Button 
             variant="outline" 
             onClick={onClose}
-            className="flex-1 h-11 border-brand text-brand hover:bg-brand hover:text-white"
+            className="flex-1 h-11 border-brand text-brand hover:bg-brand-selected hover:text-brand"
           >
             Cancel
           </Button>
           <Button 
             variant="outline" 
             onClick={handleReset}
-            className="flex-1 h-11 border-brand text-brand hover:bg-brand hover:text-white"
+            className="flex-1 h-11 border-brand text-brand hover:bg-brand-selected hover:text-brand"
           >
             Reset
           </Button>
