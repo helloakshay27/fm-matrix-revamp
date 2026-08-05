@@ -331,7 +331,7 @@ const EditMeterModal = ({ isOpen, onClose, onSuccess, meterData }: EditModalProp
 
           <div className="space-y-2">
             <Button
-              className="w-full bg-transparent text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white"
+              className="w-full bg-transparent text-[#C72030] border border-[#C72030]"
               onClick={() => setIsAddingUnit(true)}
             >
               <Plus className="w-4 h-4 mr-2" />

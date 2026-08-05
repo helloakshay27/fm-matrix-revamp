@@ -181,6 +181,7 @@ export const PlantDetailSetupPage = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-[#f6f4ee]">
+                  <TableHead className="font-medium">Actions</TableHead>
                   <TableHead className="font-medium">Plant Name</TableHead>
                   <TableHead className="font-medium">Site Name</TableHead>
                   <TableHead className="font-medium">Plant Category</TableHead>
@@ -188,7 +189,6 @@ export const PlantDetailSetupPage = () => {
                   <TableHead className="font-medium">Company Code</TableHead>
                   <TableHead className="font-medium">Sale Org Code</TableHead>
                   <TableHead className="font-medium">Valuation Area</TableHead>
-                  <TableHead className="font-medium">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -201,13 +201,6 @@ export const PlantDetailSetupPage = () => {
                 ) : (
                   filteredPlants.map((plant) => (
                     <TableRow key={plant.id} className="hover:bg-gray-50">
-                      <TableCell className="font-medium">{plant.plant_name}</TableCell>
-                      <TableCell>{plant.site_name}</TableCell>
-                      <TableCell>{plant.plant_category}</TableCell>
-                      <TableCell>{plant.company_name}</TableCell>
-                      <TableCell>{plant.company_code}</TableCell>
-                      <TableCell>{plant.sale_org_code}</TableCell>
-                      <TableCell>{plant.valuation_area}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Button
@@ -240,6 +233,13 @@ export const PlantDetailSetupPage = () => {
                           </AlertDialog>
                         </div>
                       </TableCell>
+                      <TableCell className="font-medium">{plant.plant_name}</TableCell>
+                      <TableCell>{plant.site_name}</TableCell>
+                      <TableCell>{plant.plant_category}</TableCell>
+                      <TableCell>{plant.company_name}</TableCell>
+                      <TableCell>{plant.company_code}</TableCell>
+                      <TableCell>{plant.sale_org_code}</TableCell>
+                      <TableCell>{plant.valuation_area}</TableCell>
                     </TableRow>
                   ))
                 )}
