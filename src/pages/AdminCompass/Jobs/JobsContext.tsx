@@ -11,8 +11,6 @@ import {
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  AI_KRAS,
-  genAiKpis,
   DEPARTMENTS,
   TARGET_FREQ,
   DATA_SOURCES,
@@ -34,7 +32,7 @@ import {
   updateKraAssignees,
 } from "./krasApi";
 import { fetchEscalateToUsers } from "./usersApi";
-import { firstDefined } from "./apiClient";
+import { apiHeaders, buildApiUrl, firstDefined } from "./apiClient";
 import { assignJobDescriptionMembers } from "./api/jobsApi";
 import { useEscalateUsers } from "./hooks/useEscalateUsers";
 
@@ -273,63 +271,176 @@ export function JobsProvider({ children }) {
     (s, k) => s + (Number(k.weightage) || 0),
     0
   );
+  const formKpisFitKraWeightage = () =>
+    formKras.every((kra, kraIdx) => {
+      const limit = Number(kra.weightage) || 0;
+      const used = formKpis
+        .filter((kpi) => kpi.kraIdx === kraIdx)
+        .reduce((sum, kpi) => sum + (Number(kpi.weightage) || 0), 0);
+      return used <= limit;
+    });
+  const apiExperienceLevel = (level) =>
+    ({
+      "Entry Level": "entry",
+      "Mid Level": "mid",
+      Senior: "senior",
+      Lead: "lead",
+      Manager: "manager",
+      Director: "director",
+      VP: "vp",
+      "C-Suite": "c_suite",
+    })[level] || level;
+  const apiEmploymentType = (type) =>
+    ({
+      "Full-time": "full_time",
+      "Part-time": "part_time",
+      Contract: "contract",
+      Internship: "internship",
+    })[type] || type;
+  const toBulletText = (value) => {
+    if (Array.isArray(value)) {
+      return value
+        .map((item) =>
+          typeof item === "string"
+            ? item
+            : firstDefined(item?.title, item?.text, item?.name, item?.description)
+        )
+        .filter(Boolean)
+        .map((item) => `• ${item}`)
+        .join("\n");
+    }
+    return String(value || "");
+  };
+  const postJobAi = async (path, payload) => {
+    const res = await fetch(buildApiUrl(path), {
+      method: "POST",
+      headers: apiHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || json?.success === false) {
+      throw new Error(json?.message || `HTTP ${res.status}`);
+    }
+    return json?.data || {};
+  };
 
-  /* AI simulation */
-  const simulateAiJd = () => {
+  /* AI generated JD description */
+  const simulateAiJd = async () => {
+    if (!jobForm.title || !jobForm.deptId || !jobForm.level || !jobForm.type) {
+      showToast("Please fill job title, department, experience level, and employment type first", "error");
+      return;
+    }
+
     setAiLoading(true);
-    setTimeout(() => {
-      sf(
-        "summary",
-        `We are looking for a talented ${jobForm.title || "professional"} to join our ${jobForm.dept || "team"} with ${jobForm.level || "relevant"} experience.`
-      );
-      sf(
-        "responsibilities",
-        "• Lead end-to-end ownership of assigned workstreams\n• Collaborate cross-functionally with design, engineering, and business\n• Define and track key metrics\n• Conduct regular reviews\n• Present progress reports to leadership"
-      );
-      sf(
-        "qualifications",
-        `• ${jobForm.level === "Senior" || jobForm.level === "Lead" ? "5+" : "2+"}  years of relevant experience\n• Strong analytical abilities\n• Excellent communication skills\n• Relevant degree`
-      );
-      sf(
-        "skills",
-        "• Proficiency in industry tools\n• Data-driven decision making\n• Stakeholder management"
-      );
-      sf(
-        "niceToHave",
-        "• Agile experience\n• Startup background\n• Domain certifications"
-      );
+    try {
+      const data = await postJobAi("/job_descriptions/generate_description_ai.json", {
+        job_title: jobForm.title,
+        department_id: Number(jobForm.deptId),
+        experience_level: apiExperienceLevel(jobForm.level),
+        employment_type: apiEmploymentType(jobForm.type),
+      });
+      sf("summary", data.summary || "");
+      sf("responsibilities", toBulletText(data.responsibilities));
+      sf("qualifications", toBulletText(data.qualifications));
+      sf("skills", toBulletText(data.skills));
+      sf("niceToHave", toBulletText(data.nice_to_have));
       setAiLoading(false);
       setJdMethod("ai");
-    }, 2200);
+      showToast("AI job description generated");
+    } catch (err) {
+      toast.error(`Could not generate job description: ${err?.message || "request failed"}`);
+      setAiLoading(false);
+    }
   };
-  const simulateAiKras = () => {
+  const simulateAiKras = async () => {
+    if (!jobForm.title || !jobForm.deptId || !jobForm.summary) {
+      showToast("Please fill job title, department, and summary first", "error");
+      return;
+    }
+
     setAiLoading(true);
-    setTimeout(() => {
+    try {
+      const data = await postJobAi("/job_descriptions/generate_kras_ai.json", {
+        job_title: jobForm.title,
+        department_id: Number(jobForm.deptId),
+        summary: jobForm.summary,
+        kra_count: 4,
+      });
+      const generatedKras = Array.isArray(data.kras) ? data.kras : [];
+      if (!generatedKras.length) throw new Error("No KRAs returned");
+
       setFormKras(
-        AI_KRAS.map((k, i) => ({ ...k, assignee: "", id: Date.now() + i }))
+        generatedKras.map((kra, i) => ({
+          id: Date.now() + i,
+          title: kra.title || kra.name || "",
+          desc: kra.description || kra.desc || "",
+          weightage: kra.weightage ?? kra.weight ?? "",
+          assignee: "",
+          assigneeId: "",
+          effectiveFrom: "",
+          effectiveTo: "",
+          status: "active",
+        }))
       );
+      setFormKpis([]);
       setAiLoading(false);
       setKraAiDone(true);
-    }, 1800);
+      setKpiAiDone(false);
+      showToast("AI KRAs generated");
+    } catch (err) {
+      toast.error(`Could not generate KRAs: ${err?.message || "request failed"}`);
+      setAiLoading(false);
+    }
   };
-  const simulateAiKpis = () => {
+  const simulateAiKpis = async () => {
+    if (!jobForm.title || !formKras.length) {
+      showToast("Please generate or add KRAs first", "error");
+      return;
+    }
+
     setKpiAiLoading(true);
-    setTimeout(() => {
+    try {
+      const generatedByKra = await Promise.all(
+        formKras.map((kra) =>
+          postJobAi("/job_descriptions/generate_kpis_ai.json", {
+            job_title: jobForm.title,
+            kra_title: kra.title,
+            kra_description: kra.desc,
+            kra_weightage: Number(kra.weightage) || 0,
+            kpi_count: 3,
+          })
+        )
+      );
       const gen = [];
-      formKras.forEach((kra, idx) => {
-        genAiKpis(kra.title).forEach((kpi) => {
+      generatedByKra.forEach((data, idx) => {
+        const kpis = Array.isArray(data.kpis) ? data.kpis : [];
+        kpis.forEach((kpi) => {
           gen.push({
-            ...kpi,
-            assignee: "",
             kraIdx: idx,
             id: Date.now() + Math.random() * 10000,
+            name: kpi.name || kpi.title || "",
+            unit: kpi.unit || "",
+            weightage: kpi.weight ?? kpi.weightage ?? "",
+            assignee: "",
+            target: kpi.target_value ?? kpi.target ?? "",
+            freq: kpi.frequency || kpi.freq || kpi.target_frequency || "",
+            updateType: kpi.update_type || "manual",
+            dataSource: kpi.data_source || "",
+            module: kpi.module || "",
+            measurementType: kpi.measurement_type || "positive",
           });
         });
       });
+      if (!gen.length) throw new Error("No KPIs returned");
+
       setFormKpis(gen);
       setKpiAiLoading(false);
       setKpiAiDone(true);
-    }, 1800);
+      showToast("AI KPIs generated");
+    } catch (err) {
+      toast.error(`Could not generate KPIs: ${err?.message || "request failed"}`);
+      setKpiAiLoading(false);
+    }
   };
 
   /* Form CRUD */
@@ -390,7 +501,11 @@ export function JobsProvider({ children }) {
     if (step === 2)
       return formKras.length > 0 && formKras.every((k) => k.title);
     if (step === 3)
-      return formKpis.length > 0 && formKpis.every((k) => k.name && k.target);
+      return (
+        formKpis.length > 0 &&
+        formKpis.every((k) => k.name && k.target) &&
+        formKpisFitKraWeightage()
+      );
     return true;
   };
 
@@ -788,6 +903,9 @@ export function JobsProvider({ children }) {
   // Ek KRA ki saari KPIs ka weightage milakar 100% se zyada nahi ho sakta —
   // chahe us KRA se 2 KPIs juddi hon ya 10. `excludeKpiId` edit ke waqt
   // current KPI ko total se hata deta hai.
+  const kraWeightageLimit = (kraId) =>
+    Number(allKras.find((kra) => sameId(kra.id, kraId))?.weightage) || 100;
+
   const kraWeightageUsed = (kraId, excludeKpiId = null) =>
     allKpis
       .filter(
@@ -815,13 +933,14 @@ export function JobsProvider({ children }) {
     } catch {
       // Network fail — local total par hi fallback.
     }
-    if (used + next <= 100) return false;
+    const limit = kraWeightageLimit(kraId);
+    if (used + next <= limit) return false;
     const kraTitle =
       allKras.find((k) => sameId(k.id, kraId))?.title || "this KRA";
     toast.error(
-      `Total KPI weightage for "${kraTitle}" cannot exceed 100%. Already used: ${used}%, remaining: ${Math.max(
+      `Total KPI weightage for "${kraTitle}" cannot exceed ${limit}%. Already used: ${used}%, remaining: ${Math.max(
         0,
-        100 - used
+        limit - used
       )}%.`
     );
     return true;
@@ -1938,6 +2057,7 @@ export function JobsProvider({ children }) {
     kpiModalKras,
     kpiModalKrasLoading,
     kpiModalKrasError,
+    kraWeightageLimit,
     kraWeightageUsed,
     assigneeKraUsage,
     loadAssigneeKraUsage,
