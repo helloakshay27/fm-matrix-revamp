@@ -453,8 +453,10 @@ export const VisitingPurposePage = () => {
       case 'status':
         return (
           <span
-            className={`px-3 py-1 text-xs font-medium rounded-full ${
-              item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-md ${
+              item.status
+                ? 'bg-brand text-white'
+                : 'bg-brand-light text-brand border border-brand/30'
             }`}
           >
             {item.status ? 'Active' : 'Inactive'}
