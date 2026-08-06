@@ -145,6 +145,10 @@ export const useUtilityEvents = () => {
     trackEvent('Utility Waste Generation Dashboard Viewed', {});
   }, [trackEvent]);
 
+  const onUtilityWaterDashboardViewed = useCallback(() => {
+    trackEvent('Utility Water Dashboard Viewed', {});
+  }, [trackEvent]);
+
   const onUtilitySTPDashboardViewed = useCallback(() => {
     trackEvent('Utility STP Dashboard Viewed', {});
   }, [trackEvent]);
@@ -179,6 +183,7 @@ export const useUtilityEvents = () => {
     onEVConsumptionListViewed,
     onSolarGeneratorListViewed,
     onUtilityWasteGenerationDashboardViewed,
+    onUtilityWaterDashboardViewed,
     onUtilitySTPDashboardViewed,
     onUtilityEVDashboardViewed,
     onUtilityDGDashboardViewed,

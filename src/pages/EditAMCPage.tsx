@@ -2487,30 +2487,55 @@ export const EditAMCPage = () => {
                               )) as string[];
                               return (
                                 <div className="grid grid-cols-2 gap-3 mb-3">
-                                  <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Group</label>
-                                    <select
+                                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStylesMUI }}>
+                                    <InputLabel shrink>Group</InputLabel>
+                                    <MuiSelect
+                                      label="Group"
+                                      notched
+                                      displayEmpty
                                       value={indivGroupFilter}
-                                      onChange={e => { setIndivGroupFilter(e.target.value); setIndivSubGroupFilter(''); }}
+                                      onChange={(e) => {
+                                        setIndivGroupFilter(e.target.value as string);
+                                        setIndivSubGroupFilter('');
+                                      }}
                                       disabled={updateLoading}
-                                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                                      renderValue={(selected) =>
+                                        selected ? String(selected) : <span style={{ color: '#aaa' }}>All Groups</span>
+                                      }
                                     >
-                                      <option value="">All Groups</option>
-                                      {uniqueGroups.map(g => <option key={g} value={g}>{g}</option>)}
-                                    </select>
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Sub Group</label>
-                                    <select
+                                      <MenuItem value="">
+                                        <em>All Groups</em>
+                                      </MenuItem>
+                                      {uniqueGroups.map((g) => (
+                                        <MenuItem key={g} value={g}>
+                                          {g}
+                                        </MenuItem>
+                                      ))}
+                                    </MuiSelect>
+                                  </FormControl>
+                                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStylesMUI }}>
+                                    <InputLabel shrink>Sub Group</InputLabel>
+                                    <MuiSelect
+                                      label="Sub Group"
+                                      notched
+                                      displayEmpty
                                       value={indivSubGroupFilter}
-                                      onChange={e => setIndivSubGroupFilter(e.target.value)}
+                                      onChange={(e) => setIndivSubGroupFilter(e.target.value as string)}
                                       disabled={updateLoading || !indivGroupFilter}
-                                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[var(--color-primary)] disabled:bg-gray-50 disabled:text-gray-400"
+                                      renderValue={(selected) =>
+                                        selected ? String(selected) : <span style={{ color: '#aaa' }}>All Sub Groups</span>
+                                      }
                                     >
-                                      <option value="">All Sub Groups</option>
-                                      {uniqueSubGroups.map(sg => <option key={sg} value={sg}>{sg}</option>)}
-                                    </select>
-                                  </div>
+                                      <MenuItem value="">
+                                        <em>All Sub Groups</em>
+                                      </MenuItem>
+                                      {uniqueSubGroups.map((sg) => (
+                                        <MenuItem key={sg} value={sg}>
+                                          {sg}
+                                        </MenuItem>
+                                      ))}
+                                    </MuiSelect>
+                                  </FormControl>
                                 </div>
                               );
                             })()}
@@ -2755,20 +2780,20 @@ export const EditAMCPage = () => {
                             disabled={loading || updateLoading}
                             error={!!errors.vendor}
                             helperText={errors.vendor}
+                            size="compact"
                             label={<>Supplier <span style={{ color: 'var(--color-primary)' }}>*</span></>}
                             required
                           />
                         </div>
 
                         <div>
-                          <FormControl fullWidth variant="outlined">
+                          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStylesMUI }}>
                             <InputLabel shrink>Technician</InputLabel>
                             <MuiSelect
                               label="Technician"
                               displayEmpty
                               value={formData.technician}
                               onChange={e => handleInputChange('technician', e.target.value)}
-                              sx={fieldStyles}
                               disabled={loading || techniciansLoading || updateLoading}
                             >
                               <MenuItem value=""><em>Select Technician</em></MenuItem>

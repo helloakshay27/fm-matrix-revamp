@@ -3174,20 +3174,20 @@ const FiltersPanel: React.FC<{
                                 style={{
                                     display: 'block',
                                     fontFamily: '"Work Sans", "Helvetica Neue", Arial, sans-serif',
-                                    fontWeight: 400,
-                                    fontStyle: 'normal',
-                                    fontSize: '16px',
+                                    fontWeight: 500,
+                                    fontSize: '12px',
                                     lineHeight: '100%',
-                                    letterSpacing: '0%',
-                                    marginBottom: '0.25rem',
-                                    marginLeft: '10px',
+                                    letterSpacing: '0.04em',
+                                    textTransform: 'uppercase',
+                                    color: '#6B7C5A',
+                                    marginBottom: '6px',
                                 }}
                             >
                                 Start Date <span style={{ color: '#EE0B0B' }}>*</span>
                             </label>
                             <input
                                 type="date"
-                                className="w-full h-10 rounded-[25px] border border-gray-300 bg-white px-3 py-0 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-0 focus:border-gray-400"
+                                className="w-full h-10 rounded-lg border border-gray-300 bg-white px-3 py-0 text-sm text-gray-900 hover:border-[#EE0B0B] focus:outline-none focus:border-[#EE0B0B] focus:ring-1 focus:ring-[#EE0B0B]/30"
                                 value={toDateInputValue(startDate ?? new Date())}
                                 onChange={(e) => {
                                     const next = e.target.value ? new Date(e.target.value + 'T00:00:00') : null;
@@ -3203,10 +3203,9 @@ const FiltersPanel: React.FC<{
                                     fontFamily: '"Work Sans", "Helvetica Neue", Arial, sans-serif',
                                     fontWeight: 400,
                                     fontStyle: 'normal',
-                                    // fontSize: '18px',
                                     lineHeight: '100%',
                                     letterSpacing: '0%',
-                                    color: '#374151', /* text-gray-700 */
+                                    color: '#374151',
                                     paddingBottom: '0.5rem',
                                 }}
                             >
@@ -3217,20 +3216,20 @@ const FiltersPanel: React.FC<{
                                 style={{
                                     display: 'block',
                                     fontFamily: '"Work Sans", "Helvetica Neue", Arial, sans-serif',
-                                    fontWeight: 400,
-                                    fontStyle: 'normal',
-                                    fontSize: '16px',
+                                    fontWeight: 500,
+                                    fontSize: '12px',
                                     lineHeight: '100%',
-                                    letterSpacing: '0%',
-                                    marginBottom: '0.25rem',
-                                    marginLeft: '10px',
+                                    letterSpacing: '0.04em',
+                                    textTransform: 'uppercase',
+                                    color: '#6B7C5A',
+                                    marginBottom: '6px',
                                 }}
                             >
                                 End Date <span style={{ color: '#EE0B0B' }}>*</span>
                             </label>
                             <input
                                 type="date"
-                                className="w-full h-10 rounded-[25px] border border-gray-300 bg-white px-3 py-0 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-0 focus:border-gray-400"
+                                className="w-full h-10 rounded-lg border border-gray-300 bg-white px-3 py-0 text-sm text-gray-900 hover:border-[#EE0B0B] focus:outline-none focus:border-[#EE0B0B] focus:ring-1 focus:ring-[#EE0B0B]/30"
                                 value={toDateInputValue(endDate ?? new Date())}
                                 min={toDateInputValue(startDate ?? new Date())}
                                 onChange={(e) => {
@@ -3286,7 +3285,22 @@ const FiltersPanel: React.FC<{
                             to: endDate,
                         });
                     }}
-                    sx={{ ml: 'auto', flexShrink: 0, whiteSpace: 'nowrap', mt: '10px', mb: '4px', backgroundColor: '#EE0B0B', fontSize: '0.85rem', fontWeight: 600, fontFamily: '"Open Sans", sans-serif', height: 40, px: 2.5, borderRadius: '25px' }}
+                    sx={{
+                        ml: 'auto',
+                        flexShrink: 0,
+                        whiteSpace: 'nowrap',
+                        mt: '10px',
+                        mb: '4px',
+                        backgroundColor: '#EE0B0B',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        fontFamily: '"Open Sans", sans-serif',
+                        height: 40,
+                        px: 2.5,
+                        borderRadius: '8px',
+                        boxShadow: 'none',
+                        '&:hover': { backgroundColor: '#D40A0A', boxShadow: 'none' },
+                    }}
                 >
                     Apply
                 </Button>

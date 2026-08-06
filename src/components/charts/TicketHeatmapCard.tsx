@@ -1,10 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-const HEATMAP_COLORS = ["#F6EAEC", "#F0CCD1", "#E7848E", "#C0303D", "#8B0000"];
+// Brand-coral intensity scale (matches --color-primary #DA7756), with zero
+// treated as a distinct neutral "no events" state rather than the lightest
+// heat color.
+const HEATMAP_ZERO_COLOR = "#E3E1D9";
+const HEATMAP_LEGEND = [
+  { color: HEATMAP_ZERO_COLOR, label: "No tickets" },
+  { color: "#F8E3DA", label: "Light" },
+  { color: "#EFBBA1", label: "Moderate" },
+  { color: "#DA7756", label: "Busiest" },
+];
+const HEATMAP_COLORS = HEATMAP_LEGEND.slice(1).map((s) => s.color);
 
 function colorForValue(value: number, max: number): string {
-  if (max <= 0) return HEATMAP_COLORS[0];
+  if (value <= 0 || max <= 0) return HEATMAP_ZERO_COLOR;
   const ratio = value / max;
   const bucket = Math.min(HEATMAP_COLORS.length - 1, Math.floor(ratio * HEATMAP_COLORS.length));
   return HEATMAP_COLORS[bucket];
@@ -63,11 +73,11 @@ export function TicketHeatmapCard({
                 style={{ gridTemplateColumns: `36px repeat(${hours.length}, minmax(0,1fr))` }}
               >
                 <span className="text-brand-body-5 text-brand-text-light flex items-center">{day}</span>
-                {data[dayIdx].map((value, hourIdx) => (
+                {(data[dayIdx] ?? []).map((value, hourIdx) => (
                   <div
                     key={hourIdx}
                     title={`${day} ${hours[hourIdx]}:00 · ${value} tickets`}
-                    className="aspect-square rounded-sm"
+                    className="aspect-square rounded-md"
                     style={{ backgroundColor: colorForValue(value, max) }}
                   />
                 ))}
@@ -76,15 +86,13 @@ export function TicketHeatmapCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 mt-3 text-brand-caption text-brand-text-light">
-          <span>Low</span>
-          <div className="flex h-2 w-24 rounded overflow-hidden">
-            {HEATMAP_COLORS.map((c) => (
-              <div key={c} className="flex-1" style={{ backgroundColor: c }} />
-            ))}
-          </div>
-          <span>High</span>
-          <span className="ml-1.5">— ticket volume by day &amp; hour</span>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-3">
+          {HEATMAP_LEGEND.map((item) => (
+            <div key={item.label} className="flex items-center gap-2 text-brand-caption text-brand-text-light">
+              <span className="h-4 w-4 rounded-md flex-shrink-0" style={{ backgroundColor: item.color }} />
+              {item.label}
+            </div>
+          ))}
         </div>
 
         {insight && <p className="text-brand-body-5 text-brand-green leading-relaxed mt-3">{insight}</p>}

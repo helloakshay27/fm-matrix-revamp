@@ -2548,8 +2548,8 @@ h4[class*="text-[#1A1A1A]"],
 }
 
 /* Chart subheadings like "Response TAT", "Resolution TAT" - BLACK */
-.text-center.font-semibold,
-.text-center.font-bold {
+.text-center.font-semibold:not(.analytics-header),
+.text-center.font-bold:not(.analytics-header) {
   color: var(--color-text) !important;
 }
 

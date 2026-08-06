@@ -2,9 +2,9 @@ import { Trophy, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface FilterPillBarProps {
-  segments: string[];
-  activeSegment: string;
-  onSegmentChange: (segment: string) => void;
+  segments?: string[];
+  activeSegment?: string;
+  onSegmentChange?: (segment: string) => void;
   goldenActive?: boolean;
   onGoldenToggle?: () => void;
   redFlagActive?: boolean;
@@ -13,10 +13,11 @@ export interface FilterPillBarProps {
 }
 
 /**
- * Quick-filter row — mirrors ".toggle-group" (Today / This Week / This Month)
- * and ".flag-toggle" (Golden / Red Flag) in fm_matrix_phase10 (29).html.
- * bg-brand-warning and bg-brand-error already match the reference's active
- * gold (#EDC488) and red (#E7848E) fills exactly.
+ * Quick-filter row — ".flag-toggle" (Golden / Red Flag) in
+ * fm_matrix_phase10 (29).html. Golden uses the gold (#EDC488) fill; Red Flag
+ * uses the brand coral (#DA7756) fill rather than the reference's red, to
+ * stay on-brand. The optional `segments` group (e.g. Today/This Week/This
+ * Month) only renders when passed.
  */
 export function FilterPillBar({
   segments,
@@ -30,31 +31,33 @@ export function FilterPillBar({
 }: FilterPillBarProps) {
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      <div className="flex rounded-full border border-brand-border overflow-hidden">
-        {segments.map((segment) => {
-          const isActive = segment === activeSegment;
-          return (
-            <button
-              key={segment}
-              type="button"
-              onClick={() => onSegmentChange(segment)}
-              className={cn(
-                "px-3 py-1.5 text-brand-caption font-medium transition-colors",
-                isActive ? "bg-brand text-white" : "bg-white text-brand-green hover:bg-brand-light"
-              )}
-            >
-              {segment}
-            </button>
-          );
-        })}
-      </div>
+      {segments && segments.length > 0 && (
+        <div className="flex rounded-full border border-brand-border overflow-hidden">
+          {segments.map((segment) => {
+            const isActive = segment === activeSegment;
+            return (
+              <button
+                key={segment}
+                type="button"
+                onClick={() => onSegmentChange?.(segment)}
+                className={cn(
+                  "px-2.5 py-1 text-brand-caption font-medium transition-colors",
+                  isActive ? "bg-brand text-white" : "bg-white text-brand-green hover:bg-brand-light"
+                )}
+              >
+                {segment}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {onGoldenToggle && (
         <button
           type="button"
           onClick={onGoldenToggle}
           className={cn(
-            "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-brand-caption font-medium transition-colors",
+            "flex items-center gap-1 rounded-full border px-2.5 py-1 text-brand-caption font-medium transition-colors",
             goldenActive
               ? "bg-brand-warning border-brand-warning text-[#5C4A00]"
               : "bg-white border-brand-border text-brand-green"
@@ -70,9 +73,9 @@ export function FilterPillBar({
           type="button"
           onClick={onRedFlagToggle}
           className={cn(
-            "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-brand-caption font-medium transition-colors",
+            "flex items-center gap-1 rounded-full border px-2.5 py-1 text-brand-caption font-medium transition-colors",
             redFlagActive
-              ? "bg-brand-error border-brand-error text-white"
+              ? "bg-brand border-brand text-white"
               : "bg-white border-brand-border text-brand-green"
           )}
         >

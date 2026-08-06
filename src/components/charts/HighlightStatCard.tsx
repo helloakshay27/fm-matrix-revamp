@@ -3,15 +3,8 @@ import { cn } from "@/lib/utils";
 
 export type HighlightStatTone = "error" | "warning" | "success" | "info";
 
-const BORDER_TONE_CLASSES: Record<HighlightStatTone, string> = {
-  error: "border-l-4 border-l-brand-error",
-  warning: "border-l-4 border-l-brand-warning",
-  success: "border-l-4 border-l-brand-success",
-  info: "border-l-4 border-l-brand-info",
-};
-
 const VALUE_TONE_CLASSES: Record<HighlightStatTone, string> = {
-  error: "text-brand-error",
+  error: "text-brand",
   warning: "text-[#8A5A00]",
   success: "text-brand-success",
   info: "text-brand-info",
@@ -28,8 +21,8 @@ export interface HighlightStatCardProps {
 }
 
 /**
- * Callout card — colored left border, one pinned headline stat top-right,
- * a description paragraph below. Mirrors "Asset value at risk right now" in
+ * Callout card — one pinned headline stat top-right, a description
+ * paragraph below. Mirrors "Asset value at risk right now" in
  * fm_matrix_phase10 (29).html. No existing card covered a single-stat
  * callout (StatListCard is for label→value/badge rows; StatHeroCard is a
  * compact tinted tile without a description paragraph).
@@ -44,7 +37,7 @@ export function HighlightStatCard({
   className,
 }: HighlightStatCardProps) {
   return (
-    <Card className={cn("border-brand-border", BORDER_TONE_CLASSES[tone], className)}>
+    <Card className={cn("border-brand-border", className)}>
       <CardContent className="pt-6">
         <div className="flex items-start justify-between gap-4">
           <div>

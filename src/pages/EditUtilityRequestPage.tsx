@@ -53,17 +53,19 @@ interface CustomerLease {
     paid_parking: number;
 }
 
+// Every field here can come back null from /compile_utilizations/:id.json for
+// partially-filled records, so they are typed nullable and guarded on read.
 interface UtilizationDetails {
     id: number;
-    entity_id: number;
-    plant_detail_id: number;
-    from_date: string;
-    to_date: string;
-    total_consumption: number;
-    rate: number;
-    amount: number;
-    status: string;
-    reading_type: string;
+    entity_id: number | null;
+    plant_detail_id: number | null;
+    from_date: string | null;
+    to_date: string | null;
+    total_consumption: number | null;
+    rate: number | null;
+    amount: number | null;
+    status: string | null;
+    reading_type: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -133,13 +135,13 @@ export const EditUtilityRequestPage = () => {
 
                 // Populate form with existing data
                 setFormData({
-                    entity: data.entity_id.toString(),
-                    plantDetail: data.plant_detail_id.toString(),
-                    fromDate: data.from_date,
-                    toDate: data.to_date,
-                    totalConsumption: data.total_consumption.toString(),
-                    rate: data.rate.toString(),
-                    readingType: data.reading_type
+                    entity: data.entity_id?.toString() ?? '',
+                    plantDetail: data.plant_detail_id?.toString() ?? '',
+                    fromDate: data.from_date ?? '',
+                    toDate: data.to_date ?? '',
+                    totalConsumption: data.total_consumption?.toString() ?? '',
+                    rate: data.rate?.toString() ?? '',
+                    readingType: data.reading_type ?? ''
                 });
             } catch (err) {
                 console.error('Error fetching utilization details:', err);

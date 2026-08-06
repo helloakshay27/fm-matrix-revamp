@@ -41,6 +41,10 @@ const fieldStyles = {
 // Portals to document.body so the menu anchors under the field instead of
 // inheriting the Radix Dialog's translate transform (which mispositions it).
 const selectMenuProps = {
+  // Radix's modal Dialog sets `pointer-events: none` on <body>, which the
+  // portaled menu inherits — without this the backdrop never receives the
+  // click that closes the menu.
+  sx: { pointerEvents: 'auto' },
   PaperProps: {
     sx: {
       maxHeight: 224,
