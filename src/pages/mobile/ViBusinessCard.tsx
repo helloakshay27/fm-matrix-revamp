@@ -65,6 +65,7 @@ export const ViBusinessCard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const source = searchParams.get("source") || "";
+  const scannedById = searchParams.get("scanned_by_id") || "";
 
   // Add meta tags for cache control
   useEffect(() => {
@@ -119,13 +120,17 @@ export const ViBusinessCard: React.FC = () => {
           params.set("source", source);
         }
 
+        if (scannedById) {
+          params.set("scanned_by_id", scannedById);
+        }
+
         const response = await fetch(
           `https://live-api.gophygital.work/pms/users/user_info_by_enc_id.json?${params.toString()}`
         );
 
         if (!response.ok) {
           throw new Error("Failed to fetch user data");
-        }
+        } 
 
         const data: ApiResponse = await response.json();
 
