@@ -188,7 +188,7 @@ const UtilityConsumptionDashboard = () => {
             e.stopPropagation();
             handleEdit(item);
           }}
-          className="h-8 w-8 p-0 text-[#C72030] hover:bg-[#C72030]/10 hover:text-[#C72030]"
+          className="h-8 w-8 p-0 text-black hover:bg-gray-100 hover:text-black"
           title="Edit"
         >
           <Edit className="w-4 h-4" />

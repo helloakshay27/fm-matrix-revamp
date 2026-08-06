@@ -18,6 +18,7 @@ import { SpaceManagementImportDialog } from "@/components/SpaceManagementImportD
 import { SpaceManagementRosterExportDialog } from "@/components/SpaceManagementRosterExportDialog";
 import { SpaceManagementExportDialog } from "@/components/SpaceManagementExportDialog";
 import { EditBookingDialog } from "@/components/EditBookingDialog";
+import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from "@/config/apiConfig";
 import { CancelBookingDialog } from "@/components/CancelBookingDialog";
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -72,33 +73,17 @@ useEffect(() => {
       setLoadingBookings(true);
       setErrorBookings(null);
       try {
-        const url = 'https://fm-uat-api.lockated.com/pms/admin/seat_bookings.json';
-
-        // Try to read token from localStorage under common keys, fall back to demo token
-        let token = '';
-        try {
-          token = (
-            localStorage.getItem('token') ||
-            localStorage.getItem('accessToken') ||
-            localStorage.getItem('access_token') ||
-            localStorage.getItem('authToken') ||
-            ''
-          );
-        } catch (e) {
-          token = '';
-        }
-
-        if (!token) {
-          token = 'SaIVkU1mrRwyCeqMxNqPGb0c-GtpOqt3xSuUi58HP4E';
-        }
+        // Use the configured base URL + session token so the request goes to the
+        // same host that issued the token (a hardcoded host 401s on other envs).
+        const url = getFullUrl(API_CONFIG.ENDPOINTS.SEAT_BOOKINGS);
 
         const params = new URLSearchParams();
         params.set('page', String(pageNumber));
 
-        const response = await fetch(`${url}?${params.toString()}`, {
-          method: 'GET',
-          headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: `Bearer ${token}` } : {}),
-        });
+        const response = await fetch(
+          `${url}?${params.toString()}`,
+          getAuthenticatedFetchOptions()
+        );
 
         if (!response.ok) {
           const text = await response.text();
