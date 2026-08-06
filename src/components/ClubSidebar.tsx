@@ -1025,11 +1025,39 @@ export const ClubSidebar: React.FC = () => {
         ...(item.subItems ? collectHrefs(item.subItems) : []),
       ]);
 
+    const currentPath = location.pathname;
+
+    // LayoutContext derives a section name from the URL globally (e.g. any
+    // "/pulse/*" route becomes "Pulse Privilege" for the Pulse tenant sidebar).
+    // Some of those routes (Club Privilege > Service / Service Category) are
+    // actually nested under this sidebar's "Settings" package, so when the
+    // context hands us a section we don't recognize, resolve the real owning
+    // package from the current path instead of silently falling back to
+    // "Club Management".
+    const isKnownSection = Object.prototype.hasOwnProperty.call(
+      modulesByPackage,
+      currentSection
+    );
+
+    if (!isKnownSection) {
+      const owningPackage = Object.entries(modulesByPackage).find(
+        ([, items]) =>
+          collectHrefs(items).some(
+            (href) => currentPath === href || currentPath.startsWith(href + "/")
+          )
+      )?.[0];
+
+      if (owningPackage) {
+        lastNavigatedSection.current = null;
+        setCurrentSection(owningPackage);
+        return;
+      }
+    }
+
     const sectionModules =
       modulesByPackage[currentSection as keyof typeof modulesByPackage] || [];
     const sectionHrefs = collectHrefs(sectionModules);
 
-    const currentPath = location.pathname;
     const belongsToSection = sectionHrefs.some(
       (href) => currentPath === href || currentPath.startsWith(href + "/")
     );
@@ -1048,7 +1076,7 @@ export const ClubSidebar: React.FC = () => {
     if (belongsToSection) {
       lastNavigatedSection.current = null;
     }
-  }, [currentSection, location.pathname, navigate]);
+  }, [currentSection, location.pathname, navigate, setCurrentSection]);
 
   const toggleExpand = (name: string) => {
     setExpandedItems((prev) =>
