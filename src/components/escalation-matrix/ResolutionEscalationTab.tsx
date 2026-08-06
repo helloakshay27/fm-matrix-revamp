@@ -669,13 +669,13 @@ export const ResolutionEscalationTab: React.FC = () => {
       {/* Create Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Resolution Escalation Configuration</CardTitle>
+          <CardTitle className="text-brand">Resolution Escalation Configuration</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Category Selection */}
             <div>
-              <Label className="text-sm font-medium">Select Categories</Label>
+              <Label className="text-sm font-medium text-brand">Select Categories</Label>
               <ReactSelect
                 isMulti
                 options={categoryOptions}
@@ -697,23 +697,23 @@ export const ResolutionEscalationTab: React.FC = () => {
             <div>
               <Table className="border">
                 <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-center border-r">Levels</TableHead>
-                    <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P1</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P2</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P3</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P4</TableHead>
-                    <TableHead className="font-semibold text-center" colSpan={3}>P5</TableHead>
+                  <TableRow className="bg-[#EDEAE3]">
+                    <TableHead className="font-semibold text-center border-r text-brand">Levels</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand">Escalation To</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand" colSpan={3}>P1</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand" colSpan={3}>P2</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand" colSpan={3}>P3</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand" colSpan={3}>P4</TableHead>
+                    <TableHead className="font-semibold text-center text-brand" colSpan={3}>P5</TableHead>
                   </TableRow>
-                  <TableRow className="bg-gray-50">
+                  <TableRow className="bg-[#EDEAE3]">
                     <TableHead className="border-r"></TableHead>
                     <TableHead className="border-r"></TableHead>
                     {priorities.map((priority) => (
                       <React.Fragment key={priority}>
-                        <TableHead className="text-center text-xs border-r">Day</TableHead>
-                        <TableHead className="text-center text-xs border-r">Hrs</TableHead>
-                        <TableHead className="text-center text-xs border-r">Min</TableHead>
+                        <TableHead className="text-center text-xs border-r text-brand">Day</TableHead>
+                        <TableHead className="text-center text-xs border-r text-brand">Hrs</TableHead>
+                        <TableHead className="text-center text-xs border-r text-brand">Min</TableHead>
                       </React.Fragment>
                     ))}
                   </TableRow>
@@ -721,7 +721,9 @@ export const ResolutionEscalationTab: React.FC = () => {
                 <TableBody>
                   {escalationLevels.map((level) => (
                     <TableRow key={level} className="border-b">
-                      <TableCell className="font-medium text-center border-r">{level.toUpperCase()}</TableCell>
+                      <TableCell className="font-medium text-center border-r">
+                        <span style={{ color: '#DA7756' }}>{level.toUpperCase()}</span>
+                      </TableCell>
                       <TableCell className="p-2 border-r">
                         <ReactSelect
                           isMulti
@@ -836,7 +838,7 @@ export const ResolutionEscalationTab: React.FC = () => {
       {/* Filter Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Filter</CardTitle>
+          <CardTitle className="text-brand">Filter</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-end space-x-4">
@@ -884,7 +886,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                   <div key={rule.id} className="border-b last:border-b-0">
                     <div className="flex items-center justify-between p-4 bg-gray-50">
                       <div className="flex items-center space-x-4">
-                        <span className="font-semibold">Rule {index + 1}</span>
+                        <span className="font-semibold text-brand">Rule {index + 1}</span>
                         <div className="flex items-center space-x-4 text-sm">
                           <span><strong>Category Type:</strong> {categoryName}</span>
                         </div>
@@ -1081,23 +1083,23 @@ export const ResolutionEscalationTab: React.FC = () => {
             <div>
               <Table className="border">
                 <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-center border-r">Levels</TableHead>
-                    <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P1</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P2</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P3</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P4</TableHead>
-                    <TableHead className="font-semibold text-center" colSpan={3}>P5</TableHead>
+                  <TableRow className="bg-[#EDEAE3]">
+                    <TableHead className="font-semibold text-center border-r text-brand">Levels</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand">Escalation To</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand" colSpan={3}>P1</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand" colSpan={3}>P2</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand" colSpan={3}>P3</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand" colSpan={3}>P4</TableHead>
+                    <TableHead className="font-semibold text-center text-brand" colSpan={3}>P5</TableHead>
                   </TableRow>
-                  <TableRow className="bg-gray-50">
+                  <TableRow className="bg-[#EDEAE3]">
                     <TableHead className="border-r"></TableHead>
                     <TableHead className="border-r"></TableHead>
                     {priorities.map((priority) => (
                       <React.Fragment key={priority}>
-                        <TableHead className="text-center text-xs border-r">Day</TableHead>
-                        <TableHead className="text-center text-xs border-r">Hrs</TableHead>
-                        <TableHead className="text-center text-xs border-r">Min</TableHead>
+                        <TableHead className="text-center text-xs border-r text-brand">Day</TableHead>
+                        <TableHead className="text-center text-xs border-r text-brand">Hrs</TableHead>
+                        <TableHead className="text-center text-xs border-r text-brand">Min</TableHead>
                       </React.Fragment>
                     ))}
                   </TableRow>
@@ -1105,7 +1107,9 @@ export const ResolutionEscalationTab: React.FC = () => {
                 <TableBody>
                   {escalationLevels.map((level) => (
                     <TableRow key={level} className="border-b">
-                      <TableCell className="font-medium text-center border-r">{level.toUpperCase()}</TableCell>
+                      <TableCell className="font-medium text-center border-r">
+                        <span style={{ color: '#DA7756' }}>{level.toUpperCase()}</span>
+                      </TableCell>
                       <TableCell className="p-2 border-r">
                         <ReactSelect
                           isMulti

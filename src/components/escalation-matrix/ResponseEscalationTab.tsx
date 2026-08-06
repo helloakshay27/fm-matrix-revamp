@@ -745,12 +745,12 @@ export const ResponseEscalationTab: React.FC = () => {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Response Escalation Configuration</CardTitle>
+            <CardTitle className="text-brand">Response Escalation Configuration</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Category Selection Dropdown */}
             <div className="space-y-3">
-              <Label className="text-base font-semibold">Category Type</Label>
+              <Label className="text-base font-semibold text-brand">Category Type</Label>
               <ReactSelect
                 isMulti
                 options={categoryOptions}
@@ -833,9 +833,9 @@ export const ResponseEscalationTab: React.FC = () => {
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead className="font-semibold">Levels</TableHead>
-                      <TableHead className="font-semibold">
+                    <TableRow className="bg-[#EDEAE3]">
+                      <TableHead className="font-semibold text-brand">Levels</TableHead>
+                      <TableHead className="font-semibold text-brand">
                         Escalation To
                       </TableHead>
                     </TableRow>
@@ -843,8 +843,8 @@ export const ResponseEscalationTab: React.FC = () => {
                   <TableBody>
                     {(["e1", "e2", "e3", "e4", "e5"] as const).map((level) => (
                       <TableRow key={level}>
-                        <TableCell className="font-medium">
-                          {level.toUpperCase()}
+                        <TableCell className="font-semibold">
+                          <span style={{ color: '#DA7756' }}>{level.toUpperCase()}</span>
                         </TableCell>
                         <TableCell>
                           <ReactSelect
@@ -961,7 +961,7 @@ export const ResponseEscalationTab: React.FC = () => {
       <Card className="border border-gray-200">
         <CardHeader className="border-b border-gray-200 bg-white">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold text-gray-900">
+            <CardTitle className="text-lg font-semibold text-brand">
               Filter
             </CardTitle>
             <div className="flex items-center gap-3">
@@ -1033,7 +1033,7 @@ export const ResponseEscalationTab: React.FC = () => {
                 >
                   <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
                     <div className="flex items-center gap-3">
-                      <h3 className="text-base font-semibold text-gray-900">
+                      <h3 className="text-base font-semibold text-brand">
                         Rule {index + 1}
                       </h3>
                       <div className="flex gap-2">
@@ -1041,7 +1041,7 @@ export const ResponseEscalationTab: React.FC = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEditRule(rule)}
-                          className="h-8 w-8 p-0 text-gray-900 hover:text-black hover:bg-[#EDEAE3]"
+                          className="h-8 w-8 p-0 text-brand hover:text-brand-hover hover:bg-[#EDEAE3]"
                           disabled={updateLoading}
                         >
                           <Edit className="h-4 w-4" />
@@ -1087,21 +1087,21 @@ export const ResponseEscalationTab: React.FC = () => {
                   <div className="overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-gray-50 border-b border-gray-200 hover:bg-gray-50">
-                          <TableHead className="font-semibold text-gray-900 text-left py-3 px-4 w-1/3">
+                        <TableRow className="bg-[#EDEAE3] border-b border-gray-200 hover:bg-[#EDEAE3]">
+                          <TableHead className="font-semibold text-brand text-left py-3 px-4 w-1/3">
                             Category Type
                           </TableHead>
-                          <TableHead className="font-semibold text-gray-900 text-left py-3 px-4 w-1/6">
+                          <TableHead className="font-semibold text-brand text-left py-3 px-4 w-1/6">
                             Levels
                           </TableHead>
-                          <TableHead className="font-semibold text-gray-900 text-left py-3 px-4">
+                          <TableHead className="font-semibold text-brand text-left py-3 px-4">
                             Escalation To
                           </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         <TableRow className="border-b border-gray-100 hover:bg-gray-50/50">
-                          <TableCell className="py-4 px-4 align-top font-medium text-gray-900">
+                          <TableCell className="py-4 px-4 align-top font-medium text-[#2c2c2c]">
                             {getCategoryName(rule.category_id)}
                           </TableCell>
                           <TableCell className="py-4 px-4 align-top">
@@ -1109,7 +1109,8 @@ export const ResponseEscalationTab: React.FC = () => {
                               {rule.escalations.map((escalation) => (
                                 <div
                                   key={escalation.name}
-                                  className="text-sm text-gray-700 font-medium"
+                                  className="text-sm font-semibold"
+                                  style={{ color: '#DA7756' }}
                                 >
                                   {escalation.name}
                                 </div>
@@ -1197,7 +1198,7 @@ export const ResponseEscalationTab: React.FC = () => {
             {/* Categories Selection */}
             <Card>
               <CardHeader>
-                <CardTitle>Category Selection</CardTitle>
+                <CardTitle className="text-brand">Category Selection</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <ReactSelect
@@ -1221,12 +1222,12 @@ export const ResponseEscalationTab: React.FC = () => {
             {/* Escalation Levels */}
             <Card>
               <CardHeader>
-                <CardTitle>Escalation Matrix</CardTitle>
+                <CardTitle className="text-brand">Escalation Matrix</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 {(["e1", "e2", "e3", "e4", "e5"] as const).map((level) => (
                   <div key={level} className="space-y-3">
-                    <Label className="text-base font-semibold">
+                    <Label className="text-base font-semibold text-brand">
                       {level.toUpperCase()} - Escalation Level {level.slice(1)}
                     </Label>
 
