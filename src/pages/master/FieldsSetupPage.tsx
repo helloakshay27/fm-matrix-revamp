@@ -493,7 +493,7 @@ const FieldsSetupPage = () => {
                   <Button
                     variant="outline"
                     onClick={handleAddRow}
-                    className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] px-4"
+                    className="border-[#C72030] text-[#C72030] px-4"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Another Field
