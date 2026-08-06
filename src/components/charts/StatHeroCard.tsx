@@ -26,7 +26,7 @@ const ACCENT_TEXT_CLASSES: Record<StatHeroAccent, string> = {
   info: "text-brand-info",
   green: "text-brand-green",
   warning: "text-[#8A5A00]",
-  error: "text-brand-error",
+  error: "text-brand",
   neutral: "text-brand-text",
 };
 

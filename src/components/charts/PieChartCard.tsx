@@ -12,7 +12,12 @@ import { PieChart as PieChartIcon, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+// Primary pie palette (lavender / teal / terracotta). Once a chart has more
+// categories than this, extra slices borrow the shared bar-chart palette
+// rather than repeating these three colors.
 const PIE_SLICE_COLORS = ["#CDCAF5", "#76CDC1", "#E39090"];
+const BAR_FALLBACK_COLORS = ["#9EC8BA", "#8E7BE0", "#DA7756", "#798C5E", "#EDC488"];
+const EXTENDED_PIE_COLORS = [...PIE_SLICE_COLORS, ...BAR_FALLBACK_COLORS];
 
 export interface PieChartDatum {
   name: string;
@@ -109,8 +114,12 @@ export function PieChartCard({
   className,
 }: PieChartCardProps) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
-  const palette = colors ?? PIE_SLICE_COLORS;
-  const coloredData = data.map((d, index) => ({
+  // Zero-value slices still receive Pie's paddingAngle gaps on both sides,
+  // which shows up as blank notches in the ring — drop them so the donut
+  // only ever renders arcs for categories that actually have data.
+  const nonZeroData = data.filter((d) => d.value > 0);
+  const palette = colors ?? (nonZeroData.length > PIE_SLICE_COLORS.length ? EXTENDED_PIE_COLORS : PIE_SLICE_COLORS);
+  const coloredData = nonZeroData.map((d, index) => ({
     ...d,
     color: palette[index % palette.length],
   }));
@@ -125,9 +134,8 @@ export function PieChartCard({
             nameKey="name"
             innerRadius="58%"
             outerRadius="85%"
-            paddingAngle={2}
-            strokeWidth={2}
-            stroke="var(--color-card-white)"
+            paddingAngle={0}
+            stroke="none"
             label={({ percent }) => (percent && percent >= 0.08 ? `${Math.round(percent * 100)}%` : "")}
             labelLine={false}
           >
