@@ -25,6 +25,33 @@ body.product-pages-scope table th {
   overflow-wrap: break-word;
 }
 
+/* Product pages only: force every table to the shared baseline look
+   (src/pages/products/tabs/EnhancementsTab.tsx) regardless of how each
+   individual product page's markup/inline styles were hand-authored.
+   !important is required because several product pages set colors/fonts
+   via inline style={{...}} (e.g. PostSalesEnhancementsTab.tsx), which
+   normal stylesheet rules cannot override. */
+body.product-pages-scope table {
+  font-family: "Poppins", sans-serif !important;
+  border-collapse: collapse !important;
+}
+
+body.product-pages-scope table th {
+  color: #da7756 !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  font-size: 14px !important;
+  letter-spacing: 0.02em !important;
+  border-color: #e5e7eb !important;
+}
+
+body.product-pages-scope table td {
+  color: #2c2c2c !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  border-color: #e5e7eb !important;
+}
+
 /* Mobile-friendly scrollbar styling */
 .scrollbar-thin {
   scrollbar-width: thin;
@@ -123,8 +150,22 @@ body.product-pages-scope table th {
 }
 
 .bg-card,
-.cursor-grab svg {
+/* Draggable rows force their icons black — opt out with data-icon-color
+   when the icon carries its own meaning (task/issue/todo/note glyphs). */
+.cursor-grab svg:not([data-icon-color]) {
   color: #000000 !important;
+}
+
+/* Glyphs that carry meaning (task / issue / todo / note) opt out of every
+   blanket black override above by declaring their own --glyph-color inline.
+   The selectors below are deliberately more specific than `.bg-card button svg`
+   and `.cursor-grab svg` so the colour survives regardless of CSS order. */
+svg[data-icon-color],
+.bg-card svg[data-icon-color],
+.bg-card button svg[data-icon-color],
+.cursor-grab svg[data-icon-color],
+.bg-card .cursor-grab svg[data-icon-color] {
+  color: var(--glyph-color, currentColor) !important;
 }
 
 /* 
@@ -353,8 +394,8 @@ body {
     --muted-foreground: 0 0% 53%;
     --accent: 17 64% 60% / 0.08;
     --accent-foreground: 0 0% 17%;
-    --destructive: 0 58% 72%;
-    /* #E7848E */
+    --destructive: 355 55% 48%;
+    /* darker error for readable contrast with white text */
     --destructive-foreground: 0 0% 100%;
     --border: 40 20% 73%;
     /* #C4B89D */
@@ -2029,6 +2070,7 @@ a.fm-button-fix,
   text-overflow: clip !important;
   box-sizing: border-box !important;
   flex-shrink: 0 !important;
+  border-radius: 0 !important;
 }
 
 .fm-button-fix svg,

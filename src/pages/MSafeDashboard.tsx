@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,7 @@ export const MSafeDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation()
   const dispatch = useAppDispatch();
+  const msafeEvents = useMSafeEvents();
 
   const [fmUsers, setFmUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,8 +138,13 @@ export const MSafeDashboard = () => {
             total_pages: data.pagination.total_pages,
             total_count: data.pagination.total_count,
           }));
+          msafeEvents.onMSafeUserListViewed('fte', data.pagination.total_count);
         } else {
           setPagination(prev => ({ ...prev, total_pages: 1, total_count: users.length }));
+          msafeEvents.onMSafeUserListViewed('fte', users.length);
+        }
+        if (debouncedSearch.trim()) {
+          msafeEvents.onMSafeUserSearchPerformed('fte', debouncedSearch.trim().length, users.length);
         }
       } catch (err) {
         console.error('Error fetching users:', err);
@@ -414,6 +421,7 @@ useEffect(() => {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
       toast.success('M-Safe data exported successfully');
+      msafeEvents.onMSafeUserListExported('fte', selectedItems.length > 0 ? selectedItems.length : pagination.total_count);
     } catch (error) {
       console.error('Export failed:', error);
       toast.error('Failed to export M-Safe data');
@@ -443,6 +451,10 @@ useEffect(() => {
       role: newFilters.role || '',
       report_to_id: newFilters.report_to_id ? String(newFilters.report_to_id) : ''
     });
+    const appliedFields = Object.entries(newFilters).filter(([, v]) => Boolean(v)).map(([k]) => k);
+    if (appliedFields.length > 0) {
+      msafeEvents.onMSafeUserFilterApplied('fte', appliedFields);
+    }
     // If all filters are cleared, also clear search to truly reset table
     if (!(newFilters.firstname || newFilters.lastname || newFilters.email || newFilters.mobile || newFilters.cluster || newFilters.cluster_id || newFilters.circle || newFilters.department || newFilters.role || newFilters.report_to_id)) {
       setSearchTerm('');

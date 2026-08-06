@@ -291,14 +291,23 @@ export const FillForm = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                setDropdownData(data);
+                // Normalize ids to strings — the API returns numeric ids, but the
+                // Select options/state are compared as strings, so mixed types
+                // caused the newly picked officer/issuer id to silently fail to match.
+                const normalizedData: DropdownData = {
+                    permit_issuers: (data.permit_issuers || []).map((issuer: PersonOption) => ({ ...issuer, id: issuer.id?.toString() })),
+                    selected_issuer: data.selected_issuer ? { ...data.selected_issuer, id: data.selected_issuer.id?.toString() } : null,
+                    permit_safety_officers: (data.permit_safety_officers || []).map((officer: PersonOption) => ({ ...officer, id: officer.id?.toString() })),
+                    selected_safety_officer: data.selected_safety_officer ? { ...data.selected_safety_officer, id: data.selected_safety_officer.id?.toString() } : null,
+                };
+                setDropdownData(normalizedData);
 
                 // Set selected values if they exist
-                if (data.selected_issuer?.id) {
-                    setSelectedPermitIssuerId(data.selected_issuer.id.toString());
+                if (normalizedData.selected_issuer?.id) {
+                    setSelectedPermitIssuerId(normalizedData.selected_issuer.id);
                 }
-                if (data.selected_safety_officer?.id) {
-                    setSelectedSafetyOfficerId(data.selected_safety_officer.id.toString());
+                if (normalizedData.selected_safety_officer?.id) {
+                    setSelectedSafetyOfficerId(normalizedData.selected_safety_officer.id);
                 }
             } else {
                 console.error('Failed to load dropdown data');
@@ -645,7 +654,7 @@ export const FillForm = () => {
 
     const handlePermitIssuerChange = (value: string) => {
         setSelectedPermitIssuerId(value);
-        const selectedIssuer = dropdownData.permit_issuers.find(issuer => issuer.id === value);
+        const selectedIssuer = dropdownData.permit_issuers.find(issuer => String(issuer.id) === String(value));
         if (selectedIssuer) {
             setPersonsInfo(prev => ({
                 ...prev,
@@ -657,7 +666,7 @@ export const FillForm = () => {
 
     const handleSafetyOfficerChange = (value: string) => {
         setSelectedSafetyOfficerId(value);
-        const selectedOfficer = dropdownData.permit_safety_officers.find(officer => officer.id === value);
+        const selectedOfficer = dropdownData.permit_safety_officers.find(officer => String(officer.id) === String(value));
         if (selectedOfficer) {
             setPersonsInfo(prev => ({
                 ...prev,

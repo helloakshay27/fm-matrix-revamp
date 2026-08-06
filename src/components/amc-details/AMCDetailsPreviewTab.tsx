@@ -2,6 +2,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, Download, FileText, FileSpreadsheet, X } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { API_CONFIG } from "@/config/apiConfig";
@@ -27,13 +36,13 @@ const HOUR_VALUES = Array.from({ length: 24 }, (_, idx) => idx);
 const MINUTE_VALUES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 
 const WEEKDAY_CODE_TO_NAME: Record<string, string> = {
-  "1": "Sunday",
-  "2": "Monday",
-  "3": "Tuesday",
-  "4": "Wednesday",
-  "5": "Thursday",
-  "6": "Friday",
-  "7": "Saturday",
+  "0": "Sunday",
+  "1": "Monday",
+  "2": "Tuesday",
+  "3": "Wednesday",
+  "4": "Thursday",
+  "5": "Friday",
+  "6": "Saturday",
 };
 
 type CronConfig = {
@@ -222,6 +231,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
 }) => {
   const [showScheduleSection, setShowScheduleSection] = useState(false);
   const [activePreviewFreqTab, setActivePreviewFreqTab] = useState(0);
+  const [visitPage, setVisitPage] = useState(1);
   const frequencyGroups: Array<{
     frequency_config_id: number;
     frequency: string;
@@ -248,11 +258,13 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
   const normalizedAmcType = (amc?.amc_type || "").toString().toLowerCase();
   const normalizedChecklistType = (amc?.checklist_type || "").toString().toLowerCase();
   const normalizedResourceType = (amc?.resource_type || "").toString().toLowerCase();
-  const normalizedCoverageType = normalizedAmcType === "non-comprehensive"
-    ? "Non-Comprehensive"
-    : normalizedAmcType === "comprehensive"
-      ? "Comprehensive"
-      : (amc?.coverage_type || amc?.amc_coverage_type || "").toString();
+  const normalizedCoverageType = (() => {
+    const pmsType = (amc?.pms_amc_type || "").toString();
+    if (pmsType) return pmsType;
+    if (normalizedAmcType === "non-comprehensive") return "Non-Comprehensive";
+    if (normalizedAmcType === "comprehensive") return "Comprehensive";
+    return (amc?.coverage_type || amc?.amc_coverage_type || "").toString();
+  })();
   const isAssetType =
     normalizedAmcType === "asset" ||
     normalizedChecklistType === "asset" ||
@@ -535,11 +547,11 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                 <span className="text-[#1a1a1a] font-medium text-sm">Every month between</span>
               </label>
               <div className="flex items-center gap-2 mt-3">
-                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '100px' }} value={bMonthStart} onChange={() => {}}>
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '100px' }} value={bMonthStart} onChange={() => { }}>
                   {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
                 <span className="text-sm text-[#1a1a1a]">and</span>
-                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '100px' }} value={bMonthEnd} onChange={() => {}}>
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '100px' }} value={bMonthEnd} onChange={() => { }}>
                   {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
@@ -563,7 +575,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                   <span className="text-[#1a1a1a] font-medium">Select All</span>
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((day) => (
+                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
                     <label key={day} className="flex items-center text-sm cursor-pointer">
                       <input type="checkbox" checked={weekdayChecked(day)} readOnly className="mr-2 w-4 h-4" style={{ accentColor: '#C72030' }} />
                       <span className="text-[#1a1a1a]">{day.substring(0, 3)}</span>
@@ -626,7 +638,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                 <span className="text-[#1a1a1a] font-medium text-sm">Specific minutes</span>
               </label>
               <div className="grid grid-cols-4 gap-1 mt-4">
-                {[0,5,10,15,20,25,30,35,40,45,50,55].map((minute) => (
+                {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minute) => (
                   <label key={minute} className="flex items-center text-xs cursor-pointer">
                     <input type="checkbox" checked={minuteChecked(minute)} readOnly className="mr-1 w-3 h-3" style={{ accentColor: '#C72030' }} />
                     <span className="text-[#1a1a1a]">{minute.toString().padStart(2, '0')} min</span>
@@ -638,12 +650,12 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                 <span className="text-[#1a1a1a] font-medium text-sm">Every minute between minute</span>
               </label>
               <div className="flex items-center gap-2 mt-3">
-                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '60px' }} value={bMinStart} onChange={() => {}}>
-                  {MINUTE_VALUES.map((m) => <option key={m} value={m.toString().padStart(2,"0")}>{m.toString().padStart(2,"0")}</option>)}
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '60px' }} value={bMinStart} onChange={() => { }}>
+                  {MINUTE_VALUES.map((m) => <option key={m} value={m.toString().padStart(2, "0")}>{m.toString().padStart(2, "0")}</option>)}
                 </select>
                 <span className="text-sm text-[#1a1a1a]">and minute</span>
-                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '60px' }} value={bMinEnd} onChange={() => {}}>
-                  {MINUTE_VALUES.map((m) => <option key={m} value={m.toString().padStart(2,"0")}>{m.toString().padStart(2,"0")}</option>)}
+                <select className="px-2 py-1 border border-gray-300 rounded text-sm" style={{ minWidth: '60px' }} value={bMinEnd} onChange={() => { }}>
+                  {MINUTE_VALUES.map((m) => <option key={m} value={m.toString().padStart(2, "0")}>{m.toString().padStart(2, "0")}</option>)}
                 </select>
               </div>
             </div>
@@ -1128,51 +1140,111 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
         {/* Step Content - Schedule */}
         {!showScheduleSection ? (
           <CardContent className="p-0" style={{ backgroundColor: 'rgb(246, 247, 247)' }}>
-            <div className="overflow-x-auto" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-              <table className="min-w-full">
-                <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F6F4EE', zIndex: 10 }}>
-                  <tr className="border-b border-gray-200" style={{ backgroundColor: '#F6F4EE' }}>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Schedule Date</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit Date</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit No.</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Attendant Name</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">No. of Assets Covered</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Remarks</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-600">Attachment</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.isArray(amc?.amc_visit_logs) && amc.amc_visit_logs.length > 0 ? (
-                    amc.amc_visit_logs.map((visit: any, index: number) => (
-                      <tr key={visit.id || index} className="border-b border-gray-100">
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.scheduled_date || visit.asset_period || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('en-GB') : '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_number || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.attendant_name || visit.technician?.name || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm text-center">{visit.no_of_assets ?? visit.assets_covered ?? '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.remarks || '-'}</td>
-                        <td className="py-3 px-4 text-gray-600 text-sm">{visit.attachment?.document_url || visit.attachment?.document ? '📎 Attached' : '-'}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr className="border-b border-gray-100">
-                      <td colSpan={7} className="py-3 px-4 text-center text-gray-500">
-                        No schedule visits found
-                      </td>
-                    </tr>
+            {(() => {
+              const visitLogs = Array.isArray(amc?.amc_visit_logs) ? amc.amc_visit_logs : [];
+              const VISIT_PER_PAGE = 15;
+              const visitTotalPages = Math.max(1, Math.ceil(visitLogs.length / VISIT_PER_PAGE));
+              const visitPageLogs = visitLogs.slice((visitPage - 1) * VISIT_PER_PAGE, visitPage * VISIT_PER_PAGE);
+
+              const renderVisitPaginationItems = () => {
+                const items: React.ReactNode[] = [];
+                const delta = 1;
+                const left = visitPage - delta;
+                const right = visitPage + delta;
+                let last = 0;
+                for (let i = 1; i <= visitTotalPages; i++) {
+                  if (i === 1 || i === visitTotalPages || (i >= left && i <= right)) {
+                    if (last && i - last > 1) {
+                      items.push(
+                        <PaginationItem key={`ellipsis-${i}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      );
+                    }
+                    items.push(
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          isActive={visitPage === i}
+                          onClick={() => setVisitPage(i)}
+                          className="cursor-pointer"
+                        >
+                          {i}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                    last = i;
+                  }
+                }
+                return items;
+              };
+
+              return (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                      <thead style={{ position: 'sticky', top: 0, backgroundColor: '#F6F4EE', zIndex: 10 }}>
+                        <tr className="border-b border-gray-200" style={{ backgroundColor: '#F6F4EE' }}>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Schedule Date</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit Date</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Visit No.</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Attendant Name</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">No. of Assets Covered</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Remarks</th>
+                          <th className="text-left py-3 px-4 font-semibold text-gray-600">Attachment</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visitLogs.length > 0 ? (
+                          visitPageLogs.map((visit: any, index: number) => (
+                            <tr key={visit.id || index} className="border-b border-gray-100">
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.scheduled_date || visit.asset_period || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('en-GB') : '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.visit_number || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.attendant_name || visit.technician?.name || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm text-center">{visit.no_of_assets ?? visit.assets_covered ?? '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.remarks || '-'}</td>
+                              <td className="py-3 px-4 text-gray-600 text-sm">{visit.attachment?.document_url || visit.attachment?.document ? '📎 Attached' : '-'}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr className="border-b border-gray-100">
+                            <td colSpan={7} className="py-3 px-4 text-center text-gray-500">
+                              No schedule visits found
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {visitLogs.length > 0 && (
+                    <div className="flex justify-center mt-4 mb-4">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => setVisitPage((p) => Math.max(1, p - 1))}
+                              className={visitPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                          {renderVisitPaginationItems()}
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() => setVisitPage((p) => Math.min(visitTotalPages, p + 1))}
+                              className={visitPage === visitTotalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
                   )}
-                </tbody>
-              </table>
-            </div>
-            {Array.isArray(amc?.amc_visit_logs) && amc.amc_visit_logs.length > 0 && (
-              <div style={{ padding: '12px 16px', backgroundColor: '#F6F4EE', borderTop: '1px solid #D9D9D9', fontSize: '12px', color: '#666' }}>
-                Total {amc.amc_visit_logs.length} records. Scroll to view all.
-              </div>
-            )}
+                </>
+              );
+            })()}
           </CardContent>
         ) : (
           <CardContent className="p-0" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
-            {frequencyGroups.length > 0 ? (
+            {frequencyGroups.some(g => g.frequency_config_id !== null) ? (
               /* Multi-frequency tabbed cron view */
               <div>
                 {/* Frequency tab buttons */}
@@ -1182,11 +1254,10 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                       key={group.frequency_config_id}
                       type="button"
                       onClick={() => setActivePreviewFreqTab(idx)}
-                      className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${
-                        idx === activePreviewFreqTab
+                      className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${idx === activePreviewFreqTab
                           ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
                           : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       {group.frequency.charAt(0).toUpperCase() + group.frequency.slice(1)}
                     </button>
@@ -1196,7 +1267,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                 {/* Per-frequency content panels */}
                 {frequencyGroups.map((group, idx) => {
                   if (idx !== activePreviewFreqTab) return null;
-                  const freqCronConfig = parseCronExpression(group.cron_expression);
+                  const freqCronConfig = parseCronExpression(group.cron_expression || cronExpression);
                   return (
                     <div key={group.frequency_config_id}>
                       {/* Info row */}
@@ -1281,7 +1352,7 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
             </div>
 
             <div className="bg-[#F6F4EE] rounded-lg p-6">
-              <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">AMC Invoice</h3>
+              <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">Other Documents</h3>
               <div className="flex flex-wrap gap-4">
                 {renderAttachmentCards(invoiceDocuments, "No AMC invoice attachments available")}
               </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ import {
     Eye,
     ClipboardList,
     X,
+    Settings2,
 } from "lucide-react";
 import {
     Dialog,
@@ -54,6 +55,11 @@ import {
     AccordionContent,
 } from "@/components/ui/accordion";
 import AccountingDocumentPdf from "@/components/accounting/AccountingDocumentPdf";
+import {
+    bankMasterListUrl,
+    getBankMasterApiConfig,
+    mapApiBankRecord,
+} from "./ClubManagement/bankMasterUtils";
 // Types
 interface SalesOrderItem {
     id: number;
@@ -212,10 +218,11 @@ const mockSalesOrder = {
 export const SalesOrderDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [salesOrder, setSalesOrder] = useState<SalesOrder>(mockSalesOrder);
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState("order-details");
+    const [activeTab, setActiveTab] = useState((location.state as any)?.tab === "pdf" ? "pdf" : "order-details");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showApprovalLog, setShowApprovalLog] = useState(false);
     const [hasSaleOrderApproval, setHasSaleOrderApproval] = useState(false);
@@ -223,6 +230,7 @@ export const SalesOrderDetailPage = () => {
     const [showConvertMenu, setShowConvertMenu] = useState(false);
     const [pdfGenerating, setPdfGenerating] = useState(false);
     const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+    const [bankDetail, setBankDetail] = useState<any>(null);
     const salesOrderPdfRef = useRef<HTMLDivElement | null>(null);
 
     const baseUrl = localStorage.getItem("baseUrl");
@@ -245,6 +253,31 @@ export const SalesOrderDetailPage = () => {
     useEffect(() => {
         if (id) fetchSalesOrder();
     }, [id]);
+
+    // Resolve the bank selected on the sales order, if any
+    useEffect(() => {
+        const fetchBankDetail = async () => {
+            const bankId = (salesOrder as any)?.bank_master_id || (salesOrder as any)?.bank_master?.id;
+            if (!bankId) {
+                setBankDetail(null);
+                return;
+            }
+            if ((salesOrder as any)?.bank_master) {
+                setBankDetail(mapApiBankRecord((salesOrder as any).bank_master));
+                return;
+            }
+            try {
+                const { baseUrl: bmBaseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+                const res = await axios.get(bankMasterListUrl(bmBaseUrl, lockAccountId), { headers });
+                const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+                const found = data.map(mapApiBankRecord).find((b: any) => String(b.id) === String(bankId));
+                setBankDetail(found || null);
+            } catch (err) {
+                setBankDetail(null);
+            }
+        };
+        fetchBankDetail();
+    }, [salesOrder]);
 
     useEffect(() => {
         const fetchLockAccount = async () => {
@@ -353,23 +386,11 @@ export const SalesOrderDetailPage = () => {
     };
 
     const getStatusColor = (status: string) => {
-        const colors: { [key: string]: string } = {
-            draft: "bg-gray-100 text-gray-800 border-gray-200",
-            confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-            processing: "bg-yellow-100 text-yellow-800 border-yellow-200",
-            shipped: "bg-purple-100 text-purple-800 border-purple-200",
-            delivered: "bg-green-100 text-green-800 border-green-200",
-            cancelled: "bg-red-100 text-red-800 border-red-200",
-            pending_approval: 'bg-orange-100 text-orange-800',
-        };
-        return colors[status] || colors.draft;
+        return "bg-gray-100 text-gray-800";
     };
 
     const getApprovalStatusBadge = (status: any) => {
-        const s = String(status || "").toLowerCase();
-        if (s === "approved") return "bg-green-100 text-green-800";
-        if (s === "rejected") return "bg-red-100 text-red-800";
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-gray-100 text-gray-800";
     };
 
     const handleEdit = () => {
@@ -483,7 +504,7 @@ export const SalesOrderDetailPage = () => {
 
     return (
         <div className="min-h-screen bg-background p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+            <div className="space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -503,6 +524,11 @@ export const SalesOrderDetailPage = () => {
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
+
+
+                        <Badge className={`${getStatusColor(salesOrder.status)} border`}>
+                            {salesOrder.status?.replace(/_/g, " ").toUpperCase()}
+                        </Badge>
                         <Button
                             size="sm"
                             variant="outline"
@@ -512,11 +538,6 @@ export const SalesOrderDetailPage = () => {
                             <Edit className="h-4 w-4" />
                             Edit
                         </Button>
-
-                        <Badge className={`${getStatusColor(salesOrder.status)} border`}>
-                            {salesOrder.status?.replace(/_/g, " ").toUpperCase()}
-                        </Badge>
-
                         {(salesOrder as any)?.approval_status?.approval_levels?.length > 0 && (
                             <Button
                                 size="sm"
@@ -542,6 +563,16 @@ export const SalesOrderDetailPage = () => {
                         <Button
                             size="sm"
                             variant="outline"
+                            onClick={() => navigate("/accounting/sales-order/template", { state: { recordId: id } })}
+                            className="gap-2"
+                        >
+                            <Settings2 className="h-4 w-4" />
+                            Template Edit
+                        </Button>
+
+                        <Button
+                            size="sm"
+                            variant="outline"
                             onClick={handleDownload}
                             disabled={pdfGenerating}
                             className="gap-2"
@@ -557,7 +588,7 @@ export const SalesOrderDetailPage = () => {
                                 {salesOrder.status === "draft" && (
                                     <Button
                                         size="sm"
-                                        className="bg-green-600 text-white hover:bg-green-700"
+                                        className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                                         disabled={actionLoading}
                                         onClick={() => updateStatus("confirmed")}
                                     >
@@ -569,7 +600,7 @@ export const SalesOrderDetailPage = () => {
                                 {salesOrder.status === "confirmed" && (
                                     <Button
                                         size="sm"
-                                        className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                        className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                                         disabled={actionLoading}
                                         onClick={() => navigate("/accounting/invoices/add", { state: { saleOrderId: salesOrder?.id || id } })}
                                     >
@@ -586,7 +617,7 @@ export const SalesOrderDetailPage = () => {
                                 {salesOrder.status === "draft" && (
                                     <Button
                                         size="sm"
-                                        className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                        className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                                         disabled={actionLoading}
                                         onClick={() => updateStatus("pending_approval")}
                                     >
@@ -599,7 +630,7 @@ export const SalesOrderDetailPage = () => {
                                     <>
                                         <Button
                                             size="sm"
-                                            className="bg-green-600 text-white hover:bg-green-700"
+                                            className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                                             disabled={actionLoading}
                                             onClick={() => updateApprovalStatus("approved")}
                                         >
@@ -607,7 +638,7 @@ export const SalesOrderDetailPage = () => {
                                         </Button>
                                         <Button
                                             size="sm"
-                                            className="bg-red-600 text-white hover:bg-red-700"
+                                            className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                                             disabled={actionLoading}
                                             onClick={() => updateApprovalStatus("rejected")}
                                         >
@@ -620,7 +651,7 @@ export const SalesOrderDetailPage = () => {
                                 {salesOrder.status === "approved" && (
                                     <Button
                                         size="sm"
-                                        className="bg-green-600 text-white hover:bg-green-700"
+                                        className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                                         disabled={actionLoading}
                                         onClick={() => updateStatus("confirmed")}
                                     >
@@ -632,7 +663,7 @@ export const SalesOrderDetailPage = () => {
                                 {salesOrder.status === "confirmed" && (
                                     <Button
                                         size="sm"
-                                        className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                        className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                                         disabled={actionLoading}
                                         onClick={() => navigate("/accounting/invoices/add", { state: { saleOrderId: salesOrder?.id || id } })}
                                     >
@@ -683,10 +714,10 @@ export const SalesOrderDetailPage = () => {
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="grid grid-cols-4 w-full max-w-2xl">
-                        <TabsTrigger value="order-details">Order Details</TabsTrigger>
-                        <TabsTrigger value="customer-info">Customer Info</TabsTrigger>
-                        <TabsTrigger value="history">History</TabsTrigger>
-                        <TabsTrigger value="pdf">PDF</TabsTrigger>
+                        <TabsTrigger value="order-details" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Order Details</TabsTrigger>
+                        <TabsTrigger value="customer-info" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Customer Info</TabsTrigger>
+                        <TabsTrigger value="history" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">History</TabsTrigger>
+                        <TabsTrigger value="pdf" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">PDF</TabsTrigger>
                     </TabsList>
 
                     {/* Order Details Tab */}
@@ -704,10 +735,10 @@ export const SalesOrderDetailPage = () => {
                                             </span>
 
                                             <Badge
-                                                variant="secondary"
+                                                // variant="secondary"
                                                 className="h-5 px-2 text-xs rounded-full"
                                             >
-                                                1
+                                                {salesOrder.invoices.length}
                                             </Badge>
                                         </div>
                                     </AccordionTrigger>
@@ -737,7 +768,7 @@ export const SalesOrderDetailPage = () => {
                                                             {/* Invoice Number */}
                                                             <TableCell>
                                                                 <button
-                                                                    className="text-blue-600 hover:underline font-medium"
+                                                                    className="text-brand hover:underline font-medium"
                                                                     onClick={() => navigate(`/accounting/invoices/${inv.id}`)}
                                                                 >
                                                                     {inv.invoice_number}
@@ -747,12 +778,12 @@ export const SalesOrderDetailPage = () => {
                                                             {/* Status */}
                                                             <TableCell>
                                                                 <span
-                                                                    className={`text-xs font-semibold ${inv.status === "overdue"
-                                                                            ? "text-red-600"
-                                                                            : inv.status === "paid"
-                                                                                ? "text-green-600"
-                                                                                : "text-orange-500"
-                                                                        }`}
+                                                                // className={`text-xs font-semibold ${inv.status === "overdue"
+                                                                //         ? "text-red-600"
+                                                                //         : inv.status === "paid"
+                                                                //             ? "text-green-600"
+                                                                //             : "text-orange-500"
+                                                                //     }`}
                                                                 >
                                                                     {inv.status?.toUpperCase()}
                                                                 </span>
@@ -932,6 +963,43 @@ export const SalesOrderDetailPage = () => {
                             </CardContent>
                         </Card>
 
+                        {/* Bank Details */}
+                        {bankDetail && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base font-semibold">Bank Details</CardTitle>
+                                </CardHeader>
+                                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
+                                        <p className="text-sm mt-1">{bankDetail.bankName}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Account Number</p>
+                                        <p className="text-sm mt-1">{bankDetail.accountNo}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Beneficiary / Account Name</p>
+                                        <p className="text-sm mt-1">{bankDetail.beneficiaryName}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">IFSC Code</p>
+                                        <p className="text-sm mt-1">{bankDetail.ifscCode}</p>
+                                    </div>
+                                    {bankDetail.swiftCode && (
+                                        <div>
+                                            <p className="text-sm font-medium text-muted-foreground">Swift Code</p>
+                                            <p className="text-sm mt-1">{bankDetail.swiftCode}</p>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Branch</p>
+                                        <p className="text-sm mt-1">{bankDetail.branch}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
                         {/* Notes and Terms */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {salesOrder.customer_notes && (
@@ -1086,12 +1154,7 @@ export const SalesOrderDetailPage = () => {
                                                 (salesOrder as any)?.lock_account_invoice_id;
 
                                             const Icon = isConverted || isCreated ? CirclePlus : (isAccepted || isSent ? Edit : FileText);
-                                            const iconWrapClass =
-                                                isConverted || isCreated
-                                                    ? "bg-green-50 text-green-600 border-green-100"
-                                                    : (isAccepted || isSent
-                                                        ? "bg-sky-50 text-sky-600 border-sky-100"
-                                                        : "bg-gray-50 text-gray-500 border-gray-100");
+                                            const iconWrapClass = "bg-brand-light text-brand border-brand";
 
                                             return (
                                                 <div key={key} className="flex gap-6 py-5">
@@ -1114,7 +1177,7 @@ export const SalesOrderDetailPage = () => {
                                                         {isConverted && invoiceId ? (
                                                             <button
                                                                 type="button"
-                                                                className="mt-2 inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                                                                className="mt-2 inline-flex items-center gap-2 text-sm text-brand hover:underline"
                                                                 onClick={() => navigate(`/accounting/invoices/${invoiceId}`)}
                                                             >
                                                                 <Eye className="h-4 w-4" />
@@ -1158,6 +1221,7 @@ export const SalesOrderDetailPage = () => {
                                     <div className="mx-auto bg-white" ref={activeTab === "pdf" ? salesOrderPdfRef : null}>
                                         <AccountingDocumentPdf
                                             documentTitle="SALES ORDER"
+                                            documentType="sales_order"
                                             documentNumber={salesOrder.sale_order_number}
                                             documentDate={salesOrder.date}
                                             status={salesOrder.status}
@@ -1170,6 +1234,7 @@ export const SalesOrderDetailPage = () => {
                                             secondaryDateLabel="Shipment Date"
                                             secondaryDate={salesOrder.shipment_date}
                                             referenceNumber={salesOrder.reference_number}
+                                            bankDetail={bankDetail}
                                         />
                                     </div>
                                 </div>
@@ -1184,6 +1249,7 @@ export const SalesOrderDetailPage = () => {
                     <div ref={salesOrderPdfRef}>
                         <AccountingDocumentPdf
                             documentTitle="SALES ORDER"
+                            documentType="sales_order"
                             documentNumber={salesOrder.sale_order_number}
                             documentDate={salesOrder.date}
                             status={salesOrder.status}
@@ -1196,6 +1262,7 @@ export const SalesOrderDetailPage = () => {
                             secondaryDateLabel="Shipment Date"
                             secondaryDate={salesOrder.shipment_date}
                             referenceNumber={salesOrder.reference_number}
+                            bankDetail={bankDetail}
                         />
                     </div>
                 </div>
@@ -1214,7 +1281,13 @@ export const SalesOrderDetailPage = () => {
                         <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
                             Cancel
                         </Button>
-                        <Button variant="destructive" onClick={handleDelete}>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDelete}
+                            style={{ backgroundColor: '#dc2626', color: '#ffffff', border: 'none' }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#b91c1c'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#dc2626'; }}
+                        >
                             Delete
                         </Button>
                     </div>
@@ -1226,7 +1299,7 @@ export const SalesOrderDetailPage = () => {
                 <DialogContent className="max-w-4xl">
                     <div className="flex items-center justify-between">
                         <DialogHeader>
-                            <DialogTitle className="text-[#C72030]">Approval Log</DialogTitle>
+                            <DialogTitle className="text-[#DA7756]">Approval Log</DialogTitle>
                         </DialogHeader>
                         <button
                             type="button"
@@ -1241,7 +1314,7 @@ export const SalesOrderDetailPage = () => {
                     <div className="rounded-lg border overflow-hidden">
                         <Table>
                             <TableHeader>
-                                <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
+                                <TableRow className="bg-[#DA7756] hover:bg-[#DA7756] [&>th]:!text-white [&>th]:!opacity-100">
                                     <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">Sr.No.</TableHead>
                                     <TableHead className="!text-white !opacity-100 font-semibold">Approval Level</TableHead>
                                     <TableHead className="!text-white !opacity-100 font-semibold">Approved By</TableHead>

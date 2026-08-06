@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Eye } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface RoasterData {
   id: number;
@@ -20,7 +20,7 @@ interface RoasterData {
 export const UserRoastersDashboard = () => {
   const navigate = useNavigate();
   const [roasters, setRoasters] = useState<RoasterData[]>([]);
-
+ const { shouldShow } = useDynamicPermissions(); 
   React.useEffect(() => {
     // Fetch roster data from API
     const fetchRoasters = async () => {
@@ -70,14 +70,15 @@ export const UserRoastersDashboard = () => {
           <div className="text-sm text-gray-500 mb-2">Space &gt; User Roasters</div>
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-800">USER ROASTERS</h1>
+            {(shouldShow("Roaster","create") && 
             <Button 
               onClick={handleAddClick}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white flex items-center gap-2"
+              className="fm-button-fix fm-button-brand-solid hover:bg-[#c96546] text-white flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Add
             </Button>
+            )}
           </div>
         </div>
 

@@ -295,7 +295,7 @@ export const EditInvoiceApprovalsPage = () => {
               </div>
             ))}
 
-            <Button variant="ghost" onClick={addApprovalLevel} className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" onClick={addApprovalLevel} className="bg-brand text-white [&_svg]:!text-white [&_svg]:!stroke-white px-4 py-1.5">
               <Plus className="w-4 h-4" />
               Add More Level
             </Button>
@@ -305,7 +305,7 @@ export const EditInvoiceApprovalsPage = () => {
             <Button variant="outline" onClick={() => navigate('/settings/asset-setup/approval-matrix')}>
               Back
             </Button>
-            <Button onClick={handleUpdate} disabled={submitting} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+            <Button onClick={handleUpdate} disabled={submitting} className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost">
               {submitting ? 'Updating...' : 'Update'}
             </Button>
           </div>

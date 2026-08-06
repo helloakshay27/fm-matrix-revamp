@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PostHogTicketActivity } from '@/components/PostHogTicketActivity';
+import { useHelpdeskEvents } from '@/components/PostHogHelpdeskEvents';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -287,6 +289,18 @@ const getUserProfileFromAlternativeAPI = async () => {
 
 export const AddTicketDashboard = () => {
   const navigate = useNavigate();
+  const helpdeskEvents = useHelpdeskEvents();
+
+  const [ticketEvent, setTicketEvent] = useState<{
+    event: "Ticket Create Form Opened" | "ticket creation successful" | "ticket abandoned";
+    properties?: Record<string, unknown>;
+  } | null>(null);
+
+  useEffect(() => {
+    if (ticketEvent?.event === 'ticket abandoned') {
+      navigate(-1);
+    }
+  }, [ticketEvent, navigate]);
 
   // Form state
   const [onBehalfOf, setOnBehalfOf] = useState('self');
@@ -1024,6 +1038,10 @@ export const AddTicketDashboard = () => {
     }
   };
 
+  const handleCancel = () => {
+    setTicketEvent({ event: 'ticket abandoned' });
+  };
+
   // Handle form submission
   const handleSubmit = async () => {
     // Validation
@@ -1127,6 +1145,29 @@ export const AddTicketDashboard = () => {
         ? `Ticket created successfully - ${ticketNumber}`
         : "Ticket created successfully!");
 
+      setTicketEvent({ event: 'ticket creation successful', properties: { ticket_number: ticketNumber } });
+
+      // Business lifecycle event — Ticket Created
+      const createdId = response?.id || response?.complaint?.id || ticketNumber || null;
+      helpdeskEvents.onTicketCreated(createdId, {
+        ticket_type: ticketType || null,
+        on_behalf_of: onBehalfOf === 'self' ? 'self' : onBehalfOf,
+        category: formData.categoryType || null,
+        sub_category: formData.subCategoryType || null,
+        mode: formData.complaintMode || null,
+        identification: formData.proactiveReactive
+          ? (formData.proactiveReactive.toLowerCase() as 'proactive' | 'reactive')
+          : null,
+        priority: formData.adminPriority || null,
+        severity: formData.severity || null,
+        creation_source: 'web',
+        is_golden_ticket: isGoldenTicket,
+        is_flagged: isFlagged,
+        has_attachments: attachedFiles.length > 0,
+        vendor_assigned: Boolean(formData.vendor),
+        linked_asset_id: null,
+      });
+
       // navigate('/maintenance/ticket');
       const currentPath = window.location.pathname;
 
@@ -1175,6 +1216,10 @@ export const AddTicketDashboard = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      <PostHogTicketActivity key="Ticket Create Form Opened" event="Ticket Create Form Opened" />
+      {ticketEvent && (
+        <PostHogTicketActivity key={ticketEvent.event} event={ticketEvent.event} properties={ticketEvent.properties} />
+      )}
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
@@ -1345,15 +1390,15 @@ export const AddTicketDashboard = () => {
             <div className="flex gap-8">
               <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-8">
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="request" id="request" className="text-[#C72030] border-[#C72030]" />
+                  <RadioGroupItem value="request" id="request" />
                   <label htmlFor="request" className="text-sm font-medium">Request</label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="complaint" id="complaint" className="text-[#C72030] border-[#C72030]" />
+                  <RadioGroupItem value="complaint" id="complaint" />
                   <label htmlFor="complaint" className="text-sm font-medium">Complaint</label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="suggestion" id="suggestion" className="text-[#C72030] border-[#C72030]" />
+                  <RadioGroupItem value="suggestion" id="suggestion" />
                   <label htmlFor="suggestion" className="text-sm font-medium">Suggestion</label>
                 </div>
               </RadioGroup>
@@ -1895,8 +1940,8 @@ export const AddTicketDashboard = () => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate(-1)}
-            className="fm-button-fix border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+            onClick={handleCancel}
+            className="fm-button-fix border-brand text-brand hover:bg-brand-selected px-8 py-2"
           >
             Cancel
           </Button>

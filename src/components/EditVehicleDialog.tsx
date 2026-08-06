@@ -197,9 +197,9 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSave }: EditVehi
           </Button>
           <Button 
             onClick={handleSave}
-            className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white"
+            className="px-6 py-2 !bg-[#DA7756] hover:!bg-[#C45F40]"
           >
-            Save
+            <span className="!text-white font-medium">Save</span>
           </Button>
         </div>
       </DialogContent>

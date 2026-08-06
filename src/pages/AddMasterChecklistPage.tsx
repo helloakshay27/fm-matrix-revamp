@@ -11,6 +11,7 @@ import {
   Select as MuiSelect,
   MenuItem,
 } from '@mui/material';
+import { PostHogAuditActivity } from '@/components/PostHogAuditActivity';
 
 const fieldStyles = {
   width: '100%',
@@ -87,6 +88,7 @@ export const AddMasterChecklistPage = () => {
   ]);
   const [createTask, setCreateTask] = useState(false);
   const [weightage, setWeightage] = useState(false);
+  const [checklistCreatedEvent, setChecklistCreatedEvent] = useState<{ key: number; properties: Record<string, unknown> } | null>(null);
 
   const handleBack = () => {
     navigate(-1);
@@ -165,11 +167,27 @@ export const AddMasterChecklistPage = () => {
     e.preventDefault();
     console.log({ scheduleFor, activityName, description, assetType, taskSections });
     alert('Master checklist created successfully!');
+    const questionCount = taskSections.reduce((sum, section) => sum + section.tasks.length, 0);
+    setChecklistCreatedEvent({
+      key: Date.now(),
+      properties: {
+        question_count: questionCount,
+        import_method: 'manual',
+        schedule_for: scheduleFor,
+      },
+    });
     navigate('/maintenance/audit/operational/master-checklists');
   };
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-screen-xl mx-auto">
+      {checklistCreatedEvent && (
+        <PostHogAuditActivity
+          key={checklistCreatedEvent.key}
+          event="Master Checklist Created"
+          properties={checklistCreatedEvent.properties}
+        />
+      )}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           <button

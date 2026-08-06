@@ -38,9 +38,22 @@ const AddApprovalMatrixPage = () => {
   // Function options with label-value pairs
   const functionOptions = [
     { label: 'Purchase Order', value: 'purchase_order' },
+    { label: 'Purchase Order (Technical)', value: 'purchase_order_technical' },
+    { label: 'Purchase Order (Non Technical)', value: 'purchase_order_non-technical' },
+    { label: 'Purchase Order (Security)', value: 'purchase_order_security' },
     { label: 'GRN', value: 'grn' },
+    { label: 'GRN (Technical)', value: 'grn_technical' },
+    { label: 'GRN (Non Technical)', value: 'grn_non-technical' },
+    { label: 'GRN (Security)', value: 'grn_security' },
+
     { label: 'Work Order', value: 'work_order' },
+    { label: 'Work Order (Technical)', value: 'work_order_technical' },
+    { label: 'Work Order (Non Technical)', value: 'work_order_non-technical' },
+    { label: 'Work Order (Security)', value: 'work_order_security' },
     { label: 'Work Order Invoice', value: 'work_order_invoice' },
+    { label: 'Work Order Invoice (Technical)', value: 'work_order_invoice_technical' },
+    { label: 'Work Order Invoice (Non Technical)', value: 'work_order_invoice_non-technical' },
+    { label: 'Work Order Invoice (Security)', value: 'work_order_invoice_security' },
     { label: 'Bill', value: 'bill' },
     { label: 'Vendor Evaluation', value: 'vendor_audit' },
     { label: 'Permit', value: 'permit' },
@@ -271,6 +284,17 @@ const AddApprovalMatrixPage = () => {
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <style>{`
+          .MuiFormHelperText-root.Mui-error {
+            color: #DA7756 !important;
+          }
+          .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+            border-color: #DA7756 !important;
+          }
+          .MuiCheckbox-root.Mui-error {
+            color: #DA7756 !important;
+          }
+        `}</style>
         {/* Function Selection */}
         <div className="mb-8">
           <FormControl fullWidth error={!!functionError}>
@@ -417,8 +441,8 @@ const AddApprovalMatrixPage = () => {
                             <Checkbox
                               checked={level.users.includes(user.id.toString())}
                               sx={{
-                                color: '#C72030',
-                                '&.Mui-checked': { color: '#C72030' },
+                                color: '#DA7756',
+                                '&.Mui-checked': { color: '#DA7756' },
                               }}
                             />
                             {user.full_name}
@@ -440,8 +464,8 @@ const AddApprovalMatrixPage = () => {
                         checked={level.sendEmails}
                         onChange={(e) => updateApprovalLevel(index, 'sendEmails', e.target.checked)}
                         sx={{
-                          color: '#C72030',
-                          '&.Mui-checked': { color: '#C72030' },
+                          color: '#DA7756',
+                          '&.Mui-checked': { color: '#DA7756' },
                         }}
                       />
                     }
@@ -468,7 +492,7 @@ const AddApprovalMatrixPage = () => {
           <Button
             variant="ghost"
             onClick={addApprovalLevel}
-            className="bg-[#f6f4ee] hover:bg-[#e8e5dc] text-[#6B2C91] w-12 h-12 rounded-lg p-0"
+            className="bg-brand text-white [&_svg]:!text-white w-12 h-12 rounded-lg p-0"
           >
             <Plus className="w-6 h-6" />
           </Button>
@@ -479,7 +503,7 @@ const AddApprovalMatrixPage = () => {
           <Button
             onClick={handleCreate}
             disabled={isSubmitting}
-            className="fm-button-fix fm-button-brand px-8 py-2"
+            className="fm-button-fix fm-button-brand-solid px-8 py-2"
           >
             {isSubmitting ? 'Creating...' : 'Create'}
           </Button>
@@ -487,7 +511,8 @@ const AddApprovalMatrixPage = () => {
           <Button
             variant="outline"
             onClick={handleSaveAndCreateNew}
-            className="border-[#6B2C91] text-[#6B2C91] hover:bg-[#6B2C91] hover:text-white px-8"
+           className="fm-button-fix fm-button-brand-solid px-4 py-2"
+          variant="ghost"
           >
             Save And Create New
           </Button>

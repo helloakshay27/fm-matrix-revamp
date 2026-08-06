@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { API_CONFIG } from '@/config/apiConfig';
 import { Search, X } from "lucide-react";
 import { toast } from 'sonner';
+import { useNavigate } from "react-router-dom";
 interface AccountOption {
   id: number;
   name: string;
@@ -12,6 +13,7 @@ interface AccountOption {
   current_total_credits: number;
 }
 const OpeningBalance = () => {
+  const navigate = useNavigate();
   const [date, setDate] = useState("");
 
   // const [accountValues, setAccountValues] = useState(
@@ -30,6 +32,7 @@ const OpeningBalance = () => {
   const [accountValues, setAccountValues] = useState<Record<string, { debit: string; credit: string }>>({});
   const lock_account_id = localStorage.getItem("lock_account_id");
   const [search, setSearch] = useState("");
+  const [entityAccountIds, setEntityAccountIds] = useState<Set<number>>(new Set());
 
 
    const fetchAccounts = async () => {
@@ -90,9 +93,34 @@ const OpeningBalance = () => {
       }
     };
   useEffect(() => {
-   
     fetchAccounts();
   }, []);
+
+  useEffect(() => {
+    if (accountOptions.length === 0) return;
+    const baseUrl = API_CONFIG.BASE_URL;
+    const token = API_CONFIG.TOKEN;
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+    Promise.all(
+      accountOptions.map((acc) =>
+        axios
+          .get(`${baseUrl}/lock_accounts/${lock_account_id}/lock_account_ledgers/${acc.id}.json`, { headers })
+          .then((res) => {
+            const data = res.data;
+            const hasEntities =
+              (Array.isArray(data.vendors) && data.vendors.length > 0) ||
+              (Array.isArray(data.customers) && data.customers.length > 0);
+            return hasEntities ? acc.id : null;
+          })
+          .catch(() => null)
+      )
+    ).then((results) => {
+      setEntityAccountIds(new Set(results.filter((id): id is number => id !== null)));
+    });
+  }, [accountOptions]);
 
   // const handleValueChange = (
   //   accountName: string,
@@ -406,7 +434,16 @@ const totalCredit = filteredAccounts.reduce((sum, acc) => {
 
       {/* Account Name */}
       <td className="border border-gray-300 px-4 py-2 text-sm text-gray-700">
-        {account.name}
+        {entityAccountIds.has(account.id) ? (
+          <span
+            className="text-blue-600 underline cursor-pointer hover:text-blue-800"
+            onClick={() => navigate(`/accounting/opening-balance/${account.id}`)}
+          >
+            {account.name}
+          </span>
+        ) : (
+          account.name
+        )}
       </td>
 
       {/* Editable Debit */}

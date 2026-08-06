@@ -244,11 +244,11 @@ export const AddPlusServicePage = () => {
           >
             <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
-          <span>Plus Service List</span>
+          <span>Service List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">Create New Plus Service</span>
+          <span className="text-gray-900 font-medium">Create New Service</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">NEW PLUS SERVICE</h1>
+        <h1 className="text-2xl font-bold text-gray-900">NEW SERVICE</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -497,9 +497,9 @@ export const AddPlusServicePage = () => {
           <Button
             type="submit"
             disabled={loading}
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
+            className="!bg-[#D77754] hover:!bg-[#CA6A48] px-8 py-2"
           >
-            {loading ? 'Creating...' : 'Create Service'}
+            <span className="!text-white font-medium">{loading ? 'Creating...' : 'Create Service'}</span>
           </Button>
           <Button
             type="button"

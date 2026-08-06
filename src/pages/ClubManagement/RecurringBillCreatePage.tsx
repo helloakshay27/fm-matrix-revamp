@@ -38,6 +38,12 @@ import {
 import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import {
+  BankRecord,
+  bankMasterListUrl,
+  getBankMasterApiConfig,
+  mapApiBankRecord,
+} from './bankMasterUtils';
 import { Button as ShadButton } from '@/components/ui/button';
 import ItemSearchInput from '@/components/ItemSearchInput';
 
@@ -560,6 +566,24 @@ export const RecurringBillCreatePage: React.FC = () => {
   const [termsAndConditions, setTermsAndConditions] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
   const [displayAttachmentsInPortal, setDisplayAttachmentsInPortal] = useState(false);
+
+  // Bank Details
+  const [bankOptions, setBankOptions] = useState<BankRecord[]>([]);
+  const [selectedBankId, setSelectedBankId] = useState<string>('');
+
+  useEffect(() => {
+    const fetchBanks = async () => {
+      try {
+        const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(`${bankMasterListUrl(baseUrl, lockAccountId)}&active=true`, { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        setBankOptions(data.map(mapApiBankRecord));
+      } catch (err) {
+        setBankOptions([]);
+      }
+    };
+    fetchBanks();
+  }, []);
 
   // Email Communications
   const [sendEmailToCustomer, setSendEmailToCustomer] = useState(false);
@@ -1088,6 +1112,12 @@ if (!profileName || profileName.trim() === "") {
         return false;
     }
 
+    if (!selectedBankId) {
+        setErrors((prev) => ({ ...prev, bank: 'Bank is required' }));
+        toast.error("Please select a bank");
+        return false;
+    }
+
     const hasValidItems = items.some(
         item => item.name && item.quantity > 0 && item.rate > 0
     );
@@ -1183,6 +1213,7 @@ if (!profileName || profileName.trim() === "") {
       formData.append('lock_account_bill[delivery_method]', deliveryMethod);
       formData.append('lock_account_bill[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
       formData.append('lock_account_bill[customer_notes]', customerNotes);
+      formData.append('lock_account_bill[bank_master_id]', selectedBankId || '');
       formData.append('lock_account_bill[terms_and_conditions]', termsAndConditions);
       formData.append('lock_account_bill[subject]', subject);
       formData.append('lock_account_bill[status]', 'active');
@@ -1593,7 +1624,7 @@ if (!profileName || profileName.trim() === "") {
                       {selectedBillingAddress.country && <div>{selectedBillingAddress.country}</div>}
                     </div>
                   ) : (
-                    <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                    <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
                       New Address
                     </button>
                   )}
@@ -1617,7 +1648,7 @@ if (!profileName || profileName.trim() === "") {
                       {selectedShippingAddress.country && <div>{selectedShippingAddress.country}</div>}
                     </div>
                   ) : (
-                    <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                    <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
                       New Address
                     </button>
                   )}
@@ -1671,7 +1702,7 @@ if (!profileName || profileName.trim() === "") {
                 )}
               </div>
               <textarea
-                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                 rows={4}
                 maxLength={500}
                 value={billingAddress}
@@ -1685,7 +1716,7 @@ if (!profileName || profileName.trim() === "") {
                 <button
                   type="button"
                   onClick={() => openAddressFormModal('new', 'billing')}
-                  className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
+                  className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
                 >
                   New Address
                 </button>
@@ -1704,7 +1735,7 @@ if (!profileName || profileName.trim() === "") {
                 )}
               </div>
               <textarea
-                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                 rows={4}
                 maxLength={500}
                 value={shippingAddress}
@@ -1719,7 +1750,7 @@ if (!profileName || profileName.trim() === "") {
                 <button
                   type="button"
                   onClick={() => openAddressFormModal('new', 'shipping')}
-                  className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
+                  className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
                 >
                   New Address
                 </button>
@@ -1965,7 +1996,7 @@ if (!profileName || profileName.trim() === "") {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                         onClick={handleSaveTerms}
                       >
                         Save
@@ -2208,7 +2239,7 @@ if (!profileName || profileName.trim() === "") {
         <div className="flex gap-2">
 
           <button
-            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+            className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
 
             onClick={handleSaveTerms}
           >
@@ -2470,6 +2501,7 @@ if (!profileName || profileName.trim() === "") {
             <div className="flex gap-3 pt-4">
               <ShadButton
                 variant="outline"
+                className="fm-button-fix px-8 py-2"
                 onClick={addItem}
               >
                 <Add className="w-4 h-4 mr-1" />
@@ -2538,12 +2570,12 @@ if (!profileName || profileName.trim() === "") {
                 >
                   <FormControlLabel
                     value="TDS"
-                    control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                    control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                     label={<span className="text-sm">TDS</span>}
                   />
                   <FormControlLabel
                     value="TCS"
-                    control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                    control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                     label={<span className="text-sm">TCS</span>}
                   />
                 </RadioGroup>
@@ -2609,7 +2641,7 @@ if (!profileName || profileName.trim() === "") {
         {/* Customer Notes */}
         <Section title="Notes" icon={<FileText className="w-5 h-5" />}>
           <textarea
-            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
             rows={3}
             maxLength={500}
             value={customerNotes}
@@ -2619,6 +2651,45 @@ if (!profileName || profileName.trim() === "") {
             placeholder="Enter any notes for the bill"
           />
           <p className="text-xs text-gray-400 text-right mt-1">{customerNotes.length}/500</p>
+
+          <div className="mt-4 w-1/2">
+            <label className="block text-sm font-medium mb-2">
+              Bank<span className="text-red-500">*</span>
+            </label>
+            <FormControl fullWidth size="small" error={!!errors.bank}>
+              <Select
+                displayEmpty
+                value={selectedBankId}
+                onChange={(e) => {
+                  setSelectedBankId(String(e.target.value));
+                  if (errors.bank) {
+                    setErrors((prev) => {
+                      const next = { ...prev };
+                      delete next.bank;
+                      return next;
+                    });
+                  }
+                }}
+                renderValue={(val) =>
+                  val
+                    ? (() => {
+                        const bank = bankOptions.find(b => String(b.id) === String(val));
+                        return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
+                      })()
+                    : <span style={{ color: '#aaa' }}>Select Bank</span>
+                }
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Bank</em></MenuItem>
+                {bankOptions.map((bank) => (
+                  <MenuItem key={bank.id} value={String(bank.id)}>
+                    {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {errors.bank && <p className="text-xs text-red-500 mt-1">{errors.bank}</p>}
+          </div>
         </Section>
 
         {/* Terms & Conditions */}
@@ -2773,13 +2844,13 @@ if (!profileName || profileName.trim() === "") {
 
       <div className="flex items-center gap-3 justify-center pt-2">
        
-        <ShadButton className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={() => handleSubmit(true)} disabled={isSubmitting}>
+        <ShadButton className="fm-button-fix fm-button-brand px-8 py-2" onClick={() => handleSubmit(true)} disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : 'Save '}
         </ShadButton>
-         <ShadButton variant="outline" onClick={() => navigate('/accounting/recurring-bills')} disabled={isSubmitting}>
+         <ShadButton variant="outline" className="fm-button-fix px-8 py-2" onClick={() => navigate('/accounting/recurring-bills')} disabled={isSubmitting}>
           Cancel
         </ShadButton>
-        {/* <ShadButton className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={() => handleSubmit(false)} disabled={isSubmitting}>
+        {/* <ShadButton className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded" onClick={() => handleSubmit(false)} disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : 'Save as Open'}
         </ShadButton> */}
       </div>
@@ -2792,7 +2863,7 @@ if (!profileName || profileName.trim() === "") {
               <div
                 key={addr.id}
                 className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
-                  ? 'border-[#C72030] bg-red-50'
+                  ? 'border-[#DA7756] bg-red-50'
                   : 'border-gray-200 hover:border-gray-300'
                   }`}
                 onClick={() => {
@@ -2978,7 +3049,7 @@ if (!profileName || profileName.trim() === "") {
                   Outstanding Payables
                 </Typography>
               </div>
-              <div className="bg-green-50 rounded-lg p-4 text-center">
+              <div className="bg-orange-50 rounded-lg p-4 text-center">
                 <Typography variant="h6" className="font-bold">
                   ₹0.00
                 </Typography>
@@ -3002,7 +3073,7 @@ if (!profileName || profileName.trim() === "") {
                 ['Shipping Address', formatInlineAddress(selectedCustomer.default_shipping_address || selectedCustomer.shipping_address)],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between items-start py-1.5 border-b border-gray-100 last:border-0 gap-4">
-                  <span className="text-xs text-[#C72030] w-36 shrink-0">{label}</span>
+                  <span className="text-xs text-[#DA7756] w-36 shrink-0">{label}</span>
                   <span className="text-xs text-gray-700 text-right">{value}</span>
                 </div>
               ))}
@@ -3217,7 +3288,7 @@ if (!profileName || profileName.trim() === "") {
             Cancel
           </button>
           <button
-            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+            className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
             onClick={() => {
               if (currentItemIndex !== null) {
                 updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);

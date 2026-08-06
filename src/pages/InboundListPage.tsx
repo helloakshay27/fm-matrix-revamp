@@ -415,12 +415,6 @@ export const InboundListPage = () => {
 
     const columns: ColumnConfig[] = [
         {
-            key: 'actions',
-            label: 'Actions',
-            sortable: false,
-            draggable: false,
-        },
-        {
             key: 'id',
             label: 'ID',
             sortable: true,
@@ -512,33 +506,37 @@ export const InboundListPage = () => {
         },
     ];
 
+    const renderActions = (item: InboundMail) => (
+        <div className="flex items-center justify-center gap-1">
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleViewInbound(item.id)}
+                className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+                title="View"
+            >
+                <Eye className="w-4 h-4" />
+            </Button>
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleFlag(item.id);
+                }}
+                className={`h-8 w-8 p-0 hover:bg-gray-100 ${
+                    item.is_flagged
+                        ? 'text-red-500 hover:text-red-600'
+                        : 'text-black'
+                }`}
+                title="Flag Mail"
+            >
+                <Flag className={`w-4 h-4 ${item.is_flagged ? 'fill-red-500' : ''}`} />
+            </Button>
+        </div>
+    );
+
     const renderCell = (item: InboundMail, columnKey: string) => {
-        if (columnKey === 'actions') {
-            return (
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => handleViewInbound(item.id)}
-                        className="text-stone-800 hover:text-[#C72030] transition-colors"
-                    >
-                        <Eye className="w-4 h-4" />
-                    </button>
-                    <div title="Flag Mail">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleToggleFlag(item.id);
-                            }}
-                            className={`${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'} hover:text-[#C72030] transition-colors cursor-pointer`}
-                        >
-                            <Flag className="w-4 h-4" />
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-
-
-
         if (columnKey === 'status') {
             const statusColors: { [key: string]: string } = {
                 'Collected': 'bg-green-100 text-green-800',
@@ -942,7 +940,8 @@ export const InboundListPage = () => {
     const leftActions = (
         <Button
             onClick={() => setShowActionPanel(true)}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
+            className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
         >
             <Plus className="w-4 h-4" />
             Add 
@@ -966,6 +965,7 @@ export const InboundListPage = () => {
                 data={filteredInboundMails}
                 columns={columns}
                 renderCell={renderCell}
+                renderActions={renderActions}
                 onFilterClick={() => setIsFilterModalOpen(true)}
                 onSearch={(query) => {
                     setSearchQuery(query);
@@ -1150,7 +1150,8 @@ export const InboundListPage = () => {
                         </Button>
                         <Button
                             onClick={handleApplyFilters}
-                            className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white px-6"
+                            className="fm-button-fix fm-button-brand px-4 py-2"
+                            variant="ghost"
                         >
                             Apply
                         </Button>

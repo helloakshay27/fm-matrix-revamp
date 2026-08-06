@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FM Matrix · Adoption Analytics — Customer Dashboard (Wireframe)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Anthropic brand palette */
+    --dark:#141413; --light:#faf9f5; --midgray:#b0aea5; --lightgray:#e8e6dc;
+    --orange:#d97757; --blue-accent:#6a9bcc; --green-accent:#788c5d;
+    /* Mapped roles */
+    --bg:#f4f2ea; --panel:#ffffff; --ink:#141413; --muted:#73726a; --line:#e8e6dc;
+    --brand:#d97757; --brand2:#6a9bcc; --accent:#788c5d;
+    --green:#788c5d; --green-bg:#e8ecdf; --amber:#c2893f; --amber-bg:#f4e9d6;
+    --red:#b3402c; --red-bg:#f4ddd6; --blue:#6a9bcc; --blue-bg:#e3ebf3;
+    --shadow:0 1px 2px rgba(20,20,19,.04),0 12px 32px -18px rgba(20,20,19,.22);
+    --shadow-lift:0 2px 4px rgba(20,20,19,.06),0 18px 44px -16px rgba(20,20,19,.30);
+    --ease:cubic-bezier(.22,.61,.36,1);
+    --radius:14px;
+    /* Glass tokens (light frosted) */
+    --glass:rgba(255,255,255,.62);
+    --glass-strong:rgba(255,255,255,.78);
+    --glass-edge:rgba(20,20,19,.09);
+    --glass-hi:inset 0 1px 0 rgba(255,255,255,.85);
+    --blur:saturate(1.5) blur(16px);
+    --blur-soft:saturate(1.35) blur(10px);
+    --font-head:'Poppins',Arial,Helvetica,sans-serif;
+    --font-body:'Lora',Georgia,'Times New Roman',serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:var(--font-body);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(1100px 520px at 88% -8%, rgba(217,119,87,.13), transparent 60%),
+      radial-gradient(900px 500px at -8% 18%, rgba(106,155,204,.11), transparent 55%),
+      radial-gradient(760px 440px at 52% 112%, rgba(120,140,93,.09), transparent 60%),
+      linear-gradient(180deg,#f8f6ef 0%,#f2efe5 100%);
+    background-attachment:fixed;background-color:var(--bg)}
+  h1,h2,h3,h4,.eyebrow,.tile .lbl,.tile .val,.tile .delta,.ctrl,.seg button,.mnav button,
+  .card-head .ct,.card-head .cr,.metric-id,.league th,.league td,.pathtbl th,.pathtbl td,
+  .pill,.chip,.funnel .fs,.role .rn,.big,.tag,.gloss,.tierbadge,.scope-note,.kv .k,.kv .v{font-family:var(--font-head)}
+  a{color:inherit}
+  .wrap{max-width:1320px;margin:0 auto;padding:0 22px 72px}
+
+  /* Header */
+  header.top{background:linear-gradient(130deg,#171715 0%,#211f1a 58%,#2a2119 100%);color:var(--light);border-bottom:2px solid var(--orange);padding:16px 0 18px;box-shadow:0 10px 30px -18px rgba(20,20,19,.45)}
+  .top .wrap{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding-bottom:0}
+  .brand{display:flex;align-items:center;gap:13px}
+  .logo{width:38px;height:38px;border-radius:5px;background:var(--orange);display:grid;place-items:center;font-weight:800;font-size:15px;color:#fff;border:1px solid rgba(255,255,255,.18)}
+  .brand h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.2px}
+  .brand .sub{font-size:11.5px;opacity:.78;margin-top:1px;font-family:var(--font-body)}
+  .hmeta{text-align:right;font-size:12px;opacity:.9;font-variant-numeric:tabular-nums}
+  .hmeta .cust{font-weight:700;font-size:14px}
+  .badge-sample{display:inline-block;border:1px solid rgba(255,255,255,.35);color:var(--light);font-weight:600;font-size:10px;letter-spacing:.5px;padding:3px 8px;border-radius:3px;margin-top:6px;text-transform:uppercase;opacity:.85}
+
+  /* Control bar */
+  .controlbar{position:sticky;top:0;z-index:30;background:rgba(248,246,239,.6);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border-bottom:1px solid var(--glass-edge);box-shadow:0 10px 28px -22px rgba(20,20,19,.35);padding:8px 0}
+  .controlbar .wrap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;row-gap:8px;padding:0 22px}
+  .seg{display:inline-flex;background:var(--glass-strong);-webkit-backdrop-filter:var(--blur-soft);backdrop-filter:var(--blur-soft);border:1px solid var(--glass-edge);border-radius:10px;box-shadow:var(--glass-hi),0 1px 3px rgba(20,20,19,.05);overflow:hidden}
+  .seg button{font:inherit;font-size:11.5px;font-weight:600;padding:6px 10px;border:none;background:none;color:var(--muted);cursor:pointer;border-right:1px solid var(--line);white-space:nowrap}
+  .seg button:last-child{border-right:none}
+  .seg button.on{background:var(--dark);color:#fff}
+  .seg.tier button.on{background:var(--orange);color:#fff}
+  .ctrl{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--ink);background:var(--glass-strong);-webkit-backdrop-filter:var(--blur-soft);backdrop-filter:var(--blur-soft);border:1px solid var(--glass-edge);border-radius:10px;box-shadow:var(--glass-hi),0 1px 3px rgba(20,20,19,.05);padding:6px 9px;cursor:pointer;transition:border-color .15s,box-shadow .15s;white-space:nowrap}
+  .ctrl:hover{border-color:rgba(217,119,87,.45)}
+  .ctrl .ic{opacity:.55;font-size:13px}
+  .ctrl select{font:inherit;font-size:11.5px;font-weight:600;border:none;background:none;color:var(--ink);cursor:pointer;outline:none;max-width:172px;overflow:hidden;text-overflow:ellipsis}
+  .ctrl.toggle-on{border-color:var(--orange);color:var(--orange)}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--green);background:rgba(232,236,223,.72);-webkit-backdrop-filter:var(--blur-soft);backdrop-filter:var(--blur-soft);border:1px solid rgba(120,140,93,.32);border-radius:20px;padding:5px 10px;box-shadow:var(--glass-hi);white-space:nowrap}
+  .pill .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(120,140,93,.2)}
+  .spacer{flex:1}
+  .devtoggle{display:inline-flex;background:var(--glass-strong);-webkit-backdrop-filter:var(--blur-soft);backdrop-filter:var(--blur-soft);border:1px solid var(--glass-edge);border-radius:10px;box-shadow:var(--glass-hi),0 1px 3px rgba(20,20,19,.05);overflow:hidden}
+  .devtoggle button{border:none;background:none;padding:5px 8px;cursor:pointer;color:var(--muted);border-right:1px solid var(--line);font-size:13px}
+  .devtoggle button:last-child{border-right:none}
+  .devtoggle button.on{background:var(--lightgray);color:var(--ink)}
+
+  /* module nav */
+  .mnav{margin:2px 0 14px;background:rgba(255,255,255,.42);-webkit-backdrop-filter:var(--blur-soft);backdrop-filter:var(--blur-soft);
+    border:1px solid var(--glass-edge);border-radius:14px;box-shadow:var(--glass-hi);overflow:hidden}
+  .mnav-buckets{display:flex;gap:2px;flex-wrap:wrap;padding:4px 10px 0;border-bottom:1px solid var(--glass-edge)}
+  .mnav-buckets button{font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+    padding:9px 14px 8px;border:none;background:none;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;
+    white-space:nowrap;transition:color .18s var(--ease),border-color .18s var(--ease)}
+  .mnav-buckets button:hover:not(.on){color:var(--ink)}
+  .mnav-buckets button.on{color:var(--brand);border-bottom-color:var(--brand)}
+  .mnav-buckets .mcount{font-weight:600;font-size:9.5px;opacity:.65;margin-left:4px}
+  .mnav-mods{display:flex;padding:10px 12px}
+  .mnav-mods .segbar{display:inline-flex;flex-wrap:wrap;border:1px solid var(--glass-edge);border-radius:11px;
+    background:rgba(255,255,255,.68);box-shadow:var(--glass-hi),0 1px 3px rgba(20,20,19,.05);overflow:hidden}
+  .mnav-mods button{font-family:var(--font-head);font-size:12px;font-weight:600;padding:8px 18px;border:none;
+    border-left:1px solid var(--glass-edge);background:none;color:var(--muted);cursor:pointer;white-space:nowrap;
+    transition:color .18s var(--ease),background .18s var(--ease)}
+  .mnav-mods button:first-child{border-left:none}
+  .mnav-mods button:hover:not(.on){color:var(--ink);background:rgba(217,119,87,.08)}
+  .mnav-mods button.on{background:var(--dark);color:#fff}
+
+  /* Section + cards */
+  .section{margin-top:26px}
+  .section-head{display:flex;align-items:baseline;gap:12px;margin:0 0 6px}
+  .section-head h2{font-size:16px;margin:0;letter-spacing:.2px}
+  .section-head .layerpill{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--brand);border:1px solid #ecccbf;background:#fbeee7;padding:2px 8px;border-radius:20px}
+  .section-head .sd{font-size:12.5px;color:var(--muted);font-family:var(--font-body)}
+
+  .grid{display:grid;gap:14px}
+  .card{position:relative;background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--glass-edge);border-radius:var(--radius);box-shadow:var(--shadow),var(--glass-hi);overflow:visible}
+  .card-head{padding:14px 16px 8px;border-left:3px solid var(--line)}
+  .card-head.b-orange{border-left-color:var(--orange)}
+  .card-head.b-blue{border-left-color:var(--blue)}
+  .card-head.b-green{border-left-color:var(--green)}
+  .card-head .cr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+  .card-head .ct{font-size:14.5px;font-weight:700;margin:3px 0 0;display:flex;align-items:center;gap:7px}
+  .card-head .metric-id{font-size:10px;font-weight:700;color:#fff;background:var(--midgray);border-radius:3px;padding:1px 6px}
+  .card-head .cd{font-size:12px;color:var(--muted);margin:2px 0 0;font-family:var(--font-body)}
+  .card-body{padding:6px 16px 16px}
+
+  /* Tiles row (PostHog metric tiles) */
+  .tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+  @media(max-width:1100px){.tiles{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:640px){.tiles{grid-template-columns:repeat(2,1fr)}}
+  .tile{position:relative;background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--glass-edge);border-radius:var(--radius);padding:16px 14px;text-align:center;box-shadow:var(--shadow),var(--glass-hi);overflow:hidden;
+    transition:box-shadow .25s var(--ease),transform .25s var(--ease),border-color .25s var(--ease)}
+  .tile::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0;
+    background:linear-gradient(90deg,var(--orange),rgba(217,119,87,0));opacity:0;transition:opacity .25s var(--ease)}
+  .tile:hover{transform:translateY(-2px);box-shadow:var(--shadow-lift),var(--glass-hi)}
+  .tile:hover::before{opacity:1}
+  .tile .lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted)}
+  .tile .val{font-size:30px;font-weight:700;margin:8px 0 6px;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+  .tile .delta{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+  .delta.up{color:var(--green)} .delta.dn{color:var(--red)}
+  .tile .sub2{font-size:10.5px;color:var(--muted);margin-top:5px;font-family:var(--font-body)}
+  /* self-defined benchmark row on each tile */
+  .bm{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:10px;padding-top:9px;border-top:1px dashed var(--line);font-family:var(--font-head);font-size:10.5px}
+  .bm .bl{color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+  .bm input.bmin{width:46px;font:inherit;font-size:11px;font-weight:700;text-align:center;border:1px solid var(--glass-edge);border-radius:7px;padding:2px 3px;background:rgba(255,255,255,.8);color:var(--ink)}
+  .bm input.bmin:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 2px rgba(217,119,87,.15)}
+  .bm .bu{color:var(--muted);font-weight:600;margin-left:-3px}
+  .bm .bb{font-weight:700;padding:2px 8px;border-radius:20px}
+  .bm .bb.met{background:var(--green-bg);color:var(--green)}
+  .bm .bb.miss{background:var(--red-bg);color:var(--red)}
+  .bm .bb.unset{background:#ece9df;color:var(--muted)}
+  .bmnote{font-size:11.5px;color:var(--muted);font-family:var(--font-body);background:rgba(255,255,255,.5);border:1px dashed rgba(20,20,19,.14);border-radius:10px;padding:9px 13px;margin:10px 0 0;display:flex;gap:9px;align-items:flex-start}
+  .bmnote b{color:var(--ink);font-family:var(--font-head)}
+  /* (i) explain-this-metric button + popover */
+  .info-btn{position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:50%;border:1px solid var(--glass-edge);background:rgba(255,255,255,.75);color:var(--muted);font-family:var(--font-head);font-size:11px;font-weight:700;font-style:italic;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;z-index:6;transition:border-color .15s,color .15s}
+  .info-btn:hover{border-color:var(--orange);color:var(--orange)}
+  .info-pop{position:fixed;max-width:330px;background:rgba(24,24,22,.92);-webkit-backdrop-filter:var(--blur-soft);backdrop-filter:var(--blur-soft);color:var(--light);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:13px 15px;font-family:var(--font-body);font-size:12.5px;line-height:1.5;box-shadow:0 14px 38px rgba(20,20,19,.32);z-index:300;display:none}
+  .info-pop .ipt{font-family:var(--font-head);font-weight:700;font-size:12.5px;margin:0 0 4px;color:#fff}
+  .info-pop .ipf{font-family:var(--font-head);font-size:11.5px;font-weight:600;background:rgba(217,119,87,.20);border:1px solid rgba(217,119,87,.5);color:#f2cdbc;border-radius:5px;padding:6px 9px;margin:6px 0;display:block}
+  .info-pop .ipfk{color:var(--midgray);text-transform:uppercase;letter-spacing:.5px;font-size:9.5px;display:block;margin-bottom:2px}
+  .info-pop .ipd{color:#e8e6dc}
+
+  /* ✦ Generate-insight (AI) button + slide-in panel */
+  .ai-btn{position:absolute;top:7px;right:34px;display:inline-flex;align-items:center;gap:4px;height:21px;padding:0 10px;border-radius:20px;border:1px solid #e6c7b8;background:linear-gradient(180deg,#fff,#fbeee7);color:var(--brand);font-family:var(--font-head);font-size:10px;font-weight:700;letter-spacing:.2px;cursor:pointer;z-index:6;white-space:nowrap}
+  .ai-btn:hover{border-color:var(--orange);background:#f7e2d6}
+  .ai-btn .sp{font-size:11px;line-height:1}
+  .ai-backdrop{position:fixed;inset:0;background:rgba(20,20,19,.25);z-index:390;opacity:0;pointer-events:none;transition:opacity .2s}
+  .ai-backdrop.open{opacity:1;pointer-events:auto}
+  .ai-panel{position:fixed;top:0;right:0;width:400px;max-width:94vw;height:100vh;background:rgba(250,249,245,.82);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border-left:1px solid rgba(255,255,255,.6);box-shadow:-14px 0 46px rgba(20,20,19,.22);z-index:400;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .24s ease}
+  .ai-panel.open{transform:translateX(0)}
+  /* Chart spotlight — when an insight opens, the clicked chart glides into the free space left of the panel */
+  .ai-spot{position:fixed;top:0;left:0;right:400px;bottom:0;z-index:395;display:flex;align-items:center;justify-content:center;padding:34px;pointer-events:none}
+  .ai-spot .card{pointer-events:auto;width:min(760px,86%);max-height:84vh;overflow:auto;margin:0;position:relative;opacity:0;transform:translateY(16px) scale(.93);transition:opacity .28s ease,transform .34s cubic-bezier(.2,.8,.25,1);background:var(--glass-strong);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:0 26px 72px -26px rgba(20,20,19,.5),var(--glass-hi)}
+  .ai-spot.open .card{opacity:1;transform:none}
+  .ai-spot .card .ai-btn,.ai-spot .card .info-btn{display:none}
+  .ai-spot-tag{position:absolute;top:0;left:0;right:0;text-align:center;font-family:var(--font-head);font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);padding-top:12px;pointer-events:none}
+  @media(max-width:900px){.ai-spot{display:none}}
+  .ai-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:16px 18px 12px;background:var(--dark);color:#fff}
+  .ai-head .ai-h-t{font-family:var(--font-head);font-weight:700;font-size:15px;display:flex;align-items:center;gap:7px}
+  .ai-head .ai-h-t .sp{color:var(--orange)}
+  .ai-head .ai-h-s{font-family:var(--font-body);font-size:11.5px;color:#c7c4b8;margin-top:3px}
+  .ai-x{background:none;border:none;color:#c7c4b8;font-size:18px;line-height:1;cursor:pointer;padding:2px 4px}
+  .ai-x:hover{color:#fff}
+  .ai-sim{font-family:var(--font-body);font-size:11px;color:#8a6a2f;background:#fdf6e3;border-bottom:1px solid #efe3c4;padding:8px 18px;display:flex;gap:7px;align-items:center}
+  .ai-body{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+  .ai-msg{font-family:var(--font-body);font-size:13px;line-height:1.55;border-radius:10px;padding:11px 13px;max-width:92%}
+  .ai-msg.bot{background:rgba(255,255,255,.85);border:1px solid var(--glass-edge);align-self:flex-start;box-shadow:0 1px 3px rgba(20,20,19,.06)}
+  .ai-msg.user{background:var(--blue);color:#fff;align-self:flex-end;font-weight:600}
+  .ai-msg.bot .ai-lead{font-family:var(--font-head);font-weight:700;font-size:13px;margin:0 0 6px}
+  .ai-msg.bot .ai-k{font-family:var(--font-head);font-weight:700;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--brand);margin:10px 0 3px}
+  .ai-msg.bot .ai-k:first-child{margin-top:0}
+  .ai-msg.bot p{margin:0 0 4px}
+  .ai-msg.bot ul{margin:6px 0 4px;padding-left:18px}
+  .ai-msg.bot li{margin:3px 0}
+  .ai-msg.bot .ai-sug{margin:8px 0 0;color:var(--muted);font-size:12px;font-style:italic}
+  .ai-typing{color:var(--muted);font-style:italic}
+  .ai-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 18px 10px}
+  .ai-chip{font-family:var(--font-head);font-size:10.5px;font-weight:600;color:var(--ink);background:rgba(255,255,255,.7);border:1px solid var(--glass-edge);border-radius:20px;padding:4px 10px;cursor:pointer;transition:border-color .15s,color .15s}
+  .ai-chip:hover{border-color:var(--orange);color:var(--brand)}
+  .ai-foot{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--glass-edge);background:rgba(255,255,255,.6)}
+  .ai-input{flex:1;font-family:var(--font-body);font-size:13px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;resize:none;max-height:90px}
+  .ai-input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 2px rgba(217,119,87,.15)}
+  .ai-send{font-family:var(--font-head);font-weight:700;font-size:12.5px;color:#fff;background:var(--orange);border:none;border-radius:8px;padding:0 16px;cursor:pointer}
+  .ai-send:hover{filter:brightness(.96)}
+  @media(max-width:640px){.ai-btn{right:32px;padding:0 7px}.ai-btn .lbl-ai{display:none}}
+
+  /* two-col layouts */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:900px){.two{grid-template-columns:1fr}}
+  .two-32{display:grid;grid-template-columns:1.5fr 1fr;gap:14px}
+  @media(max-width:900px){.two-32{grid-template-columns:1fr}}
+
+  /* chart tabs */
+  .charttabs{display:inline-flex;gap:2px;background:rgba(20,20,19,.05);border:1px solid var(--glass-edge);border-radius:10px;padding:2px}
+  .charttabs button{font:inherit;font-size:11.5px;font-weight:600;padding:5px 12px;border:none;background:none;color:var(--muted);cursor:pointer;border-radius:4px}
+  .charttabs button.on{background:rgba(255,255,255,.92);color:var(--ink);box-shadow:0 1px 3px rgba(20,20,19,.08);border-bottom:2px solid var(--orange);border-radius:8px}
+  .charthead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .charthead .gb{font-size:11.5px;color:var(--muted)}
+  svg.chart{width:100%;height:auto;display:block}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:8px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:11px;height:11px;border-radius:2px;display:inline-block}
+  .legend i.dash{height:0;border-top:2px dashed var(--midgray);width:16px;border-radius:0}
+
+  /* retention heatmap */
+  .rt{border-collapse:separate;border-spacing:4px;width:100%;font-variant-numeric:tabular-nums}
+  .rt th{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:2px}
+  .rt td{text-align:center;font-size:11.5px;font-weight:600;border-radius:4px;padding:9px 4px;color:var(--ink)}
+  .rt td.lbl{background:none;text-align:left;color:var(--muted);white-space:nowrap;font-weight:600}
+
+  /* funnel */
+  .funnel{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+  .funnel .frow{display:grid;grid-template-columns:150px 1fr 84px;gap:10px;align-items:center}
+  .funnel .fs{font-size:11.5px;color:var(--ink);font-weight:600}
+  .funnel .fbar{height:26px;background:rgba(20,20,19,.06);border-radius:6px;overflow:hidden;position:relative}
+  .funnel .fbar i{display:block;height:100%;background:var(--blue);border-radius:6px}
+  .funnel .fbar i.warn{background:var(--amber)}
+  .funnel .fbar i.bad{background:var(--red)}
+  .funnel .fnum{font-size:11.5px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+  .funnel .fdrop{font-size:10.5px;color:var(--red);font-weight:700}
+
+  /* role bars / horizontal bars */
+  .hbars{display:flex;flex-direction:column;gap:9px;margin-top:2px}
+  .role{display:grid;grid-template-columns:120px 1fr 46px;gap:10px;align-items:center}
+  .role .rn{font-size:11.5px;font-weight:600}
+  .role .rbar{height:16px;background:rgba(20,20,19,.06);border-radius:5px;overflow:hidden}
+  .role .rbar i{display:block;height:100%;border-radius:3px}
+  .role .rv{font-size:11.5px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+
+  /* league + path tables */
+  .tbl-wrap{overflow-x:auto}
+  table.league,table.pathtbl{border-collapse:collapse;width:100%;font-size:12px}
+  table.league th,table.league td,table.pathtbl th,table.pathtbl td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  table.league thead th,table.pathtbl thead th{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;border-bottom:2px solid var(--dark)}
+  table.league tbody td,table.pathtbl tbody td{transition:background .15s var(--ease)}
+  table.league tbody tr:hover,table.pathtbl tbody tr:hover{background:rgba(255,255,255,.65)}
+  table.league tbody tr:hover td:first-child,table.pathtbl tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--orange)}
+  .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+  .arrow{font-weight:700;font-size:11px}
+  .arrow.up{color:var(--green)} .arrow.dn{color:var(--red)} .arrow.flat{color:var(--muted)}
+  .status{font-size:10px;font-weight:700;letter-spacing:.4px;padding:3px 8px;border-radius:20px;text-transform:uppercase}
+  .st-healthy{background:var(--green-bg);color:var(--green)}
+  .st-watch{background:var(--amber-bg);color:var(--amber)}
+  .st-drop{background:var(--red-bg);color:var(--red)}
+  .minibar{display:inline-block;width:60px;height:6px;background:rgba(20,20,19,.08);border-radius:3px;overflow:hidden;vertical-align:middle;margin-right:6px}
+  .minibar i{display:block;height:100%}
+
+  .kv{display:flex;gap:22px;flex-wrap:wrap;margin-top:2px}
+  .kv .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700}
+  .kv .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  .kv .u{font-size:11px;color:var(--muted);font-weight:600}
+
+  .scope-note{font-size:11.5px;color:var(--muted);background:rgba(255,255,255,.5);border:1px dashed rgba(20,20,19,.14);border-radius:10px;padding:9px 13px;margin-top:10px;display:flex;gap:10px;align-items:flex-start}
+  .scope-note b{color:var(--ink)}
+  .tierbadge{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--dark);color:#fff;border-radius:3px;padding:2px 7px;margin-left:6px}
+  .lockrow{display:none}
+
+  .footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);font-family:var(--font-body)}
+  .footer code{font-family:var(--font-head);font-size:11px;background:rgba(255,255,255,.7);border:1px solid var(--glass-edge);border-radius:5px;padding:1px 5px}
+
+  /* T2/T3 only blocks toggled by JS */
+  .tieronly{display:none}
+
+  /* Graceful fallback where backdrop-filter is unsupported: near-opaque surfaces */
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .card,.tile{background:rgba(255,255,255,.95)}
+    .controlbar{background:rgba(248,246,239,.97)}
+    .seg,.ctrl,.devtoggle{background:#fff}
+    .mnav{background:#fafaf6}
+    .ai-panel{background:var(--light)}
+    .info-pop{background:var(--dark)}
+  }
+
+  /* ===== Motion & polish layer ===== */
+  .reveal{opacity:0;transform:translateY(12px)}
+  .reveal.in{opacity:1;transform:none;transition:opacity .55s var(--ease),transform .55s var(--ease)}
+  html{scroll-behavior:smooth}
+  ::selection{background:rgba(217,119,87,.22)}
+  .seg button,.info-btn,.ai-btn{transition:background .18s var(--ease),color .18s var(--ease),border-color .18s var(--ease)}
+  .card{transition:box-shadow .25s var(--ease)}
+  .card:hover{box-shadow:var(--shadow-lift),var(--glass-hi)}
+  @media (prefers-reduced-motion: reduce){
+    .reveal{opacity:1;transform:none}
+    *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important}
+  }
+  @media print{.reveal{opacity:1 !important;transform:none !important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo">FM</div>
+      <div>
+        <h1>FM Matrix · Adoption Analytics</h1>
+        <div class="sub">Employee adoption &amp; engagement with the application · Phygital.work</div>
+      </div>
+    </div>
+    <div class="hmeta">
+      <div class="cust" id="custName">PSIPL — Property Solutions (India)</div>
+      <div id="scopeLabel">All sites · 6 sites · West / South / North</div>
+      <span class="badge-sample">Wireframe · sample data</span>
+    </div>
+  </div>
+</header>
+
+<div class="controlbar">
+  <div class="wrap">
+    <div class="seg tier" id="tierSeg">
+      <button data-tier="t1">Site Manager</button>
+      <button data-tier="t2">Regional</button>
+      <button data-tier="t3" class="on">Management</button>
+    </div>
+    <label class="ctrl"><span class="ic">◎</span><select id="scopeSel"></select></label>
+    <label class="ctrl"><span class="ic">▤</span>
+      <select id="dateSel">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+    </label>
+    <div class="devtoggle" id="devToggle" title="Platform">
+      <button data-dev="all" class="on">All</button>
+      <button data-dev="desktop">🖥</button>
+      <button data-dev="mobile">📱</button>
+    </div>
+    <span class="pill"><span class="dot"></span><span id="liveCount">— recently online</span></span>
+    <div class="spacer"></div>
+    <label class="ctrl"><span class="ic">▽</span>
+      <select id="goalSel">
+        <option value="helpdesk.ticket_create">Goal: Ticket creation</option>
+        <option value="ppm.task_execute">Goal: PPM task done</option>
+        <option value="audit.conduct">Goal: Audit conducted</option>
+        <option value="incident.report">Goal: Incident reported</option>
+        <option value="permit.raise">Goal: Permit raised</option>
+        <option value="procure.pr_create">Goal: PR submitted</option>
+        <option value="gdn.raise">Goal: GDN raised</option>
+        <option value="gatepass.inward_create">Goal: Gate pass created</option>
+        <option value="visitor.lifecycle">Goal: Visitor checked in</option>
+        <option value="patrol.execute">Goal: Patrol checkpoint completed</option>
+        <option value="meter.reading_capture">Goal: Meter reading recorded</option>
+        <option value="ubill.generate">Goal: Utility bill generated</option>
+      </select>
+    </label>
+    <label class="ctrl toggle-on" id="prevBtn"><span class="ic">⟲</span> Previous period ✓</label>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="scope-note" id="tierNote"></div>
+  <div class="bmnote"><span>◎</span><span><b>Benchmarks are yours to set.</b> Every KPI tile has a <b>Target</b> field — type your own number and the tile shows <b>✓ on target</b> or <b>✕ off target</b> live. Rate KPIs start with a suggested target; count KPIs start blank for you to define. In production these targets are saved per customer (and can be set per site / region / tier).</span></div>
+
+  <!-- ============ LAYER 1: TRAFFIC & SESSION ============ -->
+  <div class="section" id="secTraffic">
+    <div class="section-head">
+      <h2>Traffic &amp; Session</h2>
+      <span class="layerpill">Layer 1 · U1–U8</span>
+      <span class="sd">Who is using the app, how much — the web-analytics set (reframed for the app).</span>
+    </div>
+    <div class="tiles" id="trafficTiles"></div>
+
+    <div class="two-32" style="margin-top:14px">
+      <div class="card">
+        <div class="card-head b-orange">
+          <div class="cr" id="sessRange">Last 30 days · vs previous period</div>
+          <div class="charthead">
+            <div class="ct" style="margin:0">Usage over time</div>
+            <div class="charttabs" id="sessTabs">
+              <button data-s="visitors">Visitors</button>
+              <button data-s="views">Views</button>
+              <button data-s="sessions" class="on">Sessions</button>
+            </div>
+          </div>
+          <div class="charthead"><span></span><span class="gb">Group by <b>Day</b> ▾</span></div>
+        </div>
+        <div class="card-body">
+          <div id="sessChart"></div>
+          <div class="legend">
+            <span><i style="background:var(--orange)"></i> Current period</span>
+            <span><i class="dash"></i> Previous period</span>
+            <span><i style="background:var(--midgray)"></i> Projected (partial day)</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head b-blue">
+          <div class="cr">U7 · Device / platform split</div>
+          <div class="ct" style="margin:0">Web vs mobile usage</div>
+          <div class="cd">Share of active users and sessions by device.</div>
+        </div>
+        <div class="card-body">
+          <div class="hbars" id="deviceBars"></div>
+          <div class="kv" style="margin-top:14px">
+            <div><div class="k">U8 · Recently online</div><div class="v" id="liveKv">—</div><div class="u">active in last 30 min</div></div>
+            <div><div class="k">U4 · Views / session</div><div class="v" id="vpsKv">—</div><div class="u">screens per visit</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ LAYER 2: ADOPTION & ENGAGEMENT ============ -->
+  <div class="section" id="secAdopt">
+    <div class="section-head">
+      <h2>Adoption &amp; Engagement</h2>
+      <span class="layerpill">Layer 2 · A1–A9</span>
+      <span class="sd">How well your people are adopting the app — habit, growth, retention, breadth &amp; depth.</span>
+    </div>
+    <div class="tiles" id="adoptTiles" style="grid-template-columns:repeat(5,1fr)"></div>
+
+    <div class="two" style="margin-top:14px">
+      <div class="card">
+        <div class="card-head b-orange">
+          <div class="cr">A3 · Adoption trend · Last 8 weeks</div>
+          <div class="ct" style="margin:0">Weekly active users</div>
+          <div class="cd">Are more of your people using the app week over week?</div>
+        </div>
+        <div class="card-body"><div id="adoptChart"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-head b-green">
+          <div class="cr">Growth accounting · Last 6 weeks</div>
+          <div class="ct" style="margin:0">New · returning · resurrecting · dormant</div>
+          <div class="cd">How your active base changes each week.</div>
+        </div>
+        <div class="card-body">
+          <div id="growthChart"></div>
+          <div class="legend">
+            <span><i style="background:var(--blue)"></i> New</span>
+            <span><i style="background:var(--green)"></i> Returning</span>
+            <span><i style="background:var(--orange)"></i> Resurrecting</span>
+            <span><i style="background:var(--red)"></i> Dormant</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two" style="margin-top:14px">
+      <div class="card">
+        <div class="card-head b-blue">
+          <div class="cr">Retention · weekly cohorts</div>
+          <div class="ct" style="margin:0">Do new users keep coming back?</div>
+          <div class="cd">Each row = users first active that week; cells = % still active weeks later.</div>
+        </div>
+        <div class="card-body tbl-wrap"><div id="retentionTbl"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-head b-orange">
+          <div class="cr">A8 · Adoption by role</div>
+          <div class="ct" style="margin:0">Who is (and isn't) using the app</div>
+          <div class="cd">Active users ÷ provisioned users, per role.</div>
+        </div>
+        <div class="card-body">
+          <div class="hbars" id="roleBars"></div>
+          <div class="kv" style="margin-top:14px">
+            <div><div class="k">A6 · Module breadth</div><div class="v" id="breadthKv">—</div><div class="u">of licensed modules in use</div></div>
+            <div><div class="k">A4 · Dormant users</div><div class="v" id="dormantKv">—</div><div class="u">no activity 14+ days</div></div>
+            <div><div class="k">A5 · 14-day activation</div><div class="v" id="activationKv">—</div><div class="u">of new joiners</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- A9 Site & Org Adoption Health (T2/T3 only) -->
+    <div class="card tieronly" id="siteHealthCard" style="margin-top:14px">
+      <div class="card-head b-green">
+        <div class="cr">A9 · Site &amp; org adoption health <span class="tierbadge" id="healthTierBadge">Regional+</span></div>
+        <div class="ct" style="margin:0">Adoption league table — worst first</div>
+        <div class="cd">Seat utilisation, trend and flagship-flow completion by site. ⚑ = sudden-drop early warning (WAU below 65% of 8-week peak).</div>
+      </div>
+      <div class="card-body tbl-wrap"><table class="league" id="siteHealthTbl"></table></div>
+    </div>
+
+    <!-- Region league (T3 only) -->
+    <div class="card tieronly" id="regionCard" style="margin-top:14px">
+      <div class="card-head b-orange">
+        <div class="cr">Portfolio roll-up <span class="tierbadge">Management</span></div>
+        <div class="ct" style="margin:0">Adoption health by region</div>
+        <div class="cd">Drill a region → its sites → a single site.</div>
+      </div>
+      <div class="card-body tbl-wrap"><table class="league" id="regionTbl"></table></div>
+    </div>
+  </div>
+
+  <!-- ============ LAYER 3: WORKFLOW-USAGE PACKS ============ -->
+  <div class="section" id="secFlows">
+    <div class="section-head">
+      <h2>Workflow usage — <span id="flowModName">Helpdesk</span></h2>
+      <span class="layerpill">Layer 3 · F-adopt / F-comp / F-step / F-vol</span>
+      <span class="sd">Where in the app's key workflows do people engage — or drop off? Internal-dashboard style.</span>
+    </div>
+    <div class="mnav" id="modNav" title="Choose a module — this filter applies to the Workflow usage section only"></div>
+    <div class="tiles" id="flowTiles" style="grid-template-columns:repeat(4,1fr)"></div>
+
+    <div class="two-32" style="margin-top:14px">
+      <div class="card">
+        <div class="card-head b-orange">
+          <div class="cr">F-step · flagship flow drop-off</div>
+          <div class="ct" style="margin:0" id="flowFunnelName">Ticket creation funnel</div>
+          <div class="cd">Users reaching each step of the flow; biggest drop is highlighted.</div>
+        </div>
+        <div class="card-body"><div class="funnel" id="flowFunnel"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-head b-blue">
+          <div class="cr">All flows in this module</div>
+          <div class="ct" style="margin:0">Adoption &amp; completion</div>
+          <div class="cd">★ flagship. F-adopt = % of active users who start; F-comp = % who finish.</div>
+        </div>
+        <div class="card-body tbl-wrap"><table class="league" id="flowList"></table></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-head b-green">
+        <div class="cr">Top entry screens (this module)</div>
+        <div class="ct" style="margin:0">Where people land &amp; whether they bounce</div>
+        <div class="cd">Initial path · visitors · views · bounce rate. Trend vs previous period.</div>
+      </div>
+      <div class="card-body tbl-wrap"><table class="pathtbl" id="pathTbl"></table></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <b>Wireframe note.</b> Single-tenant customer view — shows only this customer's own employees; no cross-tenant data, no Lockated health/churn scores (those stay in the internal dashboard). All numbers are seeded sample data that recompute as you change <code>tier</code>, <code>scope</code>, <code>date range</code>, <code>device</code> and <code>module</code>. Every metric maps to a formula and instrumented events in the specification (§6–§7). Layout adapted from PostHog Web/Product Analytics; styled in Anthropic brand colours (Poppins / Lora, orange&nbsp;#d97757).
+  </div>
+</div>
+
+<script>
+/* ---------- seeded RNG ---------- */
+function hashStr(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function rngFor(key){return mulberry32(hashStr(key))}
+
+/* ---------- data model ---------- */
+const SITES=[
+  {id:'bkc',   name:'Mumbai — BKC Tower',     region:'West',  seats:120},
+  {id:'powai', name:'Mumbai — Powai Campus',  region:'West',  seats:85},
+  {id:'pune',  name:'Pune — Hinjewadi',       region:'West',  seats:70},
+  {id:'blr',   name:'Bengaluru — Whitefield', region:'South', seats:95},
+  {id:'del',   name:'Delhi — Aerocity',       region:'North', seats:60},
+  {id:'ggn',   name:'Gurgaon — Cyber Hub',    region:'North', seats:55},
+];
+const REGIONS=['West','South','North'];
+const MODULES=[
+  {key:'helpdesk',name:'Helpdesk',bucket:'Maintenance',flows:[
+    {key:'helpdesk.ticket_create',label:'Ticket creation',flagship:true,steps:['Open form','Category','Details','Attachment','Submit']},
+    {key:'helpdesk.ticket_find',label:'Find ticket',steps:['Open list','Search','Open result']},
+    {key:'helpdesk.triage_assign',label:'Triage & assign',steps:['Open ticket','Set priority','Assign']},
+    {key:'helpdesk.ticket_close',label:'Ticket close',steps:['Open ticket','Resolution note','Close']},
+  ], paths:['/maintenance/ticket','/maintenance/ticket/new','/maintenance/ticket/list','/maintenance/asset','/mobile/ticket']},
+  {key:'ppm',name:'PPM',bucket:'Maintenance',flows:[
+    {key:'ppm.schedule_create',label:'Schedule creation',flagship:true,steps:['Open wizard','Asset/scope','Frequency','Checklist','Publish']},
+    {key:'ppm.task_execute',label:'Task execution',flagship:false,steps:['Open task','Checklist','Readings/photos','Complete']},
+    {key:'ppm.reschedule',label:'Reschedule',steps:['Open task','Pick date','Confirm']},
+  ], paths:['/vas/tasks','/vas/schedule','/vas/task/execute','/mobile/lmc','/vas/calendar']},
+  {key:'audit',name:'Audit',bucket:'Maintenance',flows:[
+    {key:'audit.schedule_create',label:'Audit setup',flagship:true,steps:['Open wizard','Template','Scope','Schedule']},
+    {key:'audit.conduct',label:'Conduct audit',flagship:false,steps:['Open audit','Questions','Evidence','Submit']},
+    {key:'audit.template_use',label:'Template use',steps:['Open templates','Select','Apply']},
+  ], paths:['/audit/list','/audit/conduct','/audit/template','/mobile/audit','/audit/report']},
+  {key:'assets',name:'Assets',bucket:'Maintenance',flows:[
+    {key:'assets.register',label:'Asset registration',flagship:true,steps:['Open form','Identity','Location','Specs','Save']},
+    {key:'assets.detail_complete',label:'Detail enrichment',steps:['Open asset','Config tab','Save']},
+    {key:'assets.status_update',label:'Status update',steps:['Scan/Open','New status','Confirm']},
+  ], paths:['/maintenance/asset','/maintenance/asset/new','/maintenance/asset/detail','/mobile/asset-scan','/maintenance/asset/list']},
+  {key:'amc',name:'AMC',bucket:'Maintenance',flows:[
+    {key:'amc.create',label:'Contract creation',flagship:true,steps:['Open form','Vendor','Coverage','Schedule','Save']},
+    {key:'amc.visit_log',label:'Visit logging',flagship:false,steps:['Open contract','Log visit','Attach report','Save']},
+    {key:'amc.renew',label:'Renewal',steps:['Renewal prompt','Review terms','Confirm']},
+  ], paths:['/finance/amc','/finance/amc/new','/finance/amc/visit','/finance/pending-approvals','/finance/service-pr']},
+  {key:'incident',name:'Incident',bucket:'Safety',flows:[
+    {key:'incident.report',label:'Incident reporting',flagship:true,steps:['Open form','Time & building','Categorise','Assess','Describe & disclaim','Submit']},
+    {key:'incident.status_progress',label:'Status progression',flagship:false,steps:['Open incident','Update status','Comment','Save']},
+    {key:'incident.investigation',label:'Investigation & CAPA',steps:['Open edit','Root cause','Actions','Save']},
+    {key:'incident.find',label:'Find incident',steps:['Open list','Search/filter','Open result']},
+  ], paths:['/safety/incident','/safety/incident/add','/safety/incident/new-details','/safety/incident#analytics','/mobile/incident']},
+  {key:'permit',name:'Permit',bucket:'Safety',flows:[
+    {key:'permit.raise',label:'Permit raise',flagship:true,steps:['Open form','Basic details','Permit details','Attachments','Raise']},
+    {key:'permit.approve',label:'Approval decision',flagship:false,steps:['Open queue','Open item','Decide']},
+    {key:'permit.extend',label:'Extension',steps:['Open permit','Request extension','Extension approved']},
+    {key:'permit.close',label:'Closure',steps:['Open permit','Submit closure','Closure approved']},
+  ], paths:['/safety/permit','/safety/permit/add','/safety/permit/details','/safety/permit/pending-approvals','/safety/permit/checklist']},
+  {key:'msafe',name:'M-Safe',bucket:'Safety',flows:[
+    {key:'msafe.ext_approve',label:'External-user approval',flagship:true,steps:['Open external list','Review pending','Approve']},
+    {key:'msafe.reassign',label:'Reportees reassign',flagship:false,steps:['Open form','Fetch reportees','Select','Reassign']},
+    {key:'msafe.report_pull',label:'Report download',steps:['Open report','Generate','Download']},
+    {key:'msafe.hierarchy_check',label:'Hierarchy lookup',steps:['Open form','Enter identifier','Submit']},
+  ], paths:['/safety/m-safe','/safety/m-safe/non-fte-users','/safety/m-safe/reportees-reassign','/safety/report/msafe-detail-report','/safety/check-hierarchy-levels']},
+  {key:'procurement',name:'Procurement',bucket:'Finance',flows:[
+    {key:'procure.pr_create',label:'PR creation',flagship:true,steps:['Open form','Supplier details','Item details','Attach','Submit']},
+    {key:'procure.approve',label:'Approval decision',flagship:false,steps:['Open queue','Open item','Decide']},
+    {key:'procure.convert',label:'PR → PO/WO conversion',steps:['Open form','Select PR','Details','Submit']},
+    {key:'procure.grn',label:'Goods receipt (GRN)',steps:['Open form','Select PO','Quantities & batches','Submit']},
+    {key:'procure.draft_recover',label:'Draft recovery',steps:['Draft auto-saved','Reopen draft','Submit']},
+  ], paths:['/finance/material-pr','/finance/service-pr','/finance/po','/finance/wo','/finance/grn-srn','/finance/pending-approvals','/finance/auto-saved-pr']},
+  {key:'gdn',name:'GDN',bucket:'Finance',flows:[
+    {key:'gdn.raise',label:'GDN raise',flagship:true,steps:['Open form','Basic details','Inventory rows','Submit']},
+    {key:'gdn.approve',label:'Approval decision',flagship:false,steps:['Open queue','Open item','Decide']},
+    {key:'gdn.find',label:'Find GDN',steps:['Open list','Search/filter','Open result']},
+  ], paths:['/finance/gdn','/finance/gdn/request-add','/finance/gdn/pending-approvals','/finance/wbs']},
+  {key:'gatepass',name:'Gate Pass',bucket:'Security',flows:[
+    {key:'gatepass.inward_create',label:'Inward pass creation',flagship:true,steps:['Open form','Visitor details','Gate pass details','Item rows','Submit']},
+    {key:'gatepass.outward_create',label:'Outward pass creation',flagship:false,steps:['Open form','Returnable status','Expected return date','Item rows','Submit']},
+    {key:'gatepass.handover',label:'Returnable closure (handover)',steps:['Returnable submitted','Handover recorded']},
+    {key:'gatepass.find',label:'Find & review pass',steps:['Open list','Search/filter','Open detail']},
+  ], paths:['/security/gate-pass/inwards','/security/gate-pass/inwards/add','/security/gate-pass/outwards','/security/gate-pass/outwards/add']},
+  {key:'visitor',name:'Visitor',bucket:'Security',flows:[
+    {key:'visitor.lifecycle',label:'Visitor lifecycle',flagship:true,steps:['Visitor created','Approved','Checked in','Checked out']},
+    {key:'visitor.preregister',label:'Pre-registration',flagship:false,steps:['Open modal','Mobile lookup','Registration submitted']},
+    {key:'visitor.analytics',label:'Analytics consumption',steps:['Open analytics tab','Filter/interact','Export tile']},
+    {key:'visitor.staff_onboard',label:'Staff onboarding',steps:['Open form','Details & validity','Schedule grid','Submit']},
+  ], paths:['/security/visitor','/security/staff','/security/staff/add']},
+  {key:'vehicle',name:'Vehicle',bucket:'Security',flows:[
+    {key:'vehicle.log',label:'Vehicle in/out logging',flagship:true,steps:['Vehicle at gate','Entry logged','Exit logged']},
+    {key:'vehicle.register',label:'Vehicle registration',flagship:false,steps:['Open form','Slot & sticker','QR issued']},
+  ], paths:['/security/vehicle/r-vehicles','/security/vehicle/r-vehicles/history','/security/vehicle/g-vehicles']},
+  {key:'patrolling',name:'Patrolling',bucket:'Security',flows:[
+    {key:'patrol.execute',label:'Patrol execution',flagship:true,steps:['Slot scheduled','Checkpoint scanned','Checklist submitted','Completed in grace']},
+    {key:'patrol.setup',label:'Patrol setup',flagship:false,steps:['Open form','Validity & checklist','Schedule','Checkpoints','Submit']},
+    {key:'patrol.review',label:'Response review & escalation',steps:['Open response','Review missed','Raise ticket/incident']},
+  ], paths:['/security/patrolling','/security/patrolling/create','/security/patrolling/response']},
+  {key:'metering',name:'Metering & Readings',bucket:'Utility',flows:[
+    {key:'meter.reading_capture',label:'Reading capture',flagship:true,steps:['Meter configured','Reading recorded','Consumption derived']},
+    {key:'meter.reading_fix',label:'Reading correction',flagship:false,steps:['Open register','Open edit','Update']},
+    {key:'meter.import',label:'Bulk import',steps:['Open import','Upload file','Validated']},
+    {key:'meter.analytics',label:'Analytics view',steps:['Open analytics','Adjust range','Export chart']},
+  ], paths:['/utility/energy','/utility/water','/utility/stp','/utility/daily-readings']},
+  {key:'ubilling',name:'Utility Billing',bucket:'Utility',flows:[
+    {key:'ubill.generate',label:'Bill generation',flagship:true,steps:['Open wizard','Scope & consumption','Adjustment factor','Rate entered','Submit']},
+    {key:'ubill.compile',label:'Manual compile',flagship:false,steps:['Open form','Entity & period','Consumption & rate','Submit']},
+    {key:'ubill.close',label:'Billing status closure',steps:['Request created','Status advanced']},
+  ], paths:['/utility/utility-consumption','/utility/utility-consumption/generate-bill','/utility/utility-request','/utility/utility-request/add','/utility/ev-consumption','/utility/solar-generator']},
+];
+const ROLES=[
+  {key:'admin',name:'Admin',color:'var(--orange)',prov:0.06},
+  {key:'supervisor',name:'Supervisor',color:'var(--blue)',prov:0.18},
+  {key:'technician',name:'Technician',color:'var(--green)',prov:0.46},
+  {key:'occupant',name:'Occupant',color:'var(--midgray)',prov:0.30},
+];
+
+/* ---------- state ---------- */
+const state={tier:'t3',scope:'org',date:30,dev:'all',mod:'helpdesk',sessTab:'sessions',prev:true};
+
+/* ---------- user-defined benchmarks (set inside the app) ---------- */
+/* BENCHMARKS = live user targets; BM_DEFAULTS = suggested starting targets for rate metrics. */
+const BENCHMARKS={};
+const BM_DEFAULTS={U5:6,U6:20,A1:75,A2:30,A3:5,A5:60,A6:4,'F-adopt':50,'F-comp':70,'F-step':25};
+function getBM(id){ if(id in BENCHMARKS) return BENCHMARKS[id]; if(id in BM_DEFAULTS) return BM_DEFAULTS[id]; return null; }
+
+/* ---------- (i) "how this is calculated" explanations ----------
+   Plain-language but accurate. {t:title, f:the formula in words, d:what it means}.
+   Keyed by tile id (U, A and F-series) and by chart key (chart-dot-series). */
+const INFO={
+  /* ----- Layer 1: Traffic tiles ----- */
+  U1:{t:'Active Users (U1)',f:'Count of distinct employees who were active at least once in a 7-day window (weekly active users, WAU).',d:'Each person is counted only once no matter how many times they log in. This is your reach — how many of your team actually showed up in the week.'},
+  U2:{t:'Screen Views (U2)',f:'Total number of screens/pages opened across everyone, added up over the selected date range.',d:'Unlike active users, this counts every screen opened — so it climbs when people browse more deeply, not just when more people log in.'},
+  U3:{t:'Sessions (U3)',f:'Total number of visits in the selected range. A session is one continuous visit that ends after about 30 minutes of no activity.',d:'If one person logs in three separate times, that\'s three sessions. It measures how often people are coming back, not just how many people.'},
+  U5:{t:'Session Duration (U5)',f:'Total time everyone spent in the app ÷ total number of sessions.',d:'The average length of a single visit, shown in minutes and seconds. A session ends after ~30 minutes of inactivity, so this reflects real time-in-app.'},
+  U6:{t:'Bounce Rate (U6)',f:'Sessions where the person viewed only one screen and took no further action ÷ total sessions, shown as a percentage.',d:'A "bounce" is a visit where someone opened the app but left without doing anything. Lower is better — it means people are finding a reason to stay.'},
+  U8:{t:'Recently Online (U8)',f:'Count of distinct employees who were active in the last ~30 minutes.',d:'A near-live pulse of who is in the app right now. It moves up and down through the day rather than reflecting the whole date range.'},
+  /* ----- Layer 2: Adoption tiles ----- */
+  A1:{t:'Seat Utilisation (A1)',f:'Weekly active users (WAU) ÷ total seats (licences purchased), shown as a percentage.',d:'Of all the logins you pay for, what share are actually being used each week. A low number means licences are sitting idle.'},
+  A2:{t:'Stickiness (A2)',f:'Average daily active users ÷ monthly active users, shown as a percentage (DAU ÷ MAU).',d:'Of the people who use the app in a month, what share use it on any given day. Roughly 30% means the average active user shows up ~9 days a month. Higher means more habitual use.'},
+  A3:{t:'Adoption Trend (A3)',f:'The change in weekly active users now versus four weeks ago, expressed as a percentage rise or fall.',d:'A simple momentum reading: a positive number means more of your team is engaging than a month ago, a negative number means engagement is slipping.'},
+  A5:{t:'14-Day Activation (A5)',f:'New joiners who completed a first meaningful action within 14 days of getting access ÷ all new joiners in that window, as a percentage.',d:'"Activated" means a new user got past just logging in and actually did something real. It shows how well newcomers get off the ground in their first two weeks.'},
+  A6:{t:'Module Breadth (A6)',f:'Count of the core modules (Helpdesk, PPM, Audit, Assets, AMC) that had at least one action in the range, shown out of five.',d:'How much of the platform is genuinely in use versus sitting idle. A low number means people are only touching one or two areas of what they pay for.'},
+  /* ----- Layer 3: Workflow-pack tiles (for the module currently selected) ----- */
+  'F-adopt':{t:'Workflow Adoption (F-adopt)',f:'Active users who started at least one of this module\'s workflows ÷ active users who could use them, as a percentage.',d:'For the module you\'re viewing, how many of the relevant people have actually begun using its workflows at all.'},
+  'F-comp':{t:'Completion Rate (F-comp)',f:'Workflow runs that reached the final step ÷ workflow runs that were started, as a percentage.',d:'Of the processes people begin (e.g. a ticket, an audit), how many they carry through to the end rather than abandoning partway.'},
+  'F-step':{t:'Biggest Step Drop (F-step)',f:'At the single worst step in the workflow, the share of runs that fail to move on to the next step, as a percentage.',d:'Pinpoints the one place people most often get stuck or give up. Lower is better; a high number flags a confusing or heavy step to fix first.'},
+  'F-vol':{t:'Usage Volume (F-vol)',f:'Total count of workflow runs started in this module during the selected range.',d:'The raw amount of work flowing through the module — how many tickets, audits or tasks were kicked off. Shows overall throughput.'},
+  /* ----- Charts / analyses ----- */
+  'chart.usage':{t:'Usage over time',f:'For each day in the range, the solid line plots the chosen measure — Visitors (distinct active people), Views (screens opened) or Sessions (visits). The faint dashed line is the same measure for the immediately preceding period of equal length.',d:'Lets you spot the trend and compare it like-for-like against the previous period. The short dashed tail at the end is a simple projection of where the current pace is heading.'},
+  'chart.device':{t:'Device breakdown',f:'Sessions split by the device they came from — Desktop, Mobile and Tablet — each shown as a share of total sessions.',d:'Tells you how staff are reaching the tool. A heavy mobile/tablet share usually means people working on the move rather than at a desk.'},
+  'chart.adoptTrend':{t:'Adoption trend',f:'Weekly active users (WAU) plotted for each of the last 8 weeks, with the faint dashed line showing the prior comparison period.',d:'Shows whether more of your team is engaging week over week, or whether active usage has flattened or fallen.'},
+  'chart.growth':{t:'Growth accounting',f:'Each week, active users are split into New (first-ever active), Returning (active the prior week too) and Resurrected (came back after a gap) above the line, with Dormant (were active before, not this week) shown below the line.',d:'Explains why your active-user number moved: bars above zero are gains, the bar below zero is the loss. If losses regularly outweigh gains, growth is at risk.'},
+  'chart.retention':{t:'Retention cohorts',f:'People are grouped by the week they first became active (a "cohort"), shown one per row. Each cell reads what percentage of that group came back in week 0, week 1, week 2, and so on.',d:'Reading left to right shows how well each joining group sticks around. Darker cells mean more people retained. It answers "once people start, do they keep coming back?"'},
+  'chart.role':{t:'Usage by role',f:'Active people broken down by their role (Admin, Supervisor, Technician, Occupant), each shown as a share within the group.',d:'Shows which types of user are actually engaging. If a key role such as Technicians is under-represented, adoption may be uneven.'},
+  'chart.siteHealth':{t:'Site league table',f:'One row per site in scope, showing its seat utilisation (A1), its trend versus the prior period (A3), and flagship-workflow completion, ranked from lowest utilisation upward. Status flags a sudden drop, a site to watch, or a healthy site.',d:'A leaderboard to see which sites are adopting well and which are lagging or dropping and may need attention.'},
+  'chart.region':{t:'Region roll-up',f:'Figures aggregated to region level (West, South, North): number of sites, active users, seat utilisation (A1) and trend (A3), with a health status.',d:'The management-level summary — how adoption compares across regions before drilling into individual sites.'},
+  'chart.funnel':{t:'Workflow funnel',f:'For the flagship workflow of the selected module, the number of runs still present at each successive step, from start to finish. The percentage on each step is the drop from the step before it.',d:'Each bar is narrower than the one above because some runs drop off. The highlighted step is the single biggest drop — where people most often get stuck.'},
+  'chart.flowList':{t:'Flows in this module',f:'For every workflow in the module, its adoption (F-adopt), completion (F-comp) and volume (F-vol). A star marks the flagship flow.',d:'A per-workflow scorecard so you can see which specific processes are working and which are being ignored or abandoned.'},
+  'chart.path':{t:'Where people start',f:'The screen each session lands on first, listed with its Visitors, Views and Bounce rate. The small arrows show the change versus the previous period.',d:'Shows the most common entry points into the app — what people actually come to the tool to do first.'}
+};
+function infoHTML(key){
+  const i=INFO[key]; if(!i) return '';
+  return '<div class="ipt">'+i.t+'</div>'+
+    '<div class="ipf"><span class="ipfk">How it\'s calculated</span>'+i.f+'</div>'+
+    '<div class="ipd">'+i.d+'</div>';
+}
+
+/* ================= AI INSIGHTS (per chart) =================
+   Pluggable design: askAI() calls a real backend endpoint when one is
+   configured (window.FMMATRIX_AI_ENDPOINT); otherwise it returns a clearly
+   LABELLED, SIMULATED insight computed deterministically from the chart's own
+   on-screen data. Production is a one-function swap of askAI()'s transport.
+   The grounding context sent to any model is tenant-scoped and aggregated —
+   the same numbers already on screen, no PII, no cross-tenant data. */
+const AI_DATA={};                                   // per-chart snapshot, filled at render time
+window.FMMATRIX_AI_ENDPOINT=window.FMMATRIX_AI_ENDPOINT||null; // set to a URL to use a live model
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function _sum(a){return a.reduce((x,y)=>x+y,0);}
+function _chg(a,b){return b===0?0:Math.round((a-b)/b*100);}
+
+/* Grounding context — what a real model would receive (tenant-scoped, aggregated). */
+function buildAIContext(chartKey){
+  const i=INFO[chartKey]||{};
+  return {tenant:'(this tenant only)',chart:i.t||chartKey,metricDefinition:i.f||'',whatItMeans:i.d||'',
+    view:{tier:state.tier,scope:scopeLabel(),dateRangeDays:state.date,device:state.dev,module:state.mod},
+    data:AI_DATA[chartKey]||null};
+}
+
+/* Deterministic simulated insight, computed from the chart's real data. */
+function simInsight(chartKey){
+  const d=AI_DATA[chartKey]; const scope=scopeLabel();
+  if(!d) return {head:'No data is loaded for this view yet — widen the date range or change the scope filter and try again.',pts:[],sug:'',why:'',rec:''};
+  let head='',pts=[],sug='',why='',rec='';
+  switch(chartKey){
+    case 'chart.usage':{
+      const ct=_sum(d.cur),pt=_sum(d.prev),ch=_chg(ct,pt);
+      const pk=d.cur.indexOf(Math.max.apply(null,d.cur)),lo=d.cur.indexOf(Math.min.apply(null,d.cur));
+      head=d.measure.charAt(0).toUpperCase()+d.measure.slice(1)+' are '+(ch>=0?'up ':'down ')+Math.abs(ch)+'% versus the previous period across '+scope+'.';
+      pts=['This period totals ≈ '+fmtC(ct)+' against ≈ '+fmtC(pt)+' in the prior period of equal length.',
+           'Peak was '+d.labels[pk]+' ('+fmtC(d.cur[pk])+'); the quietest was '+d.labels[lo]+' ('+fmtC(d.cur[lo])+').',
+           ch>=0?'The recent trajectory is holding up.':'Momentum is softening toward the end of the range.'];
+      why='Session volume is the earliest adoption signal — a sustained move here shows up in every metric below within weeks.';
+      rec=ch<0?'Pinpoint the week the decline started, then use the role and site cards below to see who went quiet — target the biggest contributor with a re-engagement nudge this week.':'Protect the momentum: identify what changed recently (rollout, training, comms) and keep it running; set this level as the new baseline target.';
+      sug=ch<0?'which sites or roles are driving the drop?':'is this broad-based or concentrated in a few sites?'; break;}
+    case 'chart.device':{
+      const rows=d.rows.slice().sort((a,b)=>b[1]-a[1]),top=rows[0];
+      const mob=(d.rows.find(r=>r[0]==='Mobile')||['',0])[1]+(d.rows.find(r=>r[0]==='Tablet')||['',0])[1];
+      head=top[0]+' is the main way people reach the app ('+pct(top[1])+' of sessions) in '+scope+'.';
+      pts=['Mobile + tablet together are '+pct(mob)+' of sessions — a signal of field / on-the-move usage.',
+           'Desktop share: '+pct((d.rows.find(r=>r[0]==='Desktop')||['',0])[1])+'.'];
+      why='The device mix tells you where UX and training effort pays off — a mismatch between how staff should work and how they reach the app hides friction.';
+      rec=mob>=0.5?'Prioritise mobile-first workflows — QR/scan entry points and short forms — since most sessions happen on the move.':'A desktop-heavy mix for field-oriented teams suggests access friction — verify field staff have working mobile logins and know the app is on their phones.';
+      sug='should we prioritise mobile-friendly workflows?'; break;}
+    case 'chart.adoptTrend':{
+      const f=d.cur[0],l=d.cur[d.cur.length-1],ch=_chg(l,f);
+      head='Weekly active users are '+(ch>=0?'up ':'down ')+Math.abs(ch)+'% over the 8-week window in '+scope+'.';
+      pts=['Started around '+fmtC(f)+' active users and ended near '+fmtC(l)+'.',
+           ch>=0?'Engagement is trending in the right direction.':'Active usage is slipping — worth pairing with the growth-accounting view below.'];
+      why='Weekly active users is the headline adoption number — a slide here means paid seats going unused.';
+      rec=ch<0?'Open the growth-accounting card to see whether the leak is dormancy or weak new-user inflow, and target that side first.':'Lock in the gain: set the current level as the target on the KPI tile above and watch for regression.';
+      sug='what is causing the change week to week?'; break;}
+    case 'chart.growth':{
+      const w=d.weeks[d.weeks.length-1],gains=w.nw+w.res,losses=w.dorm;
+      head=(gains>losses?'Gains are outpacing losses':'Losses are outpacing new + resurrected users')+' in the latest week for '+scope+'.';
+      pts=['Latest week: '+w.nw+' new, '+w.res+' resurrected, '+w.ret+' returning, and '+w.dorm+' went dormant.',
+           gains>losses?'Net growth is positive for now.':'If this persists, the active-user base will shrink.'];
+      why='Growth composition shows whether adoption is self-sustaining or leaking — dormancy that outpaces gains shrinks the active base within weeks.';
+      rec=gains>losses?'Keep the onboarding cadence that is feeding new users, and watch the dormant line weekly for reversals.':'Run a win-back: identify the roles or sites going dormant and re-onboard them with a manager-led first workflow.';
+      sug='which roles or sites are going dormant?'; break;}
+    case 'chart.retention':{
+      const w1=d.cohorts.map(c=>c[1]).filter(x=>x!=null); const avg=w1.length?Math.round(_sum(w1)/w1.length):0;
+      head='About '+avg+'% of a joining group is still active one week after they start, in '+scope+'.';
+      pts=['Retention decays fastest in the first weeks, as is normal — the goal is to flatten that early curve.',
+           avg<50?'A sub-50% week-1 figure suggests onboarding isn\'t sticking.':'Week-1 retention is reasonably healthy.'];
+      why='Early retention decides whether onboarding converts to habit — rollout effort is lost if week 1 doesn\'t stick.';
+      rec=avg<50?'Add a guided first-week task — a manager-assigned checklist or ticket — so every joiner completes one real workflow in week one.':'Focus on flattening the curve after week 4 by tying a recurring duty (checklist, reading, report) to the app.';
+      sug='what happens to retention after week 4?'; break;}
+    case 'chart.role':{
+      const rs=d.roles.slice().sort((a,b)=>b.share-a.share),top=rs[0],bot=rs[rs.length-1];
+      head=top.name+' are the most engaged role ('+pct(top.share)+'), while '+bot.name+' are the least ('+pct(bot.share)+') in '+scope+'.';
+      pts=['A wide gap between roles means adoption is uneven — one group carries usage.',
+           'Lifting the lowest role ('+bot.name+') is usually the fastest way to raise overall engagement.'];
+      why='Uneven role adoption means usage is single-threaded — it depends on one group, and their turnover puts it at risk.';
+      rec='Lift the '+bot.name+' group first: assign them the workflows built for their role and set the expectation through their managers.';
+      sug='how do I re-engage the '+bot.name+' group?'; break;}
+    case 'chart.siteHealth':{
+      const rows=d.rows.slice().sort((a,b)=>a.util-b.util),weak=rows[0]; const drops=d.rows.filter(r=>r.drop);
+      head='The weakest site is '+weak.name+' ('+pct(weak.util)+' seat utilisation) in '+scope+'.';
+      pts=[drops.length?drops.length+' site(s) flagged a sudden drop: '+drops.map(r=>r.name).join(', ')+'.':'No sudden drops flagged this period.',
+           'Top and bottom sites differ by '+Math.round((rows[rows.length-1].util-weak.util)*100)+' points of utilisation.'];
+      why='Site spread shows whether adoption is a portfolio habit or a few champion sites — a sudden-drop flag is the earliest churn warning available.';
+      rec=drops.length?'Contact the flagged site(s) — '+drops.map(r=>r.name).join(', ')+' — this week; a sudden drop is a leading indicator, not noise.':'Pair '+weak.name+' with the strongest site in its region for a practice transfer.';
+      sug='what should '+weak.name+' focus on first?'; break;}
+    case 'chart.region':{
+      const rows=d.rows.slice().sort((a,b)=>b.util-a.util),best=rows[0],worst=rows[rows.length-1];
+      head=best.reg+' leads on adoption ('+pct(best.util)+'), '+worst.reg+' trails ('+pct(worst.util)+').';
+      pts=['Active users: '+rows.map(r=>r.reg+' '+fmtC(r.wau)).join(', ')+'.',
+           'The gap between best and worst region is '+Math.round((best.util-worst.util)*100)+' points.'];
+      why='Regional gaps compound: a trailing region drags portfolio utilisation and usually traces back to a handful of sites.';
+      rec='Drill into '+worst.reg+'\'s site table to find the dragging sites, and replicate '+best.reg+'\'s operating rhythm there.';
+      sug='which sites are dragging '+worst.reg+' down?'; break;}
+    case 'chart.funnel':{
+      const first=d.reaches[0],last=d.reaches[d.reaches.length-1],overall=Math.round((last/first)*100);
+      head='The biggest drop-off in "'+d.flowLabel+'" is a '+d.worstDrop+'% fall at "'+d.steps[d.worst]+'" in '+scope+'.';
+      pts=['Overall, '+overall+'% of started runs reach the final step ('+fmtC(last)+' of '+fmtC(first)+').',
+           'Fixing the "'+d.steps[d.worst]+'" step is the highest-leverage improvement.'];
+      why='Every drop at "'+d.steps[d.worst]+'" is started work that never finished — completion, not traffic, is what this workflow exists for.';
+      rec='Fix the "'+d.steps[d.worst]+'" step first: reduce form friction if it\'s an entry step, nudge or delegate if it\'s an approval, retrain if it\'s setup. One step, one action.';
+      sug='why do people drop at "'+d.steps[d.worst]+'"?'; break;}
+    case 'chart.flowList':{
+      const byA=d.rows.slice().sort((a,b)=>a.adopt-b.adopt),byC=d.rows.slice().sort((a,b)=>a.comp-b.comp);
+      head='"'+byA[0].label+'" has the lowest adoption ('+pct(byA[0].adopt)+') and "'+byC[0].label+'" the lowest completion ('+pct(byC[0].comp)+').';
+      pts=['Low adoption is a discovery/training problem; low completion is a friction problem — they need different fixes.',
+           'Highest-volume flow this period: "'+d.rows.slice().sort((a,b)=>b.vol-a.vol)[0].label+'".'];
+      why='Low adoption and low completion need different fixes — training won\'t remove friction, and UX polish won\'t create discovery.';
+      rec='Start with "'+byA[0].label+'": run a short role-targeted training push; then walk the funnel of "'+byC[0].label+'" to find its friction step.';
+      sug='is low adoption a training gap or a workflow-design gap?'; break;}
+    case 'chart.path':{
+      const byV=d.rows.slice().sort((a,b)=>b.vis-a.vis),byB=d.rows.slice().sort((a,b)=>b.bo-a.bo);
+      head='Most sessions start at "'+byV[0].path+'" ('+fmtC(byV[0].vis)+' visitors) in '+scope+'.';
+      pts=['"'+byB[0].path+'" has the highest bounce ('+pct(byB[0].bo,1)+') — people arrive but leave without acting.',
+           'The top entry point is a good candidate for surfacing key actions and nudges.'];
+      why='Entry pages are where habits form — high bounce on a work page means people arrive with intent and leave without acting.';
+      rec='On "'+byB[0].path+'", surface the primary action above the fold or shorten the path to it, then recheck the bounce next period.';
+      sug='how do I reduce the bounce on "'+byB[0].path+'"?'; break;}
+    default: head='Here is what this view shows for '+scope+'.'; }
+  return {head,pts,sug,why,rec};
+}
+
+/* Follow-up questions — keyword-routed, always grounded in the chart's data. */
+function simAnswer(chartKey,q){
+  const ins=simInsight(chartKey); const ql=q.toLowerCase(); const scope=scopeLabel();
+  const has=(...w)=>w.some(x=>ql.includes(x));
+  if(has('why','reason','cause','driver','driving'))
+    return 'From this view\'s data, the movement is associated with: '+ins.pts.join(' ')+' I can highlight what changed, but a dashboard shows correlation, not proof of cause — treat these as leads to verify with the team.';
+  if(has('which','where','who','site','region','role','worst','best','top','lowest','highest'))
+    return ins.head+' '+ins.pts.join(' ');
+  if(has('compare','vs','versus','previous','last','prior','trend','change'))
+    return ins.head+' The comparison shown is like-for-like against the immediately preceding period of equal length, for '+scope+'.';
+  if(has('target','benchmark','goal','on track'))
+    return 'This view isn\'t tied to a single KPI target — targets are set on the KPI tiles above. Relative to a healthy range, though: '+ins.head;
+  if(has('recommend','should','action','do','fix','improve','next','how'))
+    return ins.rec?('Recommendation, based on this data: '+ins.rec):('Suggested next step, based on this data: '+ins.pts.slice(-1)[0]);
+  return ins.head+' '+ins.pts.join(' ')+(ins.sug?(' You could also ask: "'+ins.sug+'"'):'');
+}
+
+/* One place that produces the response HTML (insight when no question, else answer).
+   Insight follows the fixed 3-part structure from the AI Insights requirement doc:
+   Analysis → Why it matters → Recommendation (+ one follow-up suggestion). */
+function aiRespond(chartKey,question){
+  if(!question){const i=simInsight(chartKey);
+    let h='<p class="ai-k">Analysis</p><p class="ai-lead">'+esc(i.head)+'</p>';
+    if(i.pts.length) h+='<ul>'+i.pts.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ul>';
+    if(i.why) h+='<p class="ai-k">Why it matters</p><p>'+esc(i.why)+'</p>';
+    if(i.rec) h+='<p class="ai-k">Recommendation</p><p>'+esc(i.rec)+'</p>';
+    if(i.sug) h+='<p class="ai-sug">Ask a follow-up, e.g. "'+esc(i.sug)+'"</p>'; return h;}
+  return '<p>'+esc(simAnswer(chartKey,question))+'</p>';
+}
+
+/* Structured live-endpoint response → same 3-part rendering (contract per
+   "AI Insights - Requirement and Prompt Library.md" §5.2). */
+function aiFmtStructured(j){
+  let h='';
+  if(j.analysis) h+='<p class="ai-k">Analysis</p><p>'+esc(j.analysis)+'</p>';
+  if(j.why_it_matters) h+='<p class="ai-k">Why it matters</p><p>'+esc(j.why_it_matters)+'</p>';
+  if(j.recommendation) h+='<p class="ai-k">Recommendation</p><p>'+esc(j.recommendation)+'</p>';
+  if(j.follow_up_suggestion) h+='<p class="ai-sug">Ask a follow-up, e.g. "'+esc(j.follow_up_suggestion)+'"</p>';
+  return h||'<p>(no response)</p>';
+}
+
+/* Conversation history for follow-ups — last 6 turns, reset per chart/panel. */
+let AI_HIST=[];
+
+/* Transport. Real endpoint if configured; otherwise simulated with slight latency.
+   Request contract per requirement doc §5.1: {context, question, history, chart_key}. */
+function askAI(chartKey,question,done){
+  const ctx=buildAIContext(chartKey);
+  if(window.FMMATRIX_AI_ENDPOINT){
+    fetch(window.FMMATRIX_AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({context:ctx,question:question||null,history:AI_HIST.slice(-6),chart_key:chartKey})})
+      .then(r=>r.json()).then(j=>{
+        const html=(j.analysis||j.recommendation)?aiFmtStructured(j):'<p>'+esc(j.answer||j.text||'(no response)')+'</p>';
+        AI_HIST.push({role:'assistant',text:html.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim()});
+        done(html);
+      })
+      .catch(()=>done('<p>Sorry — the insight service is unavailable right now. Please try again in a moment.</p>'));
+  } else { setTimeout(()=>{const html=aiRespond(chartKey,question);
+      AI_HIST.push({role:'assistant',text:html.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim()});
+      done(html);},420); }
+}
+
+/* ---------- scope resolution ---------- */
+function scopeSites(){
+  if(state.tier==='t1'){return SITES.filter(s=>s.id===state.scope);}
+  if(state.tier==='t2'){return SITES.filter(s=>s.region===state.scope);}
+  if(state.scope==='org') return SITES.slice();
+  return SITES.filter(s=>s.region===state.scope); // T3 drilled to region
+}
+function scopeKey(){return state.tier+'|'+state.scope+'|'+state.date+'|'+state.dev;}
+function scopeLabel(){
+  const s=scopeSites();
+  if(state.tier==='t1'){const site=s[0]; return site.name+' · '+site.region+' region · Site Manager view';}
+  if(state.tier==='t2'){return state.scope+' region · '+s.length+' sites · Regional view';}
+  if(state.scope==='org') return 'All sites · '+s.length+' sites · '+REGIONS.join(' / ')+' · Management view';
+  return state.scope+' region · '+s.length+' sites · Management (drilled)';
+}
+function seats(sites){return sites.reduce((a,s)=>a+s.seats,0);}
+function devFactor(){return state.dev==='all'?1:state.dev==='desktop'?0.63:0.37;}
+function dateFactor(){return state.date==7?0.34:state.date==30?1:2.6;}
+
+/* ---------- core metrics ---------- */
+function core(){
+  const sites=scopeSites(), key=scopeKey();
+  const r=rngFor(key);
+  const S=seats(sites)*(state.dev==='all'?1:1); // seats independent of device
+  const util=0.52+r()*0.36;                 // A1 seat utilisation
+  const WAU=Math.max(3,Math.round(S*util*devFactor()));
+  const MAU=Math.round(WAU*(1.18+r()*0.28));
+  const DAU=Math.round(WAU*(0.30+r()*0.20));
+  const stick=DAU/MAU;
+  const sessions=Math.round(WAU*(3.2+r()*4.5)*dateFactor());
+  const views=Math.round(sessions*(6+r()*9));
+  const vps=views/sessions;
+  const durSec=Math.round(210+r()*640);
+  const bounce=0.07+r()*0.20;
+  const live=Math.max(1,Math.round(DAU*(0.05+r()*0.10)));
+  const desktopShare=0.55+r()*0.20;
+  const activation=0.38+r()*0.42;
+  const dormant=Math.round((MAU-WAU)*(0.4+r()*0.4));
+  const breadthUsed=Math.max(2,Math.round(MODULES.length*(0.55+r()*0.4)));
+  // deltas vs previous period
+  const rp=rngFor(key+'|prev');
+  function d(){return (rp()*2-1);}
+  return {sites,S,util,WAU,MAU,DAU,stick,sessions,views,vps,durSec,bounce,live,desktopShare,activation,dormant,breadthUsed,
+    dVis:Math.round((d()*0.5+0.15)*100),dViews:Math.round((d()*0.5+0.12)*100),dSess:Math.round((d()*0.5+0.18)*100),
+    dDur:Math.round((d()*0.4-0.05)*100),dBounce:Math.round((d()*0.4)*100),dUtil:Math.round((d()*0.3+0.05)*100),
+    dStick:Math.round((d()*0.3)*100),dTrend:Math.round((d()*0.4+0.06)*100),dAct:Math.round((d()*0.4+0.04)*100)};
+}
+
+/* ---------- formatting ---------- */
+function fmtC(n){if(n>=100000)return Math.round(n/1000)+'K';if(n>=1000)return (n/1000).toFixed(2)+'K';return String(n);}
+function fmtDur(s){const m=Math.floor(s/60);return m+'m '+(s%60)+'s';}
+function pct(x,d){return (x*100).toFixed(d==null?0:d)+'%';}
+function arrow(delta,goodUp){const good=(delta>0)===(goodUp!==false); const cls=good?'up':'dn'; const a=delta>0?'↗':(delta<0?'↘':'→'); return '<span class="delta '+cls+'">'+a+(delta>0?'+':'')+delta+'%</span>';}
+function tArrow(delta,goodUp){const good=(delta>=0)===(goodUp!==false);const cls=delta===0?'flat':(good?'up':'dn');const a=delta>0?'↗':(delta<0?'↘':'→');return '<span class="arrow '+cls+'">'+a+'</span>';}
+
+/* ---------- charts (inline SVG) ---------- */
+function lineChart(cur,prev,opts){
+  opts=opts||{}; const W=640,H=240,pl=44,pr=14,pt=14,pb=26;
+  const all=cur.concat(prev||[]); const mx=Math.max.apply(null,all)*1.12||1;
+  const n=cur.length; const xw=(W-pl-pr)/(n-1);
+  const X=i=>pl+i*xw, Y=v=>pt+(H-pt-pb)*(1-v/mx);
+  function path(arr,dashFrom){let d='';for(let i=0;i<arr.length;i++){d+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(arr[i]).toFixed(1)+' ';}return d;}
+  let grid='';for(let g=0;g<=4;g++){const y=pt+(H-pt-pb)*g/4;const val=Math.round(mx*(1-g/4));grid+='<line x1="'+pl+'" y1="'+y+'" x2="'+(W-pr)+'" y2="'+y+'" stroke="#efece2" stroke-dasharray="3 4"/><text x="'+(pl-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="10" fill="#9b998f">'+fmtC(val)+'</text>';}
+  let xlab='';const step=Math.ceil(n/6);for(let i=0;i<n;i+=step){xlab+='<text x="'+X(i)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="#9b998f">'+(opts.labels?opts.labels[i]:i+1)+'</text>';}
+  // split current into solid + dashed tail (last segment projected)
+  const solid=cur.slice(0,n-1), tail=[cur[n-2],cur[n-1]];
+  let prevPath = (prev&&state.prev)?'<path d="'+path(prev)+'" fill="none" stroke="#b0aea5" stroke-width="2" stroke-dasharray="5 4" opacity=".8"/>':'';
+  const gid='lg'+(lineChart._uid=(lineChart._uid||0)+1);
+  let areaD='';for(let i=0;i<n-1;i++){areaD+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(cur[i]).toFixed(1)+' ';}
+  areaD+='L'+X(n-2).toFixed(1)+' '+(H-pb)+' L'+X(0).toFixed(1)+' '+(H-pb)+' Z';
+  const defs='<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0%" stop-color="#d97757" stop-opacity="0.18"/>'+
+    '<stop offset="100%" stop-color="#d97757" stop-opacity="0.02"/></linearGradient></defs>';
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'+defs+grid+prevPath+
+    '<path d="'+areaD+'" fill="url(#'+gid+')"/>'+
+    '<path d="'+path(cur.slice(0,n-1))+'" fill="none" stroke="var(--orange)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<path d="M'+X(n-2).toFixed(1)+' '+Y(cur[n-2]).toFixed(1)+' L'+X(n-1).toFixed(1)+' '+Y(cur[n-1]).toFixed(1)+'" fill="none" stroke="#b0aea5" stroke-width="2.6" stroke-dasharray="5 4"/>'+
+    '<circle cx="'+X(n-1)+'" cy="'+Y(cur[n-1])+'" r="6.4" fill="var(--orange)" opacity="0.16"/>'+
+    '<circle cx="'+X(n-1)+'" cy="'+Y(cur[n-1])+'" r="3.2" fill="var(--orange)"/></svg>';
+}
+function growthChart(weeks){
+  const W=560,H=240,pl=34,pr=10,pt=14,pb=26; const n=weeks.length;
+  const maxUp=Math.max.apply(null,weeks.map(w=>w.nw+w.ret+w.res));
+  const maxDn=Math.max.apply(null,weeks.map(w=>w.dorm));
+  const mx=Math.max(maxUp,maxDn)*1.15||1;
+  const bw=(W-pl-pr)/n*0.6; const gap=(W-pl-pr)/n;
+  const zero=pt+(H-pt-pb)*(maxUp/(maxUp+maxDn||1));
+  const scaleUp=(zero-pt)/ (maxUp||1); const scaleDn=(H-pb-zero)/(maxDn||1);
+  let bars='';
+  weeks.forEach((w,i)=>{
+    const x=pl+i*gap+gap*0.2; let y=zero;
+    [['nw','var(--blue)'],['ret','var(--green)'],['res','var(--orange)']].forEach(seg=>{
+      const h=w[seg[0]]*scaleUp; y-=h; bars+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+Math.max(0,h)+'" rx="1.5" fill="'+seg[1]+'"/>';
+    });
+    const hd=w.dorm*scaleDn; bars+='<rect x="'+x+'" y="'+zero+'" width="'+bw+'" height="'+Math.max(0,hd)+'" rx="1.5" fill="var(--red)" opacity=".92"/>';
+    bars+='<text x="'+(x+bw/2)+'" y="'+(H-8)+'" text-anchor="middle" font-size="9.5" fill="#9b998f">W'+(i+1)+'</text>';
+  });
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'"><line x1="'+pl+'" y1="'+zero+'" x2="'+(W-pr)+'" y2="'+zero+'" stroke="#c9c6ba"/>'+bars+'</svg>';
+}
+
+/* ---------- series generators ---------- */
+function series(key,base,n,vol){const r=rngFor(key);const out=[];let v=base*(0.7+r()*0.2);for(let i=0;i<n;i++){v=Math.max(base*0.25, v*(1+(r()-0.45)*vol));out.push(Math.round(v));}
+  // ensure last point trends toward base
+  return out;}
+function dayLabels(n){const out=[];const now=new Date(2026,6,3);for(let i=n-1;i>=0;i--){const dd=new Date(now);dd.setDate(now.getDate()-i);out.push((dd.getMonth()+1)+'/'+dd.getDate());}return out;}
+
+/* ---------- renderers ---------- */
+/* tile(o): o={id,label,disp,delta,goodUp,sub,raw,unit}
+   Each tile carries a user-editable benchmark: type a target -> live On/Off-target status. */
+function tile(o){
+  const t=getBM(o.id); const unit=o.unit||'';
+  let badge;
+  if(t==null||isNaN(t)){ badge='<span class="bb unset">set a target</span>'; }
+  else { const met=(o.goodUp!==false)? o.raw>=t : o.raw<=t; badge='<span class="bb '+(met?'met':'miss')+'">'+(met?'✓ on target':'✕ off target')+'</span>'; }
+  const bm='<div class="bm"><span class="bl">Target</span>'+
+    '<input class="bmin" type="text" inputmode="decimal" data-bm="'+o.id+'" value="'+(t==null||isNaN(t)?'':t)+'" placeholder="—" title="Set your own target for this KPI">'+
+    (unit?'<span class="bu">'+unit+'</span>':'')+badge+'</div>';
+  const ib=(o.id in INFO)?'<button class="info-btn" data-info="'+o.id+'" title="How this is calculated" aria-label="How this is calculated">i</button>':'';
+  return '<div class="tile">'+ib+'<div class="lbl">'+o.label+'</div><div class="val">'+o.disp+'</div>'+
+    (o.delta!=null?arrow(o.delta,o.goodUp):'')+(o.sub?'<div class="sub2">'+o.sub+'</div>':'')+bm+'</div>';
+}
+
+function renderTraffic(c){
+  const days=state.date; const lab=dayLabels(days>30?30:days);
+  document.getElementById('trafficTiles').innerHTML=[
+    tile({id:'U1',label:'Active Users (U1)',disp:fmtC(c.WAU),delta:c.dVis,goodUp:true,sub:'weekly active',raw:c.WAU}),
+    tile({id:'U2',label:'Screen Views (U2)',disp:fmtC(c.views),delta:c.dViews,goodUp:true,sub:'total',raw:c.views}),
+    tile({id:'U3',label:'Sessions (U3)',disp:fmtC(c.sessions),delta:c.dSess,goodUp:true,sub:'in period',raw:c.sessions}),
+    tile({id:'U5',label:'Session Duration (U5)',disp:fmtDur(c.durSec),delta:c.dDur,goodUp:true,sub:'average',raw:+(c.durSec/60).toFixed(1),unit:'min'}),
+    tile({id:'U6',label:'Bounce Rate (U6)',disp:pct(c.bounce),delta:c.dBounce,goodUp:false,sub:'lower is better',raw:+(c.bounce*100).toFixed(1),unit:'%'}),
+    tile({id:'U8',label:'Recently Online (U8)',disp:String(c.live),delta:null,goodUp:true,sub:'active last 30 min',raw:c.live}),
+  ].join('');
+  // chart
+  const base=state.sessTab==='visitors'?c.WAU/4:state.sessTab==='views'?c.views/(days>30?30:days):c.sessions/(days>30?30:days);
+  const cur=series(scopeKey()+'|'+state.sessTab,base,lab.length,0.5);
+  const prev=series(scopeKey()+'|'+state.sessTab+'|p',base*0.82,lab.length,0.5);
+  document.getElementById('sessChart').innerHTML=lineChart(cur,prev,{labels:lab});
+  document.getElementById('sessRange').textContent='Last '+days+' days'+(state.prev?' · vs previous period':'');
+  AI_DATA['chart.usage']={measure:state.sessTab,cur:cur.slice(),prev:prev.slice(),labels:lab.slice(),days:days};
+  // device bars
+  const ds=c.desktopShare, mob=state.dev==='mobile'?1:state.dev==='desktop'?0:(1-ds);
+  const rows=[['Desktop',state.dev==='mobile'?0:ds,'var(--blue)'],['Mobile',state.dev==='desktop'?0:(1-ds)*0.86,'var(--orange)'],['Tablet',state.dev==='desktop'?0:(1-ds)*0.14,'var(--green)']];
+  document.getElementById('deviceBars').innerHTML=rows.map(r=>'<div class="role"><div class="rn">'+r[0]+'</div><div class="rbar"><i style="width:'+Math.round(r[1]*100)+'%;background:'+r[2]+'"></i></div><div class="rv">'+pct(r[1])+'</div></div>').join('');
+  AI_DATA['chart.device']={rows:rows.map(r=>[r[0],r[1]])};
+  document.getElementById('liveKv').textContent=c.live;
+  document.getElementById('vpsKv').textContent=c.vps.toFixed(1);
+  document.getElementById('liveCount').innerHTML='<b>'+c.live+'</b>&nbsp;recently online';
+}
+
+function renderAdopt(c){
+  document.getElementById('adoptTiles').innerHTML=[
+    tile({id:'A1',label:'Seat Utilisation (A1)',disp:pct(c.util),delta:c.dUtil,goodUp:true,sub:fmtC(c.WAU)+' / '+c.S+' seats',raw:+(c.util*100).toFixed(1),unit:'%'}),
+    tile({id:'A2',label:'Stickiness (A2)',disp:pct(c.stick),delta:c.dStick,goodUp:true,sub:'DAU / MAU',raw:+(c.stick*100).toFixed(1),unit:'%'}),
+    tile({id:'A3',label:'Adoption Trend (A3)',disp:(c.dTrend>0?'+':'')+c.dTrend+'%',delta:null,goodUp:true,sub:'WAU vs 4 wks ago',raw:c.dTrend,unit:'%'}),
+    tile({id:'A5',label:'14-Day Activation (A5)',disp:pct(c.activation),delta:c.dAct,goodUp:true,sub:'of new joiners',raw:+(c.activation*100).toFixed(1),unit:'%'}),
+    tile({id:'A6',label:'Module Breadth (A6)',disp:c.breadthUsed+' / '+MODULES.length,delta:null,goodUp:true,sub:'modules in use',raw:c.breadthUsed}),
+  ].join('');
+  // adoption trend chart (8 weeks)
+  const cur=series(scopeKey()+'|wau',c.WAU,8,0.28);
+  const prev=series(scopeKey()+'|waup',c.WAU*0.8,8,0.28);
+  document.getElementById('adoptChart').innerHTML=lineChart(cur,prev,{labels:['W1','W2','W3','W4','W5','W6','W7','W8']});
+  AI_DATA['chart.adoptTrend']={cur:cur.slice(),prev:prev.slice()};
+  // growth accounting
+  const r=rngFor(scopeKey()+'|grw');const weeks=[];for(let i=0;i<6;i++){weeks.push({nw:Math.round(c.WAU*(0.05+r()*0.09)),ret:Math.round(c.WAU*(0.5+r()*0.2)),res:Math.round(c.WAU*(0.02+r()*0.05)),dorm:Math.round(c.WAU*(0.05+r()*0.1))});}
+  document.getElementById('growthChart').innerHTML=growthChart(weeks);
+  AI_DATA['chart.growth']={weeks:weeks.map(w=>({nw:w.nw,ret:w.ret,res:w.res,dorm:w.dorm}))};
+  // retention cohort
+  renderRetention();
+  // role bars
+  const roleShares=ROLES.map(role=>{const rr=rngFor(scopeKey()+'|role|'+role.key);return {name:role.name,share:0.35+rr()*0.55,color:role.color};});
+  document.getElementById('roleBars').innerHTML=roleShares.map(role=>'<div class="role"><div class="rn">'+role.name+'</div><div class="rbar"><i style="width:'+Math.round(role.share*100)+'%;background:'+role.color+'"></i></div><div class="rv">'+pct(role.share)+'</div></div>').join('');
+  AI_DATA['chart.role']={roles:roleShares.map(r2=>({name:r2.name,share:r2.share}))};
+  document.getElementById('breadthKv').textContent=c.breadthUsed+' / '+MODULES.length;
+  document.getElementById('dormantKv').textContent=c.dormant;
+  document.getElementById('activationKv').textContent=pct(c.activation);
+}
+
+function renderRetention(){
+  const r=rngFor(scopeKey()+'|ret');const rows=6,cols=8;let html='<table class="rt"><thead><tr><th class="lbl">Cohort</th>';for(let w=0;w<cols;w++)html+='<th>Week '+w+'</th>';html+='</tr></thead><tbody>';
+  const now=new Date(2026,6,3); const cohorts=[];
+  for(let i=0;i<rows;i++){const dd=new Date(now);dd.setDate(now.getDate()-(rows-i)*7);html+='<tr><td class="lbl">'+(dd.getMonth()+1)+'/'+dd.getDate()+'</td>';
+    let base=1; const curve=[];for(let w=0;w<cols;w++){if(w> (cols-1)-(rows-1-i)){html+='<td style="background:#f6f4ec;color:#c9c6ba">·</td>';curve.push(null);continue;}
+      let v; if(w===0)v=1; else {base=base*(0.55+r()*0.28); v=base;} const val=w===0?100:Math.round(v*100); curve.push(val);
+      const t=val/100; const bg='rgba(217,119,87,'+(0.12+t*0.8).toFixed(2)+')'; const col=t>0.55?'#fff':'var(--ink)';
+      html+='<td style="background:'+bg+';color:'+col+'">'+val+'%</td>';}
+    cohorts.push(curve); html+='</tr>';}
+  html+='</tbody></table>';document.getElementById('retentionTbl').innerHTML=html;
+  AI_DATA['chart.retention']={cohorts:cohorts};
+}
+
+function renderSiteHealth(){
+  const card=document.getElementById('siteHealthCard');const regCard=document.getElementById('regionCard');
+  if(state.tier==='t1'){card.style.display='none';regCard.style.display='none';AI_DATA['chart.siteHealth']=null;AI_DATA['chart.region']=null;return;}
+  card.style.display='';
+  document.getElementById('healthTierBadge').textContent=state.tier==='t2'?'Regional':'Management';
+  const sites=scopeSites();
+  let html='<thead><tr><th>Site</th><th>Region</th><th>Seat util (A1)</th><th>Trend (A3)</th><th>Flagship completion</th><th>Status</th></tr></thead><tbody>';
+  const rowsData=sites.map(s=>{const r=rngFor('t2|'+s.region+'|'+state.date+'|'+state.dev);// deterministic per site
+    const rr=rngFor('site|'+s.id+'|'+state.date);const util=0.42+rr()*0.5;const trend=Math.round((rr()*2-1)*30);const comp=0.4+rr()*0.5;const peakDrop=rr()<0.22;
+    return {s,util,trend,comp,drop:peakDrop};});
+  rowsData.sort((a,b)=>a.util-b.util);
+  rowsData.forEach(d=>{const st=d.drop?['st-drop','⚑ Sudden drop']:(d.util<0.55?['st-watch','Watch']:['st-healthy','Healthy']);
+    html+='<tr><td style="font-weight:700">'+d.s.name+'</td><td>'+d.s.region+'</td>'+
+      '<td class="num"><span class="minibar"><i style="width:'+Math.round(d.util*100)+'%;background:'+(d.util<0.55?'var(--amber)':'var(--green)')+'"></i></span>'+pct(d.util)+'</td>'+
+      '<td class="num">'+tArrow(d.trend,true)+' '+(d.trend>0?'+':'')+d.trend+'%</td>'+
+      '<td class="num">'+pct(d.comp)+'</td>'+
+      '<td><span class="status '+st[0]+'">'+st[1]+'</span></td></tr>';});
+  html+='</tbody>';document.getElementById('siteHealthTbl').innerHTML=html;
+  AI_DATA['chart.siteHealth']={rows:rowsData.map(d=>({name:d.s.name,region:d.s.region,util:d.util,trend:d.trend,comp:d.comp,drop:d.drop}))};
+  // region table T3
+  if(state.tier==='t3'&&state.scope==='org'){regCard.style.display='';
+    let rh='<thead><tr><th>Region</th><th>Sites</th><th>Active users</th><th>Seat util (A1)</th><th>Trend (A3)</th><th>Status</th></tr></thead><tbody>';
+    const regData=REGIONS.map(reg=>{const rsites=SITES.filter(s=>s.region===reg);const rr=rngFor('region|'+reg+'|'+state.date);const util=0.45+rr()*0.42;const wau=Math.round(seats(rsites)*util);const trend=Math.round((rr()*2-1)*24);return {reg,sites:rsites.length,util,wau,trend};});
+    regData.forEach(rd=>{const st=rd.util<0.55?['st-watch','Watch']:['st-healthy','Healthy'];
+      rh+='<tr><td style="font-weight:700">'+rd.reg+'</td><td>'+rd.sites+'</td><td class="num">'+fmtC(rd.wau)+'</td><td class="num">'+pct(rd.util)+'</td><td class="num">'+tArrow(rd.trend,true)+' '+(rd.trend>0?'+':'')+rd.trend+'%</td><td><span class="status '+st[0]+'">'+st[1]+'</span></td></tr>';});
+    rh+='</tbody>';document.getElementById('regionTbl').innerHTML=rh;
+    AI_DATA['chart.region']={rows:regData};
+  } else {regCard.style.display='none';AI_DATA['chart.region']=null;}
+}
+
+function renderFlows(c){
+  const mod=MODULES.find(m=>m.key===state.mod);
+  document.getElementById('flowModName').textContent=(mod.bucket?mod.bucket+' · ':'')+mod.name;
+  const flagship=mod.flows.find(f=>f.flagship)||mod.flows[0];
+  document.getElementById('flowFunnelName').textContent=flagship.label+' funnel';
+  const r=rngFor(scopeKey()+'|'+mod.key);
+  const adopt=0.35+r()*0.5, comp=0.42+r()*0.45, vol=Math.round(c.WAU*(0.6+r()*2.4)*dateFactor());
+  const stepDrop=Math.round(15+r()*35);
+  const dAdopt=Math.round((r()*2-1)*20),dComp=Math.round((r()*2-1)*18),dStep=Math.round((r()*2-1)*15),dVol=Math.round((r()*2-1)*22);
+  document.getElementById('flowTiles').innerHTML=[
+    tile({id:'F-adopt',label:'Workflow Adoption (F-adopt)',disp:pct(adopt),delta:dAdopt,goodUp:true,sub:'active users who start',raw:+(adopt*100).toFixed(1),unit:'%'}),
+    tile({id:'F-comp',label:'Completion Rate (F-comp)',disp:pct(comp),delta:dComp,goodUp:true,sub:'finish once started',raw:+(comp*100).toFixed(1),unit:'%'}),
+    tile({id:'F-step',label:'Biggest Step Drop (F-step)',disp:stepDrop+'%',delta:dStep,goodUp:false,sub:'at worst step',raw:stepDrop,unit:'%'}),
+    tile({id:'F-vol',label:'Usage Volume (F-vol)',disp:fmtC(vol),delta:dVol,goodUp:true,sub:'runs in period',raw:vol}),
+  ].join('');
+  // funnel
+  const steps=flagship.steps;const fr=rngFor(scopeKey()+'|'+flagship.key+'|f');let reach=vol;const reaches=[reach];for(let i=1;i<steps.length;i++){reach=Math.round(reach*(0.62+fr()*0.3));reaches.push(reach);}
+  let worst=0,worstDrop=0;for(let i=1;i<reaches.length;i++){const dpct=(reaches[i-1]-reaches[i])/reaches[i-1];if(dpct>worstDrop){worstDrop=dpct;worst=i;}}
+  let fh='';for(let i=0;i<steps.length;i++){const w=reaches[i]/reaches[0]*100;const cls=(i===worst)?'bad':(i>0&&(reaches[i-1]-reaches[i])/reaches[i-1]>0.25?'warn':'');
+    const drop=i>0?Math.round((reaches[i-1]-reaches[i])/reaches[i-1]*100):0;
+    fh+='<div class="frow"><div class="fs">'+(i+1)+'. '+steps[i]+'</div><div class="fbar"><i class="'+cls+'" style="width:'+w.toFixed(1)+'%"></i></div><div class="fnum">'+fmtC(reaches[i])+(i>0?' <span class="fdrop">-'+drop+'%</span>':'')+'</div></div>';}
+  document.getElementById('flowFunnel').innerHTML=fh;
+  AI_DATA['chart.funnel']={flowLabel:flagship.label,steps:steps.slice(),reaches:reaches.slice(),worst:worst,worstDrop:Math.round(worstDrop*100)};
+  // flow list
+  let lh='<thead><tr><th>Flow</th><th>F-adopt</th><th>F-comp</th><th>F-vol</th></tr></thead><tbody>';
+  const flowRows=mod.flows.map(f=>{const rf=rngFor(scopeKey()+'|'+f.key);const a=0.25+rf()*0.6,co=0.4+rf()*0.5,v=Math.round(c.WAU*(0.4+rf()*2)*dateFactor());return {label:f.label,flagship:!!f.flagship,adopt:a,comp:co,vol:v};});
+  flowRows.forEach(f=>{lh+='<tr><td style="font-weight:700">'+(f.flagship?'★ ':'')+f.label+'</td><td class="num">'+pct(f.adopt)+'</td><td class="num">'+pct(f.comp)+'</td><td class="num">'+fmtC(f.vol)+'</td></tr>';});
+  lh+='</tbody>';document.getElementById('flowList').innerHTML=lh;
+  AI_DATA['chart.flowList']={rows:flowRows.map(f=>({label:f.label,flagship:f.flagship,adopt:f.adopt,comp:f.comp,vol:f.vol}))};
+  // path table
+  let ph='<thead><tr><th>Initial path</th><th class="num">Visitors</th><th class="num">Views</th><th class="num">Bounce</th></tr></thead><tbody>';
+  const pathRows=mod.paths.map(p=>{const rp=rngFor(scopeKey()+'|path|'+p);const vis=Math.round(c.WAU*(0.1+rp()*0.7));const vw=Math.round(vis*(4+rp()*40));const bo=0.02+rp()*0.7;const dv=Math.round((rp()*2-1)*30),dw=Math.round((rp()*2-1)*30),db=Math.round((rp()*2-1)*20);return {path:p,vis,vw,bo,dv,dw,db};});
+  pathRows.forEach(p=>{ph+='<tr><td style="font-weight:600">'+p.path+'</td><td class="num">'+fmtC(p.vis)+' '+tArrow(p.dv,true)+'</td><td class="num">'+fmtC(p.vw)+' '+tArrow(p.dw,true)+'</td><td class="num">'+pct(p.bo,1)+' '+tArrow(p.db,false)+'</td></tr>';});
+  ph+='</tbody>';document.getElementById('pathTbl').innerHTML=ph;
+  AI_DATA['chart.path']={rows:pathRows.map(p=>({path:p.path,vis:p.vis,vw:p.vw,bo:p.bo}))};
+}
+
+/* ---------- scope select + tier note ---------- */
+function fillScope(){
+  const sel=document.getElementById('scopeSel');let html='';
+  if(state.tier==='t1'){SITES.forEach(s=>html+='<option value="'+s.id+'">'+s.name+'</option>');if(!SITES.find(s=>s.id===state.scope))state.scope='bkc';}
+  else if(state.tier==='t2'){REGIONS.forEach(r=>html+='<option value="'+r+'">'+r+' region</option>');if(!REGIONS.includes(state.scope))state.scope='West';}
+  else {html+='<option value="org">All sites (org)</option>';REGIONS.forEach(r=>html+='<option value="'+r+'">↳ '+r+' region</option>');if(state.scope!=='org'&&!REGIONS.includes(state.scope))state.scope='org';}
+  sel.innerHTML=html;sel.value=state.scope;
+}
+function tierNote(){
+  const n=document.getElementById('tierNote');
+  const map={
+    t1:'<b>Site Manager view.</b> Scope locked to your single site. You see Traffic + Adoption for your team plus every module\'s workflow drop-off. Cross-site comparison is not shown at this tier.',
+    t2:'<b>Regional view (inherits Site Manager).</b> Everything a Site Manager sees, rolled up across your region\'s sites — <b>plus</b> the site league table (A9) so you can spot which sites are disengaging. Drill a site to open its Site view.',
+    t3:'<b>Management view (inherits Regional + Site).</b> All lower-tier metrics for the whole organisation, <b>plus</b> the region roll-up and portfolio adoption health. Drill region → site → team.'
+  };
+  n.innerHTML='<span>▸</span><span>'+map[state.tier]+'</span>';
+}
+
+function renderModNav(){
+  const nav=document.getElementById('modNav');
+  const buckets=[...new Set(MODULES.map(m=>m.bucket))];   /* preserves declaration order */
+  const curBucket=(MODULES.find(m=>m.key===state.mod)||MODULES[0]).bucket;
+  const mods=MODULES.filter(m=>m.bucket===curBucket);
+  nav.innerHTML=
+    '<div class="mnav-buckets">'+buckets.map(b=>
+      '<button data-bkt="'+b+'"'+(b===curBucket?' class="on"':'')+'>'+b+
+      '<span class="mcount">'+MODULES.filter(m=>m.bucket===b).length+'</span></button>').join('')+'</div>'+
+    '<div class="mnav-mods"><div class="segbar">'+mods.map(m=>
+      '<button data-mod="'+m.key+'"'+(m.key===state.mod?' class="on"':'')+'>'+m.name+'</button>').join('')+'</div></div>';
+  nav.querySelectorAll('.mnav-buckets button').forEach(b=>b.onclick=()=>{
+    const first=MODULES.find(m=>m.bucket===b.dataset.bkt);
+    state.mod=first.key;renderModNav();renderFlows(core());
+  });
+  nav.querySelectorAll('.mnav-mods button').forEach(b=>b.onclick=()=>{state.mod=b.dataset.mod;renderModNav();renderFlows(core());});
+}
+
+/* ---------- (i) info buttons on each chart/analysis card ---------- */
+/* Maps a chart container id -> INFO key. We append the (i) button to the card
+   header so every analysis carries a "how this is calculated" explanation. */
+const CARD_INFO={sessChart:'chart.usage',deviceBars:'chart.device',adoptChart:'chart.adoptTrend',
+  growthChart:'chart.growth',retentionTbl:'chart.retention',roleBars:'chart.role',
+  siteHealthTbl:'chart.siteHealth',regionTbl:'chart.region',flowFunnel:'chart.funnel',
+  flowList:'chart.flowList',pathTbl:'chart.path'};
+function mountCardInfos(){
+  Object.keys(CARD_INFO).forEach(cid=>{
+    const el=document.getElementById(cid); if(!el) return;
+    const card=el.closest('.card'); if(!card) return;
+    if(!card.querySelector(':scope > .info-btn')){
+      const b=document.createElement('button');
+      b.className='info-btn'; b.setAttribute('data-info',CARD_INFO[cid]);
+      b.setAttribute('title','How this is calculated'); b.setAttribute('aria-label','How this is calculated');
+      b.textContent='i'; card.appendChild(b);
+    }
+    if(!card.querySelector(':scope > .ai-btn')){
+      const a=document.createElement('button');
+      a.className='ai-btn'; a.setAttribute('data-ai',CARD_INFO[cid]);
+      a.setAttribute('title','Generate insight with AI'); a.setAttribute('aria-label','Generate insight with AI');
+      a.innerHTML='<span class="sp">✦</span><span class="lbl-ai">Insight</span>'; card.appendChild(a);
+    }
+  });
+}
+
+/* ---------- master render ---------- */
+function renderAll(){
+  fillScope();tierNote();
+  document.getElementById('scopeLabel').textContent=scopeLabel();
+  const c=core();
+  renderTraffic(c);renderAdopt(c);renderSiteHealth();renderModNav();renderFlows(c);
+  mountCardInfos();
+}
+
+/* ---------- wiring ---------- */
+document.getElementById('tierSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  state.tier=b.dataset.tier;document.querySelectorAll('#tierSeg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  fillScope();renderAll();
+});
+document.getElementById('scopeSel').onchange=e=>{state.scope=e.target.value;renderAll();};
+document.getElementById('dateSel').onchange=e=>{state.date=+e.target.value;renderAll();};
+document.getElementById('devToggle').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  state.dev=b.dataset.dev;document.querySelectorAll('#devToggle button').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderAll();});
+document.getElementById('sessTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  state.sessTab=b.dataset.s;document.querySelectorAll('#sessTabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderTraffic(core());});
+document.getElementById('prevBtn').onclick=()=>{state.prev=!state.prev;const el=document.getElementById('prevBtn');el.classList.toggle('toggle-on',state.prev);el.innerHTML='<span class="ic">⟲</span> Previous period '+(state.prev?'✓':'');renderTraffic(core());};
+
+/* self-defined benchmarks: user types a target into any KPI tile -> live On/Off-target status */
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t&&t.classList&&t.classList.contains('bmin')){
+    const id=t.getAttribute('data-bm');const v=t.value.trim();
+    BENCHMARKS[id]=(v===''?null:parseFloat(v));
+    renderAll();
+  }
+});
+
+/* ---------- (i) explain-this-metric popover ---------- */
+const infoPop=document.createElement('div'); infoPop.className='info-pop'; infoPop.id='infoPop';
+document.body.appendChild(infoPop);
+let infoOpenFor=null;
+function closeInfoPop(){ infoPop.style.display='none'; infoOpenFor=null; }
+function openInfoPop(btn){
+  const key=btn.getAttribute('data-info'); const html=infoHTML(key);
+  if(!html){ closeInfoPop(); return; }
+  infoPop.innerHTML=html; infoPop.style.display='block'; infoOpenFor=btn;
+  // position: prefer below-left of the button, keep on-screen
+  const r=btn.getBoundingClientRect(); const pw=infoPop.offsetWidth, ph=infoPop.offsetHeight; const gap=8;
+  let left=r.right-pw; if(left<10) left=10; if(left+pw>window.innerWidth-10) left=window.innerWidth-pw-10;
+  let top=r.bottom+gap; if(top+ph>window.innerHeight-10) top=r.top-ph-gap; if(top<10) top=10;
+  infoPop.style.left=left+'px'; infoPop.style.top=top+'px';
+}
+document.addEventListener('click',e=>{
+  const btn=e.target.closest && e.target.closest('.info-btn');
+  if(btn){ e.stopPropagation(); if(infoOpenFor===btn){closeInfoPop();} else {openInfoPop(btn);} return; }
+  if(infoOpenFor && !e.target.closest('.info-pop')) closeInfoPop();
+});
+window.addEventListener('scroll',()=>{ if(infoOpenFor) closeInfoPop(); },true);
+window.addEventListener('resize',()=>{ if(infoOpenFor) closeInfoPop(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&infoOpenFor) closeInfoPop(); });
+
+/* ---------- ✦ AI insight panel ---------- */
+const aiBackdrop=document.createElement('div'); aiBackdrop.className='ai-backdrop'; aiBackdrop.id='aiBackdrop';
+const aiPanel=document.createElement('div'); aiPanel.className='ai-panel'; aiPanel.id='aiPanel';
+aiPanel.innerHTML=
+  '<div class="ai-head"><div><div class="ai-h-t"><span class="sp">✦</span><span id="aiTitle"></span></div><div class="ai-h-s" id="aiSub"></div></div><button class="ai-x" id="aiClose" aria-label="Close">✕</button></div>'+
+  '<div class="ai-sim" id="aiSim"><span>✦</span><span>Simulated insight (demo). Connect an AI endpoint to enable live answers — the wiring is already in place.</span></div>'+
+  '<div class="ai-body" id="aiBody"></div>'+
+  '<div class="ai-chips" id="aiChips"></div>'+
+  '<div class="ai-foot"><textarea class="ai-input" id="aiInput" rows="1" placeholder="Ask a question about this chart…"></textarea><button class="ai-send" id="aiSend">Ask</button></div>';
+document.body.appendChild(aiBackdrop); document.body.appendChild(aiPanel);
+const aiTitle=aiPanel.querySelector('#aiTitle'),aiSub=aiPanel.querySelector('#aiSub'),aiSim=aiPanel.querySelector('#aiSim'),
+      aiBody=aiPanel.querySelector('#aiBody'),aiChips=aiPanel.querySelector('#aiChips'),aiInput=aiPanel.querySelector('#aiInput'),aiSend=aiPanel.querySelector('#aiSend');
+let aiChart=null,aiSpot=null;
+/* Bring the clicked chart into the space left of the panel (visual clone, smooth rise-in). */
+function showSpot(chartKey){
+  hideSpot();
+  const cid=Object.keys(CARD_INFO).find(k=>CARD_INFO[k]===chartKey); if(!cid) return;
+  const el=document.getElementById(cid); const card=el&&el.closest('.card'); if(!card||card.style.display==='none') return;
+  aiSpot=document.createElement('div'); aiSpot.className='ai-spot';
+  const clone=card.cloneNode(true);
+  const tag=document.createElement('div'); tag.className='ai-spot-tag'; tag.textContent='Chart in focus';
+  clone.appendChild(tag);
+  aiSpot.appendChild(clone); document.body.appendChild(aiSpot);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ if(aiSpot) aiSpot.classList.add('open'); }));
+}
+function hideSpot(){ if(aiSpot){ aiSpot.remove(); aiSpot=null; } }
+function aiAddMsg(role,html){ const m=document.createElement('div'); m.className='ai-msg '+role; m.innerHTML=html; aiBody.appendChild(m); aiBody.scrollTop=aiBody.scrollHeight; return m; }
+function aiReplaceLastBot(html){ const bots=aiBody.querySelectorAll('.ai-msg.bot'); const last=bots[bots.length-1]; if(last){ last.innerHTML=html; aiBody.scrollTop=aiBody.scrollHeight; } }
+function aiSetChips(chartKey){
+  const suggestions=[];
+  const ins=simInsight(chartKey);
+  if(ins&&ins.sug) suggestions.push(ins.sug.charAt(0).toUpperCase()+ins.sug.slice(1));
+  ['Why did this change?','Which sites or roles stand out?','What should I do next?'].forEach(s=>{if(suggestions.length<4)suggestions.push(s);});
+  aiChips.innerHTML=suggestions.map(s=>'<button class="ai-chip">'+esc(s)+'</button>').join('');
+  aiChips.querySelectorAll('.ai-chip').forEach(c=>c.onclick=()=>{ aiInput.value=c.textContent; aiSendMsg(); });
+}
+function openAI(chartKey){
+  aiChart=chartKey; AI_HIST=[]; const ctx=buildAIContext(chartKey);
+  aiTitle.textContent=ctx.chart; aiSub.textContent=ctx.view.scope+' · last '+ctx.view.dateRangeDays+' days';
+  aiSim.style.display=window.FMMATRIX_AI_ENDPOINT?'none':'flex';
+  aiBody.innerHTML=''; aiSetChips(chartKey);
+  aiAddMsg('bot','<span class="ai-typing">Generating insight…</span>');
+  aiPanel.classList.add('open'); aiBackdrop.classList.add('open');
+  showSpot(chartKey);
+  askAI(chartKey,null,html=>aiReplaceLastBot(html));
+}
+function closeAI(){ aiPanel.classList.remove('open'); aiBackdrop.classList.remove('open'); hideSpot(); aiChart=null; AI_HIST=[]; }
+function aiSendMsg(){ const q=aiInput.value.trim(); if(!q||!aiChart) return; aiAddMsg('user',esc(q)); aiInput.value=''; aiAddMsg('bot','<span class="ai-typing">Thinking…</span>'); const ck=aiChart; AI_HIST.push({role:'user',text:q}); askAI(ck,q,html=>aiReplaceLastBot(html)); }
+document.addEventListener('click',e=>{ const btn=e.target.closest && e.target.closest('.ai-btn'); if(btn){ e.stopPropagation(); openAI(btn.getAttribute('data-ai')); } });
+aiPanel.querySelector('#aiClose').onclick=closeAI;
+aiBackdrop.onclick=closeAI;
+aiSend.onclick=aiSendMsg;
+aiInput.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); aiSendMsg(); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&aiPanel.classList.contains('open')) closeAI(); });
+
+renderAll();
+
+/* ===== Motion — scroll-reveal entrance (respects reduced motion) ===== */
+(function(){
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const targets=[...document.querySelectorAll('.wrap > .section, .footer')];
+  targets.forEach(el=>el.classList.add('reveal'));
+  const io=new IntersectionObserver(entries=>{
+    entries.forEach(en=>{if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}});
+  },{threshold:0.06,rootMargin:'0px 0px -4% 0px'});
+  targets.forEach(el=>io.observe(el));
+  /* safety net: ensure nothing stays hidden (print, embedded views, odd viewports) */
+  setTimeout(()=>targets.forEach(el=>el.classList.add('in')),3000);
+})();
+</script>
+</body>
+</html>

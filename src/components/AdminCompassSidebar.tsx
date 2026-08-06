@@ -17,6 +17,7 @@ import {
   LineChart,
   BarChart3,
   Users,
+  Briefcase,
 } from "lucide-react";
 
 // Module-based navigation structures for Admin Compass
@@ -29,10 +30,11 @@ const adminCompassNavigation: Record<string, any> = {
     icon: MessageSquare,
     href: "/admin-compass/daily-meeting",
   },
-  KPI: {
-    icon: BarChart3,
-    href: "/admin-compass/kpi",
-  },
+  // KPI module hidden
+  // KPI: {
+  //   icon: BarChart3,
+  //   href: "/admin-compass/kpi",
+  // },
   "Weekly Meetings": {
     icon: Trophy,
     href: "/admin-compass/weekly-meetings",
@@ -53,10 +55,14 @@ const adminCompassNavigation: Record<string, any> = {
     icon: FileText,
     href: "/admin-compass/systems-sops",
   },
-  // "Team Setup": {
-  //   icon: Users,
-  //   href: "/admin-compass/team-setup",
-  // },
+  "Team Setup": {
+    icon: Users,
+    href: "/admin-compass/team-setup",
+  },
+  Jobs: {
+    icon: Briefcase,
+    href: "/admin-compass/jobs",
+  },
 };
 
 export const AdminCompassSidebar: React.FC = () => {
@@ -137,8 +143,8 @@ export const AdminCompassSidebar: React.FC = () => {
                     key={key}
                     onClick={() => handleNavigation(sectionHref)}
                     className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors relative ${isActive(sectionHref)
-                        ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                        : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
+                      ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                      : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
                       }`}
                     title={isSidebarCollapsed ? key : ""}
                   >
@@ -184,8 +190,8 @@ export const AdminCompassSidebar: React.FC = () => {
                           key={item.name}
                           onClick={() => handleNavigation(item.href)}
                           className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors relative ${isActive(item.href)
-                              ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                              : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
+                            ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                            : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
                             }`}
                         >
                           {isActive(item.href) && (

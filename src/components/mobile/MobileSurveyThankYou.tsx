@@ -21,6 +21,7 @@ interface SurveyData {
   area_name: string;
   room_name: string | null;
   company_logo_url?: string | null;
+  org_id?: number | null;
   snag_checklist: {
     id: number;
     name: string;
@@ -38,9 +39,17 @@ export const MobileSurveyThankYou: React.FC = () => {
   const { mappingId } = useParams<{ mappingId: string }>();
   const state = location.state as LocationState;
 
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(2);
   const [surveyData, setSurveyData] = useState<SurveyData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Resolve org_id from URL params first, then sessionStorage, then the survey API response
+  const urlOrgId = new URLSearchParams(location.search).get("org_id");
+  const resolvedOrgId =
+    urlOrgId ||
+    sessionStorage.getItem("survey_org_id") ||
+    (surveyData?.org_id != null ? String(surveyData.org_id) : "");
+  const isOrg3 = resolvedOrgId === "3";
 
   // Fetch survey data for dynamic background
   useEffect(() => {
@@ -64,21 +73,27 @@ export const MobileSurveyThankYou: React.FC = () => {
     fetchSurveyData();
   }, [mappingId]);
 
-  //   useEffect(() => {
-  //     const timer = setInterval(() => {
-  //       setCountdown((prev) => {
-  //         if (prev <= 1) {
-  //           clearInterval(timer);
-  //           // Redirect back to survey landing page
-  //           navigate(`/mobile/survey/${mappingId}`, { replace: true });
-  //           return 0;
-  //         }
-  //         return prev - 1;
-  //       });
-  //     }, 5000);
+  // Auto-redirect after 10 seconds — only for org_id 3
+  useEffect(() => {
+    if (!isOrg3) return;
 
-  //     return () => clearInterval(timer);
-  //   }, [navigate, mappingId]);
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          // Preserve the original query string (public survey access mode
+          // relies on org_id being in the URL); fall back to the resolved org_id
+          const search =
+            location.search || (resolvedOrgId ? `?org_id=${resolvedOrgId}` : "");
+          navigate(`/mobile/survey/${mappingId}${search}`, { replace: true });
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isOrg3, navigate, mappingId, location.search, resolvedOrgId]);
 
   const getThankYouMessage = () => {
     if (state?.rating >= 3) {
@@ -190,6 +205,14 @@ export const MobileSurveyThankYou: React.FC = () => {
             ? "Thank you for taking the time to share your feedback."
             : "Helping us to improve!"}
         </p>
+
+        {/* Countdown — only for org_id 3 */}
+        {isOrg3 && (
+          <p className="text-xs text-gray-500 mt-2">
+            Redirecting to feedback in{" "}
+            <span className="font-semibold text-gray-700">{countdown}s</span>
+          </p>
+        )}
       </div>
     </div>
   );

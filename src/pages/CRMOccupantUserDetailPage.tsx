@@ -4,11 +4,13 @@ import { ArrowLeft, User, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TextField, MenuItem, FormControl, InputLabel, Select, Chip, Box } from '@mui/material';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 export const CRMOccupantUserDetailPage = () => {
   const {
     id
   } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
 
   // Sample user data - in real app, this would be fetched based on ID
@@ -52,6 +54,7 @@ export const CRMOccupantUserDetailPage = () => {
           </Button>
           <h1 className="text-2xl font-semibold">User Details</h1>
         </div>
+        {shouldShow("Occupant Users", "update") && (
         <Button
           variant="ghost"
           size="icon"
@@ -60,6 +63,7 @@ export const CRMOccupantUserDetailPage = () => {
         >
           <Edit className="h-5 w-5" />
         </Button>
+        )}
       </div>
 
       {/* Content */}

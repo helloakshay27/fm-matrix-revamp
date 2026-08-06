@@ -13,7 +13,6 @@ import {
   Loader2,
   Save,
   X,
-  Edit,
 } from "lucide-react";
 import {
   FormControl,
@@ -77,6 +76,7 @@ interface RosterFormData {
   departments: number[];
   shift: number | null;
   selectedEmployees: number[];
+  approverIds: number[];
   rosterType: "Permanent";
   active: boolean;
 }
@@ -103,6 +103,7 @@ export const RosterEditPage: React.FC = () => {
     departments: [],
     shift: null,
     selectedEmployees: [],
+    approverIds: [],
     rosterType: "Permanent",
     active: true,
   });
@@ -124,6 +125,8 @@ export const RosterEditPage: React.FC = () => {
   // Data states
   const [fmUsers, setFMUsers] = useState<FMUser[]>([]);
   const [filteredFMUsers, setFilteredFMUsers] = useState<FMUser[]>([]);
+  const [approverUsers, setApproverUsers] = useState<FMUser[]>([]);
+  const [loadingApproverUsers, setLoadingApproverUsers] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [currentLocation, setCurrentLocation] = useState<string>("");
@@ -167,6 +170,7 @@ export const RosterEditPage: React.FC = () => {
       fetchDepartments();
       fetchShifts();
       fetchCurrentLocation();
+      fetchApproverUsers();
     }
   }, [id]);
 
@@ -268,8 +272,45 @@ export const RosterEditPage: React.FC = () => {
             ? [Number(r.resource_id)]
             : [];
 
+      // Map approvers from the API response
+      const approverIds =
+        r.approvers && Array.isArray(r.approvers)
+          ? r.approvers.map((a: any) => (typeof a === "object" ? a.id : Number(a)))
+          : r.approver_ids && Array.isArray(r.approver_ids)
+            ? r.approver_ids.map(Number)
+            : [];
+
+      // The roster response already carries approver name/email (when returned as objects) —
+      // seed approverUsers with them so the select shows real names immediately, without
+      // waiting on (or being limited to) the separately-fetched, site-scoped approver_users list.
+      if (r.approvers && Array.isArray(r.approvers)) {
+        const approversFromRoster: FMUser[] = r.approvers
+          .filter((a: any) => typeof a === "object" && a !== null)
+          .map((a: any) => ({
+            id: a.id,
+            name: a.name || a.full_name || `${a.firstname || ""} ${a.lastname || ""}`.trim(),
+            email: a.email,
+          }));
+
+        if (approversFromRoster.length > 0) {
+          setApproverUsers((prev) => {
+            const merged = [...prev];
+            approversFromRoster.forEach((approver) => {
+              const existingIndex = merged.findIndex((u) => u.id === approver.id);
+              if (existingIndex === -1) {
+                merged.push(approver);
+              } else if (!merged[existingIndex].name && approver.name) {
+                merged[existingIndex] = { ...merged[existingIndex], name: approver.name };
+              }
+            });
+            return merged;
+          });
+        }
+      }
+
       console.log("🏢 Mapped Departments:", departments);
       console.log("👥 Mapped Employees:", selectedEmployees);
+      console.log("✅ Mapped Approvers:", approverIds);
       console.log("📊 Original departments data:", r.departments);
       console.log("📊 Original employees data:", r.employees);
 
@@ -282,6 +323,7 @@ export const RosterEditPage: React.FC = () => {
         departments,
         shift: r.user_shift_id ? Number(r.user_shift_id) : null,
         selectedEmployees,
+        approverIds,
         rosterType: r.allocation_type || "Permanent",
         active: r.active !== undefined ? r.active : true,
       });
@@ -490,6 +532,50 @@ export const RosterEditPage: React.FC = () => {
     }
   };
 
+  const fetchApproverUsers = async () => {
+    const siteId = selectedSite?.id || localStorage.getItem("selectedSiteId");
+    if (!siteId) return;
+    setLoadingApproverUsers(true);
+    try {
+      const apiUrl = `${API_CONFIG.BASE_URL}/pms/admin/user_roasters/approver_users?site_id=${siteId}`;
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: getAuthHeader(),
+        },
+      });
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      const users = Array.isArray(data) ? data : data.users || data.fm_users || [];
+      const siteApprovers: FMUser[] = users.map(
+        (user: { id: number; name?: string; email?: string }) => ({
+          id: user.id,
+          name: user.name || "",
+          email: user.email || "",
+        })
+      );
+
+      // Merge rather than replace: an approver already assigned on this roster (seeded from
+      // the roster response) may not be in the current site's approver list — keep it so its
+      // name doesn't disappear once this site-scoped fetch resolves.
+      setApproverUsers((prev) => {
+        const merged = [...siteApprovers];
+        prev.forEach((existing) => {
+          if (!merged.some((u) => u.id === existing.id)) {
+            merged.push(existing);
+          }
+        });
+        return merged;
+      });
+    } catch (error) {
+      console.error("Error fetching approver users:", error);
+    } finally {
+      setLoadingApproverUsers(false);
+    }
+  };
+
   // Handle day type selection
   const handleDayTypeChange = (type: "Weekdays" | "Weekends" | "Recurring") => {
     setFormData((prev) => ({
@@ -618,13 +704,14 @@ export const RosterEditPage: React.FC = () => {
   const handleInputChange = (field: keyof RosterFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-    // If departments are being changed, fetch filtered users and clear selected employees
+    // If departments are being changed, fetch filtered users and clear selected employees/approvers
     if (field === "departments") {
       const departmentIds = value as number[];
       setFormData((prev) => ({
         ...prev,
         [field]: departmentIds,
         selectedEmployees: [],
+        approverIds: [],
       }));
       fetchFilteredFMUsers(departmentIds);
     }
@@ -735,6 +822,7 @@ export const RosterEditPage: React.FC = () => {
         user_roaster: {
           ...baseUserRoaster,
           ...commonDateFields,
+          approver_ids: formData.approverIds.join(","),
         },
         department_id: formData.departments.map(String),
         no_of_days: "",
@@ -859,7 +947,7 @@ export const RosterEditPage: React.FC = () => {
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[#E5E0D3] text-brand flex items-center justify-center">
               <Edit className="w-5 h-5" />
             </div>
             <div>
@@ -1476,6 +1564,84 @@ export const RosterEditPage: React.FC = () => {
                 </p>
               </div>
             )}
+
+            {/* Approvers Dropdown */}
+            <div className="relative lg:col-span-2">
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ "& .MuiInputBase-root": fieldStyles }}
+              >
+                <InputLabel shrink>Approvers</InputLabel>
+                <MuiSelect
+                  multiple
+                  value={formData.approverIds}
+                  onChange={(e) =>
+                    handleInputChange(
+                      "approverIds",
+                      e.target.value as number[]
+                    )
+                  }
+                  input={<OutlinedInput notched label="Approvers" />}
+                  renderValue={(selected) => {
+                    const selectedArray = selected as number[];
+                    if (selectedArray.length === 0) return "";
+                    return selectedArray
+                      .map((value) => {
+                        const user = approverUsers.find(
+                          (u) => u.id === value
+                        );
+                        return user?.name || `User ${value}`;
+                      })
+                      .join(", ");
+                  }}
+                  displayEmpty
+                  disabled={loadingApproverUsers || isSubmitting}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                        overflow: "auto",
+                      },
+                    },
+                  }}
+                >
+                  {approverUsers.length > 0 ? (
+                    approverUsers.map((user) => (
+                      <MenuItem key={user.id} value={user.id}>
+                        <Checkbox
+                          checked={
+                            formData.approverIds.indexOf(user.id) > -1
+                          }
+                          sx={{
+                            color: "#D5DbDB",
+                            "&.Mui-checked": {
+                              color: "#C72030",
+                            },
+                          }}
+                        />
+                        <ListItemText
+                          primary={user.name || "No name available"}
+                          // secondary={user.email}
+                        />
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled>
+                      <ListItemText
+                        primary="No approvers available"
+                        sx={{ fontStyle: "italic", color: "#9ca3af" }}
+                      />
+                    </MenuItem>
+                  )}
+                </MuiSelect>
+                {loadingApproverUsers && (
+                  <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+                    <CircularProgress size={16} />
+                  </div>
+                )}
+              </FormControl>
+            </div>
           </div>
         </Section>
 
@@ -1586,8 +1752,8 @@ export const RosterEditPage: React.FC = () => {
       {/* Footer Actions */}
       <div className="flex items-center gap-3 justify-center pt-2">
         <Button
-          variant="destructive"
-          className="px-8"
+          variant="ghost"
+          className="fm-button-fix fm-button-brand px-4 py-2"
           onClick={handleSubmit}
           disabled={isSubmitting}
         >
@@ -1604,8 +1770,8 @@ export const RosterEditPage: React.FC = () => {
           )}
         </Button>
         <Button
-          variant="outline"
-          className="px-8"
+          variant="ghost"
+          className="fm-button-fix fm-button-brand px-4 py-2"
           onClick={handleCancel}
           disabled={isSubmitting}
         >

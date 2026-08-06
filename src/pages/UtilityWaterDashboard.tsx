@@ -39,6 +39,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
 
 // ── Same components as IncidentDashboard ──────────────────────────────────────
 import { AssetAnalyticsSelector } from "@/components/AssetAnalyticsSelector";
@@ -149,6 +150,12 @@ const SortableChartItem = ({
 export const UtilityWaterDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  
+  const { onUtilityWaterDashboardViewed } = useUtilityEvents();
+
+  useEffect(() => {
+    onUtilityWaterDashboardViewed();
+  }, [onUtilityWaterDashboardViewed]);
 
   // Redux state
   const {

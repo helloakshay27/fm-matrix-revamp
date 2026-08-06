@@ -1705,8 +1705,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Edit, Trash2, X } from 'lucide-react';
+import { Download, Edit, Trash2 } from 'lucide-react';
 import { toast } from "sonner";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import {
+  PermitTypeFilterDialog,
+  type PermitTypeFilters,
+} from "@/components/PermitTypeFilterDialog";
 // import { API_CONFIG, getAuthenticatedFetchOptions, getFullUrl } from '@/config/apiConfig';
 import {
   FormControl,
@@ -1874,6 +1880,9 @@ export const PermitSetupDashboard = () => {
   // Type
   const [permitType, setPermitType] = useState('');
   const [editingTypeId, setEditingTypeId] = useState<number | null>(null);
+  const [typeSearchTerm, setTypeSearchTerm] = useState('');
+  const [showTypeFilters, setShowTypeFilters] = useState(false);
+  const [typeFilters, setTypeFilters] = useState<PermitTypeFilters>({ name: '' });
 
   // Activity
   const [permitActivity, setPermitActivity] = useState('');
@@ -2265,6 +2274,46 @@ export const PermitSetupDashboard = () => {
     setPermitType('');
     setEditingTypeId(null);
   };
+
+  const permitTypeColumns: ColumnConfig[] = [
+    { key: 'name', label: 'Permit Type', sortable: true, defaultVisible: true },
+  ];
+
+  const filteredPermitTypes = useMemo(() => {
+    return permitTypes.filter((type) => {
+      const name = String(type.name || '').toLowerCase();
+      if (typeFilters.name && !name.includes(typeFilters.name.toLowerCase())) {
+        return false;
+      }
+      if (typeSearchTerm.trim()) {
+        return name.includes(typeSearchTerm.toLowerCase());
+      }
+      return true;
+    });
+  }, [permitTypes, typeFilters, typeSearchTerm]);
+
+  const renderPermitTypeActions = (type: { id: number; name: string }) => (
+    <div className="flex items-center justify-center gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0 text-brand hover:bg-brand-selected"
+        onClick={() => startEditType(type)}
+        title="Edit"
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0 text-black hover:bg-black/10"
+        onClick={() => deleteType(type.id)}
+        title="Delete"
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
+    </div>
+  );
 
   // ACTIVITY
   const handlePermitActivitySubmit = async (e: React.FormEvent) => {
@@ -2752,14 +2801,19 @@ export const PermitSetupDashboard = () => {
                 </div>
                 <div className="flex gap-2">
                   {editingTypeId && (
-                    <Button type="button" variant="ghost" onClick={cancelEditType} className="text-gray-700">
-                      <X className="w-4 h-4 mr-1" /> Cancel
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={cancelEditType}
+                      className="bg-white border-brand text-brand hover:bg-brand-selected hover:text-brand"
+                    >
+                      Cancel
                     </Button>
                   )}
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-brand text-white hover:bg-brand-hover px-4 py-2"
                   >
                     {isSubmitting ? (editingTypeId ? 'Updating...' : 'Submitting...') : (editingTypeId ? 'Update' : 'Submit')}
                   </Button>
@@ -2767,37 +2821,40 @@ export const PermitSetupDashboard = () => {
               </div>
             </form>
 
-            <div className="bg-white rounded-lg border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
-                    <TableHead className="font-semibold text-gray-900 ">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow><TableCell colSpan={2} className="text-center py-8 text-gray-500">Loading permit types...</TableCell></TableRow>
-                  ) : permitTypes.length === 0 ? (
-                    <TableRow><TableCell colSpan={2} className="text-center py-8 text-gray-500">No permit types found</TableCell></TableRow>
-                  ) : permitTypes.map((type) => (
-                    <TableRow key={type.id}>
-                      <TableCell className="py-4">{safeStr(type.name)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600" onClick={() => startEditType(type)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600" onClick={() => deleteType(type.id)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <EnhancedTable
+              data={filteredPermitTypes}
+              columns={permitTypeColumns}
+              renderCell={(item, columnKey) =>
+                columnKey === 'name' ? safeStr(item.name) : '-'
+              }
+              renderActions={renderPermitTypeActions}
+              storageKey="permit-setup-type-table"
+              emptyMessage={
+                typeSearchTerm || typeFilters.name
+                  ? 'No permit types found matching your search'
+                  : 'No permit types found'
+              }
+              loading={isLoading}
+              loadingMessage="Loading permit types..."
+              enableSearch
+              searchTerm={typeSearchTerm}
+              onSearchChange={setTypeSearchTerm}
+              searchPlaceholder="Search permit types..."
+              disableClientSearch
+              onFilterClick={() => setShowTypeFilters(true)}
+              hideTableExport
+              pagination
+              pageSize={10}
+              getItemId={(item) => String(item.id)}
+            />
+
+            <PermitTypeFilterDialog
+              isOpen={showTypeFilters}
+              onClose={() => setShowTypeFilters(false)}
+              filters={typeFilters}
+              onApplyFilters={setTypeFilters}
+              onResetFilters={() => setTypeFilters({ name: '' })}
+            />
           </TabsContent>
 
           {/* -------- Permit Activity -------- */}
@@ -2848,14 +2905,20 @@ export const PermitSetupDashboard = () => {
                 </div>
                 <div className="flex gap-2">
                   {editingActivityId && (
-                    <Button type="button" variant="ghost" onClick={cancelEditActivity} className="text-gray-700">
-                      <X className="w-4 h-4 mr-1" /> Cancel
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={cancelEditActivity}
+                      className="bg-white border-brand text-brand hover:bg-brand-selected hover:text-brand"
+                    >
+                      Cancel
                     </Button>
                   )}
                   <Button
                     type="submit"
                     disabled={isSubmittingPermitActivity}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                   className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     {isSubmittingPermitActivity ? (editingActivityId ? 'Updating...' : 'Submitting...') : (editingActivityId ? 'Update' : 'Submit')}
                   </Button>
@@ -2867,22 +2930,20 @@ export const PermitSetupDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-900">Action</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
-                    <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
-                    <TableRow><TableCell colSpan={3} className="text-center py-8 text-gray-500">Loading permit activities...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={3} className="pt-4 pb-16"><div className="w-full flex items-center justify-start gap-3 pl-4"><div className="h-5 w-5 rounded-full animate-spin" style={{ border: "2px solid #000000", borderTopColor: "transparent" }} /><span className="text-sm text-black">Loading ...</span></div></TableCell></TableRow>
                   ) : activitiesTable.length === 0 ? (
                     <TableRow><TableCell colSpan={3} className="text-center py-8 text-gray-500">No permit activities found</TableCell></TableRow>
                   ) : activitiesTable.map((row) => (
                     <TableRow key={row.id}>
-                      <TableCell className="py-4">{row.permitType}</TableCell>
-                      <TableCell className="py-4">{row.permitActivity}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                      <TableCell className="py-4">
+                        <div className="flex justify-start gap-2">
                           <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600" onClick={() => startEditActivity(row)}>
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -2891,6 +2952,8 @@ export const PermitSetupDashboard = () => {
                           </Button>
                         </div>
                       </TableCell>
+                      <TableCell className="py-4">{row.permitType}</TableCell>
+                      <TableCell className="py-4">{row.permitActivity}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -2958,14 +3021,20 @@ export const PermitSetupDashboard = () => {
                 </div>
                 <div className="flex gap-2">
                   {editingSubActivityId && (
-                    <Button type="button" variant="ghost" onClick={cancelEditSubActivity} className="text-gray-700">
-                      <X className="w-4 h-4 mr-1" /> Cancel
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={cancelEditSubActivity}
+                      className="bg-white border-brand text-brand hover:bg-brand-selected hover:text-brand"
+                    >
+                      Cancel
                     </Button>
                   )}
                   <Button
                     type="submit"
                     disabled={isSubmittingPermitSubActivity}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                   className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     {isSubmittingPermitSubActivity ? (editingSubActivityId ? 'Updating...' : 'Submitting...') : (editingSubActivityId ? 'Update' : 'Submit')}
                   </Button>
@@ -2977,20 +3046,17 @@ export const PermitSetupDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-900">Action</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Sub Activity</TableHead>
-                    <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {subsTable.map((row) => (
                     <TableRow key={row.id}>
-                      <TableCell className="py-4">{row.permitType}</TableCell>
-                      <TableCell className="py-4">{row.permitActivity}</TableCell>
-                      <TableCell className="py-4">{row.permitSubActivity}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                      <TableCell className="py-4">
+                        <div className="flex justify-start gap-2">
                           <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600" onClick={() => startEditSubActivity(row)}>
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -2999,6 +3065,9 @@ export const PermitSetupDashboard = () => {
                           </Button>
                         </div>
                       </TableCell>
+                      <TableCell className="py-4">{row.permitType}</TableCell>
+                      <TableCell className="py-4">{row.permitActivity}</TableCell>
+                      <TableCell className="py-4">{row.permitSubActivity}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -3083,14 +3152,20 @@ export const PermitSetupDashboard = () => {
                 </div>
                 <div className="flex gap-2">
                   {editingHazardId && (
-                    <Button type="button" variant="ghost" onClick={cancelEditHazard} className="text-gray-700">
-                      <X className="w-4 h-4 mr-1" /> Cancel
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={cancelEditHazard}
+                      className="bg-white border-brand text-brand hover:bg-brand-selected hover:text-brand"
+                    >
+                      Cancel
                     </Button>
                   )}
                   <Button
                     type="submit"
                     disabled={isSubmittingPermitHazardCategory}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     {isSubmittingPermitHazardCategory ? (editingHazardId ? 'Updating...' : 'Submitting...') : (editingHazardId ? 'Update' : 'Submit')}
                   </Button>
@@ -3102,22 +3177,18 @@ export const PermitSetupDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-900">Action</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Sub Activity</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Hazard Category</TableHead>
-                    <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {hazardsTable.map((row) => (
                     <TableRow key={row.id}>
-                      <TableCell className="py-4">{row.category}</TableCell>
-                      <TableCell className="py-4">{row.subCategory}</TableCell>
-                      <TableCell className="py-4">{row.subSubCategory}</TableCell>
-                      <TableCell className="py-4">{row.permitHazardCategory}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                      <TableCell className="py-4">
+                        <div className="flex justify-start gap-2">
                           <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600" onClick={() => startEditHazard(row)}>
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -3126,6 +3197,10 @@ export const PermitSetupDashboard = () => {
                           </Button>
                         </div>
                       </TableCell>
+                      <TableCell className="py-4">{row.category}</TableCell>
+                      <TableCell className="py-4">{row.subCategory}</TableCell>
+                      <TableCell className="py-4">{row.subSubCategory}</TableCell>
+                      <TableCell className="py-4">{row.permitHazardCategory}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -3226,14 +3301,20 @@ export const PermitSetupDashboard = () => {
                 </div>
                 <div className="flex gap-2">
                   {editingRiskId && (
-                    <Button type="button" variant="ghost" onClick={cancelEditRisk} className="text-gray-700">
-                      <X className="w-4 h-4 mr-1" /> Cancel
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={cancelEditRisk}
+                      className="bg-white border-brand text-brand hover:bg-brand-selected hover:text-brand"
+                    >
+                      Cancel
                     </Button>
                   )}
                   <Button
                     type="submit"
                     disabled={isSubmittingPermitRisk}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                   className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                   >
                     {isSubmittingPermitRisk ? (editingRiskId ? 'Updating...' : 'Submitting...') : (editingRiskId ? 'Update' : 'Submit')}
                   </Button>
@@ -3245,24 +3326,19 @@ export const PermitSetupDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-900">Action</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Sub Activity</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Hazard Category</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Risk</TableHead>
-                    <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {risksTable.map((row) => (
                     <TableRow key={row.id}>
-                      <TableCell className="py-4">{row.permitType}</TableCell>
-                      <TableCell className="py-4">{row.subCategory}</TableCell>
-                      <TableCell className="py-4">{row.subSubCategory}</TableCell>
-                      <TableCell className="py-4">{row.subSubSubCategory}</TableCell>
-                      <TableCell className="py-4">{row.permitRisk}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                      <TableCell className="py-4">
+                        <div className="flex justify-start gap-2">
                           <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600" onClick={() => startEditRisk(row)}>
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -3271,6 +3347,11 @@ export const PermitSetupDashboard = () => {
                           </Button>
                         </div>
                       </TableCell>
+                      <TableCell className="py-4">{row.permitType}</TableCell>
+                      <TableCell className="py-4">{row.subCategory}</TableCell>
+                      <TableCell className="py-4">{row.subSubCategory}</TableCell>
+                      <TableCell className="py-4">{row.subSubSubCategory}</TableCell>
+                      <TableCell className="py-4">{row.permitRisk}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -3388,14 +3469,20 @@ export const PermitSetupDashboard = () => {
               </div>
               <div className="flex justify-end gap-2">
                 {editingSafetyId && (
-                  <Button type="button" variant="ghost" onClick={cancelEditSafety} className="text-gray-700">
-                    <X className="w-4 h-4 mr-1" /> Cancel
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={cancelEditSafety}
+                    className="bg-white border-brand text-brand hover:bg-brand-selected hover:text-brand"
+                  >
+                    Cancel
                   </Button>
                 )}
                 <Button
                   type="submit"
                   disabled={isSubmittingPermitSafetyEquipment}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                 className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                 >
                   {isSubmittingPermitSafetyEquipment ? (editingSafetyId ? 'Updating...' : 'Submitting...') : (editingSafetyId ? 'Update' : 'Submit')}
                 </Button>
@@ -3406,26 +3493,20 @@ export const PermitSetupDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-900">Action</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Sub Activity</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Hazard Category</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Risk</TableHead>
                     <TableHead className="font-semibold text-gray-900">Permit Safety Equipment</TableHead>
-                    <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {safetyTable.map((row) => (
                     <TableRow key={row.id}>
-                      <TableCell className="py-4">{row.permitType}</TableCell>
-                      <TableCell className="py-4">{row.permitActivity}</TableCell>
-                      <TableCell className="py-4">{row.permitSubActivity}</TableCell>
-                      <TableCell className="py-4">{row.permitHazardCategory}</TableCell>
-                      <TableCell className="py-4">{row.permitRisk}</TableCell>
-                      <TableCell className="py-4">{row.permitSafetyEquipment}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                      <TableCell className="py-4">
+                        <div className="flex justify-start gap-2">
                           <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600" onClick={() => startEditSafety(row)}>
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -3434,6 +3515,12 @@ export const PermitSetupDashboard = () => {
                           </Button>
                         </div>
                       </TableCell>
+                      <TableCell className="py-4">{row.permitType}</TableCell>
+                      <TableCell className="py-4">{row.permitActivity}</TableCell>
+                      <TableCell className="py-4">{row.permitSubActivity}</TableCell>
+                      <TableCell className="py-4">{row.permitHazardCategory}</TableCell>
+                      <TableCell className="py-4">{row.permitRisk}</TableCell>
+                      <TableCell className="py-4">{row.permitSafetyEquipment}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

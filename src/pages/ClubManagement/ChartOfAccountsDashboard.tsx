@@ -1145,14 +1145,16 @@ export const ChartOfAccountsDashboard = () => {
   const renderCustomActions = () => (
     <div className="flex gap-3">
       <Button
-        className="bg-[#f7f2eb] hover:bg-[#efe6d8] text-[#C72030] border-none px-6 py-2 h-auto rounded-lg font-bold transition-all duration-200"
+      className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
         onClick={handleAddAccountGroup}
       >
         <Plus className="w-4 h-4 mr-2" />
         Add Group
       </Button>
       <Button
-        className="bg-[#f7f2eb] hover:bg-[#efe6d8] text-[#C72030] border-none px-6 py-2 h-auto rounded-lg font-bold transition-all duration-200"
+      className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
         onClick={handleAddAccount}
       >
         <Plus className="w-4 h-4 mr-2" />

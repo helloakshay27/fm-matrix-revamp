@@ -232,7 +232,8 @@ export const AddAmenityModal = ({ isOpen, onClose, fetchData, isEditing, record 
                     <div className="pt-4">
                         <Button
                             type="submit"
-                            className="bg-purple-600 hover:bg-purple-700 text-white w-full"
+                            variant="outline"
+                            className="fm-button-fix fm-button-brand w-full"
                         >
                             Submit
                         </Button>

@@ -234,6 +234,7 @@ export const FnBRestaurantDetailsPage = () => {
   const [removedImageIds, setRemovedImageIds] = useState<number[]>([]);
   const [removedBlockedDayIds, setRemovedBlockedDayIds] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const coverInputRef = useRef<HTMLInputElement>(null);
   const menuInputRef = useRef<HTMLInputElement>(null);
@@ -305,10 +306,12 @@ export const FnBRestaurantDetailsPage = () => {
 
   useEffect(() => {
     const fetchDetails = async () => {
+      setLoading(true);
       try {
         const response = await dispatch(
           fetchRestaurantDetails({ baseUrl, token, id })
         ).unwrap();
+        setLoading(false);
         const {
           restaurant,
           schedule,
@@ -326,6 +329,7 @@ export const FnBRestaurantDetailsPage = () => {
       } catch (error) {
         console.log(error);
         toast.error("Failed to fetch restaurant details");
+        setLoading(false);
       }
     };
 
@@ -544,6 +548,17 @@ export const FnBRestaurantDetailsPage = () => {
       color: '#C72030',
     },
   };
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading restaurant details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -1739,8 +1754,8 @@ export const FnBRestaurantDetailsPage = () => {
               </Button>
               <Button
                 onClick={handleGoBack}
-                variant="outline"
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                variant="ghost"
+                className="fm-button-fix fm-button-brand px-4 py-2"
               >
                 Back
               </Button>

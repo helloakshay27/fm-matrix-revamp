@@ -3,6 +3,7 @@ import {
   Star,
   MessageSquare,
   Flag,
+  ChevronLeft,
   ChevronRight,
   Building2,
   User,
@@ -52,6 +53,9 @@ export const RecentTicketsSidebar: React.FC<RecentTicketsSidebarProps> = ({
 
   const [recentTickets, setRecentTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem("sidebarCollapsed") === "true"; } catch { return false; }
+  });
   const navigate = useNavigate();
 
   // Save to localStorage whenever state changes
@@ -277,22 +281,52 @@ export const RecentTicketsSidebar: React.FC<RecentTicketsSidebarProps> = ({
   };
   return (
     <>
-      <div className="w-full bg-[#fff] border-l p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
+      <div
+        className="bg-white border flex flex-col transition-all duration-300"
+        style={{
+          boxShadow: "0px 4px 14.2px 0px #0000001A",
+          width: isCollapsed ? 48 : 350,
+          minWidth: isCollapsed ? 48 : 350,
+          maxWidth: isCollapsed ? 48 : 350,
+          height: "100%",
+          overflow: "hidden",
+        }}
+      >
         {/* Header */}
-        <div className="mb-6">
-          <h2
-            className="text-lg font-semibold mb-2"
-            style={{ color: "#c72030" }}
+        <div className={`flex items-center justify-between px-3 py-3 border-b border-gray-100 flex-shrink-0 ${isCollapsed ? "flex-col gap-2" : ""}`}>
+          {!isCollapsed && (
+            <h2 className="text-base font-semibold" style={{ color: "#c72030" }}>
+              Recent Tickets
+            </h2>
+          )}
+          <button
+            onClick={() => setIsCollapsed((v) => {
+              const next = !v;
+              try { localStorage.setItem("sidebarCollapsed", String(next)); } catch {}
+              return next;
+            })}
+            title={isCollapsed ? "Expand" : "Collapse"}
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500"
           >
-            Recent Tickets
-          </h2>
-          {/* <div className="text-sm font-medium text-gray-800">
-            14/07/2025
-          </div> */}
+            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         </div>
 
+        {/* Collapsed vertical label */}
+        {isCollapsed && (
+          <div className="flex-1 flex items-center justify-center">
+            <span
+              className="text-xs font-semibold tracking-widest"
+              style={{ writingMode: "vertical-rl", color: "#c72030", transform: "rotate(180deg)" }}
+            >
+              Recent Tickets
+            </span>
+          </div>
+        )}
+
         {/* Tickets List */}
-        <div className="flex-1 overflow-y-auto space-y-4">
+        {!isCollapsed && (
+        <div className="flex-1 space-y-4 overflow-y-auto p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {recentTickets.map((ticket, index) => {
             // Debug logging for each ticket
             const isCurrentlyFlagged = flaggedTickets.has(ticket.id.toString());
@@ -519,6 +553,7 @@ export const RecentTicketsSidebar: React.FC<RecentTicketsSidebarProps> = ({
             );
           })}
         </div>
+        )}
       </div>
 
       <AddCommentModal

@@ -294,7 +294,7 @@ const mapDescriptionObjectToArray = (
           designation: otherConfig?.ceo_info?.designation || "CEO",
           description: otherConfig?.ceo_info?.description || "",
           photo:  null, // file cannot be prefilled
-          photoPreviewUrl: org?.ceo_photo.document_url || null, // optional: set if API gives image URL
+          photoPreviewUrl: org?.ceo_photo?.document_url || null,
           video: null, // file cannot be prefilled
           videoUrl: org?.ceo_video?.document_url || null, // optional: set if API gives video URL
         });

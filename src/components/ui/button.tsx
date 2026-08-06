@@ -8,13 +8,13 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "!bg-[#F2EEE9] !text-[#BF213E] [&_svg]:text-[#BF213E]",
-        destructive: "!bg-[#F2EEE9] !text-[#BF213E] [&_svg]:text-[#BF213E]",
-        outline: "!bg-white !text-[#BF213E] !border !border-[#BF213E] [&_svg]:text-[#BF213E]",
-        secondary: "!bg-[#F2EEE9] !text-[#BF213E] !border-none [&_svg]:text-[#BF213E]",
+        default: "bg-brand hover:bg-brand-hover !text-white [&_svg]:!text-white",
+        destructive: "bg-brand-error-bg text-brand-error [&_svg]:text-brand-error",
+        outline: "bg-white text-brand border border-brand hover:bg-brand-selected [&_svg]:text-brand",
+        secondary: "bg-[#F2EEE9] text-brand border-none [&_svg]:text-brand",
         ghost: "bg-transparent text-black [&_svg]:text-black",
-        link: "!text-[#BF213E] underline-offset-4 hover:underline [&_svg]:text-[#BF213E]",
-        primary: "!bg-[#F2EEE9] !text-[#BF213E] [&_svg]:text-[#BF213E]",
+        link: "text-brand underline-offset-4 hover:underline [&_svg]:text-brand",
+        primary: "bg-[#F2EEE9] text-brand [&_svg]:text-brand",
         icon: "bg-transparent text-white [&_svg]:text-white",
       },
       size: {
@@ -33,7 +33,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  VariantProps<typeof buttonVariants> {
   asChild?: boolean
 }
 

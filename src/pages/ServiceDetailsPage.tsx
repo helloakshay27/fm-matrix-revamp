@@ -16,6 +16,7 @@ import { fetchServiceDetails } from '@/store/slices/serviceDetailsSlice';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface ServiceDetailsData {
   id: number;
@@ -51,6 +52,7 @@ export const ServiceDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const { toast } = useToast();
+  const { shouldShow } = useDynamicPermissions();
   const { data: serviceData, loading, error } = useAppSelector((state) => state.serviceDetails);
   const [showAssociateModal, setShowAssociateModal] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<{ id: string; name: string } | null>(null);

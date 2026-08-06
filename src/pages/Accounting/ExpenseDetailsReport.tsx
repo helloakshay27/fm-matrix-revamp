@@ -33,11 +33,11 @@ const columns: ColumnConfig[] = [
 ];
 
 const statusColorMap: Record<string, string> = {
-  Unbilled: "bg-orange-100 text-orange-700",
-  "Non-Billable": "bg-gray-100 text-gray-700",
-  Billable: "bg-blue-100 text-blue-700",
-  Billed: "bg-green-100 text-green-700",
-  Draft: "bg-gray-100 text-gray-700",
+  Unbilled: "bg-gray-100 text-gray-800",
+  "Non-Billable": "bg-gray-100 text-gray-800",
+  Billable: "bg-gray-100 text-gray-800",
+  Billed: "bg-gray-100 text-gray-800",
+  Draft: "bg-gray-100 text-gray-800",
 };
 
 const getCurrentMonthRange = () => {
@@ -193,7 +193,7 @@ const ExpenseDetailsReport: React.FC = () => {
 
   const renderRow = (row: ExpenseRow) => {
     const isTotal = row.id === "__total__";
-    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`;
+    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`;
 
     return {
       status: isTotal ? (
@@ -201,20 +201,20 @@ const ExpenseDetailsReport: React.FC = () => {
       ) : (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            statusColorMap[row.status] || "bg-gray-100 text-gray-700"
+            statusColorMap[row.status] || "bg-gray-100 text-gray-800"
           }`}
         >
           {row.status}
         </span>
       ),
-      date: <span className="text-sm text-gray-600">{isTotal ? "" : row.date}</span>,
+      date: <span className="text-sm text-gray-600">{isTotal ? "" : formatDisplayDate(row.date)}</span>,
       transaction_type: <span className="text-sm text-gray-900">{isTotal ? "" : row.transaction_type}</span>,
       transaction_number: isTotal ? (
         <span />
       ) : (
         <button
           onClick={() => navigate(`/accounting/expense/${row.id}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.transaction_number}
         </button>

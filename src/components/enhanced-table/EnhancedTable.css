@@ -12,8 +12,11 @@
 /* Base sticky header styling */
 .table-container {
   overflow: auto;
+  overflow-x: auto;
   position: relative;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* Sticky table header base */

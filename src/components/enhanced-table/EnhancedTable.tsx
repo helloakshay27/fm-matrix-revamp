@@ -122,7 +122,7 @@ interface EnhancedTableProps<T> {
   data: T[];
   columns: ColumnConfig[];
   renderCell?: (item: T, columnKey: string) => React.ReactNode;
-  renderRow?: (item: T) => Record<string, any>;
+  renderRow?: (item: T, index: number) => Record<string, any>;
   renderActions?: (item: T) => React.ReactNode;
   onRowClick?: (item: T) => void;
   onSort?: (columnKey: string) => void;
@@ -508,10 +508,20 @@ export function EnhancedTable<T extends Record<string, any>>({
   // Paginate data if pagination is enabled
   const paginatedData = useMemo(() => {
     if (!pagination) return filteredData;
+    if (externalCurrentPage !== undefined || externalOnPageChange) {
+      return filteredData;
+    }
 
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
-  }, [filteredData, currentPage, pageSize, pagination]);
+  }, [
+    filteredData,
+    currentPage,
+    pageSize,
+    pagination,
+    externalCurrentPage,
+    externalOnPageChange,
+  ]);
 
   const sortedData = pagination ? paginatedData : filteredData;
   // Use external totalPages if provided, otherwise calculate from filtered data
@@ -688,7 +698,7 @@ export function EnhancedTable<T extends Record<string, any>>({
 
     // Default search input
     return (
-      <div className="relative max-w-sm">
+      <div className="relative w-[300px] max-w-full">
         {isSearching && (
           <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
         )}
@@ -701,7 +711,7 @@ export function EnhancedTable<T extends Record<string, any>>({
           }
           value={effectiveSearchValue}
           onChange={(e) => handleSearchInputChange(e.target.value)}
-          className="pl-10 pr-10"
+          className="h-9 pl-10 pr-10"
           disabled={isSearching}
         />
         {effectiveSearchValue && (
@@ -815,7 +825,8 @@ export function EnhancedTable<T extends Record<string, any>>({
       handleExport(columnVisibility);
     } else {
       // Fallback to CSV export
-      exportToExcel(data, columns, exportFileName);
+      const exportColumns = columns.filter(col => col.key !== 'action' && col.key !== 'actions');
+      exportToExcel(data, exportColumns, exportFileName);
     }
   };
 
@@ -893,15 +904,15 @@ export function EnhancedTable<T extends Record<string, any>>({
           )}
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap justify-end">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
           {rightActions}
-          {/* Mobile: filter and columns on right side */}
+          {/* Mobile: filter, export, and columns on right side */}
           <div className="flex items-center gap-1 sm:hidden">
             {onFilterClick && (
               <Button
                 variant="outline"
-                size="sm"
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 h-8 px-2"
+                size="icon"
+                className="!rounded-lg h-8 w-8 border border-brand text-brand"
                 onClick={onFilterClick}
                 title="Filter"
               >
@@ -909,6 +920,22 @@ export function EnhancedTable<T extends Record<string, any>>({
               </Button>
             )}
             {filterAdjacentActions}
+            {!hideTableExport && enableExport && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleExportClick}
+                disabled={isExporting}
+                className="!rounded-lg h-8 w-8 border border-brand text-brand"
+                title={isExporting ? "Exporting..." : "Export"}
+              >
+                {isExporting ? (
+                  <div className="animate-spin rounded-full border-2 border-current border-t-transparent w-4 h-4" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+              </Button>
+            )}
             {!hideColumnsButton && (
               <ColumnVisibilityMenu
                 columns={columns}
@@ -922,40 +949,13 @@ export function EnhancedTable<T extends Record<string, any>>({
           <div className="hidden sm:flex items-center gap-2">
             {!hideTableSearch &&
               (onSearchChange || !externalSearchTerm || enableGlobalSearch) &&
-              (customSearchInput ? (
-                <div className="relative max-w-sm">
-                  {isSearching && (
-                    <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
-                  )}
-                  {!isSearching && (
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                  )}
-                  <Input
-                    placeholder={searchPlaceholder}
-                    value={effectiveSearchValue}
-                    onChange={(e) => handleSearchInputChange(e.target.value)}
-                    className="pl-10 pr-10"
-                    disabled={isSearching}
-                  />
-                  {effectiveSearchValue && (
-                    <button
-                      onClick={handleClearSearch}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      disabled={isSearching}
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              ) : (
-                renderCustomSearchInput()
-              ))}
+              (customSearchInput ? customSearchInput : renderCustomSearchInput())}
 
             {onFilterClick && (
               <Button
                 variant="outline"
-                size="sm"
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
+                size="icon"
+                className="!rounded-lg border border-brand text-brand"
                 onClick={onFilterClick}
                 title="Filter"
               >
@@ -965,6 +965,25 @@ export function EnhancedTable<T extends Record<string, any>>({
 
             {filterAdjacentActions}
 
+            {!hideTableExport && enableExport && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleExportClick}
+                disabled={isExporting}
+                className="!rounded-lg border border-brand text-brand"
+                title={isExporting ? "Exporting..." : "Export"}
+              >
+                {isExporting ? (
+                  <>
+                    <div className="animate-spin rounded-full border-2 border-current border-t-transparent w-4 h-4" />
+                  </>
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+              </Button>
+            )}
+
             {!hideColumnsButton && (
               <ColumnVisibilityMenu
                 columns={columns}
@@ -972,26 +991,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                 onToggleVisibility={handleToggleColumnVisibility}
                 onResetToDefaults={handleResetToDefaults}
               />
-            )}
-
-            {!hideTableExport && enableExport && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExportClick}
-                disabled={isExporting}
-                className="flex items-center gap-2"
-                title={isExporting ? "Exporting..." : "Export"}
-              >
-                {isExporting ? (
-                  <>
-                    <div className="animate-spin rounded-full border-2 border-current border-t-transparent w-4 h-4" />
-                    <span className="text-xs">Exporting...</span>
-                  </>
-                ) : (
-                  <Download className="w-4 h-4" />
-                )}
-              </Button>
             )}
           </div>
         </div>
@@ -1021,16 +1020,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                         </div>
                       </TableHead>
                     )}
-                    {renderActions && (
-                      <TableHead
-                        className="bg-[#f6f4ee] text-center w-16 min-w-16 sticky top-0"
-                        data-actions
-                      >
-                        <div className="flex justify-center items-center text-center">
-                          Actions
-                        </div>
-                      </TableHead>
-                    )}
                     {selectable && (
                       <TableHead
                         className="bg-[#f6f4ee] w-12 min-w-12 text-center sticky top-0"
@@ -1046,6 +1035,16 @@ export function EnhancedTable<T extends Record<string, any>>({
                               "data-state": "indeterminate",
                             })}
                           />
+                        </div>
+                      </TableHead>
+                    )}
+                    {renderActions && (
+                      <TableHead
+                        className="bg-[#f6f4ee] text-center w-16 min-w-16 sticky top-0"
+                        data-actions
+                      >
+                        <div className="flex justify-center items-center text-center">
+                          Actions
                         </div>
                       </TableHead>
                     )}
@@ -1134,6 +1133,16 @@ export function EnhancedTable<T extends Record<string, any>>({
                         {/* Empty for add row */}
                       </TableCell>
                     )}
+                    {selectable && (
+                      <TableCell
+                        className="p-4 w-12 min-w-12 text-center"
+                        data-checkbox
+                      >
+                        <div className="flex justify-center">
+                          <Checkbox disabled />
+                        </div>
+                      </TableCell>
+                    )}
                     {renderActions && (
                       <TableCell
                         className="p-4 text-center w-16 min-w-16"
@@ -1158,16 +1167,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                           >
                             <X className="w-4 h-4" />
                           </Button>
-                        </div>
-                      </TableCell>
-                    )}
-                    {selectable && (
-                      <TableCell
-                        className="p-4 w-12 min-w-12 text-center"
-                        data-checkbox
-                      >
-                        <div className="flex justify-center">
-                          <Checkbox disabled />
                         </div>
                       </TableCell>
                     )}
@@ -1270,12 +1269,14 @@ export function EnhancedTable<T extends Record<string, any>>({
                           <div>{emptyMessage}</div>
                           <Button
                             onClick={handleAddRowClick}
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-2"
+                            variant="icon"
+                            size="icon"
+                            className="h-8 w-8 !rounded-full bg-brand p-0 text-white hover:bg-brand-hover [&_svg]:text-white"
+                            aria-label={newRowPlaceholder}
+                            title={newRowPlaceholder}
                           >
-                            <Plus className="w-4 h-4" />
-                            {newRowPlaceholder}
+                            <Plus className="h-4 w-4" />
+                            <span className="sr-only">{newRowPlaceholder}</span>
                           </Button>
                         </div>
                       ) : (
@@ -1334,16 +1335,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                               )}
                             </TableCell>
                           )}
-                          {renderActions && (
-                            <TableCell
-                              className="p-4 text-center w-16 min-w-16"
-                              data-actions
-                            >
-                              <div className="flex justify-center items-center gap-2">
-                                {renderActions(item)}
-                              </div>
-                            </TableCell>
-                          )}
                           {selectable && (
                             <TableCell
                               className="p-4 w-12 min-w-12 text-center"
@@ -1363,9 +1354,19 @@ export function EnhancedTable<T extends Record<string, any>>({
                               </div>
                             </TableCell>
                           )}
+                          {renderActions && (
+                            <TableCell
+                              className="p-4 text-center w-16 min-w-16"
+                              data-actions
+                            >
+                              <div className="flex justify-center items-center gap-2">
+                                {renderActions(item)}
+                              </div>
+                            </TableCell>
+                          )}
                           {visibleColumns.map((column, columnIndex) => {
                             const renderedRow = renderRow
-                              ? renderRow(item)
+                              ? renderRow(item, index)
                               : item;
                             const cellContent = renderRow
                               ? renderedRow[column.key]
@@ -1443,9 +1444,18 @@ export function EnhancedTable<T extends Record<string, any>>({
                         }
                         className="text-center py-4 text-gray-500 hover:text-gray-700"
                       >
-                        <div className="flex items-center justify-start gap-2">
-                          <Plus className="w-4 h-4" />
-                          {newRowPlaceholder}
+                        <div className="flex items-center justify-start">
+                          <Button
+                            onClick={handleAddRowClick}
+                            variant="icon"
+                            size="icon"
+                            className="h-8 w-8 !rounded-full bg-brand p-0 text-white hover:bg-brand-hover [&_svg]:text-white"
+                            aria-label={newRowPlaceholder}
+                            title={newRowPlaceholder}
+                          >
+                            <Plus className="h-4 w-4" />
+                            <span className="sr-only">{newRowPlaceholder}</span>
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>

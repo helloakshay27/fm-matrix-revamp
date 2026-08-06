@@ -99,15 +99,15 @@ const ProjectTemplates = () => {
     const renderActions = (item: any) => {
         return (
             <div className="flex gap-2">
-                {shouldShow("Project Templates","destroy")&&(
-                <Button
-                    size="sm"
-                    variant="ghost"
-                    className="p-1 text-red-500 hover:text-red-700"
-                    onClick={() => handleDelete(item.id)}
-                >
-                    <Trash2 className="w-4 h-4" />
-                </Button>)}
+                {shouldShow("Project Templates", "destroy") && (
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        className="p-1 text-red-500 hover:text-red-700"
+                        onClick={() => handleDelete(item.id)}
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </Button>)}
             </div>
         )
     };

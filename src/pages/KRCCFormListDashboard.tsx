@@ -10,9 +10,11 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { KRCCFormFilterDialog } from '@/components/KRCCFormFilterDialog';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Local debounce hook (kept here to avoid external dependency assumptions)
 function useDebounce<T>(value: T, delay: number) {
@@ -49,6 +51,8 @@ interface KRCCApiResponse {
 
 export const KRCCFormListDashboard = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+  const msafeEvents = useMSafeEvents();
 
   // Remote data state
   const [krccForms, setKrccForms] = useState<KRCCForm[]>([]);
@@ -157,9 +161,11 @@ export const KRCCFormListDashboard = () => {
         setCurrentPage(data.pagination.current_page);
         setTotalPages(data.pagination.total_pages);
         setTotalCount(data.pagination.total_count);
+        msafeEvents.onMSafeSubmoduleViewed('krcc', data.pagination.total_count);
       } else {
         setTotalPages(1);
         setTotalCount(mapped.length);
+        msafeEvents.onMSafeSubmoduleViewed('krcc', mapped.length);
       }
       if (searchActive && mapped.length === 0) {
         toast.info('No results found');
@@ -267,15 +273,17 @@ export const KRCCFormListDashboard = () => {
       case 'action':
         return (
           <div className="flex justify-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(`/safety/m-safe/krcc-list/${form.id}`)}
-              className="h-8 w-8 p-0"
-              title="View Form"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
+            {shouldShow("KRCC Form", "show") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(`/safety/m-safe/krcc-list/${form.id}`)}
+                className="h-8 w-8 p-0"
+                title="View Form"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            )}
             {/* <Button
               variant="ghost"
               size="sm"

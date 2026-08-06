@@ -428,7 +428,7 @@ const PauseReasonModal = ({
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-[30rem] mx-4">
-                <h2 className="text-lg font-semibold mb-4 text-gray-800">
+                <h2 className="fm-button-fix fm-button-brand px-4 py-2">
                     Reason for Pause/End
                 </h2>
 
@@ -447,7 +447,7 @@ const PauseReasonModal = ({
                     <Button
                         onClick={handleEndTask}
                         disabled={isLoading}
-                    // className="px-4 py-2 !bg-red-600 !text-white rounded-md !hover:bg-red-700 disabled:opacity-50"
+                        className="fm-button-fix fm-button-brand px-4 py-2"
                     >
                         {isLoading ? "Submitting..." : "End Task"}
                     </Button>
@@ -458,7 +458,7 @@ const PauseReasonModal = ({
                         <Button
                             onClick={handleSubmit}
                             disabled={isLoading}
-                        // className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                            className="fm-button-fix fm-button-brand px-4 py-2"
                         >
                             {isLoading ? "Submitting..." : "Pause Task"}
                         </Button>
@@ -524,7 +524,6 @@ const ResponsiblePersonReasonModal = ({
                     <Button
                         onClick={handleSubmit}
                         disabled={isLoading}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                     >
                         {isLoading ? "Submitting..." : "Change Responsible Person"}
                     </Button>
@@ -579,7 +578,6 @@ const HoldReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
                     <Button
                         onClick={handleSubmit}
                         disabled={isLoading}
-                        className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50"
                     >
                         {isLoading ? "Submitting..." : "Put on Hold"}
                     </Button>
@@ -634,7 +632,7 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                     <Button
                         onClick={handleSubmit}
                         disabled={isLoading}
-                    // className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                        className="fm-button-fix fm-button-brand px-4 py-2"
                     >
                         {isLoading ? "Submitting..." : "Submit"}
                     </Button>

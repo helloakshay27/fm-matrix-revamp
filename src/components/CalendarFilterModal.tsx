@@ -105,45 +105,28 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
     return '';
   };
 
-  // Helper function to get default date range (today to one week ago)
+  // Helper function to get default date range (financial year: Apr 1 – Mar 31)
   const getDefaultDateRange = () => {
     const today = new Date();
-    const oneWeekAgo = new Date(today);
-    oneWeekAgo.setDate(today.getDate() - 7);
-    
-    const formatDate = (date: Date) => {
-      const year = date.getFullYear();
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-    
+    const currentMonth = today.getMonth(); // 0-indexed; March = 2, April = 3
+    const fyStartYear = currentMonth >= 3 ? today.getFullYear() : today.getFullYear() - 1;
+    const fyEndYear = fyStartYear + 1;
+
     return {
-      dateFrom: formatDate(oneWeekAgo),
-      dateTo: formatDate(today)
+      dateFrom: `${fyStartYear}-04-01`,
+      dateTo: `${fyEndYear}-03-31`,
     };
   };
 
-  // Initialize filters from currentFilters prop or use defaults
+  // Always initialize with financial year dates
   const [filters, setFilters] = useState<CalendarFilters>(() => {
-    if (currentFilters) {
-      // Convert current filters from DD/MM/YYYY to YYYY-MM-DD for the inputs
-      return {
-        dateFrom: convertToDateInputFormat(currentFilters.dateFrom),
-        dateTo: convertToDateInputFormat(currentFilters.dateTo),
-        's[task_custom_form_schedule_type_eq]': currentFilters['s[task_custom_form_schedule_type_eq]'] || '',
-        's[task_task_of_eq]': currentFilters['s[task_task_of_eq]'] || '',
-        's[custom_form_form_name_eq]': currentFilters['s[custom_form_form_name_eq]'] || ''
-      };
-    }
-    
-    const defaultRange = getDefaultDateRange();
+    const fy = getDefaultDateRange();
     return {
-      dateFrom: defaultRange.dateFrom,
-      dateTo: defaultRange.dateTo,
-      's[task_custom_form_schedule_type_eq]': '',
-      's[task_task_of_eq]': '',
-      's[custom_form_form_name_eq]': ''
+      dateFrom: fy.dateFrom,
+      dateTo: fy.dateTo,
+      's[task_custom_form_schedule_type_eq]': currentFilters?.['s[task_custom_form_schedule_type_eq]'] || 'AMC',
+      's[task_task_of_eq]': currentFilters?.['s[task_task_of_eq]'] || '',
+      's[custom_form_form_name_eq]': currentFilters?.['s[custom_form_form_name_eq]'] || ''
     };
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -155,20 +138,21 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
   const [customForms, setCustomForms] = useState<CustomForm[]>([]);
   const [isLoadingCustomForms, setIsLoadingCustomForms] = useState(false);
 
-  // Update filters when currentFilters prop changes (when modal opens)
+  // Reset to financial year dates every time the modal opens
   useEffect(() => {
-    if (isOpen && currentFilters) {
+    if (isOpen) {
+      const fy = getDefaultDateRange();
       setFilters({
-        dateFrom: convertToDateInputFormat(currentFilters.dateFrom),
-        dateTo: convertToDateInputFormat(currentFilters.dateTo),
-        's[task_custom_form_schedule_type_eq]': currentFilters['s[task_custom_form_schedule_type_eq]'] || '',
-        's[task_task_of_eq]': currentFilters['s[task_task_of_eq]'] || '',
-        's[custom_form_form_name_eq]': currentFilters['s[custom_form_form_name_eq]'] || ''
+        dateFrom: fy.dateFrom,
+        dateTo: fy.dateTo,
+        's[task_custom_form_schedule_type_eq]': currentFilters?.['s[task_custom_form_schedule_type_eq]'] || 'AMC',
+        's[task_task_of_eq]': currentFilters?.['s[task_task_of_eq]'] || '',
+        's[custom_form_form_name_eq]': currentFilters?.['s[custom_form_form_name_eq]'] || ''
       });
-      setChecklist(currentFilters['s[custom_form_form_name_eq]'] || '');
+      setChecklist(currentFilters?.['s[custom_form_form_name_eq]'] || '');
       setDateError('');
     }
-  }, [isOpen, currentFilters]);
+  }, [isOpen]);
 
   // Date validation function
   const validateDates = (fromDate: string, toDate: string): string => {
@@ -339,21 +323,21 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
     const clearedFilters = {
       dateFrom: defaultRange.dateFrom,
       dateTo: defaultRange.dateTo,
-      's[task_custom_form_schedule_type_eq]': '',
+      's[task_custom_form_schedule_type_eq]': 'AMC',
       's[task_task_of_eq]': '',
       's[custom_form_form_name_eq]': ''
     };
-    
+
     setFilters(clearedFilters);
     setChecklist(''); // Clear checklist input
     setCustomForms([]); // Clear custom form suggestions
     setDateError(''); // Clear date error
-    
+
     // Convert to DD/MM/YYYY for API
     const apiFilters: CalendarFilters = {
       dateFrom: convertToAPIFormat(clearedFilters.dateFrom),
       dateTo: convertToAPIFormat(clearedFilters.dateTo),
-      's[task_custom_form_schedule_type_eq]': '',
+      's[task_custom_form_schedule_type_eq]': 'AMC',
       's[task_task_of_eq]': '',
       's[custom_form_form_name_eq]': ''
     };

@@ -1,10 +1,16 @@
 import React, { useState, useEffect, Fragment } from "react";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
 import { apiClient } from "@/utils/apiClient";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import {
+  TrainingConductedFilterDialog,
+  type TrainingConductedFilters,
+} from "@/components/TrainingConductedFilterDialog";
 import {
   Pagination,
   PaginationContent,
@@ -38,6 +44,7 @@ interface AuditConductedResponse {
 }
 
 export const TrainingConductedDashboard = () => {
+  const { shouldShow } = useDynamicPermissions();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [conductedData, setConductedData] = useState<
     AuditConductedOccurrence[]
@@ -46,23 +53,44 @@ export const TrainingConductedDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<TrainingConductedFilters>({
+    trainingName: "",
+    status: "",
+    site: "",
+    conductedBy: "",
+  });
 
   useEffect(() => {
     fetchAuditsConducted();
-  }, [currentPage]);
+  }, [currentPage, filters]);
 
   const fetchAuditsConducted = async () => {
     try {
       setLoading(true);
+      const params: Record<string, string | number> = {
+        page: currentPage,
+        per_page: 20,
+        "q[custom_form_checklist_for_eq]": "Training",
+      };
+
+      if (filters.trainingName.trim()) {
+        params["q[form_name_cont]"] = filters.trainingName.trim();
+      }
+      if (filters.status.trim()) {
+        params["q[status_cont]"] = filters.status.trim();
+      }
+      if (filters.site.trim()) {
+        params["q[site_cont]"] = filters.site.trim();
+      }
+      if (filters.conductedBy.trim()) {
+        params["q[conducted_by_cont]"] = filters.conductedBy.trim();
+      }
+
       const response = await apiClient.get<AuditConductedResponse>(
         "/pms/custom_forms/audits_conducted.json",
-        {
-          params: {
-            page: currentPage,
-            per_page: 20,
-            "q[custom_form_checklist_for_eq]": "Training",
-          },
-        }
+        { params }
       );
       setConductedData(response.data.occurrences);
       setTotalPages(response.data.total_pages);
@@ -170,7 +198,7 @@ export const TrainingConductedDashboard = () => {
   const renderCell = (item: AuditConductedOccurrence, columnKey: string) => {
     switch (columnKey) {
       case "actions":
-        return (
+        return shouldShow("Training", "show") ? (
           <Button
             variant="ghost"
             size="sm"
@@ -178,7 +206,7 @@ export const TrainingConductedDashboard = () => {
           >
             <Eye className="w-4 h-4" />
           </Button>
-        );
+        ) : null;
       case "report":
         return item.has_response && item.print_pdf_url ? (
           <Button
@@ -257,6 +285,34 @@ export const TrainingConductedDashboard = () => {
     }
   };
 
+  const handleApplyFilters = (nextFilters: TrainingConductedFilters) => {
+    setFilters(nextFilters);
+    setCurrentPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      trainingName: "",
+      status: "",
+      site: "",
+      conductedBy: "",
+    });
+    setCurrentPage(1);
+  };
+
+  const filteredData = searchTerm.trim()
+    ? conductedData.filter((item) => {
+        const q = searchTerm.toLowerCase();
+        return (
+          item.form_name?.toLowerCase().includes(q) ||
+          item.conducted_by?.toLowerCase().includes(q) ||
+          item.status?.toLowerCase().includes(q) ||
+          item.site?.toLowerCase().includes(q) ||
+          String(item.id).includes(q)
+        );
+      })
+    : conductedData;
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -270,17 +326,43 @@ export const TrainingConductedDashboard = () => {
         </div>
       </div>
 
-      {loading && (
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      {loading ? (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">Report</TableHead>
+                <TableHead className="font-medium">ID</TableHead>
+                <TableHead className="font-medium">Training Name</TableHead>
+                <TableHead className="font-medium">Start Date & Time</TableHead>
+                <TableHead className="font-medium">Conducted By</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
+                <TableHead className="font-medium">Site</TableHead>
+                <TableHead className="font-medium">Duration</TableHead>
+                <TableHead className="font-medium">%</TableHead>
+                <TableHead className="font-medium">Delete</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={11} className="pt-4 pb-16">
+                  <div className="w-full flex items-center justify-start gap-3 pl-4">
+                    <div
+                      className="h-5 w-5 rounded-full animate-spin"
+                      style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
+                    />
+                    <span className="text-sm text-black">Loading ...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
-      )}
-
-      {!loading && (
+      ) : (
         <>
           <div className="overflow-x-auto">
             <EnhancedTable
-              data={conductedData}
+              data={filteredData}
               columns={columns}
               renderCell={renderCell}
               selectable={true}
@@ -291,6 +373,13 @@ export const TrainingConductedDashboard = () => {
               storageKey="training-conducted-table"
               className="w-full"
               pagination={false}
+              enableSearch
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              searchPlaceholder="Search..."
+              disableClientSearch
+              onFilterClick={() => setShowFilters(true)}
+              emptyMessage=""
             />
           </div>
 
@@ -383,6 +472,14 @@ export const TrainingConductedDashboard = () => {
           )}
         </>
       )}
+
+      <TrainingConductedFilterDialog
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+        filters={filters}
+        onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
+      />
     </div>
   );
 };

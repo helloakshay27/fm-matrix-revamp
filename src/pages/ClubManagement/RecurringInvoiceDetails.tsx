@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ import {
   Eye,
   ClipboardList,
   X,
+  Settings2,
 } from "lucide-react";
 import {
   Dialog,
@@ -68,14 +69,20 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import AccountingDocumentPdf from "@/components/accounting/AccountingDocumentPdf";
+import {
+  bankMasterListUrl,
+  getBankMasterApiConfig,
+  mapApiBankRecord,
+} from "./bankMasterUtils";
 
 export const RecurringInvoiceDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [invoiceData, setInvoiceData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("invoice-details");
+  const [activeTab, setActiveTab] = useState((location.state as any)?.tab === "pdf" ? "pdf" : "invoice-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showApprovalLog, setShowApprovalLog] = useState(false);
   const [hasInvoiceApproval, setHasInvoiceApproval] = useState(false);
@@ -102,6 +109,7 @@ export const RecurringInvoiceDetailsPage = () => {
   const [sendThankYou, setSendThankYou] = useState(true);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+  const [bankDetail, setBankDetail] = useState<any>(null);
   const invoicePdfRef = useRef(null);
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -112,6 +120,31 @@ export const RecurringInvoiceDetailsPage = () => {
       fetchLockAccount();
     }
   }, [id, baseUrl, token]);
+
+  // Resolve the bank selected on the recurring invoice profile, if any
+  useEffect(() => {
+    const fetchBankDetail = async () => {
+      const bankId = (invoiceData as any)?.bank_master_id || (invoiceData as any)?.bank_master?.id;
+      if (!bankId) {
+        setBankDetail(null);
+        return;
+      }
+      if ((invoiceData as any)?.bank_master) {
+        setBankDetail(mapApiBankRecord((invoiceData as any).bank_master));
+        return;
+      }
+      try {
+        const { baseUrl: bmBaseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(bankMasterListUrl(bmBaseUrl, lockAccountId), { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        const found = data.map(mapApiBankRecord).find((b: any) => String(b.id) === String(bankId));
+        setBankDetail(found || null);
+      } catch (err) {
+        setBankDetail(null);
+      }
+    };
+    fetchBankDetail();
+  }, [invoiceData]);
 
   useEffect(() => {
     if (!baseUrl || !token || !lock_account_id) return;
@@ -250,19 +283,7 @@ export const RecurringInvoiceDetailsPage = () => {
   };
 
   const getStatusColor = (status) => {
-    const colors = {
-      draft: "bg-gray-100 text-gray-800 border-gray-200",
-      sent: "bg-blue-100 text-blue-800 border-blue-200",
-      approved: "bg-green-100 text-green-800 border-green-200",
-      pending_approval: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-      processing: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      shipped: "bg-purple-100 text-purple-800 border-purple-200",
-      delivered: "bg-green-100 text-green-800 border-green-200",
-      cancelled: "bg-red-100 text-red-800 border-red-200",
-      rejected: "bg-red-100 text-red-800 border-red-200",
-    };
-    return colors[status] || "bg-gray-100 text-gray-800 border-gray-200";
+    return "bg-gray-100 text-gray-800 border-gray-200";
   };
 
   // Helper: returns true when the invoice is fully approved (main status OR approval_status object)
@@ -283,10 +304,7 @@ export const RecurringInvoiceDetailsPage = () => {
   };
 
   const getApprovalStatusBadge = (status) => {
-    const s = String(status || "").toLowerCase();
-    if (s === "approved") return "bg-green-100 text-green-800";
-    if (s === "rejected") return "bg-red-100 text-red-800";
-    return "bg-yellow-100 text-yellow-800";
+    return "bg-gray-100 text-gray-800";
   };
 
   const handleEdit = () => {
@@ -556,6 +574,7 @@ export const RecurringInvoiceDetailsPage = () => {
         <div className="text-center">
           <p className="text-lg text-muted-foreground">Invoice not found</p>
           <Button
+            variant="ghost"
             className="mt-4"
             onClick={() => navigate("/accounting/recurring-invoices")}
           >
@@ -597,7 +616,7 @@ export const RecurringInvoiceDetailsPage = () => {
   const totalCredit = journalData.reduce((sum, r) => sum + r.credit, 0);
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -659,6 +678,16 @@ export const RecurringInvoiceDetailsPage = () => {
             <Button
               size="sm"
               variant="outline"
+              onClick={() => navigate("/accounting/recurring-invoices/template", { state: { recordId: id } })}
+              className="gap-2"
+            >
+              <Settings2 className="h-4 w-4" />
+              Template Edit
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
               onClick={handleDownload}
               disabled={pdfGenerating}
               className="gap-2"
@@ -674,7 +703,7 @@ export const RecurringInvoiceDetailsPage = () => {
                 {invoiceData.status === "draft" && (
                   <Button
                     size="sm"
-                    className="bg-blue-600 text-white hover:bg-blue-700"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("sent")}
                   >
@@ -691,7 +720,7 @@ export const RecurringInvoiceDetailsPage = () => {
                 {invoiceData.status === "draft" && (
                   <Button
                     size="sm"
-                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("pending_approval")}
                   >
@@ -705,7 +734,7 @@ export const RecurringInvoiceDetailsPage = () => {
                     <>
                       <Button
                         size="sm"
-                        className="bg-green-600 text-white hover:bg-green-700"
+                        className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                         disabled={actionLoading}
                         onClick={() => updateApprovalStatus("approved")}
                       >
@@ -713,7 +742,7 @@ export const RecurringInvoiceDetailsPage = () => {
                       </Button>
                       <Button
                         size="sm"
-                        className="bg-red-600 text-white hover:bg-red-700"
+                        className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                         disabled={actionLoading}
                         onClick={() => updateApprovalStatus("rejected")}
                       >
@@ -726,7 +755,7 @@ export const RecurringInvoiceDetailsPage = () => {
                 {isFullyApproved(invoiceData) && (
                   <Button
                     size="sm"
-                    className="bg-blue-600 text-white hover:bg-blue-700"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("sent")}
                   >
@@ -776,15 +805,45 @@ export const RecurringInvoiceDetailsPage = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex flex-wrap w-full max-w-5xl">
-            <TabsTrigger value="invoice-details">Invoice Details</TabsTrigger>
+          <TabsList className="flex flex-wrap w-full max-w-5xl justify-start">
+            <TabsTrigger
+              value="invoice-details"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
+            >
+              Invoice Details
+            </TabsTrigger>
             {invoiceData.status === "Overdue" && (
-              <TabsTrigger value="record-payment">Record Payment</TabsTrigger>
+              <TabsTrigger
+                value="record-payment"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
+              >
+                Record Payment
+              </TabsTrigger>
             )}
-            <TabsTrigger value="customer-info">Customer Info</TabsTrigger>
-            <TabsTrigger value="attachments">Attachments & Comms</TabsTrigger>
-            <TabsTrigger value="activity-logs">Activity Logs</TabsTrigger>
-            <TabsTrigger value="pdf">PDF</TabsTrigger>
+            <TabsTrigger
+              value="customer-info"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
+            >
+              Customer Info
+            </TabsTrigger>
+            <TabsTrigger
+              value="attachments"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
+            >
+              Attachments & Comms
+            </TabsTrigger>
+            <TabsTrigger
+              value="activity-logs"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
+            >
+              Activity Logs
+            </TabsTrigger>
+            <TabsTrigger
+              value="pdf"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
+            >
+              PDF
+            </TabsTrigger>
           </TabsList>
 
           {/* Invoice Details Tab */}
@@ -834,7 +893,7 @@ export const RecurringInvoiceDetailsPage = () => {
 
                             <TableCell>
                               <button
-                                className="text-blue-600 hover:underline font-medium"
+                                className="text-brand hover:underline font-medium"
                                 onClick={() =>
                                   navigate(
                                     `/accounting/sales-order/${invoiceData.sale_order.id}`
@@ -1054,6 +1113,43 @@ export const RecurringInvoiceDetailsPage = () => {
               </CardContent>
             </Card>
 
+            {/* Bank Details */}
+            {bankDetail && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Bank Details</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
+                    <p className="text-sm mt-1">{bankDetail.bankName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Account Number</p>
+                    <p className="text-sm mt-1">{bankDetail.accountNo}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Beneficiary / Account Name</p>
+                    <p className="text-sm mt-1">{bankDetail.beneficiaryName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">IFSC Code</p>
+                    <p className="text-sm mt-1">{bankDetail.ifscCode}</p>
+                  </div>
+                  {bankDetail.swiftCode && (
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Swift Code</p>
+                      <p className="text-sm mt-1">{bankDetail.swiftCode}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Branch</p>
+                    <p className="text-sm mt-1">{bankDetail.branch}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Notes and Terms */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {invoiceData.customer_notes && (
@@ -1188,7 +1284,7 @@ export const RecurringInvoiceDetailsPage = () => {
                     {selectedCustomer?.pan && (
                       <p className="text-xs text-muted-foreground mt-2">
                         PAN:{" "}
-                        <span className="text-blue-600">
+                        <span className="text-brand">
                           {selectedCustomer.pan}
                         </span>
                       </p>
@@ -1471,7 +1567,7 @@ export const RecurringInvoiceDetailsPage = () => {
                   <Button
                     onClick={() => handleRecordPayment("paid")}
                     disabled={paymentSubmitting}
-                    className="bg-[#C72030] hover:bg-[#a81a28]"
+                    className="fm-button-fix fm-button-brand px-8 py-2"
                   >
                     {paymentSubmitting ? "Saving..." : "Save as Paid"}
                   </Button>
@@ -1479,7 +1575,7 @@ export const RecurringInvoiceDetailsPage = () => {
                   <Button
                     onClick={() => handleRecordPayment("draft")}
                     disabled={paymentSubmitting}
-                    className="bg-[#C72030] hover:bg-[#a81a28]"
+                    className="fm-button-fix fm-button-brand px-8 py-2"
                   >
                     {paymentSubmitting ? "Saving..." : "Save as Draft"}
                   </Button>
@@ -1512,7 +1608,8 @@ export const RecurringInvoiceDetailsPage = () => {
                 <div className="overflow-auto rounded-lg border bg-muted/30 p-4">
                   <div className="mx-auto bg-white" ref={activeTab === "pdf" ? invoicePdfRef : null}>
                     <AccountingDocumentPdf
-                      documentTitle="INVOICE"
+                      documentTitle="RECURRING INVOICE"
+                      documentType="recurring_invoice"
                       documentNumber={invoiceData.invoice_number}
                       documentDate={invoiceData.date}
                       status={invoiceData.status}
@@ -1525,6 +1622,7 @@ export const RecurringInvoiceDetailsPage = () => {
                       secondaryDateLabel="Due Date"
                       secondaryDate={invoiceData.due_date}
                       referenceNumber={invoiceData.order_number}
+                      bankDetail={bankDetail}
                     />
                   </div>
                 </div>
@@ -1692,12 +1790,7 @@ export const RecurringInvoiceDetailsPage = () => {
                           : isAccepted || isSent
                             ? Edit
                             : FileText;
-                      const iconWrapClass =
-                        isConverted || isCreated
-                          ? "bg-green-50 text-green-600 border-green-100"
-                          : isAccepted || isSent
-                            ? "bg-sky-50 text-sky-600 border-sky-100"
-                            : "bg-gray-50 text-gray-500 border-gray-100";
+                      const iconWrapClass = "bg-brand-light text-brand border-brand/20";
 
                       return (
                         <div key={key} className="flex gap-6 py-5">
@@ -1727,7 +1820,7 @@ export const RecurringInvoiceDetailsPage = () => {
                             {isConverted && salesOrderId ? (
                               <button
                                 type="button"
-                                className="mt-2 inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                                className="mt-2 inline-flex items-center gap-2 text-sm text-brand hover:underline"
                                 onClick={() =>
                                   navigate(
                                     `/accounting/sales-order/${salesOrderId}`
@@ -1758,7 +1851,8 @@ export const RecurringInvoiceDetailsPage = () => {
         <div className="fixed left-[-10000px] top-0">
           <div ref={invoicePdfRef}>
             <AccountingDocumentPdf
-              documentTitle="INVOICE"
+              documentTitle="RECURRING INVOICE"
+              documentType="recurring_invoice"
               documentNumber={invoiceData.invoice_number}
               documentDate={invoiceData.date}
               status={invoiceData.status}
@@ -1771,6 +1865,7 @@ export const RecurringInvoiceDetailsPage = () => {
               secondaryDateLabel="Due Date"
               secondaryDate={invoiceData.due_date}
               referenceNumber={invoiceData.order_number}
+              bankDetail={bankDetail}
             />
           </div>
         </div>
@@ -1793,7 +1888,21 @@ export const RecurringInvoiceDetailsPage = () => {
             >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              style={{
+                backgroundColor: "#dc2626",
+                color: "#ffffff",
+                border: "none",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#b91c1c";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#dc2626";
+              }}
+            >
               Delete
             </Button>
           </div>
@@ -1805,7 +1914,7 @@ export const RecurringInvoiceDetailsPage = () => {
         <DialogContent className="max-w-4xl">
           <div className="flex items-center justify-between">
             <DialogHeader>
-              <DialogTitle className="text-[#C72030]">Approval Log</DialogTitle>
+              <DialogTitle className="text-brand">Approval Log</DialogTitle>
             </DialogHeader>
             <button
               type="button"
@@ -1820,7 +1929,7 @@ export const RecurringInvoiceDetailsPage = () => {
           <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
+                <TableRow className="bg-brand hover:bg-brand [&>th]:!text-white [&>th]:!opacity-100">
                   <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">
                     Sr.No.
                   </TableHead>

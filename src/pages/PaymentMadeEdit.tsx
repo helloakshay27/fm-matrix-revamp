@@ -1505,7 +1505,7 @@ export const EditPaymentPage: React.FC = () => {
                               : "-"}
                           </div>
                           <div className="col-span-2">
-                            <span className="text-blue-600 font-medium text-xs">
+                            <span className="text-brand font-medium text-xs">
                               {bill.bill_number || "-"}
                             </span>
                             {bill.subject && (
@@ -1895,7 +1895,7 @@ export const EditPaymentPage: React.FC = () => {
 
                       <div className="flex gap-4 items-start relative">
                         <div className="h-8 w-8 rounded-full bg-white border border-gray-200 flex items-center justify-center shrink-0 z-10 shadow-sm">
-                          <MessageSquare className="h-4 w-4 text-blue-400" />
+                          <MessageSquare className="h-4 w-4 text-brand" />
                         </div>
                         <div className="flex-1 space-y-2">
                           <div className="text-xs">
@@ -1980,7 +1980,7 @@ export const EditPaymentPage: React.FC = () => {
               >
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="auto" id="auto" className="text-blue-600 border-gray-300" />
+                    <RadioGroupItem value="auto" id="auto" className="text-brand border-gray-300" />
                     <Label htmlFor="auto" className="text-sm font-medium text-gray-700 cursor-pointer">
                       Auto-generate payment number
                     </Label>
@@ -2011,7 +2011,7 @@ export const EditPaymentPage: React.FC = () => {
 
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="manual" id="manual" className="text-blue-600 border-gray-300" />
+                    <RadioGroupItem value="manual" id="manual" className="text-brand border-gray-300" />
                     <Label htmlFor="manual" className="text-sm font-medium text-gray-700 cursor-pointer">
                       Add payment number manually for this payment
                     </Label>

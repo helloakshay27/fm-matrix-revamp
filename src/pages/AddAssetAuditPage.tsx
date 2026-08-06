@@ -752,9 +752,19 @@ import {
 } from '@mui/material';
 
 const fieldStyles = {
-  height: { xs: 28, sm: 36, md: 45 },
+  height: { xs: 36, sm: 40, md: 45 },
+  backgroundColor: '#fff',
   '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: '#fff',
+    '& fieldset': { borderColor: '#e5e7eb' },
+    '&:hover fieldset': { borderColor: '#C72030' },
+    '&.Mui-focused fieldset': { borderColor: '#C72030' },
+  },
+  '& .MuiInputLabel-root.Mui-focused': {
+    color: '#C72030',
   },
 };
 
@@ -1265,9 +1275,20 @@ export const AddAssetAuditPage = () => {
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Conducted By <span className="text-red-500">*</span></InputLabel>
                   <MuiSelect
+                    label="Conducted By"
+                    notched
+                    displayEmpty
                     value={formData.conductedBy}
                     onChange={(e) => updateFormData('conductedBy', e.target.value)}
                     sx={fieldStyles}
+                    renderValue={(selected) =>
+                      selected
+                        ? (() => {
+                            const user = users.find((u) => String(u.id) === String(selected));
+                            return user ? `${user.firstname} ${user.lastname}` : String(selected);
+                          })()
+                        : <span style={{ color: '#999' }}>Select Person</span>
+                    }
                   >
                     <MenuItem value=""><em>Select Person</em></MenuItem>
                     {users.map((user) => (
@@ -1300,14 +1321,24 @@ export const AddAssetAuditPage = () => {
           {auditTypeExpanded && (
             <div className="p-4 sm:p-6">
               <FormControl component="fieldset" sx={{ mb: 3 }}>
-                <FormLabel component="legend">Based On</FormLabel>
+                <FormLabel component="legend" sx={{ color: '#1a1a1a', '&.Mui-focused': { color: '#C72030' } }}>
+                  Based On
+                </FormLabel>
                 <MuiRadioGroup
                   value={formData.basedOn}
                   onChange={(e) => updateFormData('basedOn', e.target.value)}
                   row
                 >
-                  <FormControlLabel value="Location" control={<Radio />} label="Location" />
-                  <FormControlLabel value="Asset" control={<Radio />} label="Asset" />
+                  <FormControlLabel
+                    value="Location"
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                    label="Location"
+                  />
+                  <FormControlLabel
+                    value="Asset"
+                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                    label="Asset"
+                  />
                 </MuiRadioGroup>
               </FormControl>
 
@@ -1331,6 +1362,7 @@ export const AddAssetAuditPage = () => {
                         label={item.label}
                         options={options}
                         value={selectedOptions}
+                        maxHeight="45px"
                         onChange={(vals) => {
                           const ids = vals.map(v => String(v.id || v.value));
                           updateFormData(item.name, ids);
@@ -1343,9 +1375,19 @@ export const AddAssetAuditPage = () => {
                       <FormControl fullWidth variant="outlined" key={idx}>
                         <InputLabel shrink>{item.label}</InputLabel>
                         <MuiSelect
+                          label={typeof item.label === 'string' ? item.label : undefined}
+                          notched
+                          displayEmpty
                           value={currentValue || ''}
                           onChange={(e) => updateFormData(item.name, e.target.value)}
                           sx={fieldStyles}
+                          renderValue={(selected) =>
+                            selected
+                              ? (item.values.find((v) => String(v.id) === String(selected))?.name ||
+                                  item.values.find((v) => String(v.id) === String(selected))?.department_name ||
+                                  String(selected))
+                              : <span style={{ color: '#999' }}>Select...</span>
+                          }
                         >
                           <MenuItem value=""><em>Select...</em></MenuItem>
                           {item.values.map((v) => (
@@ -1366,7 +1408,7 @@ export const AddAssetAuditPage = () => {
         {/* Buttons */}
         <div className="flex justify-center gap-4">
           <Button
-            className="bg-[#C72030] text-white px-6"
+            className="bg-brand hover:bg-brand-hover text-white px-6"
             onClick={() => handleSubmit('create')}
             disabled={isLoading}
           >
@@ -1375,7 +1417,7 @@ export const AddAssetAuditPage = () => {
 
           <Button
             variant="outline"
-            className="border-gray-300 px-6"
+            className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] px-6"
             onClick={() => handleSubmit('saveAndCreate')}
             disabled={isLoading}
           >

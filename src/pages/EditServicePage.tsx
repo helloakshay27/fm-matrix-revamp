@@ -91,8 +91,8 @@ export const EditServicePage = () => {
       const storedSiteId =
         Number(
           localStorage.getItem("selectedSiteId") ||
-            localStorage.getItem("siteId") ||
-            "0"
+          localStorage.getItem("siteId") ||
+          "0"
         ) || null;
       const effectiveSiteId = fetchedService.site_id || storedSiteId;
 
@@ -202,8 +202,8 @@ export const EditServicePage = () => {
         if (rejected.length) {
           toast.error(
             `Some files were not added:\n` +
-              rejected.slice(0, 5).join("\n") +
-              (rejected.length > 5 ? `\n…and ${rejected.length - 5} more` : ""),
+            rejected.slice(0, 5).join("\n") +
+            (rejected.length > 5 ? `\n…and ${rejected.length - 5} more` : ""),
             { duration: 5000 }
           );
         }
@@ -519,11 +519,12 @@ export const EditServicePage = () => {
 
             <Button
               type="button"
-              onClick={() => document.getElementById("file-upload")?.click()}
-              className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center"
+              variant="secondary"
+              onClick={() => document.getElementById('file-upload')?.click()}
+              className="!bg-[#f6f4ee] !text-brand !border-none hover:!bg-[#f0ebe0] text-sm flex items-center justify-center"
               disabled={isSubmitting}
             >
-              <Upload className="w-4 h-4 mr-1" />
+              <Upload className="w-4 h-4 mr-1 !text-brand" />
               Upload Files
             </Button>
 

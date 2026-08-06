@@ -30,6 +30,7 @@ import { FinalClosureModal } from '@/components/FinalClosureModal';
 import { incidentService, type Incident } from '@/services/incidentService';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Field component for consistent styling - defined outside main component to prevent re-renders
 const Field = memo(({
@@ -55,6 +56,7 @@ const Field = memo(({
 export const IncidentDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showInjuryModal, setShowInjuryModal] = useState(false);
@@ -233,12 +235,10 @@ export const IncidentDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="p-6 bg-white min-h-screen">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="flex items-center gap-3">
-            <Loader2 className="w-6 h-6 animate-spin" />
-            <span>Loading incident details...</span>
-          </div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading Incident Details...</p>
         </div>
       </div>
     );
@@ -285,6 +285,7 @@ export const IncidentDetailsPage = () => {
             <h1 className="text-2xl font-bold text-[#1a1a1a]">Details ({incident.id})</h1>
           </div>
           <div className="flex flex-wrap gap-3">
+            {shouldShow("Incident", "update") && (
             <Button
               onClick={handleEditDetails}
               style={{ backgroundColor: '#C72030' }}
@@ -293,6 +294,7 @@ export const IncidentDetailsPage = () => {
               <Edit className="w-4 h-4 mr-2" style={{ color: '#C72030', background: '#E5E0D3' }} />
               Edit Details
             </Button>
+            )}
             <Button
               onClick={() => setShowUpdateModal(true)}
               style={{ backgroundColor: '#C72030' }}
@@ -309,6 +311,7 @@ export const IncidentDetailsPage = () => {
               <Settings className="w-4 h-4 mr-2" style={{ color: '#C72030', background: '#E5E0D3' }} />
               Final Closure
             </Button>
+            {shouldShow("Incident", "create") && (
             <Button
               onClick={() => setShowInjuryModal(true)}
               style={{ backgroundColor: '#C72030' }}
@@ -317,6 +320,7 @@ export const IncidentDetailsPage = () => {
               <Plus className="w-4 h-4 mr-2" style={{ color: '#C72030', background: '#E5E0D3' }} />
               Add Injury
             </Button>
+            )}
             <Button
               onClick={handleDownloadReport}
               disabled={downloadLoading}

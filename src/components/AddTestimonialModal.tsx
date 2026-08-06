@@ -1,7 +1,6 @@
-
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Box, Dialog, DialogContent, FormControl, IconButton, InputLabel, MenuItem, Select, TextField, Typography } from '@mui/material';
+import { Box, Dialog, DialogContent, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, TextField, Typography } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { toast } from 'sonner';
@@ -16,10 +15,29 @@ interface AddTestimonialModalProps {
 }
 
 const fieldStyles = {
-  height: { xs: 28, sm: 36, md: 45 },
-  "& .MuiInputBase-input, & .MuiSelect-select": {
-    padding: { xs: "8px", sm: "10px", md: "12px" },
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
   },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: '#ffffff !important',
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
 };
 
 export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, record }: AddTestimonialModalProps) => {
@@ -29,7 +47,7 @@ export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, rec
   const { sites } = useAppSelector(state => state.site);
 
   const [formData, setFormData] = useState({
-    site: [],
+    site: [] as (string | number)[],
     name: '',
     designation: '',
     companyName: '',
@@ -40,22 +58,30 @@ export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, rec
 
   useEffect(() => {
     if (isEditing && record) {
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         name: record.name,
         designation: record.designation,
         companyName: record.company_name,
         description: record.description,
-      })
-      setAttachmentPreview({ file: undefined, preview: record?.video_preview_image })
+      }));
+      setAttachmentPreview({ file: undefined, preview: record?.video_preview_image });
     }
-  }, [record, isEditing])
+  }, [record, isEditing]);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { name: string; value: any } }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handleSiteChange = (event: SelectChangeEvent<(string | number)[]>) => {
+    const value = event.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      site: typeof value === 'string' ? value.split(',') : value,
     }));
   };
 
@@ -92,7 +118,7 @@ export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, rec
       }
     } else {
       formData.site.forEach((site) => {
-        payload.append('testimonial[site_ids][]', site);
+        payload.append('testimonial[site_ids][]', String(site));
       });
       payload.append('testimonial[name]', formData.name);
       payload.append('testimonial[designation]', formData.designation);
@@ -127,118 +153,116 @@ export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, rec
       designation: '',
       companyName: '',
       description: '',
-    })
+    });
     setAttachmentPreview(null);
     onClose();
   };
 
   return (
-    <Dialog open={isOpen} onClose={handleClose}>
-      <DialogContent>
+    <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
+      <DialogContent className="!bg-white">
         <div>
           <h1 className='text-xl mb-6 mt-2 font-semibold'>{isEditing ? 'Edit Testimonial' : 'Add Testimonial'}</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {
-            !isEditing && (
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Site</InputLabel>
-                <Select
-                  multiple
-                  label="Site"
-                  name="site"
-                  value={formData.site}
-                  onChange={handleFormChange}
-                  displayEmpty
-                  sx={fieldStyles}
-                  renderValue={(selected) => {
-                    if (selected.length === 0) {
-                      return <em>Select Site</em>;
-                    }
-                    return selected
-                      .map((value) => sites.find((option) => option.id === value)?.name)
-                      .join(', ');
-                  }}
-                >
-                  {sites.map((option) => (
-                    <MenuItem key={option.id} value={option.id}>
-                      {option.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )
-          }
+          {!isEditing && (
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="testimonial-site-label">Site *</InputLabel>
+              <Select
+                labelId="testimonial-site-label"
+                multiple
+                label="Site *"
+                name="site"
+                value={formData.site}
+                onChange={handleSiteChange}
+                displayEmpty
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+                renderValue={(selected) => {
+                  if (!selected || selected.length === 0) {
+                    return <em className="text-gray-400">Select Site</em>;
+                  }
+                  return selected
+                    .map((value) => sites.find((option) => String(option.id) === String(value))?.name)
+                    .filter(Boolean)
+                    .join(', ');
+                }}
+              >
+                {sites.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>
+                    {option.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
 
           <TextField
-            label="Name*"
+            label="Name *"
             name="name"
-            type='text'
+            type="text"
             value={formData.name}
             onChange={handleFormChange}
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
-            InputProps={{ sx: fieldStyles }}
-            sx={{ mt: 1 }}
+            sx={{ ...fieldStyles, mt: 1 }}
           />
 
           <TextField
-            label="Designation*"
+            label="Designation *"
             name="designation"
-            type='text'
+            type="text"
             value={formData.designation}
             onChange={handleFormChange}
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
-            InputProps={{ sx: fieldStyles }}
-            sx={{ mt: 1 }}
+            sx={{ ...fieldStyles, mt: 1 }}
           />
 
           <TextField
-            label="Company Name*"
+            label="Company Name *"
             name="companyName"
-            type='text'
+            type="text"
             value={formData.companyName}
             onChange={handleFormChange}
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
-            InputProps={{ sx: fieldStyles }}
-            sx={{ mt: 1 }}
+            sx={{ ...fieldStyles, mt: 1 }}
           />
 
           <TextField
-            label="Description*"
+            label="Description *"
             name="description"
             value={formData.description}
             onChange={handleFormChange}
             multiline
             rows={2}
-            type='text'
+            type="text"
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
-            InputProps={{ sx: fieldStyles }}
             sx={{
               mt: 1,
-              "& .MuiOutlinedInput-root": {
-                height: "auto !important",
-                padding: "2px !important",
-                display: "flex",
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: '#ffffff !important',
+                height: 'auto !important',
+                padding: '2px !important',
+                display: 'flex',
               },
               "& .MuiInputBase-input[aria-hidden='true']": {
                 flex: 0,
                 width: 0,
                 height: 0,
-                padding: "0 !important",
+                padding: '0 !important',
                 margin: 0,
-                display: "none",
+                display: 'none',
               },
-              "& .MuiInputBase-input": {
-                resize: "none !important",
+              '& .MuiInputBase-input': {
+                resize: 'none !important',
               },
             }}
           />
@@ -260,7 +284,7 @@ export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, rec
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-orange-50 hover:bg-orange-100 transition-colors">
                   <span className="text-gray-600">
                     Drag & Drop or{" "}
-                    <span className="text-red-500 underline">Choose file</span>{" "}
+                    <span className="text-brand underline">Choose file</span>{" "}
                   </span>
                 </div>
               </label>
@@ -278,7 +302,7 @@ export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, rec
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: 'hsl(var(--background))'
+                      backgroundColor: 'hsl(var(--background))',
                     }}
                   >
                     <img
@@ -294,7 +318,7 @@ export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, rec
                         top: 0,
                         right: 0,
                         backgroundColor: 'hsl(var(--background))',
-                        '&:hover': { backgroundColor: 'hsl(var(--destructive))', color: 'white' }
+                        '&:hover': { backgroundColor: 'hsl(var(--destructive))', color: 'white' },
                       }}
                     >
                       <Close fontSize="small" />
@@ -305,13 +329,21 @@ export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, rec
             </div>
           </Box>
 
-          {/* Submit Button */}
-          <div className="pt-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
             <Button
               type="submit"
-              className="bg-purple-600 hover:bg-purple-700 text-white w-full"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-8 w-full sm:w-auto"
             >
-              Submit
+              {isEditing ? 'UPDATE' : 'CREATE'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              className="border-brand text-brand px-8 w-full sm:w-auto"
+            >
+              CANCEL
             </Button>
           </div>
         </form>

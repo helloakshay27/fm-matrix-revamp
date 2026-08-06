@@ -36,10 +36,16 @@ import {
     PersonAdd,
     EditOutlined
 } from '@mui/icons-material';
-import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail, Phone, Smartphone, Star, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail, Phone, Smartphone, Star, ChevronRight, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { toast } from "sonner";
 import { format, parseISO } from 'date-fns';
+import {
+    BankRecord,
+    bankMasterListUrl,
+    getBankMasterApiConfig,
+    mapApiBankRecord,
+} from './bankMasterUtils';
 
 // Zoho-style item search input with dropdown
 const ItemSearchInput: React.FC<{
@@ -119,7 +125,7 @@ const ItemSearchInput: React.FC<{
                     boxSizing: 'border-box',
                     height: 34,
                 }}
-                onFocusCapture={(e) => (e.target.style.borderColor = '#C72030')}
+                onFocusCapture={(e) => (e.target.style.borderColor = '#DA7756')}
                 onBlurCapture={(e) => (e.target.style.borderColor = '#d1d5db')}
             />
             {open && typeof document !== 'undefined' && createPortal(
@@ -172,7 +178,7 @@ const ItemSearchInput: React.FC<{
                             style={{
                                 padding: '8px 14px',
                                 fontSize: 13,
-                                color: '#C72030',
+                                color: '#DA7756',
                                 cursor: 'pointer',
                                 fontWeight: 500,
                                 borderTop: '1px solid #e5e7eb',
@@ -870,6 +876,24 @@ export const QuotesAdd: React.FC = () => {
     const [attachments, setAttachments] = useState<File[]>([]);
     const [displayAttachmentsInPortal, setDisplayAttachmentsInPortal] = useState(false);
 
+    // Bank Details
+    const [bankOptions, setBankOptions] = useState<BankRecord[]>([]);
+    const [selectedBankId, setSelectedBankId] = useState<string>('');
+
+    useEffect(() => {
+        const fetchBanks = async () => {
+            try {
+                const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+                const res = await axios.get(`${bankMasterListUrl(baseUrl, lockAccountId)}&active=true`, { headers });
+                const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+                setBankOptions(data.map(mapApiBankRecord));
+            } catch (err) {
+                setBankOptions([]);
+            }
+        };
+        fetchBanks();
+    }, []);
+
     // Email Communications
     const [sendEmailToCustomer, setSendEmailToCustomer] = useState(false);
     const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
@@ -936,15 +960,15 @@ export const QuotesAdd: React.FC = () => {
     };
     const modalPrimaryButtonSx = {
         textTransform: 'none',
-        bgcolor: '#C72030',
+        bgcolor: '#DA7756',
         color: '#fff',
-        '&:hover': { bgcolor: '#A01020' }
+        '&:hover': { bgcolor: '#C45F40' }
     };
     const modalSecondaryButtonSx = {
         textTransform: 'none',
-        borderColor: '#C72030',
-        color: '#C72030',
-        '&:hover': { borderColor: '#A01020', bgcolor: '#f8f1f1', color: '#A01020' }
+        borderColor: '#DA7756',
+        color: '#DA7756',
+        '&:hover': { borderColor: '#C45F40', bgcolor: '#F2EEE9', color: '#C45F40' }
     };
 
     // Generate auto sales order number
@@ -1447,6 +1471,13 @@ export const QuotesAdd: React.FC = () => {
             return false;
         }
 
+        if (!selectedBankId) {
+            newErrors.bank = 'Bank is required';
+            setErrors(newErrors);
+            toast.error('Please select a bank');
+            return false;
+        }
+
         if (!salesOrderDate) {
             // newErrors.salesOrderDate = 'Sales order date is required';
             setErrors(newErrors);
@@ -1578,6 +1609,7 @@ export const QuotesAdd: React.FC = () => {
             formData.append('lock_account_quote[expiry_date]', expectedShipmentDate);
             formData.append('lock_account_quote[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
             formData.append('lock_account_quote[customer_notes]', customerNotes);
+            formData.append('lock_account_quote[bank_master_id]', selectedBankId || '');
             formData.append('lock_account_quote[terms_and_conditions]', termsAndConditions);
             formData.append('lock_account_quote[subject]', subject);
             // formData.append('lock_account_quote[status]', 'draft');
@@ -1795,6 +1827,18 @@ export const QuotesAdd: React.FC = () => {
                 </div>
             )}
 
+            <div className="mb-2">
+                <Button
+                    variant="text"
+                    color="inherit"
+                    onClick={() => navigate('/accounting/quotes')}
+                    sx={{ textTransform: 'none',  color: 'black', px: 0 }}
+                >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Quotes List
+                </Button>
+            </div>
+
             <header className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">New Quote</h1>
             </header>
@@ -1806,7 +1850,7 @@ export const QuotesAdd: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-medium mb-2">
-                                    Customer Name<span className="text-red-500">*</span>
+                                    Customer Name<span className="text-brand">*</span>
                                 </label>
                                 <FormControl fullWidth error={!!errors.customer}>
                                     <Select
@@ -1856,7 +1900,7 @@ export const QuotesAdd: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-2">
-                                        Place of Supply<span className="text-red-500">*</span>
+                                        Place of Supply<span className="text-brand">*</span>
                                     </label>
 
                                     <TextField
@@ -1893,7 +1937,7 @@ export const QuotesAdd: React.FC = () => {
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Billing Address
                                             <IconButton size="small" onClick={() => openAddressListModal('billing')}>
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedBillingAddress?.address ? (
@@ -1916,7 +1960,7 @@ export const QuotesAdd: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => openAddressFormModal('new', 'billing')}
-                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                                className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
                                             >
                                                 New Address
                                             </button>
@@ -1928,7 +1972,7 @@ export const QuotesAdd: React.FC = () => {
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Shipping Address
                                             <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedShippingAddress?.address ? (
@@ -1951,7 +1995,7 @@ export const QuotesAdd: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => openAddressFormModal('new', 'shipping')}
-                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                                className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
                                             >
                                                 New Address
                                             </button>
@@ -1965,14 +2009,14 @@ export const QuotesAdd: React.FC = () => {
                                         <span className="text-gray-500">GST Treatment:</span>
                                         <span className="text-gray-800">{getGstTreatmentLabel(customerDetail.gst_preference || customerDetail.gst_treatment)}</span>
                                         <IconButton size="small" onClick={openGstModal}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500">GSTIN:</span>
                                         <span className="text-gray-800 font-medium">{selectedGstDetail?.gstin || customerDetail.gstin || "—"}</span>
                                         <IconButton size="small" onClick={openGstPickerModal}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                 </div>
@@ -1980,7 +2024,7 @@ export const QuotesAdd: React.FC = () => {
                                 <div className="flex items-center gap-2 pt-2">
                                     <button
                                         onClick={openCustomerDrawer}
-                                        className="text-[#C72030] text-sm font-medium hover:underline flex items-center gap-1"
+                                        className="text-[#DA7756] text-sm font-medium hover:underline flex items-center gap-1"
                                     >
                                         View Customer Details <ChevronRight className="w-4 h-4" />
                                     </button>
@@ -2003,7 +2047,7 @@ export const QuotesAdd: React.FC = () => {
                                 Billing Address
                             </label>
                             <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                                 rows={4}
                                 value={billingAddress}
                                 onChange={(e) => {
@@ -2022,7 +2066,7 @@ export const QuotesAdd: React.FC = () => {
                                 Shipping Address
                             </label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${sameAsBilling ? 'bg-gray-50' : ''}`}
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y ${sameAsBilling ? 'bg-gray-50' : ''}`}
                                 rows={4}
                                 value={shippingAddress}
                                 onChange={(e) => {
@@ -2040,6 +2084,7 @@ export const QuotesAdd: React.FC = () => {
                                     <Checkbox
                                         checked={sameAsBilling}
                                         onChange={(e) => setSameAsBilling(e.target.checked)}
+                                        sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                     />
                                 }
                                 label="Same as Billing Address"
@@ -2069,7 +2114,7 @@ export const QuotesAdd: React.FC = () => {
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
-                                Quote Date<span className="text-red-500">*</span>
+                                Quote Date<span className="text-brand">*</span>
                             </label>
                             <TextField
                                 fullWidth
@@ -2148,7 +2193,7 @@ export const QuotesAdd: React.FC = () => {
                                 Subject
                             </label>
                             <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                                 rows={4}
                                 value={subject}
                                 onChange={(e) => {
@@ -2168,7 +2213,7 @@ export const QuotesAdd: React.FC = () => {
                 <Section title="Item Table" icon={<Package className="w-5 h-5" />}>
                     <div className="space-y-4">
                         {errors.items && (
-                            <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
+                            <div className="text-brand text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
                         )}
 
                         <div className="border border-border rounded-lg overflow-x-auto">
@@ -2451,12 +2496,12 @@ export const QuotesAdd: React.FC = () => {
                                 >
                                     <FormControlLabel
                                         value="TDS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                                         label={<span className="text-sm">TDS</span>}
                                     />
                                     <FormControlLabel
                                         value="TCS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                                         label={<span className="text-sm">TCS</span>}
                                     />
                                 </RadioGroup>
@@ -2525,7 +2570,7 @@ export const QuotesAdd: React.FC = () => {
                 {/* Customer Notes */}
                 <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
                     <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                         rows={3}
                         value={customerNotes}
                         onChange={(e) => {
@@ -2537,12 +2582,51 @@ export const QuotesAdd: React.FC = () => {
                     <div className="text-xs text-gray-400 text-right mt-1">
                         {(customerNotes?.length || 0)}/500
                     </div>
+
+                    <div className="mt-4 w-1/2">
+                        <label className="block text-sm font-medium mb-2">
+                            Bank<span className="text-brand">*</span>
+                        </label>
+                        <FormControl fullWidth size="small" error={!!errors.bank}>
+                            <Select
+                                displayEmpty
+                                value={selectedBankId}
+                                onChange={(e) => {
+                                    setSelectedBankId(String(e.target.value));
+                                    if (errors.bank) {
+                                        setErrors((prev) => {
+                                            const next = { ...prev };
+                                            delete next.bank;
+                                            return next;
+                                        });
+                                    }
+                                }}
+                                renderValue={(val) =>
+                                    val
+                                        ? (() => {
+                                            const bank = bankOptions.find(b => String(b.id) === String(val));
+                                            return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
+                                        })()
+                                        : <span style={{ color: '#aaa' }}>Select Bank</span>
+                                }
+                                sx={fieldStyles}
+                            >
+                                <MenuItem value=""><em>Select Bank</em></MenuItem>
+                                {bankOptions.map((bank) => (
+                                    <MenuItem key={bank.id} value={String(bank.id)}>
+                                        {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        {errors.bank && <p className="text-xs text-brand mt-1">{errors.bank}</p>}
+                    </div>
                 </Section>
 
                 {/* Terms & Conditions */}
                 <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
                     <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                         rows={4}
                         value={termsAndConditions}
                         onChange={(e) => {
@@ -2607,6 +2691,7 @@ export const QuotesAdd: React.FC = () => {
                                 <Checkbox
                                     checked={displayAttachmentsInPortal}
                                     onChange={(e) => setDisplayAttachmentsInPortal(e.target.checked)}
+                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                 />
                             }
                             label="Display attachments in customer portal and emails"
@@ -2622,6 +2707,7 @@ export const QuotesAdd: React.FC = () => {
                                 <Checkbox
                                     checked={sendEmailToCustomer}
                                     onChange={(e) => setSendEmailToCustomer(e.target.checked)}
+                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                 />
                             }
                             label="Send email to selected customer above"
@@ -2646,6 +2732,7 @@ export const QuotesAdd: React.FC = () => {
                                                     }
                                                 }}
                                                 size="small"
+                                                sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                             />
                                             <Chip
                                                 label={`${person.first_name || person.firstName} ${person.last_name || person.lastName} (${person.email})`}
@@ -2703,17 +2790,8 @@ export const QuotesAdd: React.FC = () => {
                     variant="text"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        bgcolor: '#f8f1f1',
-                        color: '#C72030',
-                        fontWeight: 600,
-                        '&:hover': {
-                            bgcolor: '#f1e8e8',
-                            color: '#A01020'
-                        }
-                    }}
+                    className="fm-button-fix fm-button-brand px-8 py-2"
+                    sx={{ textTransform: 'none', fontWeight: 600 }}
                 >
                     Save as Draft
                 </Button>
@@ -2722,17 +2800,8 @@ export const QuotesAdd: React.FC = () => {
                         variant="text"
                         onClick={() => handleSubmit(false)}
                         disabled={isSubmitting}
-                        sx={{
-                            bgcolor: '#f8f1f1',
-                            color: '#C72030',
-                            fontWeight: 600,
-                            px: 4,
-                            '&:hover': {
-                                bgcolor: '#f1e8e8',
-                                color: '#A01020'
-                            },
-                            textTransform: 'none'
-                        }}
+                        className="fm-button-fix fm-button-brand px-8 py-2"
+                        sx={{ textTransform: 'none', fontWeight: 600 }}
                     >
                         {isSubmitting ? 'Submitting...' : 'Save and Send'}
                     </Button>
@@ -2742,16 +2811,16 @@ export const QuotesAdd: React.FC = () => {
                     variant="outlined"
                     onClick={() => navigate('/accounting/quotes')}
                     disabled={isSubmitting}
+                    className="fm-button-fix px-8 py-2"
                     sx={{
                         textTransform: 'none',
-                        px: 4,
-                        borderColor: '#C72030',
-                        color: '#C72030',
                         fontWeight: 600,
+                        borderColor: '#DA7756',
+                        color: '#DA7756',
                         '&:hover': {
-                            borderColor: '#A01020',
-                            bgcolor: '#f8f1f1',
-                            color: '#A01020'
+                            borderColor: '#C45F40',
+                            bgcolor: '#F2EEE9',
+                            color: '#C45F40'
                         }
                     }}
                 >
@@ -2795,13 +2864,13 @@ export const QuotesAdd: React.FC = () => {
                                                 [customerDetail.salutation, customerDetail.first_name, customerDetail.last_name]
                                                     .filter(Boolean)
                                                     .join(" ")}
-                                            <span className="text-blue-500 cursor-pointer text-sm">↗</span>
+                                            <span className="text-brand cursor-pointer text-sm">↗</span>
                                         </div>
                                         {customerDetail.company_name && (
                                             <div className="text-sm text-gray-500">{customerDetail.company_name}</div>
                                         )}
                                         {customerDetail.email && (
-                                            <div className="text-xs text-blue-500">{customerDetail.email}</div>
+                                            <div className="text-xs text-brand">{customerDetail.email}</div>
                                         )}
                                     </div>
                                 </div>
@@ -2813,7 +2882,7 @@ export const QuotesAdd: React.FC = () => {
                                             key={t}
                                             onClick={() => setDrawerActiveTab(i)}
                                             className={`py-2 px-3 text-sm font-medium border-b-2 transition-colors ${drawerActiveTab === i
-                                                    ? "border-[#C72030] text-[#C72030]"
+                                                    ? "border-[#DA7756] text-[#DA7756]"
                                                     : "border-transparent text-gray-500 hover:text-gray-700"
                                                 }`}
                                         >
@@ -2858,7 +2927,7 @@ export const QuotesAdd: React.FC = () => {
                                                 ["Tax Preference", customerDetail.tax_preference || "—"],
                                             ].map(([label, value]) => (
                                                 <div key={label} className="flex justify-between items-start py-1.5 border-b border-gray-100 last:border-0">
-                                                    <span className="text-xs text-[#C72030] w-36 shrink-0">{label}</span>
+                                                    <span className="text-xs text-[#DA7756] w-36 shrink-0">{label}</span>
                                                     <span className="text-xs text-gray-700 text-right">{value}</span>
                                                 </div>
                                             ))}
@@ -3079,7 +3148,7 @@ export const QuotesAdd: React.FC = () => {
                             <div
                                 key={addr.id}
                                 className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
-                                        ? 'border-[#C72030] bg-red-50'
+                                        ? 'border-[#DA7756] bg-red-50'
                                         : 'border-gray-200 hover:border-gray-300'
                                     }`}
                                 onClick={() => {
@@ -3106,7 +3175,7 @@ export const QuotesAdd: React.FC = () => {
                                             openAddressFormModal('edit', activeAddressType, addr);
                                         }}
                                     >
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 </div>
                             </div>
@@ -3116,7 +3185,7 @@ export const QuotesAdd: React.FC = () => {
                 <DialogActions className="!justify-between !px-4">
                     <button
                         type="button"
-                        className="text-[#1d4ed8] text-sm font-medium"
+                        className="text-[#DA7756] text-sm font-medium"
                         onClick={() => openAddressFormModal('new', activeAddressType)}
                     >
                         + New address
@@ -3253,7 +3322,7 @@ export const QuotesAdd: React.FC = () => {
                 <DialogTitle className="!text-base !font-semibold !border-b !border-gray-200 !flex !items-center !justify-between !py-3">
                     <span>Manage Tax Informations</span>
                     <IconButton size="small" onClick={() => setGstManageModalOpen(false)}>
-                        <Close fontSize="small" className="text-red-500" />
+                        <Close fontSize="small" className="text-brand" />
                     </IconButton>
                 </DialogTitle>
                 <DialogContent className="!pt-4">
@@ -3418,7 +3487,7 @@ export const QuotesAdd: React.FC = () => {
                     <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
                         <button
                             type="button"
-                            className="text-blue-600 text-sm flex items-center gap-1"
+                            className="text-brand text-sm flex items-center gap-1"
                             onClick={() => {
                                 setGstPickerModalOpen(false);
                                 openGstManageModal();
@@ -3558,7 +3627,7 @@ export const QuotesAdd: React.FC = () => {
                         Cancel
                     </button>
                     <button
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                         onClick={() => {
                             if (currentItemIndex !== null) {
                                 updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
@@ -3592,11 +3661,11 @@ export const QuotesAdd: React.FC = () => {
                         onClick={() => setDeleteConfirmOpen(false)}
                         variant="outlined"
                         sx={{
-                            color: '#C72030',
-                            borderColor: '#C72030',
+                            color: '#DA7756',
+                            borderColor: '#DA7756',
                             '&:hover': {
-                                borderColor: '#C72030',
-                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                borderColor: '#DA7756',
+                                backgroundColor: 'rgba(218, 119, 86, 0.04)'
                             }
                         }}
                     >
@@ -3606,9 +3675,9 @@ export const QuotesAdd: React.FC = () => {
                         onClick={handleDeleteConfirm}
                         variant="contained"
                         sx={{
-                            backgroundColor: '#C72030',
+                            backgroundColor: '#dc2626',
                             '&:hover': {
-                                backgroundColor: '#A01926'
+                                backgroundColor: '#b91c1c'
                             }
                         }}
                     >

@@ -464,7 +464,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({
   const customFieldIdParam = searchParams.get("custom_field_id");
   const isLocationFromUrl = !!buildingIdParam;
   const hostname = window.location.hostname;
-  const isOigComingSoonDomain = siteId === 2893;
+  const isOigComingSoonDomain = siteId === 2893111111111;
 
   const [siteDomain, setSiteDomain] = useState<string>("");
   const [siteError, setSiteError] = useState<string>("");
@@ -1688,40 +1688,42 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({
                   </Select>
                 </div>
 
-                <div className="md:col-span-2">
-                  <label
-                    className="text-xs font-medium mb-1 block"
-                    style={{ color: "#888780" }}
-                  >
-                    Room
-                  </label>
-                  <Select
-                    value={formData.room}
-                    onValueChange={(val) => field("room", val)}
-                    disabled={isLocationFromUrl || !formData.floor}
-                  >
-                    <SelectTrigger
-                      className="h-11 rounded-lg text-sm"
-                      style={{ borderColor: "#d3d1c7" }}
+                {siteId !== 2893 && (
+                  <div className="md:col-span-2">
+                    <label
+                      className="text-xs font-medium mb-1 block"
+                      style={{ color: "#888780" }}
                     >
-                      <SelectValue placeholder="Select Room">
-                        {isLocationFromUrl
-                          ? rooms.find((r) => String(r.id) === formData.room)
-                              ?.name ||
-                            formData.room ||
-                            undefined
-                          : undefined}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {rooms.map((item) => (
-                        <SelectItem key={item.id} value={String(item.id)}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                      Room
+                    </label>
+                    <Select
+                      value={formData.room}
+                      onValueChange={(val) => field("room", val)}
+                      disabled={isLocationFromUrl || !formData.floor}
+                    >
+                      <SelectTrigger
+                        className="h-11 rounded-lg text-sm"
+                        style={{ borderColor: "#d3d1c7" }}
+                      >
+                        <SelectValue placeholder="Select Room">
+                          {isLocationFromUrl
+                            ? rooms.find((r) => String(r.id) === formData.room)
+                                ?.name ||
+                              formData.room ||
+                              undefined
+                            : undefined}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {rooms.map((item) => (
+                          <SelectItem key={item.id} value={String(item.id)}>
+                            {item.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </div>
           )}

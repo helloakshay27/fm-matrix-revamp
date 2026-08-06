@@ -50,12 +50,30 @@ export interface WasteGeneration {
   wing_name: string | null;
   area_id: number | null;
   area_name: string | null;
+  entity_id: number | null;
+  client_name: string | null;
+  device_id: number | null;
+  status: string;
+  user_type: string;
+  user_name: string;
+  bag_counts: number;
   vendor: Vendor;
   commodity: Commodity;
   category: Category;
   operational_landlord: OperationalLandlord;
   created_by: CreatedBy;
   url: string;
+  attachments: unknown[];
+  signature: string | null;
+  waste_bag_details: unknown[];
+}
+
+export interface WasteGenerationCounts {
+  total_waste: number;
+  total_recycled: number;
+  recycling_percentage: number;
+  dry_waste: number;
+  hazardous_waste: number;
 }
 
 export interface WasteGenerationResponse {
@@ -65,6 +83,7 @@ export interface WasteGenerationResponse {
     total_count: number;
     total_pages: number;
   };
+  counts?: WasteGenerationCounts;
 }
 
 export interface Building {
@@ -132,8 +151,12 @@ export interface WasteGenerationFilters {
   commodity_id_eq?: string;
   category_id_eq?: string;
   operational_landlord_id_in?: string;
-  date_from?: string;
-  date_to?: string;
+  date_range?: string;
+  created_by_firstname_or_lastname_cont?: string;
+  entity_id_eq?: string;
+  resource_type_eq?: string;
+  status_eq?: string;
+  devise_id_cont?: string;
 }
 
 // API function to fetch waste generations with filters
@@ -141,7 +164,7 @@ export const fetchWasteGenerations = async (page: number = 1, filters?: WasteGen
   try {
     // Build query parameters manually to preserve square brackets
     const queryParts: string[] = [`page=${page}`];
-    
+
     // Add filter parameters if provided
     if (filters) {
       if (filters.commodity_id_eq) {
@@ -153,11 +176,23 @@ export const fetchWasteGenerations = async (page: number = 1, filters?: WasteGen
       if (filters.operational_landlord_id_in) {
         queryParts.push(`q[operational_landlord_id_in]=${encodeURIComponent(filters.operational_landlord_id_in)}`);
       }
-      if (filters.date_from) {
-        queryParts.push(`q[wg_date_gteq]=${encodeURIComponent(filters.date_from)}`);
+      if (filters.date_range) {
+        queryParts.push(`q[date_range]=${encodeURIComponent(filters.date_range)}`);
       }
-      if (filters.date_to) {
-        queryParts.push(`q[wg_date_lteq]=${encodeURIComponent(filters.date_to)}`);
+      if (filters.created_by_firstname_or_lastname_cont) {
+        queryParts.push(`q[created_by_firstname_or_lastname_cont]=${encodeURIComponent(filters.created_by_firstname_or_lastname_cont)}`);
+      }
+      if (filters.entity_id_eq) {
+        queryParts.push(`q[entity_id_eq]=${encodeURIComponent(filters.entity_id_eq)}`);
+      }
+      if (filters.resource_type_eq) {
+        queryParts.push(`q[resource_type_eq]=${encodeURIComponent(filters.resource_type_eq)}`);
+      }
+      if (filters.status_eq) {
+        queryParts.push(`q[status_eq]=${encodeURIComponent(filters.status_eq)}`);
+      }
+      if (filters.devise_id_cont) {
+        queryParts.push(`q[devise_id_cont]=${encodeURIComponent(filters.devise_id_cont)}`);
       }
     }
     

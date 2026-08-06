@@ -22,6 +22,8 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
 
 // Interface definitions for API response
 interface CustomerName {
@@ -96,8 +98,10 @@ const columns: ColumnConfig[] = [
 
 export default function UtilityDailyReadingsDashboard() {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const { onDailyReadingsListViewed, onReadingsImportOpened, onReadingsImportSubmitted } = useUtilityEvents();
 
   // API state management
   const [dailyReadingsData, setDailyReadingsData] = useState<DailyReadingItem[]>([]);
@@ -192,6 +196,9 @@ export default function UtilityDailyReadingsDashboard() {
 
       const transformedData = measurementsArray.map(transformMeasurement);
       setDailyReadingsData(transformedData);
+      
+      const filterNames = filters ? Object.keys(filters).filter(k => filters[k]).join(',') : '';
+      onDailyReadingsListViewed({ row_count: transformedData.length, filter_used: filterNames });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while fetching measurements';
       setError(errorMessage);
@@ -356,11 +363,13 @@ export default function UtilityDailyReadingsDashboard() {
   };
 
   const handleImport = () => {
+    onReadingsImportOpened();
     setIsBulkUploadOpen(true);
   };
 
   const handleImportComplete = (file: File) => {
     // Refresh the data after successful import
+    onReadingsImportSubmitted({ row_count: 0, error_count: 0 }); // Placeholder row_count and error_count since not returned directly
     fetchMeasurements(1); // Reset to first page after import
     setCurrentPage(1);
     toast.success('Data imported successfully');
@@ -404,14 +413,16 @@ export default function UtilityDailyReadingsDashboard() {
       case 'actions':
         return (
           <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEdit(item)}
-              className="h-8 w-8 p-0"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
+            {shouldShow("Daily Readings", "update") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleEdit(item)}
+                className="h-8 w-8 p-0"
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         );
       case 'id':
@@ -483,12 +494,7 @@ export default function UtilityDailyReadingsDashboard() {
 
       {/* Enhanced Data Table */}
       <div>
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="w-6 h-6 animate-spin mr-2" />
-            <span>Loading daily readings...</span>
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="text-center py-12">
             <p className="text-red-600 mb-4">{error}</p>
             <Button onClick={handleRefresh} variant="outline">
@@ -516,6 +522,7 @@ export default function UtilityDailyReadingsDashboard() {
               // selectable={true}
               storageKey="daily-readings-table"
               leftActions={leftActions}
+              loading={loading}
             />
 
             {/* Custom Pagination Controls */}
@@ -717,16 +724,15 @@ export default function UtilityDailyReadingsDashboard() {
               <Button
                 onClick={handleFilterReset}
                 variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+                className="border-brand text-brand hover:bg-brand-selected hover:text-brand px-8 py-2"
               >
                 Reset
               </Button>
               <Button
                 onClick={() => handleFilterApply(filterFormData)}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-8 py-2"
+                className="!bg-brand hover:!bg-brand-hover !text-white px-8 py-2"
               >
-                Submit
+                Apply
               </Button>
             </div>
           </div>

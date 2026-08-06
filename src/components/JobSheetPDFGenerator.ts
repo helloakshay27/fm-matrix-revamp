@@ -150,7 +150,7 @@ export class JobSheetPDFGenerator {
               : ""
           }
           ${this.generateDailyMaintenanceSection(jobSheetData)}
-          ${this.generateRemarksSection(taskDetails, comments)}
+          ${this.generateRemarksSection(jobSheetData, comments)}
           ${this.generateBottomSection()}
         </body>
       </html>
@@ -265,7 +265,7 @@ export class JobSheetPDFGenerator {
             )}
             ${
               isLastPage
-                ? this.generateRemarksSection(taskDetails, comments)
+                ? this.generateRemarksSection(jobSheetData, comments)
                 : ""
             }
             ${isLastPage ? this.generateBottomSection() : ""}
@@ -429,6 +429,34 @@ export class JobSheetPDFGenerator {
     `;
   }
 
+  // The job sheet API returns both `task_details.asset` and `task_details.service`,
+  // but only one is populated depending on `task_of`/`is_service_task` — the other
+  // comes back all-null. Pick whichever one actually holds the data.
+  private resolveAssetOrService(jobSheet: any): {
+    name: string;
+    code: string;
+    category: string;
+    location: any;
+    isService: boolean;
+    label: string;
+  } {
+    const taskDetails = jobSheet?.task_details;
+    const isService =
+      taskDetails?.is_service_task === true ||
+      taskDetails?.task_of === "Pms::Service" ||
+      !taskDetails?.asset?.id;
+    const source = isService ? taskDetails?.service : taskDetails?.asset;
+
+    return {
+      name: source?.name || "",
+      code: source?.code || "",
+      category: source?.category || "",
+      location: source?.location || null,
+      isService,
+      label: isService ? "Service" : "Asset",
+    };
+  }
+
   private getLogoForSite(): string {
     const hostname = window.location.hostname;
 
@@ -451,10 +479,12 @@ export class JobSheetPDFGenerator {
 
     // Enhanced data mapping from new API structure
     const siteName = jobSheet?.task_details?.site?.name || "";
-    const assetName = jobSheet?.task_details?.asset?.name || "";
-    const assetCode = jobSheet?.task_details?.asset?.code || "";
+    const assetOrService = this.resolveAssetOrService(jobSheet);
+    const assetName = assetOrService.name;
+    const assetCode = assetOrService.code;
+    const assetOrServiceLabel = assetOrService.label;
     const jobCode = jobSheet?.basic_info?.job_card_no || "";
-    const group = jobSheet?.task_details?.asset?.category || "";
+    const group = assetOrService.category;
     const serialNumber = jobSheet?.basic_info?.job_id || "";
 
     // Get sub group from group_scores if available
@@ -503,9 +533,9 @@ export class JobSheetPDFGenerator {
               <td class="figma-value-cell">${jobCode}</td>
             </tr>
             <tr>
-              <td class="figma-label-cell">Asset Name:</td>
+              <td class="figma-label-cell">${assetOrServiceLabel} Name:</td>
               <td class="figma-value-cell">${assetName}</td>
-              <td class="figma-label-cell">Asset No.:</td>
+              <td class="figma-label-cell">${assetOrServiceLabel} No.:</td>
               <td class="figma-value-cell">${assetCode}</td>
             </tr>
             <tr>
@@ -600,8 +630,8 @@ export class JobSheetPDFGenerator {
 
     console.log(`📊 PDF Grouping: ${sections.length} sections from ${checklistResponses.length} items`);
 
-    // Enhanced section title - use task name or fallback to asset category
-    const assetCategory = jobSheet?.task_details?.asset?.category || "";
+    // Enhanced section title - use task name or fallback to asset/service category
+    const assetCategory = this.resolveAssetOrService(jobSheet).category;
     const mainTitle = taskName
       ? taskName.toUpperCase()
       : assetCategory
@@ -739,7 +769,7 @@ export class JobSheetPDFGenerator {
   ): string {
     const jobSheet = jobSheetData?.data?.job_sheet || jobSheetData?.job_sheet;
     const checklistResponses = jobSheet?.checklist_responses || [];
-    const assetCategory = jobSheet?.task_details?.asset?.category || "";
+    const assetCategory = this.resolveAssetOrService(jobSheet).category;
     const taskName = jobSheet?.task_details?.task_name || "";
 
     if (checklistResponses.length === 0) {
@@ -915,7 +945,7 @@ export class JobSheetPDFGenerator {
 
   private generateLocationDetails(jobSheetData: any): string {
     const jobSheet = jobSheetData?.data?.job_sheet || jobSheetData?.job_sheet;
-    const location = jobSheet?.task_details?.asset?.location;
+    const location = this.resolveAssetOrService(jobSheet).location;
 
     // Debug location data
     console.log("🗺️ Location Data Debug:", {
@@ -1119,37 +1149,35 @@ export class JobSheetPDFGenerator {
   private generateRemarksSection(taskDetails: any, comments: string): string {
     const jobSheet = taskDetails?.data?.job_sheet || taskDetails?.job_sheet;
 
-    // Get comments from multiple sources and map correctly
-    const taskComments = jobSheet?.task_details?.task_comments || "";
-    const userComments = comments || "";
-    const basicInfoComments = jobSheet?.basic_info?.comments || "";
-    const checklistComments =
-      jobSheet?.checklist_responses
-        ?.filter((item: any) => item.comments)
-        .map((item: any) => item.comments) || [];
-    const systemComments = jobSheet?.comments || [];
+    const taskComments   = (jobSheet?.task_details?.task_comments || "").trim();
+    const userComments   = (comments || "").trim();
+    const basicInfoComments = (jobSheet?.basic_info?.comments || "").trim();
+    const systemComments: string[] = (jobSheet?.comments || [])
+      .map((c: any) => (c.comment || c.text || c || "").trim())
+      .filter(Boolean);
 
-    // Combine all available comments with proper filtering and formatting
-    const allComments = [
-      taskComments,
-      userComments,
-      basicInfoComments,
-      ...checklistComments,
-      ...systemComments.map((c: any) => c.comment || c.text || c),
-    ].filter(
-      (comment) =>
-        comment && typeof comment === "string" && comment.trim().length > 0
-    );
+    const hasAny = taskComments || userComments || basicInfoComments || systemComments.length > 0;
 
-    const finalComments = allComments.length > 0 ? allComments.join(" • ") : "";
+    const row = (label: string, text: string) => `
+      <div class="pdf-remark-row">
+        ${label ? `<div class="pdf-remark-label-col">${label}</div>` : ""}
+        <div class="pdf-remark-value-col">${text}</div>
+      </div>`;
+
+    const rows = [
+      taskComments    ? row("",                    taskComments)    : "",
+      userComments    ? row("Additional Comments", userComments)    : "",
+      basicInfoComments ? row("Other Comments",    basicInfoComments) : "",
+      ...systemComments.map((c, i) => row(i === 0 ? "System Comments" : "", c)),
+    ].join("");
 
     return `
-      <div class="svg-remarks-section">
-        <div class="svg-remarks-container">
-          <div class="svg-remarks-label">Remarks</div>
-          <div class="svg-remarks-content">
-            ${finalComments || ""}
-          </div>
+      <div class="pdf-remarks-section">
+        <div class="pdf-remarks-header-bar">
+          <span class="pdf-remarks-header-text">REMARKS</span>
+        </div>
+        <div class="pdf-remarks-body">
+          ${hasAny ? rows : '<div class="pdf-remarks-empty">No remarks available</div>'}
         </div>
       </div>
     `;

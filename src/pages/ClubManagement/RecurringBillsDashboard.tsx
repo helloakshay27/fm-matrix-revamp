@@ -298,18 +298,8 @@ export const RecurringBillsDashboard: React.FC = () => {
 
   // Helper function to get status badge
   const getStatusBadge = (status: string) => {
-    const statusColors: Record<string, string> = {
-      draft: "bg-gray-100 text-gray-800",
-      open: "bg-yellow-100 text-yellow-800",
-      paid: "bg-green-100 text-green-800",
-      overdue: "bg-red-100 text-red-800",
-      cancelled: "bg-red-100 text-red-800",
-    };
-
     return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || "bg-gray-100 text-gray-800"}`}
-      >
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
         {status.replace(/_/g, " ").toUpperCase()}
       </span>
     );
@@ -369,7 +359,7 @@ export const RecurringBillsDashboard: React.FC = () => {
       </span>
     ),
     bill_number: (
-      <div className="font-medium text-blue-600">{bill.bill_number}</div>
+      <div className="font-medium text-brand">{bill.bill_number}</div>
     ),
     reference_number: (
       <span className="text-sm text-gray-900">{bill.reference_number}</span>
@@ -484,8 +474,7 @@ export const RecurringBillsDashboard: React.FC = () => {
         loading={loading}
         leftActions={
           <Button
-            // className="fm-button-fix fm-button-brand !rounded-md !px-4 !py-2 !text-sm !font-semibold"
-             className='fm-button-fix fm-button-brand px-4 py-2P'
+             className='fm-button-fix fm-button-brand px-8 py-2'
             onClick={() => navigate("/accounting/recurring-bills/create")}
           >
             <Plus className="w-4 h-4" /> Add

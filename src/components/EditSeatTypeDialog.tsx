@@ -116,10 +116,9 @@ export const EditSeatTypeDialog: React.FC<EditSeatTypeDialogProps> = ({
           <div className="pt-4">
             <Button 
               onClick={handleSubmit}
-              style={{ backgroundColor: '#C72030', color: 'white' }}
-              className="w-full hover:opacity-90 h-10 border-0"
+              className="w-full !bg-[#DA7756] hover:!bg-[#C45F40] h-10 border-0"
             >
-              Submit
+              <span className="!text-white font-medium">Submit</span>
             </Button>
           </div>
         </div>

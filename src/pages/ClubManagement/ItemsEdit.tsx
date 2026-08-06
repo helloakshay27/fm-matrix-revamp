@@ -19,6 +19,10 @@ import { InputAdornment, TextField, Dialog, DialogTitle, DialogContent, DialogAc
 import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star, ArrowLeft } from 'lucide-react';
 
 const muiTheme = createTheme({
+    palette: {
+        primary: { main: "#DA7756" },
+        error: { main: "#DA7756" },
+    },
     components: {
         MuiTextField: {
             styleOverrides: {
@@ -48,9 +52,9 @@ const muiTheme = createTheme({
         MuiCheckbox: {
             styleOverrides: {
                 root: {
-                    color: "#bf213e",
+                    color: "var(--color-primary)",
                     "&.Mui-checked": {
-                        color: "#bf213e",
+                        color: "var(--color-primary)",
                     },
                 },
             },
@@ -60,9 +64,9 @@ const muiTheme = createTheme({
         MuiRadio: {
             styleOverrides: {
                 root: {
-                    color: "#bf213e",
+                    color: "var(--color-primary)",
                     "&.Mui-checked": {
-                        color: "#bf213e",
+                        color: "var(--color-primary)",
                     },
                 },
             },
@@ -103,6 +107,22 @@ const muiTheme = createTheme({
 import { useParams } from "react-router-dom";
 import axios from "axios";
 
+interface TaxGroup {
+    id: number;
+    name: string;
+}
+
+interface TaxRate {
+    id: number;
+    name: string;
+    rate: number;
+}
+
+interface Customer {
+    id: string;
+    name: string;
+}
+
 const ItemsEdit = () => {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -111,6 +131,9 @@ const ItemsEdit = () => {
     const lock_account_id = localStorage.getItem("lock_account_id");
     const [exemptions, setExemptions] = useState([]);
     const [taxSettings, setTaxSettings] = useState<any | null>(null);
+    const [intraTaxes, setIntraTaxes] = useState<TaxGroup[]>([]);
+    const [interTaxes, setInterTaxes] = useState<TaxRate[]>([]);
+    const [unitOptions, setUnitOptions] = useState<{ value: string; label: string }[]>([]);
     const [form, setForm] = useState({
         type: "goods",
         name: "",
@@ -134,57 +157,124 @@ const ItemsEdit = () => {
         intra_state_tax: "",
         inter_state_tax: "",
         exemption_reason: "",
-         track_inventory: false,
+        track_inventory: false,
+        current_stock: "",
+        opening_stock: "",
+        opening_stock_rate: "",
     });
     const [loading, setLoading] = useState(false);
-    const [accountGroups, setAccountGroups] = React.useState([]);
+    const [salesAccountGroups, setSalesAccountGroups] = React.useState([]);
+    const [purchaseAccountGroups, setPurchaseAccountGroups] = React.useState([]);
     // const baseUrl = localStorage.getItem("baseUrl");
     // const token = localStorage.getItem("token");
     const [openSalesAccount, setOpenSalesAccount] = React.useState(false);
     const [openPurchaseAccount, setOpenPurchaseAccount] = React.useState(false);
 
     React.useEffect(() => {
-        const fetchAccountGroups = async () => {
+        const fetchSalesAccountGroups = async () => {
             try {
-                // Replace with your actual endpoint for groups/ledgers
-                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-                console.log("Account Groups Response:", res.data);
-                setAccountGroups(res.data.data || []);
-            } catch (e) {
-                setAccountGroups([]);
-            }
-        };
-        fetchAccountGroups();
-    }, [openSalesAccount, openPurchaseAccount, baseUrl, token]);
-    React.useEffect(() => {
-        const fetchTaxSettings = async () => {
-            try {
-                const baseUrl = localStorage.getItem("baseUrl");
-                const token = localStorage.getItem("token");
-
                 const res = await axios.get(
-                    `https://${baseUrl}/lock_accounts/${lock_account_id}/tax_settings.json`,
-                    {
-                        headers: {
-                            Authorization: token ? `Bearer ${token}` : undefined,
-                        },
-                    }
+                    `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat&q[group_type_in][]=sales&q[group_type_in][]=both`,
+                    { headers: { Authorization: `Bearer ${token}` } }
                 );
+                setSalesAccountGroups(res.data.data || []);
+            } catch (e) {
+                setSalesAccountGroups([]);
+            }
+        };
+        fetchSalesAccountGroups();
+    }, [baseUrl, token, lock_account_id]);
 
-                console.log("Tax settings:", res.data);
-                setTaxSettings(res.data || null); // adjust based on response
-            } catch (err) {
-                console.error("Failed to fetch tax settings", err);
-                setTaxSettings(null);
+    React.useEffect(() => {
+        const fetchPurchaseAccountGroups = async () => {
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat&q[group_type_in][]=purchase&q[group_type_in][]=both`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                setPurchaseAccountGroups(res.data.data || []);
+            } catch (e) {
+                setPurchaseAccountGroups([]);
+            }
+        };
+        fetchPurchaseAccountGroups();
+    }, [baseUrl, token, lock_account_id]);
+
+    React.useEffect(() => {
+        const fetchUnits = async () => {
+            if (!baseUrl || !token) {
+                setUnitOptions([]);
+                return;
+            }
+
+            try {
+                const res = await axios.get(`https://${baseUrl}/erp_uoms.json?lock_account_id=${lock_account_id}&active=true`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                const rawUnits = Array.isArray(res.data)
+                    ? res.data
+                    : res.data?.units || res.data?.data || [];
+
+                const options = rawUnits
+                    .map((unit: any) => {
+                        const value = unit.short_name ?? unit.code ?? unit.name ?? "";
+                        const label = unit.name
+                            ? unit.short_name
+                                ? `${unit.name} - ${unit.short_name}`
+                                : unit.name
+                            : value;
+                        return value ? { value, label } : null;
+                    })
+                    .filter(Boolean) as { value: string; label: string }[];
+
+                setUnitOptions(options);
+            } catch (e) {
+                console.error("Failed to fetch usage units:", e);
+                setUnitOptions([]);
             }
         };
 
-        fetchTaxSettings();
+        fetchUnits();
+    }, [baseUrl, token]);
+
+    useEffect(() => {
+        const fetchTaxData = async () => {
+            const [settingsRes, groupRes, rateRes] = await Promise.allSettled([
+                axios.get(
+                    `https://${baseUrl}/lock_accounts/${lock_account_id}/tax_settings.json`,
+                    { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+                ),
+                axios.get(
+                    `https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`,
+                    { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+                ),
+                axios.get(
+                    `https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`,
+                    { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+                ),
+            ]);
+
+            const settings = settingsRes.status === "fulfilled" ? (settingsRes.value.data || null) : null;
+            const intra = groupRes.status === "fulfilled" ? (Array.isArray(groupRes.value.data) ? groupRes.value.data : []) : [];
+            const inter = rateRes.status === "fulfilled" ? (Array.isArray(rateRes.value.data) ? rateRes.value.data : []) : [];
+
+            setTaxSettings(settings);
+            setIntraTaxes(intra);
+            setInterTaxes(inter);
+        };
+        fetchTaxData();
     }, []);
+
+    // Set org-default tax selections after dropdown data is ready
+    useEffect(() => {
+        if (taxSettings?.intra_state_tax_rate_id && !form.intra_state_tax) {
+            setForm((p) => ({ ...p, intra_state_tax: String(taxSettings.intra_state_tax_rate_id) }));
+        }
+        if (taxSettings?.inter_state_tax_rate_id && !form.inter_state_tax) {
+            setForm((p) => ({ ...p, inter_state_tax: String(taxSettings.inter_state_tax_rate_id) }));
+        }
+    }, [taxSettings]);
 
 
     React.useEffect(() => {
@@ -211,7 +301,7 @@ const ItemsEdit = () => {
                     sku: data.sku || "",
                     hsn_code: data.hsn_code || "",
                     sac_code: data.sac || "",
-                     track_inventory: data.track_inventory ?? false, // ✅
+                    track_inventory: data.track_inventory ?? false, // ✅
                     sellable: data.can_be_sold ?? true,
                     purchasable: data.can_be_purchased ?? true,
                     selling_price: data.sale_rate?.toString() || "",
@@ -223,7 +313,12 @@ const ItemsEdit = () => {
                     purchase_description: data.purchase_description || "",
                     preferred_vendor: data.pms_supplier_id?.toString() || "",
                     tax_preference: data.tax_preference || "",
+                    intra_state_tax: data.intra_state_tax_rate_id ? String(data.intra_state_tax_rate_id) : "",
+                    inter_state_tax: data.inter_state_tax_rate_id ? String(data.inter_state_tax_rate_id) : "",
                     exemption_reason: data.tax_exemption_id?.toString() || "",
+                    current_stock: data.current_stock != null ? String(data.current_stock) : "",
+                    opening_stock: data.opening_stock != null ? String(data.opening_stock) : "",
+                    opening_stock_rate: data.opening_stock_rate != null ? String(data.opening_stock_rate) : "",
                 });
                 if (data.icon?.document_file_name && data.icon?.attachment_url) {
                     setPreview(data.icon.attachment_url);
@@ -325,7 +420,7 @@ const ItemsEdit = () => {
             toast.error("HSN Code is required.");
             return;
         }
-        
+
 
         if (!form.tax_preference) {
             toast.error("Please select Tax Preference");
@@ -335,6 +430,17 @@ const ItemsEdit = () => {
         if (form.tax_preference === "non_taxable") {
             if (!form.exemption_reason) {
                 toast.error("Please select Exemption Reason");
+                return;
+            }
+        }
+
+        if (form.tax_preference === "taxable") {
+            if (!form.intra_state_tax) {
+                toast.error("Intra State Tax Rate is required.");
+                return;
+            }
+            if (!form.inter_state_tax) {
+                toast.error("Inter State Tax Rate is required.");
                 return;
             }
         }
@@ -370,6 +476,7 @@ const ItemsEdit = () => {
                 return;
             }
         }
+
 
         const itemPayload = {
             name: form.name,
@@ -416,16 +523,13 @@ const ItemsEdit = () => {
             formData.append("lock_account_item[sac]", form.sac_code);
         }
 
-        if (form.tax_preference === "taxable" && taxSettings) {
-            formData.append(
-                "lock_account_item[intra_state_tax_rate_id]",
-                taxSettings.intra_state_tax_rate_id
-            );
-
-            formData.append(
-                "lock_account_item[inter_state_tax_rate_id]",
-                taxSettings.inter_state_tax_rate_id
-            );
+        if (form.tax_preference === "taxable") {
+            if (form.intra_state_tax) {
+                formData.append("lock_account_item[intra_state_tax_rate_id]", form.intra_state_tax);
+            }
+            if (form.inter_state_tax) {
+                formData.append("lock_account_item[inter_state_tax_rate_id]", form.inter_state_tax);
+            }
         }
 
         if (form.tax_preference === "non_taxable") {
@@ -436,9 +540,13 @@ const ItemsEdit = () => {
         }
 
         formData.append(
-    "lock_account_item[track_inventory]",
-    form.track_inventory.toString()
-);
+            "lock_account_item[track_inventory]",
+            form.track_inventory.toString()
+        );
+        formData.append("lock_account_item[opening_stock]", form.opening_stock);
+        formData.append("lock_account_item[opening_stock_rate]", form.opening_stock_rate);
+        const openingValue = (parseFloat(form.opening_stock) || 0) * (parseFloat(form.opening_stock_rate) || 0);
+        formData.append("lock_account_item[opening_stock_value]", String(openingValue));
         if (form.sellable) {
             formData.append("lock_account_item[sale_description]", form.sales_description);
             formData.append("lock_account_item[sale_rate]", form.selling_price);
@@ -556,7 +664,7 @@ const ItemsEdit = () => {
                             // label="Name *"
                             label={
                                 <>
-                                    Name <span style={{ color: "red" }}>*</span>
+                                    Name <span style={{ color: "var(--color-primary)" }}>*</span>
                                 </>
                             }
 
@@ -585,22 +693,17 @@ const ItemsEdit = () => {
                                 onChange={handleChange}
                             >
                                 <MenuItem value="" disabled>Select unit</MenuItem>
-                                <MenuItem value="box">BOX - box</MenuItem>
-                                <MenuItem value="cm">CMS - cm</MenuItem>
-                                <MenuItem value="dz">DOZ - dz</MenuItem>
-                                <MenuItem value="ft">FTS - ft</MenuItem>
-                                <MenuItem value="g">GMS - g</MenuItem>
-                                <MenuItem value="in">INC - in</MenuItem>
-                                <MenuItem value="kg">KGS - kg</MenuItem>
-                                <MenuItem value="km">KME - km</MenuItem>
-                                <MenuItem value="lb">LBS - lb</MenuItem>
-                                <MenuItem value="mg">MGS - mg</MenuItem>
+                                {unitOptions.map((unit) => (
+                                    <MenuItem key={unit.value} value={unit.value}>
+                                        {unit.label}
+                                    </MenuItem>
+                                ))}
                             </Select>
                         </FormControl>
 
                         {form.type === "goods" ? (
                             <TextField
-                                label={<span>HSN Code <span style={{ color: 'red' }}>*</span></span>}
+                                label={<span>HSN Code <span style={{ color: 'var(--color-primary)' }}>*</span></span>}
                                 name="hsn_code"
                                 placeholder="Enter HSN Code"
                                 value={form.hsn_code}
@@ -628,7 +731,7 @@ const ItemsEdit = () => {
 
 
                         <FormControl fullWidth>
-                            <InputLabel>Tax Preference <span style={{ color: "red" }}>*</span></InputLabel>
+                            <InputLabel>Tax Preference <span style={{ color: "var(--color-primary)" }}>*</span></InputLabel>
                             <Select
                                 name="tax_preference"
                                 value={form.tax_preference}
@@ -646,7 +749,7 @@ const ItemsEdit = () => {
 
                         {form.tax_preference === "non_taxable" && (
                             <FormControl fullWidth>
-                                <InputLabel>Exemption Reason <span style={{ color: "red" }}>*</span></InputLabel>
+                                <InputLabel>Exemption Reason <span style={{ color: "var(--color-primary)" }}>*</span></InputLabel>
                                 <Select
                                     name="exemption_reason"
                                     value={form.exemption_reason}
@@ -669,17 +772,58 @@ const ItemsEdit = () => {
 
 
                         <div className="mb-6">
-    <FormControlLabel
-        control={
-            <Checkbox
-                checked={form.track_inventory}
-                name="track_inventory"
-                onChange={handleChange}
-            />
-        }
-        label="Is Inventory"
-    />
-</div>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={form.track_inventory}
+                                        name="track_inventory"
+                                        onChange={handleChange}
+                                    />
+                                }
+                                label="Is Inventory"
+                            />
+                        </div>
+
+                        <div className="mt-6 border rounded-lg p-4 bg-gray-50">
+                            <h2 className="font-semibold mb-4">Inventory Details</h2>
+                            <div className="grid md:grid-cols-3 gap-4">
+                                <TextField
+                                    fullWidth
+                                    label={<span>Opening Qty <span style={{ color: "var(--color-primary)" }}>*</span></span>}
+                                    value={form.opening_stock}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^0-9.]/g, "");
+                                        setForm((prev) => ({ ...prev, opening_stock: value }));
+                                    }}
+                                    InputLabelProps={{ shrink: true }}
+                                    placeholder="Enter opening qty"
+                                />
+                                <TextField
+                                    fullWidth
+                                    label={<span>Rate <span style={{ color: "var(--color-primary)" }}>*</span></span>}
+                                    value={form.opening_stock_rate}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^0-9.]/g, "");
+                                        setForm((prev) => ({ ...prev, opening_stock_rate: value }));
+                                    }}
+                                    InputLabelProps={{ shrink: true }}
+                                    placeholder="Enter rate"
+                                />
+                                <TextField
+                                    fullWidth
+                                    label="Value"
+                                    value={
+                                        (parseFloat(form.opening_stock) || 0) * (parseFloat(form.opening_stock_rate) || 0)
+                                            ? ((parseFloat(form.opening_stock) || 0) * (parseFloat(form.opening_stock_rate) || 0)).toFixed(2)
+                                            : ""
+                                    }
+                                    InputLabelProps={{ shrink: true }}
+                                    InputProps={{ readOnly: true }}
+                                    placeholder="Auto calculated"
+                                    disabled
+                                />
+                            </div>
+                        </div>
 
                     </div>
 
@@ -698,7 +842,7 @@ const ItemsEdit = () => {
 
                                 <p className="text-gray-600 text-sm">Drag image(s) here or</p>
 
-                                <label className="text-[#1976d2] text-sm font-medium cursor-pointer mt-1">
+                                <label className="text-brand text-sm font-medium cursor-pointer mt-1">
                                     Browse images
                                     <input
                                         type="file"
@@ -718,7 +862,7 @@ const ItemsEdit = () => {
                                 />
 
                                 <div className="flex items-center justify-between">
-                                    <label className="text-[#1976d2] font-medium cursor-pointer">
+                                    <label className="text-brand font-medium cursor-pointer">
                                         Change Image
                                         <input
                                             type="file"
@@ -733,7 +877,7 @@ const ItemsEdit = () => {
                                         onClick={() => setOpenDeleteDialog(true)}
                                         className="text-gray-500 hover:text-red-600"
                                     >
-                                         <Trash2 className="h-4 w-4" />
+                                        <Trash2 className="h-4 w-4" />
                                     </button>
                                 </div>
                             </div>
@@ -767,7 +911,7 @@ const ItemsEdit = () => {
                                 fullWidth
                                 label={
                                     <>
-                                        Selling Price <span style={{ color: "red" }}>*</span>
+                                        Selling Price <span style={{ color: "var(--color-primary)" }}>*</span>
                                     </>
                                 }
                                 name="selling_price"
@@ -882,7 +1026,7 @@ const ItemsEdit = () => {
                             />
 
                             <FormControl disabled={!form.sellable} fullWidth margin="normal" sx={{ minWidth: 200 }}>
-                                <InputLabel id="sales-account-label" sx={{ color: '#C72030' }}>Account<span style={{ color: '#C72030' }}>*</span></InputLabel>
+                                <InputLabel id="sales-account-label" sx={{ color: 'var(--color-primary)' }}>Account<span style={{ color: 'var(--color-primary)' }}>*</span></InputLabel>
                                 <Select
                                     labelId="sales-account-label"
                                     name="sales_account"
@@ -906,7 +1050,7 @@ const ItemsEdit = () => {
                                     <MenuItem value="" disabled>
                                         Select Account Ledger
                                     </MenuItem>
-                                    {accountGroups.map(group => (
+                                    {salesAccountGroups.map(group => (
                                         group.ledgers && group.ledgers.length > 0 ? [
                                             <ListSubheader key={"group-" + group.id}>{group.group_name}</ListSubheader>,
                                             ...group.ledgers.map(ledger => (
@@ -986,13 +1130,13 @@ const ItemsEdit = () => {
                         </div>
 
                         <div className="grid gap-6">
-                           
+
                             <TextField
                                 placeholder="Enter cost price"
                                 fullWidth
                                 label={
                                     <>
-                                        Cost Price <span style={{ color: "red" }}>*</span>
+                                        Cost Price <span style={{ color: "var(--color-primary)" }}>*</span>
                                     </>
                                 }
                                 name="cost_price"
@@ -1062,9 +1206,9 @@ const ItemsEdit = () => {
                                     },
                                 }}
                             />
-                           
+
                             <FormControl disabled={!form.purchasable} fullWidth margin="normal" sx={{ minWidth: 200 }}>
-                                <InputLabel id="purchase-account-label" sx={{ color: '#C72030' }}>Account<span style={{ color: '#C72030' }}>*</span></InputLabel>
+                                <InputLabel id="purchase-account-label" sx={{ color: 'var(--color-primary)' }}>Account<span style={{ color: 'var(--color-primary)' }}>*</span></InputLabel>
                                 <Select
                                     labelId="purchase-account-label"
                                     name="purchase_account"
@@ -1088,7 +1232,7 @@ const ItemsEdit = () => {
                                     <MenuItem value="" disabled>
                                         Select Account Ledger
                                     </MenuItem>
-                                    {accountGroups.map(group => (
+                                    {purchaseAccountGroups.map(group => (
                                         group.ledgers && group.ledgers.length > 0 ? [
                                             <ListSubheader key={"group-" + group.id}>{group.group_name}</ListSubheader>,
                                             ...group.ledgers.map(ledger => (
@@ -1177,44 +1321,89 @@ const ItemsEdit = () => {
                     </div>
                 </div>
 
-                {form.tax_preference === "taxable" && taxSettings && (
+                {form.tax_preference === "taxable" && (
                     <div className="grid md:grid-cols-2 gap-6 mt-4 p-4 border rounded-lg bg-gray-50">
-
                         <div className="md:col-span-2 font-semibold text-gray-700">
                             Default Tax Rates
                         </div>
 
                         {/* Intra State Tax (CGST + SGST) */}
-                        <TextField
-                            label="Intra State Tax Rate"
-                            value={taxSettings.intra_state_tax_rate || "-"}
-                            disabled
-                            fullWidth
-                            InputLabelProps={{ shrink: true }}
-                        />
+                        <FormControl size="small" fullWidth>
+                            <InputLabel id="intra-state-tax-label" shrink>
+                                Intra State Tax Rate <span style={{ color: "var(--color-primary)" }}>*</span>
+                            </InputLabel>
+                            <Select
+                                labelId="intra-state-tax-label"
+                                value={form.intra_state_tax || ""}
+                                label="Intra State Tax Rate *"
+                                displayEmpty
+                                notched
+                                renderValue={(val) => {
+                                    if (!val) return <span style={{ color: "#888" }}>Select</span>;
+                                    const match = intraTaxes.find((t) => String(t.id) === String(val));
+                                    return match ? <span>{match.name}</span> : <span style={{ color: "#888" }}>Select</span>;
+                                }}
+                                onChange={(e) => setForm((p) => ({ ...p, intra_state_tax: e.target.value }))}
+                            >
+                                <MenuItem value="" disabled>
+                                    <span style={{ color: "#888" }}>Select</span>
+                                </MenuItem>
+                                {intraTaxes.map((tax) => (
+                                    <MenuItem key={tax.id} value={String(tax.id)}>{tax.name}</MenuItem>
+                                ))}
+                                {intraTaxes.length === 0 && (
+                                    <MenuItem disabled>No tax found.</MenuItem>
+                                )}
+                            </Select>
+                        </FormControl>
 
                         {/* Inter State Tax (IGST) */}
-                        <TextField
-                            label="Inter State Tax Rate"
-                            value={taxSettings.inter_state_tax_rate || "-"}
-                            disabled
-                            fullWidth
-                            InputLabelProps={{ shrink: true }}
-                        />
-
+                        <FormControl size="small" fullWidth>
+                            <InputLabel id="inter-state-tax-label" shrink>
+                                Inter State Tax Rate <span style={{ color: "var(--color-primary)" }}>*</span>
+                            </InputLabel>
+                            <Select
+                                labelId="inter-state-tax-label"
+                                value={form.inter_state_tax || ""}
+                                label="Inter State Tax Rate *"
+                                displayEmpty
+                                notched
+                                renderValue={(val) => {
+                                    if (!val) return <span style={{ color: "#888" }}>Select</span>;
+                                    const match = interTaxes.find((t) => String(t.id) === String(val));
+                                    return match ? <span>{match.name}</span> : <span style={{ color: "#888" }}>Select</span>;
+                                }}
+                                onChange={(e) => setForm((p) => ({ ...p, inter_state_tax: e.target.value }))}
+                            >
+                                <MenuItem value="" disabled>
+                                    <span style={{ color: "#888" }}>Select</span>
+                                </MenuItem>
+                                {interTaxes.map((tax) => (
+                                    <MenuItem key={tax.id} value={String(tax.id)}>{tax.name} [{tax.rate}%]</MenuItem>
+                                ))}
+                                {interTaxes.length === 0 && (
+                                    <MenuItem disabled>No tax found.</MenuItem>
+                                )}
+                            </Select>
+                        </FormControl>
                     </div>
                 )}
 
                 {/* BUTTONS */}
                 <div className="flex gap-3 mt-10 mb-5 justify-center">
                     <Button
+                        variant="ghost"
                         onClick={handleSubmit}
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                        className="fm-button-fix fm-button-brand px-8 py-2"
                     >
                         Update
                     </Button>
 
-                    <Button variant="outline" onClick={() => navigate("/accounting/items")}>
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate("/accounting/items")}
+                        className="fm-button-fix px-8 py-2"
+                    >
                         Cancel
                     </Button>
                 </div>
@@ -1227,7 +1416,7 @@ const ItemsEdit = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                        className="bg-brand hover:bg-brand-hover text-white"
                         onClick={handleRemoveImage}
                     >
                         Delete

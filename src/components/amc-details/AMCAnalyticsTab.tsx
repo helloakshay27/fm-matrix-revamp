@@ -1,9 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, Settings } from "lucide-react";
+import { StatsCard } from "@/components/StatsCard";
 import axios from "axios";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import { useParams } from "react-router-dom";
 import { StatusBadge } from "@/components/StatusBadge"; // Fixed: named import
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 interface AMCAnalyticsTab {
   amc: AMCData;
@@ -112,6 +115,56 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
   };
 
   const pastPPM = analytics?.past_ppm ?? [];
+  const amcDetailColumns: ColumnConfig[] = useMemo(
+    () =>
+      configRows.map(({ label, key }) => ({
+        key,
+        label: label === "Red Flag" ? "🚩 Red Flag" : label,
+        sortable: false,
+        hideable: false,
+        defaultVisible: true,
+      })),
+    [configRows]
+  );
+
+  const amcDetailData = useMemo(
+    () => [analytics ?? ({} as AMCAnalyticsResponse)],
+    [analytics]
+  );
+
+  const pastAmcColumns: ColumnConfig[] = [
+    { key: "contractName", label: "Contract Name", sortable: false, hideable: false, defaultVisible: true },
+    { key: "startEndDate", label: "Start & End Date", sortable: false, hideable: false, defaultVisible: true },
+    { key: "amcType", label: "AMC Type", sortable: false, hideable: false, defaultVisible: true },
+    { key: "totalAssociatedAssets", label: "Total Associated Assets", sortable: false, hideable: false, defaultVisible: true },
+    { key: "amcValue", label: "AMC Value", sortable: false, hideable: false, defaultVisible: true },
+    { key: "statusLabel", label: "Status", sortable: false, hideable: false, defaultVisible: true },
+  ];
+
+  const pastAmcData = useMemo(
+    () =>
+      pastPPM.map((entry) => {
+        const statusVal = (entry.status || "").toLowerCase();
+        const isActive = statusVal === "active";
+        const isExpired = statusVal === "expired";
+        const totalAssets = Array.isArray(entry.amc_assets)
+          ? entry.amc_assets.length
+          : entry.total_associated_assets ?? "—";
+        return {
+          rowId: String(entry.id),
+          contractName: entry.contract_name || "—",
+          startEndDate: `${formatDate(entry.amc_start_date)} – ${formatDate(entry.amc_end_date)}`,
+          amcType: entry.checklist_type || entry.amc_type || "—",
+          totalAssociatedAssets: totalAssets,
+          amcValue:
+            entry.amc_cost !== undefined && entry.amc_cost !== null
+              ? `₹ ${entry.amc_cost.toLocaleString()}`
+              : "—",
+          statusLabel: isActive ? "Active" : isExpired ? "Expired" : entry.status || "—",
+        };
+      }),
+    [pastPPM]
+  );
 
   return (
     <div style={{ backgroundColor: 'rgba(250, 250, 250, 1)' }}>
@@ -124,335 +177,63 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
         </div>
 
         <div className="rounded-lg border border-gray-200 shadow-sm p-4 mx-4 mb-4" style={{ backgroundColor: 'rgba(250, 250, 250, 1)' }}>
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-            <thead>
-              <tr style={{ backgroundColor: 'rgba(237, 234, 227, 1)' }}>
-                {configRows.map(({ label }) => (
-                  <th
-                    key={label}
-                    className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200"
-                  >
-                    {label === "Red Flag" ? (
-                      <div className="flex items-center gap-1">
-                        <span className="text-red-600 text-xs">🚩</span>
-                        <span>Red Flag</span>
-                      </div>
-                    ) : (
-                      label
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="bg-white">
-                {configRows.map(({ key }) => {
-                  const value = analytics ? (analytics as Record<string, any>)[key] : undefined;
-                  const isEnabled = Boolean(value);
-                  return (
-                    <td
-                      key={key}
-                      className="px-4 py-3 text-center border-b border-gray-200"
-                    >
-                      {analytics ? (
-                        isEnabled ? (
-                          <Check className="w-5 h-5 text-green-600 mx-auto" />
-                        ) : (
-                          <X className="w-5 h-5 text-red-500 mx-auto" />
-                        )
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            </tbody>
-          </table>
+          <EnhancedTable
+            data={amcDetailData}
+            columns={amcDetailColumns}
+            renderCell={(item: AMCAnalyticsResponse, columnKey: string) => {
+              const value = item[columnKey as keyof AMCAnalyticsResponse];
+              if (value === undefined || value === null) {
+                return <span className="text-gray-400">-</span>;
+              }
+              return value ? (
+                <Check className="w-5 h-5 text-green-600 mx-auto" />
+              ) : (
+                <X className="w-5 h-5 text-red-500 mx-auto" />
+              );
+            }}
+            storageKey="amc-analytics-detail-table"
+            hideTableSearch
+            hideTableExport
+            hideColumnsButton
+            getItemId={() => "amc-detail-row"}
+          />
         </div>
-      </div>
       </div>
 
       {/* Analytics Cards Section */}
       <div className="space-y-4 p-4">
-
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 pb-4">
-        {/* SLA Achieved */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              SLA Achieved
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {formatValue(analytics?.sla_achieved)}
-            </span>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 px-4 pb-4">
+          <StatsCard
+            title="SLA Achieved"
+            value={formatValue(analytics?.sla_achieved)}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="No. of Critical Assets Covered"
+            value={formatValue(analytics?.critical_assets_covered_number)}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Critical Assets Covered (Value)"
+            value={formatValue(analytics?.critical_assets_covered_value)}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Visits Completed"
+            value={formatValue(analytics?.visits_completed)}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Pending Visits"
+            value={formatValue(analytics?.pending_visits)}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
+          <StatsCard
+            title="Open Tickets"
+            value={formatValue(analytics?.open_tickets)}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
         </div>
-
-        {/* No. of Critical Assets Covered */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              No. of Critical Assets Covered
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {formatValue(analytics?.critical_assets_covered_number)}
-            </span>
-          </div>
-        </div>
-
-        {/* Critical Assets Covered (Value) */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              Critical Assets Covered (Value)
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {formatValue(analytics?.critical_assets_covered_value)}
-            </span>
-          </div>
-        </div>
-
-        {/* Visits Completed */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center flex-1">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              Visits Completed
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {formatValue(analytics?.visits_completed)}
-            </span>
-            {/* {dashboardSummary?.visits_completed_percentage && (
-              <div className="mt-2">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-red-600 h-2 rounded-full" 
-                    style={{ width: `${dashboardSummary.visits_completed_percentage}%` }}
-                  ></div>
-                </div>
-                <span className="text-xs text-gray-600 mt-1">{dashboardSummary.visits_completed_percentage}%</span>
-              </div>
-            )} */}
-          </div>
-        </div>
-
-        {/* Pending Visits */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center flex-1">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              Pending Visits
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {formatValue(analytics?.pending_visits)}
-            </span>
-            {/* {dashboardSummary?.pending_visits_percentage && (
-              <div className="mt-2">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-orange-500 h-2 rounded-full" 
-                    style={{ width: `${dashboardSummary.pending_visits_percentage}%` }}
-                  ></div>
-                </div>
-                <span className="text-xs text-gray-600 mt-1">{dashboardSummary.pending_visits_percentage}%</span>
-              </div>
-            )} */}
-          </div>
-        </div>
-
-        {/* Open Tickets */}
-        <div
-          className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "auto" }}
-        >
-          <div
-            className="flex items-center justify-center rounded-lg mr-4"
-            style={{ background: "#EDEAE3", width: 62, height: 62 }}
-          >
-            {/* Cog SVG icon */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                stroke="#C72030"
-                strokeWidth="1.5"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-semibold text-[#1A1A1A]"
-              style={{ fontSize: 18 }}
-            >
-              Open Tickets
-            </span>
-            <span className="text-[#1A1A1A]" style={{ fontSize: 16 }}>
-              {formatValue(analytics?.open_tickets)}
-            </span>
-          </div>
-        </div>
-      </div>
       </div>
 
       {/* Past AMC Section */}
@@ -474,74 +255,26 @@ export const AMCAnalyticsTab: React.FC<AMCAnalyticsTab> = ({
         </h2>
         
         <div className="rounded-lg border border-gray-200 shadow-sm mx-4 mb-4" style={{ backgroundColor: 'rgba(250, 250, 250, 1)' }}>
-          <div className="overflow-x-auto" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-            <table className="min-w-full">
-              <thead>
-                <tr className="bg-gray-50" style={{ backgroundColor: '#F6F4EE' }}>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Contract Name</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Start & End Date</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">AMC Type</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Total Associated Assets</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">AMC Value</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
-                      Loading past AMC data...
-                    </td>
-                  </tr>
-                ) : pastPPM.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
-                      No past AMC records available.
-                    </td>
-                  </tr>
-                ) : (
-                  pastPPM.map((entry) => {
-                    const statusVal = (entry.status || '').toLowerCase();
-                    const isActive = statusVal === 'active';
-                    const isExpired = statusVal === 'expired';
-                    const statusBg = isActive
-                      ? 'bg-green-100 text-green-800'
-                      : isExpired
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-gray-100 text-gray-700';
-                    const statusLabel = isActive ? 'Active' : isExpired ? 'Expired' : (entry.status || '—');
-                    const totalAssets = Array.isArray(entry.amc_assets)
-                      ? entry.amc_assets.length
-                      : (entry.total_associated_assets ?? '—');
-                    return (
-                      <tr
-                        key={entry.id}
-                        className="border-b"
-                        style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
-                      >
-                        <td className="px-4 py-3 text-sm text-gray-600">{entry.contract_name || '—'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
-                          {formatDate(entry.amc_start_date)} – {formatDate(entry.amc_end_date)}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {entry.checklist_type || entry.amc_type || '—'}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600 text-center">{totalAssets}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {entry.amc_cost !== undefined && entry.amc_cost !== null
-                            ? `₹ ${entry.amc_cost.toLocaleString()}`
-                            : '—'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${statusBg}`}>{statusLabel}</span>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          <EnhancedTable
+            data={pastAmcData}
+            columns={pastAmcColumns}
+            renderCell={(item: (typeof pastAmcData)[number], columnKey: string) => {
+              if (columnKey === "statusLabel") {
+                return <StatusBadge status={item.statusLabel} size="sm" />;
+              }
+              return item[columnKey as keyof typeof item] as React.ReactNode;
+            }}
+            storageKey="amc-analytics-past-amc-table"
+            hideTableSearch
+            hideTableExport
+            hideColumnsButton
+            loading={loading}
+            loadingMessage="Loading past AMC data..."
+            emptyMessage="No past AMC records available."
+            pagination
+            pageSize={15}
+            getItemId={(item) => item.rowId}
+          />
         </div>
       </div>
     </div>

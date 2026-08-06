@@ -411,7 +411,7 @@ const TrialBalance: React.FC = () => {
                             event.preventDefault();
                             openLedger(item.ledgerId);
                           }}
-                          className="text-left text-blue-600 hover:text-blue-800 hover:underline"
+                          className="text-left text-brand hover:text-brand-hover hover:underline"
                         >
                           {item.label}
                         </a>
@@ -468,7 +468,7 @@ const TrialBalance: React.FC = () => {
                 return "bg-[#E5E0D3] font-bold";
               }
               if (item.kind === "account" && item.ledgerId != null) {
-                return "cursor-pointer hover:bg-blue-50";
+                return "cursor-pointer hover:bg-brand-light";
               }
               return "";
             }}

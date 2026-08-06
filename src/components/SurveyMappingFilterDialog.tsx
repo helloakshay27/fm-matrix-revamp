@@ -499,14 +499,15 @@ export const SurveyMappingFilterDialog: React.FC<SurveyMappingFilterDialogProps>
           <Button
             onClick={handleApply}
             disabled={isLoading}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 flex-1 h-11"
+            className="bg-brand text-white hover:bg-brand-hover flex-1 h-11 disabled:opacity-100 disabled:bg-brand-hover disabled:!text-white"
           >
             {isLoading ? "Applying..." : "Apply Filter"}
           </Button>
           <Button
             variant="outline"
             onClick={handleClear}
-            className="flex-1 h-11"
+            disabled={isLoading}
+            className="flex-1 h-11 border-brand text-brand hover:bg-brand-selected hover:text-brand"
           >
             Clear All
           </Button>

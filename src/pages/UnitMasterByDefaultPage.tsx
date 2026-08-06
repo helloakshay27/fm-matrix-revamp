@@ -2,16 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Edit, Plus } from 'lucide-react';
+import { FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
+import { Edit, Plus, Loader2 } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useAppDispatch } from '@/store/hooks';
 import { createMasterUnit, fetchMasterUnits, fetchMeterType, updateMeterUnitType, updateMeterType } from '@/store/slices/unitMaster';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 interface AddMeterModalProps {
   isOpen: boolean;
@@ -59,46 +85,69 @@ const AddMeterModal = ({ isOpen, onClose, onSuccess }: AddMeterModalProps) => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+    <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
+      <DialogContent
+        className="max-w-md bg-white overflow-visible"
+        onPointerDownOutside={(e) => {
+          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">New Meter Type</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label className="text-sm">Meter Type</Label>
-            <Select value={formData.meterType} onValueChange={(value) => setFormData({ ...formData, meterType: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Energy">Energy</SelectItem>
-                <SelectItem value="Water">Water</SelectItem>
-                <SelectItem value="STP">STP</SelectItem>
-              </SelectContent>
-            </Select>
+          <div>
+            <MuiFormControl fullWidth variant="outlined">
+              <InputLabel id="add-meter-type-label">Meter Type</InputLabel>
+              <MuiSelect
+                labelId="add-meter-type-label"
+                label="Meter Type"
+                value={formData.meterType}
+                onChange={(e) => setFormData({ ...formData, meterType: e.target.value })}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value=""><em>Select Type</em></MenuItem>
+                <MenuItem value="Energy">Energy</MenuItem>
+                <MenuItem value="Water">Water</MenuItem>
+                <MenuItem value="STP">STP</MenuItem>
+              </MuiSelect>
+            </MuiFormControl>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-sm">
-              Meter Category <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              value={formData.meterCategory}
-              onChange={(e) => setFormData({ ...formData, meterCategory: e.target.value })}
-            />
+          <div>
+            <MuiFormControl fullWidth variant="outlined" required>
+              <TextField
+                label="Meter Category"
+                variant="outlined"
+                fullWidth
+                value={formData.meterCategory}
+                onChange={(e) => setFormData({ ...formData, meterCategory: e.target.value })}
+                sx={fieldStyles}
+              />
+            </MuiFormControl>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-sm">
-              Unit Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              value={formData.unitName}
-              onChange={(e) => setFormData({ ...formData, unitName: e.target.value })}
-              placeholder="Enter Unit Name"
-            />
+          <div>
+            <MuiFormControl fullWidth variant="outlined" required>
+              <TextField
+                label="Unit Name"
+                variant="outlined"
+                fullWidth
+                value={formData.unitName}
+                onChange={(e) => setFormData({ ...formData, unitName: e.target.value })}
+                placeholder="Enter Unit Name"
+                sx={fieldStyles}
+              />
+            </MuiFormControl>
           </div>
 
           <div className="flex justify-center pt-4">
@@ -199,44 +248,63 @@ const EditMeterModal = ({ isOpen, onClose, onSuccess, meterData }: EditModalProp
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+    <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
+      <DialogContent
+        className="max-w-md bg-white overflow-visible"
+        onPointerDownOutside={(e) => {
+          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Edit Meter Type</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          <div className="space-y-2">
-            <Label>Meter Type*</Label>
-            <Select value={formData.meterType} onValueChange={(value) => setFormData({ ...formData, meterType: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select meter type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Energy">Energy</SelectItem>
-                <SelectItem value="Water">Water</SelectItem>
-                <SelectItem value="STP">STP</SelectItem>
-              </SelectContent>
-            </Select>
+          <div>
+            <MuiFormControl fullWidth variant="outlined">
+              <InputLabel id="edit-meter-type-label">Meter Type</InputLabel>
+              <MuiSelect
+                labelId="edit-meter-type-label"
+                label="Meter Type"
+                value={formData.meterType}
+                onChange={(e) => setFormData({ ...formData, meterType: e.target.value })}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value=""><em>Select meter type</em></MenuItem>
+                <MenuItem value="Energy">Energy</MenuItem>
+                <MenuItem value="Water">Water</MenuItem>
+                <MenuItem value="STP">STP</MenuItem>
+              </MuiSelect>
+            </MuiFormControl>
           </div>
 
-          <div className="space-y-2">
-            <Label>Meter Category</Label>
-            <Input
+          <div>
+            <TextField
+              label="Meter Category"
+              variant="outlined"
+              fullWidth
               value={formData.meterCategory}
               onChange={(e) => setFormData({ ...formData, meterCategory: e.target.value })}
-              className="bg-gray-50"
-              readOnly
+              sx={fieldStyles}
+              InputProps={{ readOnly: true }}
             />
           </div>
 
           <div className="space-y-4">
-            <Label className="text-base font-medium">Meter Unit</Label>
+            <span className="text-base font-medium">Meter Unit</span>
 
             {
               formData.unitType.map((unitType: any) => (
                 <div key={unitType.id} className="flex items-center justify-between">
-                  <Label>{unitType.unit_name}</Label>
+                  <span className="text-sm font-medium">{unitType.unit_name}</span>
                   <Switch
                     checked={unitType.active}
                     onCheckedChange={(checked) => handleToggleUnit(unitType.id, checked)}
@@ -246,13 +314,16 @@ const EditMeterModal = ({ isOpen, onClose, onSuccess, meterData }: EditModalProp
             }
 
             {isAddingUnit && (
-              <div className="space-y-2 pt-2">
-                <Label>New Unit Name</Label>
-                <Input
+              <div className="pt-2">
+                <TextField
+                  label="New Unit Name"
+                  variant="outlined"
+                  fullWidth
                   value={newUnitName}
                   onChange={(e) => setNewUnitName(e.target.value)}
                   placeholder="Enter unit name"
                   autoFocus
+                  sx={fieldStyles}
                 />
               </div>
             )}
@@ -260,7 +331,7 @@ const EditMeterModal = ({ isOpen, onClose, onSuccess, meterData }: EditModalProp
 
           <div className="space-y-2">
             <Button
-              className="w-full bg-transparent text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white"
+              className="w-full bg-transparent text-[#C72030] border border-[#C72030]"
               onClick={() => setIsAddingUnit(true)}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -294,13 +365,17 @@ export const UnitMasterByDefaultPage = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [selectedMeter, setSelectedMeter] = useState(null);
   const [meters, setMeters] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchMeters = async () => {
+    setLoading(true);
     try {
       const response = await dispatch(fetchMasterUnits({ baseUrl, token })).unwrap();
       setMeters(response);
     } catch (error) {
       console.log(error)
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -360,7 +435,22 @@ export const UnitMasterByDefaultPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {meters.map((meter) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    <div className="flex items-center justify-center gap-2 text-black">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Loading ...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : meters.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                    No units found
+                  </TableCell>
+                </TableRow>
+              ) : meters.map((meter) => (
                 <TableRow key={meter.id} className="hover:bg-gray-50">
                   <TableCell className="font-medium">{meter.name}</TableCell>
                   <TableCell>

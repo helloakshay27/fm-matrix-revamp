@@ -30,6 +30,13 @@ interface SalesCustomer {
   transactions?: TransactionData[];
 }
 
+const formatDate = (dateStr?: string | null): string => {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return String(dateStr);
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
+};
+
 const DetailsSaleCustomerReport: React.FC = () => {
   const navigate = useNavigate();
   const { customerName } = useParams<{ customerName: string }>();
@@ -162,18 +169,14 @@ const DetailsSaleCustomerReport: React.FC = () => {
               transactionData.map((row) => (
                 <tr key={row.id} className="hover:bg-gray-50">
                   <td className="border px-4 py-3">
-                    {row.date ? row.date : "-"}
+                    {formatDate(row.date)}
                   </td>
 
                   <td className="border px-4 py-3">{row.type}</td>
 
                   <td className="border px-4 py-3 text-center">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        row.status?.toLowerCase() === "paid"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
+                      className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
                     >
                       {row.status}
                     </span>

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,7 @@ import {
   Share2,
   ShoppingCart,
   ClipboardList,
+  Settings2,
 } from "lucide-react";
 import {
   Dialog,
@@ -47,6 +48,11 @@ import axios from "axios";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import PurchaseOrderPdfTemplate from "./ClubManagement/PurchaseOrderPdfTemplate";
+import {
+  bankMasterListUrl,
+  getBankMasterApiConfig,
+  mapApiBankRecord,
+} from "./ClubManagement/bankMasterUtils";
 
 // Types based on actual API response
 interface PoInventory {
@@ -193,6 +199,7 @@ const aggregateTax = (
 export const PurchaseOrderDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const pdfRef = React.useRef<HTMLDivElement>(null);
 
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(
@@ -200,9 +207,10 @@ export const PurchaseOrderDetailPage = () => {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("order-details");
+  const [activeTab, setActiveTab] = useState((location.state as any)?.tab === "pdf-view" ? "pdf-view" : "order-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [bankDetail, setBankDetail] = useState<any>(null);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -272,6 +280,31 @@ export const PurchaseOrderDetailPage = () => {
   useEffect(() => {
     fetchPurchaseOrderDetail();
   }, [fetchPurchaseOrderDetail]);
+
+  // Resolve the bank selected on the purchase order, if any
+  useEffect(() => {
+    const fetchBankDetail = async () => {
+      const bankId = (purchaseOrder as any)?.bank_master_id || (purchaseOrder as any)?.bank_master?.id;
+      if (!bankId) {
+        setBankDetail(null);
+        return;
+      }
+      if ((purchaseOrder as any)?.bank_master) {
+        setBankDetail(mapApiBankRecord((purchaseOrder as any).bank_master));
+        return;
+      }
+      try {
+        const { baseUrl: bmBaseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(bankMasterListUrl(bmBaseUrl, lockAccountId), { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        const found = data.map(mapApiBankRecord).find((b: any) => String(b.id) === String(bankId));
+        setBankDetail(found || null);
+      } catch (err) {
+        setBankDetail(null);
+      }
+    };
+    fetchBankDetail();
+  }, [purchaseOrder]);
 
 
   const [hasSaleOrderApproval, setHasSaleOrderApproval] = useState(false);
@@ -345,18 +378,7 @@ export const PurchaseOrderDetailPage = () => {
   };
 
   const getStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      draft: "bg-gray-100 text-gray-800 border-gray-200",
-      pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      approved: "bg-green-100 text-green-800 border-green-200",
-      confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-      processing: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      shipped: "bg-purple-100 text-purple-800 border-purple-200",
-      received: "bg-green-100 text-green-800 border-green-200",
-      delivered: "bg-green-100 text-green-800 border-green-200",
-      cancelled: "bg-red-100 text-red-800 border-red-200",
-    };
-    return colors[status?.toLowerCase()] || colors.draft;
+    return "bg-gray-100 text-gray-800 border-gray-200";
   };
 
   const handleEdit = () => {
@@ -461,7 +483,7 @@ export const PurchaseOrderDetailPage = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-background p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <div className="flex items-center gap-4 mb-6">
             <Button
               variant="ghost"
@@ -493,7 +515,7 @@ export const PurchaseOrderDetailPage = () => {
   if (!purchaseOrder) {
     return (
       <div className="min-h-screen bg-background p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <div className="flex items-center gap-4 mb-6">
             <Button
               variant="ghost"
@@ -532,7 +554,7 @@ export const PurchaseOrderDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -578,17 +600,28 @@ export const PurchaseOrderDetailPage = () => {
 
             <Button
               variant="outline"
+              style={{ borderColor: '#DA7756', color: '#DA7756' }}
               onClick={() => setActiveTab("pdf-view")}
             >
-              <FileText className="h-4 w-4 mr-2" />
+              <FileText className="h-4 w-4 mr-2" color="#DA7756" />
               PDF
             </Button>
 
             <Button
               variant="outline"
+              style={{ borderColor: '#DA7756', color: '#DA7756' }}
+              onClick={() => navigate("/accounting/purchase-order/template", { state: { recordId: id } })}
+            >
+              <Settings2 className="h-4 w-4 mr-2" color="#DA7756" />
+              Template Edit
+            </Button>
+
+            <Button
+              variant="outline"
+              style={{ borderColor: '#DA7756', color: '#DA7756' }}
               onClick={handleDownloadPdf}
             >
-              <Download className="h-4 w-4 mr-2" />
+              <Download className="h-4 w-4 mr-2" color="#DA7756" />
               Download PDF
             </Button>
 
@@ -596,9 +629,10 @@ export const PurchaseOrderDetailPage = () => {
               size="sm"
               variant="outline"
               className="gap-2"
+              style={{ borderColor: '#DA7756', color: '#DA7756' }}
               onClick={() => navigate(`/accounting/purchase-order/edit/${id}`)}
             >
-              <Edit className="h-4 w-4" />
+              <Edit className="h-4 w-4" color="#DA7756" />
               Edit
             </Button>
 
@@ -621,7 +655,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "draft" && (
                   <Button
                     size="sm"
-                    className="bg-green-600 text-white hover:bg-green-700"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("issued")}
                   >
@@ -633,7 +667,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "issued" && (
                   <Button
                     size="sm"
-                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => navigate("/accounting/bills/create", { state: { saleOrderId: purchaseOrder?.id || id } })}
                   >
@@ -650,7 +684,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "draft" && (
                   <Button
                     size="sm"
-                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("pending_approval")}
                   >
@@ -663,7 +697,7 @@ export const PurchaseOrderDetailPage = () => {
                   <>
                     <Button
                       size="sm"
-                      className="bg-green-600 text-white hover:bg-green-700"
+                      className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                       disabled={actionLoading}
                       onClick={() => updateApprovalStatus("approved")}
                     >
@@ -671,7 +705,7 @@ export const PurchaseOrderDetailPage = () => {
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-red-600 text-white hover:bg-red-700"
+                      className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                       disabled={actionLoading}
                       onClick={() => updateApprovalStatus("rejected")}
                     >
@@ -684,7 +718,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "approved" && (
                   <Button
                     size="sm"
-                    className="bg-green-600 text-white hover:bg-green-700"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("issued")}
                   >
@@ -696,7 +730,7 @@ export const PurchaseOrderDetailPage = () => {
                 {purchaseOrder.status === "issued" && (
                   <Button
                     size="sm"
-                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => navigate("/accounting/bills/create", { state: { saleOrderId: purchaseOrder?.id || id } })}
                   >
@@ -717,28 +751,12 @@ export const PurchaseOrderDetailPage = () => {
             backgroundColor: "rgba(250, 250, 250, 1)",
           }}
         >
-          <style>{`
-                        .purchase-order-tabs button[data-state="active"] {
-                            background-color: rgba(237, 234, 227, 1) !important;
-                            color: rgba(199, 32, 48, 1) !important;
-                        }
-                    `}</style>
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList
-              className="purchase-order-tabs w-full flex flex-nowrap rounded-t-lg p-0 overflow-x-auto mb-4"
-              style={{
-                gap: "0",
-                padding: "0",
-                backgroundColor: "rgba(246, 247, 247, 1)",
-                height: "50px",
-                marginBottom: "16px",
-                justifyContent: "flex-start",
-              }}
-            >
+            <TabsList className="flex flex-wrap w-full max-w-3xl justify-start">
               {[
                 { label: "Order Details", value: "order-details" },
                 { label: "Vendor Info", value: "vendor-info" },
@@ -748,25 +766,7 @@ export const PurchaseOrderDetailPage = () => {
                 <TabsTrigger
                   key={tab.value}
                   value={tab.value}
-                  className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
-                  style={{
-                    width: "230px",
-                    height: "36px",
-                    paddingTop: "10px",
-                    paddingRight: "20px",
-                    paddingBottom: "10px",
-                    paddingLeft: "20px",
-                    borderRadius: "0",
-                    border: "none",
-                    margin: "0",
-                    fontFamily: "Work Sans",
-                    fontWeight: 500,
-                    fontSize: "14px",
-                    lineHeight: "100%",
-                    letterSpacing: "0%",
-                    color: "rgba(26, 26, 26, 1)",
-                    backgroundColor: "rgba(246, 247, 247, 1)",
-                  }}
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand"
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -862,28 +862,19 @@ export const PurchaseOrderDetailPage = () => {
                 const items = resolveItems(purchaseOrder);
                 if (!items.length) return null;
 
-                // Pricing values
-                const subTotal =
-                  purchaseOrder.sub_total_amount ??
-                  purchaseOrder.sub_total ??
-                  purchaseOrder.net_amount ??
-                  items.reduce((s, i) => s + i.total_value, 0);
-
-                const discountAmt = purchaseOrder.tax?.discount ?? 0;
+                const subTotal = purchaseOrder.sub_total ?? purchaseOrder.sub_total_amount ?? 0;
                 const discountPct = purchaseOrder.tax?.tax_percentage ?? 0;
+                const discountAmt = purchaseOrder.tax?.discount ?? 0;
 
-                const cgstRows = aggregateTax(items, "cgst");
-                const sgstRows = aggregateTax(items, "sgst");
-                const igstRows = aggregateTax(items, "igst");
+                // Single tax row, just like the Bill page: name from the first item's tax_group, amount from total_taxable_amount
+                const taxGroupName = items[0]?.tax_group?.name ?? null;
+                const taxGroupRate = items[0]?.tax_group?.rate ?? null;
+                const taxAmount = purchaseOrder.total_taxable_amount ?? 0;
 
-                const tdsAmt =
-                  purchaseOrder.lock_account_tax_amount ??
-                  purchaseOrder.tax?.tax_value ??
-                  0;
                 const tdsLabel = purchaseOrder.tax?.tax_type ?? "TDS";
+                const tdsAmt = purchaseOrder.lock_account_tax_amount ?? purchaseOrder.tax?.tax_value ?? 0;
 
                 const adjustment = purchaseOrder.tax?.adjustment ?? 0;
-
                 const grandTotal =
                   purchaseOrder.total_amount_formatted ??
                   purchaseOrder.total_amount?.toFixed(2) ??
@@ -898,72 +889,41 @@ export const PurchaseOrderDetailPage = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {/* Item Table */}
                       <div className="border border-border rounded-lg overflow-hidden">
                         <Table>
                           <TableHeader>
-                            <TableRow style={{ backgroundColor: "rgba(50,50,50,1)" }}>
-                              <TableHead className="text-black font-semibold w-10">#</TableHead>
-                              <TableHead className="text-black font-semibold">
-                                Item &amp; Description
-                              </TableHead>
-                              <TableHead className="text-black font-semibold text-right">
-                                Qty
-                              </TableHead>
-                              <TableHead className="text-black font-semibold text-right">
-                                Rate
-                              </TableHead>
-                              <TableHead className="text-black font-semibold text-right">
-                                Amount
-                              </TableHead>
+                            <TableRow className="bg-muted/50">
+                              <TableHead>Item Details</TableHead>
+                              <TableHead className="text-right">Quantity</TableHead>
+                              <TableHead className="text-right">Rate</TableHead>
+                              <TableHead className="text-right">Tax</TableHead>
+                              <TableHead className="text-right">Amount</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {items.map((item, idx) => (
-                              <TableRow key={item.id} className="border-b last:border-0">
-                                {/* # */}
-                                <TableCell className="text-muted-foreground text-sm align-top">
-                                  {idx + 1}
-                                </TableCell>
-
-                                {/* Item & Description */}
-                                <TableCell className="align-top">
-                                  <p className="font-semibold text-sm">
-                                    {item.inventory?.name ?? item.prod_desc ?? "N/A"}
-                                  </p>
-                                  {item.inventory?.name && item.prod_desc && (
-                                    <p className="text-xs text-muted-foreground mt-0.5">
+                            {items.map((item) => (
+                              <TableRow key={item.id}>
+                                <TableCell>
+                                  <div>
+                                    <p className="font-semibold">
+                                      {item.inventory?.name ?? "N/A"}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
                                       {item.prod_desc}
                                     </p>
-                                  )}
+                                  </div>
                                 </TableCell>
-
-                                {/* Qty + unit */}
-                                {/* <TableCell className="text-right align-top">
-                                  <span className="block">{item.quantity}</span>
-                                  {item.unit && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {item.unit}
-                                    </span>
-                                  )}
-                                </TableCell> */}
-                                <TableCell className="text-right align-top">
-                                  {item.quantity}
-                                  {item.unit && (
-                                    <span className="block text-xs text-muted-foreground">
-                                      {item.unit}
-                                    </span>
-                                  )}
+                                <TableCell className="text-right">
+                                  {item.quantity} {item.unit || ""}
                                 </TableCell>
-
-                                {/* Rate */}
-                                <TableCell className="text-right align-top">
-                                  ₹{item.rate.toFixed(2)}
+                                <TableCell className="text-right">
+                                  ₹{Number(item.rate).toFixed(2)}
                                 </TableCell>
-
-                                {/* Amount */}
-                                <TableCell className="text-right font-semibold align-top">
-                                  ₹{item.total_value.toFixed(2)}
+                                <TableCell className="text-right">
+                                  {item.tax_group?.name ?? "-"}
+                                </TableCell>
+                                <TableCell className="text-right font-semibold">
+                                  ₹{Number(item.total_value).toFixed(2)}
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -973,110 +933,64 @@ export const PurchaseOrderDetailPage = () => {
 
                       {/* Pricing Summary */}
                       <div className="mt-6 flex justify-end">
-                        <div className="w-full max-w-md border border-border rounded-lg overflow-hidden bg-white">
-                          {/* Sub Total */}
-                          <div className="flex justify-between items-center px-6 py-3 border-b">
-                            <span className="text-sm text-muted-foreground">Sub Total</span>
-                            <span className="font-semibold">₹{subTotal.toFixed(2)}</span>
+                        <div className="w-full max-w-md space-y-3 bg-muted/30 p-4 rounded-lg">
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Sub Total
+                            </span>
+                            <span className="font-semibold text-base">
+                              ₹{Number(subTotal).toFixed(2)}
+                            </span>
                           </div>
 
-                          {/* Discount — hidden when 0 */}
-                          {discountAmt > 0 && (
-                            <div className="flex justify-between items-center px-6 py-3 border-b">
-                              <span className="text-sm text-muted-foreground">
-                                Discount{discountPct > 0 ? ` (${discountPct}%)` : ""}
-                              </span>
-                              <span className="font-semibold text-red-600">
-                                (-) ₹{discountAmt.toFixed(2)}
-                              </span>
-                            </div>
-                          )}
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Discount ({discountPct}%)
+                            </span>
+                            <span className="font-semibold text-base text-red-600">
+                              -₹{Number(discountAmt).toFixed(2)}
+                            </span>
+                          </div>
 
-                          {/* CGST rows — one per unique rate */}
-                          {cgstRows.map(({ rate, amount }) => (
-                            <div
-                              key={`cgst-${rate}`}
-                              className="flex justify-between items-center px-6 py-3 border-b"
-                            >
-                              <span className="text-sm text-muted-foreground">
-                                CGST ({rate}%)
-                              </span>
-                              <span className="font-semibold">₹{amount.toFixed(2)}</span>
-                            </div>
-                          ))}
-
-                          {/* SGST rows */}
-                          {sgstRows.map(({ rate, amount }) => (
-                            <div
-                              key={`sgst-${rate}`}
-                              className="flex justify-between items-center px-6 py-3 border-b"
-                            >
-                              <span className="text-sm text-muted-foreground">
-                                SGST ({rate}%)
-                              </span>
-                              <span className="font-semibold">₹{amount.toFixed(2)}</span>
-                            </div>
-                          ))}
-
-                          {/* IGST rows */}
-                          {igstRows.map(({ rate, amount }) => (
-                            <div
-                              key={`igst-${rate}`}
-                              className="flex justify-between items-center px-6 py-3 border-b"
-                            >
-                              <span className="text-sm text-muted-foreground">
-                                IGST ({rate}%)
-                              </span>
-                              <span className="font-semibold">₹{amount.toFixed(2)}</span>
-                            </div>
-                          ))}
-
-                          {/* Amount Withheld / TDS — red negative, hidden when 0 */}
-                          {tdsAmt > 0 && (
-                            <div className="flex justify-between items-center px-6 py-3 border-b">
-                              <div>
-                                <p className="text-sm text-muted-foreground">
-                                  Amount Withheld
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  ({tdsLabel})
-                                </p>
+                          {!(
+                            purchaseOrder?.reverse_charge === true ||
+                            purchaseOrder?.reverse_charge === "true"
+                          ) &&
+                            taxGroupName && (
+                              <div className="flex justify-between items-center py-2">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                  {taxGroupName} {taxGroupRate != null ? `(${taxGroupRate}%)` : ""}
+                                </span>
+                                <span className="font-semibold text-base">
+                                  ₹{Number(taxAmount).toFixed(2)}
+                                </span>
                               </div>
-                              <span className="font-semibold text-red-600">
-                                (-) ₹{tdsAmt.toFixed(2)}
-                              </span>
-                            </div>
-                          )}
+                            )}
 
-                          {/* Adjustment — hidden when 0 */}
-                          {adjustment !== 0 && (
-                            <div className="flex justify-between items-center px-6 py-3 border-b">
-                              <span className="text-sm text-muted-foreground">
-                                Adjustment
-                              </span>
-                              <span className="font-semibold">
-                                ₹{adjustment.toFixed(2)}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Grand Total — always from backend */}
-                          <div className="flex justify-between items-center px-6 py-4 border-t">
-                            <span className="font-bold text-base">Total</span>
-                            <span className="font-bold text-xl">₹{grandTotal}</span>
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              {tdsLabel?.toUpperCase()}
+                            </span>
+                            <span className="font-semibold text-base text-red-600">
+                              -₹{Number(tdsAmt).toFixed(2)}
+                            </span>
                           </div>
 
-                          {/* Amount in Words */}
-                          {purchaseOrder.amount_in_words && (
-                            <div className="px-6 py-3 border-t bg-muted/30">
-                              <p className="text-xs text-muted-foreground">
-                                Amount in Words:
-                              </p>
-                              <p className="text-sm font-medium">
-                                {purchaseOrder.amount_in_words}
-                              </p>
-                            </div>
-                          )}
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Adjustment
+                            </span>
+                            <span className="font-semibold text-base">
+                              ₹{Number(adjustment).toFixed(2)}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                            <span className="font-bold text-base">Total ( ₹ )</span>
+                            <span className="font-bold text-primary text-2xl">
+                              ₹{grandTotal}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
@@ -1168,6 +1082,42 @@ export const PurchaseOrderDetailPage = () => {
                     </CardContent>
                   </Card>
                 )}
+
+              {bankDetail && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Bank Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
+                      <p className="text-sm mt-1">{bankDetail.bankName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Account Number</p>
+                      <p className="text-sm mt-1">{bankDetail.accountNo}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Beneficiary / Account Name</p>
+                      <p className="text-sm mt-1">{bankDetail.beneficiaryName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">IFSC Code</p>
+                      <p className="text-sm mt-1">{bankDetail.ifscCode}</p>
+                    </div>
+                    {bankDetail.swiftCode && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Swift Code</p>
+                        <p className="text-sm mt-1">{bankDetail.swiftCode}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Branch</p>
+                      <p className="text-sm mt-1">{bankDetail.branch}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {purchaseOrder.terms_conditions && (
                 <Card>
@@ -1341,16 +1291,18 @@ export const PurchaseOrderDetailPage = () => {
                     <div className="flex items-center gap-3">
                       <Button
                         variant="outline"
+                        style={{ borderColor: '#DA7756', color: '#DA7756' }}
                         onClick={() => window.print()}
                       >
-                        <Printer className="h-4 w-4 mr-2" />
+                        <Printer className="h-4 w-4 mr-2" color="#DA7756" />
                         Print
                       </Button>
                       <Button
                         variant="outline"
+                        style={{ borderColor: '#DA7756', color: '#DA7756' }}
                         onClick={handleDownloadPdf}
                       >
-                        <Download className="h-4 w-4 mr-2" />
+                        <Download className="h-4 w-4 mr-2" color="#DA7756" />
                         Download PDF
                       </Button>
                     </div>
@@ -1360,6 +1312,7 @@ export const PurchaseOrderDetailPage = () => {
                   <div className="bg-gray-100 p-6 overflow-auto rounded-lg">
                     <div ref={pdfRef} className="flex justify-center">
                       <PurchaseOrderPdfTemplate
+                        documentType="purchase_order"
                         data={{
                           po_number: `PO-${String(purchaseOrder?.id).padStart(5, "0")}`,
                           po_date: purchaseOrder?.po_date,
@@ -1394,6 +1347,7 @@ export const PurchaseOrderDetailPage = () => {
                           if (!date) return "-";
                           return new Date(date).toLocaleDateString("en-GB");
                         }}
+                        bankDetail={bankDetail}
                       />
                     </div>
                   </div>
@@ -1459,12 +1413,14 @@ export const PurchaseOrderDetailPage = () => {
           <div className="flex gap-3 justify-end mt-4">
             <Button
               variant="outline"
+              className="fm-button-fix px-8 py-2"
               onClick={() => setShowDeleteDialog(false)}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
+              className="bg-[#dc2626] hover:bg-[#b91c1c] text-white"
               onClick={handleDelete}
               disabled={deleting}
             >

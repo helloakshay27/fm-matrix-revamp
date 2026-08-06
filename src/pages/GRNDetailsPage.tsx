@@ -21,7 +21,9 @@ import {
   Printer,
   Rss,
   ScrollText,
-  Loader2
+  Loader2,
+  Truck,
+  Receipt,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -40,6 +42,7 @@ import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import axios from "axios";
 import DebitCreditModal from "@/components/DebitCreditModal";
 import { format } from "date-fns";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 // Define the interface for Approval
 interface Approval {
@@ -127,6 +130,7 @@ const debitNoteColumns: ColumnConfig[] = [
 
 export const GRNDetailsPage = () => {
   const dispatch = useAppDispatch();
+  const { shouldShow } = useDynamicPermissions();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
@@ -142,11 +146,11 @@ export const GRNDetailsPage = () => {
   const { id } = useParams();
 
   const formatIndian = (val: string | number | null | undefined): string => {
-  if (val === "" || val === null || val === undefined) return "-";
-  const n = parseFloat(String(val));
-  if (isNaN(n)) return String(val);
-  return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
-};
+    if (val === "" || val === null || val === undefined) return "-";
+    const n = parseFloat(String(val));
+    if (isNaN(n)) return String(val);
+    return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  };
 
   const [openDebitModal, setOpenDebitModal] = useState(false);
   const [grnDetails, setGrnDetails] = useState<any>({});
@@ -163,8 +167,14 @@ export const GRNDetailsPage = () => {
     description: "",
   });
   const [externalApiCalls, setExternalApiCalls] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const fetchData = async () => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
       const response = await dispatch(
         fetchSingleGRN({ baseUrl, token, id: Number(id) })
@@ -178,6 +188,8 @@ export const GRNDetailsPage = () => {
     } catch (error) {
       console.log(error);
       toast.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -190,6 +202,7 @@ export const GRNDetailsPage = () => {
   const supplier = grnDetails.supplier || {};
   const billingAddress = purchaseOrder.billing_address || {};
   const approvalStatus = grnDetails.approval_status || {};
+  const canEdit = grnDetails.user_permissions?.can_edit === true;
 
   const handlePrint = async () => {
     setPrinting(true)
@@ -224,43 +237,43 @@ export const GRNDetailsPage = () => {
     navigate(`/finance/grn-srn/feeds/${id}`);
   };
 
-    const handleSendToSap = useCallback(async () => {
-      const token = localStorage.getItem("token");
-      const baseUrl = localStorage.getItem("baseUrl");
-  // sendto sap
-  
-      if (!baseUrl || !token || !id) {
-        toast.error("Missing required configuration");
-        return;
-      }
-      setSapPushDisabled(true);
-      try {
-        const response = await axios.get<{ message: string }>(
-          `https://${baseUrl}/pms/grns/${id}.json?send_sap=yes`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-  
-        toast.success(response.data.message || "Sent to SAP successfully");
-  
-        // wait for server-side processing
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-  
-        fetchData();
-          toast.success("Data refreshed after send to SAP");
-        // Disable the button after successful push
-  
-      } catch (error: any) {
-        console.error("Send to SAP error:", error);
-  
-        toast.error(
-          error?.response?.data?.message ||
-          error.message ||
-          "Failed to send to SAP"
-        );
-      }
-    }, [id]);
+  const handleSendToSap = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    const baseUrl = localStorage.getItem("baseUrl");
+    // sendto sap
+
+    if (!baseUrl || !token || !id) {
+      toast.error("Missing required configuration");
+      return;
+    }
+    setSapPushDisabled(true);
+    try {
+      const response = await axios.get<{ message: string }>(
+        `https://${baseUrl}/pms/grns/${id}.json?send_sap=yes`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      toast.success(response.data.message || "Sent to SAP successfully");
+
+      // wait for server-side processing
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      fetchData();
+      toast.success("Data refreshed after send to SAP");
+      // Disable the button after successful push
+
+    } catch (error: any) {
+      console.error("Send to SAP error:", error);
+
+      toast.error(
+        error?.response?.data?.message ||
+        error.message ||
+        "Failed to send to SAP"
+      );
+    }
+  }, [id]);
 
   const handleApprove = async () => {
     const payload = {
@@ -393,6 +406,17 @@ export const GRNDetailsPage = () => {
       sno: index + 1,
     })) || [];
 
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading GRN details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
       <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
@@ -405,11 +429,21 @@ export const GRNDetailsPage = () => {
           GRN DETAILS
         </h1>
         <div className="flex gap-2 flex-wrap">
+          {shouldShow("GRN/ SRN", "update") && canEdit && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300"
+              onClick={() => navigate(`/finance/grn-srn/edit/${id}`)}
+            >
+              Edit
+            </Button>
+          )}
           {sendToSap && (
             <Button
               size="sm"
               variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+              // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
               onClick={handleSendToSap}
               disabled={sapPushDisabled}
             >
@@ -421,7 +455,7 @@ export const GRNDetailsPage = () => {
               <Button
                 size="sm"
                 variant="outline"
-                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                 onClick={handleOpenDebitModal}
               >
                 Debit Note
@@ -431,7 +465,7 @@ export const GRNDetailsPage = () => {
           <Button
             size="sm"
             variant="outline"
-            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+            // className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
             onClick={handleFeeds}
           >
             <Rss className="w-4 h-4 mr-1" />
@@ -717,7 +751,128 @@ export const GRNDetailsPage = () => {
             <span className="text-gray-900 font-medium">{grnDetails.notes}</span>
           </div>
         </div>
+        {grnDetails.billdesk_detail && (
+          <>
+            <h4 className="text-sm font-semibold uppercase text-[#1A1A1A] mt-6 mb-3">Billdesk Details</h4>
+            <EnhancedTable
+              data={[{
+                invoice_type: grnDetails.billdesk_detail.invoice_type || "-",
+                billdesk_number: grnDetails.billdesk_detail.billdesk_number || "-",
+                tracking_number: grnDetails.billdesk_detail.tracking_number || "-",
+                status: grnDetails.billdesk_detail.status || "-",
+                billdesk_remark: grnDetails.billdesk_detail.billdesk_remark || "-",
+              }]}
+              columns={[
+                { key: "invoice_type", label: "Invoice Type", sortable: false, draggable: false, defaultVisible: true },
+                { key: "billdesk_number", label: "Billdesk Number", sortable: false, draggable: false, defaultVisible: true },
+                { key: "tracking_number", label: "Tracking Number", sortable: false, draggable: false, defaultVisible: true },
+                { key: "status", label: "Status", sortable: false, draggable: false, defaultVisible: true },
+                { key: "billdesk_remark", label: "Billdesk Remark", sortable: false, draggable: false, defaultVisible: true },
+              ]}
+              renderCell={(item, col) => item[col]}
+              storageKey="grn-billdesk-table"
+              hideColumnsButton={true}
+              hideTableSearch={true}
+              hideTableExport={true}
+              pagination={false}
+            />
+          </>
+        )}
       </div>
+
+      {/* Gate Entry Details Section */}
+      {grnDetails.gate_entry_and_transport_details && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+          <div className="flex items-center gap-3 pb-3">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <Truck className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Gate Entry Details</h3>
+          </div>
+          <EnhancedTable
+            data={[{
+              driver_name: grnDetails.gate_entry_and_transport_details.driver_name || "-",
+              mobile_number: grnDetails.gate_entry_and_transport_details.mobile_number || "-",
+              vehicle_number: grnDetails.gate_entry_and_transport_details.vehicle_number || "-",
+              gate_entry_date: grnDetails.gate_entry_and_transport_details.gate_entry_date || "-",
+              gate_entry_number: grnDetails.gate_entry_and_transport_details.gate_entry_number || "-",
+            }]}
+            columns={[
+              { key: "driver_name", label: "Driver Name", sortable: false, draggable: false, defaultVisible: true },
+              { key: "mobile_number", label: "Mobile Number", sortable: false, draggable: false, defaultVisible: true },
+              { key: "vehicle_number", label: "Vehicle Number", sortable: false, draggable: false, defaultVisible: true },
+              { key: "gate_entry_date", label: "Gate Entry Date", sortable: false, draggable: false, defaultVisible: true },
+              { key: "gate_entry_number", label: "Gate Entry Number", sortable: false, draggable: false, defaultVisible: true },
+            ]}
+            renderCell={(item, col) => item[col]}
+            storageKey="grn-gate-entry-table"
+            hideColumnsButton={true}
+            hideTableSearch={true}
+            hideTableExport={true}
+            pagination={false}
+          />
+        </div>
+      )}
+
+      {/* Transport Invoice Details Section */}
+      {grnDetails.gate_entry_and_transport_details && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+          <div className="flex items-center gap-3 pb-3">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+              <Receipt className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Transport Invoice Details</h3>
+          </div>
+          <EnhancedTable
+            data={[{
+              transportation_vendor: grnDetails.gate_entry_and_transport_details.transportation_vendor_name || "-",
+              transport_invoice_number: grnDetails.gate_entry_and_transport_details.transport_invoice_number || "-",
+              transport_invoice_date: grnDetails.gate_entry_and_transport_details.transport_invoice_date || "-",
+              transport_invoice_amount: grnDetails.gate_entry_and_transport_details.transport_invoice_amount ?? "-",
+            }]}
+            columns={[
+              { key: "transportation_vendor", label: "Transportation Vendor", sortable: false, draggable: false, defaultVisible: true },
+              { key: "transport_invoice_number", label: "Transport Invoice Number", sortable: false, draggable: false, defaultVisible: true },
+              { key: "transport_invoice_date", label: "Transport Invoice Date", sortable: false, draggable: false, defaultVisible: true },
+              { key: "transport_invoice_amount", label: "Transport Invoice Amount", sortable: false, draggable: false, defaultVisible: true },
+            ]}
+            renderCell={(item, col) => item[col]}
+            storageKey="grn-transport-invoice-table"
+            hideColumnsButton={true}
+            hideTableSearch={true}
+            hideTableExport={true}
+            pagination={false}
+          />
+          {grnDetails.gate_entry_and_transport_details.billdesk_detail && (
+            <>
+              <h4 className="text-sm font-semibold uppercase text-[#1A1A1A] mt-6 mb-3">Billdesk Details</h4>
+              <EnhancedTable
+                data={[{
+                  invoice_type: grnDetails.gate_entry_and_transport_details.billdesk_detail.invoice_type || "-",
+                  billdesk_number: grnDetails.gate_entry_and_transport_details.billdesk_detail.billdesk_number || "-",
+                  tracking_number: grnDetails.gate_entry_and_transport_details.billdesk_detail.tracking_number || "-",
+                  status: grnDetails.gate_entry_and_transport_details.billdesk_detail.status || "-",
+                  billdesk_remark: grnDetails.gate_entry_and_transport_details.billdesk_detail.billdesk_remark || "-",
+                }]}
+                columns={[
+                  { key: "invoice_type", label: "Invoice Type", sortable: false, draggable: false, defaultVisible: true },
+                  { key: "billdesk_number", label: "Billdesk Number", sortable: false, draggable: false, defaultVisible: true },
+                  { key: "tracking_number", label: "Tracking Number", sortable: false, draggable: false, defaultVisible: true },
+                  { key: "status", label: "Status", sortable: false, draggable: false, defaultVisible: true },
+                  { key: "billdesk_remark", label: "Billdesk Remark", sortable: false, draggable: false, defaultVisible: true },
+                ]}
+                renderCell={(item, col) => item[col]}
+                storageKey="grn-transport-billdesk-table"
+                hideColumnsButton={true}
+                hideTableSearch={true}
+                hideTableExport={true}
+                pagination={false}
+              />
+            </>
+          )}
+        </div>
+      )}
+
 
       {/* Items Table Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
@@ -969,17 +1124,16 @@ export const GRNDetailsPage = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
-                    <p className={`text-sm font-medium ${
-                      apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'
-                    }`}>
+                    <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'
+                      }`}>
                       {apiCall.response_status || '-'}
                     </p>
                   </div>
                   <div className="md:col-span-2">
                     <p className="text-sm text-gray-600 font-semibold">Message</p>
                     <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
-                      {apiCall.eval_status && apiCall.eval_status.trim() 
-                        ? apiCall.eval_status 
+                      {apiCall.eval_status && apiCall.eval_status.trim()
+                        ? apiCall.eval_status
                         : (apiCall.response_string ? JSON.stringify(JSON.parse(apiCall.response_string), null, 2) : '-')}
                     </p>
                   </div>

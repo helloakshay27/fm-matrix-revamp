@@ -218,7 +218,7 @@ const PurchasesByItemReport: React.FC = () => {
 
   const renderRow = (row: PurchasesByItemRow) => {
     const isTotal = row.id === "__total__";
-    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`;
+    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`;
     return {
       item_name: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
@@ -235,7 +235,7 @@ const PurchasesByItemReport: React.FC = () => {
       ) : (
         <button
           onClick={() => handleOpenDetail(row)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {formatCurrency(row.amount)}
         </button>
@@ -245,7 +245,7 @@ const PurchasesByItemReport: React.FC = () => {
       ) : (
         <button
           onClick={() => handleOpenDetail(row)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {formatCurrency(row.average_price)}
         </button>
@@ -256,14 +256,14 @@ const PurchasesByItemReport: React.FC = () => {
 
   const renderDetailRow = (row: VendorDetailRow) => {
     const isTotal = row.id === "__total__";
-    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`;
+    const amtClass = `text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`;
     return {
       vendor_name: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
       ) : (
         <button
           onClick={() => navigate(`/maintenance/vendor/view/${row.vendorId}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.vendor_name}
         </button>

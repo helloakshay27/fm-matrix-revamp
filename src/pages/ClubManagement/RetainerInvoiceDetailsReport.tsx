@@ -53,12 +53,12 @@ const formatAmount = (value: number) =>
   }).format(value);
 
 const statusColorMap: Record<string, string> = {
-  Overdue: "bg-orange-100 text-orange-700",
-  Sent: "bg-blue-100 text-blue-700",
+  Overdue: "bg-gray-100 text-gray-800",
+  Sent: "bg-gray-100 text-gray-800",
   Open: "bg-gray-100 text-gray-800",
-  Paid: "bg-green-100 text-green-700",
-  Draft: "bg-yellow-100 text-yellow-700",
-  Confirmed: "bg-green-100 text-green-700",
+  Paid: "bg-gray-100 text-gray-800",
+  Draft: "bg-gray-100 text-gray-800",
+  Confirmed: "bg-gray-100 text-gray-800",
 };
 
 const columns: ColumnConfig[] = [
@@ -173,12 +173,12 @@ const RetainerInvoiceDetailsReport: React.FC = () => {
       </span>
     ),
     retainerInvoiceNo: (
-      <span className="text-sm font-medium text-blue-600">
+      <span className="text-sm font-medium text-brand">
         {row.retainerInvoiceNo}
       </span>
     ),
     customerName: (
-      <span className="text-sm font-medium text-blue-600">
+      <span className="text-sm font-medium text-brand">
         {row.customerName}
       </span>
     ),

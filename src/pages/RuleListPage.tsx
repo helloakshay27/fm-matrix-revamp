@@ -40,15 +40,6 @@ export const RuleListPage = () => {
         </Button>
 
         <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            className="border-gray-300"
-            onClick={handleFilterClick}
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </Button>
-          
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
@@ -58,12 +49,21 @@ export const RuleListPage = () => {
               className="pl-10 w-64"
             />
           </div>
+
+          <Button 
+            variant="outline" 
+            // className="border-gray-300"
+            className="border-brand text-brand hover:bg-brand-selected flex items-center gap-2 rounded-lg"
+            onClick={handleFilterClick}
+          >
+            <Filter className="w-4 h-4" />
+          </Button>
           
           <Button className="bg-[#C72030] hover:bg-[#A01A28] text-white px-6">
             Go!
           </Button>
           
-          <Button variant="outline" className="border-gray-300">
+          <Button variant="outline" className="borderborder-[#C72030] ">
             Reset
           </Button>
         </div>

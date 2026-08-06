@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { VendorWOFilterDialog } from "@/components/VendorWOFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { StatsCard } from "@/components/StatsCard";
 import { toast } from "sonner";
 import {
   Pagination,
@@ -50,6 +51,7 @@ export const VendorWOListPage = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [selectedSummary, setSelectedSummary] = useState<string | null>(null);
   const [woList, setWoList] = useState<any[]>([]);
   const [filters, setFilters] = useState({
     referenceNumber: "",
@@ -262,46 +264,35 @@ export const VendorWOListPage = () => {
   return (
     <div className="p-4 sm:p-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <Settings className="w-6 h-6 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-[#D92818] leading-none mb-1">{stats.totalCount}</p>
-            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total no. of WO</p>
-          </div>
-        </div>
-
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <Banknote className="w-6 h-6 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-[#D92818] leading-none mb-1">₹ {Number(stats.totalAmount).toLocaleString()}</p>
-            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Value Amount</p>
-          </div>
-        </div>
-
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <CreditCard className="w-6 h-6 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-[#D92818] leading-none mb-1">₹ {Number(stats.totalPaidAmount).toLocaleString()}</p>
-            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Paid Amount</p>
-          </div>
-        </div>
-
-        <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,44,40,0.06)] flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center shrink-0">
-            <Clock className="w-6 h-6 text-[#D92818]" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-[#D92818] leading-none mb-1">₹ {Number(stats.totalPendingAmount).toLocaleString()}</p>
-            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Pending Amount</p>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6">
+        <StatsCard
+          title="Total no. of WO"
+          value={stats.totalCount}
+          selected={selectedSummary === "total"}
+          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("total")}
+        />
+        <StatsCard
+          title="Total Value Amount"
+          value={`₹ ${Number(stats.totalAmount).toLocaleString()}`}
+          selected={selectedSummary === "value"}
+          icon={<Banknote className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("value")}
+        />
+        <StatsCard
+          title="Total Paid Amount"
+          value={`₹ ${Number(stats.totalPaidAmount).toLocaleString()}`}
+          selected={selectedSummary === "paid"}
+          icon={<CreditCard className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("paid")}
+        />
+        <StatsCard
+          title="Total Pending Amount"
+          value={`₹ ${Number(stats.totalPendingAmount).toLocaleString()}`}
+          selected={selectedSummary === "pending"}
+          icon={<Clock className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("pending")}
+        />
       </div>
 
 

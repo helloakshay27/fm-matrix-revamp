@@ -5,11 +5,22 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, QrCode, Edit, Loader2, Box, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { apiClient } from '@/utils/apiClient';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+
+const historyColumns: ColumnConfig[] = [
+  { key: 'dateTime', label: 'Date / Time', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'changedBy', label: 'Changed By', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'logType', label: 'Log Type', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'changes', label: 'Changes', sortable: false, hideable: true, defaultVisible: true },
+];
 
 export const InventoryDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [inventoryData, setInventoryData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,6 +30,7 @@ export const InventoryDetailsPage = () => {
   const [feedsLoading, setFeedsLoading] = useState(false);
   const [feedsError, setFeedsError] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
+  const [historySearchTerm, setHistorySearchTerm] = useState('');
   const [hsnCodeDisplay, setHsnCodeDisplay] = useState<string>('');
   // Maps for displaying master names instead of IDs in history
   const [invTypeMap, setInvTypeMap] = useState<Record<string, string>>({});
@@ -599,7 +611,7 @@ export const InventoryDetailsPage = () => {
     return (
       <div className="p-6 bg-white min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#DA7756] mx-auto mb-4"></div>
           <p className="text-gray-700">Loading inventory details...</p>
         </div>
       </div>
@@ -633,11 +645,12 @@ export const InventoryDetailsPage = () => {
           {/* <Button
             onClick={handleEdit}
             variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 ml-4"
+            className="border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756]/10 ml-4"
           >
             <Edit className="w-4 h-4 mr-2" />
             Edit
           </Button> */}
+          {shouldShow("Inventory", "update") && (
           <Button
             onClick={handleEdit}
             variant="outline"
@@ -659,16 +672,17 @@ export const InventoryDetailsPage = () => {
                 width="21"
                 height="21"
               >
-                <rect width="21" height="21" fill="#C72030" />
+                <rect width="21" height="21" fill="#DA7756" />
               </mask>
               <g mask="url(#mask0_107_2076)">
                 <path
                   d="M4.375 16.625H5.47881L14.4358 7.66806L13.3319 6.56425L4.375 15.5212V16.625ZM3.0625 17.9375V14.9761L14.6042 3.43941C14.7365 3.31924 14.8825 3.22642 15.0423 3.16094C15.2023 3.09531 15.37 3.0625 15.5455 3.0625C15.7209 3.0625 15.8908 3.09364 16.0552 3.15591C16.2197 3.21818 16.3653 3.3172 16.492 3.45297L17.5606 4.53491C17.6964 4.66164 17.7931 4.80747 17.8509 4.97241C17.9086 5.13734 17.9375 5.30228 17.9375 5.46722C17.9375 5.64324 17.9075 5.81117 17.8474 5.971C17.7873 6.13098 17.6917 6.2771 17.5606 6.40937L6.02394 17.9375H3.0625ZM13.8742 7.12578L13.3319 6.56425L14.4358 7.66806L13.8742 7.12578Z"
-                  fill="#C72030"
+                  fill="#DA7756"
                 />
               </g>
             </svg>
           </Button>
+          )}
         </div>
 
       </div>
@@ -685,7 +699,7 @@ export const InventoryDetailsPage = () => {
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0 text-sm"
+                className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0 text-sm"
               >
                 {tab.label}
               </TabsTrigger>
@@ -696,7 +710,7 @@ export const InventoryDetailsPage = () => {
             <div className="bg-white rounded-lg border text-[15px]">
               <div className="flex p-4 items-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                  <Box className="w-6 h-6 text-[#C72030]" />
+                  <Box className="w-6 h-6 text-[#DA7756]" />
                 </div>
                 <h2 className="text-lg font-[700]">INVENTORY DETAIL</h2>
               </div>
@@ -895,7 +909,7 @@ export const InventoryDetailsPage = () => {
                   <span className="flex items-center gap-2">
                     <span className="text-gray-500">:</span>
                     {((inventoryData as any)?.expired === true || String((inventoryData as any)?.expired).toLowerCase() === 'true') ? (
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#C72030]/10 text-[#C72030]">Expired</span>
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#DA7756]/10 text-[#DA7756]">Expired</span>
                     ) : (
                       <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-green-100 text-green-700">Valid</span>
                     )}
@@ -915,7 +929,7 @@ export const InventoryDetailsPage = () => {
             <div className="bg-white rounded-lg border text-[15px]">
               <div className="flex p-4 items-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                  <Box className="w-6 h-6 text-[#C72030]" />
+                  <Box className="w-6 h-6 text-[#DA7756]" />
                 </div>
                 <h2 className="text-lg font-[700]">VENDOR DETAIL</h2>
               </div>
@@ -956,90 +970,131 @@ export const InventoryDetailsPage = () => {
             <div className="bg-white rounded-lg border text-[15px]">
               <div className="flex p-4 items-center">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                  <Box className="w-6 h-6 text-[#C72030]" />
+                  <Box className="w-6 h-6 text-brand" />
                 </div>
                 <h2 className="text-lg font-[700]">HISTORY</h2>
               </div>
               <div className="p-4">
-                {feedsLoading && (
-                  <div className="text-gray-600 text-sm">Loading history...</div>
-                )}
                 {feedsError && (
-                  <div className="text-red-600 text-sm">{feedsError}</div>
+                  <div className="text-brand-error text-sm mb-3">{feedsError}</div>
                 )}
-                {!feedsLoading && !feedsError && feeds.length === 0 && (
-                  <div className="text-gray-600 text-sm">No history available.</div>
-                )}
-                {!feedsLoading && !feedsError && feeds.length > 0 && (
-                  <div className="rounded-md border border-gray-200 shadow-sm">
-                    <div className="max-h-[520px] overflow-y-auto relative">
-                      <table className="min-w-full text-sm">
-                        <thead className="sticky top-0 z-10 bg-gray-100/95 backdrop-blur-sm">
-                          <tr className="text-xs uppercase tracking-wide text-gray-600">
-                            <th className="px-4 py-3 text-left font-semibold">Date / Time</th>
-                            <th className="px-4 py-3 text-left font-semibold">Changed By</th>
-                            <th className="px-4 py-3 text-left font-semibold">Log Type</th>
-                            <th className="px-4 py-3 text-left font-semibold w-2/3">Changes</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {feeds.map((feed, idx) => {
-                            const changes = parseChangedAttr(feed.changed_attr);
-                            const expanded = expandedRows[feed.id];
-                            const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/70';
-                            return (
-                              <tr
-                                key={feed.id}
-                                className={`${rowBg} hover:bg-[#f6f4ee] transition-colors`}
-                              >
-                                <td className="px-4 py-3 align-top whitespace-nowrap text-gray-800">
-                                  <div className="flex flex-col">
-                                    <span title={feed.created_at}>{formatDateTime(feed.created_at)}</span>
-                                    <span className="text-[10px] text-gray-500">{relativeTime(feed.created_at)}</span>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3 align-top whitespace-nowrap text-gray-700 font-medium">{feed.changed_by || '—'}</td>
-                                <td className="px-4 py-3 align-top">
-                                  <span className="inline-block px-2 py-1 rounded-full text-[11px] font-semibold bg-[#C72030]/10 text-[#C72030] whitespace-nowrap leading-none">
-                                    {feed.log_type?.replace('Pms::', '') || '—'}
+                <div className="w-full min-w-0 max-w-full">
+                  <EnhancedTable
+                    data={feeds.map((feed) => {
+                      const changes = parseChangedAttr(feed.changed_attr).filter(
+                        (c) => !HIDDEN_KEYS.has(c.key)
+                      );
+                      return {
+                        ...feed,
+                        id: feed.id,
+                        dateTime: formatDateTime(feed.created_at),
+                        relative: relativeTime(feed.created_at),
+                        changedBy: feed.changed_by || '',
+                        logType: feed.log_type?.replace('Pms::', '') || '',
+                        changesList: changes,
+                        changesSearch: changes
+                          .map(
+                            (c) =>
+                              `${LABELS[c.key] || startCase(c.key)} ${formatValue(c.key, c.from)} ${formatValue(c.key, c.to)}`
+                          )
+                          .join(' '),
+                      };
+                    })}
+                    columns={historyColumns}
+                    renderCell={(item: any, columnKey: string) => {
+                      switch (columnKey) {
+                        case 'dateTime':
+                          return (
+                            <div className="flex flex-col gap-0.5 whitespace-nowrap">
+                              <span className="text-sm font-medium text-gray-900" title={item.created_at}>
+                                {item.dateTime || '—'}
+                              </span>
+                              <span className="text-[11px] text-gray-500 leading-none">
+                                {item.relative || ''}
+                              </span>
+                            </div>
+                          );
+                        case 'changedBy':
+                          return (
+                            <span className="text-sm font-medium text-gray-800 whitespace-nowrap">
+                              {item.changedBy || '—'}
+                            </span>
+                          );
+                        case 'logType':
+                          return item.logType ? (
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-brand-light text-brand whitespace-nowrap leading-none">
+                              {item.logType}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          );
+                        case 'changes': {
+                          const changes = item.changesList || [];
+                          const expanded = !!expandedRows[item.id];
+                          if (changes.length === 0) {
+                            return <span className="text-gray-400">—</span>;
+                          }
+                          const visible = expanded ? changes : changes.slice(0, 3);
+                          return (
+                            <div className="flex flex-col gap-1.5 min-w-[280px] max-w-xl">
+                              {visible.map((c: any) => (
+                                <div
+                                  key={c.key}
+                                  className="flex items-center flex-wrap gap-1.5 text-[12px] bg-gray-50 border border-gray-100 rounded-md px-2.5 py-1.5"
+                                >
+                                  <span className="font-semibold text-gray-700 shrink-0">
+                                    {LABELS[c.key] || startCase(c.key)}
                                   </span>
-                                </td>
-                                <td className="px-4 py-3 align-top">
-                                  {changes.length === 0 && (
-                                    <span className="text-gray-400">—</span>
+                                  <span className="text-gray-400 line-through">
+                                    {formatValue(c.key, c.from)}
+                                  </span>
+                                  <ArrowRight className="w-3 h-3 text-gray-400 shrink-0" />
+                                  <span className="text-green-700 font-semibold">
+                                    {formatValue(c.key, c.to)}
+                                  </span>
+                                </div>
+                              ))}
+                              {changes.length > 3 && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleRow(item.id);
+                                  }}
+                                  className="flex items-center gap-1 self-start text-[11px] text-brand hover:underline mt-0.5"
+                                >
+                                  {expanded ? (
+                                    <ChevronUp className="w-3 h-3" />
+                                  ) : (
+                                    <ChevronDown className="w-3 h-3" />
                                   )}
-                                  {changes.length > 0 && (
-                                    <div className="flex flex-col gap-1">
-                                      {(expanded ? changes : changes.slice(0, 3))
-                                        .filter(c => !HIDDEN_KEYS.has(c.key))
-                                        .map(c => (
-                                          <div key={c.key} className="flex items-start flex-wrap gap-1 text-[12px] bg-gray-100 rounded px-2 py-1">
-                                            <span className="font-semibold text-gray-700">{LABELS[c.key] || startCase(c.key)}</span>
-                                            <span className="text-gray-400 line-through">{formatValue(c.key, c.from)}</span>
-                                            <ArrowRight className="w-3 h-3 text-gray-400 mt-0.5" />
-                                            <span className="text-green-700 font-semibold">{formatValue(c.key, c.to)}</span>
-                                          </div>
-                                        ))}
-                                      {changes.filter(c => !HIDDEN_KEYS.has(c.key)).length > 3 && (
-                                        <button
-                                          onClick={() => toggleRow(feed.id)}
-                                          className="flex items-center gap-1 self-start text-[11px] text-[#C72030] hover:underline mt-1"
-                                        >
-                                          {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                                          {expanded ? 'Show less' : `Show ${changes.filter(c => !HIDDEN_KEYS.has(c.key)).length - 3} more`}
-                                        </button>
-                                      )}
-                                    </div>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
+                                  {expanded
+                                    ? 'Show less'
+                                    : `Show ${changes.length - 3} more`}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        }
+                        default:
+                          return '—';
+                      }
+                    }}
+                    storageKey="inventory-details-history-table"
+                    enableSearch
+                    searchTerm={historySearchTerm}
+                    onSearchChange={setHistorySearchTerm}
+                    searchPlaceholder="Search history..."
+                    hideTableExport
+                    emptyMessage="No history available."
+                    loading={feedsLoading}
+                    loadingMessage="Loading history..."
+                    pagination
+                    pageSize={10}
+                    getItemId={(item) => String(item.id)}
+                    className="[&_td]:align-top [&_th]:align-middle"
+                  />
+                </div>
               </div>
             </div>
           </TabsContent>
@@ -1048,7 +1103,7 @@ export const InventoryDetailsPage = () => {
             <div className=" border rounded-lg text-[15px]">
               <div className="flex items-center mb-4 p-4">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                  <QrCode className="w-6 h-6 text-[#C72030]" />
+                  <QrCode className="w-6 h-6 text-[#DA7756]" />
                 </div>
                 <h2 className="text-lg font-[700]">QR CODE</h2>
               </div>
@@ -1086,11 +1141,11 @@ export const InventoryDetailsPage = () => {
           <TabsContent value="asset-information" className="p-4 sm:p-6">
             <div className="bg-white rounded-lg border text-[15px]">
               <div className="flex p-4 items-center ">
-                {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                {/* <div className="w-8 h-8 bg-[#DA7756] text-white rounded-full flex items-center justify-center mr-3">
                   <Box className="w-4 h-4" />
                 </div> */}
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs mr-3">
-                  <Box className="w-6 h-6 text-[#C72030]" />
+                  <Box className="w-6 h-6 text-[#DA7756]" />
                 </div>
                 <h2 className="text-lg font-[700]">ASSET INFORMATION</h2>
               </div>

@@ -12,10 +12,11 @@ import {
 } from "@/store/slices/walletListSlice";
 import axios from "axios";
 import { format } from "date-fns";
-import { Coins, Download, Eye, Plus, Star, Users, Wallet } from "lucide-react";
+import { Download, Eye, Plus, Settings, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const columns: ColumnConfig[] = [
     { key: "entity_name", label: "Entity Name", sortable: true, draggable: true },
@@ -100,6 +101,7 @@ const transactionColumns: ColumnConfig[] = [
 const CRMWalletList = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
 
@@ -108,6 +110,8 @@ const CRMWalletList = () => {
         useState(false);
     const [walletList, setWalletList] = useState([]);
     const [transactionHistory, setTransactionHistory] = useState([]);
+    const [walletLoading, setWalletLoading] = useState(true);
+    const [transactionLoading, setTransactionLoading] = useState(true);
     const [showTopupModal, setShowTopupModal] = useState(false);
     const [walletCardCount, setWalletCardCount] = useState({
         total_users: 0,
@@ -130,6 +134,7 @@ const CRMWalletList = () => {
         };
 
         const fetchWallets = async () => {
+            setWalletLoading(true);
             try {
                 const response = await dispatch(
                     fetchWalletList({ baseUrl, token })
@@ -137,10 +142,13 @@ const CRMWalletList = () => {
                 setWalletList(response.wallets);
             } catch (error) {
                 console.log(error);
+            } finally {
+                setWalletLoading(false);
             }
         };
 
         const fetchTransactions = async () => {
+            setTransactionLoading(true);
             try {
                 const response = await dispatch(
                     fetchTransactionHistory({ baseUrl, token })
@@ -148,6 +156,8 @@ const CRMWalletList = () => {
                 setTransactionHistory(response.transactions);
             } catch (error) {
                 console.log(error);
+            } finally {
+                setTransactionLoading(false);
             }
         };
 
@@ -157,6 +167,7 @@ const CRMWalletList = () => {
     }, []);
 
     const renderActions = (item: any) => (
+        shouldShow("Wallet", "show") && (
         <Button
             variant="ghost"
             size="sm"
@@ -165,6 +176,7 @@ const CRMWalletList = () => {
         >
             <Eye className="w-4 h-4" />
         </Button>
+        )
     );
 
     const renderCell = (item: any, columnKey: string) => {
@@ -206,7 +218,7 @@ const CRMWalletList = () => {
         <>
             <Button
                 onClick={() => setShowActionPanel(true)}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2 border-0"
             >
                 <Plus className="w-4 h-4" />
                 Action
@@ -215,7 +227,7 @@ const CRMWalletList = () => {
                 onClick={() =>
                     setIsTransactionHistoryVisible(!isTransactionHistoryVisible)
                 }
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2 border-0"
             >
                 {isTransactionHistoryVisible ? "Wallet List" : "Transaction History"}
             </Button>
@@ -279,37 +291,27 @@ const CRMWalletList = () => {
                 <StatsCard
                     title="Total Wallet Users"
                     value={formatCardValue(walletCardCount.total_users)}
-                    icon={<Users className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
                 <StatsCard
                     title="Total Wallet Balance"
                     value={formatCardValue(walletCardCount.total_amount)}
-                    icon={<Wallet className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
                 <StatsCard
                     title="Paid Points"
                     value={formatCardValue(walletCardCount.paid_points)}
-                    icon={<Coins className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
                 <StatsCard
                     title="Complimentary Points"
                     value={formatCardValue(walletCardCount.complimentary_points)}
-                    icon={<Star className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
                 <StatsCard
                     title="Expired Points"
                     value={formatCardValue(walletCardCount.expiry_points)}
-                    icon={<Users className="w-6 h-6" />}
-                    valueClassName="text-[#DA7756] font-bold tabular-nums"
-                    className="cursor-pointer"
+                    icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
                 />
             </div>
 
@@ -332,6 +334,7 @@ const CRMWalletList = () => {
                     selectable={false}
                     pagination={true}
                     pageSize={10}
+                    loading={transactionLoading}
                 />
             )}
 
@@ -348,6 +351,7 @@ const CRMWalletList = () => {
                     selectable={false}
                     pagination={true}
                     pageSize={10}
+                    loading={walletLoading}
                 />
             )}
 

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, RefreshCw } from "lucide-react";
+import { Eye, RefreshCw, Settings, Banknote, CreditCard, Clock } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { VendorInvoicesFilterDialog } from "@/components/VendorInvoicesFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { StatsCard } from "@/components/StatsCard";
 import { toast } from "sonner";
 import {
   Pagination,
@@ -48,12 +49,19 @@ export const VendorInvoiceListPage = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [selectedSummary, setSelectedSummary] = useState<string | null>(null);
   const [invoiceList, setInvoiceList] = useState<any[]>([]);
   const [filters, setFilters] = useState({
     invoiceNumber: "",
     invoiceDate: "",
     supplierName: "",
     approvalStatus: "",
+  });
+  const [stats, setStats] = useState({
+    totalCount: 0,
+    totalAmount: 0,
+    totalPaidAmount: 0,
+    totalPendingAmount: 0,
   });
   const [pagination, setPagination] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -65,6 +73,14 @@ export const VendorInvoiceListPage = () => {
   });
 
   const applyResponse = (response: any) => {
+    const summary = response?.summary || {};
+    setStats({
+      totalCount: summary.total || summary.total_invoice_count || 0,
+      totalAmount: summary.total_value || 0,
+      totalPaidAmount: summary.total_paid || summary.paid || 0,
+      totalPendingAmount: summary.total_pending || summary.pending || 0,
+    });
+
     const items = response?.work_order_invoices || response?.data || [];
     const formatted = items.map((item: any) => ({
       id: item.id,
@@ -242,6 +258,38 @@ export const VendorInvoiceListPage = () => {
 
   return (
     <div className="p-4 sm:p-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6">
+        <StatsCard
+          title="Total no. of Invoices"
+          value={stats.totalCount}
+          selected={selectedSummary === "total"}
+          icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("total")}
+        />
+        <StatsCard
+          title="Total Value Amount"
+          value={`₹ ${Number(stats.totalAmount).toLocaleString()}`}
+          selected={selectedSummary === "value"}
+          icon={<Banknote className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("value")}
+        />
+        <StatsCard
+          title="Total Paid Amount"
+          value={`₹ ${Number(stats.totalPaidAmount).toLocaleString()}`}
+          selected={selectedSummary === "paid"}
+          icon={<CreditCard className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("paid")}
+        />
+        <StatsCard
+          title="Total Pending Amount"
+          value={`₹ ${Number(stats.totalPendingAmount).toLocaleString()}`}
+          selected={selectedSummary === "pending"}
+          icon={<Clock className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          onClick={() => setSelectedSummary("pending")}
+        />
+      </div>
+
       <EnhancedTable
         data={invoiceList}
         columns={columns}

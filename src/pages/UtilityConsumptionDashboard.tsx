@@ -15,17 +15,14 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination";
-import { Plus, Edit, Eye, Filter, X, Loader2 } from "lucide-react";
-import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
-import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { useNavigate } from "react-router-dom";
-import {
-  API_CONFIG,
-  getFullUrl,
-  getAuthenticatedFetchOptions,
-} from "@/config/apiConfig";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/pagination';
+import { Plus, Edit, Eye, X } from 'lucide-react';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { useNavigate } from 'react-router-dom';
+import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+import { useToast } from '@/hooks/use-toast';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface ConsumptionRecord {
   id: number;
@@ -45,53 +42,23 @@ interface ConsumptionRecord {
 }
 
 const columns: ColumnConfig[] = [
-  { key: "actions", label: "Action", sortable: false, defaultVisible: true },
-  {
-    key: "customer_name",
-    label: "Client Name",
-    sortable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "asset_name",
-    label: "Meter No.",
-    sortable: true,
-    defaultVisible: true,
-  },
-  { key: "locations", label: "Location", sortable: true, defaultVisible: true },
-  {
-    key: "from_date",
-    label: "From Date",
-    sortable: true,
-    defaultVisible: true,
-  },
-  { key: "to_date", label: "To Date", sortable: true, defaultVisible: true },
-  {
-    key: "adjustment_factor",
-    label: "Adjustment Factor",
-    sortable: true,
-    defaultVisible: true,
-  },
-  { key: "rate", label: "Rate/KWH", sortable: true, defaultVisible: true },
-  {
-    key: "consumption",
-    label: "Actual Consumption",
-    sortable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "total_consumption",
-    label: "Total Consumption",
-    sortable: true,
-    defaultVisible: true,
-  },
-  { key: "amount", label: "Amount", sortable: true, defaultVisible: true },
+  { key: 'customer_name', label: 'Client Name', sortable: true, defaultVisible: true },
+  { key: 'asset_name', label: 'Meter No.', sortable: true, defaultVisible: true },
+  { key: 'locations', label: 'Location', sortable: true, defaultVisible: true },
+  { key: 'from_date', label: 'From Date', sortable: true, defaultVisible: true },
+  { key: 'to_date', label: 'To Date', sortable: true, defaultVisible: true },
+  { key: 'adjustment_factor', label: 'Adjustment Factor', sortable: true, defaultVisible: true },
+  { key: 'rate', label: 'Rate/KWH', sortable: true, defaultVisible: true },
+  { key: 'consumption', label: 'Actual Consumption', sortable: true, defaultVisible: true },
+  { key: 'total_consumption', label: 'Total Consumption', sortable: true, defaultVisible: true },
+  { key: 'amount', label: 'Amount', sortable: true, defaultVisible: true },
 ];
 
 const UtilityConsumptionDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState("");
+  const { shouldShow } = useDynamicPermissions();
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [filters, setFilters] = useState({ clientName: "", meterNo: "" });
@@ -186,40 +153,17 @@ const UtilityConsumptionDashboard = () => {
 
   const renderCell = (item: ConsumptionRecord, columnKey: string) => {
     switch (columnKey) {
-      case "actions":
-        return (
-          <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEdit(item)}
-              className="h-8 w-8 p-0"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleView(item)}
-              className="h-8 w-8 p-0"
-            >
-              <Eye className="w-4 h-4" />
-            </Button>
-          </div>
-        );
-      case "customer_name":
-        return <span className="font-medium">{item.customer_name || "-"}</span>;
-      case "asset_name":
-        return (
-          <span className="font-mono text-sm">{item.asset_name || "-"}</span>
-        );
-      case "locations":
-        return <span className="text-sm">{item.locations || "-"}</span>;
-      case "from_date":
-        return <span>{item.from_date || "-"}</span>;
-      case "to_date":
-        return <span>{item.to_date || "-"}</span>;
-      case "adjustment_factor":
+      case 'customer_name':
+        return <span className="font-medium text-gray-900">{item.customer_name || '-'}</span>;
+      case 'asset_name':
+        return <span className="text-sm text-gray-900">{item.asset_name || '-'}</span>;
+      case 'locations':
+        return <span className="text-sm text-gray-900">{item.locations || '-'}</span>;
+      case 'from_date':
+        return <span>{item.from_date || '-'}</span>;
+      case 'to_date':
+        return <span>{item.to_date || '-'}</span>;
+      case 'adjustment_factor':
         return <span className="font-medium">{item.adjustment_factor}</span>;
       case "rate":
         return <span className="font-medium">₹{item.rate}</span>;
@@ -227,153 +171,159 @@ const UtilityConsumptionDashboard = () => {
         return <span className="font-medium">{item.consumption}</span>;
       case "total_consumption":
         return <span className="font-medium">{item.total_consumption}</span>;
-      case "amount":
-        return (
-          <span className="font-medium text-green-600">₹{item.amount}</span>
-        );
+      case 'amount':
+        return <span className="font-medium text-gray-900">₹{item.amount}</span>;
       default:
         return (item as any)[columnKey] ?? "-";
     }
   };
 
+  const renderActions = (item: ConsumptionRecord) => (
+    <div className="flex items-center justify-center gap-1">
+      {shouldShow("Utility Consumption", "update") && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleEdit(item);
+          }}
+          className="h-8 w-8 p-0 text-[#C72030] hover:bg-[#C72030]/10 hover:text-[#C72030]"
+          title="Edit"
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      )}
+      {shouldShow("Utility Consumption", "show") && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleView(item);
+          }}
+          className="h-8 w-8 p-0 text-[#C72030] hover:bg-[#C72030]/10 hover:text-[#C72030]"
+          title="View"
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+      )}
+    </div>
+  );
+
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      <div className="text-sm text-gray-600">Utility &gt; Calculations</div>
-
-      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">
-        Calculations
-      </h1>
-
-      <div className="flex flex-wrap gap-3">
-        <Button
-          onClick={() => navigate("/utility/utility-consumption/generate-bill")}
-          className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
-        >
-          <Plus className="w-4 h-4" />
-          Generate New
-        </Button>
-        <Button
-          onClick={() => setIsFilterModalOpen(true)}
-          className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
-        >
-          <Filter className="w-4 h-4" />
-          Filters
-        </Button>
+    <div className="flex-1 p-6 bg-white min-h-screen">
+      <div className="mb-6">
+        <p className="text-sm text-gray-500 mb-1">Utility &gt; Calculations</p>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          Calculations
+        </h1>
       </div>
 
-      <div>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+      <EnhancedTable
+        data={filteredData}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        onSelectAll={handleSelectAll}
+        onSelectItem={handleSelectItem}
+        selectedItems={selectedItems}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search calculations..."
+        enableSearch
+        enableExport={false}
+        hideColumnsButton={false}
+        pagination={false}
+        pageSize={pageSize}
+        emptyMessage="No calculation data found"
+        selectable
+        storageKey="utility-consumption-table"
+        loading={isLoading}
+        loadingMessage="Loading..."
+        onFilterClick={() => setIsFilterModalOpen(true)}
+        leftActions={
+          shouldShow("Utility Consumption", "create") ? (
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => navigate('/utility/utility-consumption/generate-bill')}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Generate New
+              </Button>
+            </div>
+          ) : undefined
+        }
+      />
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <div className="text-sm text-gray-700">
+            Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)} to{' '}
+            {Math.min(currentPage * pageSize, totalCount)} of {totalCount} entries
           </div>
-        ) : (
-          <>
-            <EnhancedTable
-              data={filteredData}
-              columns={columns}
-              renderCell={renderCell}
-              onSelectAll={handleSelectAll}
-              onSelectItem={handleSelectItem}
-              selectedItems={selectedItems}
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              enableSearch={false}
-              enableExport={false}
-              hideColumnsButton={false}
-              pagination={false}
-              pageSize={pageSize}
-              emptyMessage="No calculation data found"
-              selectable={true}
-              storageKey="utility-consumption-table"
-            />
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                  Showing{" "}
-                  {Math.min((currentPage - 1) * pageSize + 1, totalCount)} to{" "}
-                  {Math.min(currentPage * pageSize, totalCount)} of {totalCount}{" "}
-                  entries
-                </div>
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        className={`cursor-pointer ${currentPage === 1 ? "pointer-events-none opacity-50" : ""}`}
-                        onClick={() =>
-                          currentPage > 1 && fetchData(currentPage - 1)
-                        }
-                      />
-                    </PaginationItem>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  className={`cursor-pointer ${currentPage === 1 || isLoading ? 'pointer-events-none opacity-50' : ''}`}
+                  onClick={() => currentPage > 1 && !isLoading && fetchData(currentPage - 1)}
+                />
+              </PaginationItem>
 
-                    {currentPage > 3 && (
-                      <>
-                        <PaginationItem>
-                          <PaginationLink
-                            className="cursor-pointer"
-                            onClick={() => fetchData(1)}
-                            isActive={currentPage === 1}
-                          >
-                            1
-                          </PaginationLink>
-                        </PaginationItem>
-                        {currentPage > 4 && (
-                          <PaginationItem>
-                            <PaginationEllipsis />
-                          </PaginationItem>
-                        )}
-                      </>
-                    )}
+              {currentPage > 3 && (
+                <>
+                  <PaginationItem>
+                    <PaginationLink className="cursor-pointer" onClick={() => fetchData(1)} isActive={currentPage === 1}>
+                      1
+                    </PaginationLink>
+                  </PaginationItem>
+                  {currentPage > 4 && (
+                    <PaginationItem><PaginationEllipsis /></PaginationItem>
+                  )}
+                </>
+              )}
 
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      const pageNumber = Math.max(1, currentPage - 2) + i;
-                      if (pageNumber > totalPages) return null;
-                      return (
-                        <PaginationItem key={pageNumber}>
-                          <PaginationLink
-                            className="cursor-pointer"
-                            onClick={() => fetchData(pageNumber)}
-                            isActive={currentPage === pageNumber}
-                          >
-                            {pageNumber}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    }).filter(Boolean)}
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const pageNumber = Math.max(1, currentPage - 2) + i;
+                if (pageNumber > totalPages) return null;
+                return (
+                  <PaginationItem key={pageNumber}>
+                    <PaginationLink
+                      className="cursor-pointer"
+                      onClick={() => fetchData(pageNumber)}
+                      isActive={currentPage === pageNumber}
+                    >
+                      {pageNumber}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              }).filter(Boolean)}
 
-                    {currentPage < totalPages - 2 && (
-                      <>
-                        {currentPage < totalPages - 3 && (
-                          <PaginationItem>
-                            <PaginationEllipsis />
-                          </PaginationItem>
-                        )}
-                        <PaginationItem>
-                          <PaginationLink
-                            className="cursor-pointer"
-                            onClick={() => fetchData(totalPages)}
-                            isActive={currentPage === totalPages}
-                          >
-                            {totalPages}
-                          </PaginationLink>
-                        </PaginationItem>
-                      </>
-                    )}
+              {currentPage < totalPages - 2 && (
+                <>
+                  {currentPage < totalPages - 3 && (
+                    <PaginationItem><PaginationEllipsis /></PaginationItem>
+                  )}
+                  <PaginationItem>
+                    <PaginationLink className="cursor-pointer" onClick={() => fetchData(totalPages)} isActive={currentPage === totalPages}>
+                      {totalPages}
+                    </PaginationLink>
+                  </PaginationItem>
+                </>
+              )}
 
-                    <PaginationItem>
-                      <PaginationNext
-                        className={`cursor-pointer ${currentPage === totalPages ? "pointer-events-none opacity-50" : ""}`}
-                        onClick={() =>
-                          currentPage < totalPages && fetchData(currentPage + 1)
-                        }
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+              <PaginationItem>
+                <PaginationNext
+                  className={`cursor-pointer ${currentPage === totalPages || isLoading ? 'pointer-events-none opacity-50' : ''}`}
+                  onClick={() => currentPage < totalPages && !isLoading && fetchData(currentPage + 1)}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
         <DialogContent className="sm:max-w-[600px] p-0 bg-white">
@@ -436,7 +386,7 @@ const UtilityConsumptionDashboard = () => {
               </Button>
               <Button
                 onClick={handleApplyFilters}
-                className="px-8 py-2 h-10 rounded-md bg-purple-600 text-white hover:bg-purple-700"
+                className="px-8 py-2 h-10 rounded-md !bg-brand hover:!bg-brand-hover !text-white"
               >
                 Apply
               </Button>

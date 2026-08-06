@@ -714,11 +714,20 @@ interface AnswerOption {
 }
 
 const fieldStyles = {
-    '& .MuiInputBase-input': {
-        padding: '10px 12px',
+    height: { xs: 36, sm: 40, md: 45 },
+    backgroundColor: '#fff',
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+        padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
     },
     '& .MuiOutlinedInput-root': {
+        backgroundColor: '#fff',
         fontSize: '14px',
+        '& fieldset': { borderColor: '#e5e7eb' },
+        '&:hover fieldset': { borderColor: '#C72030' },
+        '&.Mui-focused fieldset': { borderColor: '#C72030' },
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+        color: '#C72030',
     },
 };
 
@@ -1252,7 +1261,7 @@ export const EditPermitChecklist: React.FC = () => {
                             <Button
                                 type="button"
                                 onClick={addQuestion}
-                                className="bg-[#C72030] hover:bg-[#B8252F] text-white h-8 w-8 rounded-full p-0"
+                                className="bg-brand hover:bg-brand-hover text-white h-8 w-8 rounded-full p-0 [&_svg]:text-white"
                             >
                                 <Plus className="w-4 h-4" />
                             </Button>
@@ -1308,6 +1317,10 @@ export const EditPermitChecklist: React.FC = () => {
                                             <MuiCheckbox
                                                 checked={question.mandatory}
                                                 onChange={(e) => updateQuestion(question.id, 'mandatory', e.target.checked)}
+                                                sx={{
+                                                    color: '#C72030',
+                                                    '&.Mui-checked': { color: '#C72030' },
+                                                }}
                                             />
                                         }
                                         label="Mandatory"
@@ -1339,6 +1352,7 @@ export const EditPermitChecklist: React.FC = () => {
                                                         value={opt.type}
                                                         onChange={(e) => updateOption(question.id, i, 'type', e.target.value)}
                                                         size="small"
+                                                        sx={fieldStyles}
                                                     >
                                                         <MenuItem value="P">P</MenuItem>
                                                         <MenuItem value="N">N</MenuItem>
@@ -1361,11 +1375,11 @@ export const EditPermitChecklist: React.FC = () => {
 
                                     <Button
                                         type="button"
-                                        variant="outline"
                                         onClick={() => addOption(question.id)}
-                                        className="mt-2 h-9 w-9 p-0 border-2 border-dashed border-gray-300 hover:border-gray-400"
+                                        className="mt-2 flex items-center gap-2 bg-brand hover:bg-brand-hover text-white [&_svg]:!text-white"
                                     >
                                         <Plus className="w-4 h-4" />
+                                        Add Option
                                     </Button>
                                 </div>
                             )}
@@ -1397,19 +1411,21 @@ export const EditPermitChecklist: React.FC = () => {
                 </div>
 
                 {/* Buttons */}
-                <div className="flex justify-end space-x-4 mt-8 pt-6 border-t">
+                <div className="flex justify-end gap-3 mt-8 pt-6 border-t">
                     <Button
+                        type="button"
                         variant="outline"
-                        className="px-8"
+                        className="px-8 border-brand text-brand hover:bg-brand-selected hover:text-brand"
                         disabled={isSubmitting}
                         onClick={() => navigate('/safety/permit/checklist')}
                     >
                         Cancel
                     </Button>
                     <Button
+                        type="button"
                         onClick={handleSubmit}
-                        className="bg-[#C72030] hover:bg-[#B8252F] text-white px-8"
-                        disabled={isSubmitting || isLoadingCategories}
+                        className="px-8 !bg-brand hover:!bg-brand-hover !text-white disabled:!opacity-100 disabled:!bg-brand"
+                        disabled={isSubmitting}
                     >
                         {isSubmitting ? 'Updating...' : 'Update Checklist'}
                     </Button>

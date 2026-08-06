@@ -180,19 +180,21 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
         <div className="flex justify-center gap-4 pt-4">
           <Button 
             onClick={handleSubmit}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
+            className="bg-brand hover:bg-brand-hover text-white px-8"
           >
             Submit
           </Button>
           <Button 
             onClick={handleExport}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
+            variant="outline"
+            className="bg-white border-brand text-brand hover:bg-brand-selected hover:text-brand px-8"
           >
             Export
           </Button>
           <Button 
             onClick={handleReset}
-            className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-8 py-2 h-9 text-sm font-medium"
+            variant="outline"
+            className="bg-white border-brand text-brand hover:bg-brand-selected hover:text-brand px-8"
           >
             Reset
           </Button>

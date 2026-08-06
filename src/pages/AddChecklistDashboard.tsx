@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, X } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { TextField, FormControl, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
 
 interface Question {
@@ -14,6 +14,55 @@ interface Question {
   answerType: string;
   mandatory: boolean;
 }
+
+// Label with a trailing rule, sitting above a field - matches the reference UI.
+const FieldLabel = ({ label, required }: { label: string; required?: boolean }) => (
+  <div className="flex items-center gap-2 mb-1.5">
+    <span className="text-sm text-gray-500 whitespace-nowrap">
+      {label}
+      {required && <span className="text-[#C72030] ml-0.5">*</span>}
+    </span>
+    <div className="flex-1 h-px" />
+  </div>
+);
+
+const selectFieldSx = {
+  borderRadius: '8px',
+  height: '44px',
+  '& .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
+  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#9ca3af' },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#C72030' },
+};
+
+const textFieldSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '8px',
+    '& fieldset': { borderColor: '#d1d5db' },
+    '&:hover fieldset': { borderColor: '#9ca3af' },
+    '&.Mui-focused fieldset': { borderColor: '#C72030' },
+  },
+};
+
+// Section header bar - numbered badge + title, optional action button on the right.
+const SectionHeader = ({
+  step,
+  title,
+  action,
+}: {
+  step: number;
+  title: string;
+  action?: React.ReactNode;
+}) => (
+  <div className="bg-[#F6F4EE] px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+    <div className="flex items-center gap-3">
+      <span className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030] font-semibold text-sm">
+        {step}
+      </span>
+      <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+    </div>
+    {action}
+  </div>
+);
 
 export const AddChecklistDashboard = () => {
   const navigate = useNavigate();
@@ -27,13 +76,6 @@ export const AddChecklistDashboard = () => {
   const [questions, setQuestions] = useState<Question[]>([
     { id: 1, text: '', answerType: '', mandatory: false }
   ]);
-
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
-  };
 
   const handleAddQuestion = () => {
     const newQuestion: Question = {
@@ -52,7 +94,7 @@ export const AddChecklistDashboard = () => {
   };
 
   const handleQuestionChange = (id: number, field: keyof Question, value: string | boolean) => {
-    setQuestions(prev => prev.map(q => 
+    setQuestions(prev => prev.map(q =>
       q.id === id ? { ...q, [field]: value } : q
     ));
   };
@@ -60,7 +102,7 @@ export const AddChecklistDashboard = () => {
   const handleNumberOfQuestionsChange = (value: string) => {
     const num = parseInt(value);
     setNumberOfQuestions(num);
-    
+
     if (num > questions.length) {
       const newQuestions = Array.from({ length: num - questions.length }, (_, i) => ({
         id: Date.now() + i,
@@ -92,7 +134,7 @@ export const AddChecklistDashboard = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl">
+    <div className="p-6 bg-[#F6F4EE] min-h-screen">
       {/* Breadcrumb */}
       <div className="mb-4">
         <span className="text-sm text-gray-600">
@@ -101,155 +143,149 @@ export const AddChecklistDashboard = () => {
       </div>
 
       {/* Header */}
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex items-center gap-3 mb-6">
         <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
           <span className="text-white text-sm">✓</span>
         </div>
         <h1 className="text-2xl font-bold text-[#C72030]">Add checklist</h1>
       </div>
 
-      {/* Form Fields */}
-      <div className="space-y-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-2">
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="category-label" shrink>Category*</InputLabel>
-              <MuiSelect
-                labelId="category-label"
-                label="Category*"
-                displayEmpty
-                value={formData.category}
-                onChange={(e) => setFormData(prev => ({...prev, category: e.target.value}))}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Category</em></MenuItem>
-                <MenuItem value="electrical">Electrical</MenuItem>
-                <MenuItem value="plumbing">Plumbing</MenuItem>
-                <MenuItem value="renovation">Renovation</MenuItem>
-                <MenuItem value="safety">Safety</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
-
-          <div className="space-y-2">
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel id="sub-category-label" shrink>Sub Category*</InputLabel>
-              <MuiSelect
-                labelId="sub-category-label"
-                label="Sub Category*"
-                displayEmpty
-                value={formData.subCategory}
-                onChange={(e) => setFormData(prev => ({...prev, subCategory: e.target.value}))}
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select Sub-Category</em></MenuItem>
-                <MenuItem value="wiring">Wiring</MenuItem>
-                <MenuItem value="fixtures">Fixtures</MenuItem>
-                <MenuItem value="pipes">Pipes</MenuItem>
-                <MenuItem value="fittings">Fittings</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
-
-          <div className="space-y-2">
-            <TextField
-              placeholder="Enter the title"
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({...prev, title: e.target.value}))}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-          </div>
-        </div>
-
-        {/* Number of Questions Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <h3 className="text-lg font-semibold">Add No. of Questions</h3>
-            <span className="text-lg font-semibold">No. of Questions</span>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <FormControl variant="outlined" sx={{ width: 80 }}>
-              <MuiSelect
-                displayEmpty
-                value={numberOfQuestions.toString()}
-                onChange={(e) => handleNumberOfQuestionsChange(e.target.value)}
-                sx={fieldStyles}
-              >
-                {Array.from({ length: 20 }, (_, i) => i + 1).map(num => (
-                  <MenuItem key={num} value={num.toString()}>
-                    {num.toString().padStart(2, '0')}
-                  </MenuItem>
-                ))}
-              </MuiSelect>
-            </FormControl>
-            <Button
-              type="button"
-              onClick={handleAddQuestion}
-              className="w-8 h-8 rounded-full bg-green-600 hover:bg-green-700 text-white p-0"
-            >
-              <Plus className="w-4 h-4 text-white stroke-white" />
-            </Button>
-            <span className="text-lg">{questions.length}</span>
-          </div>
-        </div>
-
-        {/* Questions Section */}
-        <div className="space-y-6">
-          {questions.map((question, index) => (
-            <div key={question.id} className="border rounded-lg p-6 bg-gray-50">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-semibold">New Question</h4>
-                {questions.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveQuestion(question.id)}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+      <div className="space-y-6 max-w-6xl">
+        {/* Section 1: Basic Information */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <SectionHeader step={1} title="Basic Information" />
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <FieldLabel label="Category" required />
+                <FormControl fullWidth variant="outlined">
+                  <MuiSelect
+                    displayEmpty
+                    value={formData.category}
+                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                    sx={selectFieldSx}
                   >
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
+                    <MenuItem value=""><em>Select Category</em></MenuItem>
+                    <MenuItem value="electrical">Electrical</MenuItem>
+                    <MenuItem value="plumbing">Plumbing</MenuItem>
+                    <MenuItem value="renovation">Renovation</MenuItem>
+                    <MenuItem value="safety">Safety</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <TextField
-                    placeholder="Enter your Question"
-                    value={question.text}
-                    onChange={(e) => handleQuestionChange(question.id, 'text', e.target.value)}
-                    fullWidth
-                    variant="outlined"
-                    multiline
-                    rows={4}
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
+              <div>
+                <FieldLabel label="Sub Category" required />
+                <FormControl fullWidth variant="outlined">
+                  <MuiSelect
+                    displayEmpty
+                    value={formData.subCategory}
+                    onChange={(e) => setFormData(prev => ({ ...prev, subCategory: e.target.value }))}
+                    sx={selectFieldSx}
+                  >
+                    <MenuItem value=""><em>Select Sub-Category</em></MenuItem>
+                    <MenuItem value="wiring">Wiring</MenuItem>
+                    <MenuItem value="fixtures">Fixtures</MenuItem>
+                    <MenuItem value="pipes">Pipes</MenuItem>
+                    <MenuItem value="fittings">Fittings</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
+
+              <div>
+                <FieldLabel label="Checklist Title" required />
+                <TextField
+                  placeholder="Enter the title"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  fullWidth
+                  variant="outlined"
+                  InputProps={{ sx: { height: '44px' } }}
+                  sx={textFieldSx}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 2: Questions */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <SectionHeader
+            step={2}
+            title="Questions"
+            action={
+              <Button
+                type="button"
+                onClick={handleAddQuestion}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Question
+              </Button>
+            }
+          />
+
+          <div className="p-6 space-y-6">
+            {/* Bulk-set number of questions */}
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-gray-700">No. of Questions</span>
+              <FormControl variant="outlined" sx={{ width: 80 }}>
+                <MuiSelect
+                  displayEmpty
+                  value={numberOfQuestions.toString()}
+                  onChange={(e) => handleNumberOfQuestionsChange(e.target.value)}
+                  sx={{ ...selectFieldSx, height: '36px' }}
+                >
+                  {Array.from({ length: 20 }, (_, i) => i + 1).map(num => (
+                    <MenuItem key={num} value={num.toString()}>
+                      {num.toString().padStart(2, '0')}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <span className="text-sm text-gray-500">{questions.length} question(s)</span>
+            </div>
+
+            {/* Question Cards */}
+            {questions.map((question, index) => (
+              <div key={question.id} className="border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-semibold text-gray-900">Question {index + 1}</h4>
+                  {questions.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveQuestion(question.id)}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Plus className="w-6 h-6 text-gray-400 border rounded-full border-gray-300 p-1" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                  <div>
+                    <FieldLabel label="Question Text" required />
+                    <TextField
+                      placeholder="Enter your Question"
+                      value={question.text}
+                      onChange={(e) => handleQuestionChange(question.id, 'text', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      InputProps={{ sx: { height: '44px' } }}
+                      sx={textFieldSx}
+                    />
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                  <div className="space-y-2">
-                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel id={`answer-type-${question.id}-label`} shrink>Select Answer Type</InputLabel>
+                  <div>
+                    <FieldLabel label="Answer Type" required />
+                    <FormControl fullWidth variant="outlined">
                       <MuiSelect
-                        labelId={`answer-type-${question.id}-label`}
-                        label="Select Answer Type"
                         displayEmpty
                         value={question.answerType}
                         onChange={(e) => handleQuestionChange(question.id, 'answerType', e.target.value)}
-                        sx={fieldStyles}
+                        sx={selectFieldSx}
                       >
                         <MenuItem value=""><em>Choose Answer Type</em></MenuItem>
                         <MenuItem value="text">Text</MenuItem>
@@ -260,26 +296,27 @@ export const AddChecklistDashboard = () => {
                       </MuiSelect>
                     </FormControl>
                   </div>
+                </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`mandatory-${question.id}`}
-                      checked={question.mandatory}
-                      onCheckedChange={(checked) => handleQuestionChange(question.id, 'mandatory', checked as boolean)}
-                    />
-                    <label htmlFor={`mandatory-${question.id}`} className="text-sm font-medium">
-                      Mandatory
-                    </label>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`mandatory-${question.id}`}
+                    checked={question.mandatory}
+                    onCheckedChange={(checked) => handleQuestionChange(question.id, 'mandatory', checked as boolean)}
+                    className="border-[#C72030] data-[state=checked]:bg-white data-[state=checked]:text-[#C72030] data-[state=checked]:border-[#C72030]"
+                  />
+                  <label htmlFor={`mandatory-${question.id}`} className="text-sm font-medium text-gray-900">
+                    Mandatory
+                  </label>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-center gap-4">
+      <div className="flex justify-center gap-4 mt-8">
         <Button
           onClick={handleCreateChecklist}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
@@ -289,7 +326,7 @@ export const AddChecklistDashboard = () => {
         <Button
           onClick={handleProceed}
           variant="outline"
-          className="border-gray-300 px-8"
+          className="border-brand text-brand hover:bg-brand-selected px-8"
         >
           Proceed
         </Button>

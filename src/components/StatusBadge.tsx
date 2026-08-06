@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
+import { useAssetEvents } from "@/components/PostHogAssetEvents";
 
 export interface StatusBadgeProps {
   status: string;
@@ -26,6 +27,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 }) => {
   const [currentStatus, setCurrentStatus] = useState<string>(status);
   const [isUpdating, setIsUpdating] = useState(false);
+  const assetEvents = useAssetEvents();
 
   useEffect(() => {
     setCurrentStatus(status)
@@ -42,16 +44,16 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     switch (status.toLowerCase()) {
       case "in_use":
       case "in use":
-        return "bg-[#DBC2A9] text-[#1A1A1A]"; // active usage → warm beige
+        return "bg-[#C7EDDA] text-black border border-[#C7EDDA]"; // match shared status-badge
       case "breakdown":
-        return "bg-[#E4626F] text-[#1A1A1A]"; // breakdown → red/coral
+        return "bg-[#F2C8C4] text-black border border-[#F2C8C4]"; // soft status red
       case "in_storage":
       case "in store":
-        return "bg-[#C4B89D] text-[#1A1A1A]"; // in store → calm sand
+        return "bg-[#F2EBC9] text-black border border-[#F2EBC9]"; // calm pending yellow
       case "disposed":
-        return "bg-[#D5DbDB] text-[#1A1A1A]"; // disposed → neutral light gray
+        return "bg-[#D5DbDB] text-black border border-[#D5DbDB]"; // neutral light gray
       default:
-        return "bg-[#AAB9C5] text-[#1A1A1A]"; // fallback → soft gray-blue
+        return "bg-[#AAB9C5] text-black border border-[#AAB9C5]"; // soft gray-blue
     }
   };
 
@@ -125,6 +127,16 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         setCurrentStatus(newStatus);
       }
 
+      // Asset Status Changed — state-machine transition
+      assetEvents.onAssetStatusChanged(assetId, {
+        from_status: currentStatus || null,
+        to_status: newStatus,
+      });
+      // Asset Restored — transition out of breakdown back to operational
+      if (currentStatus === "breakdown" && newStatus === "in_use") {
+        assetEvents.onAssetRestored(assetId, {});
+      }
+
       // Call the callback to refresh table data
       if (onStatusUpdate) {
         onStatusUpdate();
@@ -145,7 +157,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         variant="ghost"
         className={`${getStatusColor(
           currentStatus
-        )} inline-flex items-center justify-center text-xs px-2 py-2 rounded-sm font-medium w-32 text-center h-auto opacity-60 cursor-not-allowed`}
+        )} inline-flex items-center justify-center text-xs px-2 py-2 rounded-sm font-medium w-32 text-center h-auto cursor-not-allowed`}
         disabled
       >
         {formatStatusLabel(currentStatus)}

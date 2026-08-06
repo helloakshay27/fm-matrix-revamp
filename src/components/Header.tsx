@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import recessLogo from "../assets/recess-logo";
+import posthog from "posthog-js";
+import { RecessClubLogo } from "./RecessClubLogo";
 import {
   Bell,
   User,
@@ -18,8 +19,9 @@ import {
   ChartAreaIcon,
   Shield,
   Menu,
+  Activity,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,7 +87,8 @@ export const Header = () => {
     handleNotificationClick: handleNotificationClickContext,
   } = useNotification();
 
-  const currentPath = window.location.pathname;
+  const location = useLocation();
+  const currentPath = location.pathname;
 
   // Redux state
   const {
@@ -131,6 +134,29 @@ export const Header = () => {
     }
   }, [selectedSite]);
 
+  // Identify the current user in PostHog with org/company/site context so these
+  // properties attach to the person and every subsequent event. Runs on mount
+  // (values read from localStorage) and whenever the company/site changes.
+  useEffect(() => {
+    const uid = getUser()?.id;
+    if (!uid) return;
+    // Desktop (Electron) exposes device name + LAN IP via the preload bridge.
+    // In the browser build this is undefined and the fields are simply omitted.
+    const electronBridge = (
+      window as Window & {
+        electron?: { getDeviceInfo?: () => Record<string, string | undefined> };
+      }
+    ).electron;
+    const deviceInfo = electronBridge?.getDeviceInfo?.() ?? {};
+    posthog.identify(String(uid), {
+      organization_name: localStorage.getItem("selectedOrg") ?? undefined,
+      company_name: localStorage.getItem("selectedCompany") ?? undefined,
+      site_name: localStorage.getItem("selectedSiteName") ?? undefined,
+      email: getUser()?.email ?? undefined,
+      ...deviceInfo,
+    });
+  }, [selectedCompany, selectedSite]);
+
   // Get user data from localStorage
   const user = getUser() || {
     id: 0,
@@ -139,11 +165,12 @@ export const Header = () => {
     email: "",
   };
   const userId = user.id;
+  // Club/localhost must NOT hide Dashboard / Executive / MSafe header links
+  // (localhost is treated as club for logo only via isClubSite).
   const isRestrictedUser =
     user?.email === "karan.balsara@zycus.com" ||
     org_id === "90" ||
-    isPulseSite ||
-    isClubSite; // Example condition for restricted user
+    isPulseSite;
 
   const assetSuggestions = [
     "sdcdsc",
@@ -290,10 +317,29 @@ export const Header = () => {
     }
   };
 
+  // Pages where an "All" option should be shown in the site dropdown,
+  // allowing the user to select every allowed site at once.
+  const showAllSitesOption =
+    currentPath === "/master/user/fm-users" ||
+    currentPath === "/master/user/occupant-users";
+
+  const [isAllSitesSelected, setIsAllSitesSelected] = useState(
+    () => localStorage.getItem("isAllSitesSelected") === "true"
+  );
+
   // Handle site change
-  const handleSiteChange = async (siteId: number) => {
+  const handleSiteChange = async (siteId: number | "all") => {
     try {
-      await dispatch(changeSite(siteId)).unwrap();
+      const payload =
+        siteId === "all" ? sites.map((site) => site.id) : siteId;
+      await dispatch(changeSite(payload)).unwrap();
+      if (siteId === "all") {
+        localStorage.setItem("isAllSitesSelected", "true");
+        setIsAllSitesSelected(true);
+      } else {
+        localStorage.removeItem("isAllSitesSelected");
+        setIsAllSitesSelected(false);
+      }
       // Re-fetch lock_account_id for the new site
       localStorage.removeItem("lock_account_id");
       await fetchLockAccount();
@@ -336,25 +382,17 @@ export const Header = () => {
 
   const tempSwitchToEmployee = tempType === "pms_organization_admin";
 
-  const canShowMsafeForSelectedCompany =
-    selectedCompany?.id !== 294 || selectedCompany?.id === 145;
-  const canShowViMSafeDashboard =
-    isViSite && canShowMsafeForSelectedCompany && !isWebSite;
-  const canShowExternalMSafeDashboard =
-    !isViSite &&
-    canShowMsafeForSelectedCompany &&
-    (!isWebSite || selectedCompany?.id === 145);
-  const hasHeaderDashboardActions =
-    !isRestrictedUser &&
-    (!isViSite || canShowViMSafeDashboard || canShowExternalMSafeDashboard);
+  const canShowMsafeForSelectedCompany = selectedCompany?.id !== 294;
+  const canShowMSafeDashboard =
+    !isRestrictedUser && canShowMsafeForSelectedCompany;
+  const hasHeaderDashboardActions = !isRestrictedUser;
 
   const handleMSafeDashboard = () => {
-    if (isViSite || selectedCompany?.id === 145) {
-      navigate("/msafedashboard");
-      return;
-    }
+    navigate("/msafedashboard-legacy"); // old MSafe Dashboard UI
+  };
 
-    window.open("https://web.gophygital.work/msafedashboard", "_blank");
+  const handleMSafeDashboardRevamp = () => {
+    navigate("/msafedashboard"); // new MSafe Dashboard revamp
   };
 
   const logoClassName =
@@ -462,11 +500,7 @@ export const Header = () => {
                 alt=""
               />
             ) : isClubSite ? (
-              <img
-                src={recessLogo}
-                alt="Recess Logo"
-                className={logoClassName}
-              />
+              <RecessClubLogo className={logoClassName} />
             ) : isPulseSite ? (
               <img
                 src="https://www.panchshil.com/assets/images/home/logo.png"
@@ -513,11 +547,11 @@ export const Header = () => {
 
           {/* Dashboard Button */}
           {!isRestrictedUser && (
-            <div className="hidden xl:flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-2">
               {!isViSite && (
                 <button
                   onClick={() => (window.location.href = "/dashboard")}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <ChartArea className="w-4 h-4" />
                   Dashboard
@@ -528,55 +562,40 @@ export const Header = () => {
                   onClick={() =>
                     (window.location.href = "/dashboard-executive")
                   }
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <ChartAreaIcon className="w-4 h-4" />
                   Executive Dashboard
                 </button>
               )}
 
-              {/* {isViSite && selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
-                <button
-                  onClick={() => navigate("/msafedashboard")}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-                >
-                  <Home className="w-4 h-4" />
-                  MSafe Dashboard
-                </button>
-              )}
 
-              {!isViSite && selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
+              {/* {canShowViMSafeDashboard && (
                 <button
-                  onClick={() =>
-                    window.open(
-                      "https://web.gophygital.work/msafedashboard",
-                      "_blank"
-                    )
-                  }
+                  onClick={handleMSafeDashboard}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <Home className="w-4 h-4" />
                   MSafe Dashboard
+
                 </button>
               )} */}
-
-              {canShowViMSafeDashboard && (
+              {canShowMSafeDashboard && (
                 <button
-                  onClick={handleMSafeDashboard}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                  onClick={handleMSafeDashboardRevamp}
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
-                  <Home className="w-4 h-4" />
-                  MSafe Dashboard
+                  <Shield className="w-4 h-4" />
+                  Msafe Dashboard Revamp
                 </button>
               )}
-
-              {canShowExternalMSafeDashboard && (
+              {isLocalhost && (
                 <button
-                  onClick={handleMSafeDashboard}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                  onClick={() => (window.location.href = "/posthog-dashboard")}
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
-                  <Home className="w-4 h-4" />
-                  MSafe Dashboard
+                  <Activity className="w-4 h-4" />
+                  Usage Analytics
                 </button>
               )}
             </div>
@@ -634,7 +653,9 @@ export const Header = () => {
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <span className="hidden lg:inline text-sm font-medium max-w-[120px] truncate">
-                    {selectedSite?.name || "Select Site"}
+                    {isAllSitesSelected
+                      ? "All"
+                      : selectedSite?.name || "Select Site"}
                   </span>
                 )}
                 <ChevronDown className="hidden w-3 h-3 lg:block" />
@@ -643,13 +664,23 @@ export const Header = () => {
                 align="end"
                 className="!w-[calc(100vw-1rem)] max-w-[18rem] bg-white border border-[#D5DbDB] shadow-lg max-h-[60vh] overflow-y-auto sm:!w-56"
               >
+                {showAllSitesOption && sites.length > 0 && (
+                  <DropdownMenuItem
+                    onClick={() => handleSiteChange("all")}
+                    className={
+                      isAllSitesSelected ? "bg-[#f6f4ee] text-[#C72030]" : ""
+                    }
+                  >
+                    All
+                  </DropdownMenuItem>
+                )}
                 {sites.length > 0 ? (
                   sites.map((site) => (
                     <DropdownMenuItem
                       key={site.id}
                       onClick={() => handleSiteChange(site.id)}
                       className={
-                        selectedSite?.id === site.id
+                        !isAllSitesSelected && selectedSite?.id === site.id
                           ? "bg-[#f6f4ee] text-[#C72030]"
                           : ""
                       }
@@ -724,7 +755,7 @@ export const Header = () => {
           {hasHeaderDashboardActions && (
             <DropdownMenu>
               <DropdownMenuTrigger
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#1a1a1a] transition-colors hover:bg-[#f6f4ee] hover:text-[#C72030] sm:h-10 sm:w-10 xl:hidden"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-[#1a1a1a] transition-colors hover:bg-[#f6f4ee] hover:text-[#C72030] sm:h-10 sm:w-10 lg:hidden"
                 aria-label="Dashboard shortcuts"
                 title="Dashboard shortcuts"
               >
@@ -752,11 +783,16 @@ export const Header = () => {
                     Executive Dashboard
                   </DropdownMenuItem>
                 )}
-                {(canShowViMSafeDashboard ||
-                  canShowExternalMSafeDashboard) && (
+                {/* {canShowMSafeDashboard && (
                     <DropdownMenuItem onClick={handleMSafeDashboard}>
                       <Home className="w-4 h-4 mr-2" />
                       MSafe Dashboard
+                    </DropdownMenuItem>
+                  )} */}
+                {canShowMSafeDashboard && (
+                    <DropdownMenuItem onClick={handleMSafeDashboardRevamp}>
+                      <Shield className="w-4 h-4 mr-2" />
+                      Msafe Dashboard Revamp
                     </DropdownMenuItem>
                   )}
               </DropdownMenuContent>

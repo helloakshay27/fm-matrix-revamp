@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Star, MessageSquare, Flag, ChevronRight, Building2, User, Globe, Clock, MapPin, RefreshCw } from 'lucide-react';
+import { Star, MessageSquare, Flag, ChevronLeft, ChevronRight, Building2, User, Globe, Clock, MapPin, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AddCommentModal } from './AddCommentModal';
 import { useNavigate } from 'react-router-dom';
@@ -53,6 +53,9 @@ export function RecentVisitorsSidebar() {
   
   const [recentVisitors, setRecentVisitors] = useState<RecentVisitor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem("sidebarCollapsed") === "true"; } catch { return false; }
+  });
   const navigate = useNavigate();
 
   // Save to localStorage whenever state changes
@@ -259,27 +262,52 @@ export function RecentVisitorsSidebar() {
 
   return (
     <>
-      <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col">        
+      <div
+        className="bg-white border flex flex-col transition-all duration-300"
+        style={{
+          boxShadow: "0px 4px 14.2px 0px #0000001A",
+          width: isCollapsed ? 48 : 350,
+          minWidth: isCollapsed ? 48 : 350,
+          maxWidth: isCollapsed ? 48 : 350,
+          height: "100%",
+          overflow: "hidden",
+        }}
+      >
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-red-600 mb-2">
+        <div className={`flex items-center justify-between px-3 py-3 border-b border-gray-100 flex-shrink-0 ${isCollapsed ? "flex-col gap-2" : ""}`}>
+          {!isCollapsed && (
+            <h2 className="text-base font-semibold" style={{ color: "#c72030" }}>
               Recent Visitors
             </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={fetchRecentVisitorsData}
-              disabled={loading}
-              className="h-8 w-8 p-0"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
+          )}
+          <button
+            onClick={() => setIsCollapsed((v) => {
+              const next = !v;
+              try { localStorage.setItem("sidebarCollapsed", String(next)); } catch {}
+              return next;
+            })}
+            title={isCollapsed ? "Expand" : "Collapse"}
+            className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500"
+          >
+            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         </div>
-        
+
+        {/* Collapsed vertical label */}
+        {isCollapsed && (
+          <div className="flex-1 flex items-center justify-center">
+            <span
+              className="text-xs font-semibold tracking-widest"
+              style={{ writingMode: "vertical-rl", color: "#c72030", transform: "rotate(180deg)" }}
+            >
+              Recent Visitors
+            </span>
+          </div>
+        )}
+
         {/* Visitors List */}
-        <div className="flex-1 overflow-y-auto space-y-4">
+        {!isCollapsed && (
+        <div className="flex-1 space-y-4 overflow-y-auto p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {loading ? (
             <div className="text-center py-4 text-gray-500">Loading...</div>
           ) : (
@@ -390,9 +418,10 @@ export function RecentVisitorsSidebar() {
             ))
           )}
         </div>
+        )}
       </div>
 
-      <AddCommentModal 
+      <AddCommentModal
         isOpen={commentModal.isOpen} 
         onClose={() => setCommentModal({
           isOpen: false,

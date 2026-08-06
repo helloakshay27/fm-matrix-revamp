@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBroadcasts } from "@/store/slices/broadcastSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { BroadcastFilterModal } from "@/components/BroadcastFilterModal";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
 const columns: ColumnConfig[] = [
     {
@@ -73,6 +74,7 @@ const columns: ColumnConfig[] = [
 export const ClubBroadcastDashboard = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const { shouldShow } = useDynamicPermissions();
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
 
@@ -361,14 +363,16 @@ export const ClubBroadcastDashboard = () => {
     };
 
     const renderActions = (item: any) => (
+        shouldShow("Broadcast", "show") && (
         <Button
             variant="ghost"
-            size="sm"
             onClick={() => handleView(item.id)}
-            className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
+            title="View"
+            className="p-1 rounded transition-colors !text-[#1A1A1A] hover:!text-[#1A1A1A] hover:!bg-gray-100"
         >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-4 h-4 text-[#1A1A1A]" />
         </Button>
+        )
     );
 
     return (
@@ -386,8 +390,11 @@ export const ClubBroadcastDashboard = () => {
                 emptyMessage="No broadcasts found"
                 pagination={true}
                 pageSize={10}
+                loading={loading}
                 onFilterClick={() => setIsFilterModalOpen(true)}
                 leftActions={
+                    <>
+                    {shouldShow("Broadcast", "create") && (
                     <Button
                         className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                         onClick={handleAdd}
@@ -395,6 +402,8 @@ export const ClubBroadcastDashboard = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         Add
                     </Button>
+                    )}
+                    </>
                 }
             />
 

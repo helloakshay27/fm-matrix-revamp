@@ -114,6 +114,7 @@ export const EditBookingSetupClubPage = () => {
         isRequest: false,
         active: "",
         department: "",
+        location: "",
         appKey: "",
         postpaid: false,
         prepaid: false,
@@ -151,8 +152,10 @@ export const EditBookingSetupClubPage = () => {
         chargeSetup: {
             member: { selected: false, adult: "", child: "" },
             guest: { selected: false, adult: "", child: "" },
+            hotelGuest: { selected: false, adult: "" },
             minimumPersonAllowed: "1",
             maximumPersonAllowed: "1",
+            fullCourtCharge: "",
         },
         blockDays: [
             {
@@ -256,6 +259,7 @@ export const EditBookingSetupClubPage = () => {
             setFormData(prev => ({
                 ...prev,
                 facilityName: responseData.fac_name,
+                location: responseData.location || "",
                 isBookable: responseData.fac_type === "bookable",
                 isRequest: responseData.fac_type === "request",
                 active: responseData.active,
@@ -324,8 +328,14 @@ export const EditBookingSetupClubPage = () => {
                         adult: responseData.facility_charge?.adult_guest_charge,
                         child: responseData.facility_charge?.child_guest_charge
                     },
+                    hotelGuest: {
+                        ...prev.chargeSetup.hotelGuest,
+                        selected: responseData.facility_charge?.hotel_guest_charge ?? false,
+                        adult: responseData.facility_charge?.hotel_guest_charge,
+                    },
                     minimumPersonAllowed: responseData.min_people,
                     maximumPersonAllowed: responseData.max_people,
+                    fullCourtCharge: responseData.facility_charge?.full_court_charge,
                 },
                 blockDays: responseData?.facility_blockings?.map((blocking: any) => ({
                     id: blocking.facility_blocking?.id || blocking.id,
@@ -700,6 +710,10 @@ export const EditBookingSetupClubPage = () => {
             );
             formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
             formDataToSend.append("facility_setup[active]", formData.active);
+            // Include optional location if provided
+            if (formData.location && String(formData.location).trim()) {
+                formDataToSend.append("facility_setup[location]", String(formData.location).trim());
+            }
             // if (formData.department) {
             //     formDataToSend.append(
             //         "facility_setup[department_id]",
@@ -765,6 +779,20 @@ export const EditBookingSetupClubPage = () => {
                     formData.chargeSetup.guest.child || "0"
                 );
             }
+
+            // Charge Setup - Hotel Guest charge (adult only)
+            if (formData.chargeSetup.hotelGuest.selected) {
+                formDataToSend.append(
+                    "facility_setup[facility_charge_attributes][hotel_guest_charge]",
+                    formData.chargeSetup.hotelGuest.adult || "0"
+                );
+            }
+
+            // Charge Setup - Full Court Charge
+            formDataToSend.append(
+                "facility_setup[facility_charge_attributes][full_court_charge]",
+                formData.chargeSetup.fullCourtCharge || "0"
+            );
 
             // Charge Setup - Person limits and GST
             formDataToSend.append(
@@ -1139,6 +1167,13 @@ export const EditBookingSetupClubPage = () => {
                                     }
                                     variant="outlined"
                                 />
+                                <TextField
+                                    label="Location (optional)"
+                                    placeholder="Enter Location"
+                                    value={formData.location}
+                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                    variant="outlined"
+                                />
                                 {/* <FormControl>
                                     <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
                                     <Select
@@ -1423,6 +1458,68 @@ export const EditBookingSetupClubPage = () => {
                                             </div>
                                         </td>
                                     </tr>
+                                    <tr>
+                                        <td className="border border-gray-300 px-4 py-3">
+                                            <div className="flex items-center gap-2">
+                                                <Checkbox
+                                                    checked={formData.chargeSetup.hotelGuest.selected}
+                                                    onCheckedChange={(checked) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            chargeSetup: {
+                                                                ...formData.chargeSetup,
+                                                                hotelGuest: {
+                                                                    ...formData.chargeSetup.hotelGuest,
+                                                                    selected: !!checked,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                />
+                                                <span>Hotel Guest</span>
+                                            </div>
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Checkbox
+                                                    checked={!!formData.chargeSetup.hotelGuest.adult}
+                                                    onChange={(e) => {
+                                                        if (!e.target.checked) {
+                                                            setFormData({
+                                                                ...formData,
+                                                                chargeSetup: {
+                                                                    ...formData.chargeSetup,
+                                                                    hotelGuest: {
+                                                                        ...formData.chargeSetup.hotelGuest,
+                                                                        adult: "",
+                                                                    },
+                                                                },
+                                                            });
+                                                        }
+                                                    }}
+                                                />
+                                                <TextField
+                                                    size="small"
+                                                    variant="outlined"
+                                                    value={formData.chargeSetup.hotelGuest.adult}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            chargeSetup: {
+                                                                ...formData.chargeSetup,
+                                                                hotelGuest: {
+                                                                    ...formData.chargeSetup.hotelGuest,
+                                                                    adult: e.target.value,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                    className="w-full max-w-[200px]"
+                                                />
+                                            </div>
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3"></td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1462,6 +1559,28 @@ export const EditBookingSetupClubPage = () => {
                                         })
                                     }
                                     className="w-32"
+                                />
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <label className="text-sm font-semibold whitespace-nowrap">Full Court Charge</label>
+                                <TextField
+                                    size="small"
+                                    variant="outlined"
+                                    value={formData.chargeSetup.fullCourtCharge}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                                            setFormData({
+                                                ...formData,
+                                                chargeSetup: {
+                                                    ...formData.chargeSetup,
+                                                    fullCourtCharge: value,
+                                                },
+                                            });
+                                        }
+                                    }}
+                                    className="w-32"
+                                    placeholder="0"
                                 />
                             </div>
                         </div>

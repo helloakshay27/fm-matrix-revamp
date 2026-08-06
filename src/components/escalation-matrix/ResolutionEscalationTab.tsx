@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Upload, Download } from 'lucide-react';
+import axios from 'axios';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   createResolutionEscalation,
@@ -126,6 +127,10 @@ export const ResolutionEscalationTab: React.FC = () => {
   const [filteredRules, setFilteredRules] = useState(resolutionEscalations);
   const [editingRule, setEditingRule] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
 
   const {
     handleSubmit,
@@ -596,6 +601,62 @@ export const ResolutionEscalationTab: React.FC = () => {
     setSelectedCategoryFilter('');
   };
 
+  const handleDownloadTemplate = async () => {
+    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem('baseUrl');
+    setIsDownloadingTemplate(true);
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/admin/import_complaint_worker_template.xlsx`,
+        { headers: { Authorization: `Bearer ${token}` }, responseType: 'blob' }
+      );
+      const url = URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const contentDisposition = response.headers['content-disposition'];
+      const filename = contentDisposition
+        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '') || 'template.xlsx'
+        : 'template.xlsx';
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Template downloaded successfully');
+    } catch (error) {
+      toast.error('Failed to download template');
+    } finally {
+      setIsDownloadingTemplate(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) {
+      toast.error('Please select a file to import');
+      return;
+    }
+    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem('baseUrl');
+    setIsImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', importFile);
+      await axios.post(
+        `https://${baseUrl}/pms/admin/import_complaint_worker`,
+        formData,
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
+      );
+      toast.success('Import successful');
+      setIsImportModalOpen(false);
+      setImportFile(null);
+      dispatch(fetchResolutionEscalations());
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to import file');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   // Options for react-select
   const categoryOptions = categories?.helpdesk_categories?.map(cat => ({ value: cat.id, label: cat.name })) || [];
   const userOptions = escalationUsers?.map(user => ({ value: user.id, label: user.full_name })) || [];
@@ -608,13 +669,13 @@ export const ResolutionEscalationTab: React.FC = () => {
       {/* Create Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Resolution Escalation Configuration</CardTitle>
+          <CardTitle className="text-gray-900">Resolution Escalation Configuration</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Category Selection */}
             <div>
-              <Label className="text-sm font-medium">Select Categories</Label>
+              <Label className="text-sm font-medium text-gray-900">Select Categories</Label>
               <ReactSelect
                 isMulti
                 options={categoryOptions}
@@ -636,23 +697,23 @@ export const ResolutionEscalationTab: React.FC = () => {
             <div>
               <Table className="border">
                 <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-center border-r">Levels</TableHead>
-                    <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P1</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P2</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P3</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P4</TableHead>
-                    <TableHead className="font-semibold text-center" colSpan={3}>P5</TableHead>
+                  <TableRow className="bg-[#EDEAE3]">
+                    <TableHead className="font-semibold text-center border-r text-brand-accent">Levels</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand-accent">Escalation To</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand-accent" colSpan={3}>P1</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand-accent" colSpan={3}>P2</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand-accent" colSpan={3}>P3</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand-accent" colSpan={3}>P4</TableHead>
+                    <TableHead className="font-semibold text-center text-brand-accent" colSpan={3}>P5</TableHead>
                   </TableRow>
-                  <TableRow className="bg-gray-50">
+                  <TableRow className="bg-[#EDEAE3]">
                     <TableHead className="border-r"></TableHead>
                     <TableHead className="border-r"></TableHead>
                     {priorities.map((priority) => (
                       <React.Fragment key={priority}>
-                        <TableHead className="text-center text-xs border-r">Day</TableHead>
-                        <TableHead className="text-center text-xs border-r">Hrs</TableHead>
-                        <TableHead className="text-center text-xs border-r">Min</TableHead>
+                        <TableHead className="text-center text-xs border-r text-brand-accent">Day</TableHead>
+                        <TableHead className="text-center text-xs border-r text-brand-accent">Hrs</TableHead>
+                        <TableHead className="text-center text-xs border-r text-brand-accent">Min</TableHead>
                       </React.Fragment>
                     ))}
                   </TableRow>
@@ -660,7 +721,9 @@ export const ResolutionEscalationTab: React.FC = () => {
                 <TableBody>
                   {escalationLevels.map((level) => (
                     <TableRow key={level} className="border-b">
-                      <TableCell className="font-medium text-center border-r">{level.toUpperCase()}</TableCell>
+                      <TableCell className="font-medium text-center border-r text-brand-accent">
+                        {level.toUpperCase()}
+                      </TableCell>
                       <TableCell className="p-2 border-r">
                         <ReactSelect
                           isMulti
@@ -754,8 +817,17 @@ export const ResolutionEscalationTab: React.FC = () => {
               </Table>
             </div>
 
-            <div className="flex justify-end">
-              <Button type="submit" disabled={loading} className="bg-purple-600 hover:bg-purple-700 text-white px-8">
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsImportModalOpen(true)}
+                className="border-purple-600 text-purple-600 hover:bg-purple-50 px-8"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Import
+              </Button>
+              <Button type="submit" variant="ghost" disabled={loading} className="fm-button-fix fm-button-brand px-4 py-2">
                 {loading ? 'Creating...' : 'Submit'}
               </Button>
             </div>
@@ -766,12 +838,12 @@ export const ResolutionEscalationTab: React.FC = () => {
       {/* Filter Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Filter</CardTitle>
+          <CardTitle className="text-brand-accent">Filter</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-end space-x-4">
             <div className="flex-1">
-              <Label className="text-sm font-medium">Category Type</Label>
+              <Label className="text-sm font-medium text-brand-accent">Category Type</Label>
               <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select Category Type" />
@@ -787,10 +859,10 @@ export const ResolutionEscalationTab: React.FC = () => {
               </Select>
             </div>
             <div className="flex space-x-2">
-              <Button onClick={handleFilter} variant="default" className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Button onClick={handleFilter} variant="ghost" className="fm-button-fix fm-button-brand px-4 py-2">
                 Apply
               </Button>
-              <Button onClick={handleResetFilter} variant="outline">
+              <Button onClick={handleResetFilter} variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] font-semibold px-4">
                 Reset
               </Button>
             </div>
@@ -814,7 +886,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                   <div key={rule.id} className="border-b last:border-b-0">
                     <div className="flex items-center justify-between p-4 bg-gray-50">
                       <div className="flex items-center space-x-4">
-                        <span className="font-semibold">Rule {index + 1}</span>
+                        <span className="font-semibold text-brand-accent">Rule {index + 1}</span>
                         <div className="flex items-center space-x-4 text-sm">
                           <span><strong>Category Type:</strong> {categoryName}</span>
                         </div>
@@ -857,13 +929,13 @@ export const ResolutionEscalationTab: React.FC = () => {
                       <Table className="border">
                         <TableHeader>
                           <TableRow className="bg-gray-100">
-                            <TableHead className="font-semibold text-center w-20 border-r">Levels</TableHead>
-                            <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
-                            <TableHead className="font-semibold text-center w-32 border-r">P1</TableHead>
-                            <TableHead className="font-semibold text-center w-32 border-r">P2</TableHead>
-                            <TableHead className="font-semibold text-center w-32 border-r">P3</TableHead>
-                            <TableHead className="font-semibold text-center w-32 border-r">P4</TableHead>
-                            <TableHead className="font-semibold text-center w-32">P5</TableHead>
+                            <TableHead className="font-semibold text-center w-20 border-r text-brand-accent">Levels</TableHead>
+                            <TableHead className="font-semibold text-center border-r text-brand-accent">Escalation To</TableHead>
+                            <TableHead className="font-semibold text-center w-32 border-r text-brand-accent">P1</TableHead>
+                            <TableHead className="font-semibold text-center w-32 border-r text-brand-accent">P2</TableHead>
+                            <TableHead className="font-semibold text-center w-32 border-r text-brand-accent">P3</TableHead>
+                            <TableHead className="font-semibold text-center w-32 border-r text-brand-accent">P4</TableHead>
+                            <TableHead className="font-semibold text-center w-32 text-brand-accent">P5</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -895,7 +967,7 @@ export const ResolutionEscalationTab: React.FC = () => {
 
                             return (
                               <TableRow key={escalation.id} className="border-b">
-                                <TableCell className="font-medium text-center border-r">{escalation.name}</TableCell>
+                                <TableCell className="font-medium text-center border-r text-brand-accent">{escalation.name}</TableCell>
                                 <TableCell className="text-center border-r">{userNames || '-'}</TableCell>
                                 <TableCell className="text-center text-sm border-r">
                                   {escalation.p1 ? (() => {
@@ -941,6 +1013,50 @@ export const ResolutionEscalationTab: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Import Modal */}
+      <Dialog open={isImportModalOpen} onOpenChange={(open) => { setIsImportModalOpen(open); if (!open) setImportFile(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Import Escalation Matrix</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select File</label>
+              <input
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 border border-gray-300 rounded-md p-1"
+              />
+              {importFile && (
+                <p className="text-xs text-gray-500 mt-1">{importFile.name}</p>
+              )}
+            </div>
+            <div className="flex justify-between gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleDownloadTemplate}
+                disabled={isDownloadingTemplate}
+                className="flex-1"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {isDownloadingTemplate ? 'Downloading...' : 'Download Template'}
+              </Button>
+              <Button
+                type="button"
+                onClick={handleImport}
+                disabled={isImporting || !importFile}
+                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {isImporting ? 'Importing...' : 'Import'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto overflow-x-visible">
@@ -950,7 +1066,7 @@ export const ResolutionEscalationTab: React.FC = () => {
           <form onSubmit={handleSubmit(handleUpdate)} className="space-y-6">
             {/* Category Selection */}
             <div>
-              <Label className="text-sm font-medium">Category Type</Label>
+              <Label className="text-sm font-medium text-brand-accent">Category Type</Label>
               <ReactSelect
                 options={categoryOptions}
                 value={categoryOptions.filter(option => watch('categoryIds')?.includes(option.value))}
@@ -967,23 +1083,23 @@ export const ResolutionEscalationTab: React.FC = () => {
             <div>
               <Table className="border">
                 <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-center border-r">Levels</TableHead>
-                    <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P1</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P2</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P3</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P4</TableHead>
-                    <TableHead className="font-semibold text-center" colSpan={3}>P5</TableHead>
+                  <TableRow className="bg-[#EDEAE3]">
+                    <TableHead className="font-semibold text-center border-r text-brand-accent">Levels</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand-accent">Escalation To</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand-accent" colSpan={3}>P1</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand-accent" colSpan={3}>P2</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand-accent" colSpan={3}>P3</TableHead>
+                    <TableHead className="font-semibold text-center border-r text-brand-accent" colSpan={3}>P4</TableHead>
+                    <TableHead className="font-semibold text-center text-brand-accent" colSpan={3}>P5</TableHead>
                   </TableRow>
-                  <TableRow className="bg-gray-50">
+                  <TableRow className="bg-[#EDEAE3]">
                     <TableHead className="border-r"></TableHead>
                     <TableHead className="border-r"></TableHead>
                     {priorities.map((priority) => (
                       <React.Fragment key={priority}>
-                        <TableHead className="text-center text-xs border-r">Day</TableHead>
-                        <TableHead className="text-center text-xs border-r">Hrs</TableHead>
-                        <TableHead className="text-center text-xs border-r">Min</TableHead>
+                        <TableHead className="text-center text-xs border-r text-brand-accent">Day</TableHead>
+                        <TableHead className="text-center text-xs border-r text-brand-accent">Hrs</TableHead>
+                        <TableHead className="text-center text-xs border-r text-brand-accent">Min</TableHead>
                       </React.Fragment>
                     ))}
                   </TableRow>
@@ -991,7 +1107,9 @@ export const ResolutionEscalationTab: React.FC = () => {
                 <TableBody>
                   {escalationLevels.map((level) => (
                     <TableRow key={level} className="border-b">
-                      <TableCell className="font-medium text-center border-r">{level.toUpperCase()}</TableCell>
+                      <TableCell className="font-medium text-center border-r text-brand-accent">
+                        {level.toUpperCase()}
+                      </TableCell>
                       <TableCell className="p-2 border-r">
                         <ReactSelect
                           isMulti

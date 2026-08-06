@@ -49,7 +49,7 @@ export const CreateRosterTemplateDashboard = () => {
         <div className="flex-1 bg-white rounded-lg border shadow-sm p-6">
           {/* Location Details Header */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+            <div className="w-8 h-8 bg-[#da7756] rounded-full flex items-center justify-center text-white font-bold text-sm">
               3
             </div>
             <h2 className="text-lg font-semibold text-orange-500 uppercase">LOCATION DETAILS</h2>
@@ -272,9 +272,9 @@ export const CreateRosterTemplateDashboard = () => {
             <div className="flex gap-4 pt-6">
               <Button 
                 onClick={handleSubmit}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 h-10"
+                className="!bg-[#DA7756] hover:!bg-[#C45F40] px-8 h-10"
               >
-                Submit
+                <span className="!text-white font-medium">Submit</span>
               </Button>
               <Button 
                 onClick={handleCancel}
@@ -302,10 +302,10 @@ export const CreateRosterTemplateDashboard = () => {
           
           <div className="flex justify-end">
             <Button 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 h-8 text-sm"
+              className="!bg-[#DA7756] hover:!bg-[#C45F40] px-6 h-8 text-sm"
               size="sm"
             >
-              View List
+              <span className="!text-white font-medium">View List</span>
             </Button>
           </div>
           

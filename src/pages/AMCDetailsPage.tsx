@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -10,6 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
   ArrowLeft,
   Edit,
@@ -26,6 +36,9 @@ import {
   BarChart3,
   Settings,
   Plus,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
 } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AddVisitModal } from "@/components/AddVisitModal";
@@ -42,6 +55,76 @@ import { Eye } from "lucide-react";
 import { AMCAnalyticsTab } from "@/components/amc-details/AMCAnalyticsTab";
 import { AMCDetailsPreviewTab } from "@/components/amc-details/AMCDetailsPreviewTab";
 import { getReturnToFromState } from "@/utils/listBackNavigation";
+import { toast } from "sonner";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { useAMCEvents } from "@/components/PostHogAMCEvents";
+
+const scheduledTaskColumns: ColumnConfig[] = [
+  { key: "id", label: "ID", sortable: true, hideable: true, defaultVisible: true },
+  { key: "checklist_name", label: "Checklist", sortable: true, hideable: true, defaultVisible: true },
+  { key: "type", label: "Type", sortable: true, hideable: true, defaultVisible: true },
+  { key: "schedule", label: "Schedule", sortable: true, hideable: true, defaultVisible: true },
+  { key: "assigned_to", label: "Assigned To", sortable: true, hideable: true, defaultVisible: true },
+  { key: "grace_time", label: "Grace Time", sortable: true, hideable: true, defaultVisible: true },
+  { key: "per", label: "%", sortable: true, hideable: true, defaultVisible: true },
+];
+
+const ticketColumns: ColumnConfig[] = [
+  { key: "id", label: "ID", sortable: true, hideable: true, defaultVisible: true },
+  { key: "heading", label: "Title", sortable: true, hideable: true, defaultVisible: true },
+  { key: "category_type", label: "Category", sortable: true, hideable: true, defaultVisible: true },
+  { key: "status", label: "Status", sortable: true, hideable: true, defaultVisible: true },
+  { key: "updated_by", label: "Updated By", sortable: true, hideable: true, defaultVisible: true },
+  { key: "created_at", label: "Created At", sortable: true, hideable: true, defaultVisible: true },
+];
+
+const visitFreqColumns: ColumnConfig[] = [
+  { key: "select", label: "", sortable: false, hideable: false, defaultVisible: true },
+  { key: "visit_number", label: "Visit #", sortable: true, hideable: true, defaultVisible: true },
+  { key: "scheduled_date", label: "Scheduled Date", sortable: true, hideable: true, defaultVisible: true },
+  { key: "scheduled_time", label: "Scheduled Time", sortable: true, hideable: true, defaultVisible: true },
+  { key: "actual_visit_date", label: "Actual Visit Date", sortable: true, hideable: true, defaultVisible: true },
+  { key: "assets_covered", label: "Assets Covered", sortable: false, hideable: true, defaultVisible: true },
+  { key: "technician", label: "Technician", sortable: true, hideable: true, defaultVisible: true },
+  { key: "remarks", label: "Remarks", sortable: false, hideable: true, defaultVisible: true },
+  { key: "status", label: "Status", sortable: true, hideable: true, defaultVisible: true },
+  { key: "attachment", label: "Attachment", sortable: false, hideable: true, defaultVisible: true },
+];
+
+const visitFlatColumns: ColumnConfig[] = [
+  { key: "select", label: "", sortable: false, hideable: false, defaultVisible: true },
+  { key: "visit_number", label: "Visit", sortable: true, hideable: true, defaultVisible: true },
+  { key: "visit_date", label: "Visit Date", sortable: true, hideable: true, defaultVisible: true },
+  { key: "actual_visit_date", label: "Actual Visit Date", sortable: true, hideable: true, defaultVisible: true },
+  { key: "technician", label: "Technician", sortable: true, hideable: true, defaultVisible: true },
+  { key: "remarks", label: "Remarks", sortable: false, hideable: true, defaultVisible: true },
+  { key: "status", label: "Status", sortable: true, hideable: true, defaultVisible: true },
+  { key: "assets_covered", label: "Assets Covered", sortable: false, hideable: true, defaultVisible: true },
+  { key: "attachment", label: "Attachment", sortable: false, hideable: true, defaultVisible: true },
+];
+
+const associationServiceColumns: ColumnConfig[] = [
+  { key: "service_id", label: "Service ID", sortable: true, hideable: true, defaultVisible: true },
+  { key: "service_name", label: "Name", sortable: true, hideable: true, defaultVisible: true },
+  { key: "group_sub_group", label: "Group & Sub Group", sortable: true, hideable: true, defaultVisible: true },
+  { key: "status", label: "Status", sortable: true, hideable: true, defaultVisible: true },
+];
+
+const associationAssetColumns: ColumnConfig[] = [
+  { key: "equipment_id", label: "Equipment ID", sortable: true, hideable: true, defaultVisible: true },
+  { key: "asset_name", label: "Asset Name", sortable: true, hideable: true, defaultVisible: true },
+  { key: "model_no", label: "Model No.", sortable: true, hideable: true, defaultVisible: true },
+  { key: "group_name", label: "Group", sortable: true, hideable: true, defaultVisible: true },
+  { key: "sub_group_name", label: "Sub Group", sortable: true, hideable: true, defaultVisible: true },
+  { key: "asset_status", label: "Status", sortable: true, hideable: true, defaultVisible: true },
+  { key: "criticality", label: "Criticality", sortable: true, hideable: true, defaultVisible: true },
+  { key: "site", label: "Site", sortable: true, hideable: true, defaultVisible: true },
+  { key: "building", label: "Building", sortable: true, hideable: true, defaultVisible: true },
+  { key: "wing", label: "Wing", sortable: true, hideable: true, defaultVisible: true },
+  { key: "area", label: "Area", sortable: true, hideable: true, defaultVisible: true },
+  { key: "floor", label: "Floor", sortable: true, hideable: true, defaultVisible: true },
+  { key: "room", label: "Room", sortable: true, hideable: true, defaultVisible: true },
+];
 
 interface AMCDetailsData {
   id: number;
@@ -90,6 +173,15 @@ interface Technician {
   email: string;
 }
 
+interface VisitAttachment {
+  id?: number;
+  document?: string;
+  document_url?: string;
+  filename?: string;
+  document_file_name?: string;
+  [key: string]: any;
+}
+
 interface AmcVisitLog {
   id: number;
   visit_number: number;
@@ -99,13 +191,8 @@ interface AmcVisitLog {
   updated_at: string;
   asset_period: string;
   technician: Technician | null;
-  // Added optional attachment to align with runtime usage (visit.attachment?.document / id)
-  attachment?: {
-    id?: number;
-    document?: string; // image URL or file URL
-    document_url?: string; // sometimes APIs use document_url
-    [key: string]: any; // allow extra backend-provided fields
-  } | null;
+  attachment?: VisitAttachment | null;
+  attachments?: VisitAttachment[];
 }
 
 interface VisitLogEntry {
@@ -116,13 +203,10 @@ interface VisitLogEntry {
   actual_visit_date?: string | null;
   status?: string;
   remarks?: string | null;
+  assets_covered?: string[] | null;
   technician?: Technician | null;
-  attachment?: {
-    id?: number;
-    document?: string;
-    document_url?: string;
-    [key: string]: any;
-  } | null;
+  attachment?: VisitAttachment | null;
+  attachments?: VisitAttachment[];
 }
 
 interface FrequencyVisitGroup {
@@ -157,9 +241,11 @@ interface TicketRecord {
 
 export const AMCDetailsPage = () => {
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
+  const { onAMCVisitCompleted, onAMCVisitMissed } = useAMCEvents();
   const {
     data: amcData,
     loading,
@@ -198,6 +284,9 @@ export const AMCDetailsPage = () => {
   const [tickets, setTickets] = useState<TicketRecord[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(false);
   const [ticketsError, setTicketsError] = useState<string | null>(null);
+  const [ticketsSearchTerm, setTicketsSearchTerm] = useState("");
+  const [visitsSearchTerm, setVisitsSearchTerm] = useState("");
+  const [associationSearchTerm, setAssociationSearchTerm] = useState("");
   // History (PPM Occurrences) state
   const [occurrences, setOccurrences] = useState<any[]>([]);
   const [occurrencesLoading, setOccurrencesLoading] = useState(false);
@@ -205,6 +294,8 @@ export const AMCDetailsPage = () => {
   const [occurrenceSearch, setOccurrenceSearch] = useState("");
   const [occurrencePage, setOccurrencePage] = useState(1);
   const [occurrenceTotalCount, setOccurrenceTotalCount] = useState(0);
+  const [occurrenceTotalPages, setOccurrenceTotalPages] = useState(1);
+  const [occurrenceCounts, setOccurrenceCounts] = useState({ scheduled: 0, open: 0, in_progress: 0, closed: 0, overdue: 0 });
   // AMC Visits History state
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
   const [showVisitEditModal, setShowVisitEditModal] = useState(false);
@@ -214,7 +305,8 @@ export const AMCDetailsPage = () => {
   const [visitEditTechnicianId, setVisitEditTechnicianId] = useState("");
   const [visitEditRemarks, setVisitEditRemarks] = useState("");
   const [visitEditStatus, setVisitEditStatus] = useState("");
-  const [visitEditDocument, setVisitEditDocument] = useState<File | null>(null);
+  const [visitEditOriginalStatus, setVisitEditOriginalStatus] = useState("");
+  const [visitEditDocuments, setVisitEditDocuments] = useState<File[]>([]);
   const [visitEditSelectedAssetIds, setVisitEditSelectedAssetIds] = useState<number[]>([]);
   const [visitTechnicians, setVisitTechnicians] = useState<Technician[]>([]);
   const [visitTechniciansLoading, setVisitTechniciansLoading] = useState(false);
@@ -222,6 +314,80 @@ export const AMCDetailsPage = () => {
   const [activeVisitFreqTab, setActiveVisitFreqTab] = useState(0);
 
   const visitLogsByFrequency = (amcData as any)?.visit_logs_by_frequency as FrequencyVisitGroup[] | undefined;
+
+  const downloadVisitAttachment = async (url: string, name: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(
+        new Blob([blob], { type: "application/octet-stream" })
+      );
+      const el = document.createElement("a");
+      el.href = blobUrl;
+      el.download = name;
+      document.body.appendChild(el);
+      el.click();
+      el.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(url, "_blank");
+    }
+  };
+
+  const getFileNameFromUrl = (url: string) => {
+    try {
+      const path = new URL(url).pathname;
+      const segment = path.substring(path.lastIndexOf("/") + 1);
+      return decodeURIComponent(segment) || null;
+    } catch {
+      const segment = url.split("?")[0].split("/").pop();
+      return segment ? decodeURIComponent(segment) : null;
+    }
+  };
+
+  const renderVisitAttachments = (visit: any) => {
+    const list: VisitAttachment[] = [
+      ...(visit.attachments || []),
+      ...(visit.attachment ? [visit.attachment] : []),
+    ].filter((a) => a?.document || a?.document_url);
+    if (!list.length) return <span className="text-gray-400 text-sm">—</span>;
+    return (
+      <div className="flex flex-col gap-1">
+        {list.map((a, ai) => {
+          const url = a.document || a.document_url || "";
+          const name =
+            a.filename ||
+            a.document_file_name ||
+            getFileNameFromUrl(url) ||
+            `File ${ai + 1}`;
+          return (
+            <div key={a.id ?? ai} className="flex items-center gap-2">
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 text-brand hover:underline text-sm"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                {name}
+              </a>
+              <button
+                type="button"
+                title="Download"
+                className="text-gray-500 hover:text-brand"
+                onClick={() => downloadVisitAttachment(url, name)}
+              >
+                <Download className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   const fetchTicketsForAssets = async (assetIds: number[]) => {
     if (!assetIds.length) return;
@@ -286,16 +452,25 @@ export const AMCDetailsPage = () => {
     setOccurrencesLoading(true);
     try {
       const idsQs = assetIds.map((aid: number) => `ids[]=${aid}`).join("&");
-      const url = `https://${baseUrl}/pms/asset_amcs/occurrences.json?${idsQs}&access_token=${token}&page=${page}&per_page=20`;
+      const url = `https://${baseUrl}/pms/asset_amcs/occurrences.json?${idsQs}&access_token=${token}&page=${page}&per_page=15`;
       const res = await fetch(url, { headers: { Accept: "application/json" } });
       if (!res.ok) throw new Error(`Occurrences fetch failed: ${res.status}`);
       const data = await res.json();
       const items = Array.isArray(data)
         ? data
         : data.occurrences ?? data.data ?? [];
-      const total = data.total_count ?? data.total ?? items.length;
+      const pagination = data.pagination ?? {};
+      const counts = data.counts ?? {};
       setOccurrences(items);
-      setOccurrenceTotalCount(total);
+      setOccurrenceTotalCount(pagination.total_count ?? items.length);
+      setOccurrenceTotalPages(pagination.total_pages ?? 1);
+      setOccurrenceCounts({
+        scheduled: counts.total_scheduled ?? 0,
+        open: counts.total_open ?? 0,
+        in_progress: counts.in_progress ?? 0,
+        closed: counts.closed ?? 0,
+        overdue: counts.overdue ?? 0,
+      });
     } catch (e: any) {
       console.error("Occurrences Error:", e);
     } finally {
@@ -348,7 +523,8 @@ export const AMCDetailsPage = () => {
     setVisitEditTechnicianId(visit.technician ? String(visit.technician.id) : "");
     setVisitEditRemarks(visit.remarks || "");
     setVisitEditStatus((visit as any).status || "");
-    setVisitEditDocument(null);
+    setVisitEditOriginalStatus((visit as any).status || "");
+    setVisitEditDocuments([]);
     const assetIds: number[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
     setVisitEditSelectedAssetIds(assetIds);
     fetchVisitTechnicians();
@@ -357,6 +533,10 @@ export const AMCDetailsPage = () => {
 
   const handleVisitUpdate = async () => {
     if (!selectedVisitId) return;
+    if (visitEditStatus === visitEditOriginalStatus) {
+      toast.error("Please change the status before submitting.");
+      return;
+    }
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     if (!baseUrl || !token) return;
@@ -373,14 +553,33 @@ export const AMCDetailsPage = () => {
       visitEditSelectedAssetIds.forEach((assetId) =>
         formData.append("amc_history[asset_ids][]", String(assetId))
       );
-      if (visitEditDocument) {
-        formData.append("amc_history[document]", visitEditDocument);
-      }
+      visitEditDocuments.forEach((file) => {
+        formData.append("amc_history[documents][]", file);
+      });
       const res = await fetch(
         `https://${baseUrl}/pms/asset_amcs/amc_history_update.json?access_token=${token}`,
         { method: "POST", body: formData }
       );
       if (!res.ok) throw new Error(`Update failed: ${res.status}`);
+      
+      const statusLower = visitEditStatus.toLowerCase();
+      if (statusLower === 'completed' || statusLower === 'done') {
+        onAMCVisitCompleted({
+          amc_id: String(id),
+          visit_no: Number(visitEditVisitNumber) || 0,
+          attendant_id: visitEditTechnicianId,
+          visit_date: visitEditActualVisitDate || visitEditVisitDate,
+          on_time: visitEditActualVisitDate <= visitEditVisitDate,
+          has_attachment: visitEditDocuments.length > 0
+        });
+      } else if (statusLower === 'missed' || statusLower === 'cancelled') {
+        onAMCVisitMissed({
+          amc_id: String(id),
+          visit_no: Number(visitEditVisitNumber) || 0,
+          days_overdue: 0
+        });
+      }
+
       setShowVisitEditModal(false);
       setSelectedVisitId(null);
       if (id) dispatch(fetchAMCDetails(id));
@@ -467,7 +666,7 @@ export const AMCDetailsPage = () => {
     );
   }
 
-  const hanldeClose = () => {
+  const handleClose = () => {
     setShowAddVisitModal(false);
   };
 
@@ -497,7 +696,7 @@ export const AMCDetailsPage = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">AMC Details</h1>
           <div className="flex gap-2">
-            {activeTab === "amc-information" && activeSubTab === "amc-details" && (
+            {shouldShow("AMC", "update") && activeTab === "amc-information" && activeSubTab === "amc-details" && (
               <Button
                 onClick={() => navigate(`/maintenance/amc/edit/${id}`)}
                 variant="outline"
@@ -971,7 +1170,7 @@ export const AMCDetailsPage = () => {
                   {/* AMC Invoice Card */}
                   <div className="bg-[#F6F4EE] rounded-lg p-6">
                     <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">
-                      AMC Invoice
+                      Other Documents
                     </h3>
                     <div className="flex flex-wrap gap-4">
                       {(() => {
@@ -985,7 +1184,7 @@ export const AMCDetailsPage = () => {
                         if (documents.length === 0) {
                           return (
                             <p className="text-gray-500 text-sm">
-                              No AMC invoice attachments available
+                              No Other Documents. available
                             </p>
                           );
                         }
@@ -1235,34 +1434,28 @@ export const AMCDetailsPage = () => {
               >
                 {(() => {
                   const statusCards = [
-                    { label: "Scheduled", color: "#6366F1" },
-                    { label: "Open", color: "#EF4444" },
-                    { label: "In Progress", color: "#F59E0B" },
-                    { label: "Closed", color: "#10B981" },
-                    { label: "Overdue", color: "#C72030" },
+                    { label: "Scheduled", color: "#6366F1", count: occurrenceCounts.scheduled },
+                    { label: "Open", color: "#EF4444", count: occurrenceCounts.open },
+                    { label: "In Progress", color: "#F59E0B", count: occurrenceCounts.in_progress },
+                    { label: "Closed", color: "#10B981", count: occurrenceCounts.closed },
+                    { label: "Overdue", color: "#C72030", count: occurrenceCounts.overdue },
                   ];
 
                   const filtered = occurrences.filter(
-                    (o) =>
-                      o.task_status === occurrenceStatusFilter &&
-                      (
-                        (o.checklist_name || "").toLowerCase().includes(occurrenceSearch.toLowerCase()) ||
-                        (o.schedule || "").toLowerCase().includes(occurrenceSearch.toLowerCase())
-                      )
+                    (o) => o.task_status === occurrenceStatusFilter
                   );
 
-                  const totalPages = Math.max(1, Math.ceil(occurrenceTotalCount / 20));
+                  const totalPages = occurrenceTotalPages;
 
                   return (
                     <div className="space-y-6">
                       {/* Status Cards */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                         {statusCards.map((card) => {
-                          const count = occurrences.filter((o) => o.task_status === card.label).length;
                           return (
                             <div
                               key={card.label}
-                              className={`p-4 rounded-lg cursor-pointer ${occurrenceStatusFilter === card.label ? "ring-2 ring-[#C72030]" : ""
+                              className={`p-4 rounded-lg cursor-pointer ${occurrenceStatusFilter === card.label ? "ring-2 ring-brand" : ""
                                 }`}
                               style={{ backgroundColor: "#F6F4EE" }}
                               onClick={() => {
@@ -1276,7 +1469,7 @@ export const AMCDetailsPage = () => {
                                 </div>
                                 <div>
                                   <div className="text-2xl font-bold text-black">
-                                    {count.toString().padStart(2, "0")}
+                                    {card.count.toString().padStart(2, "0")}
                                   </div>
                                   <div className="text-sm font-medium text-black">{card.label}</div>
                                 </div>
@@ -1286,89 +1479,99 @@ export const AMCDetailsPage = () => {
                         })}
                       </div>
 
-                      {/* Search */}
-                      <div className="flex justify-end">
-                        <Input
-                          placeholder="Search..."
-                          value={occurrenceSearch}
-                          onChange={(e) => setOccurrenceSearch(e.target.value)}
-                          className="pl-3 w-64"
-                        />
-                      </div>
-
                       {/* Occurrences Table */}
-                      <div className="bg-white rounded-lg border overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="bg-[#EDEAE3]">
-                              <TableHead className="font-semibold text-[#1a1a1a]">ID</TableHead>
-                              <TableHead className="font-semibold text-[#1a1a1a]">Checklist</TableHead>
-                              <TableHead className="font-semibold text-[#1a1a1a]">Type</TableHead>
-                              <TableHead className="font-semibold text-[#1a1a1a]">Schedule</TableHead>
-                              <TableHead className="font-semibold text-[#1a1a1a]">Assigned To</TableHead>
-                              <TableHead className="font-semibold text-[#1a1a1a]">Grace Time</TableHead>
-                              <TableHead className="font-semibold text-[#1a1a1a]">%</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody className="bg-white">
-                            {occurrencesLoading ? (
-                              <TableRow>
-                                <TableCell colSpan={7} className="text-center py-6 text-gray-500">
-                                  Loading...
-                                </TableCell>
-                              </TableRow>
-                            ) : filtered.length === 0 ? (
-                              <TableRow>
-                                <TableCell colSpan={7} className="text-center py-6 text-gray-500">
-                                  No records found.
-                                </TableCell>
-                              </TableRow>
-                            ) : (
-                              filtered.map((item: any) => (
-                                <TableRow key={item.id} className="border-b border-gray-200">
-                                  <TableCell className="font-medium text-gray-900">{item.id}</TableCell>
-                                  <TableCell className="text-gray-900">{item.checklist_name || "—"}</TableCell>
-                                  <TableCell className="text-gray-900">{item.type || "—"}</TableCell>
-                                  <TableCell className="text-gray-900">{item.schedule || "—"}</TableCell>
-                                  <TableCell className="text-gray-900">{item.assigned_to || "—"}</TableCell>
-                                  <TableCell className="text-gray-900">{item.grace_time || "—"}</TableCell>
-                                  <TableCell>
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-6 h-6 rounded-full flex items-center justify-center bg-[#C72030]">
-                                        <span className="text-white text-[9px] font-bold">✓</span>
-                                      </div>
-                                      <span className="font-medium">{item.per ?? 0}%</span>
+                      <div className="w-full min-w-0 max-w-full">
+                        <EnhancedTable
+                          data={filtered}
+                          columns={scheduledTaskColumns}
+                          renderCell={(item: any, columnKey: string) => {
+                            switch (columnKey) {
+                              case "id":
+                                return <span className="font-medium text-gray-900">{item.id}</span>;
+                              case "checklist_name":
+                                return item.checklist_name || "—";
+                              case "type":
+                                return item.type || "—";
+                              case "schedule":
+                                return item.schedule || "—";
+                              case "assigned_to":
+                                return item.assigned_to || "—";
+                              case "grace_time":
+                                return item.grace_time || "—";
+                              case "per":
+                                return (
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-full flex items-center justify-center bg-brand shrink-0">
+                                      <span className="text-white text-[9px] font-bold">✓</span>
                                     </div>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                            )}
-                          </TableBody>
-                        </Table>
+                                    <span className="font-medium">{item.per ?? 0}%</span>
+                                  </div>
+                                );
+                              default:
+                                return "—";
+                            }
+                          }}
+                          storageKey="amc-details-scheduled-tasks"
+                          enableSearch
+                          searchTerm={occurrenceSearch}
+                          onSearchChange={setOccurrenceSearch}
+                          searchPlaceholder="Search..."
+                          hideTableExport
+                          emptyMessage="No records found."
+                          loading={occurrencesLoading}
+                          loadingMessage="Loading..."
+                          getItemId={(item) => String(item.id)}
+                        />
                       </div>
 
                       {/* Pagination */}
                       {totalPages > 1 && (
-                        <div className="flex justify-end items-center gap-3 pt-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={occurrencePage <= 1 || occurrencesLoading}
-                            onClick={() => setOccurrencePage((p) => p - 1)}
-                          >
-                            Previous
-                          </Button>
-                          <span className="text-sm text-gray-600">
-                            Page {occurrencePage} of {totalPages}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={occurrencePage >= totalPages || occurrencesLoading}
-                            onClick={() => setOccurrencePage((p) => p + 1)}
-                          >
-                            Next
-                          </Button>
+                        <div className="flex justify-center mt-4">
+                          <Pagination>
+                            <PaginationContent>
+                              <PaginationItem>
+                                <PaginationPrevious
+                                  onClick={() => setOccurrencePage((p) => Math.max(1, p - 1))}
+                                  className={occurrencePage === 1 || occurrencesLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                />
+                              </PaginationItem>
+                              {(() => {
+                                const items: React.ReactNode[] = [];
+                                const delta = 1;
+                                let last = 0;
+                                for (let i = 1; i <= totalPages; i++) {
+                                  if (i === 1 || i === totalPages || (i >= occurrencePage - delta && i <= occurrencePage + delta)) {
+                                    if (last && i - last > 1) {
+                                      items.push(
+                                        <PaginationItem key={`e-${i}`}>
+                                          <PaginationEllipsis />
+                                        </PaginationItem>
+                                      );
+                                    }
+                                    items.push(
+                                      <PaginationItem key={i}>
+                                        <PaginationLink
+                                          isActive={occurrencePage === i}
+                                          onClick={() => setOccurrencePage(i)}
+                                          className="cursor-pointer"
+                                        >
+                                          {i}
+                                        </PaginationLink>
+                                      </PaginationItem>
+                                    );
+                                    last = i;
+                                  }
+                                }
+                                return items;
+                              })()}
+                              <PaginationItem>
+                                <PaginationNext
+                                  onClick={() => setOccurrencePage((p) => Math.min(totalPages, p + 1))}
+                                  className={occurrencePage === totalPages || occurrencesLoading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                />
+                              </PaginationItem>
+                            </PaginationContent>
+                          </Pagination>
                         </div>
                       )}
                     </div>
@@ -1404,110 +1607,64 @@ export const AMCDetailsPage = () => {
                 className="p-6"
                 style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
               >
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-[#EDEAE3]">
-                        <TableHead className="font-semibold text-[#1a1a1a]">
-                          ID
-                        </TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">
-                          Title
-                        </TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">
-                          Category
-                        </TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">
-                          Status
-                        </TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">
-                          Updated By
-                        </TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">
-                          Created At
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody className="bg-white">
-                      {ticketsLoading && (
-                        <TableRow className="border-b border-gray-200">
-                          <TableCell
-                            colSpan={6}
-                            className="text-center text-gray-600"
-                          >
-                            Loading tickets...
-                          </TableCell>
-                        </TableRow>
-                      )}
-                      {!ticketsLoading && ticketsError && (
-                        <TableRow className="border-b border-gray-200">
-                          <TableCell
-                            colSpan={6}
-                            className="text-center text-red-600"
-                          >
-                            {ticketsError}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                      {!ticketsLoading &&
-                        !ticketsError &&
-                        tickets.length === 0 && (
-                          <TableRow className="border-b border-gray-200">
-                            <TableCell
-                              colSpan={6}
-                              className="text-center text-gray-600"
+                {ticketsError && (
+                  <div className="text-brand-error text-sm mb-3">{ticketsError}</div>
+                )}
+                <div className="w-full min-w-0 max-w-full">
+                  <EnhancedTable
+                    data={tickets}
+                    columns={ticketColumns}
+                    renderCell={(item: any, columnKey: string) => {
+                      switch (columnKey) {
+                        case "id":
+                          return <span className="font-medium text-gray-900">{item.id}</span>;
+                        case "heading":
+                          return (
+                            <span className="max-w-[360px] inline-block whitespace-normal break-words text-gray-900">
+                              {item.heading || "—"}
+                            </span>
+                          );
+                        case "category_type":
+                          return item.category_type || "—";
+                        case "status":
+                          return item.status ? (
+                            <span
+                              className={`px-2 py-1 text-xs rounded ${
+                                item.status.toLowerCase() === "open"
+                                  ? "bg-gray-200 text-gray-900"
+                                  : item.status.toLowerCase() === "pending"
+                                    ? "bg-brand text-white"
+                                    : "bg-gray-100 text-gray-800"
+                              }`}
                             >
-                              No tickets found.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      {!ticketsLoading &&
-                        !ticketsError &&
-                        tickets.length > 0 &&
-                        tickets.map((t) => (
-                          <TableRow
-                            key={t.id}
-                            className="border-b border-gray-200"
-                          >
-                            <TableCell className="text-gray-900">
-                              {t.id}
-                            </TableCell>
-                            <TableCell className="max-w-[360px] whitespace-normal break-words text-gray-900">
-                              {t.heading || "—"}
-                            </TableCell>
-                            <TableCell className="text-gray-900">
-                              {t.category_type || "—"}
-                            </TableCell>
-                            <TableCell>
-                              {t.status ? (
-                                <span
-                                  className={`px-2 py-1 text-xs rounded ${t.status.toLowerCase() === "open"
-                                    ? "bg-gray-200 text-gray-900"
-                                    : t.status.toLowerCase() === "pending"
-                                      ? "bg-[#C72030] text-white"
-                                      : "bg-gray-100 text-gray-800"
-                                    }`}
-                                >
-                                  {t.status}
-                                </span>
-                              ) : (
-                                "—"
-                              )}
-                            </TableCell>
-                            <TableCell className="text-gray-900">
-                              {t.updated_by || "—"}
-                            </TableCell>
-                            <TableCell className="text-gray-900">
-                              {t.created_at
-                                ? new Date(t.created_at).toLocaleDateString(
-                                  "en-GB"
-                                )
-                                : "—"}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                    </TableBody>
-                  </Table>
+                              {item.status}
+                            </span>
+                          ) : (
+                            "—"
+                          );
+                        case "updated_by":
+                          return item.updated_by || "—";
+                        case "created_at":
+                          return item.created_at
+                            ? new Date(item.created_at).toLocaleDateString("en-GB")
+                            : "—";
+                        default:
+                          return "—";
+                      }
+                    }}
+                    storageKey="amc-details-tickets"
+                    enableSearch
+                    searchTerm={ticketsSearchTerm}
+                    onSearchChange={setTicketsSearchTerm}
+                    searchPlaceholder="Search tickets..."
+                    hideTableExport
+                    emptyMessage="No tickets found."
+                    loading={ticketsLoading}
+                    loadingMessage="Loading tickets..."
+                    pagination
+                    pageSize={10}
+                    getItemId={(item) => String(item.id)}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -1547,17 +1704,16 @@ export const AMCDetailsPage = () => {
                         <button
                           key={group.frequency_config_id}
                           type="button"
-                          onClick={() => setActiveVisitFreqTab(idx)}
-                          className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${
-                            idx === activeVisitFreqTab
-                              ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
-                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                          }`}
+                          onClick={() => { setActiveVisitFreqTab(idx); setVisitsSearchTerm(""); }}
+                          className={`px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${idx === activeVisitFreqTab
+                            ? "border-b-2 border-[#C72030] text-[#C72030] bg-[#FFF8F8]"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                            }`}
                         >
                           {group.frequency.charAt(0).toUpperCase() + group.frequency.slice(1)}
-                          <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">
-                            {group.no_of_visits ?? group.visits.length}
-                          </span>
+                          {/* <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600"> */}
+                          {/* {group.no_of_visits ?? group.visits.length} */}
+                          {/* </span> */}
                         </button>
                       ))}
                     </div>
@@ -1568,16 +1724,19 @@ export const AMCDetailsPage = () => {
                         {/* Summary Cards */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                           {[
-                            { label: "Total", value: group.total ?? 0, bg: "bg-[#F6F4EE]", textColor: "text-gray-900" },
-                            { label: "Completed", value: group.completed ?? 0, bg: "bg-green-50", textColor: "text-green-700" },
-                            { label: "Pending", value: group.pending ?? 0, bg: "bg-blue-50", textColor: "text-blue-700" },
-                            { label: "Missed", value: group.missed ?? 0, bg: "bg-red-50", textColor: "text-red-700" },
+                            { label: "Total", value: group.total ?? 0, icon: BarChart3 },
+                            { label: "Completed", value: group.completed ?? 0, icon: CheckCircle2 },
+                            { label: "Pending", value: group.pending ?? 0, icon: Clock },
+                            { label: "Missed", value: group.missed ?? 0, icon: AlertCircle },
                           ].map((card) => (
-                            <div key={card.label} className={`${card.bg} rounded-lg p-4`}>
-                              <div className={`text-2xl font-bold ${card.textColor}`}>
-                                {String(card.value).padStart(2, "0")}
+                            <div key={card.label} className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4">
+                              <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center flex-shrink-0">
+                                <card.icon className="w-6 h-6 text-[#C72030]" />
                               </div>
-                              <div className="text-sm text-gray-600 font-medium mt-0.5">{card.label}</div>
+                              <div>
+                                <div className="text-2xl font-semibold text-[#1A1A1A]">{String(card.value).padStart(2, "0")}</div>
+                                <div className="text-sm font-medium text-[#1A1A1A]">{card.label}</div>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -1588,210 +1747,204 @@ export const AMCDetailsPage = () => {
                             {group.description && (
                               <span><span className="font-medium text-gray-800">Description:</span> {group.description}</span>
                             )}
-                            <span><span className="font-medium text-gray-800">Schedule:</span> <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{group.cron_expression}</code></span>
                           </div>
                         )}
 
                         {/* Visits Table */}
-                        <div className="bg-white rounded-lg border overflow-x-auto">
-                          <Table>
-                            <TableHeader>
-                              <TableRow className="bg-[#EDEAE3]">
-                                <TableHead className="w-10" />
-                                <TableHead className="font-semibold text-[#1a1a1a]">Visit #</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Scheduled Date</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Scheduled Time</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                                <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody className="bg-white">
-                              {group.visits.length === 0 ? (
-                                <TableRow>
-                                  <TableCell colSpan={9} className="text-center py-6 text-gray-500">
-                                    No visits found.
-                                  </TableCell>
-                                </TableRow>
-                              ) : (
-                                group.visits.map((visit) => {
-                                  const isSelected = selectedVisitId === visit.id;
+                        <div className="w-full min-w-0 max-w-full">
+                          <EnhancedTable
+                            data={group.visits.map((visit: any, index: number) => ({
+                              ...visit,
+                              id: visit.id ?? `visit-${visit.visit_number ?? index}`,
+                              technician_name: visit.technician?.name || "",
+                            }))}
+                            columns={visitFreqColumns}
+                            renderCell={(item: any, columnKey: string) => {
+                              const isSelected = selectedVisitId === item.id;
+                              switch (columnKey) {
+                                case "select":
+                                  return item.id && typeof item.id === "number" ? (
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={() =>
+                                        setSelectedVisitId(isSelected ? null : item.id)
+                                      }
+                                      className="w-4 h-4 rounded border-gray-300 accent-brand cursor-pointer"
+                                    />
+                                  ) : null;
+                                case "visit_number":
                                   return (
-                                    <TableRow
-                                      key={visit.id ?? visit.visit_number}
-                                      className={`border-b border-gray-200 transition-colors ${isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"}`}
-                                    >
-                                      <TableCell className="w-10">
-                                        {visit.id && (
-                                          <input
-                                            type="checkbox"
-                                            checked={isSelected}
-                                            onChange={() => setSelectedVisitId(isSelected ? null : visit.id!)}
-                                            className="w-4 h-4 rounded border-gray-300 accent-[#C72030] cursor-pointer"
-                                          />
-                                        )}
-                                      </TableCell>
-                                      <TableCell className="font-medium text-gray-900">{visit.visit_number}</TableCell>
-                                      <TableCell className="text-gray-900">{visit.scheduled_date || "—"}</TableCell>
-                                      <TableCell className="text-gray-900">{visit.scheduled_time || "—"}</TableCell>
-                                      <TableCell className="text-gray-900">{visit.actual_visit_date || "—"}</TableCell>
-                                      <TableCell className="text-gray-900">{visit.technician?.name || "—"}</TableCell>
-                                      <TableCell className="text-gray-900 max-w-[200px] whitespace-normal break-words">{visit.remarks || "—"}</TableCell>
-                                      <TableCell>
-                                        {visit.status ? (
-                                          <span
-                                            className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
-                                              visit.status.toLowerCase() === "completed"
-                                                ? "bg-green-100 text-green-800"
-                                                : visit.status.toLowerCase() === "missed"
-                                                ? "bg-red-100 text-red-800"
-                                                : visit.status.toLowerCase() === "pending"
-                                                ? "bg-amber-100 text-amber-800"
-                                                : "bg-gray-100 text-gray-700"
-                                            }`}
-                                          >
-                                            {visit.status.toUpperCase()}
-                                          </span>
-                                        ) : (
-                                          <span className="text-gray-400 text-sm">—</span>
-                                        )}
-                                      </TableCell>
-                                      <TableCell>
-                                        {visit.attachment?.document || visit.attachment?.document_url ? (
-                                          <a
-                                            href={visit.attachment.document || visit.attachment.document_url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="flex items-center gap-1 text-[#C72030] hover:underline text-sm"
-                                          >
-                                            <FileText className="w-4 h-4" />
-                                            View
-                                          </a>
-                                        ) : (
-                                          <span className="text-gray-400 text-sm">—</span>
-                                        )}
-                                      </TableCell>
-                                    </TableRow>
+                                    <span className="font-medium text-gray-900">
+                                      {item.visit_number}
+                                    </span>
                                   );
-                                })
-                              )}
-                            </TableBody>
-                          </Table>
+                                case "scheduled_date":
+                                  return item.scheduled_date || "—";
+                                case "scheduled_time":
+                                  return item.scheduled_time || "—";
+                                case "actual_visit_date":
+                                  return item.actual_visit_date || "—";
+                                case "assets_covered":
+                                  return Array.isArray(item.assets_covered) &&
+                                    item.assets_covered.length > 0 ? (
+                                    <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                      {item.assets_covered.length}
+                                    </span>
+                                  ) : (
+                                    "—"
+                                  );
+                                case "technician":
+                                  return item.technician_name || "—";
+                                case "remarks":
+                                  return (
+                                    <span className="max-w-[200px] inline-block whitespace-normal break-words">
+                                      {item.remarks || "—"}
+                                    </span>
+                                  );
+                                case "status":
+                                  return item.status ? (
+                                    <span
+                                      className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
+                                        item.status.toLowerCase() === "completed"
+                                          ? "bg-green-100 text-green-800"
+                                          : item.status.toLowerCase() === "missed"
+                                            ? "bg-red-100 text-red-800"
+                                            : item.status.toLowerCase() === "pending"
+                                              ? "bg-amber-100 text-amber-800"
+                                              : "bg-gray-100 text-gray-700"
+                                      }`}
+                                    >
+                                      {item.status.toUpperCase()}
+                                    </span>
+                                  ) : (
+                                    <span className="text-gray-400 text-sm">—</span>
+                                  );
+                                case "attachment":
+                                  return renderVisitAttachments(item);
+                                default:
+                                  return "—";
+                              }
+                            }}
+                            storageKey={`amc-details-visits-freq-${group.frequency_config_id}`}
+                            enableSearch
+                            searchTerm={visitsSearchTerm}
+                            onSearchChange={setVisitsSearchTerm}
+                            searchPlaceholder="Search visits..."
+                            hideTableExport
+                            emptyMessage="No visits found."
+                            pagination
+                            pageSize={15}
+                            getItemId={(item) => String(item.id)}
+                            rowClassName={(item) =>
+                              selectedVisitId === item.id ? "bg-[#FFF8F8]" : ""
+                            }
+                          />
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   /* Fallback: flat visit table when no frequency groups */
-                  <div className="bg-white rounded-lg border overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-[#EDEAE3]">
-                          <TableHead className="w-10" />
-                          <TableHead className="font-semibold text-[#1a1a1a]">Visit</TableHead>
-                          <TableHead className="font-semibold text-[#1a1a1a]">Visit Date</TableHead>
-                          <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
-                          <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
-                          <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
-                          <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                          <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
-                          <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody className="bg-white">
-                        {amcVisitData.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={9} className="text-center py-6 text-gray-500">
-                              No visit history found.
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          amcVisitData.map((visit) => {
-                            const isSelected = selectedVisitId === visit.id;
-                            return (
-                              <TableRow
-                                key={visit.id}
-                                className={`border-b border-gray-200 transition-colors ${isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"}`}
-                              >
-                                <TableCell className="w-10">
+                  (() => (
+                      <div className="w-full min-w-0 max-w-full">
+                        <EnhancedTable
+                          data={amcVisitData.map((visit: any) => ({
+                            ...visit,
+                            technician_name: visit.technician?.name || "",
+                          }))}
+                          columns={visitFlatColumns}
+                          renderCell={(item: any, columnKey: string) => {
+                            const isSelected = selectedVisitId === item.id;
+                            switch (columnKey) {
+                              case "select":
+                                return (
                                   <input
                                     type="checkbox"
                                     checked={isSelected}
-                                    onChange={() => setSelectedVisitId(isSelected ? null : visit.id)}
-                                    className="w-4 h-4 rounded border-gray-300 accent-[#C72030] cursor-pointer"
+                                    onChange={() =>
+                                      setSelectedVisitId(isSelected ? null : item.id)
+                                    }
+                                    className="w-4 h-4 rounded border-gray-300 accent-brand cursor-pointer"
                                   />
-                                </TableCell>
-                                <TableCell className="font-medium text-gray-900">{visit.visit_number ?? "—"}</TableCell>
-                                <TableCell className="text-gray-900">
-                                  {visit.visit_date ? new Date(visit.visit_date).toLocaleDateString("en-GB") : "—"}
-                                </TableCell>
-                                <TableCell className="text-gray-900">
-                                  {(visit as any).actual_visit_date
-                                    ? (() => {
-                                        const raw = (visit as any).actual_visit_date as string;
-                                        if (raw.includes("/")) return raw;
-                                        const d = new Date(raw);
-                                        return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
-                                      })()
-                                    : "—"}
-                                </TableCell>
-                                <TableCell className="text-gray-900">{visit.technician?.name || "—"}</TableCell>
-                                <TableCell className="text-gray-900 max-w-[200px] whitespace-normal break-words">{visit.remarks || "—"}</TableCell>
-                                <TableCell>
-                                  {(visit as any).status ? (
-                                    <span
-                                      className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
-                                        (visit as any).status.toLowerCase() === "completed"
-                                          ? "bg-green-100 text-green-800"
-                                          : (visit as any).status.toLowerCase() === "cancelled"
+                                );
+                              case "visit_number":
+                                return (
+                                  <span className="font-medium text-gray-900">
+                                    {item.visit_number ?? "—"}
+                                  </span>
+                                );
+                              case "visit_date":
+                                return item.visit_date
+                                  ? new Date(item.visit_date).toLocaleDateString("en-GB")
+                                  : "—";
+                              case "actual_visit_date": {
+                                const raw = item.actual_visit_date as string | undefined;
+                                if (!raw) return "—";
+                                if (raw.includes("/")) return raw;
+                                const d = new Date(raw);
+                                return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
+                              }
+                              case "technician":
+                                return item.technician_name || "—";
+                              case "remarks":
+                                return (
+                                  <span className="max-w-[200px] inline-block whitespace-normal break-words">
+                                    {item.remarks || "—"}
+                                  </span>
+                                );
+                              case "status":
+                                return item.status ? (
+                                  <span
+                                    className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
+                                      item.status.toLowerCase() === "completed"
+                                        ? "bg-green-100 text-green-800"
+                                        : item.status.toLowerCase() === "cancelled"
                                           ? "bg-red-100 text-red-800"
                                           : "bg-gray-100 text-gray-700"
-                                      }`}
-                                    >
-                                      {((visit as any).status as string).toUpperCase()}
-                                    </span>
-                                  ) : (
-                                    <span className="text-gray-400 text-sm">—</span>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  {(() => {
-                                    const ids: any[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
-                                    const total = amcDetails?.amc_assets?.length ?? 0;
-                                    const covered = ids.length;
-                                    return covered > 0 ? (
-                                      <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFF0F0] text-[#C72030]">
-                                        {covered}{total > 0 ? ` / ${total}` : ""}
-                                      </span>
-                                    ) : (
-                                      <span className="text-gray-400 text-sm">—</span>
-                                    );
-                                  })()}
-                                </TableCell>
-                                <TableCell>
-                                  {visit.attachment?.document || visit.attachment?.document_url ? (
-                                    <a
-                                      href={visit.attachment.document || visit.attachment.document_url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="flex items-center gap-1 text-[#C72030] hover:underline text-sm"
-                                    >
-                                      <FileText className="w-4 h-4" />
-                                      View
-                                    </a>
-                                  ) : (
-                                    <span className="text-gray-400 text-sm">—</span>
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                                    }`}
+                                  >
+                                    {String(item.status).toUpperCase()}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">—</span>
+                                );
+                              case "assets_covered": {
+                                const ids: any[] =
+                                  item.asset_ids || item.amc_asset_ids || [];
+                                const total = amcDetails?.amc_assets?.length ?? 0;
+                                const covered = ids.length;
+                                return covered > 0 ? (
+                                  <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-light text-brand">
+                                    {covered}
+                                    {total > 0 ? ` / ${total}` : ""}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">—</span>
+                                );
+                              }
+                              case "attachment":
+                                return renderVisitAttachments(item);
+                              default:
+                                return "—";
+                            }
+                          }}
+                          storageKey="amc-details-visits-flat"
+                          enableSearch
+                          searchTerm={visitsSearchTerm}
+                          onSearchChange={setVisitsSearchTerm}
+                          searchPlaceholder="Search visits..."
+                          hideTableExport
+                          emptyMessage="No visit history found."
+                          pagination
+                          pageSize={15}
+                          getItemId={(item) => String(item.id)}
+                          rowClassName={(item) =>
+                            selectedVisitId === item.id ? "bg-[#FFF8F8]" : ""
+                          }
+                        />
+                      </div>
+                    ))()
                 )}
               </CardContent>
             </Card>
@@ -1824,6 +1977,7 @@ export const AMCDetailsPage = () => {
                       <label className="text-sm font-medium text-gray-700">Visit Date</label>
                       <input
                         type="date"
+                        disabled={visitEditVisitDate}
                         value={visitEditVisitDate}
                         onChange={(e) => setVisitEditVisitDate(e.target.value)}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
@@ -1837,6 +1991,7 @@ export const AMCDetailsPage = () => {
                       <label className="text-sm font-medium text-gray-700">Actual Visit Date</label>
                       <input
                         type="date"
+
                         value={visitEditActualVisitDate}
                         onChange={(e) => setVisitEditActualVisitDate(e.target.value)}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
@@ -1890,30 +2045,44 @@ export const AMCDetailsPage = () => {
                       </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-gray-700">Attachment</label>
+                      <label className="text-sm font-medium text-gray-700">Attachments</label>
                       <div
                         className="flex items-center gap-2 border border-dashed border-gray-300 rounded-md px-3 py-2 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => document.getElementById("visit-doc-input")?.click()}
                       >
                         <Paperclip className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span className="text-sm text-gray-500 truncate flex-1">
-                          {visitEditDocument ? visitEditDocument.name : "Choose File"}
+                        <span className="text-sm text-gray-500 flex-1">
+                          {visitEditDocuments.length === 0 ? "Choose Files" : `${visitEditDocuments.length} file(s) selected`}
                         </span>
-                        {visitEditDocument && (
-                          <button
-                            className="text-xs text-red-500 hover:underline flex-shrink-0"
-                            onClick={(e) => { e.stopPropagation(); setVisitEditDocument(null); }}
-                          >
-                            Remove
-                          </button>
-                        )}
                         <input
                           id="visit-doc-input"
                           type="file"
+                          multiple
                           className="hidden"
-                          onChange={(e) => setVisitEditDocument(e.target.files?.[0] || null)}
+                          onChange={(e) => {
+                            const newFiles = Array.from(e.target.files || []);
+                            setVisitEditDocuments((prev) => [...prev, ...newFiles]);
+                            e.target.value = "";
+                          }}
                         />
                       </div>
+                      {visitEditDocuments.length > 0 && (
+                        <ul className="space-y-1 mt-1">
+                          {visitEditDocuments.map((file, i) => (
+                            <li key={i} className="flex items-center gap-2 text-sm text-gray-700 bg-white border border-gray-200 rounded px-3 py-1.5">
+                              <Paperclip className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                              <span className="truncate flex-1">{file.name}</span>
+                              <button
+                                type="button"
+                                className="text-xs text-red-500 hover:underline flex-shrink-0"
+                                onClick={() => setVisitEditDocuments((prev) => prev.filter((_, idx) => idx !== i))}
+                              >
+                                Remove
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   </div>
 
@@ -2285,185 +2454,141 @@ export const AMCDetailsPage = () => {
                 className="p-6"
                 style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
               >
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-[#EDEAE3]">
-                        {isServiceAmc ? (
-                          <>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Action
-                            </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Service ID
-                            </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Name
-                            </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Group & Sub Group
-                            </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Status
-                            </TableHead>
-                          </>
-                        ) : (
-                          <>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Action
-                            </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Equipment ID
-                            </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Asset Name
-                            </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Model No.
-                            </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Group & Sub Group
-                            </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Status
-                            </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Criticality
-                            </TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">
-                              Location
-                            </TableHead>
-                          </>
-                        )}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody className="bg-white">
-                      {isServiceAmc ? (
-                        amcDetails.amc_services?.length > 0 ? (
-                          amcDetails.amc_services.map((service) => (
-                            <TableRow
-                              key={service.id}
-                              className="border-b border-gray-200"
-                            >
-                              <TableCell>
-                                <a
-                                  href={`/maintenance/service/details/${service.service_id}`}
-                                  className="text-gray-600 hover:text-black"
-                                  title="View Details"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </a>
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {service.service_id || "—"}
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {service.service_name || "—"}
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {[service.group_name, service.sub_group_name]
-                                  .filter(Boolean)
-                                  .join(" / ") || "—"}
-                              </TableCell>
-                              <TableCell>
-                                <span
-                                  className={`px-2 py-1 text-xs rounded ${(service as any).status === "Active"
+                <div className="w-full min-w-0 max-w-full">
+                  {isServiceAmc ? (
+                    <EnhancedTable
+                      data={(amcDetails.amc_services || []).map((service: any) => ({
+                        ...service,
+                        group_sub_group: [service.group_name, service.sub_group_name]
+                          .filter(Boolean)
+                          .join(" / "),
+                      }))}
+                      columns={associationServiceColumns}
+                      renderCell={(item: any, columnKey: string) => {
+                        switch (columnKey) {
+                          case "service_id":
+                            return item.service_id || "—";
+                          case "service_name":
+                            return item.service_name || "—";
+                          case "group_sub_group":
+                            return item.group_sub_group || "—";
+                          case "status":
+                            return (
+                              <span
+                                className={`px-2 py-1 text-xs rounded ${
+                                  item.status === "Active"
                                     ? "bg-green-100 text-green-800"
                                     : "bg-gray-100 text-gray-800"
-                                    }`}
-                                >
-                                  {(service as any).status || "—"}
-                                </span>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow className="border-b border-gray-200">
-                            <TableCell
-                              colSpan={5}
-                              className="text-center text-sm text-gray-500"
-                            >
-                              No services found
-                            </TableCell>
-                          </TableRow>
-                        )
-                      ) : amcDetails.amc_assets?.length > 0 ? (
-                        amcDetails.amc_assets.map((asset: any) => {
-                          const locationParts = [
-                            asset.building_name || asset.building,
-                            asset.wing_name || asset.wing,
-                            asset.area_name || asset.area,
-                            asset.floor_name || asset.floor,
-                            asset.room_name || asset.room,
-                          ].filter(Boolean);
-                          const location =
-                            locationParts.length > 0
-                              ? locationParts.join(", ")
-                              : "—";
-                          const groupSubGroup =
-                            [asset.group_name, asset.sub_group_name]
-                              .filter(Boolean)
-                              .join(" / ") || "—";
-                          return (
-                            <TableRow
-                              key={asset.id}
-                              className="border-b border-gray-200"
-                            >
-                              <TableCell>
-                                <a
-                                  href={`/maintenance/asset/details/${asset.asset_id}`}
-                                  className="text-gray-600 hover:text-black"
-                                  title="View Details"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </a>
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {asset.equipment_id ||
-                                  asset.asset_code ||
-                                  asset.asset_id ||
-                                  "—"}
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {asset.asset_name || "—"}
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {asset.model_no || asset.model_number || "—"}
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {groupSubGroup}
-                              </TableCell>
-                              <TableCell>
-                                <span
-                                  className={`px-2 py-1 text-xs rounded ${asset.asset_status === "active"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-gray-100 text-gray-800"
-                                    }`}
-                                >
-                                  {asset.asset_status?.replace("_", " ") || "—"}
-                                </span>
-                              </TableCell>
-                              <TableCell className="text-gray-900">
-                                {asset.criticality || "—"}
-                              </TableCell>
-                              <TableCell className="text-gray-900 text-sm">
-                                {location}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      ) : (
-                        <TableRow className="border-b border-gray-200">
-                          <TableCell
-                            colSpan={8}
-                            className="text-center text-sm text-gray-500"
-                          >
-                            No assets found
-                          </TableCell>
-                        </TableRow>
+                                }`}
+                              >
+                                {item.status || "—"}
+                              </span>
+                            );
+                          default:
+                            return "—";
+                        }
+                      }}
+                      renderActions={(item: any) => (
+                        <a
+                          href={`/maintenance/service/details/${item.service_id}`}
+                          className="inline-flex h-8 w-8 items-center justify-center text-brand hover:bg-brand-light rounded"
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </a>
                       )}
-                    </TableBody>
-                  </Table>
+                      storageKey="amc-details-association-services"
+                      enableSearch
+                      searchTerm={associationSearchTerm}
+                      onSearchChange={setAssociationSearchTerm}
+                      searchPlaceholder="Search services..."
+                      hideTableExport
+                      emptyMessage="No services found"
+                      pagination
+                      pageSize={10}
+                      getItemId={(item) => String(item.id)}
+                    />
+                  ) : (
+                    <EnhancedTable
+                      data={(amcDetails.amc_assets || []).map((asset: any) => {
+                        const loc = asset.location ?? {};
+                        return {
+                          ...asset,
+                          equipment_id:
+                            asset.equipment_id ||
+                            asset.asset_code ||
+                            asset.asset_id ||
+                            "",
+                          model_no: asset.model_no || asset.model_number || "",
+                          site: loc.site || asset.site_name || "",
+                          building: loc.building || asset.building_name || asset.building || "",
+                          wing: loc.wing || asset.wing_name || asset.wing || "",
+                          area: loc.area || asset.area_name || asset.area || "",
+                          floor: loc.floor || asset.floor_name || asset.floor || "",
+                          room: loc.room || asset.room_name || asset.room || "",
+                        };
+                      })}
+                      columns={associationAssetColumns}
+                      renderCell={(item: any, columnKey: string) => {
+                        switch (columnKey) {
+                          case "equipment_id":
+                            return item.equipment_id || "—";
+                          case "asset_name":
+                            return item.asset_name || "—";
+                          case "model_no":
+                            return item.model_no || "—";
+                          case "group_name":
+                            return item.group_name || "—";
+                          case "sub_group_name":
+                            return item.sub_group_name || "—";
+                          case "asset_status":
+                            return (
+                              <span
+                                className={`px-2 py-1 text-xs rounded ${
+                                  item.asset_status === "active"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                                }`}
+                              >
+                                {item.asset_status?.replace("_", " ") || "—"}
+                              </span>
+                            );
+                          case "criticality":
+                            return item.criticality || "—";
+                          case "site":
+                          case "building":
+                          case "wing":
+                          case "area":
+                          case "floor":
+                          case "room":
+                            return (
+                              <span className="text-sm">{item[columnKey] || "—"}</span>
+                            );
+                          default:
+                            return "—";
+                        }
+                      }}
+                      renderActions={(item: any) => (
+                        <a
+                          href={`/maintenance/asset/details/${item.asset_id}`}
+                          className="inline-flex h-8 w-8 items-center justify-center text-brand hover:bg-brand-light rounded"
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </a>
+                      )}
+                      storageKey="amc-details-association-assets"
+                      enableSearch
+                      searchTerm={associationSearchTerm}
+                      onSearchChange={setAssociationSearchTerm}
+                      searchPlaceholder="Search assets..."
+                      hideTableExport
+                      emptyMessage="No assets found"
+                      pagination
+                      pageSize={10}
+                      getItemId={(item) => String(item.id)}
+                    />
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -2533,7 +2658,7 @@ export const AMCDetailsPage = () => {
 
       <AddVisitModal
         isOpen={showAddVisitModal}
-        onClose={hanldeClose}
+        onClose={handleClose}
         amcId={amcDetails?.id?.toString() || id || ""}
       />
     </div>

@@ -29,6 +29,14 @@ export const visitorHostWiseAPI = {
       to_date: toDate,
     });
 
+    const siteId =
+      localStorage.getItem('selectedSiteId') ||
+      localStorage.getItem('site_id') ||
+      localStorage.getItem('siteId');
+    if (siteId) {
+      params.append('site_id', siteId);
+    }
+
     const url = `${getFullUrl(endpoint)}?${params.toString()}`;
     
     const response = await fetch(url, getAuthenticatedFetchOptions('GET'));

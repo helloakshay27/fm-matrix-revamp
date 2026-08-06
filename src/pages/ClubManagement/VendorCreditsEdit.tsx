@@ -167,7 +167,7 @@ export const VendorCreditsEdit: React.FC = () => {
             const token = localStorage.getItem('token');
             const lock_account_id = localStorage.getItem('lock_account_id');
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}&q[can_be_purchase_eq]=1`, {
+                const res = await axios.get(`https://${baseUrl}/lock_account_items/select_list.json?lock_account_id=${lock_account_id}&q[can_be_purchase_eq]=1&active=true`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -1806,7 +1806,7 @@ export const VendorCreditsEdit: React.FC = () => {
                                     <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                         Billing Address
                                         <IconButton size="small" onClick={() => openAddressListModal('billing')}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                     {selectedBillingAddress?.address ? (
@@ -1820,7 +1820,7 @@ export const VendorCreditsEdit: React.FC = () => {
                                             {selectedBillingAddress.country && <div>{selectedBillingAddress.country}</div>}
                                         </div>
                                     ) : (
-                                        <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                        <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
                                             New Address
                                         </button>
                                     )}
@@ -1830,7 +1830,7 @@ export const VendorCreditsEdit: React.FC = () => {
                                     <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                         Shipping Address
                                         <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                     {selectedShippingAddress?.address ? (
@@ -1844,7 +1844,7 @@ export const VendorCreditsEdit: React.FC = () => {
                                             {selectedShippingAddress.country && <div>{selectedShippingAddress.country}</div>}
                                         </div>
                                     ) : (
-                                        <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                        <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
                                             New Address
                                         </button>
                                     )}
@@ -1858,14 +1858,14 @@ export const VendorCreditsEdit: React.FC = () => {
                                     <span className="text-gray-500">GST Treatment:</span>
                                     <span className="text-gray-800">{getGstTreatmentLabel(selectedCustomer.gst_preference || selectedCustomer.gst_treatment)}</span>
                                     <IconButton size="small" onClick={openGstModal}>
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-gray-500">GSTIN:</span>
                                     <span className="text-gray-800 font-medium">{selectedCustomer.gstin || "—"}</span>
                                     <IconButton size="small" onClick={openGstModal}>
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 </div>
                             </div>
@@ -1883,12 +1883,12 @@ export const VendorCreditsEdit: React.FC = () => {
                                 </label>
                                 {selectedCustomer && (
                                     <IconButton size="small" onClick={() => openAddressListModal('billing')}>
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 )}
                             </div>
                             <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
                                 rows={4}
                                 maxLength={500}
                                 value={billingAddress}
@@ -1902,7 +1902,7 @@ export const VendorCreditsEdit: React.FC = () => {
                                 <button
                                     type="button"
                                     onClick={() => openAddressFormModal('new', 'billing')}
-                                    className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
+                                    className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
                                 >
                                     New Address
                                 </button>
@@ -1916,12 +1916,12 @@ export const VendorCreditsEdit: React.FC = () => {
                                 </label>
                                 {selectedCustomer && (
                                     <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 )}
                             </div>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
                                 maxLength={500}
                                 value={shippingAddress}
@@ -1936,7 +1936,7 @@ export const VendorCreditsEdit: React.FC = () => {
                                 <button
                                     type="button"
                                     onClick={() => openAddressFormModal('new', 'shipping')}
-                                    className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
+                                    className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
                                 >
                                     New Address
                                 </button>
@@ -2035,7 +2035,7 @@ export const VendorCreditsEdit: React.FC = () => {
                                         <MenuItem key={term.id || term.name} value={term.id}>{term.name}</MenuItem>
                                     ))} */}
                         {/* <MenuItem>
-                                        <span className="text-blue-600 cursor-pointer" onClick={() => setShowConfig(true)}>
+                                        <span className="text-brand cursor-pointer" onClick={() => setShowConfig(true)}>
                                             Configure Terms
                                         </span>
                                     </MenuItem> */}
@@ -2089,7 +2089,7 @@ export const VendorCreditsEdit: React.FC = () => {
                                         </table>
                                         <div className="flex gap-2 mb-2">
                                             <button
-                                                className="text-blue-600 text-sm"
+                                                className="text-brand text-sm"
                                                 onClick={handleAddNewTerm}
                                             >
                                                 + Add New
@@ -2097,7 +2097,7 @@ export const VendorCreditsEdit: React.FC = () => {
                                         </div>
                                         <div className="flex gap-2">
                                             <button
-                                                className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                                                className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                                                 onClick={handleSaveTerms}
                                             >
                                                 Save
@@ -2174,7 +2174,7 @@ export const VendorCreditsEdit: React.FC = () => {
                                 id="reverseCharge"
                                 checked={reverseCharge}
                                 onChange={(e) => setReverseCharge(e.target.checked)}
-                                className="w-4 h-4 accent-[#bf213e] cursor-pointer"
+                                className="w-4 h-4 accent-[#DA7756] cursor-pointer"
                             />
                             <label
                                 htmlFor="reverseCharge"
@@ -2474,12 +2474,11 @@ export const VendorCreditsEdit: React.FC = () => {
 
                         <div className="flex gap-3 pt-4">
                             <Button
-                                startIcon={<Add />}
                                 onClick={addItem}
                                 variant="outline"
-                                sx={{ textTransform: 'none' }}
+                                className="fm-button-fix px-8 py-2"
                             >
-                                Add New Row
+                                <span className="flex items-center gap-2"><Add fontSize="small" /> Add New Row</span>
                             </Button>
                             {/* <Button
                                 variant="outlined"
@@ -2546,12 +2545,12 @@ export const VendorCreditsEdit: React.FC = () => {
                                 >
                                     <FormControlLabel
                                         value="TDS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                                         label={<span className="text-sm">TDS</span>}
                                     />
                                     <FormControlLabel
                                         value="TCS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                                         label={<span className="text-sm">TCS</span>}
                                     />
                                 </RadioGroup>
@@ -2795,10 +2794,10 @@ export const VendorCreditsEdit: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 justify-center pt-2">
-                <Button variant="outline" onClick={() => navigate(-1)} disabled={isSubmitting}>
+                <Button variant="outline" className="fm-button-fix px-8 py-2" onClick={() => navigate(-1)} disabled={isSubmitting}>
                     Cancel
                 </Button>
-                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={() => handleSubmit()} disabled={isSubmitting}>
+                <Button className="fm-button-fix fm-button-brand px-8 py-2" onClick={() => handleSubmit()} disabled={isSubmitting}>
                     {isSubmitting ? 'Updating...' : 'Update'}
                 </Button>
             </div>
@@ -2811,7 +2810,7 @@ export const VendorCreditsEdit: React.FC = () => {
                             <div
                                 key={addr.id}
                                 className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
-                                    ? 'border-[#C72030] bg-red-50'
+                                    ? 'border-[#DA7756] bg-red-50'
                                     : 'border-gray-200 hover:border-gray-300'
                                     }`}
                                 onClick={() => {
@@ -2835,7 +2834,7 @@ export const VendorCreditsEdit: React.FC = () => {
                                             openAddressFormModal('edit', activeAddressType, addr);
                                         }}
                                     >
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 </div>
                             </div>
@@ -2922,7 +2921,7 @@ export const VendorCreditsEdit: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions>
-                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white" onClick={handleSaveAddressForm}>Save</Button>
+                    <Button className="bg-[#DA7756] hover:bg-[#C45F40] text-white" onClick={handleSaveAddressForm}>Save</Button>
                     <Button variant="outline" onClick={() => setAddressFormModalOpen(false)}>Cancel</Button>
                 </DialogActions>
             </Dialog>
@@ -2951,7 +2950,7 @@ export const VendorCreditsEdit: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions>
-                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white" onClick={handleUpdateGstConfig}>Update</Button>
+                    <Button className="bg-[#DA7756] hover:bg-[#C45F40] text-white" onClick={handleUpdateGstConfig}>Update</Button>
                     <Button variant="outline" onClick={() => setGstModalOpen(false)}>Cancel</Button>
                 </DialogActions>
             </Dialog>
@@ -2967,8 +2966,8 @@ export const VendorCreditsEdit: React.FC = () => {
                     <div className="p-6 space-y-6">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <span className="text-xl font-bold text-blue-600">
+                                <div className="w-12 h-12 rounded-full bg-brand-light flex items-center justify-center">
+                                    <span className="text-xl font-bold text-brand">
                                         {(selectedCustomer.company_name || selectedCustomer.name || 'V').charAt(0).toUpperCase()}
                                     </span>
                                 </div>
@@ -2997,7 +2996,7 @@ export const VendorCreditsEdit: React.FC = () => {
                                     Outstanding Payables
                                 </Typography>
                             </div>
-                            <div className="bg-green-50 rounded-lg p-4 text-center">
+                            <div className="bg-orange-50 rounded-lg p-4 text-center">
                                 <Typography variant="h6" className="font-bold">
                                     ₹0.00
                                 </Typography>
@@ -3021,7 +3020,7 @@ export const VendorCreditsEdit: React.FC = () => {
                                 ['Shipping Address', formatInlineAddress(selectedCustomer.default_shipping_address || selectedCustomer.shipping_address)],
                             ].map(([label, value]) => (
                                 <div key={label} className="flex justify-between items-start py-1.5 border-b border-gray-100 last:border-0 gap-4">
-                                    <span className="text-xs text-[#C72030] w-36 shrink-0">{label}</span>
+                                    <span className="text-xs text-[#DA7756] w-36 shrink-0">{label}</span>
                                     <span className="text-xs text-gray-700 text-right">{value}</span>
                                 </div>
                             ))}
@@ -3105,7 +3104,7 @@ export const VendorCreditsEdit: React.FC = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button variant="outline" onClick={() => setAddUserDialogOpen(false)}>Cancel</Button>
-                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white" onClick={handleAddExternalUser}>Add</Button>
+                    <Button className="bg-[#DA7756] hover:bg-[#C45F40] text-white" onClick={handleAddExternalUser}>Add</Button>
                 </DialogActions>
             </Dialog>
 
@@ -3195,7 +3194,7 @@ export const VendorCreditsEdit: React.FC = () => {
                 </DialogContent>
                 <DialogActions>
                     <Button variant="outline" onClick={() => setContactPersonDialogOpen(false)}>Cancel</Button>
-                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white" onClick={handleAddContactPerson}>Save</Button>
+                    <Button className="bg-[#DA7756] hover:bg-[#C45F40] text-white" onClick={handleAddContactPerson}>Save</Button>
                 </DialogActions>
             </Dialog>
 
@@ -3234,7 +3233,7 @@ export const VendorCreditsEdit: React.FC = () => {
                         Cancel
                     </button>
                     <button
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                         onClick={() => {
                             if (currentItemIndex !== null) {
                                 updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);

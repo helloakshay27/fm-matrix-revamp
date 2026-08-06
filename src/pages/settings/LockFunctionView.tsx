@@ -57,8 +57,11 @@ export const LockFunctionView = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading lock function details...</p>
+        </div>
       </div>
     );
   }
@@ -86,7 +89,7 @@ export const LockFunctionView = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[#E5E0D3] text-brand flex items-center justify-center">
               <Lock className="w-5 h-5" />
             </div>
             <div>
@@ -96,13 +99,23 @@ export const LockFunctionView = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleEdit}>
-            <Edit className="w-4 h-4 mr-2" />
-            Edit
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleEdit}
+            title="Edit"
+            className="!rounded-lg h-9 w-9 border border-brand text-brand hover:bg-brand-selected"
+          >
+            <Edit className="w-4 h-4" />
           </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleDelete}
+            title="Delete"
+            className="!rounded-lg h-9 w-9 border border-brand text-brand hover:bg-brand-selected"
+          >
+            <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       </div>

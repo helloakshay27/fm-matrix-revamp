@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { ArrowLeft, Plus, FileText, Star, Flag, Paperclip, Download, Eye, ChevronDown, ChevronUp, User, MapPin, FileSearch, PlusCircle, ClipboardList, DollarSign, History, File, FileSpreadsheet, X, Edit, FileIcon, Check, Minus, MessageSquare, Ticket } from 'lucide-react';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
@@ -22,6 +24,8 @@ import { TicketJobSheetModal } from '@/components/TicketJobSheetModal';
 import Select, { components } from "react-select";
 import { min } from 'lodash';
 import { getReturnToFromState } from "@/utils/listBackNavigation";
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useHelpdeskEvents } from '@/components/PostHogHelpdeskEvents';
 
 // Utility function to format date to DD/MM/YYYY
 const formatDateToDDMMYYYY = (dateString: string) => {
@@ -38,6 +42,43 @@ const formatDateToDDMMYYYY = (dateString: string) => {
   } catch (error) {
     return '-';
   }
+};
+
+const ticketLogColumns: ColumnConfig[] = [
+  { key: 'dateTime', label: 'Date/Time', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'log_type', label: 'Type', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'log_status', label: 'Status', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'log_by', label: 'By', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'details', label: 'Details', sortable: false, hideable: true, defaultVisible: true },
+];
+
+const getLogTypeLabel = (logType?: string) => {
+  if (logType === 'creation') return 'Created';
+  if (logType === 'status_update') return 'Status Update';
+  if (logType === 'assignee_change') return 'Assigned';
+  if (logType === 'comment') return 'Comment';
+  return 'Update';
+};
+
+const getLogTypeBadgeClass = (logType?: string) => {
+  if (logType === 'creation') return 'bg-green-100 text-green-700';
+  if (logType === 'status_update') return 'bg-blue-100 text-blue-700';
+  if (logType === 'assignee_change') return 'bg-purple-100 text-purple-700';
+  if (logType === 'comment') return 'bg-gray-100 text-gray-700';
+  return 'bg-gray-100 text-gray-700';
+};
+
+const getLogDetailsText = (log: any) => {
+  if (log.log_type === 'creation' && log.creation_summary) {
+    return log.creation_summary.ticket_raised || '-';
+  }
+  if (log.log_type === 'assignee_change' && log.assignment_changes) {
+    return `Assigned to: ${log.assignment_changes.assigned_to}`;
+  }
+  if (log.log_comment && log.log_comment.trim() !== '') {
+    return log.log_comment;
+  }
+  return '-';
 };
 
 const CustomMultiValue = (props) => (
@@ -85,12 +126,12 @@ const customStyles = {
   control: (provided, state) => ({
     ...provided,
     minHeight: "44px",
-    borderColor: state.isFocused ? "#C72030" : "#dcdcdc",
+    borderColor: state.isFocused ? 'var(--color-primary)' : "#dcdcdc",
     boxShadow: "none",
     fontSize: "14px",
     paddingTop: "6px",
     backgroundColor: "transparent",
-    "&:hover": { borderColor: "#C72030" },
+    "&:hover": { borderColor: 'var(--color-primary)' },
   }),
   valueContainer: (provided) => ({
     ...provided,
@@ -101,8 +142,8 @@ const customStyles = {
   dropdownIndicator: (provided, state) => ({
     ...provided,
     padding: "4px 8px",
-    color: state.isFocused ? "#C72030" : "#666",
-    "&:hover": { color: "#C72030" },
+    color: state.isFocused ? 'var(--color-primary)' : "#666",
+    "&:hover": { color: 'var(--color-primary)' },
   }),
   indicatorSeparator: () => ({ display: "none" }),
   placeholder: (provided) => ({
@@ -119,7 +160,7 @@ const customStyles = {
   option: (provided, state) => ({
     ...provided,
     backgroundColor: state.isSelected
-      ? "#C72030"
+      ? 'var(--color-primary)'
       : state.isFocused
         ? "#F6F4EE"
         : "#fff",
@@ -132,7 +173,7 @@ const customStyles = {
       color: "#1A1A1A",
     },
     "&:active": {
-      backgroundColor: "#C72030",
+      backgroundColor: 'var(--color-primary)',
       color: "#fff",
     },
   }),
@@ -153,12 +194,12 @@ const singleSelectStyles = {
   control: (provided, state) => ({
     ...provided,
     minHeight: "44px",
-    borderColor: state.isFocused ? "#C72030" : "#dcdcdc",
+    borderColor: state.isFocused ? 'var(--color-primary)' : "#dcdcdc",
     boxShadow: "none",
     fontSize: "14px",
     paddingTop: "6px",
     backgroundColor: "transparent",
-    "&:hover": { borderColor: "#C72030" },
+    "&:hover": { borderColor: 'var(--color-primary)' },
   }),
   valueContainer: (provided) => ({
     ...provided,
@@ -174,16 +215,16 @@ const singleSelectStyles = {
   dropdownIndicator: (provided, state) => ({
     ...provided,
     padding: "4px 8px",
-    color: state.isFocused ? "#C72030" : "#666",
-    "&:hover": { color: "#C72030" },
+    color: state.isFocused ? 'var(--color-primary)' : "#666",
+    "&:hover": { color: 'var(--color-primary)' },
   }),
   clearIndicator: (provided, state) => ({
     ...provided,
     padding: "4px 8px",
-    color: state.isFocused ? "#C72030" : "#666",
+    color: state.isFocused ? 'var(--color-primary)' : "#666",
     cursor: "pointer",
     "&:hover": {
-      color: "#C72030",
+      color: 'var(--color-primary)',
     },
   }),
   indicatorSeparator: () => ({ display: "none" }),
@@ -201,7 +242,7 @@ const singleSelectStyles = {
   option: (provided, state) => ({
     ...provided,
     backgroundColor: state.isSelected
-      ? "#C72030"
+      ? 'var(--color-primary)'
       : state.isFocused
         ? "#F6F4EE"
         : "#fff",
@@ -210,7 +251,7 @@ const singleSelectStyles = {
     padding: "8px 12px",
     cursor: "pointer",
     "&:active": {
-      backgroundColor: "#C72030",
+      backgroundColor: 'var(--color-primary)',
     },
   }),
 };
@@ -226,16 +267,16 @@ const fieldStyles = {
       borderColor: '#ddd',
     },
     '&:hover fieldset': {
-      borderColor: '#C72030',
+      borderColor: 'var(--color-primary)',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+      borderColor: 'var(--color-primary)',
     },
   },
   '& .MuiInputLabel-root': {
     fontSize: '14px',
     '&.Mui-focused': {
-      color: '#C72030',
+      color: 'var(--color-primary)',
     },
   },
 };
@@ -548,6 +589,8 @@ const getBalanceTATSeconds = (escalationTime: string | null | undefined): number
 export const TicketDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
+  const helpdeskEvents = useHelpdeskEvents();
    const location = useLocation();
   const [ticketData, setTicketData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -555,6 +598,7 @@ export const TicketDetailsPage = () => {
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [activeTab, setActiveTab] = useState("analytics");
   const [activeSubTab, setActiveSubTab] = useState("analytics"); // Track sub-tab inside Analytics tab
+  const [logsSearchTerm, setLogsSearchTerm] = useState('');
   const [costInvolveEnabled, setCostInvolveEnabled] = useState<boolean>(false);
   const [currentAgeing, setCurrentAgeing] = useState<number>(0); // Ageing in seconds for real-time countdown
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
@@ -563,6 +607,12 @@ export const TicketDetailsPage = () => {
   // Job Sheet Modal state
   const [isJobSheetModalOpen, setIsJobSheetModalOpen] = useState(false);
   const [jobSheetLoading, setJobSheetLoading] = useState(false);
+
+  // Feedback Modal state
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState<number | null>(null);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
 
   // Real-time timer states
   const [responseEscalationSeconds, setResponseEscalationSeconds] = useState<number>(0);
@@ -1560,6 +1610,56 @@ export const TicketDetailsPage = () => {
     setIsJobSheetModalOpen(true);
   };
 
+  const handleFeedbackSubmit = async () => {
+    if (!feedbackRating) {
+      toast.error('Please select a rating');
+      return;
+    }
+    setIsSubmittingFeedback(true);
+    try {
+      const payload = {
+        osr_log: {
+          about: 'ComplaintFeedback',
+          about_id: id?.toString(),
+          user_id: null,
+          comment: feedbackComment,
+          rating: feedbackRating.toString(),
+        },
+        osr_booking: {
+          osr_log: {
+            about: 'ComplaintFeedback',
+            about_id: id?.toString(),
+            user_id: null,
+            comment: feedbackComment,
+            rating: feedbackRating.toString(),
+          },
+        },
+      };
+      const response = await fetch(getFullUrl('/crm/create_osr_log.json'), {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        toast.success('Feedback submitted successfully!');
+        setIsFeedbackModalOpen(false);
+        setFeedbackRating(null);
+        setFeedbackComment('');
+        refreshTicketData();
+      } else {
+        const err = await response.json().catch(() => null);
+        toast.error(err?.message || 'Failed to submit feedback');
+      }
+    } catch (error) {
+      toast.error('Failed to submit feedback');
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
+  };
+
   // Handle file selection for customer comments
   const handleCustomerFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -2261,6 +2361,22 @@ export const TicketDetailsPage = () => {
 
       toast.success('Comment submitted successfully!');
 
+      // Business lifecycle event — Ticket Comment Added (one per channel submitted)
+      if (commentText.trim()) {
+        helpdeskEvents.onTicketCommentAdded(id, {
+          comment_channel: 'customer',
+          used_template: Boolean(selectedCustomerTemplate),
+          has_attachment: customerAttachments.length > 0,
+        });
+      }
+      if (internalCommentText.trim()) {
+        helpdeskEvents.onTicketCommentAdded(id, {
+          comment_channel: 'internal',
+          used_template: Boolean(selectedInternalTemplate),
+          has_attachment: internalAttachments.length > 0,
+        });
+      }
+
       // Clear form
       setCommentText('');
       setInternalCommentText('');
@@ -2362,6 +2478,13 @@ export const TicketDetailsPage = () => {
       console.log('Cost approval submitted successfully:', data);
 
       toast.success('Cost approval submitted successfully!');
+
+      // Business lifecycle event — Ticket Cost Flagged (cost raised for approval)
+      const totalEstimatedCost = costRows.reduce((sum, r) => sum + (parseFloat(r.cost) || 0), 0);
+      helpdeskEvents.onTicketCostFlagged(id, {
+        estimated_cost: totalEstimatedCost || null,
+        category: (ticketData as any)?.category_type || (ticketData as any)?.category || null,
+      });
 
       // Reset cost rows to initial state
       setCostRows([
@@ -2886,6 +3009,44 @@ export const TicketDetailsPage = () => {
 
       const data = await response.json();
       console.log('✅ Ticket management updated successfully:', data);
+
+      // Business lifecycle events — capture the prior status BEFORE refreshing
+      const fromStatus = (ticketData as any)?.issue_status ?? null;
+      const toStatusObj = complaintStatus.find(s => s.id.toString() === ticketMgmtFormData.selectedStatus);
+      const toStatus = toStatusObj?.name ?? null;
+      const toFixedState = toStatusObj?.fixed_state ?? '';
+      const changedByRole = localStorage.getItem('role') || null;
+      if (ticketMgmtFormData.selectedStatus) {
+        helpdeskEvents.onTicketStatusChanged(id, {
+          from_status: fromStatus,
+          to_status: toStatus,
+          changed_by_role: changedByRole,
+        });
+        // Ticket Resolution Recorded — reached a completed/closed state
+        if (toFixedState === 'closed' || toFixedState === 'completed') {
+          helpdeskEvents.onTicketResolutionRecorded(id, {
+            resolution_outcome: toStatus,
+            closure_completeness_score: null,
+            has_root_cause: Boolean(
+              (ticketMgmtFormData.rca_text && ticketMgmtFormData.rca_text.trim()) ||
+              (ticketMgmtFormData.rca_template_ids && ticketMgmtFormData.rca_template_ids.length > 0)
+            ),
+            has_corrective_action: Boolean(
+              (ticketMgmtFormData.corrective_action_text && ticketMgmtFormData.corrective_action_text.trim()) ||
+              (ticketMgmtFormData.corrective_action_template_ids && ticketMgmtFormData.corrective_action_template_ids.length > 0)
+            ),
+            has_preventive_action: Boolean(
+              (ticketMgmtFormData.preventive_action_text && ticketMgmtFormData.preventive_action_text.trim()) ||
+              (ticketMgmtFormData.preventive_action_template_ids && ticketMgmtFormData.preventive_action_template_ids.length > 0)
+            ),
+            review_date_set: Boolean((ticketMgmtFormData as any).review_tracking_date || (ticketMgmtFormData as any).review_date),
+          });
+        }
+        // Ticket Reopened — transition into a reopen state
+        if (toFixedState === 'reopen') {
+          helpdeskEvents.onTicketReopened(id, { reopened_by_role: changedByRole });
+        }
+      }
 
       // Refresh ticket data
       const ticketDetails = await ticketManagementAPI.getTicketDetails(id);
@@ -3868,7 +4029,7 @@ export const TicketDetailsPage = () => {
     return (
       <div className="p-6 bg-white min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-4"></div>
           <p>Loading ticket details...</p>
         </div>
       </div>
@@ -4265,12 +4426,22 @@ export const TicketDetailsPage = () => {
           <div className="flex items-center gap-3">
             {(activeTab === "details") || (activeTab === "analytics" && activeSubTab === "details") ? (
               // Show Job Sheet button when on Details tab OR when on Analytics > Ticket Details sub-tab
-              <Button
-                onClick={handleJobSheet}
-                className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-              >
-                Job Sheet
-              </Button>
+              <>
+                <Button
+                  onClick={handleJobSheet}
+                  className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
+                >
+                  Job Sheet
+                </Button>
+                {isTicketClosed && (
+                  <Button
+                    onClick={() => setIsFeedbackModalOpen(true)}
+                    className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
+                  >
+                    Add Feedback
+                  </Button>
+                )}
+              </>
             ) : (
               // Show Logs, Create Task, and Edit buttons for all other tabs
               <>
@@ -4319,62 +4490,62 @@ export const TicketDetailsPage = () => {
           <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
             <TabsTrigger
               value="analytics"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0"
             >
               Analytics
             </TabsTrigger>
             <TabsTrigger
               value="details"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0"
             >
               Details
             </TabsTrigger>
 
             {/* <TabsTrigger
               value="creator-info"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0"
             >
               Creator Info
             </TabsTrigger> */}
 
             {/* <TabsTrigger
               value="location-info"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0"
             >
               Location
             </TabsTrigger>
 
             <TabsTrigger
               value="survey-info"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0"
             >
               Survey Info
             </TabsTrigger> */}
 
             {/* <TabsTrigger
               value="additional-info"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0"
             >
               Additional
             </TabsTrigger> */}
 
             {/* <TabsTrigger
               value="attachments"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0"
             >
               Attachments
             </TabsTrigger> */}
 
             <TabsTrigger
               value="cost-approval"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0"
             >
               Cost Approval
             </TabsTrigger>
 
             <TabsTrigger
               value="action-logs"
-              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-brand border-r border-gray-200 last:border-r-0"
             >
               Logs
             </TabsTrigger>
@@ -4392,7 +4563,7 @@ export const TicketDetailsPage = () => {
               <TabsList className="w-full mb-6">
                 <TabsTrigger
                   value="analytics"
-                  className="w-full data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black"
+                  className="w-full data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-brand text-black"
                 >
                   <svg
                     width="16"
@@ -4411,7 +4582,7 @@ export const TicketDetailsPage = () => {
                 </TabsTrigger>
                 <TabsTrigger
                   value="details"
-                  className="w-full data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-[#C72030] text-black"
+                  className="w-full data-[state=active]:bg-[#EDEAE3] bg-[#FFFFFF] data-[state=active]:text-brand text-black"
                 >
                   <svg
                     width="18"
@@ -4458,7 +4629,7 @@ export const TicketDetailsPage = () => {
                               <div key="red-flag" className="flex items-center justify-center w-full gap-1">
                                 Red Flag
                                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="16" viewBox="0 0 13 16" fill="none">
-                                  <path d="M1 8.5V15.5C1 15.642 0.952 15.7607 0.856 15.856C0.76 15.9513 0.641 15.9993 0.499 16C0.357 16.0007 0.238333 15.9527 0.143 15.856C0.0476668 15.7593 0 15.6407 0 15.5V1.308C0 1.07934 0.0773332 0.887338 0.232 0.732004C0.386667 0.576671 0.578667 0.499338 0.808 0.500004H6.521C6.71433 0.500004 6.887 0.559004 7.039 0.677004C7.191 0.795004 7.28567 0.951671 7.323 1.147L7.593 2.5H12.193C12.4217 2.5 12.6133 2.57667 12.768 2.73C12.9227 2.88334 13 3.07334 13 3.3V9.7C13 9.92667 12.9227 10.1167 12.768 10.27C12.6133 10.4233 12.4213 10.5 12.192 10.5H8.48C8.28667 10.5 8.114 10.441 7.962 10.323C7.81 10.205 7.71533 10.0483 7.678 9.853L7.407 8.5H1Z" fill="#C72030" />
+                                  <path d="M1 8.5V15.5C1 15.642 0.952 15.7607 0.856 15.856C0.76 15.9513 0.641 15.9993 0.499 16C0.357 16.0007 0.238333 15.9527 0.143 15.856C0.0476668 15.7593 0 15.6407 0 15.5V1.308C0 1.07934 0.0773332 0.887338 0.232 0.732004C0.386667 0.576671 0.578667 0.499338 0.808 0.500004H6.521C6.71433 0.500004 6.887 0.559004 7.039 0.677004C7.191 0.795004 7.28567 0.951671 7.323 1.147L7.593 2.5H12.193C12.4217 2.5 12.6133 2.57667 12.768 2.73C12.9227 2.88334 13 3.07334 13 3.3V9.7C13 9.92667 12.9227 10.1167 12.768 10.27C12.6133 10.4233 12.4213 10.5 12.192 10.5H8.48C8.28667 10.5 8.114 10.441 7.962 10.323C7.81 10.205 7.71533 10.0483 7.678 9.853L7.407 8.5H1Z" fill='var(--color-primary)' />
                                 </svg>
                               </div>,
                               <div key="golden-ticket" className="flex items-center justify-center w-full gap-1">
@@ -4542,7 +4713,7 @@ export const TicketDetailsPage = () => {
                         className="flex items-center justify-center rounded-lg mr-4"
                         style={{ background: "#EDEAE3", width: 62, height: 62 }}
                       >
-                        <Ticket style={{ color: '#C72030', width: '24px', height: '24px' }} />
+                        <Ticket className="w-6 h-6 text-brand" />
                       </div>
                       <div className="flex flex-col justify-center">
                         <span
@@ -4577,12 +4748,12 @@ export const TicketDetailsPage = () => {
                         >
                           <path
                             d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                            stroke="#C72030"
+                            stroke='var(--color-primary)'
                             strokeWidth="2"
                           />
                           <path
                             d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                            stroke="#C72030"
+                            stroke='var(--color-primary)'
                             strokeWidth="2"
                           />
                         </svg>
@@ -4626,12 +4797,12 @@ export const TicketDetailsPage = () => {
                         >
                           <path
                             d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                            stroke="#C72030"
+                            stroke='var(--color-primary)'
                             strokeWidth="2"
                           />
                           <path
                             d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                            stroke="#C72030"
+                            stroke='var(--color-primary)'
                             strokeWidth="2"
                           />
                         </svg>
@@ -4666,7 +4837,7 @@ export const TicketDetailsPage = () => {
                         className="flex items-center justify-center rounded-lg mr-4"
                         style={{ background: "#EDEAE3", width: 62, height: 62 }}
                       >
-                        <Ticket className="w-6 h-6" style={{ color: '#C72030' }} />
+                        <Ticket className="w-6 h-6 text-brand" />
                       </div>
                       <div className="flex flex-col justify-center w-full">
                         <div className="flex justify-between w-full">
@@ -4775,12 +4946,12 @@ export const TicketDetailsPage = () => {
                         >
                           <path
                             d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                            stroke="#C72030"
+                            stroke='var(--color-primary)'
                             strokeWidth="2"
                           />
                           <path
                             d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                            stroke="#C72030"
+                            stroke='var(--color-primary)'
                             strokeWidth="2"
                           />
                         </svg>
@@ -4892,12 +5063,12 @@ export const TicketDetailsPage = () => {
                         >
                           <path
                             d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
-                            stroke="#C72030"
+                            stroke='var(--color-primary)'
                             strokeWidth="2"
                           />
                           <path
                             d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-                            stroke="#C72030"
+                            stroke='var(--color-primary)'
                             strokeWidth="2"
                           />
                         </svg>
@@ -4979,7 +5150,7 @@ export const TicketDetailsPage = () => {
                     <Card className="w-full">
                       <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                         <div style={{ width: '40px', height: '40px' }} className="rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                          <Ticket className="w-5 h-5" style={{ color: '#C72030' }} />
+                          <Ticket className="w-5 h-5 text-brand" />
                         </div>
                         <h3 className="text-lg font-semibold uppercase text-black">
                           Ticket Details
@@ -5075,7 +5246,7 @@ export const TicketDetailsPage = () => {
                               {ticketData.issue_status || '-'}
                             </button>
                             <div className='mb-2'>
-                              <button className='w-full py-1 bg-[#FFCFCF] rounded-full text-[#C72030] text-xs px-3 font-semibold'>
+                              <button className='w-full py-1 bg-[#FFCFCF] rounded-full text-brand text-xs px-3 font-semibold'>
                                 {getPriorityLabel(ticketData.priority)}
                               </button>
                             </div>
@@ -5144,7 +5315,7 @@ export const TicketDetailsPage = () => {
                               )}
                               {ticketData.is_flagged && (
                                 <svg xmlns="http://www.w3.org/2000/svg" width="17" height="19" viewBox="0 0 17 19" fill="none">
-                                  <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill="#C72030" stroke="#C72030" />
+                                  <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill='var(--color-primary)' stroke='var(--color-primary)' />
                                 </svg>
                               )}
                             </div>
@@ -5164,6 +5335,9 @@ export const TicketDetailsPage = () => {
                             { label: 'Updated By', value: ticketData.updated_by || '-' },
                             { label: 'Mode', value: ticketData.complaint_mode || '-' },
                             { label: 'Identification', value: ticketData.proactive_reactive || '-' },
+                          ],
+                          [
+                            { label: 'Customer Name', value: ticketData.entity_name || '-' },
                           ],
                         ].map((row, rIdx) => (
                           <div
@@ -5209,7 +5383,7 @@ export const TicketDetailsPage = () => {
                     <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                          <FileText className="w-6 h-6 text-[#C72030]" />
+                          <FileText className="w-6 h-6 text-brand" />
                         </div>
                         <h3 className="text-lg font-semibold uppercase text-black">
                           Additional Details
@@ -5239,7 +5413,7 @@ export const TicketDetailsPage = () => {
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <ClipboardList className="w-6 h-6 text-[#C72030]" />
+                        <ClipboardList className="w-6 h-6 text-brand" />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
                         Association
@@ -5253,7 +5427,7 @@ export const TicketDetailsPage = () => {
                     {/* <div className="mb-4 pb-3 border-b border-gray-200">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-gray-600">Association Type:</span>
-                        <span className="px-3 py-1 text-sm font-semibold text-white bg-[#C72030] rounded-full">
+                        <span className="px-3 py-1 text-sm font-semibold text-white bg-brand rounded-full">
                           {ticketData.asset_service || ticketData.service_or_asset || 'Asset'}
                         </span>
                       </div>
@@ -5379,12 +5553,64 @@ export const TicketDetailsPage = () => {
                   </div>
                 </div>
 
+                {/* Parent Complaint Card - Only show if data exists */}
+                {ticketData?.parent_complaint && (
+                  <Card className="w-full bg-white rounded-lg shadow-sm border">
+                    <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <Ticket className="w-5 h-5" style={{ color: '#C72030' }} />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-black">
+                        Parent Complaint
+                      </h3>
+                    </div>
+                    <div className="bg-white overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-center">Action</TableHead>
+                            <TableHead>Ticket ID</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Sub Category</TableHead>
+                            <TableHead>Created By</TableHead>
+                            <TableHead>Assigned To</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell className="text-center">
+                              <button
+                                type="button"
+                                title="View Ticket"
+                                className="inline-flex items-center justify-center text-gray-600 hover:text-[#C72030]"
+                                onClick={() => navigate(`/maintenance/ticket/details/${ticketData.parent_complaint.id}`)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {ticketData.parent_complaint.id || '-'}
+                            </TableCell>
+                            <TableCell>{ticketData.parent_complaint.desc || '-'}</TableCell>
+                            <TableCell>{ticketData.parent_complaint.category_type || '-'}</TableCell>
+                            <TableCell>{ticketData.parent_complaint.sub_category_type || '-'}</TableCell>
+                            <TableCell>{ticketData.parent_complaint.created_by || '-'}</TableCell>
+                            <TableCell>{ticketData.parent_complaint.assigned_to || '-'}</TableCell>
+                            
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </Card>
+                )}
+
                 <Card className="w-full bg-white rounded-lg shadow-sm border">
                   {/* Header (consistent) */}
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                        <FileText className="w-6 h-6 text-brand" />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
                         Ticket Management
@@ -5453,10 +5679,11 @@ export const TicketDetailsPage = () => {
                           title="Flag"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="17" height="19" viewBox="0 0 17 19" fill="none">
-                            <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill="#C72030" stroke="#C72030" />
+                            <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill='var(--color-primary)' stroke='var(--color-primary)' />
                           </svg>
                         </button>
                       )}
+                      {shouldShow("Ticket", "update") && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -5467,6 +5694,7 @@ export const TicketDetailsPage = () => {
                         <Edit className="w-4 h-4 mr-1" />
                         {(loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons) ? 'Loading...' : 'Edit'}
                       </Button>
+                      )}
                     </div>
                   </div>
 
@@ -5932,7 +6160,7 @@ export const TicketDetailsPage = () => {
                                       value={ticketMgmtFormData.rca_text || ''}
                                       onChange={(e) => handleTicketMgmtInputChange('rca_text', e.target.value)}
                                       placeholder="Enter Root Cause Analysis"
-                                      className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-[#C72030] hover:border-[#C72030] resize-vertical"
+                                      className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
                                     />
                                   </div>
                                 );
@@ -6022,7 +6250,7 @@ export const TicketDetailsPage = () => {
                                     value={ticketMgmtFormData.corrective_action_text || ''}
                                     onChange={(e) => handleTicketMgmtInputChange('corrective_action_text', e.target.value)}
                                     placeholder="Enter Corrective Action"
-                                    className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-[#C72030] hover:border-[#C72030] resize-vertical"
+                                    className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
                                   />
                                 </div>
                               );
@@ -6044,7 +6272,7 @@ export const TicketDetailsPage = () => {
                                     value={ticketMgmtFormData.preventive_action_text || ''}
                                     onChange={(e) => handleTicketMgmtInputChange('preventive_action_text', e.target.value)}
                                     placeholder="Enter Preventive Action"
-                                    className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-[#C72030] hover:border-[#C72030] resize-vertical"
+                                    className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
                                   />
                                 </div>
                               );
@@ -6062,7 +6290,7 @@ export const TicketDetailsPage = () => {
                                   focus:outline-none
                                   focus:border-[2px]
                                   focus:border-[#1976d2]
-                                  hover:border-[#C72030]
+                                  hover:border-brand
                                   resize-vertical"
                                 style={{ fontSize: '14px', height: '107px' }}
                               />
@@ -6116,7 +6344,7 @@ export const TicketDetailsPage = () => {
                           <Button
                             type="submit"
                             disabled={submittingTicketMgmt}
-                            className="bg-[#C72030] hover:bg-[#A01825] text-white px-8"
+                            className="bg-brand hover:bg-brand-hover text-white px-8"
                           >
                             {submittingTicketMgmt ? 'Saving...' : 'Submit'}
                           </Button>
@@ -6131,7 +6359,7 @@ export const TicketDetailsPage = () => {
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9] rounded-t-lg">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <DollarSign className="w-6 h-6 text-[#C72030]" />
+                        <DollarSign className="w-6 h-6 text-brand" />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
                         Cost Involve
@@ -6150,13 +6378,13 @@ export const TicketDetailsPage = () => {
                         tabIndex={0}
                         onClick={() => setCostInvolveEnabled(v => !v)}
                         onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setCostInvolveEnabled(v => !v)}
-                        // className="cursor-pointer outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#C72030] rounded-full transition-transform"
+                        // className="cursor-pointer outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand rounded-full transition-transform"
                         style={{ transform: costInvolveEnabled ? 'scaleX(1)' : 'scaleX(-1)' }}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="20" viewBox="0 0 22 14" fill="none">
                           <path fillRule="evenodd" clipRule="evenodd" d="M16.3489 9.70739H6.13079C4.13825 9.70739 2.55444 8.12357 2.55444 6.13104C2.55444 4.1385 4.13825 2.55469 6.13079 2.55469H16.3489C18.3415 2.55469 19.9253 4.1385 19.9253 6.13104C19.9253 8.12357 18.3415 9.70739 16.3489 9.70739Z" fill="#DEDEDE" />
                           <g filter="url(#filter0_dd_2611_3818)">
-                            <path fillRule="evenodd" clipRule="evenodd" d="M6.1308 11.2396C8.95246 11.2396 11.2399 8.95222 11.2399 6.13055C11.2399 3.30889 8.95246 1.02148 6.1308 1.02148C3.30914 1.02148 1.02173 3.30889 1.02173 6.13055C1.02173 8.95222 3.30914 11.2396 6.1308 11.2396Z" fill="#C72030" />
+                            <path fillRule="evenodd" clipRule="evenodd" d="M6.1308 11.2396C8.95246 11.2396 11.2399 8.95222 11.2399 6.13055C11.2399 3.30889 8.95246 1.02148 6.1308 1.02148C3.30914 1.02148 1.02173 3.30889 1.02173 6.13055C1.02173 8.95222 3.30914 11.2396 6.1308 11.2396Z" fill='var(--color-primary)' />
                             <path d="M6.1311 1.14941C8.88208 1.14958 11.1125 3.37984 11.1125 6.13086C11.1124 8.88174 8.88198 11.1121 6.1311 11.1123C3.38009 11.1123 1.14982 8.88184 1.14966 6.13086C1.14966 3.37974 3.37998 1.14941 6.1311 1.14941Z" stroke="url(#paint0_linear_2611_3818)" strokeWidth="0.255453" />
                             <path d="M6.1311 1.14941C8.88208 1.14958 11.1125 3.37984 11.1125 6.13086C11.1124 8.88174 8.88198 11.1121 6.1311 11.1123C3.38009 11.1123 1.14982 8.88184 1.14966 6.13086C1.14966 3.37974 3.37998 1.14941 6.1311 1.14941Z" stroke="url(#paint1_linear_2611_3818)" strokeWidth="0.255453" />
                           </g>
@@ -6227,10 +6455,10 @@ export const TicketDetailsPage = () => {
                                       borderColor: '#DAD7D0',
                                     },
                                     '&:hover fieldset': {
-                                      borderColor: '#C72030',
+                                      borderColor: 'var(--color-primary)',
                                     },
                                     '&.Mui-focused fieldset': {
-                                      borderColor: '#C72030',
+                                      borderColor: 'var(--color-primary)',
                                     },
                                   },
                                   '& .MuiInputBase-input': {
@@ -6277,10 +6505,10 @@ export const TicketDetailsPage = () => {
                                       borderColor: '#DAD7D0',
                                     },
                                     '&:hover fieldset': {
-                                      borderColor: '#C72030',
+                                      borderColor: 'var(--color-primary)',
                                     },
                                     '&.Mui-focused fieldset': {
-                                      borderColor: '#C72030',
+                                      borderColor: 'var(--color-primary)',
                                     },
                                   },
                                   '& .MuiInputBase-input': {
@@ -6305,10 +6533,10 @@ export const TicketDetailsPage = () => {
                                       borderColor: '#DAD7D0',
                                     },
                                     '&:hover fieldset': {
-                                      borderColor: '#C72030',
+                                      borderColor: 'var(--color-primary)',
                                     },
                                     '&.Mui-focused fieldset': {
-                                      borderColor: '#C72030',
+                                      borderColor: 'var(--color-primary)',
                                     },
                                   },
                                   '& .MuiInputBase-input': {
@@ -6318,7 +6546,7 @@ export const TicketDetailsPage = () => {
                                   '& .MuiInputLabel-root': {
                                     fontSize: '14px',
                                     '&.Mui-focused': {
-                                      color: '#C72030',
+                                      color: 'var(--color-primary)',
                                     },
                                   },
                                 }}
@@ -6387,7 +6615,7 @@ export const TicketDetailsPage = () => {
                                       justifyContent: 'flex-start',
                                       fontSize: '14px',
                                       '&:hover': {
-                                        borderColor: '#C72030',
+                                        borderColor: 'var(--color-primary)',
                                         backgroundColor: '#F2F2F2',
                                       },
                                     }}
@@ -6426,7 +6654,7 @@ export const TicketDetailsPage = () => {
       focus:outline-none
       focus:border-[2px]
       focus:border-[#1976d2]
-      hover:border-[#C72030]
+      hover:border-brand
       resize-vertical"
                                   style={{ fontSize: '14px', height: '107px' }}
                                 />
@@ -6456,7 +6684,7 @@ export const TicketDetailsPage = () => {
                         <button
                           type="button"
                           onClick={addCostRow}
-                          className="text-[#C72030] text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2"
+                          className="text-brand text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2"
                           title="Add Row"
                         >
                           <Plus className="w-4 h-4" />
@@ -6465,7 +6693,7 @@ export const TicketDetailsPage = () => {
                           type="button"
                           onClick={removeCostRow}
                           disabled={costRows.length <= 1}
-                          className={`text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2 ${costRows.length <= 1 ? 'opacity-50 cursor-not-allowed' : 'text-[#C72030]'
+                          className={`text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2 ${costRows.length <= 1 ? 'opacity-50 cursor-not-allowed' : 'text-brand'
                             }`}
                           title="Remove Row"
                         >
@@ -6479,7 +6707,7 @@ export const TicketDetailsPage = () => {
                           type="button"
                           onClick={handleSubmitCostApproval}
                           disabled={submittingCostApproval}
-                          className={`bg-[#C72030] text-white text-[13px] font-semibold px-8 py-2.5 rounded transition-colors ${submittingCostApproval
+                          className={`bg-brand text-white text-[13px] font-semibold px-8 py-2.5 rounded transition-colors ${submittingCostApproval
                             ? 'opacity-50 cursor-not-allowed'
                             : 'hover:bg-[#A01828]'
                             }`}
@@ -6619,13 +6847,14 @@ export const TicketDetailsPage = () => {
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                        <FileText className="w-6 h-6 text-brand" />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
                         Ticket Closure
                       </h3>
 
                     </div>
+                    {shouldShow("Ticket", "update") && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -6636,6 +6865,7 @@ export const TicketDetailsPage = () => {
                       <Edit className="w-4 h-4 mr-1" />
                       {loadingResponsiblePersons ? 'Loading...' : 'Edit'}
                     </Button>
+                    )}
                   </div>
 
                   {/* Body */}
@@ -6924,7 +7154,7 @@ export const TicketDetailsPage = () => {
                                   value={ticketClosureFormData.preventive_action_text || ''}
                                   onChange={(e) => handleTicketClosureInputChange('preventive_action_text', e.target.value)}
                                   placeholder="Enter Preventive Action"
-                                  className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[100px] focus:outline-none focus:border-[#C72030] hover:border-[#C72030] resize-vertical"
+                                  className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[100px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
                                 />
                               ) : (
                                 <Select
@@ -7258,10 +7488,10 @@ export const TicketDetailsPage = () => {
                                       borderWidth: '1px',
                                     },
                                     '&:hover fieldset': {
-                                      borderColor: '#C72030',
+                                      borderColor: 'var(--color-primary)',
                                     },
                                     '&.Mui-focused fieldset': {
-                                      borderColor: '#C72030',
+                                      borderColor: 'var(--color-primary)',
                                     },
                                   },
                                   '& .MuiInputBase-input': {
@@ -7344,7 +7574,7 @@ export const TicketDetailsPage = () => {
                           <Button
                             type="submit"
                             disabled={submittingTicketClosure}
-                            className="bg-[#C72030] hover:bg-[#A01825] text-white px-8"
+                            className="bg-brand hover:bg-brand-hover text-white px-8"
                           >
                             {submittingTicketClosure ? 'Saving...' : 'Submit'}
                           </Button>
@@ -7359,12 +7589,13 @@ export const TicketDetailsPage = () => {
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <MapPin className="w-6 h-6" style={{ color: "#C72030" }} />
+                        <MapPin className="w-6 h-6 text-brand" />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
                         Location Details
                       </h3>
                     </div>
+                    {shouldShow("Ticket", "update") && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -7375,13 +7606,14 @@ export const TicketDetailsPage = () => {
                       <Edit className="w-4 h-4 mr-1" />
                       Edit
                     </Button>
+                    )}
                   </div>
 
                   <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
                     {!isEditingLocation ? (
                       <div className="relative w-full px-4">
                         <div
-                          className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
+                          className="absolute top-[38px] left-0 right-0 h-0.5 bg-brand z-0"
                           style={{
                             left: `calc(9%)`,
                             right: `calc(9%)`,
@@ -7404,7 +7636,7 @@ export const TicketDetailsPage = () => {
                               <div className="text-sm text-gray-500 mb-2 mt-1">
                                 {item.label}
                               </div>
-                              <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-1" />
+                              <div className="w-[14px] h-[14px] rounded-full bg-brand z-1" />
                               <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
                                 {item.value}
                               </div>
@@ -7570,7 +7802,7 @@ export const TicketDetailsPage = () => {
                           <Button
                             type="submit"
                             disabled={submittingLocation}
-                            className="bg-[#C72030] hover:bg-[#A01825] text-white px-8"
+                            className="bg-brand hover:bg-brand-hover text-white px-8"
                           >
                             {submittingLocation ? 'Saving...' : 'Submit'}
                           </Button>
@@ -7584,7 +7816,7 @@ export const TicketDetailsPage = () => {
                   <Card className="w-full bg-white rounded-lg shadow-sm border">
                     <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <Paperclip className="w-6 h-6" style={{ color: '#C72030' }} />
+                        <Paperclip className="w-6 h-6 text-brand" />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
                         Attachments
@@ -7698,6 +7930,84 @@ export const TicketDetailsPage = () => {
                       ) : (
                         <p className="text-xs text-gray-400">No attachments</p>
                       )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Feedbacks Card */}
+                {ticketData.feedbacks && Array.isArray(ticketData.feedbacks) && ticketData.feedbacks.length > 0 && (
+                  <Card className="w-full bg-white rounded-lg shadow-sm border">
+                    <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <Star className="w-6 h-6 text-brand" />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-black">
+                        Feedback
+                      </h3>
+                    </div>
+                    <CardContent className="pt-4 bg-[#FAFAF8] border border-t-0 border-[#D9D9D9]">
+                      <div className="flex flex-col gap-4">
+                        {ticketData.feedbacks.map((feedback: { id: number; comment?: string; rating?: number; created_at?: string }) => {
+                          const rating = feedback.rating ?? 0;
+                          const emojis = [
+                            { emoji: '😞', label: 'Very Unhappy', activeColor: '#EF4444' },
+                            { emoji: '😕', label: 'Unhappy', activeColor: '#F97316' },
+                            { emoji: '😐', label: 'Neutral', activeColor: '#EAB308' },
+                            { emoji: '🙂', label: 'Happy', activeColor: '#84CC16' },
+                            { emoji: '😄', label: 'Very Happy', activeColor: '#22C55E' },
+                          ];
+                          return (
+                            <div key={feedback.id} className="bg-white rounded-lg border border-[#E5E0D3] p-4 flex flex-col gap-3">
+                              <div className="flex items-center gap-3">
+                                {emojis.map((item, idx) => {
+                                  const isActive = idx < rating;
+                                  return (
+                                    <div key={idx} className="flex flex-col items-center gap-1">
+                                      <span
+                                        style={{
+                                          fontSize: '28px',
+                                          filter: isActive ? 'none' : 'grayscale(100%)',
+                                          opacity: isActive ? 1 : 0.35,
+                                          transition: 'filter 0.2s, opacity 0.2s',
+                                        }}
+                                        title={item.label}
+                                      >
+                                        {item.emoji}
+                                      </span>
+                                      <span
+                                        className="text-[10px] font-medium"
+                                        style={{ color: isActive ? item.activeColor : '#9CA3AF' }}
+                                      >
+                                        {idx + 1}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                                {/* <div className="ml-2 flex items-center gap-1">
+                                  {Array.from({ length: 5 }).map((_, idx) => (
+                                    <Star
+                                      key={idx}
+                                      className="w-4 h-4"
+                                      style={{ color: idx < rating ? '#F59E0B' : '#D1D5DB' }}
+                                      fill={idx < rating ? '#F59E0B' : 'none'}
+                                    />
+                                  ))}
+                                  <span className="text-sm font-semibold text-gray-700 ml-1">{rating}/5</span>
+                                </div> */}
+                              </div>
+                              {feedback.comment && (
+                                <div className="flex items-start gap-2 bg-[#F6F4EE] rounded-md px-3 py-2">
+                                  <MessageSquare className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                                  <p className="text-sm text-gray-700">{feedback.comment}</p>
+                                </div>
+                              )}
+                              <div className="text-xs text-gray-400">
+                                {formatDateToDDMMYYYY(feedback.created_at)}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </CardContent>
                   </Card>
                 )}
@@ -7885,7 +8195,7 @@ export const TicketDetailsPage = () => {
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <MessageSquare className="w-6 h-6" style={{ color: '#C72030' }} />
+                        <MessageSquare className="w-6 h-6 text-brand" />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
                         Comments
@@ -8002,8 +8312,8 @@ export const TicketDetailsPage = () => {
                           htmlFor="internal-file-input"
                           sx={{
                             marginLeft: '8px',
-                            borderColor: '#C72030',
-                            color: '#C72030',
+                            borderColor: 'var(--color-primary)',
+                            color: 'var(--color-primary)',
                             textTransform: 'none',
                             fontFamily: 'Work Sans, sans-serif',
                             fontWeight: 500,
@@ -8126,8 +8436,8 @@ export const TicketDetailsPage = () => {
                           component="label"
                           htmlFor="customer-file-input"
                           sx={{
-                            borderColor: '#C72030',
-                            color: '#C72030',
+                            borderColor: 'var(--color-primary)',
+                            color: 'var(--color-primary)',
                             textTransform: 'none',
                             fontFamily: 'Work Sans, sans-serif',
                             fontWeight: 500,
@@ -8146,17 +8456,13 @@ export const TicketDetailsPage = () => {
 
                     {/* Submit Comment Button (centered) */}
                     <div className="flex justify-center mt-6 pb-6">
-                      <button
-                        type="button"
+                      <Button
                         onClick={handleSubmitComment}
                         disabled={submittingComment}
-                        className={`bg-[#C72030] text-white text-[12px] font-medium px-6 py-2 transition-colors ${submittingComment
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'hover:bg-[#A01828]'
-                          }`}
+                        className="text-[12px] font-medium px-6 py-2"
                       >
                         {submittingComment ? 'Submitting...' : 'Submit Comment'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </Card>
@@ -8169,9 +8475,9 @@ export const TicketDetailsPage = () => {
                       <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                         <div className="w-6 h-6">
                           <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 18 26" fill="none">
-                            <path d="M9 25.0908H2C1.73478 25.0908 1.48043 24.9644 1.29289 24.7394C1.10536 24.5143 1 24.2091 1 23.8908V2.29082C1 1.97256 1.10536 1.66734 1.29289 1.44229C1.48043 1.21725 1.73478 1.09082 2 1.09082H16C16.2652 1.09082 16.5196 1.21725 16.7071 1.44229C16.8946 1.66734 17 1.97256 17 2.29082V13.0908M14.75 25.0908V17.2908" stroke="#C72030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M12 19.0908L12.8333 18.4242L14.5 17.0908L16.1667 18.4242L17 19.0908" stroke="#C72030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M5 8.09082H13M5 13.0908H9" stroke="#C72030" stroke-width="2" stroke-linecap="round" />
+                            <path d="M9 25.0908H2C1.73478 25.0908 1.48043 24.9644 1.29289 24.7394C1.10536 24.5143 1 24.2091 1 23.8908V2.29082C1 1.97256 1.10536 1.66734 1.29289 1.44229C1.48043 1.21725 1.73478 1.09082 2 1.09082H16C16.2652 1.09082 16.5196 1.21725 16.7071 1.44229C16.8946 1.66734 17 1.97256 17 2.29082V13.0908M14.75 25.0908V17.2908" stroke='var(--color-primary)' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M12 19.0908L12.8333 18.4242L14.5 17.0908L16.1667 18.4242L17 19.0908" stroke='var(--color-primary)' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M5 8.09082H13M5 13.0908H9" stroke='var(--color-primary)' stroke-width="2" stroke-linecap="round" />
                           </svg>
                         </div>
                       </div>
@@ -8203,11 +8509,11 @@ export const TicketDetailsPage = () => {
                               {/* Vertical Progress Line */}
                               <div className="flex ml-1 mt-[-10px] mb-4 items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="26" viewBox="0 0 18 26" fill="none">
-                                  <path d="M9 25.0908H2C1.73478 25.0908 1.48043 24.9644 1.29289 24.7394C1.10536 24.5143 1 24.2091 1 23.8908V2.29082C1 1.97256 1.10536 1.66734 1.29289 1.44229C1.48043 1.21725 1.73478 1.09082 2 1.09082H16C16.2652 1.09082 16.5196 1.21725 16.7071 1.44229C16.8946 1.66734 17 1.97256 17 2.29082V13.0908M14.75 25.0908V17.2908" stroke="#C72030" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                  <path d="M12 19.0908L12.8333 18.4242L14.5 17.0908L16.1667 18.4242L17 19.0908" stroke="#C72030" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                  <path d="M5 8.09082H13M5 13.0908H9" stroke="#C72030" strokeWidth="1.5" strokeLinecap="round" />
+                                  <path d="M9 25.0908H2C1.73478 25.0908 1.48043 24.9644 1.29289 24.7394C1.10536 24.5143 1 24.2091 1 23.8908V2.29082C1 1.97256 1.10536 1.66734 1.29289 1.44229C1.48043 1.21725 1.73478 1.09082 2 1.09082H16C16.2652 1.09082 16.5196 1.21725 16.7071 1.44229C16.8946 1.66734 17 1.97256 17 2.29082V13.0908M14.75 25.0908V17.2908" stroke='var(--color-primary)' strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                  <path d="M12 19.0908L12.8333 18.4242L14.5 17.0908L16.1667 18.4242L17 19.0908" stroke='var(--color-primary)' strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                  <path d="M5 8.09082H13M5 13.0908H9" stroke='var(--color-primary)' strokeWidth="1.5" strokeLinecap="round" />
                                 </svg>
-                                <h4 style={{ marginLeft: '8px', fontWeight: '500', color: '#C72030' }}>Logs</h4>
+                                <h4 style={{ marginLeft: '8px', fontWeight: '500', color: 'var(--color-primary)' }}>Logs</h4>
                               </div>
 
                               {/* Container for dots and line */}
@@ -8215,7 +8521,7 @@ export const TicketDetailsPage = () => {
                                 {/* Vertical line - extends to connect all dots */}
                                 {sorted.length > 1 && (
                                   <div
-                                    className="absolute left-[13px] top-0 w-[2px] bg-[#C72030]"
+                                    className="absolute left-[13px] top-0 w-[2px] bg-brand"
                                     style={{
                                       height: `calc(100% - 24px)`
                                     }}
@@ -8234,7 +8540,7 @@ export const TicketDetailsPage = () => {
                                         {/* Dot aligned exactly on line */}
                                         <div className="relative">
                                           <span
-                                            className={`block w-3 h-3 rounded-full border-2 ml-2 bg-[#C72030] border-[#C72030]`}
+                                            className={`block w-3 h-3 rounded-full border-2 ml-2 bg-brand border-brand`}
                                           />
                                         </div>
 
@@ -8329,7 +8635,7 @@ export const TicketDetailsPage = () => {
                 <Card className="w-full">
                   <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div style={{ width: '40px', height: '40px' }} className="rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <Ticket className="w-5 h-5" style={{ color: '#C72030' }} />
+                      <Ticket className="w-5 h-5 text-brand" />
                     </div>
                     <h3 className="text-lg font-semibold uppercase text-black">
                       Ticket Details
@@ -8425,7 +8731,7 @@ export const TicketDetailsPage = () => {
                           {ticketData.issue_status || '-'}
                         </button>
                         <div className='mb-2'>
-                          <button className='w-full py-1 bg-[#FFCFCF] rounded-full text-[#C72030] text-xs px-3 font-semibold'>
+                          <button className='w-full py-1 bg-[#FFCFCF] rounded-full text-brand text-xs px-3 font-semibold'>
                             {getPriorityLabel(ticketData.priority)}
                           </button>
                         </div>
@@ -8494,7 +8800,7 @@ export const TicketDetailsPage = () => {
                           )}
                           {ticketData.is_flagged && (
                             <svg xmlns="http://www.w3.org/2000/svg" width="17" height="19" viewBox="0 0 17 19" fill="none">
-                              <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill="#C72030" stroke="#C72030" />
+                              <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill='var(--color-primary)' stroke='var(--color-primary)' />
                             </svg>
                           )}
                         </div>
@@ -8514,6 +8820,9 @@ export const TicketDetailsPage = () => {
                         { label: 'Updated By', value: ticketData.updated_by || '-' },
                         { label: 'Mode', value: ticketData.complaint_mode || '-' },
                         { label: 'Identification', value: ticketData.proactive_reactive || '-' },
+                      ],
+                      [
+                        { label: 'Customer Name', value: ticketData.entity_name || '-' },
                       ],
                     ].map((row, rIdx) => (
                       <div
@@ -8559,7 +8868,7 @@ export const TicketDetailsPage = () => {
                 <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <FileText className="w-6 h-6 text-[#C72030]" />
+                      <FileText className="w-6 h-6 text-brand" />
                     </div>
                     <h3 className="text-lg font-semibold uppercase text-black">
                       Requester Details
@@ -8589,7 +8898,7 @@ export const TicketDetailsPage = () => {
               <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <ClipboardList className="w-6 h-6 text-[#C72030]" />
+                    <ClipboardList className="w-6 h-6 text-brand" />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-black">
                     Association
@@ -8603,7 +8912,7 @@ export const TicketDetailsPage = () => {
                 {/* <div className="mb-4 pb-3 border-b border-gray-200">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-gray-600">Association Type:</span>
-                        <span className="px-3 py-1 text-sm font-semibold text-white bg-[#C72030] rounded-full">
+                        <span className="px-3 py-1 text-sm font-semibold text-white bg-brand rounded-full">
                           {ticketData.asset_service || ticketData.service_or_asset || 'Asset'}
                         </span>
                       </div>
@@ -8729,12 +9038,63 @@ export const TicketDetailsPage = () => {
               </div>
             </div>
 
+            {/* Parent Complaint Card - Only show if data exists */}
+            {ticketData?.parent_complaint && (
+              <Card className="w-full bg-white rounded-lg shadow-sm border">
+                <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <Ticket className="w-5 h-5" style={{ color: '#C72030' }} />
+                  </div>
+                  <h3 className="text-lg font-semibold uppercase text-black">
+                    Parent Complaint
+                  </h3>
+                </div>
+                <div className="bg-white overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Ticket ID</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Sub Category</TableHead>
+                        <TableHead>Created By</TableHead>
+                        <TableHead>Assigned To</TableHead>
+                        <TableHead className="text-center">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium">
+                          {ticketData.parent_complaint.id || '-'}
+                        </TableCell>
+                        <TableCell>{ticketData.parent_complaint.desc || '-'}</TableCell>
+                        <TableCell>{ticketData.parent_complaint.category_type || '-'}</TableCell>
+                        <TableCell>{ticketData.parent_complaint.sub_category_type || '-'}</TableCell>
+                        <TableCell>{ticketData.parent_complaint.created_by || '-'}</TableCell>
+                        <TableCell>{ticketData.parent_complaint.assigned_to || '-'}</TableCell>
+                        <TableCell className="text-center">
+                          <button
+                            type="button"
+                            title="View Ticket"
+                            className="inline-flex items-center justify-center text-gray-600 hover:text-[#C72030]"
+                            onClick={() => navigate(`/tickets/details/${ticketData.parent_complaint.id}`)}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
+            )}
+
             <Card className="w-full bg-white rounded-lg shadow-sm border">
               {/* Header (consistent) */}
               <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                    <FileText className="w-6 h-6 text-brand" />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-black">
                     Ticket Management
@@ -8803,10 +9163,11 @@ export const TicketDetailsPage = () => {
                       title="Flag"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="17" height="19" viewBox="0 0 17 19" fill="none">
-                        <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill="#C72030" stroke="#C72030" />
+                        <path d="M8.73145 0.5C8.85649 0.5 8.96486 0.537942 9.07324 0.630859C9.18052 0.722846 9.24902 0.836423 9.28125 0.990234V0.991211L9.54785 2.33301L9.62793 2.73535H14.9453C15.1136 2.73541 15.2354 2.78882 15.3438 2.90234C15.4533 3.01712 15.5121 3.1555 15.5117 3.35156V12.2939C15.5117 12.4916 15.4524 12.6312 15.3428 12.7461C15.2344 12.8596 15.1132 12.9125 14.9463 12.9121H9.4248C9.29987 12.9121 9.1923 12.8731 9.08398 12.7803C8.9758 12.6875 8.90589 12.5728 8.87402 12.417L8.6084 11.0791L8.52832 10.6768H1.64551V17.8828C1.64542 18.0801 1.58599 18.2192 1.47656 18.334C1.36825 18.4475 1.24682 18.5003 1.08008 18.5C0.911684 18.4996 0.788548 18.4457 0.679688 18.332C0.570877 18.2183 0.511811 18.08 0.511719 17.8828V1.11719C0.51181 0.919961 0.570878 0.781717 0.679688 0.667969C0.761428 0.582619 0.851184 0.531283 0.961914 0.510742L1.08008 0.5H8.73145Z" fill='var(--color-primary)' stroke='var(--color-primary)' />
                       </svg>
                     </button>
                   )}
+                  {shouldShow("Ticket", "update") && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -8817,6 +9178,7 @@ export const TicketDetailsPage = () => {
                     <Edit className="w-4 h-4 mr-1" />
                     {(loadingComplaintStatus || loadingComplaintModes || loadingResponsiblePersons) ? 'Loading...' : 'Edit'}
                   </Button>
+                  )}
                 </div>
               </div>
 
@@ -9282,7 +9644,7 @@ export const TicketDetailsPage = () => {
                                   value={ticketMgmtFormData.rca_text || ''}
                                   onChange={(e) => handleTicketMgmtInputChange('rca_text', e.target.value)}
                                   placeholder="Enter Root Cause Analysis"
-                                  className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-[#C72030] hover:border-[#C72030] resize-vertical"
+                                  className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
                                 />
                               </div>
                             );
@@ -9367,7 +9729,7 @@ export const TicketDetailsPage = () => {
                                 value={ticketMgmtFormData.corrective_action_text || ''}
                                 onChange={(e) => handleTicketMgmtInputChange('corrective_action_text', e.target.value)}
                                 placeholder="Enter Corrective Action"
-                                className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-[#C72030] hover:border-[#C72030] resize-vertical"
+                                className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
                               />
                             </div>
                           );
@@ -9389,7 +9751,7 @@ export const TicketDetailsPage = () => {
                                 value={ticketMgmtFormData.preventive_action_text || ''}
                                 onChange={(e) => handleTicketMgmtInputChange('preventive_action_text', e.target.value)}
                                 placeholder="Enter Preventive Action"
-                                className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-[#C72030] hover:border-[#C72030] resize-vertical"
+                                className="w-full border border-[#dcdcdc] rounded px-3 py-3 text-sm min-h-[80px] focus:outline-none focus:border-brand hover:border-brand resize-vertical"
                               />
                             </div>
                           );
@@ -9407,7 +9769,7 @@ export const TicketDetailsPage = () => {
                                   focus:outline-none
                                   focus:border-[2px]
                                   focus:border-[#1976d2]
-                                  hover:border-[#C72030]
+                                  hover:border-brand
                                   resize-vertical"
                             style={{ fontSize: '14px', height: '107px' }}
                           />
@@ -9461,7 +9823,7 @@ export const TicketDetailsPage = () => {
                       <Button
                         type="submit"
                         disabled={submittingTicketMgmt}
-                        className="bg-[#C72030] hover:bg-[#A01825] text-white px-8"
+                        className="bg-brand hover:bg-brand-hover text-white px-8"
                       >
                         {submittingTicketMgmt ? 'Saving...' : 'Submit'}
                       </Button>
@@ -9476,7 +9838,7 @@ export const TicketDetailsPage = () => {
               <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9] rounded-t-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <DollarSign className="w-6 h-6 text-[#C72030]" />
+                    <DollarSign className="w-6 h-6 text-brand" />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-black">
                     Cost Involve
@@ -9495,13 +9857,13 @@ export const TicketDetailsPage = () => {
                     tabIndex={0}
                     onClick={() => setCostInvolveEnabled(v => !v)}
                     onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setCostInvolveEnabled(v => !v)}
-                    // className="cursor-pointer outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#C72030] rounded-full transition-transform"
+                    // className="cursor-pointer outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand rounded-full transition-transform"
                     style={{ transform: costInvolveEnabled ? 'scaleX(1)' : 'scaleX(-1)' }}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="20" viewBox="0 0 22 14" fill="none">
                       <path fillRule="evenodd" clipRule="evenodd" d="M16.3489 9.70739H6.13079C4.13825 9.70739 2.55444 8.12357 2.55444 6.13104C2.55444 4.1385 4.13825 2.55469 6.13079 2.55469H16.3489C18.3415 2.55469 19.9253 4.1385 19.9253 6.13104C19.9253 8.12357 18.3415 9.70739 16.3489 9.70739Z" fill="#DEDEDE" />
                       <g filter="url(#filter0_dd_2611_3818)">
-                        <path fillRule="evenodd" clipRule="evenodd" d="M6.1308 11.2396C8.95246 11.2396 11.2399 8.95222 11.2399 6.13055C11.2399 3.30889 8.95246 1.02148 6.1308 1.02148C3.30914 1.02148 1.02173 3.30889 1.02173 6.13055C1.02173 8.95222 3.30914 11.2396 6.1308 11.2396Z" fill="#C72030" />
+                        <path fillRule="evenodd" clipRule="evenodd" d="M6.1308 11.2396C8.95246 11.2396 11.2399 8.95222 11.2399 6.13055C11.2399 3.30889 8.95246 1.02148 6.1308 1.02148C3.30914 1.02148 1.02173 3.30889 1.02173 6.13055C1.02173 8.95222 3.30914 11.2396 6.1308 11.2396Z" fill='var(--color-primary)' />
                         <path d="M6.1311 1.14941C8.88208 1.14958 11.1125 3.37984 11.1125 6.13086C11.1124 8.88174 8.88198 11.1121 6.1311 11.1123C3.38009 11.1123 1.14982 8.88184 1.14966 6.13086C1.14966 3.37974 3.37998 1.14941 6.1311 1.14941Z" stroke="url(#paint0_linear_2611_3818)" strokeWidth="0.255453" />
                         <path d="M6.1311 1.14941C8.88208 1.14958 11.1125 3.37984 11.1125 6.13086C11.1124 8.88174 8.88198 11.1121 6.1311 11.1123C3.38009 11.1123 1.14982 8.88184 1.14966 6.13086C1.14966 3.37974 3.37998 1.14941 6.1311 1.14941Z" stroke="url(#paint1_linear_2611_3818)" strokeWidth="0.255453" />
                       </g>
@@ -9572,10 +9934,10 @@ export const TicketDetailsPage = () => {
                                   borderColor: '#DAD7D0',
                                 },
                                 '&:hover fieldset': {
-                                  borderColor: '#C72030',
+                                  borderColor: 'var(--color-primary)',
                                 },
                                 '&.Mui-focused fieldset': {
-                                  borderColor: '#C72030',
+                                  borderColor: 'var(--color-primary)',
                                 },
                               },
                               '& .MuiInputBase-input': {
@@ -9622,10 +9984,10 @@ export const TicketDetailsPage = () => {
                                   borderColor: '#DAD7D0',
                                 },
                                 '&:hover fieldset': {
-                                  borderColor: '#C72030',
+                                  borderColor: 'var(--color-primary)',
                                 },
                                 '&.Mui-focused fieldset': {
-                                  borderColor: '#C72030',
+                                  borderColor: 'var(--color-primary)',
                                 },
                               },
                               '& .MuiInputBase-input': {
@@ -9650,10 +10012,10 @@ export const TicketDetailsPage = () => {
                                   borderColor: '#DAD7D0',
                                 },
                                 '&:hover fieldset': {
-                                  borderColor: '#C72030',
+                                  borderColor: 'var(--color-primary)',
                                 },
                                 '&.Mui-focused fieldset': {
-                                  borderColor: '#C72030',
+                                  borderColor: 'var(--color-primary)',
                                 },
                               },
                               '& .MuiInputBase-input': {
@@ -9663,7 +10025,7 @@ export const TicketDetailsPage = () => {
                               '& .MuiInputLabel-root': {
                                 fontSize: '14px',
                                 '&.Mui-focused': {
-                                  color: '#C72030',
+                                  color: 'var(--color-primary)',
                                 },
                               },
                             }}
@@ -9732,7 +10094,7 @@ export const TicketDetailsPage = () => {
                                   justifyContent: 'flex-start',
                                   fontSize: '14px',
                                   '&:hover': {
-                                    borderColor: '#C72030',
+                                    borderColor: 'var(--color-primary)',
                                     backgroundColor: '#F2F2F2',
                                   },
                                 }}
@@ -9771,7 +10133,7 @@ export const TicketDetailsPage = () => {
       focus:outline-none
       focus:border-[2px]
       focus:border-[#1976d2]
-      hover:border-[#C72030]
+      hover:border-brand
       resize-vertical"
                               style={{ fontSize: '14px', height: '107px' }}
                             />
@@ -9801,7 +10163,7 @@ export const TicketDetailsPage = () => {
                     <button
                       type="button"
                       onClick={addCostRow}
-                      className="text-[#C72030] text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2"
+                      className="text-brand text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2"
                       title="Add Row"
                     >
                       <Plus className="w-4 h-4" />
@@ -9810,7 +10172,7 @@ export const TicketDetailsPage = () => {
                       type="button"
                       onClick={removeCostRow}
                       disabled={costRows.length <= 1}
-                      className={`text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2 ${costRows.length <= 1 ? 'opacity-50 cursor-not-allowed' : 'text-[#C72030]'
+                      className={`text-xs flex items-center gap-1 hover:underline rounded-full bg-[#F6F4EE] p-2 ${costRows.length <= 1 ? 'opacity-50 cursor-not-allowed' : 'text-brand'
                         }`}
                       title="Remove Row"
                     >
@@ -9824,7 +10186,7 @@ export const TicketDetailsPage = () => {
                       type="button"
                       onClick={handleSubmitCostApproval}
                       disabled={submittingCostApproval}
-                      className={`bg-[#C72030] text-white text-[13px] font-semibold px-8 py-2.5 rounded transition-colors ${submittingCostApproval
+                      className={`bg-brand text-white text-[13px] font-semibold px-8 py-2.5 rounded transition-colors ${submittingCostApproval
                         ? 'opacity-50 cursor-not-allowed'
                         : 'hover:bg-[#A01828]'
                         }`}
@@ -9962,13 +10324,14 @@ export const TicketDetailsPage = () => {
               <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                    <FileText className="w-6 h-6 text-brand" />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-black">
                     Ticket Closure
                   </h3>
 
                 </div>
+                {shouldShow("Ticket", "update") && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -9979,6 +10342,7 @@ export const TicketDetailsPage = () => {
                   <Edit className="w-4 h-4 mr-1" />
                   {loadingResponsiblePersons ? 'Loading...' : 'Edit'}
                 </Button>
+                )}
               </div>
 
               {/* Body */}
@@ -10600,10 +10964,10 @@ export const TicketDetailsPage = () => {
                                   borderWidth: '1px',
                                 },
                                 '&:hover fieldset': {
-                                  borderColor: '#C72030',
+                                  borderColor: 'var(--color-primary)',
                                 },
                                 '&.Mui-focused fieldset': {
-                                  borderColor: '#C72030',
+                                  borderColor: 'var(--color-primary)',
                                 },
                               },
                               '& .MuiInputBase-input': {
@@ -10686,7 +11050,7 @@ export const TicketDetailsPage = () => {
                       <Button
                         type="submit"
                         disabled={submittingTicketClosure}
-                        className="bg-[#C72030] hover:bg-[#A01825] text-white px-8"
+                        className="bg-brand hover:bg-brand-hover text-white px-8"
                       >
                         {submittingTicketClosure ? 'Saving...' : 'Submit'}
                       </Button>
@@ -10703,12 +11067,13 @@ export const TicketDetailsPage = () => {
               <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <MapPin className="w-6 h-6" style={{ color: "#C72030" }} />
+                    <MapPin className="w-6 h-6 text-brand" />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-black">
                     Location Details
                   </h3>
                 </div>
+                {shouldShow("Ticket", "update") && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -10719,13 +11084,14 @@ export const TicketDetailsPage = () => {
                   <Edit className="w-4 h-4 mr-1" />
                   Edit
                 </Button>
+                )}
               </div>
 
               <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
                 {!isEditingLocation ? (
                   <div className="relative w-full px-4">
                     <div
-                      className="absolute top-[38px] left-0 right-0 h-0.5 bg-[#C72030] z-0"
+                      className="absolute top-[38px] left-0 right-0 h-0.5 bg-brand z-0"
                       style={{
                         left: `calc(9%)`,
                         right: `calc(9%)`,
@@ -10748,7 +11114,7 @@ export const TicketDetailsPage = () => {
                           <div className="text-sm text-gray-500 mb-2 mt-1">
                             {item.label}
                           </div>
-                          <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-1" />
+                          <div className="w-[14px] h-[14px] rounded-full bg-brand z-1" />
                           <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
                             {item.value}
                           </div>
@@ -10913,7 +11279,7 @@ export const TicketDetailsPage = () => {
                       <Button
                         type="submit"
                         disabled={submittingLocation}
-                        className="bg-[#C72030] hover:bg-[#A01825] text-white px-8"
+                        className="bg-brand hover:bg-brand-hover text-white px-8"
                       >
                         {submittingLocation ? 'Saving...' : 'Submit'}
                       </Button>
@@ -10928,7 +11294,7 @@ export const TicketDetailsPage = () => {
               <Card className="w-full bg-white rounded-lg shadow-sm border">
                 <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <Paperclip className="w-6 h-6" style={{ color: '#C72030' }} />
+                    <Paperclip className="w-6 h-6 text-brand" />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-black">
                     Attachments
@@ -10969,7 +11335,7 @@ export const TicketDetailsPage = () => {
                                       document: url,
                                       type: 'image'
                                     });
-                                    setIsModalOpen(true);
+                                    setShowImagePreview(true);
                                   }}
                                   type="button"
                                 >
@@ -10988,7 +11354,7 @@ export const TicketDetailsPage = () => {
                                       document: url,
                                       type: 'image'
                                     });
-                                    setIsModalOpen(true);
+                                    setShowImagePreview(true);
                                   }}
                                   onError={(e) => {
                                     (e.target as HTMLImageElement).style.display = 'none';
@@ -11033,7 +11399,7 @@ export const TicketDetailsPage = () => {
                                     doctype: attachment.doctype,
                                     type: 'document'
                                   });
-                                  setIsModalOpen(true);
+                                  setShowImagePreview(true);
                                 }}
                               >
                                 <Download className="w-4 h-4" />
@@ -11050,12 +11416,90 @@ export const TicketDetailsPage = () => {
               </Card>
             )}
 
+            {/* Feedbacks Card */}
+            {ticketData.feedbacks && Array.isArray(ticketData.feedbacks) && ticketData.feedbacks.length > 0 && (
+              <Card className="w-full bg-white rounded-lg shadow-sm border">
+                <div className="flex items-center gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                    <Star className="w-6 h-6 text-brand" />
+                  </div>
+                  <h3 className="text-lg font-semibold uppercase text-black">
+                    Feedback
+                  </h3>
+                </div>
+                <CardContent className="pt-4 bg-[#FAFAF8] border border-t-0 border-[#D9D9D9]">
+                  <div className="flex flex-col gap-4">
+                    {ticketData.feedbacks.map((feedback: { id: number; comment?: string; rating?: number; created_at?: string }) => {
+                      const rating = feedback.rating ?? 0;
+                      const emojis = [
+                        { emoji: '😞', label: 'Very Unhappy', activeColor: '#EF4444' },
+                        { emoji: '😕', label: 'Unhappy', activeColor: '#F97316' },
+                        { emoji: '😐', label: 'Neutral', activeColor: '#EAB308' },
+                        { emoji: '🙂', label: 'Happy', activeColor: '#84CC16' },
+                        { emoji: '😄', label: 'Very Happy', activeColor: '#22C55E' },
+                      ];
+                      return (
+                        <div key={feedback.id} className="bg-white rounded-lg border border-[#E5E0D3] p-4 flex flex-col gap-3">
+                          <div className="flex items-center gap-3">
+                            {emojis.map((item, idx) => {
+                              const isActive = idx < rating;
+                              return (
+                                <div key={idx} className="flex flex-col items-center gap-1">
+                                  <span
+                                    style={{
+                                      fontSize: '28px',
+                                      filter: isActive ? 'none' : 'grayscale(100%)',
+                                      opacity: isActive ? 1 : 0.35,
+                                      transition: 'filter 0.2s, opacity 0.2s',
+                                    }}
+                                    title={item.label}
+                                  >
+                                    {item.emoji}
+                                  </span>
+                                  <span
+                                    className="text-[10px] font-medium"
+                                    style={{ color: isActive ? item.activeColor : '#9CA3AF' }}
+                                  >
+                                    {idx + 1}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                            {/* <div className="ml-2 flex items-center gap-1">
+                              {Array.from({ length: 5 }).map((_, idx) => (
+                                <Star
+                                  key={idx}
+                                  className="w-4 h-4"
+                                  style={{ color: idx < rating ? '#F59E0B' : '#D1D5DB' }}
+                                  fill={idx < rating ? '#F59E0B' : 'none'}
+                                />
+                              ))}
+                              <span className="text-sm font-semibold text-gray-700 ml-1">{rating}/5</span>
+                            </div> */}
+                          </div>
+                          {feedback.comment && (
+                            <div className="flex items-start gap-2 bg-[#F6F4EE] rounded-md px-3 py-2">
+                              <MessageSquare className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                              <p className="text-sm text-gray-700">{feedback.comment}</p>
+                            </div>
+                          )}
+                          <div className="text-xs text-gray-400">
+                            {formatDateToDDMMYYYY(feedback.created_at)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="w-full bg-white rounded-lg shadow-sm border">
               {/* Header */}
               <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                    <MessageSquare className="w-6 h-6" style={{ color: '#C72030' }} />
+                    <MessageSquare className="w-6 h-6 text-brand" />
                   </div>
                   <h3 className="text-lg font-semibold uppercase text-black">
                     Comments
@@ -11172,8 +11616,8 @@ export const TicketDetailsPage = () => {
                       htmlFor="internal-file-input"
                       sx={{
                         marginLeft: '8px',
-                        borderColor: '#C72030',
-                        color: '#C72030',
+                        borderColor: 'var(--color-primary)',
+                        color: 'var(--color-primary)',
                         textTransform: 'none',
                         fontFamily: 'Work Sans, sans-serif',
                         fontWeight: 500,
@@ -11296,8 +11740,8 @@ export const TicketDetailsPage = () => {
                       component="label"
                       htmlFor="customer-file-input"
                       sx={{
-                        borderColor: '#C72030',
-                        color: '#C72030',
+                        borderColor: 'var(--color-primary)',
+                        color: 'var(--color-primary)',
                         textTransform: 'none',
                         fontFamily: 'Work Sans, sans-serif',
                         fontWeight: 500,
@@ -11320,7 +11764,7 @@ export const TicketDetailsPage = () => {
                     type="button"
                     onClick={handleSubmitComment}
                     disabled={submittingComment}
-                    className={`bg-[#C72030] text-white text-[12px] font-medium px-6 py-2 transition-colors ${submittingComment
+                    className={`bg-brand text-white text-[12px] font-medium px-6 py-2 transition-colors ${submittingComment
                       ? 'opacity-50 cursor-not-allowed'
                       : 'hover:bg-[#A01828]'
                       }`}
@@ -11339,9 +11783,9 @@ export const TicketDetailsPage = () => {
                   <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
                     <div className="w-6 h-6">
                       <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 18 26" fill="none">
-                        <path d="M9 25.0908H2C1.73478 25.0908 1.48043 24.9644 1.29289 24.7394C1.10536 24.5143 1 24.2091 1 23.8908V2.29082C1 1.97256 1.10536 1.66734 1.29289 1.44229C1.48043 1.21725 1.73478 1.09082 2 1.09082H16C16.2652 1.09082 16.5196 1.21725 16.7071 1.44229C16.8946 1.66734 17 1.97256 17 2.29082V13.0908M14.75 25.0908V17.2908" stroke="#C72030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M12 19.0908L12.8333 18.4242L14.5 17.0908L16.1667 18.4242L17 19.0908" stroke="#C72030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M5 8.09082H13M5 13.0908H9" stroke="#C72030" stroke-width="2" stroke-linecap="round" />
+                        <path d="M9 25.0908H2C1.73478 25.0908 1.48043 24.9644 1.29289 24.7394C1.10536 24.5143 1 24.2091 1 23.8908V2.29082C1 1.97256 1.10536 1.66734 1.29289 1.44229C1.48043 1.21725 1.73478 1.09082 2 1.09082H16C16.2652 1.09082 16.5196 1.21725 16.7071 1.44229C16.8946 1.66734 17 1.97256 17 2.29082V13.0908M14.75 25.0908V17.2908" stroke='var(--color-primary)' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M12 19.0908L12.8333 18.4242L14.5 17.0908L16.1667 18.4242L17 19.0908" stroke='var(--color-primary)' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M5 8.09082H13M5 13.0908H9" stroke='var(--color-primary)' stroke-width="2" stroke-linecap="round" />
                       </svg>
                     </div>
                   </div>
@@ -11373,11 +11817,11 @@ export const TicketDetailsPage = () => {
                           {/* Vertical Progress Line */}
                           <div className="flex ml-1 mt-[-10px] mb-4 items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="26" viewBox="0 0 18 26" fill="none">
-                              <path d="M9 25.0908H2C1.73478 25.0908 1.48043 24.9644 1.29289 24.7394C1.10536 24.5143 1 24.2091 1 23.8908V2.29082C1 1.97256 1.10536 1.66734 1.29289 1.44229C1.48043 1.21725 1.73478 1.09082 2 1.09082H16C16.2652 1.09082 16.5196 1.21725 16.7071 1.44229C16.8946 1.66734 17 1.97256 17 2.29082V13.0908M14.75 25.0908V17.2908" stroke="#C72030" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M12 19.0908L12.8333 18.4242L14.5 17.0908L16.1667 18.4242L17 19.0908" stroke="#C72030" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              <path d="M5 8.09082H13M5 13.0908H9" stroke="#C72030" strokeWidth="1.5" strokeLinecap="round" />
+                              <path d="M9 25.0908H2C1.73478 25.0908 1.48043 24.9644 1.29289 24.7394C1.10536 24.5143 1 24.2091 1 23.8908V2.29082C1 1.97256 1.10536 1.66734 1.29289 1.44229C1.48043 1.21725 1.73478 1.09082 2 1.09082H16C16.2652 1.09082 16.5196 1.21725 16.7071 1.44229C16.8946 1.66734 17 1.97256 17 2.29082V13.0908M14.75 25.0908V17.2908" stroke='var(--color-primary)' strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M12 19.0908L12.8333 18.4242L14.5 17.0908L16.1667 18.4242L17 19.0908" stroke='var(--color-primary)' strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M5 8.09082H13M5 13.0908H9" stroke='var(--color-primary)' strokeWidth="1.5" strokeLinecap="round" />
                             </svg>
-                            <h4 style={{ marginLeft: '8px', fontWeight: '500', color: '#C72030' }}>Logs</h4>
+                            <h4 style={{ marginLeft: '8px', fontWeight: '500', color: 'var(--color-primary)' }}>Logs</h4>
                           </div>
 
                           {/* Container for dots and line */}
@@ -11385,7 +11829,7 @@ export const TicketDetailsPage = () => {
                             {/* Vertical line - extends to connect all dots */}
                             {sorted.length > 1 && (
                               <div
-                                className="absolute left-[13px] top-0 w-[2px] bg-[#C72030]"
+                                className="absolute left-[13px] top-0 w-[2px] bg-brand"
                                 style={{
                                   height: `calc(100% - 24px)`
                                 }}
@@ -11404,7 +11848,7 @@ export const TicketDetailsPage = () => {
                                     {/* Dot aligned exactly on line */}
                                     <div className="relative">
                                       <span
-                                        className={`block w-3 h-3 rounded-full border-2 ml-2 bg-[#C72030] border-[#C72030]`}
+                                        className={`block w-3 h-3 rounded-full border-2 ml-2 bg-brand border-brand`}
                                       />
                                     </div>
 
@@ -11477,7 +11921,7 @@ export const TicketDetailsPage = () => {
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                        <FileText className="w-6 h-6 text-brand" />
                       </div>
                       <h3 className="text-lg font-semibold uppercase text-black">
                         Dynamic Association
@@ -11510,10 +11954,10 @@ export const TicketDetailsPage = () => {
                                 }
                               }}
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: 'var(--color-primary)',
                                 width: "16px",
                                 height: "16px",
-                                borderColor: "#C72030",
+                                borderColor: 'var(--color-primary)',
                               }}
                             />
                             <span className="text-sm text-gray-700">Asset</span>
@@ -11537,10 +11981,10 @@ export const TicketDetailsPage = () => {
                                 }
                               }}
                               style={{
-                                accentColor: "#C72030",
+                                accentColor: 'var(--color-primary)',
                                 width: "16px",
                                 height: "16px",
-                                borderColor: "#C72030",
+                                borderColor: 'var(--color-primary)',
                               }}
                             />
                             <span className="text-sm text-gray-700">Service</span>
@@ -11610,7 +12054,7 @@ export const TicketDetailsPage = () => {
                   <CardHeader className="pb-4 lg:pb-6">
                     <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
                       <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
-                        <User className="w-6 h-6 text-[#C72030]" />
+                        <User className="w-6 h-6 text-brand" />
                       </div>
                       <span>CREATOR INFORMATION</span>
                     </CardTitle>
@@ -11673,7 +12117,7 @@ export const TicketDetailsPage = () => {
                   <CardHeader className="pb-4 lg:pb-6">
                     <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
                       <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
-                        <MapPin className="w-6 h-6 text-[#C72030]" />
+                        <MapPin className="w-6 h-6 text-brand" />
                       </div>
                       <span>LOCATION INFORMATION</span>
                     </CardTitle>
@@ -11800,7 +12244,7 @@ export const TicketDetailsPage = () => {
                   <CardHeader className="pb-4 lg:pb-6">
                     <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
                       <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
-                        <FileSearch className="w-6 h-6 text-[#C72030]" />
+                        <FileSearch className="w-6 h-6 text-brand" />
                       </div>
                       <span>SURVEY INFORMATION</span>
                     </CardTitle>
@@ -11868,7 +12312,7 @@ export const TicketDetailsPage = () => {
                   <CardHeader className="pb-4 lg:pb-6">
                     <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
                       <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
-                        <PlusCircle className="w-6 h-6 text-[#C72030]" />
+                        <PlusCircle className="w-6 h-6 text-brand" />
                       </div>
                       <span>ADDITIONAL INFORMATION</span>
                     </CardTitle>
@@ -11981,6 +12425,59 @@ export const TicketDetailsPage = () => {
                   </p>
                 </div>
               )}
+
+              {/* Feedbacks Card */}
+              <Card className="w-full">
+                <CardHeader className="pb-4 lg:pb-6">
+                  <CardTitle className="flex items-center gap-2 text-[#1A1A1A] text-lg lg:text-xl">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-white text-xs">
+                      <MessageSquare className="w-6 h-6 text-brand" />
+                    </div>
+                    <span>FEEDBACKS</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  {ticketData?.feedbacks && ticketData.feedbacks.length > 0 ? (
+                    <div className="space-y-4">
+                      {ticketData.feedbacks.map((fb: { id?: number; rating?: string | number; comment?: string; created_at?: string }, idx: number) => {
+                        const emojiMap: Record<number, string> = { 1: '😢', 2: '😕', 3: '😐', 4: '🙂', 5: '😄' };
+                        const labelMap: Record<number, string> = { 1: 'Very Dissatisfied', 2: 'Dissatisfied', 3: 'Neutral', 4: 'Satisfied', 5: 'Very Satisfied' };
+                        const rating = Number(fb.rating);
+                        return (
+                          <div key={fb.id || idx} className="flex items-start gap-4 p-4 border rounded-lg bg-gray-50">
+                            <div className="flex flex-col items-center gap-1 min-w-[60px]">
+                              <span className="text-3xl">{emojiMap[rating] || '😐'}</span>
+                              <span className="text-xs text-gray-500 text-center">{labelMap[rating] || '-'}</span>
+                            </div>
+                            <div className="flex-1">
+                              {fb.comment && (
+                                <p className="text-sm text-gray-700">{fb.comment}</p>
+                              )}
+                              {fb.created_at && (
+                                <p className="text-xs text-gray-400 mt-1">{formatDateToDDMMYYYY(fb.created_at)}</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <MessageSquare className="w-12 h-12 text-gray-300 mb-3" />
+                      <p className="text-gray-500">No feedbacks available</p>
+                      {isTicketClosed && (
+                        <Button
+                          onClick={() => setIsFeedbackModalOpen(true)}
+                          className="mt-3 bg-brand hover:bg-brand-hover text-white"
+                          size="sm"
+                        >
+                          Add Feedback
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
@@ -11991,13 +12488,13 @@ export const TicketDetailsPage = () => {
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 overflow-x-auto pb-2">
                 <Button
                   variant="default"
-                  className="flex items-center gap-2 whitespace-nowrap min-w-fit px-4 py-2 rounded-lg bg-[#FBE8EA] border-[#C72030]"
+                  className="flex items-center gap-2 whitespace-nowrap min-w-fit px-4 py-2 rounded-lg bg-[#FBE8EA] border-brand"
                 >
                   <div className="w-4 h-4 rounded flex-shrink-0 bg-red-700"></div>
-                  <span className="text-sm font-medium text-[#C72030]">
+                  <span className="text-sm font-medium text-brand">
                     Ticket Attachments
                   </span>
-                  <span className="text-xs text-[#C72030]">
+                  <span className="text-xs text-brand">
                     {ticketData.documents?.length || 0} Files
                   </span>
                 </Button>
@@ -12347,82 +12844,68 @@ export const TicketDetailsPage = () => {
 
           {/* Action Logs Tab */}
           <TabsContent value="action-logs" className="p-4 sm:p-6">
-            {complaintLogs.length > 0 ? (
-              <div className="bg-white rounded-lg border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date/Time</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>By</TableHead>
-                      {/* <TableHead>Priority</TableHead> */}
-                      <TableHead>Details</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {complaintLogs.map((log, index) => (
-                      <TableRow key={log.id || index}>
-                        <TableCell className="font-medium text-sm whitespace-nowrap">
-                          {log.created_at ? formatLogTime(log.created_at) : ''}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={`text-xs ${
-                            log.log_type === 'creation' ? 'bg-green-100 text-green-700'
-                            : log.log_type === 'status_update' ? 'bg-blue-100 text-blue-700'
-                            : log.log_type === 'assignee_change' ? 'bg-purple-100 text-purple-700'
-                            : log.log_type === 'comment' ? 'bg-gray-100 text-gray-700'
-                            : 'bg-gray-100 text-gray-700'
-                          }`}>
-                            {log.log_type === 'creation' ? 'Created'
-                              : log.log_type === 'status_update' ? 'Status Update'
-                              : log.log_type === 'assignee_change' ? 'Assigned'
-                              : log.log_type === 'comment' ? 'Comment'
-                              : 'Update'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {log.log_status ? (
-                            <Badge className="bg-blue-100 text-blue-700 text-xs">
-                              {log.log_status}
-                            </Badge>
-                          ) : '-'}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {log.log_by || log.updated_by || "-"}
-                        </TableCell>
-                        {/* <TableCell className="text-sm">
-                          {getPriorityLabel(log.priority)}
-                        </TableCell> */}
-                        <TableCell className="text-sm">
-                          {log.log_type === 'creation' && log.creation_summary ? (
-                            <span>{log.creation_summary.ticket_raised}</span>
-                          ) : log.log_type === 'assignee_change' && log.assignment_changes ? (
-                            <span>Assigned to: {log.assignment_changes.assigned_to}</span>
-                          ) : log.log_comment && log.log_comment.trim() !== '' ? (
-                            log.log_comment.length > 50 ? (
-                              <Tooltip title={log.log_comment} arrow>
-                                <span className="cursor-help">
-                                  {log.log_comment.substring(0, 50)}...
-                                </span>
-                              </Tooltip>
-                            ) : (
-                              log.log_comment
-                            )
-                          ) : (
-                            "-"
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-8">
-                No action logs found
-              </p>
-            )}
+            <div className="w-full min-w-0 max-w-full">
+              <EnhancedTable
+                data={complaintLogs.map((log: any, index: number) => ({
+                  ...log,
+                  id: log.id ?? `log-${index}`,
+                  dateTime: log.created_at ? formatLogTime(log.created_at) : '',
+                  details: getLogDetailsText(log),
+                }))}
+                columns={ticketLogColumns}
+                renderCell={(item: any, columnKey: string) => {
+                  switch (columnKey) {
+                    case 'dateTime':
+                      return (
+                        <span className="font-medium text-sm whitespace-nowrap">
+                          {item.dateTime || '—'}
+                        </span>
+                      );
+                    case 'log_type':
+                      return (
+                        <Badge className={`text-xs ${getLogTypeBadgeClass(item.log_type)}`}>
+                          {getLogTypeLabel(item.log_type)}
+                        </Badge>
+                      );
+                    case 'log_status':
+                      return item.log_status ? (
+                        <Badge className="bg-blue-100 text-blue-700 text-xs">
+                          {item.log_status}
+                        </Badge>
+                      ) : (
+                        '—'
+                      );
+                    case 'log_by':
+                      return <span className="text-sm">{item.log_by || item.updated_by || '—'}</span>;
+                    case 'details': {
+                      const details = item.details || '—';
+                      if (details !== '—' && details.length > 50) {
+                        return (
+                          <Tooltip title={details} arrow>
+                            <span className="cursor-help text-sm">
+                              {details.substring(0, 50)}...
+                            </span>
+                          </Tooltip>
+                        );
+                      }
+                      return <span className="text-sm">{details}</span>;
+                    }
+                    default:
+                      return '—';
+                  }
+                }}
+                storageKey="ticket-details-action-logs"
+                enableSearch
+                searchTerm={logsSearchTerm}
+                onSearchChange={setLogsSearchTerm}
+                searchPlaceholder="Search logs..."
+                hideTableExport
+                emptyMessage="No action logs found"
+                pagination
+                pageSize={10}
+                getItemId={(item) => String(item.id)}
+              />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
@@ -12488,6 +12971,85 @@ export const TicketDetailsPage = () => {
         jobSheetData={ticketData}
         jobSheetLoading={jobSheetLoading}
       />
+
+      {/* Add Feedback Modal */}
+      {isFeedbackModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 relative">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="bg-brand text-white text-xs font-semibold px-3 py-1 rounded">
+                  {ticketData?.issue_status || 'Closed'}
+                </span>
+              </div>
+              <button
+                onClick={() => { setIsFeedbackModalOpen(false); setFeedbackRating(null); setFeedbackComment(''); }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <h2 className="text-center text-xl font-bold text-brand mb-1">
+              {ticketData?.heading || 'Ticket'}
+            </h2>
+            <p className="text-center text-gray-600 mb-5 text-sm">
+              Please rate your experience with the ticket resolution
+            </p>
+
+            {/* Emoji Rating */}
+            <div className="flex justify-center gap-4 mb-3">
+              {([1, 2, 3, 4, 5] as const).map((val) => {
+                const emojiMap: Record<number, string> = { 1: '😢', 2: '😕', 3: '😐', 4: '🙂', 5: '😄' };
+                const isSelected = feedbackRating === val;
+                return (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setFeedbackRating(val)}
+                    className={`text-4xl transition-transform hover:scale-110 ${isSelected ? 'scale-125 drop-shadow-md' : 'opacity-50 grayscale'}`}
+                  >
+                    {emojiMap[val]}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-center text-sm text-gray-500 mb-4">
+              {feedbackRating
+                ? ({ 1: 'Very Dissatisfied', 2: 'Dissatisfied', 3: 'Neutral', 4: 'Satisfied', 5: 'Very Satisfied' } as Record<number, string>)[feedbackRating]
+                : 'Select a rating'}
+            </p>
+
+            {/* Comment */}
+            <textarea
+              className="w-full border border-gray-300 rounded-md p-3 text-sm resize-none focus:outline-none focus:border-brand mb-5"
+              rows={3}
+              placeholder="Add your feedback comment (optional)"
+              value={feedbackComment}
+              onChange={(e) => setFeedbackComment(e.target.value)}
+            />
+
+            {/* Actions */}
+            <div className="flex justify-center gap-3">
+              <Button
+                variant="outline"
+                onClick={() => { setIsFeedbackModalOpen(false); setFeedbackRating(null); setFeedbackComment(''); }}
+                className="px-6 border-gray-300"
+              >
+                Skip
+              </Button>
+              <Button
+                onClick={handleFeedbackSubmit}
+                disabled={isSubmittingFeedback}
+                className="px-6 bg-brand hover:bg-brand-hover text-white"
+              >
+                {isSubmittingFeedback ? 'Submitting...' : 'Submit Rating'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

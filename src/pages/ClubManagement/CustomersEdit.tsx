@@ -16,146 +16,103 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { InputAdornment, TextField } from "@mui/material";
 import axios from "axios";
-import { Loader2, TrendingUp, Target, Users, DollarSign, BarChart3, Globe } from "lucide-react";
+import { Loader2, TrendingUp, Target, Users, DollarSign, ArrowLeft } from "lucide-react";
 
-// MARKET ANALYSIS TAB COMPONENT
 const MarketAnalysisTab = ({ productData }) => {
-    return (
-        <div className="space-y-10">
-            <div className="bg-gray-200 text-gray-800 p-4 rounded-t-xl mb-0 flex justify-between items-center">
-                <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
-                    {productData?.name || 'Product'} - Market Analysis
-                </h2>
+    const analysisRows = productData?.extendedContent?.detailedMarketAnalysis;
+
+    if (!analysisRows || analysisRows.length === 0) {
+        return (
+            <div className="text-sm text-gray-500">
+                No market analysis data available.
             </div>
-            {productData?.extendedContent?.detailedMarketAnalysis ? (
-                <div className="space-y-8">
-                    <div className="space-y-4">
-                        <div className="bg-gray-200 text-gray-800 px-4 py-2 font-semibold font-poppins text-sm uppercase italic">
-                            MARKET ANALYSIS OVERVIEW
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Market Analysis Overview</h3>
+                <table className="w-full border text-sm">
+                    <thead className="bg-gray-100">
+                        <tr>
+                            <th className="p-2 border text-left">Category</th>
+                            <th className="p-2 border text-left">Key Insights</th>
+                            <th className="p-2 border text-left">Data Points & Metrics</th>
+                            <th className="p-2 border text-left">Strategic Implications</th>
+                            <th className="p-2 border text-left">Priority Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {analysisRows.map((analysis, i) => (
+                            <tr key={i}>
+                                <td className="border p-2 font-medium">{analysis.category}</td>
+                                <td className="border p-2 whitespace-pre-line">{analysis.keyInsights}</td>
+                                <td className="border p-2 whitespace-pre-line">{analysis.dataPoints}</td>
+                                <td className="border p-2 whitespace-pre-line">{analysis.strategicImplications}</td>
+                                <td className="border p-2 text-center">{analysis.priorityLevel}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Market Position Summary</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 bg-brand-light rounded-lg flex items-center justify-center">
+                                <TrendingUp className="w-4 h-4 text-brand" />
+                            </div>
+                            <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Market Share</h4>
                         </div>
-                        <div className="overflow-x-auto border border-[#C4B89D] rounded-xl shadow-lg">
-                            <table className="w-full border-collapse text-[10px] bg-white text-left font-poppins">
-                                <thead>
-                                    <tr className="bg-gray-200 text-gray-800 font-semibold uppercase">
-                                        <th className="border border-[#C4B89D] p-2 w-[15%]">
-                                            Category
-                                        </th>
-                                        <th className="border border-[#C4B89D] p-2 w-[20%]">
-                                            Key Insights
-                                        </th>
-                                        <th className="border border-[#C4B89D] p-2 w-[30%]">
-                                            Data Points & Metrics
-                                        </th>
-                                        <th className="border border-[#C4B89D] p-2 w-[20%]">
-                                            Strategic Implications
-                                        </th>
-                                        <th className="border border-[#C4B89D] p-2 w-[15%]">
-                                            Priority Level
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {productData.extendedContent.detailedMarketAnalysis.map(
-                                        (analysis, i) => (
-                                            <tr
-                                                key={i}
-                                                className={`${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/50"} hover:bg-[#F6F4EE] transition-colors align-top`}
-                                            >
-                                                <td className="border border-[#C4B89D] p-2 font-semibold text-gray-700 break-words">
-                                                    {analysis.category}
-                                                </td>
-                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/80 font-medium leading-relaxed whitespace-pre-line break-words">
-                                                    {analysis.keyInsights}
-                                                </td>
-                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C] leading-relaxed whitespace-pre-line break-words">
-                                                    {analysis.dataPoints}
-                                                </td>
-                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/70 font-medium italic whitespace-pre-line break-words">
-                                                    {analysis.strategicImplications}
-                                                </td>
-                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/60 font-bold text-center">
-                                                    {analysis.priorityLevel}
-                                                </td>
-                                            </tr>
-                                        )
-                                    )}
-                                </tbody>
-                            </table>
+                        <div className="text-xl font-bold text-gray-800">
+                            {analysisRows.reduce((sum, item) => sum + (item.marketShare || 0), 0)}%
                         </div>
+                        <p className="text-xs text-gray-500">Current position</p>
                     </div>
 
-                    <div className="space-y-4">
-                        <div className="bg-gray-200 text-gray-800 px-4 py-2 font-semibold font-poppins text-sm uppercase italic">
-                            MARKET POSITION SUMMARY
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 bg-brand-light rounded-lg flex items-center justify-center">
+                                <Target className="w-4 h-4 text-brand" />
+                            </div>
+                            <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Growth Potential</h4>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                        <TrendingUp className="w-5 h-5 text-gray-600" />
-                                    </div>
-                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                                        Market Share
-                                    </h3>
-                                </div>
-                                <div className="text-2xl font-bold text-gray-600 mb-2">
-                                    {productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.marketShare || 0), 0)}%
-                                </div>
-                                <p className="text-xs text-gray-500">Current position</p>
-                            </div>
-
-                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                        <Target className="w-5 h-5 text-gray-600" />
-                                    </div>
-                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                                        Growth Potential
-                                    </h3>
-                                </div>
-                                <div className="text-2xl font-bold text-gray-600 mb-2">
-                                    {productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.growthPotential || 0), 0)}%
-                                </div>
-                                <p className="text-xs text-gray-500">Projected growth</p>
-                            </div>
-
-                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                        <Users className="w-5 h-5 text-gray-600" />
-                                    </div>
-                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                                        Target Segments
-                                    </h3>
-                                </div>
-                                <div className="text-2xl font-bold text-gray-600 mb-2">
-                                    {productData.extendedContent.detailedMarketAnalysis.length}
-                                </div>
-                                <p className="text-xs text-gray-500">Identified segments</p>
-                            </div>
-
-                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                                        <DollarSign className="w-5 h-5 text-gray-600" />
-                                    </div>
-                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
-                                        Revenue Opportunity
-                                    </h3>
-                                </div>
-                                <div className="text-2xl font-bold text-gray-600 mb-2">
-                                    ${productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.revenueOpportunity || 0), 0)}M
-                                </div>
-                                <p className="text-xs text-gray-500">Potential value</p>
-                            </div>
+                        <div className="text-xl font-bold text-gray-800">
+                            {analysisRows.reduce((sum, item) => sum + (item.growthPotential || 0), 0)}%
                         </div>
+                        <p className="text-xs text-gray-500">Projected growth</p>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 bg-brand-light rounded-lg flex items-center justify-center">
+                                <Users className="w-4 h-4 text-brand" />
+                            </div>
+                            <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Target Segments</h4>
+                        </div>
+                        <div className="text-xl font-bold text-gray-800">
+                            {analysisRows.length}
+                        </div>
+                        <p className="text-xs text-gray-500">Identified segments</p>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 bg-brand-light rounded-lg flex items-center justify-center">
+                                <DollarSign className="w-4 h-4 text-brand" />
+                            </div>
+                            <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Revenue Opportunity</h4>
+                        </div>
+                        <div className="text-xl font-bold text-gray-800">
+                            ${analysisRows.reduce((sum, item) => sum + (item.revenueOpportunity || 0), 0)}M
+                        </div>
+                        <p className="text-xs text-gray-500">Potential value</p>
                     </div>
                 </div>
-            ) : (
-                <div className="p-20 text-center text-[#D3D1C7] font-semibold uppercase text-xl border-4 border-dashed border-[#D3D1C7] rounded-[3rem]">
-                    Market Analysis Data Coming Soon
-                </div>
-            )}
+            </div>
         </div>
     );
 };
@@ -199,9 +156,9 @@ const muiTheme = createTheme({
         MuiCheckbox: {
             styleOverrides: {
                 root: {
-                    color: "#bf213e",
+                    color: "var(--color-primary)",
                     "&.Mui-checked": {
-                        color: "#bf213e",
+                        color: "var(--color-primary)",
                     },
                 },
             },
@@ -211,9 +168,9 @@ const muiTheme = createTheme({
         MuiRadio: {
             styleOverrides: {
                 root: {
-                    color: "#bf213e",
+                    color: "var(--color-primary)",
                     "&.Mui-checked": {
-                        color: "#bf213e",
+                        color: "var(--color-primary)",
                     },
                 },
             },
@@ -372,7 +329,7 @@ const AddressTab = ({ billing, setBilling, shipping, setShipping }) => {
             <div>
                 <h3 className="font-semibold mb-3">
                     Shipping Address
-                    <span className="text-blue-600 text-sm ml-2 cursor-pointer" onClick={copyBillingToShipping}>
+                    <span className="text-brand text-sm ml-2 cursor-pointer" onClick={copyBillingToShipping}>
                         (Copy billing address)
                     </span>
                 </h3>
@@ -447,6 +404,15 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
         };
         fetchLedgers();
     }, []);
+
+    React.useEffect(() => {
+        if (ledgers.length > 0 && !form.lock_account_ledger_id) {
+            const defaultLedger = ledgers[0];
+            if (defaultLedger?.id) {
+                setForm((prev: any) => ({ ...prev, lock_account_ledger_id: defaultLedger.id }));
+            }
+        }
+    }, [ledgers, form.lock_account_ledger_id, setForm]);
 
     React.useEffect(() => {
         if (showConfig) {
@@ -567,7 +533,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
 
             <TextField
                 select
-                label={<span>GST Treatment <span className="text-red-600">*</span></span>}
+                label={<span>GST Treatment <span className="text-brand">*</span></span>}
                 name="gst_treatment"
                 value={form.gst_treatment}
                 onChange={handleChange}
@@ -804,7 +770,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                         <MenuItem key={term.name} value={term.name}>{term.name}</MenuItem>
                     ))}
                     {/* <MenuItem>
-                        <span className="text-blue-600 cursor-pointer" onClick={() => setShowConfig(true)}>
+                        <span className="text-brand cursor-pointer" onClick={() => setShowConfig(true)}>
                             Configure Terms
                         </span>
                     </MenuItem> */}
@@ -845,7 +811,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                                             />
                                         </td>
                                         <td className="border p-2">
-                                            <button className="text-red-600 text-xs" onClick={async () => {
+                                            <button className="text-brand text-xs" onClick={async () => {
                                                 if (row.id) {
                                                     await handleRemovePaymentTerm(row.id, idx);
                                                 } else {
@@ -859,15 +825,15 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                         </table>
                         <div className="flex gap-2 mb-2">
                             <button
-                                className="text-blue-600 text-sm"
+                                className="text-brand text-sm"
                                 onClick={handleAddNewTerm}
                             >
                                 + Add New
                             </button>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2" >
                             <button
-                                className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                                className="bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded"
                                 onClick={handleSaveTerms}
                             >
                                 Save
@@ -902,7 +868,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
 
             {/* More Details toggle */}
             <div className="col-span-2">
-                <span className="text-blue-600 text-sm cursor-pointer" onClick={() => setShowMore(v => !v)}>
+                <span className="text-brand text-sm cursor-pointer" onClick={() => setShowMore(v => !v)}>
                     {showMore ? 'Hide More Details' : 'Add More Details'}
                 </span>
             </div>
@@ -944,7 +910,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
 
             {/* Customer Owner info (display only) */}
             {/* <div className="col-span-2 text-xs text-gray-500 mt-2">
-                    Customer Owner: Assign a user as the customer owner to provide access only to the data of this customer. <a href="#" className="text-blue-600">Learn More</a>
+                    Customer Owner: Assign a user as the customer owner to provide access only to the data of this customer. <a href="#" className="text-brand">Learn More</a>
                 </div> */}
         </div>
     );
@@ -1003,19 +969,27 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
     const addRow = () => {
         setOpeningBalances([
             ...openingBalances,
-            { bill_no: "", date: new Date().toISOString().split('T')[0], due_date: "", account_type: "Invoice", amount: "" }
+            { id: null, bill_no: "", date: new Date().toISOString().split('T')[0], due_date: "", account_type: "Invoice", amount: "" }
         ]);
     };
 
     const removeRow = (index) => {
-        const updated = openingBalances.filter((_, i) => i !== index);
-        setOpeningBalances(updated);
+        const target = openingBalances[index];
+        // Existing backend record: keep it (hidden) and flag it for destruction so the save
+        // payload can send { id, _destroy: true } instead of silently dropping it.
+        if (target?.id) {
+            setOpeningBalances(openingBalances.map((r, i) => i === index ? { ...r, _destroy: true } : r));
+            return;
+        }
+        // Unsaved new row: nothing to destroy on the backend, just remove it locally.
+        setOpeningBalances(openingBalances.filter((_, i) => i !== index));
     };
 
     return (
         <div>
             {openingBalances?.map((row, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-3">
+                row._destroy ? null :
+                <div key={row.id ?? index} className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-3">
 
                     <TextField
                         label="Bill No"
@@ -1052,6 +1026,14 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
                         onChange={(e) => handleChange(index, "account_type", e.target.value)}
                         fullWidth
                         InputLabelProps={{ shrink: true }}
+                        SelectProps={{
+                            MenuProps: {
+                                disablePortal: false,
+                                PaperProps: {
+                                    style: { zIndex: 1500, minWidth: 160, maxHeight: 300 },
+                                },
+                            },
+                        }}
                     >
                         <MenuItem value="Invoice">Invoice</MenuItem>
                         <MenuItem value="Credit note">Credit Note</MenuItem>
@@ -1075,15 +1057,15 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
                     />
 
                     <div className="flex items-center gap-2">
-                        <Button onClick={addRow} className="bg-[#C72030] text-white">
+                        <Button onClick={addRow} className="bg-brand hover:bg-brand-hover text-white">
                             +
                         </Button>
 
-                        {openingBalances.length > 1 && (
+                        {openingBalances.filter(r => !r._destroy).length > 1 && (
                             <Button
                                 onClick={() => removeRow(index)}
                                 variant="outline"
-                                className="border-red-500 text-red-500"
+                                className="border-[#DA7756] text-brand"
                             >
                                 -
                             </Button>
@@ -1154,11 +1136,22 @@ const ContactPersonsTab = ({ rows, setRows }) => {
     };
 
     const handleAddRow = () => {
-        setRows(prev => [...prev, { salutation: '', firstName: '', lastName: '', email: '', workPhone: '', mobile: '' }]);
+        setRows(prev => [...prev, { id: null, salutation: '', firstName: '', lastName: '', email: '', workPhone: '', mobile: '' }]);
     };
 
     const handleDeleteRow = (idx) => {
-        setRows(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
+        setRows(prev => {
+            const visibleCount = prev.filter(r => !r._destroy).length;
+            if (visibleCount === 1) return prev;
+            const target = prev[idx];
+            // Existing backend record: keep it (hidden) and flag it for destruction so the
+            // save payload can send { id, _destroy: true } instead of silently dropping it.
+            if (target?.id) {
+                return prev.map((r, i) => i === idx ? { ...r, _destroy: true } : r);
+            }
+            // Unsaved new row: nothing to destroy on the backend, just remove it locally.
+            return prev.filter((_, i) => i !== idx);
+        });
         // Clean up errors for deleted row
         setRowErrors(prev => {
             const updated = { ...prev };
@@ -1183,95 +1176,101 @@ const ContactPersonsTab = ({ rows, setRows }) => {
                 </thead>
                 <tbody>
                     {rows.map((row, idx) => (
-                        <tr key={idx}>
+                        row._destroy ? null : (
+                        <tr key={row.id ?? idx}>
                             <td className="border p-2">
-                                <select
-                                    className="border rounded px-2 py-1 w-full"
-                                    value={row.salutation}
-                                    onChange={e => handleRowChange(idx, 'salutation', e.target.value)}
-                                >
-                                    <option value="">Select</option>
-                                    <option value="Mr">Mr</option>
-                                    <option value="Ms">Ms</option>
-                                    <option value="Mrs">Mrs</option>
-                                </select>
+                                <FormControl fullWidth size="small">
+                                    <Select
+                                        displayEmpty
+                                        value={row.salutation}
+                                        onChange={e => handleRowChange(idx, 'salutation', e.target.value)}
+                                        renderValue={(val) => val ? val : <span style={{ color: '#aaa' }}>Select</span>}
+                                        sx={{ height: 36 }}
+                                    >
+                                        <MenuItem value=""><em>Select</em></MenuItem>
+                                        <MenuItem value="Mr">Mr</MenuItem>
+                                        <MenuItem value="Ms">Ms</MenuItem>
+                                        <MenuItem value="Mrs">Mrs</MenuItem>
+                                    </Select>
+                                </FormControl>
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.firstName ? 'border-red-500' : ''}`}
+                                    className={`border rounded px-2 py-1 w-full h-9 ${rowErrors[idx]?.firstName ? 'border-[#DA7756]' : ''}`}
                                     value={row.firstName}
                                     onChange={e => handleRowChange(idx, 'firstName', e.target.value)}
                                     placeholder="First Name"
                                 />
                                 {rowErrors[idx]?.firstName && (
-                                    <span className="text-red-500 text-xs">{rowErrors[idx].firstName}</span>
+                                    <span className="text-brand text-xs">{rowErrors[idx].firstName}</span>
                                 )}
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.lastName ? 'border-red-500' : ''}`}
+                                    className={`border rounded px-2 py-1 w-full h-9 ${rowErrors[idx]?.lastName ? 'border-[#DA7756]' : ''}`}
                                     value={row.lastName}
                                     onChange={e => handleRowChange(idx, 'lastName', e.target.value)}
                                     placeholder="Last Name"
                                 />
                                 {rowErrors[idx]?.lastName && (
-                                    <span className="text-red-500 text-xs">{rowErrors[idx].lastName}</span>
+                                    <span className="text-brand text-xs">{rowErrors[idx].lastName}</span>
                                 )}
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.email ? 'border-red-500' : ''}`}
+                                    className={`border rounded px-2 py-1 w-full h-9 ${rowErrors[idx]?.email ? 'border-[#DA7756]' : ''}`}
                                     value={row.email}
                                     onChange={e => handleRowChange(idx, 'email', e.target.value)}
                                     placeholder="example@gmail.com"
                                     type="email"
                                 />
                                 {rowErrors[idx]?.email && (
-                                    <span className="text-red-500 text-xs">{rowErrors[idx].email}</span>
+                                    <span className="text-brand text-xs">{rowErrors[idx].email}</span>
                                 )}
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.workPhone ? 'border-red-500' : ''}`}
+                                    className={`border rounded px-2 py-1 w-full h-9 ${rowErrors[idx]?.workPhone ? 'border-[#DA7756]' : ''}`}
                                     value={row.workPhone}
                                     onChange={e => handleRowChange(idx, 'workPhone', e.target.value)}
                                     placeholder="Work Phone"
                                     type="tel"
                                 />
                                 {rowErrors[idx]?.workPhone && (
-                                    <span className="text-red-500 text-xs">{rowErrors[idx].workPhone}</span>
+                                    <span className="text-brand text-xs">{rowErrors[idx].workPhone}</span>
                                 )}
                             </td>
                             <td className="border p-2">
                                 <input
-                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.mobile ? 'border-red-500' : ''}`}
+                                    className={`border rounded px-2 py-1 w-full h-9 ${rowErrors[idx]?.mobile ? 'border-[#DA7756]' : ''}`}
                                     value={row.mobile}
                                     onChange={e => handleRowChange(idx, 'mobile', e.target.value)}
                                     placeholder="Mobile"
                                     type="tel"
                                 />
                                 {rowErrors[idx]?.mobile && (
-                                    <span className="text-red-500 text-xs">{rowErrors[idx].mobile}</span>
+                                    <span className="text-brand text-xs">{rowErrors[idx].mobile}</span>
                                 )}
                             </td>
                             <td className="border p-2 text-center">
                                 <button
                                     type="button"
-                                    className="text-red-500 text-lg px-2"
+                                    className="text-brand text-lg px-2"
                                     onClick={() => handleDeleteRow(idx)}
                                     title="Delete Row"
-                                    disabled={rows.length === 1}
+                                    disabled={rows.filter(r => !r._destroy).length === 1}
                                 >
                                     &#10005;
                                 </button>
                             </td>
                         </tr>
+                        )
                     ))}
                 </tbody>
             </table>
             <button
                 type="button"
-                className="mt-3 text-blue-600 text-sm"
+                className="mt-3 text-brand text-sm"
                 onClick={handleAddRow}
             >
                 + Add Contact Person
@@ -1295,7 +1294,7 @@ const RemarksTab = ({ remarks, setRemarks }) => (
     <div className="flex flex-col">
         <label className="text-sm text-gray-600 mb-1">Remarks</label>
         <textarea
-            className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+            className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
             rows={5}
             placeholder="Enter remarks (max 500 characters)"
             value={remarks}
@@ -1550,11 +1549,12 @@ const CustomersEdit = () => {
 
     // CONTACT PERSONS
     const [contactPersons, setContactPersons] = useState([
-        { salutation: "", firstName: "", lastName: "", email: "", workPhone: "", mobile: "" }
+        { id: null as number | null, salutation: "", firstName: "", lastName: "", email: "", workPhone: "", mobile: "" }
     ]);
 
     const [openingBalances, setOpeningBalances] = useState([
         {
+            id: null as number | null,
             bill_no: "",
             date: new Date().toISOString().split('T')[0],
             due_date: "",
@@ -1784,6 +1784,8 @@ const CustomersEdit = () => {
         };
 
         const contactPersonsPayload = contactPersons.map(row => ({
+            ...(row.id ? { id: row.id } : {}),
+            ...(row._destroy ? { _destroy: true } : {}),
             first_name: row.firstName,
             last_name: row.lastName,
             salutation: row.salutation,
@@ -1793,11 +1795,13 @@ const CustomersEdit = () => {
         }));
 
         const openingBalancePayload = openingBalances
-            .filter(row => row.bill_no || row.amount) // skip empty rows
+            .filter(row => row._destroy || row.bill_no || row.amount) // skip empty unsaved rows, but always keep destroy markers
             .map(row => {
                 const absAmount = row.amount ? Math.abs(Number(row.amount)) : 0;
                 const signedAmount = row.account_type === "Credit note" ? -absAmount : absAmount;
                 return {
+                    ...(row.id ? { id: row.id } : {}),
+                    ...(row._destroy ? { _destroy: true } : {}),
                     bill_no: row.bill_no || null,
                     date: row.date || null,
                     due_date: row.due_date || null,
@@ -1926,6 +1930,16 @@ const CustomersEdit = () => {
     return (
         <ThemeProvider theme={muiTheme}>
             <div className="p-6 bg-white min-h-screen">
+                <div className="mb-6">
+                    <Button
+                        variant="ghost"
+                        onClick={() => navigate("/accounting/customers")}
+                        className="p-0"
+                    >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back to Customers
+                    </Button>
+                </div>
                 <h1 className="text-2xl font-semibold mb-6">New Customer</h1>
 
                 {/* CUSTOMER TYPE */}
@@ -1997,7 +2011,7 @@ const CustomersEdit = () => {
 
                 {/* DISPLAY NAME */}
                 <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-4">
-                    <div className="text-red-600">Display Name *</div>
+                    <div className="text-brand">Display Name *</div>
                     <TextField
                         name="display_name"
                         placeholder="Enter display name"
@@ -2090,7 +2104,7 @@ const CustomersEdit = () => {
                                 onClick={() => setActiveTab(tab.key)}
                                 className={`flex-1 text-center px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors
     ${activeTab === tab.key
-                                        ? "text-[#C72030] border-b-2 border-[#C72030] bg-[#f9f7f2]/50"
+                                        ? "text-brand border-b-2 border-brand bg-[#f9f7f2]/50"
                                         : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                                     }
   `}
@@ -2170,11 +2184,12 @@ const CustomersEdit = () => {
                 </div>
 
                 {/* BUTTONS */}
-                <div className="flex gap-3 justify-center">
+                <div className="flex gap-3 justify-center" style={{ marginBottom: '100px' }}>
                     <Button
+                        variant="ghost"
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[100px]"
+                        className="fm-button-fix fm-button-brand px-8 py-2 min-w-[100px]"
                     >
                         {loading ? (
                             <>
@@ -2186,7 +2201,7 @@ const CustomersEdit = () => {
                         )}
                     </Button>
 
-                    <Button variant="outline" onClick={() => navigate("/accounting/customers")}>
+                    <Button variant="outline" className="fm-button-fix px-8 py-2" onClick={() => navigate("/accounting/customers")}>
                         Cancel
                     </Button>
                 </div>

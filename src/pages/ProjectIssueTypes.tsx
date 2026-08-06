@@ -216,15 +216,15 @@ const ProjectIssueTypes = () => {
     const renderActions = (item: any) => {
         return (
             <div className="flex gap-2">
-                {shouldShow("Issue Types","update")&&(
-                <Button
-                    size="sm"
-                    variant="ghost"
-                    className="p-1"
-                    onClick={() => openEditDialog(item)}
-                >
-                    <Edit className="w-4 h-4" />
-                </Button>)}
+                {shouldShow("Issue Types", "update") && (
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        className="p-1"
+                        onClick={() => openEditDialog(item)}
+                    >
+                        <Edit className="w-4 h-4" />
+                    </Button>)}
                 {/* <Button
                     size="sm"
                     variant="ghost"
@@ -246,14 +246,15 @@ const ProjectIssueTypes = () => {
 
     const leftActions = (
         <>
-        {shouldShow("Issue Types","create")&&(
-            <Button
-                className="bg-[#C72030] hover:bg-[#A01020] text-white"
-                onClick={openAddDialog}
-            >
-                <Plus className="w-4 h-4 mr-2" />
-                Add
-            </Button>)}
+            {shouldShow("Issue Types", "create") && (
+                <Button
+                    className="fm-button-fix fm-button-brand px-4 py-2"
+                    variant="ghost"
+                    onClick={openAddDialog}
+                >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add
+                </Button>)}
         </>
     )
 
@@ -326,7 +327,8 @@ const ProjectIssueTypes = () => {
                                     Cancel
                                 </Button>
                                 <Button
-                                    className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                                    className="fm-button-fix fm-button-brand px-6"
+                                    variant="ghost"
                                     onClick={handleSubmit}
                                 >
                                     {isEditMode ? 'Update' : 'Save'}

@@ -14,13 +14,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { EditSubCategoryModal } from './modals/EditSubCategoryModal';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
@@ -43,6 +36,41 @@ import { fetchFloors } from '@/store/slices/floorsSlice';
 import { fetchZones } from '@/store/slices/zonesSlice';
 import { fetchRooms } from '@/store/slices/roomsSlice';
 import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
+import {
+  FormControl as MuiFormControl,
+  Select as MuiSelect,
+  MenuItem,
+  Checkbox as MuiCheckbox,
+  ListItemText,
+} from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
+
+// Matches the MUI field/menu styling used by the sibling CategoryTypeTab.
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 const subCategorySchema = z.object({
   category: z.string().min(1, 'Category selection is required'),
@@ -174,14 +202,6 @@ export const SubCategoryTab: React.FC = () => {
   const [selectedZones, setSelectedZones] = useState<number[]>([]);
   const [selectedFloors, setSelectedFloors] = useState<number[]>([]);
   const [selectedRooms, setSelectedRooms] = useState<number[]>([]);
-  
-  // Dropdown open/close states
-  const [engineersDropdownOpen, setEngineersDropdownOpen] = useState(false);
-  const [buildingsDropdownOpen, setBuildingsDropdownOpen] = useState(false);
-  const [wingsDropdownOpen, setWingsDropdownOpen] = useState(false);
-  const [floorsDropdownOpen, setFloorsDropdownOpen] = useState(false);
-  const [zonesDropdownOpen, setZonesDropdownOpen] = useState(false);
-  const [roomsDropdownOpen, setRoomsDropdownOpen] = useState(false);
 
   // Get data from Redux state
   const availableCategories = helpdeskCategoriesData?.helpdesk_categories || [];
@@ -270,7 +290,6 @@ export const SubCategoryTab: React.FC = () => {
 
   const handleCreateSubmit = async () => {
     // Get form values directly from the form inputs
-    const categorySelect = document.querySelector('select[name="category"]') as HTMLSelectElement;
     const tagsInput = document.querySelector('input[placeholder="Enter tag"]') as HTMLInputElement;
     
     // Check for required fields with specific messages like CategoryTypeTab
@@ -617,39 +636,37 @@ export const SubCategoryTab: React.FC = () => {
                 <FormField
                   control={form.control}
                   name="category"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <FormItem>
                       <FormLabel>Category <span className="text-red-500">*</span></FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="relative">
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent 
-                          position="popper" 
-                          side="bottom" 
-                          align="start" 
-                          sideOffset={8}
-                          avoidCollisions={false}
-                          className="z-[9999] min-w-[var(--radix-select-trigger-width)] max-h-[200px] overflow-y-auto"
-                        >
-                          {(() => {
-                            console.log('Rendering categories in dropdown:', availableCategories);
-                            return availableCategories.length === 0 ? (
-                              <SelectItem value="no-categories" disabled>
-                                {categoriesLoading ? "Loading categories..." : "No categories available"}
-                              </SelectItem>
+                      <FormControl>
+                        <MuiFormControl fullWidth size="small" error={!!fieldState.error}>
+                          <MuiSelect
+                            displayEmpty
+                            value={field.value ?? ''}
+                            onChange={(event) => field.onChange(event.target.value)}
+                            onBlur={field.onBlur}
+                            inputRef={field.ref}
+                            sx={fieldStyles}
+                            MenuProps={selectMenuProps}
+                          >
+                            <MenuItem value="" disabled>
+                              <em>Select category</em>
+                            </MenuItem>
+                            {availableCategories.length === 0 ? (
+                              <MenuItem value="no-categories" disabled>
+                                {categoriesLoading ? 'Loading categories...' : 'No categories available'}
+                              </MenuItem>
                             ) : (
                               availableCategories.map((category) => (
-                                <SelectItem key={category.id} value={category.id.toString()}>
+                                <MenuItem key={category.id} value={category.id.toString()}>
                                   {category.name}
-                                </SelectItem>
+                                </MenuItem>
                               ))
-                            );
-                          })()}
-                        </SelectContent>
-                      </Select>
+                            )}
+                          </MuiSelect>
+                        </MuiFormControl>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -716,53 +733,41 @@ export const SubCategoryTab: React.FC = () => {
               {/* Engineer Assignment */}
               <div>
                 <h3 className="text-lg font-semibold mb-2">Engineer Assignment <span className="text-red-500">*</span></h3>
-                <Select
-                  open={engineersDropdownOpen}
-                  onOpenChange={setEngineersDropdownOpen}
-                  onValueChange={(value) => {
-                    const engineerId = parseInt(value);
-                    if (selectedEngineers.includes(engineerId)) {
-                      setSelectedEngineers(selectedEngineers.filter(id => id !== engineerId));
-                    } else {
-                      setSelectedEngineers([...selectedEngineers, engineerId]);
+                <MuiFormControl fullWidth size="small">
+                  <MuiSelect
+                    multiple
+                    displayEmpty
+                    value={selectedEngineers.map(String)}
+                    onChange={(e: SelectChangeEvent<string[]>) => {
+                      const value = e.target.value;
+                      const ids = typeof value === 'string' ? value.split(',') : value;
+                      setSelectedEngineers(ids.map(Number).filter((id) => !Number.isNaN(id)));
+                    }}
+                    renderValue={(selected) =>
+                      selected.length > 0
+                        ? `${selected.length} engineer(s) selected`
+                        : 'Select engineers'
                     }
-                    // Close dropdown after selection
-                    setTimeout(() => setEngineersDropdownOpen(false), 200);
-                  }}
-                >
-                  <SelectTrigger className="w-full relative">
-                    <SelectValue placeholder={
-                      selectedEngineers.length === 0 
-                        ? "Select engineers" 
-                        : `${selectedEngineers.length} engineer(s) selected`
-                    } />
-                  </SelectTrigger>
-                  <SelectContent 
-                    position="popper" 
-                    side="bottom" 
-                    align="start" 
-                    sideOffset={8}
-                    avoidCollisions={false}
-                    className="z-[9999] min-w-[var(--radix-select-trigger-width)] max-h-[200px] overflow-y-auto"
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
                   >
                     {engineers.length === 0 ? (
-                      <SelectItem value="no-engineers" disabled>
-                        Loading engineers...
-                      </SelectItem>
+                      <MenuItem disabled value="">
+                        <em>Loading engineers...</em>
+                      </MenuItem>
                     ) : (
                       engineers.map((engineer) => (
-                        <SelectItem key={engineer.id} value={engineer.id.toString()}>
-                          <div className="flex items-center justify-between w-full">
-                            <span>{engineer.full_name}</span>
-                            {selectedEngineers.includes(engineer.id) && (
-                              <span className="ml-2 text-primary">✓</span>
-                            )}
-                          </div>
-                        </SelectItem>
+                        <MenuItem key={engineer.id} value={String(engineer.id)}>
+                          <MuiCheckbox
+                            checked={selectedEngineers.includes(engineer.id)}
+                            size="small"
+                          />
+                          <ListItemText primary={engineer.full_name} />
+                        </MenuItem>
                       ))
                     )}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </MuiFormControl>
                 
                 {/* Show selected engineers */}
                 {selectedEngineers.length > 0 && (
@@ -1268,7 +1273,8 @@ export const SubCategoryTab: React.FC = () => {
                 <Button 
                   onClick={handleCreateSubmit}
                   disabled={isSubmitting}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                 className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                 >
                   {isSubmitting ? 'Saving...' : 'Submit'}
                 </Button>

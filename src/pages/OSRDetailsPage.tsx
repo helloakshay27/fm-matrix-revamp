@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +16,12 @@ export const OSRDetailsPage = () => {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Sample data - in real app this would come from API based on ID
   const osrDetails = {
@@ -65,6 +71,17 @@ export const OSRDetailsPage = () => {
     navigate('/vas/osr');
   };
 
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading OSR details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-6xl mx-auto">
@@ -82,24 +99,27 @@ export const OSRDetailsPage = () => {
 
         {/* Action Buttons */}
         <div className="flex gap-3 mb-6">
-          <Button onClick={() => setShowCloseDialog(true)}>
+          <Button onClick={() => setShowCloseDialog(true)} variant="ghost" className="fm-button-fix fm-button-brand px-4 py-2">
             Close OSR
           </Button>
           <Button 
             onClick={() => setShowScheduleDialog(true)}
-            className="bg-[#17a2b8] hover:bg-[#17a2b8]/90"
+            variant="ghost"
+            className="fm-button-fix fm-button-brand px-4 py-2"
           >
             Schedule Second Visit
           </Button>
           <Button 
             onClick={() => setShowCancelDialog(true)}
-            className="bg-orange-500 hover:bg-orange-600"
+            variant="ghost"
+            className="fm-button-fix fm-button-brand px-4 py-2"
           >
             Cancel
           </Button>
           <Button 
             onClick={() => setShowEditDialog(true)}
-            className="bg-orange-500 hover:bg-orange-600 ml-auto"
+            variant="ghost"
+            className="fm-button-fix fm-button-brand px-4 py-2 ml-auto"
           >
             Edit
           </Button>

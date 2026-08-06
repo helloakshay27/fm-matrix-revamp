@@ -122,13 +122,13 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
             <button
               type="button"
               onClick={handleCancel}
-              className="px-4 py-2 border border-[#C72030] text-[#C72030] rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C72030]"
+              className="px-4 py-2 bg-[#C72030] text-white rounded-md hover:bg-[#C72030]/90 transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C72030]"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#F6F4EE] text-[#C72030] rounded-md hover:bg-[#F0EBE0] transition-colors text-sm flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C72030]"
+              className="px-4 py-2 bg-[#C72030] text-white rounded-md hover:bg-[#C72030]/90 transition-colors text-sm flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C72030]"
             >
               <Plus className="w-4 h-4" />
               Add Field

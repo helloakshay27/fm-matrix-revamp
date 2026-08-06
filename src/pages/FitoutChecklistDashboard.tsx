@@ -1,123 +1,92 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus, Filter, Search } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
+import { Plus } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { FitoutChecklistFilterDialog } from '@/components/FitoutChecklistFilterDialog';
+
+interface FitoutChecklist {
+  id: number;
+  name: string;
+  category: string;
+  itemsCount: number | string;
+  status: string;
+  createdDate: string;
+  modifiedDate: string;
+}
+
+const columns: ColumnConfig[] = [
+  { key: 'name', label: 'Checklist Name', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'category', label: 'Category', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'itemsCount', label: 'Items Count', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'status', label: 'Status', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'createdDate', label: 'Created Date', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'modifiedDate', label: 'Modified Date', sortable: true, hideable: true, defaultVisible: true },
+];
 
 export const FitoutChecklistDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [checklists] = useState<FitoutChecklist[]>([]);
   const navigate = useNavigate();
+
+  const filteredChecklists = useMemo(() => {
+    if (!searchTerm) return checklists;
+    const q = searchTerm.toLowerCase();
+    return checklists.filter((item) =>
+      Object.values(item).some((value) => String(value).toLowerCase().includes(q))
+    );
+  }, [checklists, searchTerm]);
 
   const handleAddChecklist = () => {
     navigate('/transitioning/fitout/checklist/add');
   };
 
+  const renderCell = (item: FitoutChecklist, columnKey: string) => (
+    <span>{item[columnKey as keyof FitoutChecklist] ?? '-'}</span>
+  );
+
   return (
-    <div className="p-4 md:p-6">
-      {/* Breadcrumb */}
-      <div className="mb-2 md:mb-4">
-        <span className="text-sm text-gray-600">Fitout &gt; Fitout Checklist</span>
+    <div className="flex-1 p-6 bg-white min-h-screen">
+      <div className="mb-6">
+        <p className="text-sm text-gray-500 mb-1">
+          Fitout &gt; Fitout Checklist
+        </p>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          Fitout Checklist
+        </h1>
       </div>
 
-      {/* Page Title */}
-      <h1 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">FITOUT CHECKLIST</h1>
+      <EnhancedTable
+        data={filteredChecklists}
+        columns={columns}
+        renderCell={renderCell}
+        storageKey="fitout-checklist-table"
+        emptyMessage="No checklists found. Click 'Add' to create your first checklist."
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search checklists..."
+        enableSearch
+        pagination
+        pageSize={10}
+        onFilterClick={() => setShowFilters(true)}
+        leftActions={
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleAddChecklist}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Add
+            </Button>
+          </div>
+        }
+      />
 
-      {/* Search and Action Buttons - Responsive */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
-        <div className="relative w-full md:max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Search checklists..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-[36px]"
-          />
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button 
-            onClick={handleAddChecklist}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2 stroke-[#C72030]" />
-            Add Checklist
-          </Button>
-          <Button variant="outline" className="border-gray-300">
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-          </Button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Actions</TableHead>
-              <TableHead className="font-semibold">Checklist Name</TableHead>
-              <TableHead className="font-semibold">Category</TableHead>
-              <TableHead className="font-semibold">Items Count</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
-              <TableHead className="font-semibold">Created Date</TableHead>
-              <TableHead className="font-semibold">Modified Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                No checklists found. Click "Add Checklist" to create your first checklist.
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
-      <div className="mt-6">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious href="#" />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#" isActive>
-                1
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">
-                2
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">
-                3
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationEllipsis />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">
-                10
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext href="#" />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+      <FitoutChecklistFilterDialog
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+      />
     </div>
   );
 };

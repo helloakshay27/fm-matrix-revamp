@@ -77,7 +77,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { DragDropContext, Droppable, Draggable, DroppableProps } from "react-beautiful-dnd";
 import axios from "axios";
+import SelectLib, { MultiValue } from "react-select";
+import { useAMCEvents } from "@/components/PostHogAMCEvents";
 import { toast } from "sonner";
 // Replaced shadcn Dialog with MUI Dialog for Filter modal
 import {
@@ -229,6 +232,13 @@ const initialAmcData: AMCRecord[] = [];
 const columns: ColumnConfig[] = [
   { key: "actions", label: "Actions", sortable: false, defaultVisible: true },
   { key: "id", label: "ID", sortable: true, defaultVisible: true },
+
+  {
+    key: "contract_name",
+    label: "Contract Name",
+    sortable: true,
+    defaultVisible: true,
+  },
   {
     key: "asset_name",
     label: "Asset/ Service Name",
@@ -248,12 +258,7 @@ const columns: ColumnConfig[] = [
     sortable: true,
     defaultVisible: true,
   },
-  {
-    key: "contract_name",
-    label: "Contract Name",
-    sortable: true,
-    defaultVisible: true,
-  },
+
   {
     key: "amc_start_date",
     label: "Start Date",
@@ -438,6 +443,13 @@ export const AMCDashboard = () => {
     "coverage_by_location",
   ]);
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
+  
+  const { onAMCStatusChanged, onAMCRedFlagged } = useAMCEvents();
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    // ...
+  };
+
   // Track which summary tile is selected; null means none selected on initial load
   const [selectedSummary, setSelectedSummary] = useState<
     | null
@@ -708,9 +720,9 @@ export const AMCDashboard = () => {
 
   const amcData =
     apiData &&
-    typeof apiData === "object" &&
-    "asset_amcs" in apiData &&
-    Array.isArray((apiData as any).asset_amcs)
+      typeof apiData === "object" &&
+      "asset_amcs" in apiData &&
+      Array.isArray((apiData as any).asset_amcs)
       ? (apiData as any).asset_amcs
       : initialAmcData;
   const pagination =
@@ -762,31 +774,31 @@ export const AMCDashboard = () => {
 
         const assetsArr: SelectOption[] = Array.isArray(assetsData)
           ? assetsData
-              .map((a: any) => ({
-                id: Number(a.id),
-                name: String(a.name ?? "").trim(),
-              }))
-              .filter((a: SelectOption) => a.id && a.name)
+            .map((a: any) => ({
+              id: Number(a.id),
+              name: String(a.name ?? "").trim(),
+            }))
+            .filter((a: SelectOption) => a.id && a.name)
           : [];
 
         const servicesArr: SelectOption[] = Array.isArray(servicesData)
           ? servicesData
-              .map((s: any) => ({
-                id: Number(s.id),
-                name: String(s.service_name ?? s.name ?? "").trim(),
-              }))
-              .filter((s: SelectOption) => s.id && s.name)
+            .map((s: any) => ({
+              id: Number(s.id),
+              name: String(s.service_name ?? s.name ?? "").trim(),
+            }))
+            .filter((s: SelectOption) => s.id && s.name)
           : [];
 
         const groupsArr: SelectOption[] = Array.isArray(
           groupsData?.asset_groups
         )
           ? groupsData.asset_groups
-              .map((g: any) => ({
-                id: Number(g.id),
-                name: String(g.name ?? "").trim(),
-              }))
-              .filter((g: SelectOption) => g.id && g.name)
+            .map((g: any) => ({
+              id: Number(g.id),
+              name: String(g.name ?? "").trim(),
+            }))
+            .filter((g: SelectOption) => g.id && g.name)
           : [];
 
         assetsArr.sort((a, b) => a.name.localeCompare(b.name));
@@ -831,11 +843,11 @@ export const AMCDashboard = () => {
         );
         const arr: SelectOption[] = Array.isArray(resp.data?.asset_groups)
           ? resp.data.asset_groups
-              .map((sg: any) => ({
-                id: Number(sg.id),
-                name: String(sg.name ?? "").trim(),
-              }))
-              .filter((sg: SelectOption) => sg.id && sg.name)
+            .map((sg: any) => ({
+              id: Number(sg.id),
+              name: String(sg.name ?? "").trim(),
+            }))
+            .filter((sg: SelectOption) => sg.id && sg.name)
           : [];
         arr.sort((a, b) => a.name.localeCompare(b.name));
         setSubGroupOptions(arr);
@@ -871,8 +883,8 @@ export const AMCDashboard = () => {
       : 0;
   const expiringIn90Days =
     apiData &&
-    typeof apiData === "object" &&
-    "expiring_in_fifteen_days" in apiData
+      typeof apiData === "object" &&
+      "expiring_in_fifteen_days" in apiData
       ? (apiData as any).expiring_in_fifteen_days
       : 0;
   const serviceTotalAMCs =
@@ -1009,8 +1021,8 @@ export const AMCDashboard = () => {
         currentPage,
         isExpiringFilterActive
           ? formatDateForAPI(
-              new Date(new Date().setDate(new Date().getDate() + 90))
-            )
+            new Date(new Date().setDate(new Date().getDate() + 90))
+          )
           : undefined,
         debouncedSearchQuery
       );
@@ -1093,8 +1105,8 @@ export const AMCDashboard = () => {
       currentPage,
       isExpiringFilterActive
         ? formatDateForAPI(
-            new Date(new Date().setDate(new Date().getDate() + 90))
-          )
+          new Date(new Date().setDate(new Date().getDate() + 90))
+        )
         : undefined,
       debouncedSearchQuery
     );
@@ -1189,13 +1201,13 @@ export const AMCDashboard = () => {
         return (
           <div className="flex items-center justify-center gap-1">
             {shouldShow("AMC", "show") && (
-              <div
-                onClick={() => handleViewDetails(item.id)}
-                className="p-1 cursor-pointer hover:text-gray-700"
-                title="View"
-              >
-                <Eye className="w-4 h-4" />
-              </div>
+            <div
+              onClick={() => handleViewDetails(item.id)}
+              className="p-1 cursor-pointer hover:text-gray-700"
+              title="View"
+            >
+              <Eye className="w-4 h-4" />
+            </div>
             )}
             <div
               title="Flag AMC"
@@ -1210,13 +1222,13 @@ export const AMCDashboard = () => {
               />
             </div>
             {shouldShow("AMC", "update") && (
-              <Link
-                to={`/maintenance/amc/edit/${item.id}`}
-                className="p-1 text-gray-600"
-                title="Edit AMC"
-              >
-                <Pencil className="w-4 h-4" />
-              </Link>
+            <Link
+              to={`/maintenance/amc/edit/${item.id}`}
+              className="p-1 text-gray-600"
+              title="Edit AMC"
+            >
+              <Pencil className="w-4 h-4" />
+            </Link>
             )}
           </div>
         );
@@ -1337,17 +1349,17 @@ export const AMCDashboard = () => {
                       value === "active"
                         ? (apiData as any).active_amcs_count + 1
                         : (apiData as any).active_amcs_count -
-                          (item.status === "active" ? 1 : 0),
+                        (item.status === "active" ? 1 : 0),
                     inactive_amcs_count:
                       value === "inactive"
                         ? (apiData as any).inactive_amcs_count + 1
                         : (apiData as any).inactive_amcs_count -
-                          (item.status === "inactive" ? 1 : 0),
+                        (item.status === "inactive" ? 1 : 0),
                     under_observation:
                       value === "under_observation"
                         ? ((apiData as any).under_observation || 0) + 1
                         : (apiData as any).under_observation -
-                          (item.status === "under_observation" ? 1 : 0),
+                        (item.status === "under_observation" ? 1 : 0),
                     total_amcs_count: (apiData as any).total_amcs_count,
                   };
 
@@ -1374,6 +1386,12 @@ export const AMCDashboard = () => {
                   );
                   if (response.status === 200) {
                     toast.success(`Status updated to ${value}`);
+                    onAMCStatusChanged({
+                      amc_id: String(item.id),
+                      from_status: item.status,
+                      to_status: newStatus,
+                      auto_or_manual: "manual"
+                    });
                     if (activeTab === "analytics") {
                       const { startDate, endDate } = analyticsDateRange;
                       const startDateObj = convertDateStringToDate(startDate);
@@ -1453,13 +1471,13 @@ export const AMCDashboard = () => {
       case "created_at":
         return item.created_at
           ? new Date(item.created_at).toLocaleString("en-IN", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-            })
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          })
           : "-";
       default:
         return "-";
@@ -1501,6 +1519,11 @@ export const AMCDashboard = () => {
         dispatch(fetchAMCData());
         toast.dismiss();
         toast.success(`Flag ${updatedFlag ? "Activated" : "Deactivated"}`);
+        onAMCRedFlagged({
+          amc_id: String(amcItem.id),
+          reason: "Manual toggle from dashboard",
+          supplier_id: amcItem.supplier_id ? String(amcItem.supplier_id) : "unknown"
+        });
       } else {
         toast.error("Failed to update AMC flag");
       }
@@ -2190,20 +2213,20 @@ export const AMCDashboard = () => {
             {showActionPanel && (
               <SelectionPanel
                 actions={[
-                  {
-                    label: "Add Visit",
-                    icon: CalendarPlus,
-                    onClick: () => {
-                      if (selectedItems.length !== 1) {
-                        toast.error(
-                          "Please select exactly 1 AMC to add a visit"
-                        );
-                        return;
-                      }
-                      setAddVisitAmcId(selectedItems[0]);
-                      setShowAddVisitModal(true);
-                    },
-                  },
+                  // {
+                  //   label: "Add Visit",
+                  //   icon: CalendarPlus,
+                  //   onClick: () => {
+                  //     if (selectedItems.length !== 1) {
+                  //       toast.error(
+                  //         "Please select exactly 1 AMC to add a visit"
+                  //       );
+                  //       return;
+                  //     }
+                  //     setAddVisitAmcId(selectedItems[0]);
+                  //     setShowAddVisitModal(true);
+                  //   },
+                  // },
                   {
                     label: "Add AMC",
                     icon: Plus,
@@ -2247,14 +2270,14 @@ export const AMCDashboard = () => {
               pagination={false}
               onFilterClick={handleFiltersClick}
               leftActions={
-                shouldShow("AMC","create") && (
-                  <Button
-                    onClick={handleActionClick}
-                    className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Action
-                  </Button>
+                shouldShow("AMC", "create") && (
+                <Button
+                  onClick={handleActionClick}
+                  className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+                >
+                  <Plus className="w-4 h-4" />
+                  Action
+                </Button>
                 )
               }
               enableSearch={true}
@@ -2293,7 +2316,7 @@ export const AMCDashboard = () => {
                       }
                       className={
                         paginationSafe.current_page ===
-                        paginationSafe.total_pages
+                          paginationSafe.total_pages
                           ? "pointer-events-none opacity-50"
                           : ""
                       }
@@ -2602,19 +2625,19 @@ export const AMCDashboard = () => {
                 </div>
               </Box>
 
-              <div className="flex justify-center gap-2 mt-12 pt-6 border-t">
+              <div className="flex justify-end gap-2 mt-12 pt-6 border-t">
+                <Button
+                  onClick={handleApplyFilters}
+                  className="fm-button-fix fm-button-brand px-4 py-2"
+                >
+                  Apply Filter
+                </Button>
                 <Button
                   variant="outline"
                   onClick={handleResetFilters}
-                  className="px-4 py-2 text-sm font-medium rounded hover:opacity-80 transition-opacity"
+                  className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
                 >
-                  Clear All
-                </Button>
-                <Button
-                  onClick={handleApplyFilters}
-                  className="h-11 px-6 bg-[#C72030] hover:bg-[#a81c29] text-white"
-                >
-                  Apply Filter
+                  Reset
                 </Button>
               </div>
             </div>

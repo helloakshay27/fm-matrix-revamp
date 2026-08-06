@@ -7,11 +7,14 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { MSafeImportModal } from '@/components/MSafeImportModal';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { useDebounce } from '@/hooks/useDebounce';
+import { Switch } from '@/components/ui/switch';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import { ExternalFilterDialog } from './ExternalFilterDialog';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 // Define External User interface (different from FMUser)
 interface ExternalUser {
@@ -77,7 +80,9 @@ export const ExternalUsersDashboard = () => {
   });
   const [pagination, setPagination] = useState<ApiPagination>({ current_page: 1, total_pages: 1, total_count: 0 });
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
+  const msafeEvents = useMSafeEvents();
   const pageSize = 25; // backend default (adjust if needed)
 
   // Permission: show Action button only for these userIds
@@ -138,6 +143,8 @@ export const ExternalUsersDashboard = () => {
           name: `${u.firstname || ''} ${u.lastname || ''}`.trim()
         }));
         setExternalUsers(users);
+        const resultCount = response.data.pagination?.total_count ?? users.length;
+        const pendingCount = users.filter((u: any) => (u.lock_user_permission?.status || u.status) === 'pending').length;
         if (response.data.pagination) {
           setPagination(prev => ({
             ...prev,
@@ -146,6 +153,11 @@ export const ExternalUsersDashboard = () => {
           }));
         } else {
           setPagination(prev => ({ ...prev, total_pages: 1, total_count: users.length }));
+        }
+        msafeEvents.onMSafeExternalUserListViewed(resultCount, pendingCount);
+        msafeEvents.onMSafeUserListViewed('non_fte', resultCount);
+        if (hasSearch) {
+          msafeEvents.onMSafeUserSearchPerformed('non_fte', debouncedSearch.trim().length, users.length);
         }
       } catch (err) {
         if (axios.isCancel?.(err) || (err as any)?.name === 'CanceledError' || (err as any)?.code === 'ERR_CANCELED') {
@@ -294,15 +306,12 @@ export const ExternalUsersDashboard = () => {
         const disabled = updatingIds.has(user.id);
         return (
           <div className="w-full flex justify-center">
-            <div
-              onClick={() => !disabled && handleToggleActive(user)}
-              className={`mx-auto relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-              style={{ backgroundColor: isActive ? '#da7756' : '#9ca3af' }}
-            >
-              <span
-                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'}`}
-              />
-            </div>
+            <Switch
+              checked={isActive}
+              onCheckedChange={() => !disabled && handleToggleActive(user)}
+              disabled={disabled}
+              className="data-[state=checked]:bg-green-500"
+            />
           </div>
         );
       }
@@ -353,14 +362,16 @@ export const ExternalUsersDashboard = () => {
 
   const renderActions = (user: ExternalUser) => (
     <div className="flex items-center justify-center gap-2">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => navigate(`/safety/m-safe/external/user/${user.id}`, { state: { user } })}
-        className="h-8 w-8 p-0"
-      >
-        <Eye className="h-4 w-4" />
-      </Button>
+      {shouldShow("Non FTE Users", "show") && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(`/safety/m-safe/external/user/${user.id}`, { state: { user } })}
+          className="h-8 w-8 p-0"
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      )}
       {/* <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(user)} className="h-8 w-8 p-0">
         <Trash2 className="h-4 w-4" />
       </Button> */}
@@ -420,6 +431,7 @@ export const ExternalUsersDashboard = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
       toast.success('External Users data exported successfully');
+      msafeEvents.onMSafeUserListExported('non_fte', selectedItems.length > 0 ? selectedItems.length : pagination.total_count);
     } catch (error) {
       console.error('Export failed:', error);
       toast.error('Failed to export External Users data');
@@ -447,6 +459,10 @@ export const ExternalUsersDashboard = () => {
       role: newFilters.role || '',
       report_to_id: newFilters.report_to_id ? String(newFilters.report_to_id) : ''
     });
+    const appliedFields = Object.entries(newFilters).filter(([, v]) => Boolean(v)).map(([k]) => k);
+    if (appliedFields.length > 0) {
+      msafeEvents.onMSafeUserFilterApplied('non_fte', appliedFields);
+    }
     // Immediately reset pagination UI to avoid showing stale total pages
     setPage(1);
     setPagination({ current_page: 1, total_pages: 1, total_count: 0 });
@@ -492,6 +508,11 @@ export const ExternalUsersDashboard = () => {
       };
       await axios.put(url, payload, { headers: { Authorization: `Bearer ${token}` } });
       toast.success(`User ${newValue ? 'activated (approved)' : 'deactivated (rejected)'} successfully`);
+      if (newValue) {
+        const createdAt = (user as any).created_at;
+        const pendingAgeDays = createdAt ? Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)) : null;
+        msafeEvents.onMSafeExternalUserApproved(pendingAgeDays);
+      }
     } catch (e: any) {
       // revert on error
       setExternalUsers(prev => prev.map(u => u.id === user.id ? { ...u, lock_user_permission: { ...u.lock_user_permission, active: current, status: previousStatus }, status: previousStatus } : u));
@@ -617,7 +638,7 @@ export const ExternalUsersDashboard = () => {
             data={externalUsers || []}
             leftActions={
               <div className="flex gap-2">
-                {canSeeActionButton && (
+                {canSeeActionButton && shouldShow("Non FTE Users", "create") && (
                   <Button
                     onClick={handleActionClick}
                     className="fm-button-fix fm-button-brand px-4 py-2"
@@ -627,14 +648,16 @@ export const ExternalUsersDashboard = () => {
                     Action
                   </Button>
                 )}
-                <Button
-                  onClick={() => navigate('/safety/m-safe/external-users/multiple-delete')}
-                  className="fm-button-fix fm-button-brand px-4 py-2"
-                  variant="ghost"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  User Deletion
-                </Button>
+                {shouldShow("Non FTE Users", "destroy") && (
+                  <Button
+                    onClick={() => navigate('/safety/m-safe/external-users/multiple-delete')}
+                    className="fm-button-fix fm-button-brand px-4 py-2"
+                    variant="ghost"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    User Deletion
+                  </Button>
+                )}
               </div>
             }
             columns={columns}

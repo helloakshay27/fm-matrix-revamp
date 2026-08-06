@@ -495,12 +495,12 @@ export const NewInboundPage = () => {
             height: '40px',
             fontSize: '14px',
             '& fieldset': { borderColor: '#ddd' },
-            '&:hover fieldset': { borderColor: '#C72030' },
-            '&.Mui-focused fieldset': { borderColor: '#C72030' },
+            '&:hover fieldset': { borderColor: '#da7756' },
+            '&.Mui-focused fieldset': { borderColor: '#da7756' },
         },
         '& .MuiInputLabel-root': {
             fontSize: '14px',
-            '&.Mui-focused': { color: '#C72030' },
+            '&.Mui-focused': { color: '#da7756' },
         },
     };
 
@@ -538,12 +538,12 @@ export const NewInboundPage = () => {
                         <CardHeader className="bg-[#F6F4EE]">
                             <CardTitle className="text-lg text-black flex items-center">
                                 <div
-                                    className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-2"
+                                    className="w-8 h-8 bg-[#da7756] text-white rounded-full flex items-center justify-center mr-2"
                                     style={{ fontFamily: 'Work Sans, sans-serif' }}
                                 >
                                     <Settings className="w-5 h-5" />
                                 </div>
-                                <span style={{ fontFamily: 'Work Sans, sans-serif', fontWeight: 600, color: '#C72030' }}>
+                                <span style={{ fontFamily: 'Work Sans, sans-serif', fontWeight: 600, color: '#da7756' }}>
                                     BASIC DETAILS
                                 </span>
                             </CardTitle>
@@ -554,7 +554,7 @@ export const NewInboundPage = () => {
                                 <div>
                                     <FormControl fullWidth variant="outlined" error={!!errors.vendor}>
                                         <InputLabel shrink>
-                                            Vendor <span style={{ color: '#C72030' }}>*</span>
+                                            Vendor <span style={{ color: '#da7756' }}>*</span>
                                         </InputLabel>
                                         <MuiSelect
                                             label="Vendor"
@@ -578,14 +578,8 @@ export const NewInboundPage = () => {
                                     <Button
                                         type="button"
                                         onClick={() => setIsAddVendorModalOpen(true)}
-                                        className="mt-2"
-                                        style={{
-                                            backgroundColor: '#1976D2',
-                                            color: '#FFF',
-                                            fontSize: '12px',
-                                            padding: '4px 12px',
-                                            height: 'auto',
-                                        }}
+                                        variant="ghost"
+                                        className="fm-button-fix fm-button-brand px-4 py-2 mt-2"
                                     >
                                         + Add Vendor
                                     </Button>
@@ -598,7 +592,7 @@ export const NewInboundPage = () => {
                                         type="date"
                                         label={
                                             <span>
-                                                Date of Receiving <span style={{ color: '#C72030' }}>*</span>
+                                                Date of Receiving <span style={{ color: '#da7756' }}>*</span>
                                             </span>
                                         }
                                         value={formData.dateOfReceiving}
@@ -629,12 +623,12 @@ export const NewInboundPage = () => {
                                 <CardTitle className="text-lg text-black flex items-center justify-between">
                                     <div className="flex items-center">
                                         <div
-                                            className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-2"
+                                            className="w-8 h-8 bg-[#da7756] text-white rounded-full flex items-center justify-center mr-2"
                                             style={{ fontFamily: 'Work Sans, sans-serif' }}
                                         >
                                             <Package className="w-5 h-5" />
                                         </div>
-                                        <span style={{ fontFamily: 'Work Sans, sans-serif', fontWeight: 600, color: '#C72030' }}>
+                                        <span style={{ fontFamily: 'Work Sans, sans-serif', fontWeight: 600, color: '#da7756' }}>
                                             PACKAGE DETAILS {packages.length > 1 && `(${index + 1})`}
                                         </span>
                                     </div>
@@ -656,7 +650,7 @@ export const NewInboundPage = () => {
                                     <div>
                                         <FormControl fullWidth variant="outlined" error={!!packageErrors[pkg.id]?.recipient}>
                                             <InputLabel shrink>
-                                                Recipient <span style={{ color: '#C72030' }}>*</span>
+                                                Recipient <span style={{ color: '#da7756' }}>*</span>
                                             </InputLabel>
                                             <MuiSelect
                                                 label="Recipient"
@@ -687,7 +681,7 @@ export const NewInboundPage = () => {
                                             fullWidth
                                             label={
                                                 <span>
-                                                    Sender <span style={{ color: '#C72030' }}>*</span>
+                                                    Sender <span style={{ color: '#da7756' }}>*</span>
                                                 </span>
                                             }
                                             placeholder="Enter Sender's Name"
@@ -748,7 +742,7 @@ export const NewInboundPage = () => {
                                             fullWidth
                                             label={
                                                 <span>
-                                                    Company's Address Line 1 <span style={{ color: '#C72030' }}>*</span>
+                                                    Company's Address Line 1 <span style={{ color: '#da7756' }}>*</span>
                                                 </span>
                                             }
                                             placeholder="Enter Company's Address Line 1"
@@ -828,7 +822,7 @@ export const NewInboundPage = () => {
                                     <div>
                                         <FormControl fullWidth variant="outlined" error={!!packageErrors[pkg.id]?.type}>
                                             <InputLabel shrink>
-                                                Type <span style={{ color: '#C72030' }}>*</span>
+                                                Type <span style={{ color: '#da7756' }}>*</span>
                                             </InputLabel>
                                             <MuiSelect
                                                 label="Type"
@@ -886,7 +880,7 @@ export const NewInboundPage = () => {
                                                 <Button
                                                     type="button"
                                                     onClick={() => document.getElementById(`attachments-upload-${pkg.id}`)?.click()}
-                                                    className="!bg-[#C72030] !text-white text-sm"
+                                                    className="!bg-[#da7756] !text-white text-sm"
                                                 >
                                                     <Upload className="w-4 h-4 mr-2" />
                                                     Choose file
@@ -914,7 +908,8 @@ export const NewInboundPage = () => {
                         <Button
                             type="button"
                             onClick={handleAddPackage}
-                            className="bg-[#532D5F] hover:bg-[#532D5F]/90 text-white"
+                           className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                         >
                             + Package
                         </Button>
@@ -925,13 +920,8 @@ export const NewInboundPage = () => {
                         <Button
                             type="submit"
                             disabled={isSubmitting}
-                            className="px-8 py-2 font-medium"
-                            style={{
-                                backgroundColor: '#C72030',
-                                color: '#FFF',
-                                border: 'none',
-                                borderRadius: '4px',
-                            }}
+                            variant="ghost"
+                            className="fm-button-fix fm-button-brand px-4 py-2"
                         >
                             {isSubmitting ? 'Submitting...' : 'Submit'}
                         </Button>

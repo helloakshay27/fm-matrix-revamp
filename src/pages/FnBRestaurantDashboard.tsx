@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate,useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Eye, Plus } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { editRestaurant, fetchRestaurants } from "@/store/slices/f&bSlice";
@@ -204,12 +205,10 @@ export const FnBRestaurantDashboard = () => {
     if (columnKey === 'booking_allowed') {
       return (
         <div className="flex items-center justify-center">
-          <div
-            className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.booking_allowed ? "bg-green-500" : "bg-gray-300"}`}
-            onClick={() => toggleBookingAllowed(item.id)}
-          >
-            <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.booking_allowed ? "translate-x-6" : "translate-x-1"}`} />
-          </div>
+          <Switch
+            checked={item.booking_allowed}
+            onCheckedChange={() => toggleBookingAllowed(item.id)}
+          />
         </div>
       );
     }
@@ -217,12 +216,10 @@ export const FnBRestaurantDashboard = () => {
     if (columnKey === 'can_order') {
       return (
         <div className="flex items-center justify-center">
-          <div
-            className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.can_order ? "bg-green-500" : "bg-gray-300"}`}
-            onClick={() => toggleOrderAllowed(item.id)}
-          >
-            <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.can_order ? "translate-x-6" : "translate-x-1"}`} />
-          </div>
+          <Switch
+            checked={item.can_order}
+            onCheckedChange={() => toggleOrderAllowed(item.id)}
+          />
         </div>
       );
     }
@@ -230,12 +227,10 @@ export const FnBRestaurantDashboard = () => {
     if (columnKey === 'status') {
       return (
         <div className="flex items-center justify-center">
-          <div
-            className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.status ? "bg-green-500" : "bg-gray-300"}`}
-            onClick={() => toggleActive(item.id)}
-          >
-            <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.status ? "translate-x-6" : "translate-x-1"}`} />
-          </div>
+          <Switch
+            checked={item.status}
+            onCheckedChange={() => toggleActive(item.id)}
+          />
         </div>
       );
     }
@@ -255,7 +250,8 @@ export const FnBRestaurantDashboard = () => {
   const leftActions = (
     <Button
       onClick={() => setShowActionPanel(true)}
-      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
+     className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
     >
       <Plus className="w-4 h-4" />
       Action

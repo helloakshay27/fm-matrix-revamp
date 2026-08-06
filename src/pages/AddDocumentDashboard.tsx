@@ -638,8 +638,8 @@ export const AddDocumentDashboard = () => {
                     control={
                       <Radio
                         sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#da7756" },
                           "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
@@ -655,8 +655,8 @@ export const AddDocumentDashboard = () => {
                     control={
                       <Radio
                         sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#da7756" },
                           "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
@@ -688,8 +688,8 @@ export const AddDocumentDashboard = () => {
                     control={
                       <Radio
                         sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#da7756" },
                           "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
@@ -701,8 +701,8 @@ export const AddDocumentDashboard = () => {
                     control={
                       <Radio
                         sx={{
-                          color: "#C72030",
-                          "&.Mui-checked": { color: "#C72030" },
+                          color: "#da7756",
+                          "&.Mui-checked": { color: "#da7756" },
                           "& .MuiSvgIcon-root": { fontSize: 16 },
                         }}
                       />
@@ -898,15 +898,16 @@ export const AddDocumentDashboard = () => {
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90  h-11 w-40"
+            className="h-11 w-40 !bg-brand hover:!bg-brand-hover !text-white disabled:!opacity-100 disabled:!bg-brand"
           >
             {isSubmitting ? "Submitting..." : "Submit"}
           </Button>
           <Button
+            type="button"
             variant="outline"
             onClick={handleCancel}
             disabled={isSubmitting}
-            className="w-40 h-11"
+            className="w-40 h-11 !border-brand !text-brand hover:!bg-brand-selected hover:!text-brand"
           >
             Cancel
           </Button>

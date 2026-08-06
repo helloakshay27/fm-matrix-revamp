@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, Trash2 } from "lucide-react";
+import { Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
@@ -309,10 +309,7 @@ const RecurringExpensesListPage: React.FC = () => {
 
   const getStatusBadge = (status?: string, item?: RecurringExpense) => {
     const upper = status?.toUpperCase() || "";
-    let cls = "bg-gray-100 text-gray-800";
-
-    if (upper === "ACTIVE") cls = "bg-green-100 text-green-800";
-    else if (upper === "INACTIVE") cls = "bg-red-100 text-red-800";
+    const cls = "bg-gray-100 text-gray-800";
 
     return (
       <span
@@ -340,6 +337,15 @@ const RecurringExpensesListPage: React.FC = () => {
         <Button
           variant="ghost"
           size="icon"
+          onClick={() => navigate(`/accounting/recurring-expenses/edit/${item.id}`)}
+          className="h-8 w-8"
+          title="Edit"
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => handleDelete(item)}
           disabled={deletingId === item.id || loading}
           className="h-8 w-8 hover:text-destructive"
@@ -352,7 +358,7 @@ const RecurringExpensesListPage: React.FC = () => {
 
     profile_name: (
       <span
-        className="text-blue-600 font-medium cursor-pointer"
+        className="text-brand font-medium cursor-pointer"
         onClick={() => navigate(`/accounting/recurring-expenses/${item.id}`)}
       >
         {item.profile_name}
@@ -395,8 +401,7 @@ const RecurringExpensesListPage: React.FC = () => {
         leftActions={
           <Button
             onClick={() => navigate("/accounting/recurring-expenses/create")}
-            // className="fm-button-fix fm-button-brand gap-2 px-4 py-2"
-            className='fm-button-fix fm-button-brand px-4 py-2P'
+            className='fm-button-fix fm-button-brand px-8 py-2'
           >
             <Plus className="h-4 w-4" />
             Add

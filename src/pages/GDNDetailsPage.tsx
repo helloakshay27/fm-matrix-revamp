@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { ChevronDown, FileText, Loader2, Search, Send, X } from "lucide-react";
+import { ChevronDown, FileText, Loader2, Search, Send, X, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogClose,
@@ -105,7 +106,7 @@ const normalizeDispatchUsers = (items: DispatchUserApi[]): DispatchUser[] =>
 export const GDNDetailsPage = () => {
   const { id } = useParams();
   const [gdnDetails, setGdnDetails] = useState<GDNDetails | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [dispatchDialogOpen, setDispatchDialogOpen] = useState(false);
   const [handOverUsers, setHandOverUsers] = useState<DispatchUser[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
@@ -302,8 +303,11 @@ export const GDNDetailsPage = () => {
 
   if (loading && !gdnDetails) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-6 h-6 animate-spin text-[#C72030]" />
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading GDN details...</p>
+        </div>
       </div>
     );
   }
@@ -334,7 +338,7 @@ export const GDNDetailsPage = () => {
         </div>
 
         <Button
-          className="gap-2 bg-[#6B2C65] px-4 py-2 text-white hover:bg-[#5a2455]"
+          className="gap-2 !bg-[#DA7756] px-4 py-2 !text-white hover:!bg-[#DA7756]/85 [&_svg]:!text-white"
           disabled={loading || dispatchSubmitting || !id}
           onClick={() => setDispatchDialogOpen(true)}
         >
@@ -345,10 +349,10 @@ export const GDNDetailsPage = () => {
 
       <section className="bg-white border border-gray-200 rounded-md shadow-sm mb-4 p-3">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-7 h-7 rounded-full flex items-center justify-center bg-[#F04B2F] text-white">
+          <div className="w-7 h-7 rounded-full flex items-center justify-center bg-[#C72030] text-white">
             <FileText className="w-4 h-4" />
           </div>
-          <h1 className="text-xl font-medium uppercase text-[#F04B2F]">
+          <h1 className="text-xl font-medium uppercase text-[#C72030]">
             GDN Details
           </h1>
         </div>
@@ -373,59 +377,68 @@ export const GDNDetailsPage = () => {
       </section>
 
       <div className="bg-white border border-gray-200 rounded-sm shadow-sm overflow-x-auto">
-        <Table className="min-w-[850px]">
-          <TableHeader>
-            <TableRow className="bg-[#f3edf3] hover:bg-[#f3edf3]">
-              <TableHead className="text-center text-black font-bold">
-                Inventory
-              </TableHead>
-              <TableHead className="text-center text-black font-bold">
-                Quantity
-              </TableHead>
-              <TableHead className="text-center text-black font-bold">
-                Purpose
-              </TableHead>
-              <TableHead className="text-center text-black font-bold">
-                Reason
-              </TableHead>
-              <TableHead className="text-center text-black font-bold">
-                Hand Over To
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {gdnDetails?.inventories?.length ? (
-              gdnDetails.inventories.map((inventory, index) => (
-                <TableRow key={`${inventory.inventory_name}-${index}`}>
-                  <TableCell className="text-center">
-                    {displayValue(inventory.inventory_name)}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {displayValue(inventory.quantity)}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {displayValue(inventory.purpose)}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {displayValue(inventory.reason)}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {displayValue(inventory.handed_over_to)}
-                  </TableCell>
-                </TableRow>
-              ))
+        <Card className="shadow-sm border border-border">
+          <div className="flex items-center gap-3 p-6">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#C72030] text-white">
+              <ClipboardList className="w-4 h-4" />
+            </div>
+            <h3 className="text-lg font-semibold uppercase text-[#C72030]">Inventory Items</h3>
+          </div>
+          <CardContent>
+            {gdnDetails?.inventories && gdnDetails.inventories.length > 0 ? (
+              <div className="space-y-4">
+                {gdnDetails.inventories.map((inventory, index) => (
+                  <div
+                    key={`${inventory.inventory_name}-${index}`}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
+                  >
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Inventory Name</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {displayValue(inventory.inventory_name)}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Quantity</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {displayValue(inventory.quantity)}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Purpose</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {displayValue(inventory.purpose)}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Reason</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {displayValue(inventory.reason)}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Hand Over To</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {displayValue(inventory.handed_over_to)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="text-center py-6 text-gray-500"
-                >
-                  No inventory details found
-                </TableCell>
-              </TableRow>
+              <div className="text-center py-8 text-gray-500">
+                No inventory details found
+              </div>
             )}
-          </TableBody>
-        </Table>
+          </CardContent>
+        </Card>
       </div>
 
       <Dialog

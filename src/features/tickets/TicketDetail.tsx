@@ -22,6 +22,7 @@ import ErrorState from "@/components/common/ErrorState";
 import FileUploader from "@/components/common/FileUploader";
 import ConvertToLockatedModal from "@/components/common/ConvertToLockatedModal";
 import type { Ticket, TicketMessage, Category } from "@/types/schemas/ticket";
+import { captureHelpdeskEvent } from "@/utils/posthogHelpers";
 
 /* ── Edit Ticket Modal ─────────────────────────────────────────── */
 const editSchema = z.object({
@@ -584,6 +585,12 @@ const TicketDetail = () => {
     setRootCause(ticket.rootCause ?? "");
     setCorrectiveAction(ticket.correctiveAction ?? "");
     setPreventiveAction(ticket.preventiveAction ?? "");
+    // UE-6: Ticket Detail Opened — fires once per ticket load
+    captureHelpdeskEvent("Ticket Detail Opened", {
+      screen: "ticket_detail",
+      ticket_id: ticket.id,
+      open_source: "list",
+    });
   }, [ticket?.id]);
 
   useEffect(() => {
@@ -592,7 +599,14 @@ const TicketDetail = () => {
 
   const statusMutation = useMutation({
     mutationFn: (statusId: string) => ticketApi.updateStatus(id!, statusId),
-    onSuccess: () => {
+    onSuccess: (_, newStatusId) => {
+      // FA-1: Ticket Status Updated (UI)
+      captureHelpdeskEvent("Ticket Status Updated (UI)", {
+        screen: "ticket_detail",
+        ticket_id: id,
+        from_status: ticket?.status.id,
+        to_status: newStatusId,
+      });
       qc.invalidateQueries({ queryKey: ["tickets", id] });
       qc.invalidateQueries({ queryKey: ["tickets"] });
       addToast("Status updated", "success");
@@ -617,6 +631,12 @@ const TicketDetail = () => {
         preventive_action: preventiveAction || undefined,
       } as Parameters<typeof ticketApi.update>[1]),
     onSuccess: () => {
+      // WC-2: Ticket Closure Form Submitted (disposition = closure fields)
+      captureHelpdeskEvent("Ticket Closure Form Submitted", {
+        screen: "ticket_detail",
+        ticket_id: id,
+        closure_fields_completed_count: [rootCause, correctiveAction, preventiveAction].filter(Boolean).length,
+      });
       qc.invalidateQueries({ queryKey: ["tickets", id] });
       addToast("Disposition saved", "success");
     },
@@ -631,6 +651,22 @@ const TicketDetail = () => {
         attachment_ids: msgAttachmentIds,
       }),
     onSuccess: () => {
+      // FA-1: Ticket Comment Added
+      captureHelpdeskEvent("Ticket Comment Added", {
+        screen: "ticket_detail",
+        ticket_id: id,
+        comment_channel: msgType === "reply" ? "customer" : "internal",
+        has_attachment: msgAttachmentIds.length > 0,
+      });
+      // FA-5: Ticket Attachment Uploaded (if message had files)
+      if (msgAttachmentIds.length > 0) {
+        captureHelpdeskEvent("Ticket Attachment Uploaded", {
+          screen: "ticket_detail",
+          ticket_id: id,
+          context: "comment",
+          file_count: msgAttachmentIds.length,
+        });
+      }
       qc.invalidateQueries({ queryKey: ["tickets", id, "messages"] });
       setMsgBody("");
       setMsgAttachmentIds([]);

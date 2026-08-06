@@ -550,9 +550,9 @@ const BillCyclesAdd: React.FC = () => {
                     </Button>
                     <Button
                         type="submit"
-                        className="bg-[#1976d2] hover:bg-[#115293] text-white min-w-[140px]"
+                        className="!bg-[#DA7756] hover:!bg-[#C45F40] min-w-[140px]"
                     >
-                        Save & New
+                        <span className="!text-white font-medium">Save & New</span>
                     </Button>
                     <Button
                         variant="outline"

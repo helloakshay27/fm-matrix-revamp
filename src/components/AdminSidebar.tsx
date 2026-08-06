@@ -84,6 +84,11 @@ const adminNavigationStructure = {
         href: "/ops-console/settings/modules",
       },
       {
+        name: "Business Card Setup",
+        icon: CreditCard,
+        href: "/ops-console/admin/business-card-setup",
+      },
+      {
         name: "Wallet Top-up",
         icon: CreditCard,
         href: "/settings/wallet-topup",

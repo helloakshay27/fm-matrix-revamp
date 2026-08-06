@@ -8,10 +8,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Edit, Printer, ArrowLeft, Loader2, ChevronDown, ChevronUp, User, MapPin, Calendar, FileText, Image, QrCode } from 'lucide-react';
 import { staffService, SocietyStaffDetails } from '@/services/staffService';
 import { toast } from 'sonner';
+import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const StaffDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { shouldShow } = useDynamicPermissions();
   const [staff, setStaff] = useState<SocietyStaffDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,12 +70,12 @@ export const StaffDetailsPage = () => {
     fetchStaffDetails();
   }, [id]);
 
-  // Loading state
   if (loading) {
     return (
-      <div className="p-6 bg-gray-50 min-h-screen">
-        <div className="flex items-center justify-center py-8">
-          <div className="text-lg text-gray-600">Loading staff details...</div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading staff details...</p>
         </div>
       </div>
     );
@@ -263,7 +265,8 @@ export const StaffDetailsPage = () => {
           <div className="flex gap-3">
             <Button
               onClick={handleVerifyNumber}
-              className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-4 py-2"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2"
               disabled={staff.number_verified || sendingOTP}
             >
               {sendingOTP ? (
@@ -277,13 +280,15 @@ export const StaffDetailsPage = () => {
                 'Verify Number'
               )}
             </Button>
-            <Button
-              onClick={handleEdit}
-              style={{ backgroundColor: '#C72030' }} 
-              className="text-white hover:bg-[#C72030]/90"
-            >
-              <Edit className="w-4 h-4" />
-            </Button>
+            {shouldShow("Staff", "update") && (
+              <Button
+                onClick={handleEdit}
+                style={{ backgroundColor: '#C72030' }}
+                className="text-white hover:bg-[#C72030]/90 [&_svg]:text-white"
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -504,7 +509,8 @@ export const StaffDetailsPage = () => {
           <div>
             <Button
               onClick={handlePrint}
-              className="bg-[#8B4B8C] hover:bg-[#7A4077] text-white px-6 py-2 flex items-center gap-2 mx-auto"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2 flex items-center gap-2 mx-auto"
               disabled={!staff.qr_code_present}
             >
               <Printer className="w-4 h-4" />

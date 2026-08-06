@@ -22,19 +22,34 @@ const TestimonialDetailsPage = () => {
         description: '',
         video_preview_image: ''
     });
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const getTestimonial = async () => {
+            setLoading(true);
             try {
                 const response = await dispatch(fetchTestimonialsById({ baseUrl, token, id: id })).unwrap();
                 setTestimonial(response);
             } catch (error) {
                 console.log(error);
+            } finally {
+                setLoading(false);
             }
         }
 
         getTestimonial();
     }, [])
+
+    if (loading) {
+        return (
+            <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <p className="text-gray-700">Loading testimonial details...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-[30px] min-h-screen bg-transparent">

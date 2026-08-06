@@ -1,20 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { 
-  Plus, Upload, Eye, Trash2, Loader2, X, BarChart3,
-  Calendar, Filter, RefreshCw, Leaf, Activity, Download 
+import {
+  Plus, Upload, Eye, Trash2, Loader2, BarChart3,
+  Calendar, Filter, RefreshCw, Leaf, Activity, Download,
+  Droplets, Percent, Package, Truck
 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { WasteGenerationFilterDialog } from '../components/WasteGenerationFilterDialog';
 import { WasteGenerationBulkDialog } from '../components/WasteGenerationBulkDialog';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
-import { fetchWasteGenerations, WasteGeneration, WasteGenerationFilters } from '../services/wasteGenerationAPI';
-import { useLayout } from '@/contexts/LayoutContext';
-import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { fetchWasteGenerations, WasteGeneration, WasteGenerationFilters, WasteGenerationCounts } from '../services/wasteGenerationAPI';
+import { API_CONFIG, getAuthHeader, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
 import { format, subYears } from 'date-fns';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -153,19 +156,28 @@ const SiteDetailModal: React.FC<SiteDetailModalProps> = ({ siteName, siteData, o
 
 const UtilityWasteGenerationDashboard = () => {
   const navigate = useNavigate();
-  const { isSidebarCollapsed } = useLayout();
   const { shouldShow } = useDynamicPermissions();
-  const panelRef = useRef<HTMLDivElement>(null);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<WasteGenerationFilters>({});
+
+  const { onUtilityWasteGenerationDashboardViewed } = useUtilityEvents();
+
+  useEffect(() => {
+    onUtilityWasteGenerationDashboardViewed();
+  }, [onUtilityWasteGenerationDashboardViewed]);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showActionPanel, setShowActionPanel] = useState(false);
-  
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
   // API states
   const [wasteGenerations, setWasteGenerations] = useState<WasteGeneration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilters, setActiveFilters] = useState<WasteGenerationFilters>({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [listCounts, setListCounts] = useState<WasteGenerationCounts | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // ── Analytics States ─────────────────────────────────────────────────────
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
@@ -180,7 +192,7 @@ const UtilityWasteGenerationDashboard = () => {
 
   // KPI card data
   const [kpiData, setKpiData] = useState<{
-    total_waste: number; total_recycled: number; dry_waste: number; hazardous_waste: number;
+    total_waste: number; total_recycled: number; dry_waste: number; hazardous_waste: number; wet_waste?: number;
   } | null>(null);
   const [kpiLoading, setKpiLoading] = useState(false);
 
@@ -296,6 +308,7 @@ useEffect(() => {
       setIsLoading(true);
       const response = await fetchWasteGenerations(page, filters);
       setWasteGenerations(response.waste_generations || []);
+      if (response.counts) setListCounts(response.counts);
     } catch (err) {
       setWasteGenerations([]);
     } finally {
@@ -309,19 +322,67 @@ useEffect(() => {
 
   // Handlers
   const handleActionClick = () => setShowActionPanel(!showActionPanel);
-  const handleClearSelection = () => setShowActionPanel(false);
+  const handleClearSelection = () => {
+    setShowActionPanel(false);
+    setSelectedItems([]);
+  };
   const handleApplyFilters = (filters: WasteGenerationFilters) => { setActiveFilters(filters); setCurrentPage(1); };
-  const handleView = (id: number) => navigate(`/maintenance/waste/generation/${id}`);
 
-  if (isLoading && wasteGenerations.length === 0) return <div className="flex items-center justify-center h-screen"><Loader2 className="animate-spin" /></div>;
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedItems(checked ? wasteGenerations.map((item) => item.id.toString()) : []);
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    setSelectedItems((prev) =>
+      checked ? [...prev, itemId] : prev.filter((id) => id !== itemId)
+    );
+  };
+
+  const handleDispatch = () => {
+    const items = wasteGenerations.filter((item) => selectedItems.includes(item.id.toString()));
+    navigate('/maintenance/waste/generation/dispatch', { state: { items } });
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const filters = activeFilters;
+      const queryParts: string[] = [];
+      if (filters.commodity_id_eq) queryParts.push(`q[commodity_id_eq]=${encodeURIComponent(filters.commodity_id_eq)}`);
+      if (filters.category_id_eq) queryParts.push(`q[category_id_eq]=${encodeURIComponent(filters.category_id_eq)}`);
+      if (filters.date_range) queryParts.push(`q[date_range]=${encodeURIComponent(filters.date_range)}`);
+      if (filters.created_by_firstname_or_lastname_cont) queryParts.push(`q[created_by_firstname_or_lastname_cont]=${encodeURIComponent(filters.created_by_firstname_or_lastname_cont)}`);
+      if (filters.entity_id_eq) queryParts.push(`q[entity_id_eq]=${encodeURIComponent(filters.entity_id_eq)}`);
+      if (filters.resource_type_eq) queryParts.push(`q[resource_type_eq]=${encodeURIComponent(filters.resource_type_eq)}`);
+      if (filters.status_eq) queryParts.push(`q[status_eq]=${encodeURIComponent(filters.status_eq)}`);
+      if (filters.devise_id_cont) queryParts.push(`q[devise_id_cont]=${encodeURIComponent(filters.devise_id_cont)}`);
+      const queryString = queryParts.join('&');
+      const url = getFullUrl(`/pms/waste_generations.xlsx?${queryString}`);
+      const response = await fetch(url, getAuthenticatedFetchOptions('GET'));
+      if (!response.ok) { toast.error('Export failed'); return; }
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'waste_generations.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+      toast.success('Data exported successfully!');
+    } catch { toast.error('Export failed'); }
+    finally { setIsExporting(false); }
+  };
+
+  const handleView = (id: number) => navigate(`/maintenance/waste/generation/${id}`);
 
   return (
     <>
       <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <div className="text-sm text-gray-600 mb-2">Assets &gt; Waste Generation List</div>
           <h1 className="font-semibold text-2xl text-gray-900 uppercase tracking-tight">WASTE GENERATION LIST</h1>
-        </div>
+        </div> */}
 
         <Tabs defaultValue="list" className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
@@ -334,26 +395,119 @@ useEffect(() => {
           </TabsList>
 
           {/* ===================== LIST TAB ===================== */}
-          <TabsContent value="list" className="mt-6">
+          <TabsContent value="list" className="mt-6 space-y-6">
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {[
+                {
+                  label: 'Total Waste',
+                  value: listCounts ? `${listCounts.total_waste.toLocaleString('en-IN')} KG` : '—',
+                  icon: <Trash2 className="w-6 h-6 text-[#C72030]" />,
+                },
+                {
+                  label: 'Total Recycled',
+                  value: listCounts ? `${listCounts.recycling_percentage}%` : '—',
+                  icon: <RefreshCw className="w-6 h-6 text-[#C72030]" />,
+                },
+                {
+                  label: 'Wet Waste',
+                  value: listCounts ? `${listCounts.total_recycled.toLocaleString('en-IN')} KG` : '—',
+                  icon: <Percent className="w-6 h-6 text-[#C72030]" />,
+                },
+                {
+                  label: 'Dry Waste',
+                  value: listCounts ? `${listCounts.dry_waste.toLocaleString('en-IN')} KG` : '—',
+                  icon: <Package className="w-6 h-6 text-[#C72030]" />,
+                },
+                {
+                  label: 'Hazardous Waste',
+                  value: listCounts ? `${listCounts.hazardous_waste.toLocaleString('en-IN')} KG` : '—',
+                  icon: <Activity className="w-6 h-6 text-[#C72030]" />,
+                },
+              ].map((card, i) => (
+                <div key={i} className="bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 hover:shadow-lg transition-shadow duration-300">
+                  <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center shrink-0">
+                    {isLoading ? <Loader2 className="animate-spin w-6 h-6 text-[#C72030]" /> : card.icon}
+                  </div>
+                  <div>
+                    <div className="text-2xl font-semibold text-[#1A1A1A]">{isLoading ? '…' : card.value}</div>
+                    <div className="text-sm font-medium text-[#1A1A1A]">{card.label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Table */}
             <EnhancedTable
               data={wasteGenerations}
+              loading={isLoading}
+              loadingMessage="Loading..."
               columns={[
                 { key: 'actions', label: 'Actions' },
-                { key: 'location_details', label: 'Location' },
-                { key: 'vendor', label: 'Vendor' },
-                { key: 'category', label: 'Category' },
-                { key: 'waste_unit', label: 'Generated (KG)' },
-                { key: 'wg_date', label: 'Waste Date' },
+                { key: 'generation_id', label: 'Generation ID' },
+                { key: 'date_time', label: 'Date & Time' },
+                { key: 'building', label: 'Building' },
+                { key: 'floor', label: 'Floor' },
+                { key: 'user_type', label: 'User Type' },
+                { key: 'client_name', label: 'Client Name' },
+                { key: 'user_name', label: 'User Name' },
+                { key: 'email', label: 'Email Id' },
+                { key: 'waste_category', label: 'Waste Category' },
+                { key: 'total_bags', label: 'Total Bags' },
+                { key: 'quantity_kg', label: 'Quantity (Kg)' },
+                { key: 'quantity_ltr', label: 'Quantity (Ltr)' },
+                { key: 'recycled_pct', label: 'Recycle %' },
+                { key: 'status', label: 'Status' },
+                { key: 'device_id', label: 'Device Id' },
+                { key: 'remarks', label: 'Remarks' },
               ]}
-              renderCell={(item: WasteGeneration, key) => {
+              renderCell={(item: WasteGeneration, key: string) => {
                 if (key === 'actions') return shouldShow("Waste Generation", "show") ? <Button variant="ghost" onClick={() => handleView(item.id)}><Eye className="h-4 w-4" /></Button> : null;
-                if (key === 'vendor') return item.vendor?.company_name || 'N/A';
-                if (key === 'category') return item.category?.category_name || 'N/A';
-                return item[key] || 'N/A';
+                if (key === 'generation_id') return item.id ?? '-';
+                if (key === 'date_time') {
+                  const datePart = item.wg_date ? item.wg_date.split('T')[0] : null;
+                  let timePart: string | null = null;
+                  if (item.created_at) {
+                    try { timePart = new Date(item.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); }
+                    catch { timePart = null; }
+                  }
+                  if (!datePart && !timePart) return '-';
+                  return [datePart, timePart].filter(Boolean).join(' ');
+                }
+                if (key === 'building') return item.building_name || '-';
+                // No dedicated "floor" field on the waste generation record — Area is
+                // the closest/most granular location field the API returns.
+                if (key === 'floor') return item.area_name || item.wing_name || '-';
+                if (key === 'user_type') return item.user_type || item.resource_type || '-';
+                if (key === 'client_name') return item.client_name || item.vendor?.company_name || item.agency_name || '-';
+                if (key === 'user_name') return item.user_name || item.created_by?.full_name || '-';
+                if (key === 'email') return item.created_by?.email || '-';
+                if (key === 'waste_category') return item.category?.category_name || '-';
+                if (key === 'total_bags') return item.bag_counts != null ? item.bag_counts.toString() : '-';
+                // The API doesn't distinguish Kg vs Ltr — waste_unit is assumed to be
+                // in Kg (matching how this figure is labeled everywhere else in the app).
+                if (key === 'quantity_kg') return item.waste_unit != null ? `${item.waste_unit}` : '-';
+                if (key === 'quantity_ltr') return '-';
+                if (key === 'recycled_pct') {
+                  const pct = item.waste_unit > 0 ? Math.round((item.recycled_unit / item.waste_unit) * 100) : 0;
+                  return `${pct}%`;
+                }
+                if (key === 'status') return item.status || '-';
+                if (key === 'device_id') return item.device_id != null ? item.device_id.toString() : '-';
+                if (key === 'remarks') return (item as Record<string, unknown>).remarks as string || '-';
+                return '-';
               }}
               getItemId={(item) => item.id.toString()}
+              selectable={true}
+              selectedItems={selectedItems}
+              onSelectAll={handleSelectAll}
+              onSelectItem={handleSelectItem}
               onSearchChange={setSearchTerm}
-              onFilterClick={() => setIsFilterOpen(true)}
+              onFilterClick={() => setIsFilterModalOpen(true)}
+              enableExport={true}
+              onExport={handleExport}
+              isExporting={isExporting}
               leftActions={
                 shouldShow("Waste Generation", "show") ? (
                   <Button className="bg-[#C72030] text-white rounded-none" onClick={handleActionClick}>
@@ -425,25 +579,21 @@ useEffect(() => {
       </div>
 
       {/* Action Panel */}
-      {showActionPanel && (
-        <div className={`fixed z-50 flex items-end justify-center pb-24 pointer-events-none transition-all duration-300 ${isSidebarCollapsed ? 'left-16' : 'left-64'} right-0 bottom-0`}>
-          <div className="pointer-events-auto bg-white border border-gray-200 rounded-lg shadow-2xl p-6 flex gap-12">
-            <button onClick={() => navigate('/maintenance/waste/generation/add')} className="flex flex-col items-center hover:text-[#C72030] transition-colors">
-              <Plus className="w-6 h-6 mb-1"/><span className="text-xs font-bold uppercase">Add</span>
-            </button>
-            <button onClick={() => setIsImportOpen(true)} className="flex flex-col items-center hover:text-[#C72030] transition-colors">
-              <Upload className="w-6 h-6 mb-1"/><span className="text-xs font-bold uppercase">Import</span>
-            </button>
-            <div className="w-px h-8 bg-gray-200" />
-            <button onClick={handleClearSelection} className="flex flex-col items-center text-gray-400 hover:text-black transition-colors">
-              <X className="w-6 h-6 mb-1"/><span className="text-xs font-bold uppercase">Close</span>
-            </button>
-          </div>
-        </div>
+      {selectedItems.length > 0 ? (
+        <SelectionPanel
+          actions={[{ label: 'Dispatch', icon: Truck, onClick: handleDispatch }]}
+          onClearSelection={handleClearSelection}
+        />
+      ) : showActionPanel && (
+        <SelectionPanel
+          onAdd={() => navigate('/maintenance/waste/generation/add')}
+          onImport={() => setIsBulkUploadOpen(true)}
+          onClearSelection={handleClearSelection}
+        />
       )}
 
-      <WasteGenerationFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleApplyFilters} onExport={() => {}} />
-      <WasteGenerationBulkDialog isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} type="import" />
+      <WasteGenerationFilterDialog isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
+      <WasteGenerationBulkDialog isOpen={isBulkUploadOpen} onClose={() => setIsBulkUploadOpen(false)} type="import" />
   <AssetAnalyticsFilterDialog
   isOpen={isAnalyticsFilterOpen}
   onClose={() => setIsAnalyticsFilterOpen(false)}

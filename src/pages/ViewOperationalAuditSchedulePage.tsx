@@ -5,10 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { ArrowLeft, FileText, Box, Clock, Link, Mail, MapPin, Loader2, Download, Eye } from "lucide-react";
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { toast } from "sonner";
+
+interface TimeSetupRow {
+    hour: string;
+    minute: string;
+    dayValue: string;
+    month: string;
+}
 
 export const ViewOperationalAuditSchedulePage = () => {
     const { id } = useParams();
@@ -113,13 +121,12 @@ export const ViewOperationalAuditSchedulePage = () => {
 
     const handleBack = () => navigate('/maintenance/audit/operational/scheduled');
 
-    // Loading state
     if (loading) {
         return (
-            <div className="p-4 sm:p-6 min-h-screen flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#C72030]" />
-                    <p className="text-gray-600">Loading form details...</p>
+            <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <p className="text-gray-700">Loading Schedule Details...</p>
                 </div>
             </div>
         );
@@ -507,26 +514,37 @@ export const ViewOperationalAuditSchedulePage = () => {
                                         }
                                     }
 
+                                    const timeSetupColumns: ColumnConfig[] = [
+                                        { key: 'hour', label: 'Hour', sortable: true, hideable: false, defaultVisible: true },
+                                        { key: 'minute', label: 'Minute', sortable: true, hideable: false, defaultVisible: true },
+                                        { key: 'dayValue', label: dayColumnHeader, sortable: true, hideable: false, defaultVisible: true },
+                                        { key: 'month', label: 'Month', sortable: true, hideable: false, defaultVisible: true },
+                                    ];
+
+                                    const timeSetupData: TimeSetupRow[] = [
+                                        {
+                                            hour: hours.join(', '),
+                                            minute: minutes.join(', '),
+                                            dayValue: dayColumnValue,
+                                            month: months.join(', '),
+                                        },
+                                    ];
+
                                     return (
                                         <div className="rounded-lg border border-gray-200 overflow-hidden">
-                                            <Table className="border-separate">
-                                                <TableHeader>
-                                                    <TableRow className="bg-gray-50">
-                                                        <TableHead className="font-semibold text-gray-700">Hour</TableHead>
-                                                        <TableHead className="font-semibold text-gray-700">Minute</TableHead>
-                                                        <TableHead className="font-semibold text-gray-700">{dayColumnHeader}</TableHead>
-                                                        <TableHead className="font-semibold text-gray-700">Month</TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    <TableRow>
-                                                        <TableCell>{hours.join(', ')}</TableCell>
-                                                        <TableCell>{minutes.join(', ')}</TableCell>
-                                                        <TableCell>{dayColumnValue}</TableCell>
-                                                        <TableCell>{months.join(', ')}</TableCell>
-                                                    </TableRow>
-                                                </TableBody>
-                                            </Table>
+                                            <EnhancedTable
+                                                data={timeSetupData}
+                                                columns={timeSetupColumns}
+                                                renderCell={(item: TimeSetupRow, columnKey: string) =>
+                                                    item[columnKey as keyof TimeSetupRow]
+                                                }
+                                                storageKey="view-operational-audit-time-setup-table"
+                                                hideTableSearch
+                                                hideTableExport
+                                                hideColumnsButton
+                                                emptyMessage="No time setup available"
+                                                getItemId={(item) => `${item.hour}-${item.minute}-${item.dayValue}-${item.month}`}
+                                            />
                                         </div>
                                     );
                                 })()}
@@ -654,43 +672,47 @@ export const ViewOperationalAuditSchedulePage = () => {
                             <CardContent>
                                 {customForm?.sch_type === 'Service' ? (
                                     <div className="rounded-lg border border-gray-200 overflow-hidden">
-                                        <Table className="border-separate">
-                                            <TableHeader>
-                                                <TableRow className="bg-gray-50">
-                                                    <TableHead className="font-semibold text-gray-700">Service ID</TableHead>
-                                                    <TableHead className="font-semibold text-gray-700">Service Name</TableHead>
-                                                    <TableHead className="font-semibold text-gray-700">Created Date</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {assetTask?.services?.map((service) => (
-                                                    <TableRow key={service.id}>
-                                                        <TableCell>{service.id}</TableCell>
-                                                        <TableCell>{service.service_name}</TableCell>
-                                                        <TableCell>{formatDateTime(service.created_at)}</TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
+                                        <EnhancedTable
+                                            data={(assetTask?.services || []).map((service) => ({
+                                                rowId: String(service.id),
+                                                serviceId: service.id,
+                                                serviceName: service.service_name || 'N/A',
+                                                createdDate: service.created_at ? formatDateTime(service.created_at) : 'N/A',
+                                            }))}
+                                            columns={[
+                                                { key: 'serviceId', label: 'Service ID', sortable: true, hideable: false, defaultVisible: true },
+                                                { key: 'serviceName', label: 'Service Name', sortable: true, hideable: false, defaultVisible: true },
+                                                { key: 'createdDate', label: 'Created Date', sortable: true, hideable: false, defaultVisible: true },
+                                            ]}
+                                            renderCell={(item, columnKey) => item[columnKey as keyof typeof item]}
+                                            storageKey="view-operational-audit-association-service-table"
+                                            hideTableSearch
+                                            hideTableExport
+                                            hideColumnsButton
+                                            emptyMessage="No services associated"
+                                            getItemId={(item) => item.rowId}
+                                        />
                                     </div>
                                 ) : (
                                     <div className="rounded-lg border border-gray-200 overflow-hidden">
-                                        <Table className="border-separate">
-                                            <TableHeader>
-                                                <TableRow className="bg-gray-50">
-                                                    <TableHead className="font-semibold text-gray-700">Asset ID</TableHead>
-                                                    <TableHead className="font-semibold text-gray-700">Asset Name</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {assetTask?.assets?.map((asset) => (
-                                                    <TableRow key={asset.id}>
-                                                        <TableCell>{asset.id}</TableCell>
-                                                        <TableCell>{asset.name}</TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
+                                        <EnhancedTable
+                                            data={(assetTask?.assets || []).map((asset) => ({
+                                                rowId: String(asset.id),
+                                                assetId: asset.id,
+                                                assetName: asset.name || 'N/A',
+                                            }))}
+                                            columns={[
+                                                { key: 'assetId', label: 'Asset ID', sortable: true, hideable: false, defaultVisible: true },
+                                                { key: 'assetName', label: 'Asset Name', sortable: true, hideable: false, defaultVisible: true },
+                                            ]}
+                                            renderCell={(item, columnKey) => item[columnKey as keyof typeof item]}
+                                            storageKey="view-operational-audit-association-asset-table"
+                                            hideTableSearch
+                                            hideTableExport
+                                            hideColumnsButton
+                                            emptyMessage="No assets associated"
+                                            getItemId={(item) => item.rowId}
+                                        />
                                     </div>
                                 )}
                             </CardContent>
@@ -710,30 +732,30 @@ export const ViewOperationalAuditSchedulePage = () => {
                             </CardHeader>
                             <CardContent>
                                 <div className="rounded-lg border border-gray-200 overflow-hidden">
-                                    <Table className="border-separate">
-                                        <TableHeader>
-                                            <TableRow className="bg-gray-50">
-                                                <TableHead className="font-semibold text-gray-700">Rule Name</TableHead>
-                                                <TableHead className="font-semibold text-gray-700">Trigger Type</TableHead>
-                                                <TableHead className="font-semibold text-gray-700">Trigger To</TableHead>
-                                                <TableHead className="font-semibold text-gray-700">Period</TableHead>
-                                                <TableHead className="font-semibold text-gray-700">Created By</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {emailRules?.map((rule) => (
-                                                <TableRow key={rule.id}>
-                                                    <TableCell>{rule.rule_name}</TableCell>
-                                                    <TableCell>{rule.trigger_type}</TableCell>
-                                                    <TableCell>{rule.trigger_to || 'N/A'}</TableCell>
-                                                    <TableCell>
-                                                        {rule.period_value} {rule.period_type}
-                                                    </TableCell>
-                                                    <TableCell>{rule.created_by || 'N/A'}</TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
+                                    <EnhancedTable
+                                        data={(emailRules || []).map((rule) => ({
+                                            rowId: String(rule.id),
+                                            ruleName: rule.rule_name || 'N/A',
+                                            triggerType: rule.trigger_type || 'N/A',
+                                            triggerTo: rule.trigger_to || 'N/A',
+                                            period: `${rule.period_value ?? ''} ${rule.period_type ?? ''}`.trim() || 'N/A',
+                                            createdBy: rule.created_by || 'N/A',
+                                        }))}
+                                        columns={[
+                                            { key: 'ruleName', label: 'Rule Name', sortable: true, hideable: false, defaultVisible: true },
+                                            { key: 'triggerType', label: 'Trigger Type', sortable: true, hideable: false, defaultVisible: true },
+                                            { key: 'triggerTo', label: 'Trigger To', sortable: true, hideable: false, defaultVisible: true },
+                                            { key: 'period', label: 'Period', sortable: true, hideable: false, defaultVisible: true },
+                                            { key: 'createdBy', label: 'Created By', sortable: true, hideable: false, defaultVisible: true },
+                                        ]}
+                                        renderCell={(item, columnKey) => item[columnKey as keyof typeof item]}
+                                        storageKey="view-operational-audit-email-rules-table"
+                                        hideTableSearch
+                                        hideTableExport
+                                        hideColumnsButton
+                                        emptyMessage="No email trigger rules found"
+                                        getItemId={(item) => item.rowId}
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
@@ -752,24 +774,26 @@ export const ViewOperationalAuditSchedulePage = () => {
                             </CardHeader>
                             <CardContent>
                                 <div className="rounded-lg border border-gray-200 overflow-hidden">
-                                    <Table className="border-separate">
-                                        <TableHeader>
-                                            <TableRow className="bg-gray-50">
-                                                <TableHead className="font-semibold text-gray-700">Asset Name</TableHead>
-                                                <TableHead className="font-semibold text-gray-700">QR Code</TableHead>
-                                                <TableHead className="font-semibold text-gray-700">Bar Code</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {assetTask?.assets?.map((asset) => (
-                                                <TableRow key={asset.id}>
-                                                    <TableCell>{asset.name}</TableCell>
-                                                    <TableCell>{asset.qr_code || 'N/A'}</TableCell>
-                                                    <TableCell>{asset.bar_code || 'N/A'}</TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
+                                    <EnhancedTable
+                                        data={(assetTask?.assets || []).map((asset) => ({
+                                            rowId: String(asset.id),
+                                            assetName: asset.name || 'N/A',
+                                            qrCode: asset.qr_code || 'N/A',
+                                            barCode: asset.bar_code || 'N/A',
+                                        }))}
+                                        columns={[
+                                            { key: 'assetName', label: 'Asset Name', sortable: true, hideable: false, defaultVisible: true },
+                                            { key: 'qrCode', label: 'QR Code', sortable: true, hideable: false, defaultVisible: true },
+                                            { key: 'barCode', label: 'Bar Code', sortable: true, hideable: false, defaultVisible: true },
+                                        ]}
+                                        renderCell={(item, columnKey) => item[columnKey as keyof typeof item]}
+                                        storageKey="view-operational-audit-asset-mapping-table"
+                                        hideTableSearch
+                                        hideTableExport
+                                        hideColumnsButton
+                                        emptyMessage="No asset mappings found"
+                                        getItemId={(item) => item.rowId}
+                                    />
                                 </div>
                             </CardContent>
                         </Card>

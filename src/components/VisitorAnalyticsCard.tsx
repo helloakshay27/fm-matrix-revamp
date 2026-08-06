@@ -40,14 +40,22 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
 
     setIsLoading(true);
     try {
-      const fromDate = `${dateRange.startDate.getDate()}/${dateRange.startDate.getMonth() + 1}/${dateRange.startDate.getFullYear()}`;
-      const toDate = `${dateRange.endDate.getDate()}/${dateRange.endDate.getMonth() + 1}/${dateRange.endDate.getFullYear()}`;
+      // Format dates as YYYY-MM-DD to match API expectation
+      const formatDate = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const fromDate = formatDate(dateRange.startDate);
+      const toDate = formatDate(dateRange.endDate);
 
       const response = await visitorHostWiseAPI.getHostWiseVisitors(fromDate, toDate);
 
       // Transform the API response to chart data
       const chartData = Object.entries(response.host_wise_guest_count.visitorsByHost).map(([host, count]) => ({
-        purpose: host || 'Unknown Host',
+        purpose: host.trim() || 'Unknown Host',
         count: count as number,
         percentage: 0 // Will be calculated after we have total
       }));
@@ -254,10 +262,10 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">{title}</CardTitle>
-          <Download
+          {/* <Download
             className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors"
             onClick={handleDownload}
-          />
+          /> */}
         </div>
       </CardHeader>
       <CardContent>

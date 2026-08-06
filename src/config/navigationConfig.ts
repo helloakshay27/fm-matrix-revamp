@@ -349,6 +349,11 @@ export const modulesByPackage = {
           href: "/maintenance/waste/generation",
           color: "text-[#1a1a1a]",
         },
+        {
+          name: "Waste Dispatch",
+          href: "/maintenance/waste/dispatch",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
     {

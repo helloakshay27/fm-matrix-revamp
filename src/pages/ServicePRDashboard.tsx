@@ -13,6 +13,7 @@ import {
   updateServiceActiveStaus,
 } from "@/store/slices/servicePRSlice";
 import { cache } from "@/utils/cacheUtils";
+import { useProcurementEvents } from "@/components/PostHogProcurementEvents";
 
 const CACHE_TTL = 5 * 60 * 1000;
 const STALE_TTL = 30 * 60 * 1000;
@@ -126,6 +127,7 @@ export const ServicePRDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { shouldShow } = useDynamicPermissions()
+  const procurementEvents = useProcurementEvents();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
   const location = useLocation();
@@ -209,6 +211,7 @@ export const ServicePRDashboard = () => {
       ).unwrap();
       cache.set(cacheKey, response, CACHE_TTL);
       applyResponse(response);
+      try { procurementEvents.onProcurementListViewed("service_pr_list", { list_type: "service_pr_list", row_count: response.work_orders.length }); } catch (err) {}
     } catch (error) {
       toast.error(error);
     } finally {
@@ -421,17 +424,17 @@ export const ServicePRDashboard = () => {
 
   const leftActions = (
     <div className="flex items-center gap-2">
-      {/* {
-        shouldShow("Service PR", "create") && ( */}
-      <Button
-        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
-        onClick={() => navigate("/finance/service-pr/add")}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
-      {/* )
-      } */}
+      {
+        shouldShow("Service PR", "create") && (
+          <Button
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
+            onClick={() => navigate("/finance/service-pr/add")}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        )
+      }
 
     </div>
   );

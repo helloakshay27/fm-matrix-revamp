@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Package } from 'lucide-react';
+import { Eye, Package, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchRestaurantOrders, fetchRestaurants } from '@/store/slices/f&bSlice';
@@ -21,6 +21,9 @@ export const RecentOrdersSidebar = () => {
   const token = localStorage.getItem('token');
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem("sidebarCollapsed") === "true"; } catch { return false; }
+  });
 
   useEffect(() => {
     const fetchRecentOrders = async () => {
@@ -79,19 +82,49 @@ export const RecentOrdersSidebar = () => {
   const currency = localStorage.getItem('currency') || '₹';
 
   return (
-    <div className="bg-white p-4 h-fit border">
+    <div
+      className="bg-white border flex flex-col transition-all duration-300"
+      style={{
+        boxShadow: "0px 4px 14.2px 0px #0000001A",
+        width: isCollapsed ? 48 : 350,
+        minWidth: isCollapsed ? 48 : 350,
+        maxWidth: isCollapsed ? 48 : 350,
+        height: "100%",
+        overflow: "hidden",
+      }}
+    >
       {/* Header */}
-      <div className="mb-6">
-        <h3 className="text-lg font-bold mb-1" style={{ color: '#C72030' }}>Recent Orders</h3>
-        <p className="text-sm text-gray-600">{new Date().toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })}</p>
+      <div className={`flex items-center justify-between px-3 py-3 border-b border-gray-100 flex-shrink-0 ${isCollapsed ? "flex-col gap-2" : ""}`}>
+        {!isCollapsed && (
+          <h3 className="text-base font-semibold" style={{ color: "#c72030" }}>Recent Orders</h3>
+        )}
+        <button
+          onClick={() => setIsCollapsed((v) => {
+            const next = !v;
+            try { localStorage.setItem("sidebarCollapsed", String(next)); } catch {}
+            return next;
+          })}
+          title={isCollapsed ? "Expand" : "Collapse"}
+          className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500"
+        >
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
       </div>
 
-      <div className="max-h-[600px] overflow-y-auto space-y-4">
+      {/* Collapsed vertical label */}
+      {isCollapsed && (
+        <div className="flex-1 flex items-center justify-center">
+          <span
+            className="text-xs font-semibold tracking-widest"
+            style={{ writingMode: "vertical-rl", color: "#c72030", transform: "rotate(180deg)" }}
+          >
+            Recent Orders
+          </span>
+        </div>
+      )}
+
+      {!isCollapsed && (
+      <div className="flex-1 space-y-4 overflow-y-auto p-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {loading && (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
@@ -159,6 +192,7 @@ export const RecentOrdersSidebar = () => {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 };

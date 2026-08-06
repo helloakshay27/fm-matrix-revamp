@@ -240,7 +240,7 @@ const PaymentTermsMaster = () => {
 					<Edit className="w-4 h-4" />
 				</Button>
 				<Button size="icon" variant="ghost" title="Remove" onClick={() => handleRemovePaymentTerm(term.id)}>
-					<Trash2 className="w-4 h-4 text-red-600" />
+					<Trash2 className="w-4 h-4 " />
 
 				</Button>
 			</div>
@@ -274,7 +274,7 @@ const PaymentTermsMaster = () => {
 						setShowConfig(true);
 					}}>
 						<Plus className="w-4 h-4 mr-2 !text-white" />
-						 <span className="!text-white" >Add</span> 
+						 <span className="!text-white" >Add</span>
 					</Button>
 				)}
 			/>
@@ -339,7 +339,7 @@ const PaymentTermsMaster = () => {
 						</table>
 					)}
 					<DialogFooter>
-						<Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={handleEditPaymentTerm} disabled={editSubmitting || editLoading}>
+						<Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 " onClick={handleEditPaymentTerm} disabled={editSubmitting || editLoading}>
 							{editSubmitting ? 'Saving...' : 'Save'}
 						</Button>
 						<Button variant="outline" onClick={() => { setEditModalOpen(false); setEditErrors({}); }} disabled={editSubmitting || editLoading}>
@@ -405,7 +405,7 @@ const PaymentTermsMaster = () => {
 						</div>
 
 						<DialogFooter>
-							<Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={handleSaveTerms}>Save</Button>
+							<Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 " onClick={handleSaveTerms}>Save</Button>
 							<Button variant="outline" onClick={() => { setEditTerms([]); setShowConfig(false); }}>Cancel</Button>
 						</DialogFooter>
 					</DialogContent>
