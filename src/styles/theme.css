@@ -446,10 +446,24 @@ select:focus {
   color: inherit !important;
 }
 
-/* MUI Checkbox with any checked state */
+/* MUI Checkbox - unchecked/base state. Several pages set inline
+   sx={{ color: '#C72030', ... }} for the *unchecked* ring specifically, which
+   the checked-only rule below never touches — force the base color too. */
+.MuiCheckbox-root,
+[class*="MuiCheckbox-root"] {
+  color: var(--color-primary) !important;
+}
+
+/* MUI Checkbox with any checked state - override inline sx styles */
 .MuiCheckbox-root.Mui-checked,
 [class*="MuiCheckbox-root"].Mui-checked {
   color: var(--color-primary) !important;
+}
+
+/* MUI Checkbox SVG icon */
+.MuiCheckbox-root svg,
+[class*="MuiCheckbox-root"] svg {
+  color: inherit !important;
 }
 
 /* MUI Switches */
