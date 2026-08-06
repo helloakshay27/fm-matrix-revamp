@@ -568,7 +568,7 @@ export const CostApprovalPage: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="fm-button-fix fm-button-brand px-4 py-2"
+                      className="bg-white border border-brand text-brand hover:bg-brand-selected px-4 py-2"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Reset
@@ -714,7 +714,7 @@ export const CostApprovalPage: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="fm-button-fix fm-button-brand px-4 py-2"
+                      className="bg-white border border-brand text-brand hover:bg-brand-selected px-4 py-2"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Reset

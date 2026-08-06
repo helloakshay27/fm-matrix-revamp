@@ -453,7 +453,7 @@ const EditApprovalMatrixPage = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => removeApprovalLevel(index)}
-                      className="bg-[#f6f4ee] hover:bg-[#e8e5dc] text-[#C72030] min-w-[32px] h-8 p-0"
+                      className="bg-brand text-white [&_svg]:!text-white min-w-[32px] h-8 p-0"
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -467,9 +467,9 @@ const EditApprovalMatrixPage = () => {
           <Button
             variant="ghost"
             onClick={addApprovalLevel}
-            className="bg-[#f6f4ee] hover:bg-[#e8e5dc] text-[#6B2C91] w-12 h-12 rounded-lg p-0"
+            className="bg-brand text-white [&_svg]:!text-white w-12 h-12 rounded-lg p-0"
           >
-            <Plus className="w-6 h-6 text-orange-500" />
+            <Plus className="w-6 h-6" />
           </Button>
         </div>
 

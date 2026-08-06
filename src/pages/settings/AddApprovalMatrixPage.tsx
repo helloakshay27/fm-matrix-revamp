@@ -492,7 +492,7 @@ const AddApprovalMatrixPage = () => {
           <Button
             variant="ghost"
             onClick={addApprovalLevel}
-            className="bg-[#f6f4ee] hover:bg-[#e8e5dc] text-[#6B2C91] w-12 h-12 rounded-lg p-0"
+            className="bg-brand text-white [&_svg]:!text-white w-12 h-12 rounded-lg p-0"
           >
             <Plus className="w-6 h-6" />
           </Button>
@@ -503,7 +503,7 @@ const AddApprovalMatrixPage = () => {
           <Button
             onClick={handleCreate}
             disabled={isSubmitting}
-            className="fm-button-fix fm-button-brand px-8 py-2"
+            className="fm-button-fix fm-button-brand-solid px-8 py-2"
           >
             {isSubmitting ? 'Creating...' : 'Create'}
           </Button>
@@ -511,7 +511,7 @@ const AddApprovalMatrixPage = () => {
           <Button
             variant="outline"
             onClick={handleSaveAndCreateNew}
-           className="fm-button-fix fm-button-brand px-4 py-2"
+           className="fm-button-fix fm-button-brand-solid px-4 py-2"
           variant="ghost"
           >
             Save And Create New
