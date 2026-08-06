@@ -61,6 +61,55 @@ const emptyFilters: WasteGenerationTagsFilters = {
   status: "",
 };
 
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  backgroundColor: "#fff",
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px 12px", sm: "10px 14px", md: "12px 14px" },
+  },
+  "& .MuiOutlinedInput-root": {
+    backgroundColor: "white",
+    "& fieldset": {
+      borderColor: "#ddd",
+    },
+    "&:hover fieldset": {
+      borderColor: "#C72030",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#C72030",
+    },
+  },
+  "& .MuiInputLabel-root": {
+    "&.Mui-focused": {
+      color: "#C72030",
+    },
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+const isMuiOverlayTarget = (target: EventTarget | null) =>
+  !!(target as HTMLElement | null)?.closest?.(
+    ".MuiPopover-root, .MuiModal-root, .MuiMenu-root"
+  );
+
 const commodityColumns: ColumnConfig[] = [
   {
     key: "category_name",
@@ -640,7 +689,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               variant="outline"
               onClick={() => setIsAddCommodityModalOpen(false)}
               disabled={submitting}
-              className="border-brand text-brand hover:bg-brand-selected"
+              className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030]"
             >
               Cancel
             </Button>
@@ -655,19 +704,36 @@ export const UtilityWasteGenerationSetupDashboard = () => {
         </DialogContent>
       </Dialog>
 
+      {/* modal={false} lets portaled MUI Select menus receive clicks/scroll */}
       <Dialog
         open={isAddCategoryModalOpen}
         onOpenChange={setIsAddCategoryModalOpen}
+        modal={false}
       >
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent
+          className="sm:max-w-[500px]"
+          onPointerDownOutside={(e) => {
+            if (isMuiOverlayTarget(e.target)) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            if (isMuiOverlayTarget(e.target)) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Add New Category</DialogTitle>
             <DialogDescription>Enter category details below</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <FormControl fullWidth variant="outlined" size="small">
-              <InputLabel shrink>Parent Commodity*</InputLabel>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="parent-commodity-label" shrink>
+                Parent Commodity*
+              </InputLabel>
               <MuiSelect
+                labelId="parent-commodity-label"
                 value={categoryInputs.parent_id}
                 onChange={(e) =>
                   setCategoryInputs((prev) => ({
@@ -677,6 +743,9 @@ export const UtilityWasteGenerationSetupDashboard = () => {
                 }
                 label="Parent Commodity*"
                 displayEmpty
+                notched
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
               >
                 <MenuItem value="">
                   <em>Select Parent Commodity</em>
@@ -701,8 +770,8 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               }
               fullWidth
               variant="outlined"
-              size="small"
               InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
 
             <TextField
@@ -717,8 +786,8 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               }
               fullWidth
               variant="outlined"
-              size="small"
               InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
             />
           </div>
           <div className="flex justify-end space-x-2">
@@ -726,7 +795,7 @@ export const UtilityWasteGenerationSetupDashboard = () => {
               variant="outline"
               onClick={() => setIsAddCategoryModalOpen(false)}
               disabled={submitting}
-              className="border-brand text-brand hover:bg-brand-selected"
+              className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030]"
             >
               Cancel
             </Button>

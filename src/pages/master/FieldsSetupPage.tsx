@@ -21,11 +21,10 @@ import {
 } from "@mui/material";
 
 const fieldStyles = {
-  height: "48px",
-  backgroundColor: "#fff",
-  borderRadius: "8px",
   "& .MuiOutlinedInput-root": {
-    height: "48px",
+    height: 40,
+    backgroundColor: "#fff",
+    borderRadius: "8px",
     "& fieldset": {
       borderColor: "#e5e7eb",
     },
@@ -36,12 +35,38 @@ const fieldStyles = {
       borderColor: "#C72030",
     },
   },
-  "& .MuiInputLabel-root": {
-    "&.Mui-focused": {
-      color: "#C72030",
-    },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: "8px 14px",
+    fontSize: "14px",
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "#C72030",
   },
 };
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+const isMuiOverlayTarget = (target: EventTarget | null) =>
+  !!(target as HTMLElement | null)?.closest?.(
+    ".MuiPopover-root, .MuiModal-root, .MuiMenu-root"
+  );
 
 const FIELD_TYPES = [
   { value: 'text', label: 'Text' },
@@ -369,8 +394,21 @@ const FieldsSetupPage = () => {
           />
 
           {/* Add Custom Fields Dialog */}
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {/* modal={false} lets portaled MUI Select menus receive clicks/scroll */}
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog} modal={false}>
+            <DialogContent
+              className="max-w-3xl max-h-[90vh] overflow-y-auto"
+              onPointerDownOutside={(e) => {
+                if (isMuiOverlayTarget(e.target)) {
+                  e.preventDefault();
+                }
+              }}
+              onInteractOutside={(e) => {
+                if (isMuiOverlayTarget(e.target)) {
+                  e.preventDefault();
+                }
+              }}
+            >
               <DialogHeader>
                 <DialogTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <span className="w-8 h-8 rounded-full bg-brand-light flex items-center justify-center">
@@ -415,24 +453,30 @@ const FieldsSetupPage = () => {
                         fullWidth
                         variant="outlined"
                         required
+                        size="small"
                         InputLabelProps={{
                           shrink: true,
                           sx: { "& .MuiInputLabel-asterisk": { color: "#ef4444" } },
                         }}
-                        InputProps={{ sx: fieldStyles }}
-                        size="small"
+                        sx={fieldStyles}
                       />
 
-                      <FormControl fullWidth variant="outlined" required size="small" sx={{
-                        "& .MuiInputBase-root": fieldStyles,
-                        "& .MuiInputLabel-asterisk": { color: "#ef4444" },
-                      }}>
-                        <InputLabel shrink>Field Type</InputLabel>
+                      <FormControl
+                        fullWidth
+                        variant="outlined"
+                        required
+                        size="small"
+                        sx={{ "& .MuiInputLabel-asterisk": { color: "#ef4444" } }}
+                      >
+                        <InputLabel id={`field-type-label-${index}`} shrink>Field Type</InputLabel>
                         <MuiSelect
+                          labelId={`field-type-label-${index}`}
                           value={question.qtype}
                           onChange={(e) => handleQuestionChange(index, 'qtype', e.target.value)}
                           label="Field Type"
                           notched
+                          sx={fieldStyles}
+                          MenuProps={selectMenuProps}
                         >
                           {FIELD_TYPES.map((t) => (
                             <MenuItem key={t.value} value={t.value}>
@@ -449,7 +493,7 @@ const FieldsSetupPage = () => {
                   <Button
                     variant="outline"
                     onClick={handleAddRow}
-                    className="border-brand text-brand hover:bg-brand-light px-4"
+                    className="border-[#C72030] text-[#C72030] px-4"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Another Field
@@ -458,6 +502,7 @@ const FieldsSetupPage = () => {
                     <Button
                       variant="outline"
                       onClick={() => setShowAddDialog(false)}
+                      className="border-[#C72030] text-[#C72030]"
                     >
                       Cancel
                     </Button>

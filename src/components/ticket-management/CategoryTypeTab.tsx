@@ -1193,6 +1193,7 @@ export const CategoryTypeTab: React.FC = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => removeFaqItem(index)}
+                            className="[&_svg]:!text-brand [&_svg]:!stroke-brand"
                           >
                             <X className="h-4 w-4" />
                           </Button>
