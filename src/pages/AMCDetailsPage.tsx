@@ -1823,7 +1823,7 @@ export const AMCDetailsPage = () => {
                                                   <div className="flex flex-col gap-1">
                                                     {list.map((a, ai) => {
                                                       const url  = a.document || a.document_url || '';
-                                                      const name = a.filename || a.document_file_name || `File ${ai + 1}`;
+                                                      const name = a.filename || a.document_file_name || getFileNameFromUrl(url) || `File ${ai + 1}`;
                                                       return (
                                                         <div key={a.id ?? ai} className="flex items-center gap-2">
                                                           <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[#C72030] hover:underline text-sm">
@@ -2000,7 +2000,7 @@ export const AMCDetailsPage = () => {
                                       <div className="flex flex-col gap-1">
                                         {list.map((a, ai) => {
                                           const url  = a.document || a.document_url || '';
-                                          const name = a.filename || a.document_file_name || `File ${ai + 1}`;
+                                          const name = a.filename || a.document_file_name || getFileNameFromUrl(url) || `File ${ai + 1}`;
                                           return (
                                             <div key={a.id ?? ai} className="flex items-center gap-2">
                                               <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[#C72030] hover:underline text-sm">
