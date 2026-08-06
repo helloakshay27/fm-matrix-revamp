@@ -608,42 +608,50 @@ td:last-child {
   background: #f9f9f9 !important;
 }
 
-/* Global MUI Select Search Input Styles */
+/* Global MUI Select Search Input Styles — match brand select / CommandInput */
 .mui-search-container {
   position: sticky !important;
   top: 0 !important;
   z-index: 999 !important;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
-  padding: 12px !important;
-  border-bottom: 1px solid #dee2e6 !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+  background: #ffffff !important;
+  padding: 6px 8px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: none !important;
   margin: 0 !important;
 }
 
 .mui-search-input {
   width: 100% !important;
-  padding: 12px 16px !important;
-  border: 2px solid #e9ecef !important;
-  border-radius: 8px !important;
-  font-size: 14px !important;
+  height: 36px !important;
+  padding: 6px 10px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  font-size: 13px !important;
   outline: none !important;
   background: white !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-family: inherit !important;
   box-sizing: border-box !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* The in-menu search box is deliberately blue, not the brand orange, so it
+   reads as a control distinct from the field/options it is filtering. */
+.mui-search-input:hover {
+  border-color: #1976d2 !important;
 }
 
 .mui-search-input:focus {
-  border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 4px rgba(218, 119, 86, 0.15), 0 2px 8px rgba(0,0,0,0.15) !important;
-  background-color: #fafbfc !important;
-  transform: translateY(-1px) !important;
+  border-color: #1976d2 !important;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.16) !important;
+  background-color: #ffffff !important;
+  transform: none !important;
 }
 
 .mui-search-input::placeholder {
-  color: #6c757d !important;
-  font-weight: 500 !important;
+  color: #9ca3af !important;
+  font-weight: 400 !important;
 }
 
 .mui-no-results-message {
@@ -733,17 +741,19 @@ td:last-child {
 
 .MuiMenu-root .MuiMenuItem-root:hover,
 .MuiPopover-root .MuiMenuItem-root:hover {
-  background-color: #f5f5f5 !important;
+  background-color: var(--color-primary-selected) !important;
 }
 
 .MuiMenu-root .MuiMenuItem-root.Mui-selected,
 .MuiPopover-root .MuiMenuItem-root.Mui-selected {
-  background-color: #e3f2fd !important;
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
 }
 
 .MuiMenu-root .MuiMenuItem-root.Mui-selected:hover,
 .MuiPopover-root .MuiMenuItem-root.Mui-selected:hover {
-  background-color: #bbdefb !important;
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
 }
 
 /* ===========================================

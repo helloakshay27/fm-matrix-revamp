@@ -79,6 +79,42 @@ import {
 import { API_CONFIG } from "@/config/apiConfig";
 import { toast } from "sonner";
 import ReactSelect from "react-select";
+import {
+  FormControl as MuiFormControl,
+  Select as MuiSelect,
+  MenuItem,
+  Checkbox as MuiCheckbox,
+  ListItemText,
+} from "@mui/material";
+import type { SelectChangeEvent } from "@mui/material/Select";
+
+// Matches the MUI field/menu styling used across the ticket-management tabs.
+const fieldStyles = {
+  minHeight: { xs: 36, sm: 40, md: 45 },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px 12px", sm: "10px 14px", md: "12px 14px" },
+  },
+  "& .MuiOutlinedInput-root": {
+    backgroundColor: "white",
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 // Schema for form validation
 const responseEscalationSchema = z.object({
@@ -745,81 +781,65 @@ export const ResponseEscalationTab: React.FC = () => {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Response Escalation Configuration</CardTitle>
+            <CardTitle className="text-gray-900">Response Escalation Configuration</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Category Selection Dropdown */}
             <div className="space-y-3">
-              <Label className="text-base font-semibold">Category Type</Label>
-              <ReactSelect
-                isMulti
-                options={categoryOptions}
-                onChange={(selected) => {
-                  if (!selected) {
-                    setSelectedCategories([]);
-                    form.setValue("categoryIds", []);
-                    return;
-                  }
+              <Label className="text-base font-semibold text-gray-900">Category Type</Label>
+              <MuiFormControl fullWidth size="small" className="mt-1">
+                <MuiSelect
+                  multiple
+                  displayEmpty
+                  disabled={categoriesLoading}
+                  value={selectedCategories.map(String)}
+                  onChange={(e: SelectChangeEvent<string[]>) => {
+                    const value = e.target.value;
+                    const ids = typeof value === "string" ? value.split(",") : value;
+                    const newCategories = ids
+                      .map(Number)
+                      .filter((id) => !Number.isNaN(id));
 
-                  const newCategories = selected.map((s) => s.value);
-                  const currentCategories = selectedCategories;
-
-                  // Check if a new category is being added (selection length increased)
-                  if (newCategories.length > currentCategories.length) {
-                    // Find the newly added category
-                    const addedCategory = newCategories.find(
-                      (id) => !currentCategories.includes(id)
-                    );
-
-                    // Check if this category already exists in current selection
-                    if (
-                      addedCategory &&
-                      currentCategories.includes(addedCategory)
-                    ) {
-                      toast.error("Category already exists in the selection!");
+                    if (newCategories.length > 15) {
+                      toast.error("Maximum 15 categories allowed!");
                       return;
                     }
-                  }
 
-                  setSelectedCategories(newCategories);
-                  form.setValue("categoryIds", newCategories);
-                }}
-                value={categoryOptions.filter((option) =>
-                  selectedCategories.includes(option.value)
-                )}
-                className="mt-1"
-                placeholder="Select up to 15 categories..."
-                isLoading={categoriesLoading}
-                isDisabled={categoriesLoading}
-                noOptionsMessage={() => "No more categories available"}
-                styles={{
-                  control: (base) => ({
-                    ...base,
-                    minHeight: "40px",
-                    border: "1px solid #e2e8f0",
-                    boxShadow: "none",
-                    "&:hover": {
-                      border: "1px solid #cbd5e1",
-                    },
-                  }),
-                  multiValue: (base) => ({
-                    ...base,
-                    backgroundColor: "#f1f5f9",
-                  }),
-                  multiValueLabel: (base) => ({
-                    ...base,
-                    color: "#334155",
-                  }),
-                  multiValueRemove: (base) => ({
-                    ...base,
-                    color: "#64748b",
-                    "&:hover": {
-                      backgroundColor: "#e2e8f0",
-                      color: "#475569",
-                    },
-                  }),
-                }}
-              />
+                    setSelectedCategories(newCategories);
+                    form.setValue("categoryIds", newCategories);
+                  }}
+                  renderValue={(selected) =>
+                    selected.length > 0
+                      ? categoryOptions
+                          .filter((option) => selected.includes(String(option.value)))
+                          .map((option) => option.label)
+                          .join(", ")
+                      : "Select up to 15 categories..."
+                  }
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  {categoryOptions.length === 0 ? (
+                    <MenuItem disabled value="">
+                      <em>
+                        {categoriesLoading
+                          ? "Loading categories..."
+                          : "No more categories available"}
+                      </em>
+                    </MenuItem>
+                  ) : (
+                    categoryOptions.map((option) => (
+                      <MenuItem key={option.value} value={String(option.value)}>
+                        <MuiCheckbox
+                          checked={selectedCategories.includes(option.value)}
+                          size="small"
+                        />
+                        <ListItemText primary={option.label} />
+                      </MenuItem>
+                    ))
+                  )}
+                </MuiSelect>
+              </MuiFormControl>
 
               {form.formState.errors.categoryIds && (
                 <p className="text-sm text-destructive">
@@ -833,9 +853,9 @@ export const ResponseEscalationTab: React.FC = () => {
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead className="font-semibold">Levels</TableHead>
-                      <TableHead className="font-semibold">
+                    <TableRow className="bg-[#EDEAE3]">
+                      <TableHead className="font-semibold text-gray-900">Levels</TableHead>
+                      <TableHead className="font-semibold text-gray-900">
                         Escalation To
                       </TableHead>
                     </TableRow>
@@ -843,7 +863,7 @@ export const ResponseEscalationTab: React.FC = () => {
                   <TableBody>
                     {(["e1", "e2", "e3", "e4", "e5"] as const).map((level) => (
                       <TableRow key={level}>
-                        <TableCell className="font-medium">
+                        <TableCell className="font-semibold text-brand-accent">
                           {level.toUpperCase()}
                         </TableCell>
                         <TableCell>
@@ -961,33 +981,47 @@ export const ResponseEscalationTab: React.FC = () => {
       <Card className="border border-gray-200">
         <CardHeader className="border-b border-gray-200 bg-white">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold text-gray-900">
+            <CardTitle className="text-lg font-semibold text-brand-accent">
               Filter
             </CardTitle>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <Label
                   htmlFor="category-filter"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium text-brand-accent"
                 >
                   Category Type
                 </Label>
-                <Select
-                  value={selectedCategoryFilter}
-                  onValueChange={setSelectedCategoryFilter}
-                >
-                  <SelectTrigger className="w-48 border-gray-200 focus:border-[#C72030] focus:ring-[#C72030]">
-                    <SelectValue placeholder="Select Category Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
+                <MuiFormControl size="small" className="w-48">
+                  <MuiSelect
+                    id="category-filter"
+                    displayEmpty
+                    value={selectedCategoryFilter ?? ""}
+                    onChange={(event) =>
+                      setSelectedCategoryFilter(event.target.value)
+                    }
+                    renderValue={(selected) =>
+                      selected ? (
+                        selected === "all" ? (
+                          "All Categories"
+                        ) : (
+                          selected
+                        )
+                      ) : (
+                        <span className="text-gray-500">Select Category Type</span>
+                      )
+                    }
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value="all">All Categories</MenuItem>
                     {categoriesData?.helpdesk_categories?.map((category) => (
-                      <SelectItem key={category.id} value={category.name}>
+                      <MenuItem key={category.id} value={category.name}>
                         {category.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
               <Button
                 variant="ghost"
@@ -1000,7 +1034,7 @@ export const ResponseEscalationTab: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold px-4"
+                className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] font-semibold px-4"
                 onClick={() => setSelectedCategoryFilter("all")}
               >
                 Reset
@@ -1032,7 +1066,7 @@ export const ResponseEscalationTab: React.FC = () => {
                 >
                   <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
                     <div className="flex items-center gap-3">
-                      <h3 className="text-base font-semibold text-gray-900">
+                      <h3 className="text-base font-semibold text-brand-accent">
                         Rule {index + 1}
                       </h3>
                       <div className="flex gap-2">
@@ -1040,7 +1074,7 @@ export const ResponseEscalationTab: React.FC = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEditRule(rule)}
-                          className="h-8 w-8 p-0 text-gray-600 hover:text-[#C72030] hover:bg-[#EDEAE3]"
+                          className="h-8 w-8 p-0 text-brand-accent hover:text-brand-hover hover:bg-[#EDEAE3]"
                           disabled={updateLoading}
                         >
                           <Edit className="h-4 w-4" />
@@ -1086,7 +1120,7 @@ export const ResponseEscalationTab: React.FC = () => {
                   <div className="overflow-hidden">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-gray-50 border-b border-gray-200 hover:bg-gray-50">
+                        <TableRow className="bg-[#EDEAE3] border-b border-gray-200 hover:bg-[#EDEAE3]">
                           <TableHead className="font-semibold text-gray-900 text-left py-3 px-4 w-1/3">
                             Category Type
                           </TableHead>
@@ -1100,7 +1134,7 @@ export const ResponseEscalationTab: React.FC = () => {
                       </TableHeader>
                       <TableBody>
                         <TableRow className="border-b border-gray-100 hover:bg-gray-50/50">
-                          <TableCell className="py-4 px-4 align-top font-medium text-gray-900">
+                          <TableCell className="py-4 px-4 align-top font-medium text-[#2c2c2c]">
                             {getCategoryName(rule.category_id)}
                           </TableCell>
                           <TableCell className="py-4 px-4 align-top">
@@ -1108,7 +1142,7 @@ export const ResponseEscalationTab: React.FC = () => {
                               {rule.escalations.map((escalation) => (
                                 <div
                                   key={escalation.name}
-                                  className="text-sm text-gray-700 font-medium"
+                                  className="text-sm font-semibold text-brand-accent"
                                 >
                                   {escalation.name}
                                 </div>
@@ -1196,7 +1230,7 @@ export const ResponseEscalationTab: React.FC = () => {
             {/* Categories Selection */}
             <Card>
               <CardHeader>
-                <CardTitle>Category Selection</CardTitle>
+                <CardTitle className="text-brand-accent">Category Selection</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <ReactSelect
@@ -1220,12 +1254,12 @@ export const ResponseEscalationTab: React.FC = () => {
             {/* Escalation Levels */}
             <Card>
               <CardHeader>
-                <CardTitle>Escalation Matrix</CardTitle>
+                <CardTitle className="text-brand-accent">Escalation Matrix</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 {(["e1", "e2", "e3", "e4", "e5"] as const).map((level) => (
                   <div key={level} className="space-y-3">
-                    <Label className="text-base font-semibold">
+                    <Label className="text-base font-semibold text-brand-accent">
                       {level.toUpperCase()} - Escalation Level {level.slice(1)}
                     </Label>
 

@@ -15,6 +15,8 @@ import {
   FilterSearchSelect,
   AiBar,
   Loader,
+  SkeletonList,
+  SkeletonCards,
 } from "./UI";
 
 export default function KraList() {
@@ -72,10 +74,29 @@ export default function KraList() {
   const displayKras = useMemo(() => {
     return apiKras.map((kra) => {
       const remoteKpis = Array.isArray(kra.kpis) ? kra.kpis : [];
-      const linked =
+      const allLinkedKpis =
         remoteKpis.length > 0
           ? remoteKpis
-          : allKpis.filter((p) => p.kraId === kra.id);
+          : allKpis.filter((p) => String(p.kraId) === String(kra.id));
+      const memberFilteredKpis =
+        kraMemberFilter === "all"
+          ? allLinkedKpis
+          : allLinkedKpis.filter((kpi) => {
+              const ids = [
+                ...(Array.isArray(kpi.assigneeIds) ? kpi.assigneeIds : []),
+                ...(Array.isArray(kpi.assignee_ids) ? kpi.assignee_ids : []),
+                ...(Array.isArray(kpi.assignees)
+                  ? kpi.assignees.map((user) => user?.id ?? user?.user_id)
+                  : []),
+              ];
+              const hasAssigneeId = ids.some(
+                (id) => String(id) === String(kraMemberFilter)
+              );
+              const hasAssigneeName = (kpi.assigneeNames || []).some(
+                (name) => String(name) === String(kraMemberFilter)
+              );
+              return hasAssigneeId || hasAssigneeName;
+            });
       return {
         ...kra,
         id: kra.id,
@@ -92,11 +113,14 @@ export default function KraList() {
           kra.job_title ||
           jdTitle(kra.jdId ?? kra.job_description_id) ||
           "",
-        linkedKpis: linked,
-        kpiCount: kra.kpiCount ?? kra.kpis_count ?? linked.length ?? 0,
+        linkedKpis: allLinkedKpis,
+        kpiCount:
+          kraMemberFilter === "all"
+            ? kra.kpiCount ?? kra.kpis_count ?? allLinkedKpis.length ?? 0
+            : memberFilteredKpis.length,
       };
     });
-  }, [apiKras, allKpis, jdTitle]);
+  }, [apiKras, allKpis, jdTitle, kraMemberFilter]);
 
   return (
     <div>
@@ -234,9 +258,11 @@ export default function KraList() {
       </div>
 
       {kraApiLoading && apiKras.length === 0 ? (
-        <div style={{ padding: 24, textAlign: "center" }}>
-          <Loader text="Loading KRAs from API…" />
-        </div>
+        kraViewMode === "card" ? (
+          <SkeletonCards count={4} minWidth={340} height={140} />
+        ) : (
+          <SkeletonList rows={5} />
+        )
       ) : (
         <>
           {kraApiError && (
@@ -655,6 +681,12 @@ export default function KraList() {
                               </span>
                               <span
                                 style={{
+                                  // Pill apne text ko hug kare — grid cell ki
+                                  // poori width par stretch na ho.
+                                  justifySelf: "start",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  whiteSpace: "nowrap",
                                   padding: "2px 8px",
                                   borderRadius: 999,
                                   fontSize: 10,

@@ -321,7 +321,7 @@ const AnnouncementsSetup: React.FC = () => {
               <Button
                 variant="outline"
                 onClick={() => setAnnouncements([...announcements, { id: Math.random().toString(36).substr(2, 9), title: "", description: "", isActive: true }])}
-                className="border-dashed border-gray-300 bg-white text-gray-500 hover:bg-gray-50"
+                className="border-dashed border-brand bg-white text-brand hover:bg-brand-selected"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add New Announcement

@@ -1,29 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Check, ChevronsUpDown, Search, Crown, Trophy, Plus, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Autocomplete } from "@mui/material";
+import { Search, Crown, Trophy, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -31,6 +9,32 @@ import { getUser } from "@/utils/auth";
 import { Trash2 } from "lucide-react";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+const menuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 interface EmployeeOfTheMonth {
   userId: string;
@@ -74,12 +78,16 @@ const AchievementPoint = ({
 
   return (
     <div className="flex gap-2">
-      <Input
+      <TextField
         value={localVal}
         onChange={(e) => setLocalVal(e.target.value)}
         onBlur={() => onUpdate(localVal)}
+        label={`Achievement ${index + 1}`}
         placeholder={`Achievement ${index + 1}`}
-        className="border-gray-200 focus:border-red-300 focus:ring-red-100"
+        variant="outlined"
+        fullWidth
+        sx={fieldStyles}
+        InputLabelProps={{ shrink: true }}
       />
       {showRemove && (
         <Button
@@ -120,8 +128,6 @@ const EmployeeOfTheMonthSetup: React.FC = () => {
   >([]);
 
   const [eomLoading, setEomLoading] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [eomHistory, setEomHistory] = useState<EOMHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historySearch, setHistorySearch] = useState("");
@@ -131,13 +137,6 @@ const EmployeeOfTheMonthSetup: React.FC = () => {
     { key: "full_name", label: "Employee Name", sortable: true, draggable: true, hideable: true, defaultVisible: true },
     { key: "role", label: "Role", sortable: true, draggable: true, hideable: true, defaultVisible: true },
   ];
-
-  const filteredUsers = React.useMemo(() => {
-    if (!searchTerm) return users.slice(0, 50);
-    return users
-      .filter((u) => u.full_name.toLowerCase().includes(searchTerm.toLowerCase()))
-      .slice(0, 50);
-  }, [users, searchTerm]);
 
   const fetchEOMHistory = React.useCallback(async () => {
     if (!companyId) return;
@@ -438,88 +437,67 @@ const EmployeeOfTheMonthSetup: React.FC = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-700">Select Employee</Label>
-                <Popover open={open} onOpenChange={setOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-between h-11 border-gray-300 font-normal hover:bg-white text-gray-700",
-                        open && "border-blue-500 ring-1 ring-blue-500"
-                      )}
-                    >
-                      <span className="truncate">
-                        {employeeOfTheMonth.userId ? users.find(u => String(u.id) === employeeOfTheMonth.userId)?.full_name : "Select Employee"}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-40" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-white border border-gray-200 shadow-xl rounded-md overflow-hidden">
-                    <Command className="w-full">
-                      <div className="p-3 bg-white border-b">
-                        <div className="relative flex items-center border-2 border-blue-400 rounded-xl px-3 py-1 bg-white">
-                          <Search className="h-5 w-5 text-blue-500 mr-2 shrink-0" />
-                          <CommandInput
-                            placeholder="Type to search..."
-                            value={searchTerm}
-                            onValueChange={setSearchTerm}
-                            className="h-9 border-none focus:ring-0 w-full"
-                          />
-                        </div>
-                      </div>
-                      <CommandList className="max-h-[280px]">
-                        <CommandEmpty className="py-4 text-center text-gray-500 text-sm">No employee found.</CommandEmpty>
-                        <CommandGroup className="p-1">
-                          {filteredUsers.map((u) => (
-                            <CommandItem
-                              key={u.id}
-                              value={u.full_name}
-                              onSelect={() => {
-                                setEmployeeOfTheMonth({
-                                  ...employeeOfTheMonth,
-                                  userId: String(u.id),
-                                  userName: u.full_name,
-                                  role: u.role_name || "Employee",
-                                  profileImage: u.profile_image || "",
-                                });
-                                setOpen(false);
-                                setSearchTerm("");
-                              }}
-                              className="flex items-center px-3 py-2.5 cursor-pointer text-gray-700 hover:bg-blue-50 rounded-md"
-                            >
-                              <Check className={cn("mr-3 h-4 w-4 text-blue-600", employeeOfTheMonth.userId === String(u.id) ? "opacity-100" : "opacity-0")} />
-                              <span className="flex-1">{u.full_name}</span>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <Autocomplete
+                  options={users}
+                  getOptionLabel={(option) => option.full_name || ""}
+                  isOptionEqualToValue={(option, value) => String(option.id) === String(value?.id)}
+                  value={users.find((u) => String(u.id) === employeeOfTheMonth.userId) || null}
+                  onChange={(_, newValue) => {
+                    if (newValue) {
+                      setEmployeeOfTheMonth({
+                        ...employeeOfTheMonth,
+                        userId: String(newValue.id),
+                        userName: newValue.full_name,
+                        role: newValue.role_name || "Employee",
+                        profileImage: newValue.profile_image || "",
+                      });
+                    }
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Select Employee"
+                      placeholder="Select Employee"
+                      variant="outlined"
+                      fullWidth
+                      sx={fieldStyles}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  )}
+                  slotProps={{
+                    paper: {
+                      style: { maxHeight: 280 },
+                    },
+                  }}
+                />
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-700">Select Month</Label>
-                <Select
-                  value={employeeOfTheMonth.month}
-                  onValueChange={(value) => setEmployeeOfTheMonth({ ...employeeOfTheMonth, month: value })}
-                >
-                  <SelectTrigger className="w-full border-gray-200 h-11">
-                    <SelectValue placeholder="Select Month" />
-                  </SelectTrigger>
-                  <SelectContent>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="eom-month-label" shrink>Select Month</InputLabel>
+                  <MuiSelect
+                    labelId="eom-month-label"
+                    id="eom-month-select"
+                    label="Select Month"
+                    value={employeeOfTheMonth.month}
+                    onChange={(e) => setEmployeeOfTheMonth({ ...employeeOfTheMonth, month: e.target.value as string })}
+                    displayEmpty
+                    sx={fieldStyles}
+                    MenuProps={menuProps}
+                  >
+                    <MenuItem value=""><em>Select Month</em></MenuItem>
                     {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((m) => (
-                      <SelectItem key={m} value={`${m} ${new Date().getFullYear()}`}>
+                      <MenuItem key={m} value={`${m} ${new Date().getFullYear()}`}>
                         {m} {new Date().getFullYear()}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </FormControl>
               </div>
             </div>
 
             <div>
-              <Label className="text-sm font-semibold text-gray-700 block mb-3">Achievement Points</Label>
+              <label className="text-sm font-semibold text-gray-700 block mb-3">Achievement Points</label>
               <div className="space-y-3">
                 {employeeOfTheMonth.points.map((point, idx) => (
                   <AchievementPoint
@@ -542,7 +520,7 @@ const EmployeeOfTheMonthSetup: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setEmployeeOfTheMonth({ ...employeeOfTheMonth, points: [...employeeOfTheMonth.points, ""] })}
-                  className="border-dashed py-0 h-8 text-xs text-gray-500"
+                  className="border-dashed py-0 h-8 text-xs text-brand"
                 >
                   <Plus className="w-3 h-3 mr-1" /> Add Achievement Point
                 </Button>

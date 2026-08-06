@@ -25,7 +25,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import recessLogo from "@/assets/recess-logo";
+import { RecessClubLogo } from "@/components/RecessClubLogo";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useNavigate } from "react-router-dom";
@@ -501,11 +501,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                 alt=""
               />
             ) : isClubSite ? (
-              <img
-                src={recessLogo}
-                alt="Recess Logo"
-                style={{ height: 60, width: "auto", objectFit: "contain" }}
-              />
+              <RecessClubLogo />
             ) : isPulseSite ? (
               <img
                 src="https://www.panchshil.com/assets/images/home/logo.png"

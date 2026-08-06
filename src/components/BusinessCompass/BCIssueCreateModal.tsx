@@ -59,6 +59,7 @@ interface BCIssueCreateModalProps {
   baseUrl: string;
   token: string;
   prefilledDate?: { year: number; month: number; date: number };
+  prefilledTitle?: string;
   dateResetKey?: number;
 }
 
@@ -270,6 +271,7 @@ const SimpleIssueForm = ({
   onClose,
   onSuccess,
   prefilledDate,
+  prefilledTitle,
   dateResetKey,
 }: {
   baseUrl: string;
@@ -277,12 +279,13 @@ const SimpleIssueForm = ({
   onClose: () => void;
   onSuccess?: () => void;
   prefilledDate?: { year: number; month: number; date: number };
+  prefilledTitle?: string;
   dateResetKey?: number;
 }) => {
   const [users, setUsers] = useState<any[]>([]);
   const [issueTypes, setIssueTypes] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    issueTitle: "",
+    issueTitle: prefilledTitle || "",
     description: "",
     responsiblePerson: "",
     issueType: "",
@@ -303,6 +306,9 @@ const SimpleIssueForm = ({
     } else {
       const t = new Date();
       setStartDate({ year: t.getFullYear(), month: t.getMonth(), date: t.getDate() });
+    }
+    if (prefilledTitle) {
+      setFormData((prev) => ({ ...prev, issueTitle: prefilledTitle }));
     }
   }, [dateResetKey]);
   const [endDate, setEndDate] = useState<any>(null);
@@ -862,6 +868,7 @@ const BCIssueCreateModal = ({
   baseUrl,
   token,
   prefilledDate,
+  prefilledTitle,
   dateResetKey,
 }: BCIssueCreateModalProps) => {
   return (
@@ -903,6 +910,7 @@ const BCIssueCreateModal = ({
           onClose={onClose}
           onSuccess={onSuccess}
           prefilledDate={prefilledDate}
+          prefilledTitle={prefilledTitle}
           dateResetKey={dateResetKey}
         />
       </DialogContent>

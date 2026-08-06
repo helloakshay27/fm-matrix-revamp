@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
+import { TextField } from "@mui/material";
 
 export interface GDNPendingApprovalFilters {
   gdnId: string;
@@ -23,6 +27,16 @@ const emptyFilters: GDNPendingApprovalFilters = {
   gdnId: "",
   siteName: "",
   level: "",
+};
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px 12px", sm: "10px 14px", md: "12px 14px" },
+  },
+  "& .MuiOutlinedInput-root": {
+    backgroundColor: "white",
+  },
 };
 
 export const GDNPendingApprovalsFilterDialog = ({
@@ -53,10 +67,10 @@ export const GDNPendingApprovalsFilterDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="w-full sm:max-w-[500px] bg-white overflow-visible">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
             <Button
               variant="ghost"
               size="sm"
@@ -68,60 +82,58 @@ export const GDNPendingApprovalsFilterDialog = ({
           </div>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label htmlFor="gdn-id">GDN ID</Label>
-            <Input
-              id="gdn-id"
-              placeholder="Enter GDN ID"
-              value={localFilters.gdnId}
-              onChange={(e) =>
-                setLocalFilters((prev) => ({ ...prev, gdnId: e.target.value }))
-              }
-            />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+          <TextField
+            label="GDN ID"
+            value={localFilters.gdnId}
+            onChange={(e) =>
+              setLocalFilters((prev) => ({ ...prev, gdnId: e.target.value }))
+            }
+            fullWidth
+            variant="outlined"
+            sx={fieldStyles}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="site-name">Site Name</Label>
-            <Input
-              id="site-name"
-              placeholder="Enter Site Name"
-              value={localFilters.siteName}
-              onChange={(e) =>
-                setLocalFilters((prev) => ({
-                  ...prev,
-                  siteName: e.target.value,
-                }))
-              }
-            />
-          </div>
+          <TextField
+            label="Site Name"
+            value={localFilters.siteName}
+            onChange={(e) =>
+              setLocalFilters((prev) => ({
+                ...prev,
+                siteName: e.target.value,
+              }))
+            }
+            fullWidth
+            variant="outlined"
+            sx={fieldStyles}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="level">Level</Label>
-            <Input
-              id="level"
-              placeholder="Enter Level"
-              value={localFilters.level}
-              onChange={(e) =>
-                setLocalFilters((prev) => ({ ...prev, level: e.target.value }))
-              }
-            />
-          </div>
+          <TextField
+            label="Level"
+            value={localFilters.level}
+            onChange={(e) =>
+              setLocalFilters((prev) => ({ ...prev, level: e.target.value }))
+            }
+            fullWidth
+            variant="outlined"
+            sx={fieldStyles}
+            className="sm:col-span-2"
+          />
         </div>
 
-        <div className="flex justify-end gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
           <Button
             onClick={handleApply}
-            className="bg-brand text-white hover:bg-brand-hover px-4 py-2"
+            className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
           >
-            Apply Filters
+            APPLY
           </Button>
           <Button
             variant="outline"
             onClick={handleReset}
-            className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
+            className="border-brand text-brand px-8 w-full sm:w-auto"
           >
-            Reset
+            RESET
           </Button>
         </div>
       </DialogContent>

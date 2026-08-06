@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { TextField } from '@mui/material';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X } from 'lucide-react';
+import { Plus, RefreshCw, Edit, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
 import { EditMoveInOutModal } from '@/components/EditMoveInOutModal';
@@ -23,7 +24,66 @@ import { createMoveInOutPurpose } from '@/services/moveInOutPurposeAPI';
 import { createWorkType } from '@/services/workTypeAPI';
 import { createVisitorComment } from '@/services/visitorCommentAPI';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import {
+  VisitingPurposeFilterDialog,
+  type VisitingPurposeFilters,
+} from '@/components/VisitingPurposeFilterDialog';
 
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  backgroundColor: '#fff',
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: '#ffffff',
+    '& fieldset': {
+      borderColor: '#e5e7eb',
+    },
+    '&:hover fieldset': {
+      borderColor: '#C72030',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    backgroundColor: '#ffffff',
+    paddingLeft: '4px',
+    paddingRight: '4px',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow:
+        '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+const isMuiOverlayTarget = (target: EventTarget | null) =>
+  !!(target as HTMLElement | null)?.closest?.(
+    '.MuiPopover-root, .MuiModal-root, .MuiMenu-root'
+  );
+
+const outlineBrandBtn =
+  'border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030]';
+const solidBrandBtn = 'bg-brand hover:bg-brand-hover text-white';
 
 interface VisitingPurposeData {
   id: number;
@@ -71,6 +131,8 @@ export const VisitingPurposePage = () => {
   const { setCurrentSection } = useLayout();
   const [activeTab, setActiveTab] = useState('Visit Purpose');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<VisitingPurposeFilters>({ name: '', status: '' });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isMoveInOutModalOpen, setIsMoveInOutModalOpen] = useState(false);
   const [isWorkTypeModalOpen, setIsWorkTypeModalOpen] = useState(false);
@@ -312,32 +374,131 @@ export const VisitingPurposePage = () => {
   }, [setCurrentSection, toast]);
 
   // Filter functions for each tab data
-  const getFilteredData = () => {
+  const getFilteredData = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    const nameFilter = filters.name.trim().toLowerCase();
+    const statusFilter = filters.status.toLowerCase();
+
+    const matchesCommon = (name: string, status: boolean, createdOn: string, createdBy: string) => {
+      const statusLabel = status ? 'active' : 'inactive';
+      if (nameFilter && !name.toLowerCase().includes(nameFilter)) return false;
+      if (statusFilter && statusLabel !== statusFilter) return false;
+      if (q) {
+        return (
+          name.toLowerCase().includes(q) ||
+          createdBy.toLowerCase().includes(q) ||
+          createdOn.toLowerCase().includes(q) ||
+          statusLabel.includes(q)
+        );
+      }
+      return true;
+    };
+
     switch (activeTab) {
       case 'Visit Purpose':
-        return purposes.filter(item =>
-          item.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+        return purposes.filter((item) =>
+          matchesCommon(item.purpose, item.status, item.createdOn, item.createdBy)
         );
       case 'Move In/Out':
-        return moveInOutData.filter(item =>
-          item.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+        return moveInOutData.filter((item) =>
+          matchesCommon(item.purpose, item.status, item.createdOn, item.createdBy)
         );
       case 'Work Type':
-        return workTypeData.filter(item =>
-          item.workType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.staffType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        return workTypeData.filter((item) => {
+          const name = `${item.staffType} ${item.workType}`;
+          return matchesCommon(name, item.status, item.createdOn, item.createdBy);
+        });
       case 'Visitor Comment':
-        return commentsData.filter(item =>
-          item.comment.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+        return commentsData.filter((item) =>
+          matchesCommon(item.comment, item.status, item.createdOn, item.createdBy)
         );
       default:
         return [];
     }
+  }, [activeTab, purposes, moveInOutData, workTypeData, commentsData, searchTerm, filters]);
+
+  const tableColumns = useMemo((): ColumnConfig[] => {
+    switch (activeTab) {
+      case 'Work Type':
+        return [
+          { key: 'staffType', label: 'Staff Type', sortable: true, defaultVisible: true },
+          { key: 'workType', label: 'Work Type', sortable: true, defaultVisible: true },
+          { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
+          { key: 'createdOn', label: 'Created On', sortable: true, defaultVisible: true },
+        ];
+      case 'Visitor Comment':
+        return [
+          { key: 'comment', label: 'Comment', sortable: true, defaultVisible: true },
+          { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
+          { key: 'createdOn', label: 'Created On', sortable: true, defaultVisible: true },
+        ];
+      case 'Move In/Out':
+        return [
+          { key: 'purpose', label: 'Move In/Out Purpose', sortable: true, defaultVisible: true },
+          { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
+          { key: 'createdOn', label: 'Created On', sortable: true, defaultVisible: true },
+        ];
+      case 'Visit Purpose':
+      default:
+        return [
+          { key: 'purpose', label: 'Purpose', sortable: true, defaultVisible: true },
+          { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
+          { key: 'createdOn', label: 'Created On', sortable: true, defaultVisible: true },
+        ];
+    }
+  }, [activeTab]);
+
+  const renderTableCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case 'status':
+        return (
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-md ${
+              item.status
+                ? 'bg-brand text-white'
+                : 'bg-brand-light text-brand border border-brand/30'
+            }`}
+          >
+            {item.status ? 'Active' : 'Inactive'}
+          </span>
+        );
+      case 'createdOn':
+        return <span className="text-sm text-gray-600">{item.createdOn}</span>;
+      case 'purpose':
+      case 'comment':
+      case 'staffType':
+      case 'workType':
+        return <span className="font-medium">{item[columnKey]}</span>;
+      default:
+        return item[columnKey] ?? '-';
+    }
+  };
+
+  const renderTableActions = (item: any) => {
+    if (activeTab === 'Visit Purpose' && !shouldShow('Visiting Purpose', 'update')) {
+      return null;
+    }
+
+    const onEdit = () => {
+      if (activeTab === 'Visit Purpose') handleEdit(item.id);
+      else if (activeTab === 'Move In/Out') handleEditMoveInOut(item.id);
+      else if (activeTab === 'Work Type') handleEditWorkType(item.id);
+      else handleEditVisitorComment(item.id);
+    };
+
+    return (
+      <div className="flex items-center justify-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 text-brand hover:bg-brand-selected"
+          onClick={onEdit}
+          title="Edit"
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      </div>
+    );
   };
 
   const handleAddPurpose = () => {
@@ -821,6 +982,8 @@ export const VisitingPurposePage = () => {
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
+    setSearchTerm('');
+    setFilters({ name: '', status: '' });
   };
 
   // Edit handlers for different types
@@ -891,6 +1054,54 @@ export const VisitingPurposePage = () => {
     setEditingPurposes(newPurposes);
   };
 
+  const leftActions = (() => {
+    if (activeTab === 'Visit Purpose' && shouldShow('Visiting Purpose', 'create')) {
+      return (
+        <Button
+          onClick={handleAddPurpose}
+          className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Purpose
+        </Button>
+      );
+    }
+    if (activeTab === 'Move In/Out' && shouldShow('Visiting Purpose', 'create')) {
+      return (
+        <Button
+          onClick={handleMoveInOut}
+          className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Move In/Out
+        </Button>
+      );
+    }
+    if (activeTab === 'Work Type' && shouldShow('Visiting Purpose', 'create')) {
+      return (
+        <Button
+          onClick={handleWorkType}
+          className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Work Type
+        </Button>
+      );
+    }
+    if (activeTab === 'Visitor Comment' && commentsData.length === 0) {
+      return (
+        <Button
+          onClick={handleVisitorCategory}
+          className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Visitor Comment
+        </Button>
+      );
+    }
+    return null;
+  })();
+
   return (
     <>
       <div className="p-6 bg-gray-50 min-h-screen">
@@ -937,35 +1148,7 @@ export const VisitingPurposePage = () => {
             </div>
           )} */}
           
-          {loadingVisitorSetup ? (
-            <div className="bg-white rounded-lg border border-gray-200">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-[#f6f4ee]">
-                    <TableHead className="font-medium">Actions</TableHead>
-                    <TableHead className="font-medium">Visit Purpose</TableHead>
-                    <TableHead className="font-medium">Status</TableHead>
-                    <TableHead className="font-medium">Created On</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell colSpan={4} className="pt-4 pb-16">
-                      <div className="w-full flex items-center justify-start gap-3 pl-4">
-                        <div
-                          className="h-5 w-5 rounded-full animate-spin"
-                          style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
-                        />
-                        <span className="text-sm text-black">Loading ...</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
           <div className="bg-white rounded-lg border border-gray-200">
-            {/* Tab Navigation */}
             <div className="flex border-b border-gray-200">
               {['Visit Purpose', 'Move In/Out', 'Work Type', 'Visitor Comment'].map((tab) => (
                 <button
@@ -973,7 +1156,7 @@ export const VisitingPurposePage = () => {
                   onClick={() => handleTabClick(tab)}
                   className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === tab
-                      ? 'border-primary text-primary bg-primary/5'
+                      ? 'border-brand text-brand bg-brand-selected'
                       : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -982,373 +1165,159 @@ export const VisitingPurposePage = () => {
               ))}
             </div>
 
-            {/* Action Buttons Bar */}
-            <div className="flex items-center gap-3 p-6 border-b border-gray-200">
-              {activeTab === 'Visit Purpose' && shouldShow("Visiting Purpose","create")&&(
-                <Button 
-                  onClick={handleAddPurpose}
-                 className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Purpose
-                </Button>
-              )}
-              
-              {activeTab === 'Move In/Out' && shouldShow("Visiting Purpose","create")&&(
-                <Button 
-                  onClick={handleMoveInOut}
-                  className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Move In/Out
-                </Button>
-              )}
-              
-              {activeTab === 'Work Type' && shouldShow("Visiting Purpose","create")&&(
-                <Button 
-                  onClick={handleWorkType}
-                 className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Work Type
-                </Button>
-              )}
-              
-              {activeTab === 'Visitor Comment' && commentsData.length === 0 && (
-                <Button 
-                  onClick={handleVisitorCategory}
-                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Visitor Comment
-                </Button>
-              )}
-
-              <div className="flex-1"></div>
-
-            </div>
-
-            {/* Tables for each tab */}
-            <div className="overflow-hidden">
-              {activeTab === 'Visit Purpose' && (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-[#f6f4ee]">
-                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[200px]">Purpose</TableHead>
-                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      {/* <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead> */}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {getFilteredData().length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                          No data available
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      getFilteredData().map((item) => (
-                        <TableRow key={item.id} className="hover:bg-gray-50">
-                          <TableCell className="px-4 py-3">
-                            {shouldShow("Visiting Purpose","update")&&(
-                            <button
-                              onClick={() => handleEdit(item.id)}
-                              className="p-1 hover:bg-gray-100 rounded"
-                              title="Edit"
-                            >
-                              <Edit className="w-4 h-4 text-black" />
-                            </button>)}
-                          </TableCell>
-                          <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
-                          <TableCell className="px-4 py-3 text-center">
-                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                              item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {item.status ? 'Active' : 'Inactive'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                          {/* <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell> */}
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              )}
-
-              {activeTab === 'Move In/Out' && (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-[#f6f4ee]">
-                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[200px]">Move In/Out Purpose</TableHead>
-                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      {/* <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead> */}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {getFilteredData().length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                          No data available
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      getFilteredData().map((item) => (
-                        <TableRow key={item.id} className="hover:bg-gray-50">
-                           <TableCell className="px-4 py-3">
-                             <button
-                               onClick={() => handleEditMoveInOut(item.id)}
-                               className="p-1 hover:bg-gray-100 rounded"
-                               title="Edit"
-                             >
-                               <Edit className="w-4 h-4 text-black" />
-                             </button>
-                           </TableCell>
-                          <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
-                          <TableCell className="px-4 py-3 text-center">
-                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                              item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {item.status ? 'Active' : 'Inactive'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                          {/* <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell> */}
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              )}
-
-              {activeTab === 'Work Type' && (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-[#f6f4ee]">
-                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[150px]">Staff Type</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[150px]">Work Type</TableHead>
-                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      {/* <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead> */}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {getFilteredData().length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                          No data available
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      getFilteredData().map((item) => (
-                        <TableRow key={item.id} className="hover:bg-gray-50">
-                           <TableCell className="px-4 py-3">
-                             <button
-                               onClick={() => handleEditWorkType(item.id)}
-                               className="p-1 hover:bg-gray-100 rounded"
-                               title="Edit"
-                             >
-                               <Edit className="w-4 h-4 text-black" />
-                             </button>
-                           </TableCell>
-                          <TableCell className="px-4 py-3 font-medium">{item.staffType}</TableCell>
-                          <TableCell className="px-4 py-3 font-medium">{item.workType}</TableCell>
-                          <TableCell className="px-4 py-3 text-center">
-                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                              item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {item.status ? 'Active' : 'Inactive'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                          {/* <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell> */}
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              )}
-
-              {activeTab === 'Visitor Comment' && (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-[#f6f4ee]">
-                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[300px]">Comment</TableHead>
-                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      {/* <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead> */}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {getFilteredData().length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                          No data available
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      getFilteredData().map((item) => (
-                        <TableRow key={item.id} className="hover:bg-gray-50">
-                           <TableCell className="px-4 py-3">
-                             <button
-                               onClick={() => handleEditVisitorComment(item.id)}
-                               className="p-1 hover:bg-gray-100 rounded"
-                               title="Edit"
-                             >
-                               <Edit className="w-4 h-4 text-black" />
-                             </button>
-                           </TableCell>
-                          <TableCell className="px-4 py-3 font-medium">{item.comment}</TableCell>
-                          <TableCell className="px-4 py-3 text-center">
-                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                              item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {item.status ? 'Active' : 'Inactive'}
-                            </span>
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                          {/* <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell> */}
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              )}
+            <div className="p-6">
+              <EnhancedTable
+                data={getFilteredData}
+                columns={tableColumns}
+                renderCell={renderTableCell}
+                renderActions={renderTableActions}
+                leftActions={leftActions}
+                storageKey={`visiting-purpose-${activeTab}`}
+                emptyMessage={
+                  searchTerm || Object.values(filters).some(Boolean)
+                    ? 'No records found matching your search'
+                    : 'No data available'
+                }
+                loading={loadingVisitorSetup}
+                loadingMessage="Loading..."
+                enableSearch
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                searchPlaceholder="Search..."
+                disableClientSearch
+                onFilterClick={() => setShowFilters(true)}
+                hideTableExport
+                pagination
+                pageSize={10}
+                getItemId={(item) => String(item.id)}
+              />
             </div>
           </div>
-          )}
-        </div>
 
+          <VisitingPurposeFilterDialog
+            isOpen={showFilters}
+            onClose={() => setShowFilters(false)}
+            filters={filters}
+            onApplyFilters={setFilters}
+            onResetFilters={() => setFilters({ name: '', status: '' })}
+          />
+        </div>
       </div>
 
       {/* Add Purpose Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="max-w-md bg-white z-50">
-          <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
-            <DialogTitle className="text-lg font-semibold">Add Purpose</DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleModalClose}
-              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            {/* Multiple Users Purpose Input */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label>Enter Purpose <span className="text-red-500">*</span></Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const currentPurposes = formData.purpose ? formData.purpose.split('|') : [''];
-                    setFormData({...formData, purpose: [...currentPurposes, ''].join('|')});
-                  }}
-                  className="text-primary border-primary hover:bg-primary/10"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add
-                </Button>
-              </div>
-              
-              <div className="space-y-3">
-                {(formData.purpose ? formData.purpose.split('|') : ['']).map((purpose, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <div className="flex-1">
-                      <TextField
-                        placeholder="Enter purpose"
-                        value={purpose}
-                        onChange={(e) => {
-                          const purposes = formData.purpose ? formData.purpose.split('|') : [''];
-                          purposes[index] = e.target.value;
-                          setFormData({...formData, purpose: purposes.join('|')});
-                        }}
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            '& fieldset': {
-                              borderColor: '#d1d5db',
-                            },
-                            '&:hover fieldset': {
-                              borderColor: '#C72030',
-                            },
-                            '&.Mui-focused fieldset': {
-                              borderColor: '#C72030',
-                            },
-                          },
-                        }}
-                      />
-                    </div>
-                    {(formData.purpose ? formData.purpose.split('|') : ['']).length > 1 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const purposes = formData.purpose ? formData.purpose.split('|') : [''];
-                          purposes.splice(index, 1);
-                          setFormData({...formData, purpose: purposes.join('|')});
-                        }}
-                        className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Active Checkbox */}
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="active"
-                checked={formData.active}
-                onCheckedChange={(checked) => setFormData({...formData, active: checked as boolean})}
-              />
-              <Label htmlFor="active">Active</Label>
-            </div>
-
-            {/* Submit Button */}
-            <div className="flex justify-center pt-4">
-              <Button 
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
+        <DialogContent className="w-full sm:max-w-[500px] !bg-white overflow-visible">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-semibold">Add Purpose</DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleModalClose}
+                className="h-6 w-6 p-0"
               >
-                {isSubmitting ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  'Submit'
-                )}
+                <X className="h-4 w-4" />
               </Button>
             </div>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">Purpose *</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const currentPurposes = formData.purpose ? formData.purpose.split('|') : [''];
+                  setFormData({ ...formData, purpose: [...currentPurposes, ''].join('|') });
+                }}
+                className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] h-8"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {(formData.purpose ? formData.purpose.split('|') : ['']).map((purpose, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <TextField
+                    label={`Purpose ${index + 1} *`}
+                    value={purpose}
+                    onChange={(e) => {
+                      const purposes = formData.purpose ? formData.purpose.split('|') : [''];
+                      purposes[index] = e.target.value;
+                      setFormData({ ...formData, purpose: purposes.join('|') });
+                    }}
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
+                  />
+                  {(formData.purpose ? formData.purpose.split('|') : ['']).length > 1 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const purposes = formData.purpose ? formData.purpose.split('|') : [''];
+                        purposes.splice(index, 1);
+                        setFormData({ ...formData, purpose: purposes.join('|') });
+                      }}
+                      className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0 h-10 w-10 p-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center space-x-2 pt-1">
+              <Checkbox
+                id="active"
+                checked={formData.active}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, active: checked as boolean })
+                }
+              />
+              <Label htmlFor="active" className="text-sm font-medium">
+                Active
+              </Label>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto disabled:!opacity-100"
+            >
+              {isSubmitting ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'CREATE'
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleModalClose}
+              disabled={isSubmitting}
+              className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] px-8 w-full sm:w-auto"
+            >
+              CANCEL
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Add Move In/Out Purpose Modal */}
       <Dialog open={isMoveInOutModalOpen} onOpenChange={setIsMoveInOutModalOpen}>
-        <DialogContent className="max-w-md bg-white z-50">
+        <DialogContent className="max-w-md !bg-white">
           <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
             <DialogTitle className="text-lg font-semibold">Add Move In/Out Purpose</DialogTitle>
             <Button
@@ -1365,7 +1334,7 @@ export const VisitingPurposePage = () => {
             {/* Multiple Move In/Out Purpose Input */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label>Enter move in/ out purpose <span className="text-red-500">*</span></Label>
+                <span className="text-sm font-medium text-gray-700">Purpose *</span>
                 <Button
                   type="button"
                   variant="outline"
@@ -1374,7 +1343,7 @@ export const VisitingPurposePage = () => {
                     const currentPurposes = moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : [''];
                     setMoveInOutFormData({...moveInOutFormData, purpose: [...currentPurposes, ''].join('|')});
                   }}
-                  className="text-primary border-primary hover:bg-primary/10"
+                  className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] h-8"
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Add
@@ -1384,33 +1353,20 @@ export const VisitingPurposePage = () => {
               <div className="space-y-3">
                 {(moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : ['']).map((purpose, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <div className="flex-1">
-                      <TextField
-                        placeholder="Enter purpose"
-                        value={purpose}
-                        onChange={(e) => {
-                          const purposes = moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : [''];
-                          purposes[index] = e.target.value;
-                          setMoveInOutFormData({...moveInOutFormData, purpose: purposes.join('|')});
-                        }}
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            '& fieldset': {
-                              borderColor: '#d1d5db',
-                            },
-                            '&:hover fieldset': {
-                              borderColor: '#C72030',
-                            },
-                            '&.Mui-focused fieldset': {
-                              borderColor: '#C72030',
-                            },
-                          },
-                        }}
-                      />
-                    </div>
+                    <TextField
+                      label={`Purpose ${index + 1} *`}
+                      placeholder="Enter purpose"
+                      value={purpose}
+                      onChange={(e) => {
+                        const purposes = moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : [''];
+                        purposes[index] = e.target.value;
+                        setMoveInOutFormData({...moveInOutFormData, purpose: purposes.join('|')});
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
                     {(moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : ['']).length > 1 && (
                       <Button
                         type="button"
@@ -1421,7 +1377,7 @@ export const VisitingPurposePage = () => {
                           purposes.splice(index, 1);
                           setMoveInOutFormData({...moveInOutFormData, purpose: purposes.join('|')});
                         }}
-                        className="text-destructive border-destructive hover:bg-destructive/10"
+                        className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0 h-10 w-10 p-0"
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -1446,7 +1402,7 @@ export const VisitingPurposePage = () => {
               <Button 
                 onClick={handleMoveInOutSubmit}
                 disabled={isSubmittingMoveInOut}
-                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
+                className={`${solidBrandBtn} px-8`}
               >
                 {isSubmittingMoveInOut ? (
                   <>
@@ -1463,8 +1419,16 @@ export const VisitingPurposePage = () => {
       </Dialog>
 
       {/* Add Work Type Modal */}
-      <Dialog open={isWorkTypeModalOpen} onOpenChange={setIsWorkTypeModalOpen}>
-        <DialogContent className="max-w-md bg-white z-50">
+      <Dialog open={isWorkTypeModalOpen} onOpenChange={setIsWorkTypeModalOpen} modal={false}>
+        <DialogContent
+          className="max-w-md !bg-white"
+          onPointerDownOutside={(e) => {
+            if (isMuiOverlayTarget(e.target)) e.preventDefault();
+          }}
+          onInteractOutside={(e) => {
+            if (isMuiOverlayTarget(e.target)) e.preventDefault();
+          }}
+        >
           <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
             <DialogTitle className="text-lg font-semibold">Add Work Type</DialogTitle>
             <Button
@@ -1479,47 +1443,46 @@ export const VisitingPurposePage = () => {
           
           <div className="space-y-4">
             {/* Staff Type Selection */}
-            <div className="space-y-2">
-              <Label className="text-sm text-gray-600">Select Staff Type <span className="text-red-500">*</span></Label>
-              <Select 
-                value={workTypeFormData.staffType} 
-                onValueChange={(value) => setWorkTypeFormData({...workTypeFormData, staffType: value})}
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="add-staff-type-label" shrink>
+                Select Staff Type *
+              </InputLabel>
+              <MuiSelect
+                labelId="add-staff-type-label"
+                label="Select Staff Type *"
+                value={workTypeFormData.staffType}
+                onChange={(e) =>
+                  setWorkTypeFormData({
+                    ...workTypeFormData,
+                    staffType: e.target.value as string,
+                  })
+                }
+                displayEmpty
+                notched
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
               >
-                <SelectTrigger className="w-full bg-white border border-gray-300">
-                  <SelectValue placeholder="Select Staff Type" />
-                </SelectTrigger>
-                <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
-                  <SelectItem value="Personal">Personal</SelectItem>
-                  <SelectItem value="Society">Society</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <MenuItem value="">
+                  <em>Select Staff Type</em>
+                </MenuItem>
+                <MenuItem value="Personal">Personal</MenuItem>
+                <MenuItem value="Society">Society</MenuItem>
+              </MuiSelect>
+            </FormControl>
 
             {/* Work Type Input */}
-            <div className="space-y-2">
-              <Label>Enter Work Type <span className="text-red-500">*</span> </Label>
-              <TextField
-                placeholder="Enter Work Type"
-                value={workTypeFormData.workType}
-                onChange={(e) => setWorkTypeFormData({...workTypeFormData, workType: e.target.value})}
-                fullWidth
-                variant="outlined"
-                size="small"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: '#d1d5db',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#C72030',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#C72030',
-                    },
-                  },
-                }}
-              />
-            </div>
+            <TextField
+              label="Enter Work Type *"
+              placeholder="Enter Work Type"
+              value={workTypeFormData.workType}
+              onChange={(e) =>
+                setWorkTypeFormData({ ...workTypeFormData, workType: e.target.value })
+              }
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
+            />
 
             {/* Active Checkbox */}
             <div className="flex items-center space-x-2">
@@ -1536,7 +1499,7 @@ export const VisitingPurposePage = () => {
               <Button 
                 onClick={handleWorkTypeSubmit}
                 disabled={isSubmittingWorkType}
-                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
+                className={`${solidBrandBtn} px-8`}
               >
                 {isSubmittingWorkType ? (
                   <>
@@ -1554,7 +1517,7 @@ export const VisitingPurposePage = () => {
 
       {/* Add Comment Modal */}
       <Dialog open={isCommentModalOpen} onOpenChange={setIsCommentModalOpen}>
-        <DialogContent className="max-w-md bg-white z-50">
+        <DialogContent className="max-w-md !bg-white">
           <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
             <DialogTitle className="text-lg font-semibold">Add Comment <span className="text-red-500">*</span></DialogTitle>
             <Button
@@ -1568,32 +1531,17 @@ export const VisitingPurposePage = () => {
           </DialogHeader>
           
           <div className="space-y-4">
-            {/* Comment Textarea */}
-            <div className="space-y-2">
-              <Label>Enter comment</Label>
-              <TextField
-                placeholder="Enter Comment"
-                value={commentFormData.comment}
-                onChange={(e) => setCommentFormData({...commentFormData, comment: e.target.value})}
-                fullWidth
-                variant="outlined"
-                multiline
-                rows={3}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: '#d1d5db',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#C72030',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#C72030',
-                    },
-                  },
-                }}
-              />
-            </div>
+            {/* Comment field */}
+            <TextField
+              label="Enter Comment *"
+              placeholder="Enter Comment"
+              value={commentFormData.comment}
+              onChange={(e) => setCommentFormData({...commentFormData, comment: e.target.value})}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
+            />
 
             {/* Active Checkbox */}
             <div className="flex items-center space-x-2">
@@ -1610,7 +1558,7 @@ export const VisitingPurposePage = () => {
               <Button 
                 onClick={handleCommentSubmit}
                 disabled={isSubmittingComment}
-                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
+                className={`${solidBrandBtn} px-8`}
               >
                 {isSubmittingComment ? (
                   <>
@@ -1628,105 +1576,104 @@ export const VisitingPurposePage = () => {
 
       {/* Edit Purpose Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-md bg-white z-50">
-          <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
-            <DialogTitle className="text-lg font-semibold">Edit Purpose</DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleEditModalClose}
-              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            {/* Multiple Purpose Input */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label>Enter Purpose <span className="text-red-500">*</span></Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addEditPurpose}
-                  className="text-primary border-primary hover:bg-primary/10"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add
-                </Button>
-              </div>
-              
-              <div className="space-y-3">
-                {editingPurposes.map((purpose, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <div className="flex-1">
-                      <TextField
-                        placeholder="Enter purpose"
-                        value={purpose}
-                        onChange={(e) => updateEditPurpose(index, e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        size="small"
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            '& fieldset': {
-                              borderColor: '#d1d5db',
-                            },
-                            '&:hover fieldset': {
-                              borderColor: '#C72030',
-                            },
-                            '&.Mui-focused fieldset': {
-                              borderColor: '#C72030',
-                            },
-                          },
-                        }}
-                      />
-                    </div>
-                    {editingPurposes.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeEditPurpose(index)}
-                        className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Active Checkbox */}
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="editActive"
-                checked={editingPurpose?.status || false}
-                onCheckedChange={(checked) => editingPurpose && setEditingPurpose({...editingPurpose, status: checked as boolean})}
-              />
-              <Label htmlFor="editActive" className="text-black">Active</Label>
-            </div>
-
-            {/* Update Button */}
-            <div className="flex justify-center pt-4">
-              <Button 
-                onClick={handleEditSubmit}
-                className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost"
-                disabled={isSubmittingEdit || editingPurposes.every(p => !p.trim())}
+        <DialogContent className="w-full sm:max-w-[500px] !bg-white overflow-visible">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-semibold">Edit Purpose</DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleEditModalClose}
+                className="h-6 w-6 p-0"
               >
-                {isSubmittingEdit ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Updating...
-                  </>
-                ) : (
-                  'UPDATE'
-                )}
+                <X className="h-4 w-4" />
               </Button>
             </div>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">Purpose *</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addEditPurpose}
+                className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] h-8"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {editingPurposes.map((purpose, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <TextField
+                    label={`Purpose ${index + 1} *`}
+                    value={purpose}
+                    onChange={(e) => updateEditPurpose(index, e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    sx={fieldStyles}
+                  />
+                  {editingPurposes.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeEditPurpose(index)}
+                      className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0 h-10 w-10 p-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center space-x-2 pt-1">
+              <Checkbox
+                id="editActive"
+                checked={editingPurpose?.status || false}
+                onCheckedChange={(checked) =>
+                  editingPurpose &&
+                  setEditingPurpose({
+                    ...editingPurpose,
+                    status: checked as boolean,
+                  })
+                }
+              />
+              <Label htmlFor="editActive" className="text-sm font-medium">
+                Active
+              </Label>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
+            <Button
+              onClick={handleEditSubmit}
+              disabled={isSubmittingEdit || editingPurposes.every((p) => !p.trim())}
+              className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto disabled:!opacity-100"
+            >
+              {isSubmittingEdit ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                'UPDATE'
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleEditModalClose}
+              disabled={isSubmittingEdit}
+              className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] px-8 w-full sm:w-auto"
+            >
+              CANCEL
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

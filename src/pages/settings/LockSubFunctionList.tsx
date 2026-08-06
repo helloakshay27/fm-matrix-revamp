@@ -8,6 +8,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { CreateLockSubFunctionDialog } from './LockSubFunctionCreate';
+import { EditLockSubFunctionDialog } from './EditLockSubFunctionDialog';
 import { CreateSubFunctionDialog } from './CreateSubFunctionDialog';
 import { lockSubFunctionService, LockSubFunction as ApiLockSubFunctionItem } from '@/services/lockSubFunctionService';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
@@ -170,6 +171,8 @@ export const LockSubFunctionList = () => {
   const { shouldShow } = useDynamicPermissions();
   const location = useLocation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingLockSubFunctionId, setEditingLockSubFunctionId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return Number(params.get('page')) || 1;
@@ -205,6 +208,16 @@ export const LockSubFunctionList = () => {
   useEffect(() => {
     fetchLockSubFunctionData();
   }, []);
+
+  // Open edit popup when redirected from legacy /edit/:id route
+  useEffect(() => {
+    const editId = (location.state as { editLockSubFunctionId?: number } | null)?.editLockSubFunctionId;
+    if (editId) {
+      setEditingLockSubFunctionId(editId);
+      setIsEditDialogOpen(true);
+      navigate(location.pathname + location.search, { replace: true, state: {} });
+    }
+  }, [location.state, location.pathname, location.search, navigate]);
 
 useEffect(() => {
     navigate(`${location.pathname}?page=${currentPage}`, { replace: true });
@@ -365,8 +378,8 @@ useEffect(() => {
   };
 
   const handleEdit = (id: number) => {
-    console.log('Edit lock sub function:', id);
-    navigate(`/settings/account/lock-sub-function/edit/${id}`);
+    setEditingLockSubFunctionId(id);
+    setIsEditDialogOpen(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -390,7 +403,7 @@ useEffect(() => {
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-[#E5E0D3] text-brand flex items-center justify-center">
             <Key className="w-5 h-5" />
           </div>
           <div>
@@ -543,6 +556,21 @@ useEffect(() => {
         onOpenChange={setIsCreateDialogOpen}
         onLockSubFunctionCreated={() => {
           setIsCreateDialogOpen(false);
+          fetchLockSubFunctionData();
+        }}
+      />
+
+      {/* Edit Lock Sub Function Dialog */}
+      <EditLockSubFunctionDialog
+        open={isEditDialogOpen}
+        onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) setEditingLockSubFunctionId(null);
+        }}
+        lockSubFunctionId={editingLockSubFunctionId}
+        onLockSubFunctionUpdated={() => {
+          setIsEditDialogOpen(false);
+          setEditingLockSubFunctionId(null);
           fetchLockSubFunctionData();
         }}
       />

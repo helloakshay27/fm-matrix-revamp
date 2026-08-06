@@ -15,13 +15,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ticketManagementAPI, UserAccountResponse } from '@/services/ticketManagementAPI';
 import { EditStatusModal } from './modals/EditStatusModal';
@@ -30,6 +23,38 @@ import { Edit, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStatuses, createStatus, updateStatus, deleteStatus, fetchAccounts } from '@/store/slices/statusesSlice';
 import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import {
+  FormControl as MuiFormControl,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
+
+// Matches the MUI field/menu styling used by the sibling CategoryTypeTab.
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 const statusSchema = z.object({
   name: z.string().min(1, 'Status is required'),
@@ -382,25 +407,33 @@ export const StatusTab: React.FC = () => {
                 <FormField
                   control={form.control}
                   name="fixedState"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <FormItem>
                       <FormLabel>Fixed State
                         {/* <span className="text-red-500">*</span> */}
                       </FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select fixed state" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {fixedStates.map((state) => (
-                            <SelectItem key={state.value} value={state.value}>
-                              {state.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <MuiFormControl fullWidth size="small" error={!!fieldState.error}>
+                          <MuiSelect
+                            displayEmpty
+                            value={field.value ?? ''}
+                            onChange={(event) => field.onChange(event.target.value)}
+                            onBlur={field.onBlur}
+                            inputRef={field.ref}
+                            sx={fieldStyles}
+                            MenuProps={selectMenuProps}
+                          >
+                            <MenuItem value="" disabled>
+                              <em>Select fixed state</em>
+                            </MenuItem>
+                            {fixedStates.map((state) => (
+                              <MenuItem key={state.value} value={state.value}>
+                                {state.label}
+                              </MenuItem>
+                            ))}
+                          </MuiSelect>
+                        </MuiFormControl>
+                      </FormControl>
                       <FormMessage />
                     </FormItem >
                   )}
@@ -483,19 +516,25 @@ export const StatusTab: React.FC = () => {
                       <label className="text-sm font-medium mb-2 block">
                         Period Type <span className="text-red-500">*</span>
                       </label>
-                      <Select value={periodType} onValueChange={(value: 'days' | 'hours' | 'minutes') => {
-                        setPeriodType(value);
-                        setTimePeriod(''); // Reset time period when period type changes
-                      }}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select period type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="days">Days</SelectItem>
-                          <SelectItem value="hours">Hours</SelectItem>
-                          <SelectItem value="minutes">Minutes</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <MuiFormControl fullWidth size="small">
+                        <MuiSelect
+                          displayEmpty
+                          value={periodType ?? ''}
+                          onChange={(event) => {
+                            setPeriodType(event.target.value as 'days' | 'hours' | 'minutes');
+                            setTimePeriod(''); // Reset time period when period type changes
+                          }}
+                          sx={fieldStyles}
+                          MenuProps={selectMenuProps}
+                        >
+                          <MenuItem value="" disabled>
+                            <em>Select period type</em>
+                          </MenuItem>
+                          <MenuItem value="days">Days</MenuItem>
+                          <MenuItem value="hours">Hours</MenuItem>
+                          <MenuItem value="minutes">Minutes</MenuItem>
+                        </MuiSelect>
+                      </MuiFormControl>
                     </div>
 
                     <div>

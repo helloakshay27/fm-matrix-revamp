@@ -86,7 +86,7 @@ export const initializeGlobalMUISelectSearchEnhancer = () => {
     // Create search input with enhanced design
     const searchInput = document.createElement('input');
     searchInput.type = 'text';
-    searchInput.placeholder = '🔍 Type to search...';
+    searchInput.placeholder = 'Type to search...';
     searchInput.className = 'mui-search-input';
     searchInput.setAttribute('data-search-input', 'true');
     

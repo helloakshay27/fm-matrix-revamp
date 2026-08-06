@@ -65,6 +65,10 @@ const selectMenuProps = {
   disableEnforceFocus: true,
 };
 
+const placeholderText = (text: string) => (
+  <span style={{ color: '#9ca3af' }}>{text}</span>
+);
+
 interface Holiday {
   id: string;
   holidayName: string;
@@ -860,7 +864,7 @@ export const HolidayCalendarPage = () => {
             {shouldShow("Holiday Calendar","create")&&(
             <DialogTrigger asChild>
           
-              <Button className='fm-button-fix fm-button-brand !rounded-md !px-4 !py-2 !text-sm !font-semibold text-white'>
+              <Button className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium">
                 <Plus className="w-4 h-4 mr-2 text-white" /> Add Holiday
               </Button>
             </DialogTrigger>)}
@@ -937,25 +941,20 @@ export const HolidayCalendarPage = () => {
 
                       {/* Recurring */}
                       <div className="space-y-1">
-                        <FormControl
-                          fullWidth
-                          required
-                          variant="outlined"
-                          sx={{
-                            ...fieldStyles,
-                            '& .MuiInputLabel-asterisk': { color: '#ef4444' },
-                          }}
-                        >
-                          <InputLabel id="recurring-label">Recurring</InputLabel>
+                        <Label className="text-sm font-semibold">
+                          Recurring <span className="text-red-500">*</span>
+                        </Label>
+                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                           <MuiSelect
-                            labelId="recurring-label"
-                            label="Recurring"
+                            displayEmpty
                             value={recurring}
                             onChange={(e) => { setRecurring(e.target.value); setAddRowError(''); }}
-                            sx={fieldStyles}
                             MenuProps={selectMenuProps}
+                            renderValue={(selected) => {
+                              if (!selected) return placeholderText('Select...');
+                              return selected === 'yes' ? 'Yes' : 'No';
+                            }}
                           >
-                            <MenuItem value=""><em>Select...</em></MenuItem>
                             <MenuItem value="yes">Yes</MenuItem>
                             <MenuItem value="no">No</MenuItem>
                           </MuiSelect>
@@ -964,25 +963,20 @@ export const HolidayCalendarPage = () => {
 
                       {/* Holiday Type */}
                       <div className="space-y-1">
-                        <FormControl
-                          fullWidth
-                          required
-                          variant="outlined"
-                          sx={{
-                            ...fieldStyles,
-                            '& .MuiInputLabel-asterisk': { color: '#ef4444' },
-                          }}
-                        >
-                          <InputLabel id="holiday-type-label">Holiday Type</InputLabel>
+                        <Label className="text-sm font-semibold">
+                          Holiday Type <span className="text-red-500">*</span>
+                        </Label>
+                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                           <MuiSelect
-                            labelId="holiday-type-label"
-                            label="Holiday Type"
+                            displayEmpty
                             value={selectedType}
                             onChange={(e) => { setSelectedType(e.target.value); setAddRowError(''); }}
-                            sx={fieldStyles}
                             MenuProps={selectMenuProps}
+                            renderValue={(selected) => {
+                              if (!selected) return placeholderText('Select...');
+                              return String(selected).charAt(0).toUpperCase() + String(selected).slice(1);
+                            }}
                           >
-                            <MenuItem value=""><em>Select...</em></MenuItem>
                             <MenuItem value="public">Public</MenuItem>
                             <MenuItem value="festival">Festival</MenuItem>
                             <MenuItem value="maintenance">Maintenance</MenuItem>
@@ -992,19 +986,12 @@ export const HolidayCalendarPage = () => {
 
                       {/* Select Sites */}
                       <div className="space-y-1">
-                        <FormControl
-                          fullWidth
-                          required
-                          variant="outlined"
-                          sx={{
-                            ...fieldStyles,
-                            '& .MuiInputLabel-asterisk': { color: '#ef4444' },
-                          }}
-                        >
-                          <InputLabel id="select-sites-label">Select Sites</InputLabel>
+                        <Label className="text-sm font-semibold">
+                          Select Sites <span className="text-red-500">*</span>
+                        </Label>
+                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                           <MuiSelect
-                            labelId="select-sites-label"
-                            label="Select Sites"
+                            displayEmpty
                             multiple
                             value={selectedSites}
                             onChange={(e) => { setSelectedSites(e.target.value as number[]); setAddRowError(''); }}
@@ -1012,9 +999,10 @@ export const HolidayCalendarPage = () => {
                               const labels = siteOptions
                                 .filter(s => (selected as number[]).includes(s.id))
                                 .map(s => s.name);
-                              return labels.length > 0 ? labels.join(', ') : '';
+                              return labels.length > 0
+                                ? labels.join(', ')
+                                : placeholderText(loadingSites ? 'Loading...' : 'Select...');
                             }}
-                            sx={fieldStyles}
                             MenuProps={selectMenuProps}
                             disabled={loadingSites}
                           >
@@ -1030,28 +1018,22 @@ export const HolidayCalendarPage = () => {
 
                       {/* Select Module */}
                       <div className="space-y-1">
-                        <FormControl
-                          fullWidth
-                          required
-                          variant="outlined"
-                          sx={{
-                            ...fieldStyles,
-                            '& .MuiInputLabel-asterisk': { color: '#ef4444' },
-                          }}
-                        >
-                          <InputLabel id="select-module-label">Select Module</InputLabel>
+                        <Label className="text-sm font-semibold">
+                          Select Module <span className="text-red-500">*</span>
+                        </Label>
+                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                           <MuiSelect
-                            labelId="select-module-label"
-                            label="Select Module"
+                            displayEmpty
                             multiple
                             value={selectedCustomers}
                             onChange={(e) => { setSelectedCustomers(e.target.value as string[]); setAddRowError(''); }}
                             renderValue={(selected) => {
                               const labels = (selected as string[])
                                 .map(m => m.charAt(0).toUpperCase() + m.slice(1));
-                              return labels.length > 0 ? labels.join(', ') : '';
+                              return labels.length > 0
+                                ? labels.join(', ')
+                                : placeholderText('Select...');
                             }}
-                            sx={fieldStyles}
                             MenuProps={selectMenuProps}
                           >
                             {customerOptions.map(o => (
@@ -1074,10 +1056,11 @@ export const HolidayCalendarPage = () => {
                     <div className="flex justify-end mt-4">
                       <Button
                         type="button"
+                        variant="ghost"
                         onClick={handleAddRow}
-                        className="bg-brand hover:bg-brand-hover text-white px-4 py-2"
+                        className="fm-button-fix fm-button-brand px-4 py-2"
                       >
-                        <Plus className="w-4 h-4 mr-1 text-white" /> Add
+                        <Plus className="w-4 h-4 mr-1" /> Add
                       </Button>
                     </div>
                   </CardContent>
@@ -1123,7 +1106,7 @@ export const HolidayCalendarPage = () => {
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   <Button
                     type="button"
-                    className="flex-1 bg-brand hover:bg-brand-hover text-white px-4 py-2"
+                    className="flex-1 bg-brand hover:bg-brand-hover text-white px-4 py-2 disabled:!opacity-100 disabled:!bg-brand"
                     disabled={isSubmitting || pendingHolidays.length === 0}
                     onClick={handleSubmit}
                   >
@@ -1131,7 +1114,7 @@ export const HolidayCalendarPage = () => {
                       ? 'Saving...'
                       : `Save ${pendingHolidays.length > 0 ? `(${pendingHolidays.length}) ` : ''}Holiday${pendingHolidays.length !== 1 ? 's' : ''}`}
                   </Button>
-                  <Button variant="outline" onClick={handleCancel} className="flex-1 h-11 border-brand text-brand">
+                  <Button variant="outline" onClick={handleCancel} className="flex-1 h-11 border-brand text-brand hover:bg-brand-selected hover:text-brand">
                     Cancel
                   </Button>
                 </div>
@@ -1142,10 +1125,10 @@ export const HolidayCalendarPage = () => {
       />
       )}
 
-      {/* Filter Modal */}
+      {/* Filter Modal — matches SnaggingFilterDialog */}
       <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen} modal={false}>
         <DialogContent
-          className="max-w-lg bg-white overflow-visible"
+          className="w-full sm:max-w-[500px] bg-white overflow-visible"
           aria-describedby="filter-dialog-description"
           onPointerDownOutside={(e) => {
             if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
@@ -1158,141 +1141,134 @@ export const HolidayCalendarPage = () => {
             }
           }}
         >
-          <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <DialogTitle className="text-lg font-semibold">Filter Holidays</DialogTitle>
-            <Button variant="ghost" size="sm" onClick={() => setIsFilterOpen(false)} className="h-6 w-6 p-0">
-              <X className="h-4 w-4" />
-            </Button>
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-semibold">Filters</DialogTitle>
+              <Button variant="ghost" size="sm" onClick={() => setIsFilterOpen(false)} className="h-6 w-6 p-0">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
             <div id="filter-dialog-description" className="sr-only">Filter holidays by various criteria</div>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>By Name</Label>
-              <TextField
-                label="By Name"
-                placeholder="Search by name..."
-                value={filterName}
-                onChange={e => setFilterName(e.target.value)}
-                fullWidth
-                variant="outlined"
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+            <TextField
+              label="Name"
+              value={filterName}
+              onChange={e => setFilterName(e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+            />
+
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="holiday-filter-type-label">Holiday Type</InputLabel>
+              <MuiSelect
+                labelId="holiday-filter-type-label"
+                label="Holiday Type"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
                 sx={fieldStyles}
-              />
-            </div>
-            <div className="space-y-2">
-              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel id="filter-type-label">By Holiday Type</InputLabel>
-                <MuiSelect
-                  labelId="filter-type-label"
-                  label="By Holiday Type"
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  sx={fieldStyles}
-                  MenuProps={selectMenuProps}
-                >
-                  <MenuItem value=""><em>Select type...</em></MenuItem>
-                  <MenuItem value="Public">Public</MenuItem>
-                  <MenuItem value="Festival">Festival</MenuItem>
-                  <MenuItem value="National">National</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-            <div className="space-y-2">
-              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel id="filter-status-label">By Status</InputLabel>
-                <MuiSelect
-                  labelId="filter-status-label"
-                  label="By Status"
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  sx={fieldStyles}
-                  MenuProps={selectMenuProps}
-                >
-                  <MenuItem value=""><em>Select status...</em></MenuItem>
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="inactive">Inactive</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
-            <div className="space-y-2">
-              <Label>By Location (text)</Label>
-              <TextField
-                label="By Location (text)"
-                placeholder="Filter by location..."
-                value={filterLocation}
-                onChange={e => setFilterLocation(e.target.value)}
-                fullWidth
-                variant="outlined"
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value=""><em>Select Type</em></MenuItem>
+                <MenuItem value="Public">Public</MenuItem>
+                <MenuItem value="Festival">Festival</MenuItem>
+                <MenuItem value="National">National</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="holiday-filter-status-label">Status</InputLabel>
+              <MuiSelect
+                labelId="holiday-filter-status-label"
+                label="Status"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
                 sx={fieldStyles}
-              />
-            </div>
-            <div className="space-y-2">
-              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel id="filter-sites-label">By Sites</InputLabel>
-                <MuiSelect
-                  labelId="filter-sites-label"
-                  label="By Sites"
-                  multiple
-                  value={filterSiteIds}
-                  onChange={(e) => setFilterSiteIds(e.target.value as number[])}
-                  renderValue={(selected) => {
-                    const labels = siteOptions
-                      .filter(s => (selected as number[]).includes(s.id))
-                      .map(s => s.name);
-                    return labels.length > 0 ? labels.join(', ') : '';
-                  }}
-                  sx={fieldStyles}
-                  MenuProps={selectMenuProps}
-                >
-                  {siteOptions.map(s => (
-                    <MenuItem key={s.id} value={s.id}>
-                      <Checkbox size="small" checked={filterSiteIds.includes(s.id)} />
-                      {s.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-            </div>
-            <div className="space-y-2">
-              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel id="filter-modules-label">By Module</InputLabel>
-                <MuiSelect
-                  labelId="filter-modules-label"
-                  label="By Module"
-                  multiple
-                  value={filterModules}
-                  onChange={(e) => setFilterModules(e.target.value as string[])}
-                  renderValue={(selected) => {
-                    const labels = (selected as string[])
-                      .map(m => m.charAt(0).toUpperCase() + m.slice(1));
-                    return labels.length > 0 ? labels.join(', ') : '';
-                  }}
-                  sx={fieldStyles}
-                  MenuProps={selectMenuProps}
-                >
-                  {customerOptions.map(o => (
-                    <MenuItem key={o} value={o}>
-                      <Checkbox size="small" checked={filterModules.includes(o)} />
-                      {o.charAt(0).toUpperCase() + o.slice(1)}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-            </div>
-            <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-              <Button
-                onClick={handleApplyFilters}
-                className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
+                MenuProps={selectMenuProps}
               >
-                Apply Filters
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleClearFilters}
-                className="border-brand text-brand px-8 w-full sm:w-auto"
+                <MenuItem value=""><em>Select Status</em></MenuItem>
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <TextField
+              label="Location"
+              value={filterLocation}
+              onChange={e => setFilterLocation(e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+            />
+
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="holiday-filter-sites-label">Sites</InputLabel>
+              <MuiSelect
+                labelId="holiday-filter-sites-label"
+                label="Sites"
+                multiple
+                value={filterSiteIds}
+                onChange={(e) => setFilterSiteIds(e.target.value as number[])}
+                renderValue={(selected) => {
+                  const labels = siteOptions
+                    .filter(s => (selected as number[]).includes(s.id))
+                    .map(s => s.name);
+                  return labels.length > 0 ? labels.join(', ') : '';
+                }}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
               >
-                Clear Filters
-              </Button>
-            </div>
+                {siteOptions.map(s => (
+                  <MenuItem key={s.id} value={s.id}>
+                    <Checkbox size="small" checked={filterSiteIds.includes(s.id)} />
+                    {s.name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="holiday-filter-module-label">Module</InputLabel>
+              <MuiSelect
+                labelId="holiday-filter-module-label"
+                label="Module"
+                multiple
+                value={filterModules}
+                onChange={(e) => setFilterModules(e.target.value as string[])}
+                renderValue={(selected) => {
+                  const labels = (selected as string[])
+                    .map(m => m.charAt(0).toUpperCase() + m.slice(1));
+                  return labels.length > 0 ? labels.join(', ') : '';
+                }}
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                {customerOptions.map(o => (
+                  <MenuItem key={o} value={o}>
+                    <Checkbox size="small" checked={filterModules.includes(o)} />
+                    {o.charAt(0).toUpperCase() + o.slice(1)}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
+            <Button
+              onClick={handleApplyFilters}
+              className="bg-brand hover:bg-brand-hover text-white px-8 w-full sm:w-auto"
+            >
+              APPLY
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleClearFilters}
+              className="border-brand text-brand px-8 w-full sm:w-auto"
+            >
+              RESET
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -1389,25 +1365,20 @@ export const HolidayCalendarPage = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <FormControl
-                        fullWidth
-                        required
-                        variant="outlined"
-                        sx={{
-                          ...fieldStyles,
-                          '& .MuiInputLabel-asterisk': { color: '#ef4444' },
-                        }}
-                      >
-                        <InputLabel id="edit-recurring-label">Recurring</InputLabel>
+                      <Label>
+                        Recurring <span className="text-red-500">*</span>
+                      </Label>
+                      <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                         <MuiSelect
-                          labelId="edit-recurring-label"
-                          label="Recurring"
+                          displayEmpty
                           value={recurring}
                           onChange={(e) => setRecurring(e.target.value)}
-                          sx={fieldStyles}
                           MenuProps={selectMenuProps}
+                          renderValue={(selected) => {
+                            if (!selected) return placeholderText('Select...');
+                            return selected === 'yes' ? 'Yes' : 'No';
+                          }}
                         >
-                          <MenuItem value=""><em>Select</em></MenuItem>
                           <MenuItem value="yes">Yes</MenuItem>
                           <MenuItem value="no">No</MenuItem>
                         </MuiSelect>
@@ -1418,25 +1389,20 @@ export const HolidayCalendarPage = () => {
                   {/* Second Row */}
                   <div className="grid grid-cols-3 gap-6">
                     <div className="space-y-2">
-                      <FormControl
-                        fullWidth
-                        required
-                        variant="outlined"
-                        sx={{
-                          ...fieldStyles,
-                          '& .MuiInputLabel-asterisk': { color: '#ef4444' },
-                        }}
-                      >
-                        <InputLabel id="edit-holiday-type-label">Holiday Type</InputLabel>
+                      <Label>
+                        Holiday Type <span className="text-red-500">*</span>
+                      </Label>
+                      <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                         <MuiSelect
-                          labelId="edit-holiday-type-label"
-                          label="Holiday Type"
+                          displayEmpty
                           value={selectedType}
                           onChange={(e) => setSelectedType(e.target.value)}
-                          sx={fieldStyles}
                           MenuProps={selectMenuProps}
+                          renderValue={(selected) => {
+                            if (!selected) return placeholderText('Select...');
+                            return String(selected).charAt(0).toUpperCase() + String(selected).slice(1);
+                          }}
                         >
-                          <MenuItem value=""><em>Select type</em></MenuItem>
                           <MenuItem value="public">Public</MenuItem>
                           <MenuItem value="festival">Festival</MenuItem>
                           <MenuItem value="maintenance">Maintenance</MenuItem>
@@ -1444,19 +1410,12 @@ export const HolidayCalendarPage = () => {
                       </FormControl>
                     </div>
                     <div className="space-y-2">
-                      <FormControl
-                        fullWidth
-                        required
-                        variant="outlined"
-                        sx={{
-                          ...fieldStyles,
-                          '& .MuiInputLabel-asterisk': { color: '#ef4444' },
-                        }}
-                      >
-                        <InputLabel id="edit-sites-label">Select Sites</InputLabel>
+                      <Label>
+                        Select Sites <span className="text-red-500">*</span>
+                      </Label>
+                      <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                         <MuiSelect
-                          labelId="edit-sites-label"
-                          label="Select Sites"
+                          displayEmpty
                           multiple
                           value={selectedSites}
                           onChange={(e) => setSelectedSites(e.target.value as number[])}
@@ -1464,9 +1423,10 @@ export const HolidayCalendarPage = () => {
                             const labels = siteOptions
                               .filter(site => (selected as number[]).includes(site.id))
                               .map(site => site.name);
-                            return labels.length > 0 ? labels.join(', ') : '';
+                            return labels.length > 0
+                              ? labels.join(', ')
+                              : placeholderText(loadingSites ? 'Loading...' : 'Select...');
                           }}
-                          sx={fieldStyles}
                           MenuProps={selectMenuProps}
                           disabled={loadingSites}
                         >
@@ -1480,28 +1440,22 @@ export const HolidayCalendarPage = () => {
                       </FormControl>
                     </div>
                     <div className="space-y-2">
-                      <FormControl
-                        fullWidth
-                        required
-                        variant="outlined"
-                        sx={{
-                          ...fieldStyles,
-                          '& .MuiInputLabel-asterisk': { color: '#ef4444' },
-                        }}
-                      >
-                        <InputLabel id="edit-modules-label">Select Module</InputLabel>
+                      <Label>
+                        Select Module <span className="text-red-500">*</span>
+                      </Label>
+                      <FormControl fullWidth variant="outlined" sx={fieldStyles}>
                         <MuiSelect
-                          labelId="edit-modules-label"
-                          label="Select Module"
+                          displayEmpty
                           multiple
                           value={selectedCustomers}
                           onChange={(e) => setSelectedCustomers(e.target.value as string[])}
                           renderValue={(selected) => {
                             const labels = (selected as string[])
                               .map(customer => customer.charAt(0).toUpperCase() + customer.slice(1));
-                            return labels.length > 0 ? labels.join(', ') : '';
+                            return labels.length > 0
+                              ? labels.join(', ')
+                              : placeholderText('Select...');
                           }}
-                          sx={fieldStyles}
                           MenuProps={selectMenuProps}
                         >
                           {customerOptions.map(customer => (

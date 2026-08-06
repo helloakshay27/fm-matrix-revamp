@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import posthog from "posthog-js";
-import recessLogo from "../assets/recess-logo";
+import { RecessClubLogo } from "./RecessClubLogo";
 import {
   Bell,
   User,
@@ -19,6 +19,7 @@ import {
   ChartAreaIcon,
   Shield,
   Menu,
+  Activity,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -499,11 +500,7 @@ export const Header = () => {
                 alt=""
               />
             ) : isClubSite ? (
-              <img
-                src={recessLogo}
-                alt="Recess Logo"
-                className={logoClassName}
-              />
+              <RecessClubLogo className={logoClassName} />
             ) : isPulseSite ? (
               <img
                 src="https://www.panchshil.com/assets/images/home/logo.png"
@@ -554,7 +551,7 @@ export const Header = () => {
               {!isViSite && (
                 <button
                   onClick={() => (window.location.href = "/dashboard")}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <ChartArea className="w-4 h-4" />
                   Dashboard
@@ -565,7 +562,7 @@ export const Header = () => {
                   onClick={() =>
                     (window.location.href = "/dashboard-executive")
                   }
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <ChartAreaIcon className="w-4 h-4" />
                   Executive Dashboard
@@ -586,10 +583,19 @@ export const Header = () => {
               {canShowMSafeDashboard && (
                 <button
                   onClick={handleMSafeDashboardRevamp}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
                   <Shield className="w-4 h-4" />
                   Msafe Dashboard Revamp
+                </button>
+              )}
+              {isLocalhost && (
+                <button
+                  onClick={() => (window.location.href = "/posthog-dashboard")}
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <Activity className="w-4 h-4" />
+                  Usage Analytics
                 </button>
               )}
             </div>

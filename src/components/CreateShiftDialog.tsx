@@ -1,11 +1,20 @@
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React, { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, Loader2 } from "lucide-react";
-import { toast } from 'sonner';
+import { toast } from "sonner";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
-import { FormControl, InputLabel, MenuItem, Select as MuiSelect } from '@mui/material';
+import {
+  FormControl,
+  MenuItem,
+  Select as MuiSelect,
+} from "@mui/material";
 
 interface CreateShiftDialogProps {
   open: boolean;
@@ -14,32 +23,97 @@ interface CreateShiftDialogProps {
 }
 
 const fieldStyles = {
-  height: { xs: 36, sm: 40, md: 45 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  "& .MuiOutlinedInput-root": {
+    height: "45px !important",
+    backgroundColor: "#ffffff !important",
+    borderRadius: "8px !important",
+    "& fieldset": {
+      borderColor: "#d1d5db",
+      borderRadius: "8px",
+    },
+    "&:hover fieldset": { borderColor: "#9ca3af" },
+    "&.Mui-focused fieldset": {
+      borderColor: "var(--color-primary)",
+      borderWidth: "2px",
+    },
   },
-  '& .MuiOutlinedInput-root': {
-    backgroundColor: 'white',
+  "& .MuiSelect-select": {
+    padding: "10px 14px !important",
+    display: "flex",
+    alignItems: "center",
+    backgroundColor: "transparent !important",
+  },
+  "& .MuiSvgIcon-root": {
+    color: "#6b7280",
   },
 };
 
 const selectMenuProps = {
   PaperProps: {
+    className: "disable-mui-select-search",
     style: {
       maxHeight: 224,
-      backgroundColor: 'white',
-      border: '1px solid #e2e8f0',
-      borderRadius: '8px',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-      zIndex: 9999,
+      overflowY: "auto" as const,
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      zIndex: 1500,
+    },
+    onWheel: (e: React.WheelEvent) => {
+      e.stopPropagation();
+    },
+    onMouseDown: (e: React.MouseEvent) => {
+      e.stopPropagation();
     },
   },
+  MenuListProps: {
+    "data-disable-mui-select-search": "true",
+    style: {
+      maxHeight: 224,
+      overflowY: "auto" as const,
+      paddingTop: 4,
+      paddingBottom: 4,
+    },
+    onWheel: (e: React.WheelEvent) => {
+      e.stopPropagation();
+    },
+  },
+  // Portal to body so menu positions correctly (dialog uses CSS transform)
   disablePortal: false,
   disableAutoFocus: true,
   disableEnforceFocus: true,
+  style: { zIndex: 1500 },
 };
 
-export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: CreateShiftDialogProps) => {
+const placeholderText = (text: string) => (
+  <span style={{ color: "#9ca3af" }}>{text}</span>
+);
+
+const HOURS = [
+  "12",
+  "01",
+  "02",
+  "03",
+  "04",
+  "05",
+  "06",
+  "07",
+  "08",
+  "09",
+  "10",
+  "11",
+];
+const MINUTES = Array.from({ length: 60 }, (_, i) =>
+  String(i).padStart(2, "0")
+);
+
+export const CreateShiftDialog = ({
+  open,
+  onOpenChange,
+  onShiftCreated,
+}: CreateShiftDialogProps) => {
   const [fromHour, setFromHour] = useState<string>("");
   const [fromMinute, setFromMinute] = useState<string>("");
   const [fromAmPm, setFromAmPm] = useState<string>("AM");
@@ -51,85 +125,75 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
   const [minMargin, setMinMargin] = useState<string>("0");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
-  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
-
-  // Convert 12-hour to 24-hour format
   const convertTo24Hour = (hour: string, ampm: string) => {
-    let hourNum = parseInt(hour);
-    if (ampm === 'AM' && hourNum === 12) {
+    let hourNum = parseInt(hour, 10);
+    if (ampm === "AM" && hourNum === 12) {
       hourNum = 0;
-    } else if (ampm === 'PM' && hourNum !== 12) {
+    } else if (ampm === "PM" && hourNum !== 12) {
       hourNum += 12;
     }
-    return String(hourNum).padStart(2, '0');
+    return String(hourNum).padStart(2, "0");
   };
 
   const validateForm = () => {
-    if (!fromHour || !fromMinute || !fromAmPm || !toHour || !toMinute || !toAmPm) {
+    if (
+      !fromHour ||
+      !fromMinute ||
+      !fromAmPm ||
+      !toHour ||
+      !toMinute ||
+      !toAmPm
+    ) {
       toast.error("Please fill in all time fields");
       return false;
     }
-
     return true;
   };
 
   const handleCreate = async () => {
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
 
-    // Convert to 24-hour format for API
     const startHour24 = convertTo24Hour(fromHour, fromAmPm);
     const endHour24 = convertTo24Hour(toHour, toAmPm);
 
-    // Build API payload
     const payload = {
       user_shift: {
         start_hour: startHour24,
         start_min: fromMinute,
         end_hour: endHour24,
         end_min: toMinute,
-        hour_margin: checkInMargin ? hourMargin : '00',
-        min_margin: checkInMargin ? minMargin : '00'
+        hour_margin: checkInMargin ? hourMargin : "00",
+        min_margin: checkInMargin ? minMargin : "00",
       },
-      check_in_margin: checkInMargin
+      check_in_margin: checkInMargin,
     };
 
-    console.log('Create shift payload:', payload);
-
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/user_shifts.json`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': getAuthHeader()
-        },
-        body: JSON.stringify(payload)
-      });
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/pms/admin/user_shifts.json`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: getAuthHeader(),
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result = await response.json();
-      console.log('Shift created successfully:', result);
-
-      toast.success('Shift created successfully!');
-      
-      // Reset form
+      await response.json();
+      toast.success("Shift created successfully!");
       resetForm();
-      
-      // Close dialog
       onOpenChange(false);
-      
-      // Trigger callback to refresh parent data
-      if (onShiftCreated) {
-        onShiftCreated();
-      }
-
+      onShiftCreated?.();
     } catch (error: any) {
-      console.error('Error creating shift:', error);
+      console.error("Error creating shift:", error);
       toast.error(`Failed to create shift: ${error.message}`);
     } finally {
       setIsSubmitting(false);
@@ -156,227 +220,239 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogContent
-        className="sm:max-w-lg bg-white overflow-visible"
+        className="sm:max-w-lg bg-white"
         onPointerDownOutside={(e) => {
-          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+          if (
+            (e.target as HTMLElement).closest(
+              ".MuiPopover-root, .MuiModal-root, .MuiMenu-root, .MuiList-root, .MuiPaper-root"
+            )
+          ) {
             e.preventDefault();
           }
         }}
         onInteractOutside={(e) => {
-          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+          if (
+            (e.target as HTMLElement).closest(
+              ".MuiPopover-root, .MuiModal-root, .MuiMenu-root, .MuiList-root, .MuiPaper-root"
+            )
+          ) {
             e.preventDefault();
           }
         }}
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
+          <DialogTitle className="flex items-center justify-between text-lg font-semibold text-gray-900">
             Create Shift
             <Button
               variant="ghost"
               size="icon"
               onClick={handleClose}
-              className="h-8 w-8 p-1  text-white  rounded-none shadow-none"
+              className="h-8 w-8 p-0 hover:bg-gray-100"
             >
               <X className="h-4 w-4" />
             </Button>
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6">
-          {/* Shift Timings From */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Shift Timings From <span className="text-red-500">*</span>
             </label>
             <div className="flex gap-2 items-center">
-              <div className="flex-1">
-                <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                  <InputLabel id="from-hour-label">Hr</InputLabel>
-                  <MuiSelect
-                    labelId="from-hour-label"
-                    label="Hr"
-                    value={fromHour}
-                    onChange={(e) => setFromHour(e.target.value)}
-                    sx={fieldStyles}
-                    MenuProps={selectMenuProps}
-                  >
-                    <MenuItem value=""><em>--</em></MenuItem>
-                    {['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map((hour) => (
-                      <MenuItem key={hour} value={hour}>
-                        {hour}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div>
-              <span className="flex items-center text-gray-500 px-1">:</span>
-              <div className="flex-1">
-                <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                  <InputLabel id="from-minute-label">mm</InputLabel>
-                  <MuiSelect
-                    labelId="from-minute-label"
-                    label="mm"
-                    value={fromMinute}
-                    onChange={(e) => setFromMinute(e.target.value)}
-                    sx={fieldStyles}
-                    MenuProps={selectMenuProps}
-                  >
-                    <MenuItem value=""><em>--</em></MenuItem>
-                    {minutes.map((minute) => (
-                      <MenuItem key={minute} value={minute}>
-                        {minute}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div>
-              <div className="w-20">
-                <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                  <MuiSelect
-                    value={fromAmPm}
-                    onChange={(e) => setFromAmPm(e.target.value)}
-                    sx={fieldStyles}
-                    MenuProps={selectMenuProps}
-                  >
-                    <MenuItem value="AM">AM</MenuItem>
-                    <MenuItem value="PM">PM</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              </div>
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                <MuiSelect
+                  displayEmpty
+                  value={fromHour}
+                  onChange={(e) => setFromHour(e.target.value as string)}
+                  MenuProps={selectMenuProps}
+                  renderValue={(selected) =>
+                    selected
+                      ? String(selected)
+                      : placeholderText("Hr")
+                  }
+                >
+                  {HOURS.map((hour) => (
+                    <MenuItem key={hour} value={hour}>
+                      {hour}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <span className="text-gray-500 px-1">:</span>
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                <MuiSelect
+                  displayEmpty
+                  value={fromMinute}
+                  onChange={(e) => setFromMinute(e.target.value as string)}
+                  MenuProps={selectMenuProps}
+                  renderValue={(selected) =>
+                    selected
+                      ? String(selected)
+                      : placeholderText("mm")
+                  }
+                >
+                  {MINUTES.map((minute) => (
+                    <MenuItem key={minute} value={minute}>
+                      {minute}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                variant="outlined"
+                sx={{ ...fieldStyles, minWidth: 88, width: 88 }}
+              >
+                <MuiSelect
+                  displayEmpty
+                  value={fromAmPm}
+                  onChange={(e) => setFromAmPm(e.target.value as string)}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="AM">AM</MenuItem>
+                  <MenuItem value="PM">PM</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
-          {/* Shift Timings To */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Shift Timings To <span className="text-red-500">*</span>
             </label>
             <div className="flex gap-2 items-center">
-              <div className="flex-1">
-                <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                  <InputLabel id="to-hour-label">Hr</InputLabel>
-                  <MuiSelect
-                    labelId="to-hour-label"
-                    label="Hr"
-                    value={toHour}
-                    onChange={(e) => setToHour(e.target.value)}
-                    sx={fieldStyles}
-                    MenuProps={selectMenuProps}
-                  >
-                    <MenuItem value=""><em>--</em></MenuItem>
-                    {['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map((hour) => (
-                      <MenuItem key={hour} value={hour}>
-                        {hour}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div>
-              <span className="flex items-center text-gray-500 px-1">:</span>
-              <div className="flex-1">
-                <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                  <InputLabel id="to-minute-label">mm</InputLabel>
-                  <MuiSelect
-                    labelId="to-minute-label"
-                    label="mm"
-                    value={toMinute}
-                    onChange={(e) => setToMinute(e.target.value)}
-                    sx={fieldStyles}
-                    MenuProps={selectMenuProps}
-                  >
-                    <MenuItem value=""><em>--</em></MenuItem>
-                    {minutes.map((minute) => (
-                      <MenuItem key={minute} value={minute}>
-                        {minute}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div>
-              <div className="w-20">
-                <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                  <MuiSelect
-                    value={toAmPm}
-                    onChange={(e) => setToAmPm(e.target.value)}
-                    sx={fieldStyles}
-                    MenuProps={selectMenuProps}
-                  >
-                    <MenuItem value="AM">AM</MenuItem>
-                    <MenuItem value="PM">PM</MenuItem>
-                  </MuiSelect>
-                </FormControl>
-              </div>
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                <MuiSelect
+                  displayEmpty
+                  value={toHour}
+                  onChange={(e) => setToHour(e.target.value as string)}
+                  MenuProps={selectMenuProps}
+                  renderValue={(selected) =>
+                    selected
+                      ? String(selected)
+                      : placeholderText("Hr")
+                  }
+                >
+                  {HOURS.map((hour) => (
+                    <MenuItem key={hour} value={hour}>
+                      {hour}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <span className="text-gray-500 px-1">:</span>
+              <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                <MuiSelect
+                  displayEmpty
+                  value={toMinute}
+                  onChange={(e) => setToMinute(e.target.value as string)}
+                  MenuProps={selectMenuProps}
+                  renderValue={(selected) =>
+                    selected
+                      ? String(selected)
+                      : placeholderText("mm")
+                  }
+                >
+                  {MINUTES.map((minute) => (
+                    <MenuItem key={minute} value={minute}>
+                      {minute}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                variant="outlined"
+                sx={{ ...fieldStyles, minWidth: 88, width: 88 }}
+              >
+                <MuiSelect
+                  displayEmpty
+                  value={toAmPm}
+                  onChange={(e) => setToAmPm(e.target.value as string)}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="AM">AM</MenuItem>
+                  <MenuItem value="PM">PM</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
-          {/* Check In Margin */}
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="check-in-margin" 
+              <Checkbox
+                id="check-in-margin"
                 checked={checkInMargin}
-                onCheckedChange={(checked) => setCheckInMargin(checked as boolean)}
+                onCheckedChange={(checked) =>
+                  setCheckInMargin(checked as boolean)
+                }
               />
-              <label 
-                htmlFor="check-in-margin" 
+              <label
+                htmlFor="check-in-margin"
                 className="text-sm font-medium text-gray-700"
               >
                 Check In Margin
               </label>
             </div>
-            
+
             {checkInMargin && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Margin Time
                 </label>
                 <div className="flex gap-2 items-center">
-                  <div className="w-20">
-                    <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                      <MuiSelect
-                        value={hourMargin}
-                        onChange={(e) => setHourMargin(e.target.value)}
-                        sx={fieldStyles}
-                        MenuProps={selectMenuProps}
-                      >
-                        {Array.from({ length: 13 }, (_, i) => String(i)).map((hour) => (
+                  <FormControl
+                    variant="outlined"
+                    sx={{ ...fieldStyles, minWidth: 88, width: 88 }}
+                  >
+                    <MuiSelect
+                      displayEmpty
+                      value={hourMargin}
+                      onChange={(e) =>
+                        setHourMargin(e.target.value as string)
+                      }
+                      MenuProps={selectMenuProps}
+                    >
+                      {Array.from({ length: 13 }, (_, i) => String(i)).map(
+                        (hour) => (
                           <MenuItem key={hour} value={hour}>
                             {hour}
                           </MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
+                        )
+                      )}
+                    </MuiSelect>
+                  </FormControl>
                   <span className="text-sm text-gray-500">hours</span>
-                  
-                  <div className="w-20">
-                    <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                      <MuiSelect
-                        value={minMargin}
-                        onChange={(e) => setMinMargin(e.target.value)}
-                        sx={fieldStyles}
-                        MenuProps={selectMenuProps}
-                      >
-                        {Array.from({ length: 60 }, (_, i) => String(i)).map((minute) => (
+
+                  <FormControl
+                    variant="outlined"
+                    sx={{ ...fieldStyles, minWidth: 88, width: 88 }}
+                  >
+                    <MuiSelect
+                      displayEmpty
+                      value={minMargin}
+                      onChange={(e) => setMinMargin(e.target.value as string)}
+                      MenuProps={selectMenuProps}
+                    >
+                      {Array.from({ length: 60 }, (_, i) => String(i)).map(
+                        (minute) => (
                           <MenuItem key={minute} value={minute}>
                             {minute}
                           </MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
-                  </div>
+                        )
+                      )}
+                    </MuiSelect>
+                  </FormControl>
                   <span className="text-sm text-gray-500">minutes</span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Create Button */}
           <div className="flex justify-center pt-4">
-            <Button 
+            <Button
               onClick={handleCreate}
               disabled={isSubmitting}
-              className="bg-brand hover:bg-brand-hover text-white px-8"
+              className="bg-brand hover:bg-brand-hover text-white px-8 disabled:!opacity-100"
             >
               {isSubmitting ? (
                 <>
@@ -384,7 +460,7 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
                   Creating...
                 </>
               ) : (
-                'Create'
+                "Create"
               )}
             </Button>
           </div>

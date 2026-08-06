@@ -15,12 +15,25 @@ import posthog from "posthog-js";
 // registerServiceWorker();
 
 // Apply Lockated Brand Theme and color patch on live and local environments
+<<<<<<< HEAD
 if (window.location.hostname === "fm-matrix.lockated.com" || window.location.hostname === "localhost" || window.location.hostname === "club.lockated.com") {
   import("./styles/theme.css"); // Lockated Brand Theme - Edit this file for global color changes
   // Initialise runtime color patcher — overrides MUI inline styles and any
   // legacy #C72030 / #C62828 colors injected via sx props or inline styles.
   initColorPatch();
 }
+=======
+// if (
+//   window.location.hostname === "fm-matrix.lockated.com" ||
+//   window.location.hostname === "lockated.gophygital.work" ||
+//   window.location.hostname === "localhost"
+// ) {
+import("./styles/theme.css"); // Lockated Brand Theme - Edit this file for global color changes
+// Initialise runtime color patcher — overrides MUI inline styles and any
+// legacy #C72030 / #C62828 colors injected via sx props or inline styles.
+initColorPatch();
+// }
+>>>>>>> api-integration-ui
 
 // Initialize posthog BEFORE React renders so posthog.capture() calls inside
 // useEffect hooks are never made on an uninitialized instance. When using

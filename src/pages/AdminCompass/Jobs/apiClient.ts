@@ -51,6 +51,31 @@ export const apiHeaders = () => {
   };
 };
 
+/**
+ * Ye API 20 rows/page bhejti hai (`pagination.total_pages`). List tabs sara
+ * filtering client-side karte hain, isliye sirf page 1 laane par rows chup-chaap
+ * gayab ho jaati hain. Ye helper saare pages laakar ek array me jodta hai.
+ */
+export const fetchAllPages = async (path, params = {}, ...rowKeys) => {
+  const rows = [];
+  let page = 1;
+  // Runaway loop se bachne ke liye upper bound.
+  const MAX_PAGES = 50;
+  for (; page <= MAX_PAGES; page += 1) {
+    const res = await fetch(buildApiUrl(path, { ...params, page }), {
+      headers: apiHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    rows.push(...unwrapRows(json, ...rowKeys));
+    const totalPages = Number(json?.pagination?.total_pages);
+    const nextPage = Number(json?.pagination?.next_page);
+    if (!Number.isFinite(totalPages) || page >= totalPages) break;
+    if (!Number.isFinite(nextPage) || nextPage <= page) break;
+  }
+  return rows;
+};
+
 /** Pulls the row array out of the several envelope shapes this API uses. */
 export const unwrapRows = (json, ...keys) => {
   if (Array.isArray(json)) return json;

@@ -714,11 +714,20 @@ interface AnswerOption {
 }
 
 const fieldStyles = {
-    '& .MuiInputBase-input': {
-        padding: '10px 12px',
+    height: { xs: 36, sm: 40, md: 45 },
+    backgroundColor: '#fff',
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+        padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
     },
     '& .MuiOutlinedInput-root': {
+        backgroundColor: '#fff',
         fontSize: '14px',
+        '& fieldset': { borderColor: '#e5e7eb' },
+        '&:hover fieldset': { borderColor: '#C72030' },
+        '&.Mui-focused fieldset': { borderColor: '#C72030' },
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+        color: '#C72030',
     },
 };
 
@@ -1308,6 +1317,10 @@ export const EditPermitChecklist: React.FC = () => {
                                             <MuiCheckbox
                                                 checked={question.mandatory}
                                                 onChange={(e) => updateQuestion(question.id, 'mandatory', e.target.checked)}
+                                                sx={{
+                                                    color: '#C72030',
+                                                    '&.Mui-checked': { color: '#C72030' },
+                                                }}
                                             />
                                         }
                                         label="Mandatory"
@@ -1339,6 +1352,7 @@ export const EditPermitChecklist: React.FC = () => {
                                                         value={opt.type}
                                                         onChange={(e) => updateOption(question.id, i, 'type', e.target.value)}
                                                         size="small"
+                                                        sx={fieldStyles}
                                                     >
                                                         <MenuItem value="P">P</MenuItem>
                                                         <MenuItem value="N">N</MenuItem>

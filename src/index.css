@@ -156,6 +156,18 @@ body.product-pages-scope table td {
   color: #000000 !important;
 }
 
+/* Glyphs that carry meaning (task / issue / todo / note) opt out of every
+   blanket black override above by declaring their own --glyph-color inline.
+   The selectors below are deliberately more specific than `.bg-card button svg`
+   and `.cursor-grab svg` so the colour survives regardless of CSS order. */
+svg[data-icon-color],
+.bg-card svg[data-icon-color],
+.bg-card button svg[data-icon-color],
+.cursor-grab svg[data-icon-color],
+.bg-card .cursor-grab svg[data-icon-color] {
+  color: var(--glyph-color, currentColor) !important;
+}
+
 /* 
 
 
