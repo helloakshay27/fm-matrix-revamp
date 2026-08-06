@@ -1,12 +1,68 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  FormControl as MuiFormControl,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from 'react-router-dom';
 import { CirclePlus, CircleMinus, X, Minus } from 'lucide-react';
+
+const fieldStyles = {
+  height: '40px',
+  backgroundColor: '#fff',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#d1d5db',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '& .MuiSelect-select': {
+    fontSize: '14px',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting a Radix Dialog's translate transform (which mispositions it).
+// Radix's modal Dialog also sets `pointer-events: none` on <body>, which the
+// portaled menu inherits — without pointerEvents:'auto' the backdrop never
+// receives the click that closes the menu.
+const selectMenuProps = {
+  sx: { pointerEvents: 'auto' },
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+const LOCATION_OPTIONS = [
+  { value: 'bbt-a', label: 'BBT A' },
+  { value: 'test', label: 'test' },
+  { value: 'jyoti-tower', label: 'Jyoti Tower' },
+  { value: 'gophygital', label: 'Gophygital' },
+];
+
+const FLOOR_OPTIONS = [
+  { value: 'ground', label: 'Ground Floor' },
+  { value: 'ta-floor-1', label: 'TA Floor 1' },
+  { value: 'floor-2', label: '2' },
+];
 
 interface SeatTypeConfig {
   name: string;
@@ -375,30 +431,53 @@ export const AddSeatSetupDashboard = () => {
         <div className="flex gap-4 mb-6">
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-            <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Location" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="bbt-a">BBT A</SelectItem>
-                <SelectItem value="test">test</SelectItem>
-                <SelectItem value="jyoti-tower">Jyoti Tower</SelectItem>
-                <SelectItem value="gophygital">Gophygital</SelectItem>
-              </SelectContent>
-            </Select>
+            <MuiFormControl fullWidth size="small">
+              <MuiSelect
+                displayEmpty
+                value={selectedLocation}
+                onChange={(event) => setSelectedLocation(event.target.value)}
+                renderValue={(selected) =>
+                  selected ? (
+                    LOCATION_OPTIONS.find((o) => o.value === selected)?.label ?? selected
+                  ) : (
+                    <span className="text-gray-500">Select Location</span>
+                  )
+                }
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                {LOCATION_OPTIONS.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </MuiFormControl>
           </div>
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">Floor</label>
-            <Select value={selectedFloor} onValueChange={setSelectedFloor}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Floor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ground">Ground Floor</SelectItem>
-                <SelectItem value="ta-floor-1">TA Floor 1</SelectItem>
-                <SelectItem value="floor-2">2</SelectItem>
-              </SelectContent>
-            </Select>
+            <MuiFormControl fullWidth size="small">
+              <MuiSelect
+                displayEmpty
+                value={selectedFloor}
+                onChange={(event) => setSelectedFloor(event.target.value)}
+                renderValue={(selected) =>
+                  selected ? (
+                    FLOOR_OPTIONS.find((o) => o.value === selected)?.label ?? selected
+                  ) : (
+                    <span className="text-gray-500">Select Floor</span>
+                  )
+                }
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                {FLOOR_OPTIONS.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </MuiFormControl>
           </div>
         </div>
 
@@ -692,16 +771,22 @@ export const AddSeatSetupDashboard = () => {
                 <div className="space-y-4 py-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                    <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Department" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white z-50">
+                    <MuiFormControl fullWidth size="small">
+                      <MuiSelect
+                        displayEmpty
+                        value={selectedDepartment}
+                        onChange={(event) => setSelectedDepartment(event.target.value)}
+                        renderValue={(selected) =>
+                          selected || <span className="text-gray-500">Select Department</span>
+                        }
+                        sx={fieldStyles}
+                        MenuProps={selectMenuProps}
+                      >
                         {departments.map((dept, idx) => (
-                          <SelectItem key={idx} value={dept.name}>{dept.name}</SelectItem>
+                          <MenuItem key={idx} value={dept.name}>{dept.name}</MenuItem>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </MuiSelect>
+                    </MuiFormControl>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Number of Seats</label>

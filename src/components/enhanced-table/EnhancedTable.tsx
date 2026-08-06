@@ -1059,8 +1059,6 @@ export function EnhancedTable<T extends Record<string, any>>({
                           )
                         : null;
 
-                      console.log(frozenConfig);
-
                       return (
                         <SortableColumnHeader
                           key={column.key}

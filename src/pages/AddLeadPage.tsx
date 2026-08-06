@@ -4,7 +4,94 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import {
+  FormControl as MuiFormControl,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
+
+const fieldStyles = {
+  height: '40px',
+  backgroundColor: '#fff',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#d1d5db',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '& .MuiSelect-select': {
+    fontSize: '14px',
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+interface LeadSelectProps {
+  id: string;
+  label: string;
+  required?: boolean;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}
+
+const LeadSelect = ({
+  id,
+  label,
+  required,
+  placeholder,
+  value,
+  onChange,
+  options,
+}: LeadSelectProps) => (
+  <div className="space-y-2">
+    <Label htmlFor={id} className="text-sm font-medium text-gray-700">
+      {label} {required && <span className="text-red-500">*</span>}
+    </Label>
+    <MuiFormControl fullWidth size="small" required={required}>
+      <MuiSelect
+        id={id}
+        displayEmpty
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        renderValue={(selected) =>
+          selected ? (
+            options.find((option) => option.value === selected)?.label ?? selected
+          ) : (
+            <span className="text-gray-400">{placeholder}</span>
+          )
+        }
+        sx={fieldStyles}
+        MenuProps={selectMenuProps}
+      >
+        {options.map((option) => (
+          <MenuItem key={option.value} value={option.value}>
+            {option.label}
+          </MenuItem>
+        ))}
+      </MuiSelect>
+    </MuiFormControl>
+  </div>
+);
 
 export const AddLeadPage = () => {
   const navigate = useNavigate();
@@ -28,6 +115,12 @@ export const AddLeadPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // MUI Select renders a hidden input, which browsers exclude from constraint
+    // validation, so the required Project field is checked explicitly here.
+    if (!leadData.project) {
+      toast.error('Please select a project');
+      return;
+    }
     console.log('Create lead submitted:', leadData);
     // Handle form submission
     navigate('/crm/campaign');
@@ -42,36 +135,33 @@ export const AddLeadPage = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-6 mb-6">
-              <div className="space-y-2">
-                <Label htmlFor="project" className="text-sm font-medium text-gray-700">
-                  Project <span className="text-red-500">*</span>
-                </Label>
-                <Select onValueChange={(value) => handleInputChange('project', value)} value={leadData.project} required>
-                  <SelectTrigger className="w-full h-10 border border-gray-300 focus:border-brand focus:ring-1 focus:ring-brand text-sm bg-white">
-                    <SelectValue placeholder="Select Project" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg z-[60]">
-                    <SelectItem value="godrej-city">GODREJ CITY</SelectItem>
-                    <SelectItem value="godrej-rks">GODREJ RKS</SelectItem>
-                    <SelectItem value="godrej-hill-retreat">GODREJ HILL RETREAT</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <LeadSelect
+                id="project"
+                label="Project"
+                required
+                placeholder="Select Project"
+                value={leadData.project}
+                onChange={(value) => handleInputChange('project', value)}
+                options={[
+                  { value: 'godrej-city', label: 'GODREJ CITY' },
+                  { value: 'godrej-rks', label: 'GODREJ RKS' },
+                  { value: 'godrej-hill-retreat', label: 'GODREJ HILL RETREAT' },
+                ]}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="flatType" className="text-sm font-medium text-gray-700">Flat Type</Label>
-                <Select onValueChange={(value) => handleInputChange('flatType', value)} value={leadData.flatType}>
-                  <SelectTrigger className="w-full h-10 border border-gray-300 focus:border-brand focus:ring-1 focus:ring-brand text-sm bg-white">
-                    <SelectValue placeholder="Select Flat Type" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg z-[60]">
-                    <SelectItem value="1bhk">1 BHK</SelectItem>
-                    <SelectItem value="2bhk">2 BHK</SelectItem>
-                    <SelectItem value="3bhk">3 BHK</SelectItem>
-                    <SelectItem value="4bhk">4 BHK</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <LeadSelect
+                id="flatType"
+                label="Flat Type"
+                placeholder="Select Flat Type"
+                value={leadData.flatType}
+                onChange={(value) => handleInputChange('flatType', value)}
+                options={[
+                  { value: '1bhk', label: '1 BHK' },
+                  { value: '2bhk', label: '2 BHK' },
+                  { value: '3bhk', label: '3 BHK' },
+                  { value: '4bhk', label: '4 BHK' },
+                ]}
+              />
 
               <div className="space-y-2">
                 <Label htmlFor="clientName" className="text-sm font-medium text-gray-700">
@@ -124,83 +214,80 @@ export const AddLeadPage = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="leadStage" className="text-sm font-medium text-gray-700">Lead Stage</Label>
-                <Select onValueChange={(value) => handleInputChange('leadStage', value)} value={leadData.leadStage}>
-                  <SelectTrigger className="w-full h-10 border border-gray-300 focus:border-brand focus:ring-1 focus:ring-brand text-sm bg-white">
-                    <SelectValue placeholder="Select Lead Stage" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg z-[60]">
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="contacted">Contacted</SelectItem>
-                    <SelectItem value="qualified">Qualified</SelectItem>
-                    <SelectItem value="proposal">Proposal</SelectItem>
-                    <SelectItem value="negotiation">Negotiation</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <LeadSelect
+                id="leadStage"
+                label="Lead Stage"
+                placeholder="Select Lead Stage"
+                value={leadData.leadStage}
+                onChange={(value) => handleInputChange('leadStage', value)}
+                options={[
+                  { value: 'new', label: 'New' },
+                  { value: 'contacted', label: 'Contacted' },
+                  { value: 'qualified', label: 'Qualified' },
+                  { value: 'proposal', label: 'Proposal' },
+                  { value: 'negotiation', label: 'Negotiation' },
+                ]}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="activity" className="text-sm font-medium text-gray-700">Activity</Label>
-                <Select onValueChange={(value) => handleInputChange('activity', value)} value={leadData.activity}>
-                  <SelectTrigger className="w-full h-10 border border-gray-300 focus:border-brand focus:ring-1 focus:ring-brand text-sm bg-white">
-                    <SelectValue placeholder="Select Activity" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg z-[60]">
-                    <SelectItem value="call">Call</SelectItem>
-                    <SelectItem value="email">Email</SelectItem>
-                    <SelectItem value="meeting">Meeting</SelectItem>
-                    <SelectItem value="site-visit">Site Visit</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <LeadSelect
+                id="activity"
+                label="Activity"
+                placeholder="Select Activity"
+                value={leadData.activity}
+                onChange={(value) => handleInputChange('activity', value)}
+                options={[
+                  { value: 'call', label: 'Call' },
+                  { value: 'email', label: 'Email' },
+                  { value: 'meeting', label: 'Meeting' },
+                  { value: 'site-visit', label: 'Site Visit' },
+                ]}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="leadStatus" className="text-sm font-medium text-gray-700">Lead Status</Label>
-                <Select onValueChange={(value) => handleInputChange('leadStatus', value)} value={leadData.leadStatus}>
-                  <SelectTrigger className="w-full h-10 border border-gray-300 focus:border-brand focus:ring-1 focus:ring-brand text-sm bg-white">
-                    <SelectValue placeholder="select status" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg z-[60]">
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="hot">Hot</SelectItem>
-                    <SelectItem value="warm">Warm</SelectItem>
-                    <SelectItem value="cold">Cold</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <LeadSelect
+                id="leadStatus"
+                label="Lead Status"
+                placeholder="select status"
+                value={leadData.leadStatus}
+                onChange={(value) => handleInputChange('leadStatus', value)}
+                options={[
+                  { value: 'active', label: 'Active' },
+                  { value: 'hot', label: 'Hot' },
+                  { value: 'warm', label: 'Warm' },
+                  { value: 'cold', label: 'Cold' },
+                ]}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="leadSource" className="text-sm font-medium text-gray-700">Lead Source</Label>
-                <Select onValueChange={(value) => handleInputChange('leadSource', value)} value={leadData.leadSource}>
-                  <SelectTrigger className="w-full h-10 border border-gray-300 focus:border-brand focus:ring-1 focus:ring-brand text-sm bg-white">
-                    <SelectValue placeholder="Select Lead Source" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg z-[60]">
-                    <SelectItem value="website">Website</SelectItem>
-                    <SelectItem value="referral">Referral</SelectItem>
-                    <SelectItem value="social-media">Social Media</SelectItem>
-                    <SelectItem value="advertisement">Advertisement</SelectItem>
-                    <SelectItem value="event">Event</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <LeadSelect
+                id="leadSource"
+                label="Lead Source"
+                placeholder="Select Lead Source"
+                value={leadData.leadSource}
+                onChange={(value) => handleInputChange('leadSource', value)}
+                options={[
+                  { value: 'website', label: 'Website' },
+                  { value: 'referral', label: 'Referral' },
+                  { value: 'social-media', label: 'Social Media' },
+                  { value: 'advertisement', label: 'Advertisement' },
+                  { value: 'event', label: 'Event' },
+                ]}
+              />
             </div>
 
-            <div className="space-y-2 mb-8">
-              <Label htmlFor="leadSubSource" className="text-sm font-medium text-gray-700">Lead Sub Source</Label>
-              <Select onValueChange={(value) => handleInputChange('leadSubSource', value)} value={leadData.leadSubSource}>
-                <SelectTrigger className="w-full h-10 border border-gray-300 focus:border-brand focus:ring-1 focus:ring-brand text-sm bg-white">
-                  <SelectValue placeholder="Select Lead Sub Source" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg z-[60]">
-                  <SelectItem value="google-ads">Google Ads</SelectItem>
-                  <SelectItem value="facebook-ads">Facebook Ads</SelectItem>
-                  <SelectItem value="instagram-ads">Instagram Ads</SelectItem>
-                  <SelectItem value="linkedin-ads">LinkedIn Ads</SelectItem>
-                  <SelectItem value="direct-referral">Direct Referral</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="mb-8">
+              <LeadSelect
+                id="leadSubSource"
+                label="Lead Sub Source"
+                placeholder="Select Lead Sub Source"
+                value={leadData.leadSubSource}
+                onChange={(value) => handleInputChange('leadSubSource', value)}
+                options={[
+                  { value: 'google-ads', label: 'Google Ads' },
+                  { value: 'facebook-ads', label: 'Facebook Ads' },
+                  { value: 'instagram-ads', label: 'Instagram Ads' },
+                  { value: 'linkedin-ads', label: 'LinkedIn Ads' },
+                  { value: 'direct-referral', label: 'Direct Referral' },
+                ]}
+              />
             </div>
 
             <div className="flex justify-center">
