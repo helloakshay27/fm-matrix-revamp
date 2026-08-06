@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, X, Plus, FileText, FileSpreadsheet, File, Eye, Loader2 } from 'lucide-react';
@@ -981,7 +981,7 @@ export const EditAMCPage = () => {
 
       const result = response?.data;
 
-      // âœ… Check backend response validity
+      // ✅ Check backend response validity
       if (!result?.id) {
         toast({
           title: 'Error',
@@ -992,7 +992,7 @@ export const EditAMCPage = () => {
         return;
       }
 
-      // âœ… Show success and navigate
+      // ✅ Show success and navigate
       toast({
         title: 'AMC Updated',
         description: 'AMC has been successfully updated.',
@@ -1229,11 +1229,11 @@ export const EditAMCPage = () => {
                     cursor: (index > currentStep && !completedSteps.includes(index - 1)) ? 'not-allowed' : 'pointer',
                     width: '187px',
                     height: '40px',
-                    backgroundColor: (index === currentStep || completedSteps.includes(index)) ? 'var(--color-primary)' :
+                    backgroundColor: (index === currentStep || completedSteps.includes(index)) ? '#C72030' :
                       (index > currentStep && !completedSteps.includes(index - 1)) ? 'rgba(245, 245, 245, 1)' : 'rgba(255, 255, 255, 1)',
                     color: (index === currentStep || completedSteps.includes(index)) ? 'white' :
                       (index > currentStep && !completedSteps.includes(index - 1)) ? 'rgba(150, 150, 150, 1)' : 'rgba(196, 184, 157, 1)',
-                    border: (index === currentStep || completedSteps.includes(index)) ? '2px solid var(--color-primary)' :
+                    border: (index === currentStep || completedSteps.includes(index)) ? '2px solid #C72030' :
                       (index > currentStep && !completedSteps.includes(index - 1)) ? '1px solid rgba(200, 200, 200, 1)' : '1px solid rgba(196, 184, 157, 1)',
                     padding: '12px 20px',
                     fontSize: '13px',
@@ -1242,7 +1242,7 @@ export const EditAMCPage = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: index === currentStep ? '0 2px 4px rgba(218, 119, 86, 0.3)' : 'none',
+                    boxShadow: index === currentStep ? '0 2px 4px rgba(199, 32, 48, 0.3)' : 'none',
                     transition: 'all 0.2s ease',
                     fontFamily: 'Work Sans, sans-serif',
                     position: 'relative',
@@ -1350,7 +1350,7 @@ export const EditAMCPage = () => {
               <CardHeader className="bg-[#F6F4EE]">
                 <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
                   <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">
-                    âœ“
+                    ✓
                   </span>
                   {['AMC Configuration', 'AMC Details', 'Schedule', 'Attachments'][stepIndex]}
                 </CardTitle>
@@ -1480,12 +1480,12 @@ export const EditAMCPage = () => {
       height: '40px',
       fontSize: '14px',
       '& fieldset': { borderColor: '#ddd' },
-      '&:hover fieldset': { borderColor: 'var(--color-primary)' },
-      '&.Mui-focused fieldset': { borderColor: 'var(--color-primary)' },
+      '&:hover fieldset': { borderColor: '#C72030' },
+      '&.Mui-focused fieldset': { borderColor: '#C72030' },
     },
     '& .MuiInputLabel-root': {
       fontSize: '14px',
-      '&.Mui-focused': { color: 'var(--color-primary)' },
+      '&.Mui-focused': { color: '#C72030' },
     },
   };
 
@@ -1625,7 +1625,7 @@ export const EditAMCPage = () => {
         {options?.includeHeader && (
           <CardHeader className="bg-[#F6F4EE] ">
             <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-              <span className="w-6 h-6 bg-[var(--color-primary)] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">
+              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">
                 1
               </span>
               AMC CONFIGURATION
@@ -1646,7 +1646,7 @@ export const EditAMCPage = () => {
                     readOnly
                     disabled
                     className="mr-2 w-4 h-4"
-                    style={{ accentColor: 'var(--color-primary)' }}
+                    style={{ accentColor: '#C72030' }}
                   />
                   <span className="text-[#1a1a1a] font-medium">{option}</span>
                 </label>
@@ -1667,7 +1667,7 @@ export const EditAMCPage = () => {
                     readOnly
                     disabled
                     className="mr-2 w-4 h-4"
-                    style={{ accentColor: 'var(--color-primary)' }}
+                    style={{ accentColor: '#C72030' }}
                   />
                   <span className="text-[#1a1a1a] font-medium">{option}</span>
                 </label>
@@ -1688,7 +1688,7 @@ export const EditAMCPage = () => {
                     readOnly
                     disabled
                     className="mr-2 w-4 h-4"
-                    style={{ accentColor: 'var(--color-primary)' }}
+                    style={{ accentColor: '#C72030' }}
                   />
                   <span className="text-[#1a1a1a] font-medium">{option}</span>
                 </label>
@@ -1700,7 +1700,7 @@ export const EditAMCPage = () => {
             <>
               {formData.details === 'Asset' ? (
                 <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Assets <span style={{ color: 'var(--color-primary)' }}>*</span></InputLabel>
+                  <InputLabel shrink>Assets <span style={{ color: '#C72030' }}>*</span></InputLabel>
                   <MuiSelect
                     multiple
                     label="Assets"
@@ -1720,7 +1720,7 @@ export const EditAMCPage = () => {
                 </FormControl>
               ) : (
                 <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Service <span style={{ color: 'var(--color-primary)' }}>*</span></InputLabel>
+                  <InputLabel shrink>Service <span style={{ color: '#C72030' }}>*</span></InputLabel>
                   <MuiSelect
                     multiple
                     label="Service"
@@ -1740,7 +1740,7 @@ export const EditAMCPage = () => {
               )}
 
               <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>Supplier <span style={{ color: 'var(--color-primary)' }}>*</span></InputLabel>
+                <InputLabel shrink>Supplier <span style={{ color: '#C72030' }}>*</span></InputLabel>
                 <MuiSelect
                   label="Supplier"
                   displayEmpty
@@ -1812,7 +1812,7 @@ export const EditAMCPage = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>Supplier <span style={{ color: 'var(--color-primary)' }}>*</span></InputLabel>
+                <InputLabel shrink>Supplier <span style={{ color: '#C72030' }}>*</span></InputLabel>
                 <MuiSelect
                   label="Supplier"
                   displayEmpty
@@ -1879,7 +1879,7 @@ export const EditAMCPage = () => {
       {options?.includeHeader && (
         <CardHeader className="bg-[#F6F4EE] ">
           <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-            <span className="w-6 h-6 bg-[var(--color-primary)] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">
               2
             </span>
             AMC DETAILS
@@ -1890,7 +1890,7 @@ export const EditAMCPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <TextField
             disabled
-            label={<span>Contract Name <span style={{ color: 'var(--color-primary)' }}>*</span></span>}
+            label={<span>Contract Name <span style={{ color: 'red' }}>*</span></span>}
             placeholder="Enter Contract Name"
             fullWidth
             value={formData.contractName}
@@ -1899,7 +1899,7 @@ export const EditAMCPage = () => {
 
           <TextField
             disabled
-            label={<span>Start Date <span style={{ color: 'var(--color-primary)' }}>*</span></span>}
+            label={<span>Start Date <span style={{ color: 'red' }}>*</span></span>}
             type="date"
             fullWidth
             value={formData.startDate || ''}
@@ -1909,7 +1909,7 @@ export const EditAMCPage = () => {
 
           <TextField
             disabled
-            label={<span>End Date <span style={{ color: 'var(--color-primary)' }}>*</span></span>}
+            label={<span>End Date <span style={{ color: 'red' }}>*</span></span>}
             type="date"
             fullWidth
             value={formData.endDate || ''}
@@ -1919,7 +1919,7 @@ export const EditAMCPage = () => {
 
           <TextField
             disabled
-            label={<span>First Service Date <span style={{ color: 'var(--color-primary)' }}>*</span></span>}
+            label={<span>First Service Date <span style={{ color: 'red' }}>*</span></span>}
             type="date"
             fullWidth
             value={formData.firstService || ''}
@@ -1928,7 +1928,7 @@ export const EditAMCPage = () => {
           />
 
           <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-            <InputLabel shrink>Payment Terms <span style={{ color: 'var(--color-primary)' }}>*</span></InputLabel>
+            <InputLabel shrink>Payment Terms <span style={{ color: '#C72030' }}>*</span></InputLabel>
             <MuiSelect
               label="Payment Terms"
               displayEmpty
@@ -1947,7 +1947,7 @@ export const EditAMCPage = () => {
 
           <TextField
             disabled
-            label={<span>Cost <span style={{ color: 'var(--color-primary)' }}>*</span></span>}
+            label={<span>Cost <span style={{ color: 'red' }}>*</span></span>}
             placeholder="Enter Cost"
             type="number"
             fullWidth
@@ -1957,7 +1957,7 @@ export const EditAMCPage = () => {
 
           <TextField
             disabled
-            label={<span>No. of Visits <span style={{ color: 'var(--color-primary)' }}>*</span></span>}
+            label={<span>No. of Visits <span style={{ color: 'red' }}>*</span></span>}
             placeholder="Enter No. of Visits"
             type="number"
             fullWidth
@@ -2004,7 +2004,7 @@ export const EditAMCPage = () => {
         {options?.includeHeader && (
           <CardHeader className="bg-[#F6F4EE] ">
             <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-              <span className="w-6 h-6 bg-[var(--color-primary)] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">
+              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">
                 3
               </span>
               SCHEDULE
@@ -2025,10 +2025,8 @@ export const EditAMCPage = () => {
     );
   };
 
-  const getAttachmentNames = (type: 'contracts' | 'invoices') => [
-    ...attachments[type].map(file => file.name),
-    ...existingFiles[type].map(file => file.document_name),
-  ];
+  const getTotalAttachmentCount = (type: 'contracts' | 'invoices') =>
+    attachments[type].length + existingFiles[type].length;
 
   const renderAttachmentsSummaryCard = (options?: { includeHeader?: boolean }) => (
     <Card
@@ -2042,7 +2040,7 @@ export const EditAMCPage = () => {
       {options?.includeHeader && (
         <CardHeader className="bg-[#F6F4EE] ">
           <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
-            <span className="w-6 h-6 bg-[var(--color-primary)] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2 font-medium">
               4
             </span>
             ATTACHMENTS
@@ -2054,33 +2052,17 @@ export const EditAMCPage = () => {
           <div>
             <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts</label>
             <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 text-center">
-              {getAttachmentNames('contracts').length ? (
-                <div className="space-y-1">
-                  {getAttachmentNames('contracts').map((name, index) => (
-                    <p key={`${name}-${index}`} className="text-sm text-gray-600 truncate">
-                      {name}
-                    </p>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-600">No files uploaded</p>
-              )}
+              <p className="text-sm text-gray-600">
+                {getTotalAttachmentCount('contracts')} file(s) ready
+              </p>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">Other Documents</label>
+            <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoices</label>
             <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 text-center">
-              {getAttachmentNames('invoices').length ? (
-                <div className="space-y-1">
-                  {getAttachmentNames('invoices').map((name, index) => (
-                    <p key={`${name}-${index}`} className="text-sm text-gray-600 truncate">
-                      {name}
-                    </p>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-600">No files uploaded</p>
-              )}
+              <p className="text-sm text-gray-600">
+                {getTotalAttachmentCount('invoices')} file(s) ready
+              </p>
             </div>
           </div>
         </div>
@@ -2172,7 +2154,7 @@ export const EditAMCPage = () => {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute top-1 right-1 h-4 w-4 p-0 text-[var(--color-primary)]"
+                  className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]"
                   onClick={() => removeExistingFile(type, file.attachment_id)}
                   disabled={updateLoading}
                 >
@@ -2228,10 +2210,10 @@ export const EditAMCPage = () => {
     <div className="mb-4">
       <div className="flex items-center mb-4">
         <span className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-sm mr-3 font-medium">
-          âœ“
+          ✓
         </span>
         <h3
-          className="text-[var(--color-primary)]"
+          className="text-[#C72030]"
           style={{
             fontFamily: 'Work Sans, sans-serif',
             fontWeight: 600,
@@ -2307,8 +2289,8 @@ export const EditAMCPage = () => {
                 className="px-6 py-2 font-medium"
                 style={{
                   backgroundColor: '#FFF',
-                  color: 'var(--color-primary)',
-                  border: '1px solid var(--color-primary)',
+                  color: '#C72030',
+                  border: '1px solid #C72030',
                   borderRadius: '4px'
                 }}
               >
@@ -2320,7 +2302,7 @@ export const EditAMCPage = () => {
                 disabled={updateLoading}
                 className="px-6 py-2 font-medium disabled:opacity-50"
                 style={{
-                  backgroundColor: 'var(--color-primary)',
+                  backgroundColor: '#C72030',
                   color: '#FFF',
                   border: 'none',
                   borderRadius: '4px'
@@ -2347,7 +2329,7 @@ export const EditAMCPage = () => {
               <>
                 <div className="flex items-center mb-4">
                   <Avatar sx={{
-                    bgcolor: 'var(--color-primary)',
+                    bgcolor: '#C72030',
                     color: 'white',
                     width: 32,
                     height: 32,
@@ -2356,7 +2338,7 @@ export const EditAMCPage = () => {
                   }}>
                     <SettingsOutlinedIcon fontSize="small" />
                   </Avatar>
-                  <h2 className="text-[var(--color-primary)]" style={{
+                  <h2 className="text-[#C72030]" style={{
                     fontFamily: 'Work Sans, sans-serif',
                     fontWeight: 600,
                     fontSize: '26px',
@@ -2373,7 +2355,7 @@ export const EditAMCPage = () => {
                 }}>
                   {/* <CardHeader className='bg-[#fffff] mb-4'> */}
                   {/* <CardTitle className="text-lg text-black flex items-center">
-              <span className="w-6 h-6 bg-[var(--color-primary)] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
               AMC CONFIGURATION
             </CardTitle> */}
                   {/* </CardHeader> */}
@@ -2389,7 +2371,7 @@ export const EditAMCPage = () => {
                             checked={formData.details === 'Asset'}
                             onChange={e => handleInputChange('details', e.target.value)}
                             className="mr-2 w-4 h-4"
-                            style={{ accentColor: 'var(--color-primary)' }}
+                            style={{ accentColor: '#C72030' }}
                             disabled={updateLoading}
                           />
                           <span className="text-[#1a1a1a] font-medium">Asset</span>
@@ -2402,7 +2384,7 @@ export const EditAMCPage = () => {
                             checked={formData.details === 'Service'}
                             onChange={e => handleInputChange('details', e.target.value)}
                             className="mr-2 w-4 h-4"
-                            style={{ accentColor: 'var(--color-primary)' }}
+                            style={{ accentColor: '#C72030' }}
                             disabled={updateLoading}
                           />
                           <span className="text-[#1a1a1a] font-medium">Service</span>
@@ -2422,7 +2404,7 @@ export const EditAMCPage = () => {
                               checked={formData.amcType === option}
                               onChange={e => handleInputChange('amcType', e.target.value)}
                               className="mr-2 w-4 h-4"
-                              style={{ accentColor: 'var(--color-primary)' }}
+                              style={{ accentColor: '#C72030' }}
                               disabled={updateLoading}
                             />
                             <span className="text-[#1a1a1a] font-medium">{option}</span>
@@ -2442,7 +2424,7 @@ export const EditAMCPage = () => {
                             checked={formData.type === 'Individual'}
                             onChange={e => handleInputChange('type', e.target.value)}
                             className="mr-2 w-4 h-4"
-                            style={{ accentColor: 'var(--color-primary)' }}
+                            style={{ accentColor: '#C72030' }}
                           /> <span className="text-[#1a1a1a] font-medium">Individual</span>
 
                         </label>
@@ -2454,7 +2436,7 @@ export const EditAMCPage = () => {
                             checked={formData.type === 'Group'}
                             onChange={e => handleInputChange('type', e.target.value)}
                             className="mr-2 w-4 h-4"
-                            style={{ accentColor: 'var(--color-primary)' }}
+                            style={{ accentColor: '#C72030' }}
                           />
                           <span className="text-[#1a1a1a] font-medium">Group</span>
                         </label>
@@ -2469,10 +2451,10 @@ export const EditAMCPage = () => {
                             {/* Header row */}
                             <div className="flex items-center justify-between mb-2">
                               <label className="text-sm font-medium text-[#444]">
-                                Assets <span style={{ color: 'var(--color-primary)' }}>*</span>
+                                Assets <span style={{ color: '#C72030' }}>*</span>
                               </label>
                               {formData.asset_ids.length > 0 && (
-                                <span className="text-xs text-[var(--color-primary)] font-medium">{formData.asset_ids.length} selected</span>
+                                <span className="text-xs text-[#C72030] font-medium">{formData.asset_ids.length} selected</span>
                               )}
                             </div>
 
@@ -2493,7 +2475,7 @@ export const EditAMCPage = () => {
                                       value={indivGroupFilter}
                                       onChange={e => { setIndivGroupFilter(e.target.value); setIndivSubGroupFilter(''); }}
                                       disabled={updateLoading}
-                                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030]"
                                     >
                                       <option value="">All Groups</option>
                                       {uniqueGroups.map(g => <option key={g} value={g}>{g}</option>)}
@@ -2505,7 +2487,7 @@ export const EditAMCPage = () => {
                                       value={indivSubGroupFilter}
                                       onChange={e => setIndivSubGroupFilter(e.target.value)}
                                       disabled={updateLoading || !indivGroupFilter}
-                                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[var(--color-primary)] disabled:bg-gray-50 disabled:text-gray-400"
+                                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030] disabled:bg-gray-50 disabled:text-gray-400"
                                     >
                                       <option value="">All Sub Groups</option>
                                       {uniqueSubGroups.map(sg => <option key={sg} value={sg}>{sg}</option>)}
@@ -2523,13 +2505,13 @@ export const EditAMCPage = () => {
                                 value={assetQuery}
                                 onChange={e => setAssetQuery(e.target.value)}
                                 disabled={updateLoading}
-                                className="w-full px-3 py-2 pl-9 border border-gray-300 rounded text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                                className="w-full px-3 py-2 pl-9 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#C72030]"
                               />
                               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
                               </svg>
                               {assetSearchLoading && (
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Loadingâ€¦</span>
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">Loading…</span>
                               )}
                             </div>
 
@@ -2541,7 +2523,7 @@ export const EditAMCPage = () => {
                                     <th className="px-3 py-2 w-10">
                                       <input
                                         type="checkbox"
-                                        style={{ accentColor: 'var(--color-primary)' }}
+                                        style={{ accentColor: '#C72030' }}
                                         disabled={updateLoading || assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).length === 0}
                                         checked={assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).length > 0 && assetOptions.filter((a: any) => (!indivGroupFilter || a.asset_group === indivGroupFilter) && (!indivSubGroupFilter || a.asset_sub_group === indivSubGroupFilter)).every((a: any) => formData.asset_ids.includes(Number(a.id)))}
                                         onChange={e => {
@@ -2574,7 +2556,7 @@ export const EditAMCPage = () => {
                                       <tr>
                                         <td colSpan={7} className="px-3 py-8 text-center text-gray-400 text-sm">
                                           {assetSearchLoading
-                                            ? 'Searchingâ€¦'
+                                            ? 'Searching…'
                                             : assetQuery.length > 0 && assetQuery.length < 3
                                               ? 'Type at least 3 characters to search'
                                               : 'No assets found'}
@@ -2602,7 +2584,7 @@ export const EditAMCPage = () => {
                                           <td className="px-3 py-2 text-center">
                                             <input
                                               type="checkbox"
-                                              style={{ accentColor: 'var(--color-primary)' }}
+                                              style={{ accentColor: '#C72030' }}
                                               checked={isChecked}
                                               onChange={() => { }}
                                               disabled={updateLoading}
@@ -2637,7 +2619,7 @@ export const EditAMCPage = () => {
                                     const asset = allAssets.find((a: any) => Number(a.id) === id);
                                     return (
                                       <div key={id} className="flex items-center gap-3 px-3 py-2 bg-white border-b border-gray-100 last:border-b-0">
-                                        <span className="w-6 h-6 flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white text-xs font-bold shrink-0">{idx + 1}</span>
+                                        <span className="w-6 h-6 flex items-center justify-center rounded-full bg-[#C72030] text-white text-xs font-bold shrink-0">{idx + 1}</span>
                                         <span className="flex-1 text-sm font-medium text-[#1a1a1a] truncate">{asset?.name || `Asset #${id}`}</span>
                                         <button
                                           type="button"
@@ -2658,7 +2640,7 @@ export const EditAMCPage = () => {
                         ) : (
                           <FormControl fullWidth variant="outlined" error={!!errors.service_ids}>
                             <InputLabel id="service-select-label" shrink>
-                              Service <span style={{ color: 'var(--color-primary)' }}>*</span>
+                              Service <span style={{ color: '#C72030' }}>*</span>
                             </InputLabel>
                             <MuiSelect
                               labelId="service-select-label"
@@ -2721,7 +2703,7 @@ export const EditAMCPage = () => {
                                           }}
                                           sx={{
                                             backgroundColor: 'rgba(199,32,48,0.08)',
-                                            color: 'var(--color-primary)',
+                                            color: '#C72030',
                                             fontWeight: 500,
                                           }}
                                         />
@@ -2737,7 +2719,7 @@ export const EditAMCPage = () => {
                                     type="checkbox"
                                     checked={formData.service_ids.includes(service.id.toString())}
                                     readOnly
-                                    style={{ marginRight: '8px', accentColor: 'var(--color-primary)' }}
+                                    style={{ marginRight: '8px', accentColor: '#C72030' }}
                                   />
                                   {service.service_name}
                                 </MenuItem>
@@ -2755,7 +2737,7 @@ export const EditAMCPage = () => {
                             disabled={loading || updateLoading}
                             error={!!errors.vendor}
                             helperText={errors.vendor}
-                            label={<>Supplier <span style={{ color: 'var(--color-primary)' }}>*</span></>}
+                            label={<>Supplier <span style={{ color: '#C72030' }}>*</span></>}
                             required
                           />
                         </div>
@@ -2851,7 +2833,7 @@ export const EditAMCPage = () => {
                           <div>
                             <FormControl fullWidth variant="outlined" error={!!errors.supplier}>
                               <InputLabel id="group-supplier-select-label" shrink>
-                                Supplier <span style={{ color: 'var(--color-primary)' }}>*</span>
+                                Supplier <span style={{ color: '#C72030' }}>*</span>
                               </InputLabel>
                               <MuiSelect
                                 labelId="group-supplier-select-label"
@@ -2906,7 +2888,7 @@ export const EditAMCPage = () => {
               <>
                 <div className="flex items-center mb-4">
                   <Avatar sx={{
-                    bgcolor: 'var(--color-primary)',
+                    bgcolor: '#C72030',
                     color: 'white',
                     width: 32,
                     height: 32,
@@ -2915,7 +2897,7 @@ export const EditAMCPage = () => {
                   }}>
                     <SettingsOutlinedIcon fontSize="small" />
                   </Avatar>
-                  <h2 className="text-[var(--color-primary)]" style={{
+                  <h2 className="text-[#C72030]" style={{
                     fontFamily: 'Work Sans, sans-serif',
                     fontWeight: 600,
                     fontSize: '26px',
@@ -2935,7 +2917,7 @@ export const EditAMCPage = () => {
                       {/* Row 1: Contract Name | Start Date | End Date */}
                       <div>
                         <TextField
-                          label={<span>Contract Name<span style={{ color: 'var(--color-primary)' }}>*</span></span>}
+                          label={<span>Contract Name<span style={{ color: '#C72030' }}>*</span></span>}
                           placeholder="Enter Contract Name"
                           name="contractName"
                           value={formData.contractName}
@@ -2953,7 +2935,7 @@ export const EditAMCPage = () => {
                         <TextField
                           fullWidth
                           type="date"
-                          label={<span>Start Date<span style={{ color: 'var(--color-primary)' }}>*</span></span>}
+                          label={<span>Start Date<span style={{ color: '#C72030' }}>*</span></span>}
                           value={formData.startDate}
                           onChange={(e) => handleInputChange('startDate', e.target.value)}
                           InputLabelProps={{ shrink: true }}
@@ -2968,7 +2950,7 @@ export const EditAMCPage = () => {
                         <TextField
                           fullWidth
                           type="date"
-                          label={<span>End Date<span style={{ color: 'var(--color-primary)' }}>*</span></span>}
+                          label={<span>End Date<span style={{ color: '#C72030' }}>*</span></span>}
                           value={formData.endDate}
                           onChange={(e) => handleInputChange('endDate', e.target.value)}
                           InputLabelProps={{ shrink: true }}
@@ -2985,7 +2967,7 @@ export const EditAMCPage = () => {
                         <TextField
                           fullWidth
                           type="date"
-                          label={<span>First Service Date<span style={{ color: 'var(--color-primary)' }}>*</span></span>}
+                          label={<span>First Service Date<span style={{ color: '#C72030' }}>*</span></span>}
                           value={formData.firstService}
                           onChange={(e) => handleInputChange('firstService', e.target.value)}
                           InputLabelProps={{ shrink: true }}
@@ -2998,7 +2980,7 @@ export const EditAMCPage = () => {
 
                       <div>
                         <FormControl fullWidth variant="outlined" error={!!errors.paymentTerms}>
-                          <InputLabel id="payment-terms-select-label" shrink>Payment Terms <span style={{ color: 'var(--color-primary)' }}>*</span></InputLabel>
+                          <InputLabel id="payment-terms-select-label" shrink>Payment Terms <span style={{ color: '#C72030' }}>*</span></InputLabel>
                           <MuiSelect
                             labelId="payment-terms-select-label"
                             label="Payment Terms"
@@ -3021,7 +3003,7 @@ export const EditAMCPage = () => {
 
                       <div>
                         <TextField
-                          label={<span>Cost<span style={{ color: 'var(--color-primary)' }}>*</span></span>}
+                          label={<span>Cost<span style={{ color: '#C72030' }}>*</span></span>}
                           placeholder="Enter Cost"
                           name="cost"
                           type="number"
@@ -3049,7 +3031,7 @@ export const EditAMCPage = () => {
                       {/* Row 3: No. of Visits | Assets Per Day */}
                       <div>
                         <TextField
-                          label={<span>No. of Visits<span style={{ color: 'var(--color-primary)' }}>*</span></span>}
+                          label={<span>No. of Visits<span style={{ color: '#C72030' }}>*</span></span>}
                           placeholder="Enter No. of Visits"
                           name="noOfVisits"
                           type="text"
@@ -3145,7 +3127,7 @@ export const EditAMCPage = () => {
               <>
                 <div className="flex items-center mb-4">
                   <Avatar sx={{
-                    bgcolor: 'var(--color-primary)',
+                    bgcolor: '#C72030',
                     color: 'white',
                     width: 32,
                     height: 32,
@@ -3154,7 +3136,7 @@ export const EditAMCPage = () => {
                   }}>
                     <SettingsOutlinedIcon fontSize="small" />
                   </Avatar>
-                  <h2 className="text-[var(--color-primary)]" style={{
+                  <h2 className="text-[#C72030]" style={{
                     fontFamily: 'Work Sans, sans-serif',
                     fontWeight: 600,
                     fontSize: '26px',
@@ -3194,8 +3176,8 @@ export const EditAMCPage = () => {
                           }
                         }}
                         sx={{
-                          '& .MuiSwitch-switchBase.Mui-checked': { color: 'var(--color-primary)' },
-                          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: 'var(--color-primary)' },
+                          '& .MuiSwitch-switchBase.Mui-checked': { color: '#C72030' },
+                          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#C72030' },
                         }}
                       />
                       <span className="text-sm font-semibold text-[#1a1a1a]">Create Checklist</span>
@@ -3268,7 +3250,7 @@ export const EditAMCPage = () => {
               <>
                 <div className="flex items-center mb-4">
                   <Avatar sx={{
-                    bgcolor: 'var(--color-primary)',
+                    bgcolor: '#C72030',
                     color: 'white',
                     width: 32,
                     height: 32,
@@ -3277,7 +3259,7 @@ export const EditAMCPage = () => {
                   }}>
                     <SettingsOutlinedIcon fontSize="small" />
                   </Avatar>
-                  <h2 className="text-[var(--color-primary)]" style={{
+                  <h2 className="text-[#C72030]" style={{
                     fontFamily: 'Work Sans, sans-serif',
                     fontWeight: 600,
                     fontSize: '26px',
@@ -3300,14 +3282,14 @@ export const EditAMCPage = () => {
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
                           <input type="file" multiple className="hidden" id="contracts-upload" onChange={e => handleFileUpload('contracts', e.target.files)} />
                           <div className="flex items-center justify-center gap-2 mb-4">
-                            <span className="text-[var(--color-primary)] font-medium cursor-pointer text-sm" onClick={() => document.getElementById('contracts-upload')?.click()}>
+                            <span className="text-[#C72030] font-medium cursor-pointer text-sm" onClick={() => document.getElementById('contracts-upload')?.click()}>
                               Choose File
                             </span>
                             <span className="text-gray-500 text-sm">
                               {attachments.contracts.length > 0 ? `${attachments.contracts.length} file(s) selected` : 'No file chosen'}
                             </span>
                           </div>
-                          <Button type="button" onClick={() => document.getElementById('contracts-upload')?.click()} className="!bg-[#f6f4ee] !text-[var(--color-primary)] !border-none text-sm flex items-center justify-center">
+                          <Button type="button" onClick={() => document.getElementById('contracts-upload')?.click()} className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center">
                             <Plus className="w-4 h-4 mr-1" />
                             Upload Files
                           </Button>
@@ -3374,7 +3356,7 @@ export const EditAMCPage = () => {
                                     </div>
                                   )}
                                   <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{doc.document_name}</span>
-                                  <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[var(--color-primary)]" onClick={() => removeExistingFile('contracts', doc.attachment_id)} disabled={updateLoading}>
+                                  <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => removeExistingFile('contracts', doc.attachment_id)} disabled={updateLoading}>
                                     <X className="w-3 h-3" />
                                   </Button>
                                 </div>
@@ -3386,18 +3368,18 @@ export const EditAMCPage = () => {
 
                       {/* AMC Invoices */}
                       <div>
-                        <label className="block text-sm font-medium mb-2">Other Documents</label>
+                        <label className="block text-sm font-medium mb-2">AMC Invoices</label>
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
                           <input type="file" multiple className="hidden" id="invoices-upload" onChange={e => handleFileUpload('invoices', e.target.files)} />
                           <div className="flex items-center justify-center gap-2 mb-4">
-                            <span className="text-[var(--color-primary)] font-medium cursor-pointer text-sm" onClick={() => document.getElementById('invoices-upload')?.click()}>
+                            <span className="text-[#C72030] font-medium cursor-pointer text-sm" onClick={() => document.getElementById('invoices-upload')?.click()}>
                               Choose File
                             </span>
                             <span className="text-gray-500 text-sm">
                               {attachments.invoices.length > 0 ? `${attachments.invoices.length} file(s) selected` : 'No file chosen'}
                             </span>
                           </div>
-                          <Button type="button" onClick={() => document.getElementById('invoices-upload')?.click()} className="!bg-[#f6f4ee] !text-[var(--color-primary)] !border-none text-sm flex items-center justify-center">
+                          <Button type="button" onClick={() => document.getElementById('invoices-upload')?.click()} className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center">
                             <Plus className="w-4 h-4 mr-1" />
                             Upload Files
                           </Button>
@@ -3430,7 +3412,7 @@ export const EditAMCPage = () => {
                                     </div>
                                   )}
                                   <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
-                                  <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[var(--color-primary)]" onClick={() => removeFile('invoices', index)} disabled={updateLoading}>
+                                  <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => removeFile('invoices', index)} disabled={updateLoading}>
                                     <X className="w-3 h-3" />
                                   </Button>
 
@@ -3466,7 +3448,7 @@ export const EditAMCPage = () => {
                                     </div>
                                   )}
                                   <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.document_name}</span>
-                                  <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[var(--color-primary)]" onClick={() => removeExistingFile('invoices', file.attachment_id)} disabled={updateLoading}>
+                                  <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => removeExistingFile('invoices', file.attachment_id)} disabled={updateLoading}>
                                     <X className="w-3 h-3" />
                                   </Button>
                                 </div>
@@ -3489,7 +3471,7 @@ export const EditAMCPage = () => {
                   onClick={handleProceedToSave}
                   className="px-6 py-2 font-medium"
                   style={{
-                    backgroundColor: 'var(--color-primary)',
+                    backgroundColor: '#C72030',
                     color: '#FFF',
                     border: 'none',
                     borderRadius: '4px'
@@ -3504,7 +3486,7 @@ export const EditAMCPage = () => {
                     onClick={handlePreview}
                     className="px-6 py-2 font-medium"
                     style={{
-                      backgroundColor: 'var(--color-primary)',
+                      backgroundColor: '#C72030',
                       color: '#FFF',
                       border: 'none',
                       borderRadius: '4px'
@@ -3518,7 +3500,7 @@ export const EditAMCPage = () => {
                     disabled={updateLoading}
                     className="px-6 py-2 font-medium disabled:opacity-50"
                     style={{
-                      backgroundColor: 'var(--color-primary)',
+                      backgroundColor: '#C72030',
                       color: '#FFF',
                       border: 'none',
                       borderRadius: '4px'
@@ -3550,5 +3532,3 @@ export const EditAMCPage = () => {
 };
 
 export default EditAMCPage;
-
-
