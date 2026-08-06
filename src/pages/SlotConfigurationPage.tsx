@@ -203,26 +203,26 @@ export const SlotConfigurationPage = () => {
     );
   };
 
-  const leftActions = (
-    <div className="flex items-center gap-3">
-      {shouldShow('Slot Configuration', 'create') && (
-        <Button
-          onClick={handleAdd}
-          className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
-      )}
-      <Button
-        onClick={() => setIsBulkUploadOpen(true)}
-        variant="outline"
-        className="h-9 px-4 border-brand"
-      >
-        <Upload className="w-4 h-4 mr-2" />
-        Import
-      </Button>
-    </div>
+  const leftActions = shouldShow('Slot Configuration', 'create') ? (
+    <Button
+      onClick={handleAdd}
+      className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Add
+    </Button>
+  ) : null;
+
+  const filterAdjacentActions = (
+    <Button
+      onClick={() => setIsBulkUploadOpen(true)}
+      variant="outline"
+      size="icon"
+      className="!rounded-lg h-9 w-9 border border-brand text-brand hover:bg-brand-light"
+      title="Import"
+    >
+      <Upload className="w-4 h-4" />
+    </Button>
   );
 
   if (error) {
@@ -249,6 +249,7 @@ export const SlotConfigurationPage = () => {
         renderCell={renderCell}
         renderActions={renderActions}
         leftActions={leftActions}
+        filterAdjacentActions={filterAdjacentActions}
         storageKey="slot-configuration-table"
         emptyMessage={
           searchTerm
