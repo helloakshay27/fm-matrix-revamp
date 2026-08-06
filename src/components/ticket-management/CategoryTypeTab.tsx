@@ -1259,7 +1259,7 @@ export const CategoryTypeTab: React.FC = () => {
                     id="edit-category-name"
                     defaultValue={editingCategory.name}
                     placeholder="Category Name"
-                    className="w-full bg-white"
+                    className="w-full bg-white border-gray-300 rounded-md focus-visible:ring-brand focus-visible:border-brand"
                   />
                 </div>
 
@@ -1290,20 +1290,26 @@ export const CategoryTypeTab: React.FC = () => {
                     placeholder="Select sites..."
                     noOptionsMessage={() => "No sites available"}
                     styles={{
-                      control: (base) => ({
+                      control: (base, state) => ({
                         ...base,
                         minHeight: '40px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '0px',
+                        border: state.isFocused ? '1px solid #DA7756' : '1px solid #d1d5db',
+                        borderRadius: '8px',
                         boxShadow: 'none',
                         '&:hover': {
                           border: '1px solid #cbd5e1'
                         }
                       }),
+                      menu: (base) => ({
+                        ...base,
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                      }),
                       multiValue: (base) => ({
                         ...base,
                         backgroundColor: '#f1f5f9',
-                        borderRadius: '0px'
+                        borderRadius: '6px'
                       }),
                       multiValueLabel: (base) => ({
                         ...base,
@@ -1312,7 +1318,7 @@ export const CategoryTypeTab: React.FC = () => {
                       multiValueRemove: (base) => ({
                         ...base,
                         color: '#64748b',
-                        borderRadius: '0px',
+                        borderRadius: '6px',
                         '&:hover': {
                           backgroundColor: '#e2e8f0',
                           color: '#475569'
@@ -1332,7 +1338,7 @@ export const CategoryTypeTab: React.FC = () => {
                     placeholder="Response Time"
                     type="number"
                     min="0"
-                    className="w-full bg-white"
+                    className="w-full bg-white border-gray-300 rounded-md focus-visible:ring-brand focus-visible:border-brand"
                   />
                 </div>
               </div>
@@ -1477,20 +1483,26 @@ export const CategoryTypeTab: React.FC = () => {
                     placeholder="Select engineers..."
                     noOptionsMessage={() => "No engineers available"}
                     styles={{
-                      control: (base) => ({
+                      control: (base, state) => ({
                         ...base,
                         minHeight: '40px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '0px',
+                        border: state.isFocused ? '1px solid #DA7756' : '1px solid #d1d5db',
+                        borderRadius: '8px',
                         boxShadow: 'none',
                         '&:hover': {
                           border: '1px solid #cbd5e1'
                         }
                       }),
+                      menu: (base) => ({
+                        ...base,
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                      }),
                       multiValue: (base) => ({
                         ...base,
                         backgroundColor: '#f1f5f9',
-                        borderRadius: '0px'
+                        borderRadius: '6px'
                       }),
                       multiValueLabel: (base) => ({
                         ...base,
@@ -1499,7 +1511,7 @@ export const CategoryTypeTab: React.FC = () => {
                       multiValueRemove: (base) => ({
                         ...base,
                         color: '#64748b',
-                        borderRadius: '0px',
+                        borderRadius: '6px',
                         '&:hover': {
                           backgroundColor: '#e2e8f0',
                           color: '#475569'

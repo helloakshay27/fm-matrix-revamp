@@ -225,7 +225,7 @@ const FieldsSetupPage = () => {
   const renderExistingCell = useCallback((item: any, columnKey: string) => {
     switch (columnKey) {
       case 'sr_no':
-        return <span className="text-gray-500 font-medium">{item.sr_no}</span>;
+        return <span className="text-gray-900 font-medium">{item.sr_no}</span>;
       case 'label':
         return <span className="font-medium text-gray-800">{item.label}</span>;
       case 'type':
@@ -268,7 +268,7 @@ const FieldsSetupPage = () => {
   const renderCustomCell = useCallback((item: any, columnKey: string) => {
     switch (columnKey) {
       case 'sr_no':
-        return <span className="text-gray-500 font-medium">{item.sr_no}</span>;
+        return <span className="text-gray-900 font-medium">{item.sr_no}</span>;
       case 'descr':
         return <span className="font-medium text-gray-800">{item.descr}</span>;
       case 'qtype':

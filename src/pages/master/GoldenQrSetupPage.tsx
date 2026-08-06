@@ -465,7 +465,11 @@ export function GoldenQrSetupPage() {
 
     switch (columnKey) {
       case 'sr_no':
-        return (currentPage - 1) * perPage + index + 1;
+        return (
+          <span className="text-gray-900">
+            {(currentPage - 1) * perPage + index + 1}
+          </span>
+        );
       case 'building':
         return getBuildingName(content.building_id);
       case 'wing':
