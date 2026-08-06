@@ -349,10 +349,10 @@ export const GDNDetailsPage = () => {
 
       <section className="bg-white border border-gray-200 rounded-md shadow-sm mb-4 p-3">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-7 h-7 rounded-full flex items-center justify-center bg-[#F04B2F] text-white">
+          <div className="w-7 h-7 rounded-full flex items-center justify-center bg-[#C72030] text-white">
             <FileText className="w-4 h-4" />
           </div>
-          <h1 className="text-xl font-medium uppercase text-[#F04B2F]">
+          <h1 className="text-xl font-medium uppercase text-[#C72030]">
             GDN Details
           </h1>
         </div>
@@ -379,10 +379,10 @@ export const GDNDetailsPage = () => {
       <div className="bg-white border border-gray-200 rounded-sm shadow-sm overflow-x-auto">
         <Card className="shadow-sm border border-border">
           <div className="flex items-center gap-3 p-6">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-brand">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#C72030] text-white">
               <ClipboardList className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Inventory Items</h3>
+            <h3 className="text-lg font-semibold uppercase text-[#C72030]">Inventory Items</h3>
           </div>
           <CardContent>
             {gdnDetails?.inventories && gdnDetails.inventories.length > 0 ? (

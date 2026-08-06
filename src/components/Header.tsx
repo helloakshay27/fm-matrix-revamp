@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import posthog from "posthog-js";
-import recessLogo from "../assets/recess-logo";
+import { RecessClubLogo } from "./RecessClubLogo";
 import {
   Bell,
   User,
@@ -500,11 +500,7 @@ export const Header = () => {
                 alt=""
               />
             ) : isClubSite ? (
-              <img
-                src={recessLogo}
-                alt="Recess Logo"
-                className={logoClassName}
-              />
+              <RecessClubLogo className={logoClassName} />
             ) : isPulseSite ? (
               <img
                 src="https://www.panchshil.com/assets/images/home/logo.png"

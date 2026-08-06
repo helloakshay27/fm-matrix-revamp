@@ -247,10 +247,10 @@ export const GDNPendingApprovalsDetails = () => {
 
       <section className="bg-white border border-gray-200 rounded-md shadow-sm mb-4 p-3">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-7 h-7 rounded-full flex items-center justify-center bg-[#F04B2F] text-white">
+          <div className="w-7 h-7 rounded-full flex items-center justify-center bg-[#C72030] text-white">
             <FileText className="w-4 h-4" />
           </div>
-          <h1 className="text-xl font-medium uppercase text-[#F04B2F]">
+          <h1 className="text-xl font-medium uppercase text-[#C72030]">
             GDN Details
           </h1>
         </div>
