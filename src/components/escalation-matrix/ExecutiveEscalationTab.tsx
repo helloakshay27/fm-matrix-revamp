@@ -400,14 +400,14 @@ export const ExecutiveEscalationTab: React.FC = () => {
       <div className={`bg-white rounded-lg border border-gray-200 p-8 ${hasExecutive ? 'opacity-60' : ''}`}>
         <div className="space-y-6">
           {/* Header Row 1 */}
-          <div className="grid grid-cols-6 gap-6 font-medium text-gray-700 text-sm border-b border-gray-200 pb-3">
+          <div className="grid grid-cols-6 gap-6 font-medium text-brand text-sm border-b border-gray-200 pb-3">
             <div>Levels</div>
             <div className="col-span-2">Escalation To</div>
             <div className="col-span-3 text-center">P1</div>
           </div>
 
           {/* Header Row 2 */}
-          <div className="grid grid-cols-6 gap-6 font-medium text-gray-700 text-sm">
+          <div className="grid grid-cols-6 gap-6 font-medium text-brand text-sm">
             <div></div>
             <div className="col-span-2"></div>
             <div className="text-center">Days</div>
@@ -418,7 +418,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
           {/* Escalation Levels */}
           {escalationData.map((item, index) => (
             <div key={item.level} className="grid grid-cols-6 gap-6 items-center py-2">
-              <div className="bg-gray-100 px-3 py-2 rounded border text-sm font-medium">
+              <div className="bg-[#EDEAE3] px-3 py-2 rounded border text-sm font-semibold" style={{ color: '#DA7756' }}>
                 {item.level}
               </div>
               
@@ -519,7 +519,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
       <Card className="border border-gray-200">
         <CardHeader className="border-b border-gray-200 bg-white">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold text-gray-900">Executive Escalation Rules</CardTitle>
+            <CardTitle className="text-lg font-semibold text-brand">Executive Escalation Rules</CardTitle>
             <div className="flex items-center gap-3">
               <Label htmlFor="escalation-filter" className="text-sm font-medium text-gray-700">
                 Filter by Type
@@ -553,7 +553,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
                 <div key={`rule-group-${index}`} className="border border-gray-200 rounded-lg bg-white shadow-sm">
                   <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
                     <div className="flex items-center gap-3">
-                      <h3 className="text-base font-semibold text-gray-900">Rule {index + 1}</h3>
+                      <h3 className="text-base font-semibold text-brand">Rule {index + 1}</h3>
                       <div className="flex gap-2">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -588,7 +588,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 text-gray-900 hover:text-black"
+                          className="h-8 w-8 p-0 text-brand hover:text-brand-hover"
                           onClick={() => startEdit(index, ruleGroup)}
                           title="Edit Rule"
                         >
@@ -602,10 +602,10 @@ export const ExecutiveEscalationTab: React.FC = () => {
                     <Table>
 
                       <TableHeader>
-                        <TableRow className="bg-gray-50 border-b border-gray-200 hover:bg-gray-50">
-                          <TableHead className="font-semibold text-gray-900 text-left py-3 px-4 w-1/6">Levels</TableHead>
-                          <TableHead className="font-semibold text-gray-900 text-left py-3 px-4">Escalation To</TableHead>
-                          <TableHead className="font-semibold text-gray-900 text-left py-3 px-4 w-1/4">P1 Timing</TableHead>
+                        <TableRow className="bg-[#EDEAE3] border-b border-gray-200 hover:bg-[#EDEAE3]">
+                          <TableHead className="font-semibold text-brand text-left py-3 px-4 w-1/6">Levels</TableHead>
+                          <TableHead className="font-semibold text-brand text-left py-3 px-4">Escalation To</TableHead>
+                          <TableHead className="font-semibold text-brand text-left py-3 px-4 w-1/4">P1 Timing</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -613,8 +613,8 @@ export const ExecutiveEscalationTab: React.FC = () => {
                           const escalation = ruleGroup.find(esc => esc.name === levelName);
                           return (
                             <TableRow key={levelName} className="border-b border-gray-100 hover:bg-gray-50/50">
-                              <TableCell className="py-4 px-4 align-top font-medium text-gray-900">
-                                {levelName}
+                              <TableCell className="py-4 px-4 align-top font-semibold">
+                                <span style={{ color: '#DA7756' }}>{levelName}</span>
                               </TableCell>
                               <TableCell className="py-4 px-4 align-top text-sm text-gray-700">
                                 {escalation ? getUserNamesFromDetails(escalation.escalate_to_users_details) : ''}
@@ -638,7 +638,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
                       <div className="space-y-3">
                         {editData.map((item, idx) => (
                           <div key={item.level} className="grid grid-cols-6 gap-6 items-center py-1">
-                            <div className="bg-gray-100 px-3 py-2 rounded border text-sm font-medium">{item.level}</div>
+                            <div className="bg-[#EDEAE3] px-3 py-2 rounded border text-sm font-semibold" style={{ color: '#DA7756' }}>{item.level}</div>
                             <div className="col-span-2">
                               <ReactSelect
                                 isMulti
