@@ -2025,8 +2025,10 @@ export const EditAMCPage = () => {
     );
   };
 
-  const getTotalAttachmentCount = (type: 'contracts' | 'invoices') =>
-    attachments[type].length + existingFiles[type].length;
+  const getAttachmentNames = (type: 'contracts' | 'invoices') => [
+    ...attachments[type].map(file => file.name),
+    ...existingFiles[type].map(file => file.document_name),
+  ];
 
   const renderAttachmentsSummaryCard = (options?: { includeHeader?: boolean }) => (
     <Card
@@ -2052,17 +2054,33 @@ export const EditAMCPage = () => {
           <div>
             <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts</label>
             <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 text-center">
-              <p className="text-sm text-gray-600">
-                {getTotalAttachmentCount('contracts')} file(s) ready
-              </p>
+              {getAttachmentNames('contracts').length ? (
+                <div className="space-y-1">
+                  {getAttachmentNames('contracts').map((name, index) => (
+                    <p key={`${name}-${index}`} className="text-sm text-gray-600 truncate">
+                      {name}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600">No files uploaded</p>
+              )}
             </div>
           </div>
           <div>
             <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">Other Documents</label>
             <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 text-center">
-              <p className="text-sm text-gray-600">
-                {getTotalAttachmentCount('invoices')} file(s) ready
-              </p>
+              {getAttachmentNames('invoices').length ? (
+                <div className="space-y-1">
+                  {getAttachmentNames('invoices').map((name, index) => (
+                    <p key={`${name}-${index}`} className="text-sm text-gray-600 truncate">
+                      {name}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600">No files uploaded</p>
+              )}
             </div>
           </div>
         </div>
