@@ -170,7 +170,7 @@ const CommunityPendingList = ({ communityId }: { communityId: string }) => {
                         <div className="flex gap-4">
                             <Button
                                 variant="outline"
-                                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-8 h-10 disabled:opacity-50"
+                                className="px-8 h-10 disabled:opacity-50"
                                 onClick={handleDeniedUsers}
                                 disabled={selectedItems.length === 0 || isUpdating}
                             >
@@ -178,7 +178,7 @@ const CommunityPendingList = ({ communityId }: { communityId: string }) => {
                                 Deny
                             </Button>
                             <Button
-                                className="!bg-[#00A651] !hover:bg-[#008C44] !text-black px-8 h-10 disabled:opacity-50"
+                                className="px-8 h-10 disabled:opacity-50"
                                 onClick={handleApprovedUsers}
                                 disabled={selectedItems.length === 0 || isUpdating}
                             >
