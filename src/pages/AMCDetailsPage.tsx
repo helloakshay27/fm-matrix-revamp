@@ -244,6 +244,80 @@ export const AMCDetailsPage = () => {
 
   const visitLogsByFrequency = (amcData as any)?.visit_logs_by_frequency as FrequencyVisitGroup[] | undefined;
 
+  const downloadVisitAttachment = async (url: string, name: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(
+        new Blob([blob], { type: "application/octet-stream" })
+      );
+      const el = document.createElement("a");
+      el.href = blobUrl;
+      el.download = name;
+      document.body.appendChild(el);
+      el.click();
+      el.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(url, "_blank");
+    }
+  };
+
+  const getFileNameFromUrl = (url: string) => {
+    try {
+      const path = new URL(url).pathname;
+      const segment = path.substring(path.lastIndexOf("/") + 1);
+      return decodeURIComponent(segment) || null;
+    } catch {
+      const segment = url.split("?")[0].split("/").pop();
+      return segment ? decodeURIComponent(segment) : null;
+    }
+  };
+
+  const renderVisitAttachments = (visit: any) => {
+    const list: VisitAttachment[] = [
+      ...(visit.attachments || []),
+      ...(visit.attachment ? [visit.attachment] : []),
+    ].filter((a) => a?.document || a?.document_url);
+    if (!list.length) return <span className="text-gray-400 text-sm">—</span>;
+    return (
+      <div className="flex flex-col gap-1">
+        {list.map((a, ai) => {
+          const url = a.document || a.document_url || "";
+          const name =
+            a.filename ||
+            a.document_file_name ||
+            getFileNameFromUrl(url) ||
+            `File ${ai + 1}`;
+          return (
+            <div key={a.id ?? ai} className="flex items-center gap-2">
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 text-brand hover:underline text-sm"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                {name}
+              </a>
+              <button
+                type="button"
+                title="Download"
+                className="text-gray-500 hover:text-brand"
+                onClick={() => downloadVisitAttachment(url, name)}
+              >
+                <Download className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   const fetchTicketsForAssets = async (assetIds: number[]) => {
     if (!assetIds.length) return;
     const baseUrl = localStorage.getItem("baseUrl");
