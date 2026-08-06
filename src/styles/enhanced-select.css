@@ -636,9 +636,15 @@ td:last-child {
   transform: none !important;
 }
 
+/* The in-menu search box is deliberately blue, not the brand orange, so it
+   reads as a control distinct from the field/options it is filtering. */
+.mui-search-input:hover {
+  border-color: #1976d2 !important;
+}
+
 .mui-search-input:focus {
-  border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 2px var(--color-primary-light) !important;
+  border-color: #1976d2 !important;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.16) !important;
   background-color: #ffffff !important;
   transform: none !important;
 }

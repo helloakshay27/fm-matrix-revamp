@@ -669,13 +669,13 @@ export const ResolutionEscalationTab: React.FC = () => {
       {/* Create Form */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-brand-accent">Resolution Escalation Configuration</CardTitle>
+          <CardTitle className="text-gray-900">Resolution Escalation Configuration</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Category Selection */}
             <div>
-              <Label className="text-sm font-medium text-brand-accent">Select Categories</Label>
+              <Label className="text-sm font-medium text-gray-900">Select Categories</Label>
               <ReactSelect
                 isMulti
                 options={categoryOptions}

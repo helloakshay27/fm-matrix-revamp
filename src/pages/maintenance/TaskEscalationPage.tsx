@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Form,
   FormControl,
@@ -14,14 +13,67 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  TextField,
+  FormControl as MuiFormControl,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
 import { toast } from 'sonner';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+
+// Field styles for Material-UI components
+const fieldStyles = {
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& .MuiOutlinedInput-root': {
+    height: '45px',
+    '& fieldset': {
+      borderColor: '#ddd',
+    },
+    '&:hover fieldset': {
+      borderColor: 'var(--color-primary)',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: 'var(--color-primary)',
+    },
+  },
+  '& .MuiInputLabel-root.Mui-focused': {
+    color: 'var(--color-primary)',
+  },
+};
+
+// Menu selection states use blue, matching the in-menu search box
+const DROPDOWN_ACCENT_SELECTED = 'rgba(25, 118, 210, 0.08)';
+const DROPDOWN_ACCENT_HOVER = 'rgba(25, 118, 210, 0.16)';
+
+const selectStyles = {
+  height: '45px',
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& fieldset': {
+    borderColor: '#ddd',
+  },
+  '&:hover fieldset': {
+    borderColor: 'var(--color-primary)',
+  },
+  '&.Mui-focused fieldset': {
+    borderColor: 'var(--color-primary)',
+  },
+};
+
+const menuProps = {
+  PaperProps: {
+    sx: {
+      maxHeight: 280,
+      // The in-menu search box is injected by globalMUISelectSearchEnhancer and
+      // styled blue globally in enhanced-select.css.
+      '& .MuiMenuItem-root.Mui-selected': {
+        backgroundColor: `${DROPDOWN_ACCENT_SELECTED} !important`,
+        '&:hover': { backgroundColor: `${DROPDOWN_ACCENT_HOVER} !important` },
+      },
+    },
+  },
+};
 
 const escalationSchema = z.object({
   serviceType: z.string().min(1, 'Please select a service type'),
@@ -133,23 +185,31 @@ export const TaskEscalationPage: React.FC = () => {
     <FormField
       control={form.control}
       name={fieldName}
-      render={({ field }) => (
+      render={({ field, fieldState }) => (
         <FormItem>
           <FormLabel>{label}</FormLabel>
-          <Select onValueChange={field.onChange} value={field.value} disabled={loading.users}>
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder={loading.users ? "Loading users..." : "Select escalation target"} />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {users.map((user) => (
-                <SelectItem key={user.id} value={user.id.toString()}>
-                  {user.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FormControl>
+            <MuiFormControl fullWidth size="small" disabled={loading.users} error={!!fieldState.error}>
+              <MuiSelect
+                displayEmpty
+                value={(field.value as string) ?? ''}
+                onChange={(event) => field.onChange(event.target.value)}
+                onBlur={field.onBlur}
+                inputRef={field.ref}
+                MenuProps={menuProps}
+                sx={selectStyles}
+              >
+                <MenuItem value="" disabled>
+                  <em>{loading.users ? 'Loading users...' : 'Select escalation target'}</em>
+                </MenuItem>
+                {users.map((user) => (
+                  <MenuItem key={user.id} value={user.id.toString()}>
+                    {user.full_name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </MuiFormControl>
+          </FormControl>
           <FormMessage />
         </FormItem>
       )}
@@ -160,8 +220,7 @@ export const TaskEscalationPage: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Task Escalation</h1>
-        <Button 
-          variant="outline" 
+        <Button
           onClick={loadUsers}
           disabled={loading.users}
           className="fm-button-fix fm-button-brand px-4 py-2"
@@ -183,23 +242,31 @@ export const TaskEscalationPage: React.FC = () => {
                 <FormField
                   control={form.control}
                   name="serviceType"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <FormItem>
                       <FormLabel className="text-lg font-semibold text-blue-700">Service Type</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select service type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {SERVICE_OPTIONS.map((service) => (
-                            <SelectItem key={service} value={service}>
-                              {service}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <MuiFormControl fullWidth size="small" error={!!fieldState.error}>
+                          <MuiSelect
+                            displayEmpty
+                            value={field.value ?? ''}
+                            onChange={(event) => field.onChange(event.target.value)}
+                            onBlur={field.onBlur}
+                            inputRef={field.ref}
+                            MenuProps={menuProps}
+                            sx={selectStyles}
+                          >
+                            <MenuItem value="" disabled>
+                              <em>Select service type</em>
+                            </MenuItem>
+                            {SERVICE_OPTIONS.map((service) => (
+                              <MenuItem key={service} value={service}>
+                                {service}
+                              </MenuItem>
+                            ))}
+                          </MuiSelect>
+                        </MuiFormControl>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -218,9 +285,12 @@ export const TaskEscalationPage: React.FC = () => {
                     <FormItem>
                       <FormLabel>Days</FormLabel>
                       <FormControl>
-                        <Input
+                        <TextField
                           type="number"
                           placeholder="Enter days"
+                          fullWidth
+                          inputProps={{ min: 1 }}
+                          sx={fieldStyles}
                           {...field}
                           onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                         />
@@ -244,9 +314,12 @@ export const TaskEscalationPage: React.FC = () => {
                     <FormItem>
                       <FormLabel>Days</FormLabel>
                       <FormControl>
-                        <Input
+                        <TextField
                           type="number"
                           placeholder="Enter days"
+                          fullWidth
+                          inputProps={{ min: 1 }}
+                          sx={fieldStyles}
                           {...field}
                           onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                         />
@@ -270,9 +343,12 @@ export const TaskEscalationPage: React.FC = () => {
                     <FormItem>
                       <FormLabel>Days</FormLabel>
                       <FormControl>
-                        <Input
+                        <TextField
                           type="number"
                           placeholder="Enter days"
+                          fullWidth
+                          inputProps={{ min: 1 }}
+                          sx={fieldStyles}
                           {...field}
                           onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                         />
