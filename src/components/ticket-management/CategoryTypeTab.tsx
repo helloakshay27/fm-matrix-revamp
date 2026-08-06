@@ -1153,7 +1153,7 @@ export const CategoryTypeTab: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">FAQ Section</h3>
-                  <Button type="button" onClick={addFaqItem} variant="outline" size="sm">
+                  <Button type="button" onClick={addFaqItem} variant="outline" size="sm" className="[&_svg]:!text-brand [&_svg]:!stroke-brand">
                     <Plus className="h-4 w-4 mr-2" />
                     Add FAQ
                   </Button>
@@ -1259,7 +1259,7 @@ export const CategoryTypeTab: React.FC = () => {
                     id="edit-category-name"
                     defaultValue={editingCategory.name}
                     placeholder="Category Name"
-                    className="w-full"
+                    className="w-full bg-white"
                   />
                 </div>
 
@@ -1332,7 +1332,7 @@ export const CategoryTypeTab: React.FC = () => {
                     placeholder="Response Time"
                     type="number"
                     min="0"
-                    className="w-full"
+                    className="w-full bg-white"
                   />
                 </div>
               </div>

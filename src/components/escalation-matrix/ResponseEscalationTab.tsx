@@ -1000,7 +1000,8 @@ export const ResponseEscalationTab: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-brand !text-brand hover:bg-white hover:border-brand font-semibold px-4"
+                className="border-brand hover:bg-white hover:border-brand font-semibold px-4"
+                style={{ color: '#DA7756' }}
                 onClick={() => setSelectedCategoryFilter("all")}
               >
                 Reset
