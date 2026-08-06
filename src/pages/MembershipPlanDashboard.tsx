@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Plus, Eye, Pencil } from "lucide-react";
 import { apiClient } from "@/utils/apiClient";
 import { toast } from "sonner";
@@ -220,15 +221,10 @@ export const MembershipPlanDashboard = () => {
       const active = item.active;
       return (
         <div className="flex items-center gap-3">
-          <div
-            onClick={() => handleStatusToggle(item)}
-            className={`w-10 h-5 rounded-full relative transition-colors cursor-pointer ${active ? '!bg-green-500' : 'bg-gray-300'}`}
-          >
-            <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all ${active ? 'right-0.5' : 'left-0.5'}`} />
-          </div>
-          {/* <span className={`text-xs font-medium ${active ? 'text-green-600' : 'text-red-600'}`}>
-            {active ? 'Active' : 'Inactive'}
-          </span> */}
+          <Switch
+            checked={active}
+            onCheckedChange={() => handleStatusToggle(item)}
+          />
         </div>
       );
     }

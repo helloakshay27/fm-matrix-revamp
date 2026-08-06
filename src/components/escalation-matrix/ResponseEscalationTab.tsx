@@ -976,10 +976,10 @@ export const ResponseEscalationTab: React.FC = () => {
                   value={selectedCategoryFilter}
                   onValueChange={setSelectedCategoryFilter}
                 >
-                  <SelectTrigger className="w-48 border-gray-200 focus:border-[#C72030] focus:ring-[#C72030]">
+                  <SelectTrigger className="w-48 bg-white border-gray-300 focus:border-gray-500 focus:ring-gray-300">
                     <SelectValue placeholder="Select Category Type" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border-[#e2e8f0]">
                     <SelectItem value="all">All Categories</SelectItem>
                     {categoriesData?.helpdesk_categories?.map((category) => (
                       <SelectItem key={category.id} value={category.name}>
@@ -1000,7 +1000,8 @@ export const ResponseEscalationTab: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold px-4"
+                className="border-brand hover:bg-white hover:border-brand font-semibold px-4"
+                style={{ color: '#DA7756' }}
                 onClick={() => setSelectedCategoryFilter("all")}
               >
                 Reset
@@ -1040,7 +1041,7 @@ export const ResponseEscalationTab: React.FC = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEditRule(rule)}
-                          className="h-8 w-8 p-0 text-gray-600 hover:text-[#C72030] hover:bg-[#EDEAE3]"
+                          className="h-8 w-8 p-0 text-gray-900 hover:text-black hover:bg-[#EDEAE3]"
                           disabled={updateLoading}
                         >
                           <Edit className="h-4 w-4" />

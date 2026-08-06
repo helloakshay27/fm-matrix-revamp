@@ -233,7 +233,7 @@ const EventRejectedList = () => {
                                 Deny
                             </Button> */}
                             <Button
-                                className="!bg-[#00A651] !hover:bg-[#008C44] !text-black px-8 h-10 disabled:opacity-50"
+                                className="px-8 h-10 disabled:opacity-50"
                                 onClick={() => handleStatusUpdate('approved')}
                                 disabled={selectedItems.length === 0 || isUpdating || eventData.total_registed_count === eventData.capacity}
                             >

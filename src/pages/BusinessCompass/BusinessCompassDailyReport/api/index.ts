@@ -50,15 +50,15 @@ export const fetchTomorrowScheduled = async (
 
   const [tasksRes, issuesRes, todosRes] = await Promise.allSettled([
     axios.get(
-      `${urlBase(ctx.baseUrl)}/business_compass/tasks/my_tasks?${tasksParams}`,
+      `${urlBase(ctx.baseUrl)}/business_compass/tasks/my_tasks.json?${tasksParams}`,
       { headers }
     ),
     axios.get(
-      `${urlBase(ctx.baseUrl)}/business_compass/issues/my_issues?${issuesParams}`,
+      `${urlBase(ctx.baseUrl)}/business_compass/issues/my_issues.json?${issuesParams}`,
       { headers }
     ),
     axios.get(
-      `${urlBase(ctx.baseUrl)}/business_compass/todos/my_todos?${todosParams}`,
+      `${urlBase(ctx.baseUrl)}/business_compass/todos/my_todos.json?${todosParams}`,
       { headers }
     ),
   ]);
@@ -107,15 +107,15 @@ export const fetchCompletedItemsForDate = async (
   };
 
   const [tasks, issues, todos] = await Promise.all([
-    fetchAllPages(`${urlBase(ctx.baseUrl)}/business_compass/tasks/my_tasks`, {
+    fetchAllPages(`${urlBase(ctx.baseUrl)}/business_compass/tasks/my_tasks.json`, {
       "q[completed_at_gteq]": completedFrom,
       "q[completed_at_lteq]": completedTo,
     }, "tasks"),
-    fetchAllPages(`${urlBase(ctx.baseUrl)}/business_compass/issues/my_issues`, {
+    fetchAllPages(`${urlBase(ctx.baseUrl)}/business_compass/issues/my_issues.json`, {
       "q[completed_at_gteq]": completedFrom,
       "q[completed_at_lteq]": completedTo,
     }, "issues"),
-    fetchAllPages(`${urlBase(ctx.baseUrl)}/business_compass/todos/my_todos`, {
+    fetchAllPages(`${urlBase(ctx.baseUrl)}/business_compass/todos/my_todos.json`, {
       "q[completed_at_gteq]": completedFrom,
       "q[completed_at_lteq]": completedTo,
     }, "todos"),
@@ -152,8 +152,8 @@ export const completeTask = async (
   status: string
 ) => {
   await axios.put(
-    `${urlBase(baseUrl)}/task_managements/${realId}.json`,
-    { task_management: { status } },
+    `${urlBase(baseUrl)}/business_compass/tasks/${realId}/update_status.json`,
+    { status },
     { headers: bearer(token) }
   );
 };
@@ -164,7 +164,7 @@ export const completeTodo = async (
   status: string
 ) => {
   await axios.put(
-    `${urlBase(baseUrl)}/todos/${realId}.json`,
+    `${urlBase(baseUrl)}/business_compass/todos/${realId}.json`,
     { todo: { status } },
     { headers: bearer(token) }
   );
@@ -176,8 +176,8 @@ export const completeIssue = async (
   status: string
 ) => {
   await axios.put(
-    `${urlBase(baseUrl)}/issues/${realId}.json`,
-    { issue: { status } },
+    `${urlBase(baseUrl)}/business_compass/issues/${realId}/update_status.json`,
+    { status },
     { headers: bearer(token) }
   );
 };
@@ -318,33 +318,6 @@ export const fetchReportsList = async (
     },
   });
   return Array.isArray(response.data) ? response.data : response.data?.user_journals || [];
-};
-
-export const fetchPlanSource = async (
-  { baseUrl, token }: ApiContext,
-  type: string,
-  id: number
-) => {
-  const endpoint =
-    type === "task"
-      ? `${urlBase(baseUrl)}/task_managements/${id}.json`
-      : type === "issue"
-        ? `${urlBase(baseUrl)}/issues/${id}.json`
-        : `${urlBase(baseUrl)}/todos/${id}.json`;
-  try {
-    const res = await axios.get(endpoint, { headers: bearer(token) });
-    return {
-      key: `${type}:${id}`,
-      data:
-        type === "task"
-          ? res.data?.data || res.data
-          : type === "issue"
-            ? res.data?.issue || res.data
-            : res.data?.todo || res.data,
-    };
-  } catch {
-    return { key: `${type}:${id}`, data: null };
-  }
 };
 
 export const submitUserJournal = async (

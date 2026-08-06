@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Input } from '../components/ui/input';
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
@@ -22,6 +22,32 @@ import {
   CreateParkingConfigurationRequest,
   ParkingSlotData
 } from '../services/parkingConfigurationsAPI';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: '#ffffff !important',
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 interface CategorySlotData {
   nonStack: number;
@@ -538,53 +564,61 @@ export const EditSlotConfigurationPage = () => {
       <div className="bg-white rounded-lg p-6 shadow-sm">
         {/* Location and Floor Selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">Location</label>
-            <Select
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="edit-location-label">Location *</InputLabel>
+            <MuiSelect
+              labelId="edit-location-label"
+              label="Location *"
               value={formData.building_id}
-              onValueChange={(value) => {
-                setFormData(prev => ({ ...prev, building_id: value, floor_id: '' }));
+              onChange={(e) => {
+                const value = e.target.value as string;
+                setFormData((prev) => ({ ...prev, building_id: value, floor_id: '' }));
                 fetchFloorsData(value);
               }}
               disabled={loading}
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={loading ? "Loading buildings..." : "Select Location"} />
-              </SelectTrigger>
-              <SelectContent>
-                {buildings.map((building) => (
-                  <SelectItem key={building.id} value={building.id.toString()}>
-                    {building.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">Floor</label>
-            <Select
+              <MenuItem value="">
+                <em>{loading ? 'Loading buildings...' : 'Select Location'}</em>
+              </MenuItem>
+              {buildings.map((building) => (
+                <MenuItem key={building.id} value={building.id.toString()}>
+                  {building.name}
+                </MenuItem>
+              ))}
+            </MuiSelect>
+          </FormControl>
+
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="edit-floor-label">Floor *</InputLabel>
+            <MuiSelect
+              labelId="edit-floor-label"
+              label="Floor *"
               value={formData.floor_id}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, floor_id: value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, floor_id: e.target.value as string }))
+              }
               disabled={loading || !formData.building_id}
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  placeholder={
-                    !formData.building_id ? "Select Location first" :
-                    loading ? "Loading floors..." :
-                    "Select Floor"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {floors.map((floor) => (
-                  <SelectItem key={floor.id} value={floor.id.toString()}>
-                    {floor.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <MenuItem value="">
+                <em>
+                  {!formData.building_id
+                    ? 'Select Location first'
+                    : loading
+                      ? 'Loading floors...'
+                      : 'Select Floor'}
+                </em>
+              </MenuItem>
+              {floors.map((floor) => (
+                <MenuItem key={floor.id} value={floor.id.toString()}>
+                  {floor.name}
+                </MenuItem>
+              ))}
+            </MuiSelect>
+          </FormControl>
         </div>
 
         {/* QR Code Configuration */}
@@ -605,7 +639,7 @@ export const EditSlotConfigurationPage = () => {
 
         {/* Parking Configuration */}
         <div className="mb-8">
-          <div className="text-sm font-semibold text-red-600 mb-6 border-b pb-2">Parking Configuration</div>
+          <div className="text-sm font-semibold text-brand mb-6 border-b pb-2">Parking Configuration</div>
 
           {/* Dynamic Parking Categories - renders every category returned by the API (2 Wheeler, 4 Wheeler, EV, ...) */}
           {parkingCategories.map((category, index) => (
@@ -619,14 +653,14 @@ export const EditSlotConfigurationPage = () => {
                   categoryId={category.id}
                   type="nonStack"
                   count={formData.categories[category.id]?.nonStack || 0}
-                  buttonColorClass="bg-purple-600 hover:bg-purple-700"
+                  buttonColorClass="bg-brand hover:bg-brand-hover"
                 />
                 <ParkingSlotCategory
                   title="Stack Parking"
                   categoryId={category.id}
                   type="stack"
                   count={formData.categories[category.id]?.stack || 0}
-                  buttonColorClass="bg-cyan-500 hover:bg-cyan-600"
+                  buttonColorClass="bg-brand hover:bg-brand-hover"
                   isStack
                 />
                 <ParkingSlotCategory
@@ -634,7 +668,7 @@ export const EditSlotConfigurationPage = () => {
                   categoryId={category.id}
                   type="reserved"
                   count={formData.categories[category.id]?.reserved || 0}
-                  buttonColorClass={index % 2 === 0 ? "bg-purple-600 hover:bg-purple-700" : "bg-cyan-500 hover:bg-cyan-600"}
+                  buttonColorClass="bg-brand hover:bg-brand-hover"
                 />
               </div>
             </div>
@@ -713,21 +747,22 @@ export const EditSlotConfigurationPage = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-center items-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
           <Button
             onClick={handleSubmit}
             disabled={submitting || !formData.building_id || !formData.floor_id}
-            className="fm-button-fix fm-button-brand px-4 py-2"
             variant="ghost"
+            className="fm-button-fix fm-button-brand px-8 w-full sm:w-auto"
           >
-            {submitting ? 'Updating...' : 'Update'}
+            {submitting ? 'Updating...' : 'UPDATE'}
           </Button>
           <Button
             variant="outline"
             onClick={handleCancel}
             disabled={submitting}
+            className="border-brand text-brand px-8 w-full sm:w-auto"
           >
-            Cancel
+            CANCEL
           </Button>
         </div>
       </div>

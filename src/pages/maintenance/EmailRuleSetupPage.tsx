@@ -166,7 +166,10 @@ export const EmailRuleSetupPage: React.FC = () => {
         return <span className="text-sm font-medium text-gray-900">{rule.ruleName}</span>;
       case 'triggerType':
         return (
-          <Badge variant={rule.triggerType === 'PPM' ? 'default' : 'secondary'}>
+          <Badge
+            variant={rule.triggerType === 'PPM' ? 'default' : 'secondary'}
+            className={rule.triggerType === 'PPM' ? '' : 'bg-brand text-white hover:bg-orange-500/80'}
+          >
             {rule.triggerType}
           </Badge>
         );

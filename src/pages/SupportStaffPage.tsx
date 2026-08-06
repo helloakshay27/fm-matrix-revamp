@@ -1,19 +1,23 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Chip, OutlinedInput } from '@mui/material';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TextField } from '@mui/material';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X } from 'lucide-react';
+import { Plus, RefreshCw, Edit, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
-import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { createSupportStaffCategory, fetchSupportStaffCategories, fetchSupportStaffCategoryById, updateSupportStaffCategory, SupportStaffCategory } from '@/services/supportStaffAPI';
 import { API_CONFIG } from '@/config/apiConfig';
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+
+const columns: ColumnConfig[] = [
+  { key: 'sr_no', label: 'S.No.', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'name', label: 'Category name', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'icons', label: 'Icons', sortable: false, hideable: true, defaultVisible: true },
+  { key: 'estimated_time', label: 'Estimated time', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'created_on', label: 'Created On', sortable: true, hideable: true, defaultVisible: true },
+];
 
 // API Icon Response Interface
 interface ApiIconResponse {
@@ -35,16 +39,19 @@ interface ApiIconResponse {
 }
 
 interface SupportStaffData {
-  id: string;
-  sNo: number;
+  id: number;
+  sr_no: number;
   name: string;
-  estimatedTime: string;
-  createdOn: string;
-  createdBy: string;
+  estimated_time: string;
+  created_on: string;
+  created_by: string;
+  active: boolean;
+  icon_id?: number;
+  icon_image_url?: string;
+  icons?: string;
 }
 
 export const SupportStaffPage = () => {
-  const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
   const { toast } = useToast();
   const { setCurrentSection } = useLayout();
@@ -52,35 +59,24 @@ export const SupportStaffPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<SupportStaffCategory | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [supportStaffData, setSupportStaffData] = useState<SupportStaffCategory[]>([]);
   const [iconsData, setIconsData] = useState<ApiIconResponse[]>([]);
   const [isLoadingIcons, setIsLoadingIcons] = useState(false);
-  const [visibleColumns, setVisibleColumns] = useState({
-    sNo: true,
-    actions: true,
-    name: true,
-    icons: true,
-    estimatedTime: true,
-    createdOn: true,
-    createdBy: true
-  });
   const [formData, setFormData] = useState({
     categoryName: '',
     days: '0',
     hours: '0',
     minutes: '0',
-    selectedIcon: '' as string  // This will store the icon ID
+    selectedIcon: '' as string
   });
   const [editFormData, setEditFormData] = useState({
     categoryName: '',
     days: '0',
     hours: '0',
     minutes: '0',
-    selectedIcon: '' as string  // This will store the icon ID
+    selectedIcon: '' as string
   });
 
   // Field styles for Material-UI components
@@ -127,17 +123,12 @@ export const SupportStaffPage = () => {
     'Gardening'
   ];
 
-  const [filteredStaff, setFilteredStaff] = useState<SupportStaffCategory[]>([]);
-
   // Load support staff categories from API
   const loadSupportStaffCategories = useCallback(async () => {
     try {
       setIsLoading(true);
-      console.log('Loading support staff categories...');
       const data = await fetchSupportStaffCategories();
-      console.log('Received data:', data);
       setSupportStaffData(data);
-      setFilteredStaff(data);
     } catch (error) {
       console.error('Failed to load support staff categories:', error);
       toast({
@@ -201,13 +192,6 @@ export const SupportStaffPage = () => {
     }
   }, [toast]);
 
-  // Pagination calculations
-  const totalRecords = filteredStaff.length;
-  const totalPages = Math.ceil(totalRecords / perPage);
-  const startIndex = (currentPage - 1) * perPage;
-  const endIndex = startIndex + perPage;
-  const currentPageData = filteredStaff.slice(startIndex, endIndex);
-
   useEffect(() => {
     setCurrentSection('Settings');
   }, [setCurrentSection]);
@@ -220,14 +204,15 @@ export const SupportStaffPage = () => {
     loadIcons();
   }, [loadIcons]);
 
-  useEffect(() => {
-    const filtered = supportStaffData.filter(staff =>
-      staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.created_by.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredStaff(filtered);
-    setCurrentPage(1); // Reset to first page when filtering
-  }, [searchTerm, supportStaffData]);
+  const tableData: SupportStaffData[] = useMemo(
+    () =>
+      supportStaffData.map((staff, index) => ({
+        ...staff,
+        sr_no: index + 1,
+        icons: staff.icon_image_url || '',
+      })),
+    [supportStaffData]
+  );
 
   const handleAdd = () => {
     setIsAddModalOpen(true);
@@ -460,7 +445,6 @@ export const SupportStaffPage = () => {
 
   const handleRefresh = async () => {
     setSearchTerm('');
-    setCurrentPage(1);
     await loadSupportStaffCategories();
     toast({
       title: "Refreshed",
@@ -468,32 +452,11 @@ export const SupportStaffPage = () => {
     });
   };
 
-  const handleColumnToggle = (columnKey: string, visible: boolean) => {
-    setVisibleColumns(prev => ({
-      ...prev,
-      [columnKey]: visible
-    }));
-  };
-
-  // Column definitions for visibility control
-  const columns = [
-    { key: 'sNo', label: 'S.No.', visible: visibleColumns.sNo },
-    { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
-    { key: 'name', label: 'Name', visible: visibleColumns.name },
-    { key: 'icons', label: 'Icons', visible: visibleColumns.icons },
-    { key: 'estimatedTime', label: 'Estimated Time', visible: visibleColumns.estimatedTime },
-    { key: 'createdOn', label: 'Created On', visible: visibleColumns.createdOn },
-    { key: 'createdBy', label: 'Created By', visible: visibleColumns.createdBy }
-  ];
-
   // Helper function to format estimated time without trailing commas
   const formatEstimatedTime = (estimatedTime: string): string => {
     if (!estimatedTime || estimatedTime === '--') return '--';
 
-    // Parse the estimated time string to extract components
     const timeUnits: string[] = [];
-
-    // Match patterns like "2 days", "3 hours", "30 minutes"
     const matches = estimatedTime.match(/(\d+)\s*(days?|hours?|hrs?|minutes?|mins?)/gi);
 
     if (matches) {
@@ -513,201 +476,93 @@ export const SupportStaffPage = () => {
       });
     }
 
-    // Join with commas and proper spacing, no trailing comma
     return timeUnits.length > 0 ? timeUnits.join(', ') : estimatedTime;
   };
+
+  const renderCell = (item: SupportStaffData, columnKey: string) => {
+    switch (columnKey) {
+      case 'sr_no':
+        return <span className="font-medium">{item.sr_no}</span>;
+      case 'name':
+        return <span className="font-medium">{item.name}</span>;
+      case 'icons':
+        return item.icon_image_url ? (
+          <img
+            src={item.icon_image_url}
+            alt={item.name}
+            className="w-8 h-8 object-contain"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <span className="text-gray-400 text-xs">No Icon</span>
+        );
+      case 'estimated_time':
+        return (
+          <span className="text-gray-600">
+            {formatEstimatedTime(item.estimated_time)}
+          </span>
+        );
+      case 'created_on':
+        return <span className="text-sm text-gray-600">{item.created_on}</span>;
+      default:
+        return item[columnKey as keyof SupportStaffData] ?? '-';
+    }
+  };
+
+  const renderActions = (item: SupportStaffData) => {
+    if (!shouldShow('Support Staff', 'update')) return null;
+
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0"
+        onClick={() => handleEdit(item.id.toString())}
+        title="Edit"
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+    );
+  };
+
+  const leftActions = shouldShow('Support Staff', 'create') ? (
+    <Button
+      onClick={handleAdd}
+      className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Add
+    </Button>
+  ) : null;
 
   return (
     <>
       <div className="p-6 min-h-screen">
-        {/* Action Bar */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            {shouldShow("Support Staff","create")&&(
-            <Button
-              onClick={handleAdd}
-              className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add
-            </Button>)}
-            {/* <Button
-            onClick={handleRefresh}
-            variant="outline"
-            className="px-4 py-2"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button> */}
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="Search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-80"
-              />
-            </div>
-            <ColumnVisibilityDropdown
-              columns={columns}
-              onColumnToggle={handleColumnToggle}
-            />
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="bg-white rounded-lg border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#f6f4ee]">
-                {visibleColumns.sNo && <TableHead className="w-20">S.No.</TableHead>}
-                {visibleColumns.actions && <TableHead className="w-20">Actions</TableHead>}
-                {visibleColumns.name && <TableHead className="w-40">Category name</TableHead>}
-                {visibleColumns.icons && <TableHead className="w-20">Icons</TableHead>}
-                {visibleColumns.estimatedTime && <TableHead className="w-40">Estimated time</TableHead>}
-                {visibleColumns.createdOn && <TableHead className="w-48">Created On</TableHead>}
-                {/* {visibleColumns.createdBy && <TableHead className="w-40">Created By</TableHead>} */}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="pt-4 pb-16">
-                    <div className="w-full flex items-center justify-start gap-3 pl-4">
-                      <div
-                        className="h-5 w-5 rounded-full animate-spin"
-                        style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
-                      />
-                      <span className="text-sm text-black">Loading ...</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : currentPageData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  </TableCell>
-                </TableRow>
-              ) : (
-                currentPageData.map((staff, index) => (
-                  <TableRow key={staff.id} className="hover:bg-gray-50">
-                    {visibleColumns.sNo && (
-                      <TableCell className="font-medium">
-                        {startIndex + index + 1}
-                      </TableCell>
-                    )}
-                    {visibleColumns.actions && shouldShow("Support Staff","update")&&(
-                      <TableCell>
-                        <button
-                          onClick={() => handleEdit(staff.id.toString())}
-                          className="p-1 hover:bg-gray-100 rounded"
-                          title="Edit"
-                        >
-                          <Edit className="w-4 h-4 text-black" />
-                        </button>
-                      </TableCell>
-                    )}
-                    {visibleColumns.name && (
-                      <TableCell className="font-medium">
-                        {staff.name}
-                      </TableCell>
-                    )}
-                    {visibleColumns.icons && (
-                      <TableCell className="text-center">
-                        {staff.icon_image_url ? (
-                          <img
-                            src={staff.icon_image_url}
-                            alt={staff.name}
-                            className="w-8 h-8 object-contain mx-auto"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
-                              if (nextElement) {
-                                nextElement.style.display = 'block';
-                              }
-                            }}
-                          />
-                        ) : (
-                          <span className="text-gray-400 text-xs">No Icon</span>
-                        )}
-                      </TableCell>
-                    )}
-                    {visibleColumns.estimatedTime && (
-                      <TableCell className="text-gray-500">
-                        {formatEstimatedTime(staff.estimated_time)}
-                      </TableCell>
-                    )}
-                    {visibleColumns.createdOn && <TableCell>{staff.created_on}</TableCell>}
-                    {/* {visibleColumns.createdBy && <TableCell>{staff.created_by}</TableCell>} */}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-6">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => {
-                      if (currentPage > 1) {
-                        setCurrentPage(currentPage - 1);
-                      }
-                    }}
-                    className={
-                      currentPage === 1
-                        ? "pointer-events-none opacity-50"
-                        : ""
-                    }
-                  />
-                </PaginationItem>
-
-                {Array.from(
-                  { length: Math.min(totalPages, 10) },
-                  (_, i) => i + 1
-                ).map((page) => (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      onClick={() => setCurrentPage(page)}
-                      isActive={currentPage === page}
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-
-                {totalPages > 10 && (
-                  <PaginationItem>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                )}
-
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => {
-                      if (currentPage < totalPages) {
-                        setCurrentPage(currentPage + 1);
-                      }
-                    }}
-                    className={
-                      currentPage === totalPages
-                        ? "pointer-events-none opacity-50"
-                        : ""
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
-
+        <EnhancedTable
+          data={tableData}
+          columns={columns}
+          renderCell={renderCell}
+          renderActions={renderActions}
+          leftActions={leftActions}
+          storageKey="support-staff-table"
+          emptyMessage={
+            searchTerm
+              ? 'No support staff found matching your search'
+              : 'No support staff categories found'
+          }
+          loading={isLoading}
+          loadingMessage="Loading..."
+          enableSearch
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search..."
+          hideTableExport
+          pagination
+          pageSize={10}
+          getItemId={(item) => String(item.id)}
+        />
       </div>
 
       {/* Add Modal */}

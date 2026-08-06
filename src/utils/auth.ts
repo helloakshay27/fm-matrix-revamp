@@ -268,12 +268,12 @@ const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
   hostname.includes("lockated.gophygital.work") ||
-  hostname.includes("community.gophygital.work")   ;
+  hostname.includes("community.gophygital.work") || hostname === "localhost";
 
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
-  hostname === "fm-matrix.lockated.com" ||  hostname === "localhost";
+  hostname === "fm-matrix.lockated.com"
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
@@ -294,7 +294,7 @@ export const getOrganizationsByEmail = async (
 ): Promise<Organization[]> => {
   if (isOmanSite || isFmSite) {
     const response = await fetch(
-      `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+      `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch organizations");
@@ -306,7 +306,7 @@ export const getOrganizationsByEmail = async (
 
   if (isViSite) {
     const response = await fetch(
-      `https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`
+      `https://live-api.gophygital.work/api/users/get_organizations_by_email.json?email=${email}`
     );
 
     if (!response.ok) {

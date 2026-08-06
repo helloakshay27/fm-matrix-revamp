@@ -265,15 +265,15 @@ export const EditPlusServicePage = () => {
       formDataToSend.append("plus_service[active]", formData?.active?.toString());
 
       // if (formData.order_no) {
-        formDataToSend.append("plus_service[order_no]", formData.order_no);
+      formDataToSend.append("plus_service[order_no]", formData.order_no);
       // }
 
       // if (formData.mobile) {
-        formDataToSend.append("plus_service[mobile]", formData.mobile);
+      formDataToSend.append("plus_service[mobile]", formData.mobile);
       // }
 
       // if (formData.address) {
-        formDataToSend.append("plus_service[address]", formData.address);
+      formDataToSend.append("plus_service[address]", formData.address);
       // }
 
       if (imageChanged) {
@@ -334,11 +334,11 @@ export const EditPlusServicePage = () => {
           >
             <ArrowLeft className="w-4 h-4 text-gray-600" />
           </button>
-          <span>Plus Service List</span>
+          <span>Service List</span>
           <span>{">"}</span>
-          <span className="text-gray-900 font-medium">Edit Plus Service</span>
+          <span className="text-gray-900 font-medium">Edit Service</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">EDIT PLUS SERVICE</h1>
+        <h1 className="text-2xl font-bold text-gray-900">EDIT SERVICE</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

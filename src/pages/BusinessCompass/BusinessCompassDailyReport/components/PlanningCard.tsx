@@ -32,7 +32,6 @@ export const PlanningCard = () => {
     dedupedTomorrowItems,
     planningItemMatchesSourceItem,
     mergedTasksIssues,
-    planSourceCache,
     togglePlanningStar,
     updatePlanningText,
     removePlanningItem,
@@ -99,20 +98,9 @@ export const PlanningCard = () => {
                           t.originalData?.id === item.source_id
                       )
                       : null;
-                  const cachedData =
-                    item.source_id && item.source_type
-                      ? planSourceCache[
-                      `${item.source_type}:${item.source_id}`
-                      ]
-                      : null;
-                  const liveData =
-                    matchedTask?.originalData ||
-                    cachedData ||
-                    item.originalData;
+                  const liveData = matchedTask?.originalData || item.originalData;
                   const livePriority =
-                    matchedTask?.priority ||
-                    cachedData?.priority ||
-                    item.originalData?.priority;
+                    matchedTask?.priority || item.originalData?.priority;
 
                   return (
                     <div
@@ -197,7 +185,7 @@ export const PlanningCard = () => {
                                   onClick={() => {
                                     if (item.source_type === "todo") {
                                       const td =
-                                        matchedTask?.originalData || cachedData;
+                                        matchedTask?.originalData;
                                       if (td) {
                                         setSelectedTodo(td);
                                         setIsDetailsModalOpen(true);
@@ -222,7 +210,7 @@ export const PlanningCard = () => {
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     const src =
-                                      matchedTask?.originalData || cachedData;
+                                      matchedTask?.originalData;
                                     if (item.source_type === "task") {
                                       setEditTaskData(src);
                                       setIsEditTaskModalOpen(true);

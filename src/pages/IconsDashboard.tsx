@@ -1,16 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Chip, OutlinedInput } from '@mui/material';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
-import { Plus, Search, Edit, RefreshCw, Star, Grid3X3, Trash2, X, Image, Upload } from 'lucide-react';
-import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
+import { TextField } from '@mui/material';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Plus, Edit, X, Image, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { API_CONFIG } from '@/config/apiConfig';
 
 // API Response Interface
@@ -35,13 +31,14 @@ interface ApiIconResponse {
 // UI Interface for table display
 interface IconItem {
   id: string;
-  sNo: number;
+  sr_no: number;
   name: string;
   iconType: string;
   description: string;
   category: string;
   iconPath: string;
   isActive: boolean;
+  status: string;
   createdOn: string;
   createdBy: string;
   usageCount: number;
@@ -49,33 +46,27 @@ interface IconItem {
   contentType: string;
 }
 
-// Field styles for Material-UI components
-const fieldStyles = {
-  backgroundColor: '#fff',
-  borderRadius: '4px',
-  '& .MuiOutlinedInput-root': {
-    '& fieldset': {
-      borderColor: '#ddd',
-    },
-    '&:hover fieldset': {
-      borderColor: '#C72030',
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
-    },
-  },
-};
+const columns: ColumnConfig[] = [
+  { key: 'sr_no', label: 'S.No.', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'icon', label: 'Icon', sortable: false, hideable: true, defaultVisible: true },
+  { key: 'name', label: 'Image Name', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'iconType', label: 'Icon Type', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'status', label: 'Status', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'createdOn', label: 'Created On', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'createdBy', label: 'Created By', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'description', label: 'Description', sortable: true, hideable: true, defaultVisible: false },
+  { key: 'fileSize', label: 'File Size', sortable: true, hideable: true, defaultVisible: false },
+  { key: 'contentType', label: 'Content Type', sortable: true, hideable: true, defaultVisible: false },
+  { key: 'usageCount', label: 'Usage Count', sortable: true, hideable: true, defaultVisible: false },
+];
 
 export const IconsDashboard = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingIcon, setEditingIcon] = useState<IconItem | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [iconsData, setIconsData] = useState<IconItem[]>([]);
@@ -96,21 +87,6 @@ export const IconsDashboard = () => {
     file: null as File | null,
     isActive: true,
     currentImageUrl: null as string | null
-  });
-  const [visibleColumns, setVisibleColumns] = useState({
-    sNo: true,
-    actions: true,
-    icon: true,
-    name: true,
-    iconType: true,
-    description: false,
-    category: true,
-    status: true,
-    fileSize: false,
-    contentType: false,
-    usageCount: false,
-    createdOn: true,
-    createdBy: true
   });
 
   // Field styles for Material-UI components
@@ -151,16 +127,12 @@ export const IconsDashboard = () => {
     { value: 'tools', label: 'Tools' }
   ];
 
-  const [filteredIcons, setFilteredIcons] = useState<IconItem[]>([]);
-
   // Load icons data from API
   const loadIcons = useCallback(async () => {
     try {
       setIsLoading(true);
-      console.log('Loading icons from API...');
       
       const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ICONS}`;
-      console.log('Fetching from:', url);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -175,28 +147,26 @@ export const IconsDashboard = () => {
       }
 
       const apiData: ApiIconResponse[] = await response.json();
-      console.log('API Response:', apiData);
 
       // Transform API data to UI format
       const transformedIcons: IconItem[] = apiData.map((apiIcon, index) => ({
         id: apiIcon.id.toString(),
-        sNo: index + 1,
-        name: apiIcon.image_file_name.replace(/\.[^/.]+$/, ""), // Remove file extension for display
+        sr_no: index + 1,
+        name: apiIcon.image_file_name.replace(/\.[^/.]+$/, ""),
         iconType: apiIcon.icon_type,
         description: `${apiIcon.icon_type.replace(/_/g, ' ').toUpperCase()} icon`,
         category: apiIcon.icon_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
         iconPath: apiIcon.image_url || `/icons/${apiIcon.image_file_name}`,
         isActive: apiIcon.active,
+        status: apiIcon.active ? 'Active' : 'Inactive',
         createdOn: new Date(apiIcon.image_updated_at).toLocaleDateString('en-IN'),
         createdBy: apiIcon.created_by.name,
-        usageCount: Math.floor(Math.random() * 500) + 50, // Mock usage count as API doesn't provide it
+        usageCount: Math.floor(Math.random() * 500) + 50,
         fileSize: apiIcon.image_file_size || '0',
         contentType: apiIcon.image_content_type
       }));
       
-      console.log('Transformed data:', transformedIcons);
       setIconsData(transformedIcons);
-      setFilteredIcons(transformedIcons);
     } catch (error) {
       console.error('Failed to load icons:', error);
       toast({
@@ -205,18 +175,17 @@ export const IconsDashboard = () => {
         variant: "destructive"
       });
       
-      // Fallback to mock data if API fails
-      console.log('Falling back to mock data...');
       const mockIcons: IconItem[] = [
         {
           id: '1',
-          sNo: 1,
+          sr_no: 1,
           name: 'User Profile',
           iconType: 'user_profile',
           description: 'Default user profile icon',
           category: 'User',
           iconPath: '/icons/user-profile.svg',
           isActive: true,
+          status: 'Active',
           createdOn: '15/01/2024',
           createdBy: 'Admin User',
           usageCount: 245,
@@ -225,18 +194,10 @@ export const IconsDashboard = () => {
         }
       ];
       setIconsData(mockIcons);
-      setFilteredIcons(mockIcons);
     } finally {
       setIsLoading(false);
     }
   }, [toast]);
-
-  // Pagination calculations
-  const totalRecords = filteredIcons.length;
-  const totalPages = Math.ceil(totalRecords / perPage);
-  const startIndex = (currentPage - 1) * perPage;
-  const endIndex = startIndex + perPage;
-  const currentPageData = filteredIcons.slice(startIndex, endIndex);
 
   useEffect(() => {
     setCurrentSection('Settings');
@@ -246,18 +207,7 @@ export const IconsDashboard = () => {
     loadIcons();
   }, [loadIcons]);
 
-  useEffect(() => {
-    const filtered = iconsData.filter(icon =>
-      icon.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      icon.iconType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      icon.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      icon.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      icon.createdBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      icon.contentType.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredIcons(filtered);
-    setCurrentPage(1); // Reset to first page when filtering
-  }, [searchTerm, iconsData]);
+  const tableData = useMemo(() => iconsData, [iconsData]);
 
   const handleAdd = () => {
     setShowAddModal(true);
@@ -533,19 +483,11 @@ export const IconsDashboard = () => {
 
   const handleRefresh = async () => {
     setSearchTerm('');
-    setCurrentPage(1);
     await loadIcons();
     toast({
       title: "Refreshed",
       description: "Data has been refreshed successfully",
     });
-  };
-
-  const handleColumnToggle = (columnKey: string, visible: boolean) => {
-    setVisibleColumns(prev => ({
-      ...prev,
-      [columnKey]: visible
-    }));
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -573,12 +515,6 @@ export const IconsDashboard = () => {
         return;
       }
 
-      console.log('Selected file:', {
-        name: file.name,
-        type: file.type,
-        size: file.size
-      });
-
       if (editMode) {
         setEditFormData(prev => ({
           ...prev,
@@ -593,255 +529,125 @@ export const IconsDashboard = () => {
     }
   };
 
-  // Column definitions for visibility control
-  const columns = [
-    { key: 'sNo', label: 'S.No.', visible: visibleColumns.sNo },
-    { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
-    { key: 'icon', label: 'Icon', visible: visibleColumns.icon },
-    { key: 'name', label: 'Image Name', visible: visibleColumns.name },
-    { key: 'iconType', label: 'Icon Type', visible: visibleColumns.iconType },
-    { key: 'description', label: 'Description', visible: visibleColumns.description },
-    { key: 'category', label: 'Category', visible: visibleColumns.category },
-    { key: 'status', label: 'Status', visible: visibleColumns.status },
-    { key: 'fileSize', label: 'File Size', visible: visibleColumns.fileSize },
-    { key: 'contentType', label: 'Content Type', visible: visibleColumns.contentType },
-    { key: 'usageCount', label: 'Usage Count', visible: visibleColumns.usageCount },
-    { key: 'createdOn', label: 'Created On', visible: visibleColumns.createdOn },
-    { key: 'createdBy', label: 'Created By', visible: visibleColumns.createdBy }
-  ];
+  const renderCell = (item: IconItem, columnKey: string) => {
+    switch (columnKey) {
+      case 'sr_no':
+        return <span className="font-medium">{item.sr_no}</span>;
+      case 'icon':
+        return (
+          <div className="w-10 h-10 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
+            {item.iconPath && item.iconPath !== '/icons/undefined' && item.iconPath !== '/icons/null' ? (
+              <img
+                src={item.iconPath}
+                alt={item.name}
+                className="w-8 h-8 object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (nextElement) nextElement.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <Image
+              className="w-5 h-5 text-gray-400"
+              style={{
+                display:
+                  item.iconPath &&
+                  item.iconPath !== '/icons/undefined' &&
+                  item.iconPath !== '/icons/null'
+                    ? 'none'
+                    : 'flex',
+              }}
+            />
+          </div>
+        );
+      case 'name':
+        return <span className="font-medium">{item.name}</span>;
+      case 'iconType':
+        return (
+          <span className="px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">
+            {item.iconType}
+          </span>
+        );
+      case 'status':
+        return (
+          <span
+            className={`px-2 py-1 rounded text-xs font-medium ${
+              item.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`}
+          >
+            {item.isActive ? 'Active' : 'Inactive'}
+          </span>
+        );
+      case 'description':
+        return <span className="text-gray-600">{item.description}</span>;
+      case 'fileSize':
+        return (
+          <span className="text-gray-500">
+            {item.fileSize ? `${Math.round(parseInt(item.fileSize) / 1024)} KB` : 'N/A'}
+          </span>
+        );
+      case 'contentType':
+        return <span className="text-gray-500 text-xs">{item.contentType}</span>;
+      case 'usageCount':
+        return <span className="text-gray-500">{item.usageCount}</span>;
+      case 'createdOn':
+        return <span className="text-sm text-gray-600">{item.createdOn}</span>;
+      case 'createdBy':
+        return item.createdBy;
+      default:
+        return item[columnKey as keyof IconItem] ?? '-';
+    }
+  };
+
+  const renderActions = (item: IconItem) => (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-8 w-8 p-0"
+      onClick={() => handleEdit(item.id)}
+      title="Edit"
+    >
+      <Edit className="w-4 h-4" />
+    </Button>
+  );
+
+  const leftActions = (
+    <Button
+      onClick={handleAdd}
+      className="bg-brand text-white hover:bg-brand-hover h-9 px-4 text-sm font-medium"
+    >
+      <Plus className="w-4 h-4 mr-2" />
+      Add
+    </Button>
+  );
 
   return (
     <>
       <div className="p-6 min-h-screen">
-      {/* Action Bar */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Button 
-            onClick={handleAdd}
-           className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Search icons..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-80"
-            />
-          </div>
-          <ColumnVisibilityDropdown
-            columns={columns}
-            onColumnToggle={handleColumnToggle}
-          />
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-lg border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#f6f4ee]">
-              {visibleColumns.sNo && <TableHead className="w-20">S.No.</TableHead>}
-              {visibleColumns.actions && <TableHead className="w-20">Actions</TableHead>}
-              {visibleColumns.icon && <TableHead className="w-20">Icon</TableHead>}
-              {visibleColumns.name && <TableHead className="w-40">Image Name</TableHead>}
-              {visibleColumns.iconType && <TableHead className="w-40">Icon Type</TableHead>}
-              {visibleColumns.description && <TableHead className="w-60">Description</TableHead>}
-              {/* {visibleColumns.category && <TableHead className="w-32">Category</TableHead>} */}
-              {visibleColumns.status && <TableHead className="w-24">Status</TableHead>}
-              {visibleColumns.fileSize && <TableHead className="w-24">File Size</TableHead>}
-              {visibleColumns.contentType && <TableHead className="w-32">Content Type</TableHead>}
-              {visibleColumns.usageCount && <TableHead className="w-32">Usage Count</TableHead>}
-              {visibleColumns.createdOn && <TableHead className="w-40">Created On</TableHead>}
-              {visibleColumns.createdBy && <TableHead className="w-40">Created By</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={12} className="pt-4 pb-16">
-                  <div className="w-full flex items-center justify-start gap-3 pl-4">
-                    <div
-                      className="h-5 w-5 rounded-full animate-spin"
-                      style={{ border: "2px solid #000000", borderTopColor: "transparent" }}
-                    />
-                    <span className="text-sm text-black">Loading ...</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : currentPageData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={12} className="text-center py-8 text-gray-500">
-                </TableCell>
-              </TableRow>
-            ) : (
-              currentPageData.map((icon, index) => (
-                <TableRow key={icon.id} className="hover:bg-gray-50">
-                  {visibleColumns.sNo && (
-                    <TableCell className="font-medium">
-                      {startIndex + index + 1}
-                    </TableCell>
-                  )}
-                  {visibleColumns.actions && (
-                    <TableCell>
-                      <button
-                        onClick={() => handleEdit(icon.id)}
-                        className="p-1 hover:bg-gray-100 rounded"
-                        title="Edit"
-                      >
-                        <Edit className="w-4 h-4 text-black" />
-                      </button>
-                    </TableCell>
-                  )}
-                  {visibleColumns.icon && (
-                    <TableCell>
-                      <div className="w-10 h-10 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
-                        {icon.iconPath && icon.iconPath !== '/icons/undefined' && icon.iconPath !== '/icons/null' ? (
-                          <img 
-                            src={icon.iconPath} 
-                            alt={icon.name}
-                            className="w-8 h-8 object-contain"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
-                              if (nextElement) {
-                                nextElement.style.display = 'flex';
-                              }
-                            }}
-                          />
-                        ) : null}
-                        <Image className="w-5 h-5 text-gray-400" style={{display: icon.iconPath && icon.iconPath !== '/icons/undefined' && icon.iconPath !== '/icons/null' ? 'none' : 'flex'}} />
-                      </div>
-                    </TableCell>
-                  )}
-                  {visibleColumns.name && (
-                    <TableCell className="font-medium">
-                      {icon.name}
-                    </TableCell>
-                  )}
-                  {visibleColumns.iconType && (
-                    <TableCell className="font-medium">
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">
-                        {icon.iconType}
-                      </span>
-                    </TableCell>
-                  )}
-                  {visibleColumns.description && (
-                    <TableCell className="text-gray-600">
-                      {icon.description}
-                    </TableCell>
-                  )}
-                  {/* {visibleColumns.category && (
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        icon.category.includes('Support Staff') ? 'bg-blue-100 text-blue-700' : 
-                        icon.category.includes('Delivery') ? 'bg-green-100 text-green-700' :
-                        icon.category.includes('Provider') ? 'bg-purple-100 text-purple-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {icon.category}
-                      </span>
-                    </TableCell>
-                  )} */}
-                  {visibleColumns.status && (
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        icon.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                      }`}>
-                        {icon.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </TableCell>
-                  )}
-                  {visibleColumns.fileSize && (
-                    <TableCell className="text-gray-500">
-                      {icon.fileSize ? `${Math.round(parseInt(icon.fileSize) / 1024)} KB` : 'N/A'}
-                    </TableCell>
-                  )}
-                  {visibleColumns.contentType && (
-                    <TableCell className="text-gray-500 text-xs">
-                      {icon.contentType}
-                    </TableCell>
-                  )}
-                  {visibleColumns.usageCount && (
-                    <TableCell className="text-gray-500">
-                      {icon.usageCount}
-                    </TableCell>
-                  )}
-                  {visibleColumns.createdOn && <TableCell>{icon.createdOn}</TableCell>}
-                  {visibleColumns.createdBy && <TableCell>{icon.createdBy}</TableCell>}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-6">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => {
-                    if (currentPage > 1) {
-                      setCurrentPage(currentPage - 1);
-                    }
-                  }}
-                  className={
-                    currentPage === 1
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  }
-                />
-              </PaginationItem>
-
-              {Array.from(
-                { length: Math.min(totalPages, 10) },
-                (_, i) => i + 1
-              ).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    onClick={() => setCurrentPage(page)}
-                    isActive={currentPage === page}
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-
-              {totalPages > 10 && (
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-              )}
-
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => {
-                    if (currentPage < totalPages) {
-                      setCurrentPage(currentPage + 1);
-                    }
-                  }}
-                  className={
-                    currentPage === totalPages
-                      ? "pointer-events-none opacity-50"
-                      : ""
-                  }
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
-
+        <EnhancedTable
+          data={tableData}
+          columns={columns}
+          renderCell={renderCell}
+          renderActions={renderActions}
+          leftActions={leftActions}
+          storageKey="icons-dashboard-table"
+          emptyMessage={
+            searchTerm
+              ? 'No icons found matching your search'
+              : 'No icons found'
+          }
+          loading={isLoading}
+          loadingMessage="Loading..."
+          enableSearch
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search icons..."
+          hideTableExport
+          pagination
+          pageSize={10}
+          getItemId={(item) => item.id}
+        />
       </div>
 
       {/* Add Modal */}

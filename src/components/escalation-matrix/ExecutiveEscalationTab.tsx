@@ -507,7 +507,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting || loadingUsers || hasExecutive}
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-brand hover:bg-brand-hover text-white px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </Button>
@@ -525,7 +525,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
                 Filter by Type
               </Label>
               <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
-                <SelectTrigger className="w-48 border-gray-200 focus:border-[#C72030] focus:ring-[#C72030]">
+                <SelectTrigger className="w-48 border-gray-300 text-gray-900 focus:border-brand focus:ring-brand">
                   <SelectValue placeholder="Select Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -588,7 +588,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 text-gray-600 hover:text-[#C72030]"
+                          className="h-8 w-8 p-0 text-gray-900 hover:text-black"
                           onClick={() => startEdit(index, ruleGroup)}
                           title="Edit Rule"
                         >
@@ -687,7 +687,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
                         <Button
                           onClick={() => updateExecutiveEscalation(ruleGroup)}
                           disabled={updateLoading}
-                          className="bg-green-600 hover:bg-green-700 text-white"
+                          className="bg-brand hover:bg-brand-hover text-white"
                         >
                           {updateLoading ? 'Saving...' : 'Save Changes'}
                         </Button>

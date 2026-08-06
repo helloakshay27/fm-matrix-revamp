@@ -60,7 +60,7 @@ const AddShortTermImpactPage = () => {
           <span>{">"}</span>
           <span className="text-gray-900 font-medium">Add Template</span>
         </div>
-        
+
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
           ADD SHORT-TERM IMPACT TEMPLATE
         </h1>
@@ -77,7 +77,7 @@ const AddShortTermImpactPage = () => {
                     {...field}
                     label={
                       <span>
-                        Field Value <span style={{ color: 'red' }}>*</span>
+                        Field Value <span style={{ color: '#da7756' }}>*</span>
                       </span>
                     }
                     placeholder="Enter field value"
