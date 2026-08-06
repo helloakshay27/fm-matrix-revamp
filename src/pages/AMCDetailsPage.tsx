@@ -337,6 +337,17 @@ export const AMCDetailsPage = () => {
     }
   };
 
+  const getFileNameFromUrl = (url: string) => {
+    try {
+      const path = new URL(url).pathname;
+      const segment = path.substring(path.lastIndexOf("/") + 1);
+      return decodeURIComponent(segment) || null;
+    } catch {
+      const segment = url.split("?")[0].split("/").pop();
+      return segment ? decodeURIComponent(segment) : null;
+    }
+  };
+
   const renderVisitAttachments = (visit: any) => {
     const list: VisitAttachment[] = [
       ...(visit.attachments || []),
@@ -347,7 +358,11 @@ export const AMCDetailsPage = () => {
       <div className="flex flex-col gap-1">
         {list.map((a, ai) => {
           const url = a.document || a.document_url || "";
-          const name = a.filename || a.document_file_name || `File ${ai + 1}`;
+          const name =
+            a.filename ||
+            a.document_file_name ||
+            getFileNameFromUrl(url) ||
+            `File ${ai + 1}`;
           return (
             <div key={a.id ?? ai} className="flex items-center gap-2">
               <a

@@ -514,10 +514,12 @@ const ReportItemRow = ({ item, onOpen, memberFallback = "" }) => {
         <ItemIcon
           data-icon-color="true"
           title={typeLabel}
-          className={cn(
-            "h-[18px] w-[18px] shrink-0",
-            type !== "note" ? "text-[#F36A3D]" : "text-[#4BA3F2]"
-          )}
+          style={
+            {
+              "--glyph-color": type !== "note" ? "#F36A3D" : "#4BA3F2",
+            } as React.CSSProperties
+          }
+          className="h-[18px] w-[18px] shrink-0"
         />
         <span className="min-w-0 flex-1 text-[13px] font-medium leading-[16px] text-[#2B2F38]">
           {getItemTitle(item)}

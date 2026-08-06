@@ -2,19 +2,14 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useFetchJobDetail } from "./hooks/useFetchJobDetail";
 import JdDetail from "./components/JdDetail";
+import { SkeletonDetail } from "./components/UI";
 
 export default function JobsViewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data, isLoading, error } = useFetchJobDetail(Number(id));
 
-  if (isLoading) {
-    return (
-      <div style={{ padding: 40, textAlign: "center", color: "#888", fontSize: 14 }}>
-        Loading job description…
-      </div>
-    );
-  }
+  if (isLoading) return <SkeletonDetail sections={3} fields={4} />;
 
   if (error || !data) {
     navigate("/admin-compass/jobs", { replace: true });

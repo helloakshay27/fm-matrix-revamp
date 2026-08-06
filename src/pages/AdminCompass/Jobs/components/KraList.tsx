@@ -15,6 +15,8 @@ import {
   FilterSearchSelect,
   AiBar,
   Loader,
+  SkeletonList,
+  SkeletonCards,
 } from "./UI";
 
 export default function KraList() {
@@ -256,9 +258,11 @@ export default function KraList() {
       </div>
 
       {kraApiLoading && apiKras.length === 0 ? (
-        <div style={{ padding: 24, textAlign: "center" }}>
-          <Loader text="Loading KRAs from API…" />
-        </div>
+        kraViewMode === "card" ? (
+          <SkeletonCards count={4} minWidth={340} height={140} />
+        ) : (
+          <SkeletonList rows={5} />
+        )
       ) : (
         <>
           {kraApiError && (
@@ -677,6 +681,12 @@ export default function KraList() {
                               </span>
                               <span
                                 style={{
+                                  // Pill apne text ko hug kare — grid cell ki
+                                  // poori width par stretch na ho.
+                                  justifySelf: "start",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  whiteSpace: "nowrap",
                                   padding: "2px 8px",
                                   borderRadius: 999,
                                   fontSize: 10,

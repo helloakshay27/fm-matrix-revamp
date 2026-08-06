@@ -40,6 +40,12 @@ const fieldStyles = {
   },
   "& .MuiOutlinedInput-root": {
     backgroundColor: "white",
+    "& fieldset": { borderColor: "#e5e7eb" },
+    "&:hover fieldset": { borderColor: "#C72030" },
+    "&.Mui-focused fieldset": { borderColor: "#C72030" },
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "#C72030",
   },
 };
 
@@ -169,7 +175,7 @@ export const VisitingPurposeFilterDialog = ({
           <Button
             variant="outline"
             onClick={handleReset}
-            className="border-brand text-brand px-8 w-full sm:w-auto"
+            className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030] px-8 w-full sm:w-auto"
           >
             RESET
           </Button>

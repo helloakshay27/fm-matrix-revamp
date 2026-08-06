@@ -10,7 +10,7 @@ import {
   getApiContext,
   buildApiUrl,
   apiHeaders,
-  unwrapRows,
+  fetchAllPages,
   firstDefined,
 } from "./apiClient";
 
@@ -146,16 +146,19 @@ export const fetchKpis = async ({
 } = {}) => {
   const { baseUrl, token } = getApiContext();
   if (!baseUrl || !token) return null;
-  const url = buildApiUrl("/kpis.json", {
-    "q[name_cont]": search,
-    "q[department_id_eq]": departmentId,
-    kra_id: kraId,
-    job_description_id: jobDescriptionId,
-  });
-  const res = await fetch(url, { headers: apiHeaders() });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = await res.json();
-  return unwrapRows(json, "kpis").map(normalizeKpi);
+  // Member/department ka filter list component client-side lagata hai, isliye
+  // saare pages chahiye — warna page 1 ke baahar ki KPIs count me nahi aatin.
+  const rows = await fetchAllPages(
+    "/kpis.json",
+    {
+      "q[name_cont]": search,
+      "q[department_id_eq]": departmentId,
+      kra_id: kraId,
+      job_description_id: jobDescriptionId,
+    },
+    "kpis"
+  );
+  return rows.map(normalizeKpi);
 };
 
 export const createKpi = async (form) => {

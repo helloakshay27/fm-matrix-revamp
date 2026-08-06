@@ -565,15 +565,17 @@ export const IconsDashboard = () => {
         return <span className="font-medium">{item.name}</span>;
       case 'iconType':
         return (
-          <span className="px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">
+          <span className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-md bg-brand-light text-brand border border-brand/30">
             {item.iconType}
           </span>
         );
       case 'status':
         return (
           <span
-            className={`px-2 py-1 rounded text-xs font-medium ${
-              item.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-md ${
+              item.isActive
+                ? 'bg-brand text-white'
+                : 'bg-brand-light text-brand border border-brand/30'
             }`}
           >
             {item.isActive ? 'Active' : 'Inactive'}
@@ -711,7 +713,7 @@ export const IconsDashboard = () => {
               
               {/* New File Preview */}
               {formData.file && (
-                <div className="mb-4 p-4 border rounded-lg bg-green-50">
+                <div className="mb-4 p-4 border rounded-lg bg-brand-light border-brand/30">
                   <p className="text-sm font-medium text-gray-700 mb-2">Icon Preview:</p>
                   <div className="flex items-center gap-4">
                     <img 
@@ -719,7 +721,7 @@ export const IconsDashboard = () => {
                       alt="Icon preview"
                       className="w-16 h-16 object-contain border rounded"
                     />
-                    <div className="text-sm text-green-600">
+                    <div className="text-sm text-brand">
                       <p>✓ Selected: {formData.file.name}</p>
                       <p className="text-xs text-gray-600">
                         Size: {(formData.file.size / 1024).toFixed(1)} KB | Type: {formData.file.type}
@@ -845,7 +847,7 @@ export const IconsDashboard = () => {
 
               {/* New File Preview */}
               {editFormData.file && (
-                <div className="mb-4 p-4 border rounded-lg bg-green-50">
+                <div className="mb-4 p-4 border rounded-lg bg-brand-light border-brand/30">
                   <p className="text-sm font-medium text-gray-700 mb-2">New Icon Preview:</p>
                   <div className="flex items-center gap-4">
                     <img 
@@ -853,7 +855,7 @@ export const IconsDashboard = () => {
                       alt="New icon preview"
                       className="w-16 h-16 object-contain border rounded"
                     />
-                    <div className="text-sm text-green-600">
+                    <div className="text-sm text-brand">
                       <p>✓ Selected: {editFormData.file.name}</p>
                       <p className="text-xs text-gray-600">
                         Size: {(editFormData.file.size / 1024).toFixed(1)} KB | Type: {editFormData.file.type}
@@ -881,7 +883,7 @@ export const IconsDashboard = () => {
                     PNG, JPG, JPEG, SVG files only. Max size: 2MB
                   </p>
                   {editFormData.currentImageUrl && (
-                    <p className="text-xs text-blue-600 mt-1">
+                    <p className="text-xs text-brand mt-1">
                       Leave empty to keep current icon
                     </p>
                   )}
@@ -894,7 +896,7 @@ export const IconsDashboard = () => {
               <Button 
                 variant="outline"
                 onClick={handleCloseAddModal}
-                className="px-6"
+                className="px-6 border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3]"
               >
                 Cancel
               </Button>

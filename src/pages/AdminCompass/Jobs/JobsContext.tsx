@@ -900,6 +900,17 @@ export function JobsProvider({ children }) {
     return () => window.clearTimeout(timer);
   }, [refreshKpis]);
 
+  // KPIs tab khulte hi fresh fetch — warna list mount ke waqt ka stale data
+  // dikhati rehti hai. Ref se call karte hain taki `kpiSearch` badalne par ye
+  // effect dobara na chale (uske liye upar wala debounced effect hai).
+  const refreshKpisRef = useRef(refreshKpis);
+  refreshKpisRef.current = refreshKpis;
+
+  useEffect(() => {
+    if (jobTab !== "kpi") return;
+    refreshKpisRef.current();
+  }, [jobTab]);
+
   // Ek KRA ki saari KPIs ka weightage milakar 100% se zyada nahi ho sakta —
   // chahe us KRA se 2 KPIs juddi hon ya 10. `excludeKpiId` edit ke waqt
   // current KPI ko total se hata deta hai.

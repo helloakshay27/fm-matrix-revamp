@@ -593,7 +593,7 @@ export const Header = () => {
                   Msafe Dashboard Revamp
                 </button>
               )}
-              {!isViSite && (
+              {isLocalhost && (
                 <button
                   onClick={() => (window.location.href = "/posthog-dashboard")}
                   className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"

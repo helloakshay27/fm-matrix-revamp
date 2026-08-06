@@ -30,10 +30,11 @@ const adminCompassNavigation: Record<string, any> = {
     icon: MessageSquare,
     href: "/admin-compass/daily-meeting",
   },
-  KPI: {
-    icon: BarChart3,
-    href: "/admin-compass/kpi",
-  },
+  // KPI module hidden
+  // KPI: {
+  //   icon: BarChart3,
+  //   href: "/admin-compass/kpi",
+  // },
   "Weekly Meetings": {
     icon: Trophy,
     href: "/admin-compass/weekly-meetings",
