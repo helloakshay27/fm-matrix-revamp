@@ -32,9 +32,44 @@ import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { userService } from '@/services/userService';
 import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
 import { toast } from 'sonner';
-import ReactSelect from 'react-select';
-import { Label } from "@/components/ui/label";
 import { Edit, Plus, Trash2, Upload, X } from 'lucide-react';
+import {
+  FormControl as MuiFormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+  Checkbox as MuiCheckbox,
+  ListItemText,
+} from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 const categorySchema = z.object({
   categoryName: z.string().min(1, 'Category name is required'),
@@ -945,144 +980,115 @@ export const CategoryTypeTab: React.FC = () => {
                 <FormField
                   control={form.control}
                   name="siteId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Enable Sites <span className="text-red-500">*</span></FormLabel>
-                      <FormControl>
-                        <div className="space-y-3">
-                          <ReactSelect
-                            isMulti
-                            options={sites.map(site => ({
-                              value: site.id.toString(),
-                              label: site.name
-                            }))}
-                            onChange={(selected) => {
-                              if (!selected || selected.length === 0) {
-                                field.onChange('');
-                                return;
+                  render={({ field }) => {
+                    const selectedSiteIds = field.value
+                      ? field.value.split(',').filter(Boolean)
+                      : [];
+                    return (
+                      <FormItem>
+                        <FormControl>
+                          <MuiFormControl fullWidth variant="outlined">
+                            <InputLabel id="add-sites-label">Selected Sites *</InputLabel>
+                            <MuiSelect
+                              labelId="add-sites-label"
+                              label="Selected Sites *"
+                              multiple
+                              value={selectedSiteIds}
+                              onChange={(e: SelectChangeEvent<string[]>) => {
+                                const value = e.target.value;
+                                const ids = typeof value === 'string' ? value.split(',') : value;
+                                field.onChange(ids.filter(Boolean).join(','));
+                              }}
+                              renderValue={(selected) =>
+                                selected.length > 0
+                                  ? sites
+                                      .filter((site) => selected.includes(site.id.toString()))
+                                      .map((site) => site.name)
+                                      .join(', ')
+                                  : 'Select sites...'
                               }
-                              // Store comma-separated site IDs
-                              const siteIds = selected.map(s => s.value).join(',');
-                              field.onChange(siteIds);
-                            }}
-                            value={field.value ? 
-                              sites
-                                .filter(site => field.value.split(',').includes(site.id.toString()))
-                                .map(site => ({
-                                  value: site.id.toString(),
-                                  label: site.name
-                                }))
-                              : []
-                            }
-                            className="mt-1"
-                            placeholder="Select sites..."
-                            noOptionsMessage={() => "No sites available"}
-                            styles={{
-                              control: (base) => ({
-                                ...base,
-                                minHeight: '40px',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '0px',
-                                boxShadow: 'none',
-                                '&:hover': {
-                                  border: '1px solid #cbd5e1'
-                                }
-                              }),
-                              multiValue: (base) => ({
-                                ...base,
-                                backgroundColor: '#f1f5f9',
-                                borderRadius: '0px'
-                              }),
-                              multiValueLabel: (base) => ({
-                                ...base,
-                                color: '#334155'
-                              }),
-                              multiValueRemove: (base) => ({
-                                ...base,
-                                color: '#64748b',
-                                borderRadius: '0px',
-                                '&:hover': {
-                                  backgroundColor: '#e2e8f0',
-                                  color: '#475569'
-                                }
-                              })
-                            }}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                              displayEmpty
+                              sx={fieldStyles}
+                              MenuProps={selectMenuProps}
+                            >
+                              {sites.length === 0 ? (
+                                <MenuItem disabled value="">
+                                  <em>No sites available</em>
+                                </MenuItem>
+                              ) : (
+                                sites.map((site) => (
+                                  <MenuItem key={site.id} value={site.id.toString()}>
+                                    <MuiCheckbox
+                                      checked={selectedSiteIds.includes(site.id.toString())}
+                                      size="small"
+                                    />
+                                    <ListItemText primary={site.name} />
+                                  </MenuItem>
+                                ))
+                              )}
+                            </MuiSelect>
+                          </MuiFormControl>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <FormField
                   control={form.control}
                   name="engineerIds"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Assign Engineers</FormLabel>
-                      <FormControl>
-                        <div className="space-y-3">
-                          <ReactSelect
-                            isMulti
-                            options={engineers.map(engineer => ({
-                              value: engineer.id,
-                              label: engineer.full_name
-                            }))}
-                            onChange={(selected) => {
-                              if (!selected) {
-                                field.onChange([]);
-                                return;
+                  render={({ field }) => {
+                    const selectedIds = (field.value ?? []).map(String);
+                    return (
+                      <FormItem>
+                        <FormControl>
+                          <MuiFormControl fullWidth variant="outlined">
+                            <InputLabel id="add-engineers-label">Assign Engineers</InputLabel>
+                            <MuiSelect
+                              labelId="add-engineers-label"
+                              label="Assign Engineers"
+                              multiple
+                              value={selectedIds}
+                              onChange={(e: SelectChangeEvent<string[]>) => {
+                                const value = e.target.value;
+                                const ids = typeof value === 'string' ? value.split(',') : value;
+                                field.onChange(ids.map(Number).filter((id) => !Number.isNaN(id)));
+                              }}
+                              renderValue={(selected) =>
+                                selected.length > 0
+                                  ? engineers
+                                      .filter((engineer) => selected.includes(String(engineer.id)))
+                                      .map((engineer) => engineer.full_name)
+                                      .join(', ')
+                                  : 'Select engineers...'
                               }
-
-                              const newEngineers = selected.map(s => s.value);
-                              field.onChange(newEngineers);
-                            }}
-                            value={engineers
-                              .filter(engineer => field.value?.includes(engineer.id))
-                              .map(engineer => ({
-                                value: engineer.id,
-                                label: engineer.full_name
-                              }))}
-                            className="mt-1"
-                            placeholder="Select engineers..."
-                            noOptionsMessage={() => "No engineers available"}
-                            styles={{
-                              control: (base) => ({
-                                ...base,
-                                minHeight: '40px',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '0px',
-                                boxShadow: 'none',
-                                '&:hover': {
-                                  border: '1px solid #cbd5e1'
-                                }
-                              }),
-                              multiValue: (base) => ({
-                                ...base,
-                                backgroundColor: '#f1f5f9',
-                                borderRadius: '0px'
-                              }),
-                              multiValueLabel: (base) => ({
-                                ...base,
-                                color: '#334155'
-                              }),
-                              multiValueRemove: (base) => ({
-                                ...base,
-                                color: '#64748b',
-                                borderRadius: '0px',
-                                '&:hover': {
-                                  backgroundColor: '#e2e8f0',
-                                  color: '#475569'
-                                }
-                              })
-                            }}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                              displayEmpty
+                              sx={fieldStyles}
+                              MenuProps={selectMenuProps}
+                            >
+                              {engineers.length === 0 ? (
+                                <MenuItem disabled value="">
+                                  <em>No engineers available</em>
+                                </MenuItem>
+                              ) : (
+                                engineers.map((engineer) => (
+                                  <MenuItem key={engineer.id} value={String(engineer.id)}>
+                                    <MuiCheckbox
+                                      checked={selectedIds.includes(String(engineer.id))}
+                                      size="small"
+                                    />
+                                    <ListItemText primary={engineer.full_name} />
+                                  </MenuItem>
+                                ))
+                              )}
+                            </MuiSelect>
+                          </MuiFormControl>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
               </div>
 
@@ -1153,7 +1159,7 @@ export const CategoryTypeTab: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">FAQ Section</h3>
-                  <Button type="button" onClick={addFaqItem} variant="outline" size="sm">
+                  <Button type="button" onClick={addFaqItem} variant="outline" size="sm" className="[&_svg]:!text-brand [&_svg]:!stroke-brand">
                     <Plus className="h-4 w-4 mr-2" />
                     Add FAQ
                   </Button>
@@ -1187,6 +1193,7 @@ export const CategoryTypeTab: React.FC = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => removeFaqItem(index)}
+                            className="[&_svg]:!text-brand [&_svg]:!stroke-brand"
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -1201,7 +1208,8 @@ export const CategoryTypeTab: React.FC = () => {
                 <Button 
                   onClick={handleCreateSubmit}
                   disabled={isSubmitting}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                 className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
                 >
                   {isSubmitting ? 'Saving...' : 'Submit'}
                 </Button>
@@ -1235,8 +1243,21 @@ export const CategoryTypeTab: React.FC = () => {
       </Card>
 
       {/* Edit Category Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      {/* modal={false} lets portaled MUI Select menus receive clicks/scroll */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen} modal={false}>
+        <DialogContent
+          className="max-w-2xl max-h-[80vh] overflow-y-auto"
+          onPointerDownOutside={(e) => {
+            if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader className="relative">
             <DialogTitle className="text-lg font-semibold">Edit Category</DialogTitle>
             <button
@@ -1258,68 +1279,56 @@ export const CategoryTypeTab: React.FC = () => {
                     id="edit-category-name"
                     defaultValue={editingCategory.name}
                     placeholder="Category Name"
-                    className="w-full"
+                    className="w-full bg-white border-gray-300 rounded-md focus-visible:ring-brand focus-visible:border-brand"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Selected Sites <span className="text-red-500">*</span>
-                  </label>
-                  <ReactSelect
-                    isMulti
-                    options={sites.map(site => ({
-                      value: site.id.toString(),
-                      label: site.name
-                    }))}
-                    onChange={(selected) => {
-                      if (!selected || selected.length === 0) {
-                        setEditSelectedSiteId('');
-                        return;
-                      }
-                      // Store comma-separated site IDs
-                      const siteIds = selected.map(s => s.value).join(',');
-                      setEditSelectedSiteId(siteIds);
+                <MuiFormControl fullWidth variant="outlined">
+                  <InputLabel id="edit-sites-label">Selected Sites *</InputLabel>
+                  <MuiSelect
+                    labelId="edit-sites-label"
+                    label="Selected Sites *"
+                    multiple
+                    value={editSelectedSiteId ? editSelectedSiteId.split(',').filter(Boolean) : []}
+                    onChange={(e: SelectChangeEvent<string[]>) => {
+                      const value = e.target.value;
+                      const ids = typeof value === 'string' ? value.split(',') : value;
+                      setEditSelectedSiteId(ids.filter(Boolean).join(','));
                     }}
-                    value={editSelectedSiteId ? editSelectedSiteId.split(',').map(id => {
-                      const site = sites.find(s => s.id.toString() === id.trim());
-                      return site ? { value: id.trim(), label: site.name } : null;
-                    }).filter(Boolean) : []}
-                    className="mt-1"
-                    placeholder="Select sites..."
-                    noOptionsMessage={() => "No sites available"}
-                    styles={{
-                      control: (base) => ({
-                        ...base,
-                        minHeight: '40px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '0px',
-                        boxShadow: 'none',
-                        '&:hover': {
-                          border: '1px solid #cbd5e1'
-                        }
-                      }),
-                      multiValue: (base) => ({
-                        ...base,
-                        backgroundColor: '#f1f5f9',
-                        borderRadius: '0px'
-                      }),
-                      multiValueLabel: (base) => ({
-                        ...base,
-                        color: '#334155'
-                      }),
-                      multiValueRemove: (base) => ({
-                        ...base,
-                        color: '#64748b',
-                        borderRadius: '0px',
-                        '&:hover': {
-                          backgroundColor: '#e2e8f0',
-                          color: '#475569'
-                        }
+                    renderValue={(selected) =>
+                      selected.length > 0
+                        ? sites
+                            .filter((site) => selected.includes(site.id.toString()))
+                            .map((site) => site.name)
+                            .join(', ')
+                        : 'Select sites...'
+                    }
+                    displayEmpty
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    {sites.length === 0 ? (
+                      <MenuItem disabled value="">
+                        <em>No sites available</em>
+                      </MenuItem>
+                    ) : (
+                      sites.map((site) => {
+                        const selectedIds = editSelectedSiteId
+                          ? editSelectedSiteId.split(',').filter(Boolean)
+                          : [];
+                        return (
+                          <MenuItem key={site.id} value={site.id.toString()}>
+                            <MuiCheckbox
+                              checked={selectedIds.includes(site.id.toString())}
+                              size="small"
+                            />
+                            <ListItemText primary={site.name} />
+                          </MenuItem>
+                        );
                       })
-                    }}
-                  />
-                </div>
+                    )}
+                  </MuiSelect>
+                </MuiFormControl>
 
                 <div>
                   <label className="block text-sm font-medium mb-2">
@@ -1331,7 +1340,7 @@ export const CategoryTypeTab: React.FC = () => {
                     placeholder="Response Time"
                     type="number"
                     min="0"
-                    className="w-full"
+                    className="w-full bg-white border-gray-300 rounded-md focus-visible:ring-brand focus-visible:border-brand"
                   />
                 </div>
               </div>
@@ -1448,65 +1457,47 @@ export const CategoryTypeTab: React.FC = () => {
               </div>
 
               <div className="mt-4">
-                <Label className="text-base font-semibold">Assign Engineers</Label>
-                <div className="mt-2">
-                  <ReactSelect
-                    key={selectedEngineers.join(',')}
-                    isMulti
-                    options={engineers.map(engineer => ({
-                      value: engineer.id,
-                      label: engineer.full_name
-                    }))}
-                    onChange={(selected) => {
-                      if (!selected) {
-                        setSelectedEngineers([]);
-                        return;
-                      }
-
-                      const newEngineers = selected.map(s => s.value);
-                      setSelectedEngineers(newEngineers);
+                <MuiFormControl fullWidth variant="outlined">
+                  <InputLabel id="edit-engineers-label">Assign Engineers</InputLabel>
+                  <MuiSelect
+                    labelId="edit-engineers-label"
+                    label="Assign Engineers"
+                    multiple
+                    value={selectedEngineers.map(String)}
+                    onChange={(e: SelectChangeEvent<string[]>) => {
+                      const value = e.target.value;
+                      const ids = typeof value === 'string' ? value.split(',') : value;
+                      setSelectedEngineers(ids.map(Number).filter((id) => !Number.isNaN(id)));
                     }}
-                    value={engineers
-                      .filter(engineer => selectedEngineers.includes(engineer.id))
-                      .map(engineer => ({
-                        value: engineer.id,
-                        label: engineer.full_name
-                      }))}
-                    className="mt-1"
-                    placeholder="Select engineers..."
-                    noOptionsMessage={() => "No engineers available"}
-                    styles={{
-                      control: (base) => ({
-                        ...base,
-                        minHeight: '40px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '0px',
-                        boxShadow: 'none',
-                        '&:hover': {
-                          border: '1px solid #cbd5e1'
-                        }
-                      }),
-                      multiValue: (base) => ({
-                        ...base,
-                        backgroundColor: '#f1f5f9',
-                        borderRadius: '0px'
-                      }),
-                      multiValueLabel: (base) => ({
-                        ...base,
-                        color: '#334155'
-                      }),
-                      multiValueRemove: (base) => ({
-                        ...base,
-                        color: '#64748b',
-                        borderRadius: '0px',
-                        '&:hover': {
-                          backgroundColor: '#e2e8f0',
-                          color: '#475569'
-                        }
-                      })
-                    }}
-                  />
-                </div>
+                    renderValue={(selected) =>
+                      selected.length > 0
+                        ? engineers
+                            .filter((engineer) => selected.includes(String(engineer.id)))
+                            .map((engineer) => engineer.full_name)
+                            .join(', ')
+                        : 'Select engineers...'
+                    }
+                    displayEmpty
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    {engineers.length === 0 ? (
+                      <MenuItem disabled value="">
+                        <em>No engineers available</em>
+                      </MenuItem>
+                    ) : (
+                      engineers.map((engineer) => (
+                        <MenuItem key={engineer.id} value={String(engineer.id)}>
+                          <MuiCheckbox
+                            checked={selectedEngineers.includes(engineer.id)}
+                            size="small"
+                          />
+                          <ListItemText primary={engineer.full_name} />
+                        </MenuItem>
+                      ))
+                    )}
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
 
 
@@ -1566,7 +1557,8 @@ export const CategoryTypeTab: React.FC = () => {
                 <Button 
                   onClick={() => handleEditSubmit({})}
                   disabled={isSubmitting}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                  className="fm-button-fix fm-button-brand px-4 py-2"
+                  variant="ghost"
                 >
                   {isSubmitting ? 'Updating...' : 'Submit'}
                 </Button>

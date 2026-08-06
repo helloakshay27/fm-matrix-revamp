@@ -1,9 +1,9 @@
-
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Eye, Edit } from "lucide-react";
+import React, { useState, useEffect, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { Plus, Eye, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 interface EmployeeData {
   id: string;
@@ -15,17 +15,30 @@ interface EmployeeData {
   userType: string;
 }
 
+const columns: ColumnConfig[] = [
+  { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'employeeId', label: 'Employee ID', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'firstName', label: 'First Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'lastName', label: 'Last Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'email', label: 'Email Address', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'mobile', label: 'Mobile No.', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'userType', label: 'User Type', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+];
+
 export const EmployeesDashboard = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [employees] = useState<EmployeeData[]>([
     {
       id: '220274',
       employeeId: '9556',
       firstName: 'Test',
       lastName: 'Bulk',
-      email: 'aaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@gmail.com',
+      email:
+        'aaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@gmail.com',
       mobile: '9774545411',
-      userType: 'User'
+      userType: 'User',
     },
     {
       id: '218970',
@@ -34,7 +47,7 @@ export const EmployeesDashboard = () => {
       lastName: 'test wallet',
       email: 'test200@yopmail.com',
       mobile: '8642589677',
-      userType: 'User'
+      userType: 'User',
     },
     {
       id: '212919',
@@ -43,7 +56,7 @@ export const EmployeesDashboard = () => {
       lastName: 'kumar',
       email: '2134513211@gmail.com',
       mobile: '2134513211',
-      userType: 'Admin'
+      userType: 'Admin',
     },
     {
       id: '208268',
@@ -52,7 +65,7 @@ export const EmployeesDashboard = () => {
       lastName: 'User',
       email: 'akksjs121@akks.com',
       mobile: '4982738492',
-      userType: 'User'
+      userType: 'User',
     },
     {
       id: '206726',
@@ -61,7 +74,7 @@ export const EmployeesDashboard = () => {
       lastName: '1000',
       email: 'test5999@yopmail.com',
       mobile: '8811881188',
-      userType: 'Admin'
+      userType: 'Admin',
     },
     {
       id: '206725',
@@ -70,7 +83,7 @@ export const EmployeesDashboard = () => {
       lastName: '999.0',
       email: 'test5998@yopmail.com',
       mobile: '4618220262',
-      userType: 'User'
+      userType: 'User',
     },
     {
       id: '206722',
@@ -79,7 +92,7 @@ export const EmployeesDashboard = () => {
       lastName: '996.',
       email: 'test5995@yopmail.com',
       mobile: '4618220259',
-      userType: 'User'
+      userType: 'User',
     },
     {
       id: '206720',
@@ -88,9 +101,24 @@ export const EmployeesDashboard = () => {
       lastName: '994.0',
       email: 'test5993@yopmail.com',
       mobile: '4618220257',
-      userType: 'Admin'
-    }
+      userType: 'Admin',
+    },
   ]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const filteredData = useMemo(() => {
+    if (!searchTerm.trim()) return employees;
+    const q = searchTerm.toLowerCase();
+    return employees.filter((employee) =>
+      Object.values(employee).some((value) =>
+        String(value ?? '').toLowerCase().includes(q)
+      )
+    );
+  }, [employees, searchTerm]);
 
   const handleAddClick = () => {
     navigate('/vas/space-management/setup/employees/add');
@@ -104,73 +132,83 @@ export const EmployeesDashboard = () => {
     navigate(`/vas/space-management/setup/employees/edit/${employee.id}`);
   };
 
+  const renderCell = (item: EmployeeData, columnKey: string) => {
+    switch (columnKey) {
+      case 'id':
+        return <span className="font-medium text-gray-900">{item.id}</span>;
+      case 'employeeId':
+        return item.employeeId || '--';
+      case 'email':
+        return (
+          <span className="block max-w-[220px] truncate text-gray-900" title={item.email}>
+            {item.email}
+          </span>
+        );
+      default:
+        return item[columnKey as keyof EmployeeData] || '--';
+    }
+  };
+
+  const renderActions = (item: EmployeeData) => (
+    <div className="flex items-center justify-center gap-1">
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+        onClick={() => handleViewClick(item)}
+        title="View"
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+        onClick={() => handleEditClick(item)}
+        title="Edit"
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="flex-1 p-6">
-        {/* Header */}
+    <div className="flex min-h-screen bg-gray-50 w-full max-w-full overflow-x-hidden">
+      <div className="flex-1 min-w-0 p-6 w-full max-w-full">
         <div className="mb-6">
           <div className="text-sm text-gray-500 mb-2">Space &gt; Employees</div>
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-800">EMPLOYEES</h1>
-            <Button 
-              onClick={handleAddClick}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </Button>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-800">EMPLOYEES</h1>
         </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-100">
-                <TableHead className="font-semibold text-gray-700">Actions</TableHead>
-                <TableHead className="font-semibold text-gray-700">ID</TableHead>
-                <TableHead className="font-semibold text-gray-700">Employee ID</TableHead>
-                <TableHead className="font-semibold text-gray-700">First Name</TableHead>
-                <TableHead className="font-semibold text-gray-700">Last Name</TableHead>
-                <TableHead className="font-semibold text-gray-700">Email Address</TableHead>
-                <TableHead className="font-semibold text-gray-700">Mobile No.</TableHead>
-                <TableHead className="font-semibold text-gray-700">User Type</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {employees.map((employee) => (
-                <TableRow key={employee.id} className="border-b">
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="p-1"
-                        onClick={() => handleViewClick(employee)}
-                      >
-                        <Eye className="w-4 h-4 text-blue-600" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="p-1"
-                        onClick={() => handleEditClick(employee)}
-                      >
-                        <Edit className="w-4 h-4 text-green-600" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-blue-600">{employee.id}</TableCell>
-                  <TableCell>{employee.employeeId}</TableCell>
-                  <TableCell>{employee.firstName}</TableCell>
-                  <TableCell>{employee.lastName}</TableCell>
-                  <TableCell className="text-blue-600 max-w-xs truncate">{employee.email}</TableCell>
-                  <TableCell>{employee.mobile}</TableCell>
-                  <TableCell>{employee.userType}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="w-full min-w-0 max-w-full">
+          <EnhancedTable
+            data={filteredData}
+            columns={columns}
+            renderCell={renderCell}
+            renderActions={renderActions}
+            storageKey="employees-table-v2"
+            enableSearch
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            disableClientSearch
+            searchPlaceholder="Search..."
+            pagination
+            pageSize={10}
+            hideTableExport
+            emptyMessage="No employees found"
+            loading={loading}
+            leftActions={
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleAddClick}
+                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap [&_svg]:text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add
+                </Button>
+              </div>
+            }
+          />
         </div>
       </div>
     </div>

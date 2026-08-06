@@ -41,12 +41,24 @@ export const initializeGlobalMUISelectSearchEnhancer = () => {
     if (enhancedDropdowns.has(dropdown)) {
       return;
     }
+
+    // Allow specific menus to opt out and keep native MUI dropdown behavior
+    if (dropdown.classList.contains('disable-mui-select-search')) {
+      return;
+    }
     
     enhancedDropdowns.add(dropdown);
     
     // Find the listbox (where options are)
     const listbox = dropdown.querySelector('[role="listbox"]');
     if (!listbox) {
+      return;
+    }
+
+    if (
+      listbox.getAttribute('data-disable-mui-select-search') === 'true' ||
+      listbox.closest('.disable-mui-select-search')
+    ) {
       return;
     }
     
@@ -74,7 +86,7 @@ export const initializeGlobalMUISelectSearchEnhancer = () => {
     // Create search input with enhanced design
     const searchInput = document.createElement('input');
     searchInput.type = 'text';
-    searchInput.placeholder = '🔍 Type to search...';
+    searchInput.placeholder = 'Type to search...';
     searchInput.className = 'mui-search-input';
     searchInput.setAttribute('data-search-input', 'true');
     

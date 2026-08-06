@@ -19,6 +19,16 @@ import {
 } from '@mui/material';
 const muiTheme = createTheme({});
 
+const formatDate = (value: string | null | undefined) => {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return value;
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+};
+
 
 export const ItemsDetails = () => {
     const navigate = useNavigate();
@@ -193,7 +203,7 @@ export const ItemsDetails = () => {
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
                             className={`pb-2 text-sm font-medium capitalize ${activeTab === tab
-                                ? "border-b-2 border-[#C72030] text-[#C72030]"
+                                ? "border-b-2 border-brand text-brand"
                                 : "text-gray-500"
                                 }`}
                         >
@@ -213,7 +223,7 @@ export const ItemsDetails = () => {
                                 {itemIconUrl ? (
                                     <img src={itemIconUrl} className="w-full h-full object-cover" />
                                 ) : (
-                                    <FileCog className="text-[#C72030]" />
+                                    <FileCog className="text-brand" />
                                 )}
                             </div>
                             <div>
@@ -285,6 +295,36 @@ export const ItemsDetails = () => {
 
 
 
+                        {/* INVENTORY DETAILS */}
+                        <div className="border p-6 rounded bg-white">
+                            <h4 className="font-semibold mb-3">Inventory Details</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="flex items-center gap-2">
+                                    <b>Is Inventory:</b>
+                                    <input
+                                        type="checkbox"
+                                        checked={!!itemData?.track_inventory}
+                                        readOnly
+                                        disabled
+                                        className="w-4 h-4 accent-brand"
+                                    />
+                                    <span className="text-sm text-gray-600">
+                                        {itemData?.track_inventory ? "Yes" : "No"}
+                                    </span>
+                                </div>
+                                <p><b>Current Stock:</b> {itemData?.current_stock != null ? itemData.current_stock : "-"}</p>
+                                <p><b>Opening Qty:</b> {itemData?.opening_stock != null ? itemData.opening_stock : "-"}</p>
+                                <p><b>Rate:</b> {itemData?.opening_stock_rate != null ? itemData.opening_stock_rate : "-"}</p>
+                                <p><b>Value:</b> {
+                                    itemData?.opening_stock != null && itemData?.opening_stock_rate != null
+                                        ? (parseFloat(itemData.opening_stock) * parseFloat(itemData.opening_stock_rate)).toFixed(2)
+                                        : itemData?.opening_stock_value != null
+                                            ? itemData.opening_stock_value
+                                            : "-"
+                                }</p>
+                            </div>
+                        </div>
+
                         {/* STOCK MOVEMENTS TABLE */}
                         {itemData?.track_inventory && (
                         <div className="border p-6 rounded bg-white">
@@ -316,17 +356,22 @@ export const ItemsDetails = () => {
                                         { key: "quantity", label: "Quantity" },
                                         { key: "rate", label: "Rate" },
                                         { key: "total_amount", label: "Amount" },
-                                        { key: "balance", label: "Balance" },
+                                        { key: "balance", label: "Current Stock Balance" },
                                     ]}
                                     renderRow={(row) => ({
                                         ...row,
+
+                                        date: formatDate(row.date),
 
                                         direction: (
                                             <Chip
                                                 label={row.direction}
                                                 size="small"
-                                                color={row.direction === "in" ? "success" : "error"}
                                                 variant="outlined"
+                                                sx={{
+                                                    color: "var(--color-primary)",
+                                                    borderColor: "var(--color-primary)",
+                                                }}
                                             />
                                         ),
 
@@ -387,7 +432,7 @@ export const ItemsDetails = () => {
                                         { key: "total_amount", label: "Total" },
                                         { key: "status", label: "Status" },
                                     ]}
-                                    renderRow={(row) => row}
+                                    renderRow={(row) => ({ ...row, date: formatDate(row.date) })}
                                 />
                             </>
                         )}
@@ -404,7 +449,7 @@ export const ItemsDetails = () => {
                                         { key: "total_amount", label: "Total" },
                                         { key: "status", label: "Status" },
                                     ]}
-                                    renderRow={(row) => row}
+                                    renderRow={(row) => ({ ...row, date: formatDate(row.date) })}
                                 />
                             </>
                         )}
@@ -421,7 +466,7 @@ export const ItemsDetails = () => {
                                         { key: "total_amount", label: "Total" },
                                         { key: "status", label: "Status" },
                                     ]}
-                                    renderRow={(row) => row}
+                                    renderRow={(row) => ({ ...row, date: formatDate(row.date) })}
                                 />
                             </>
                         )}
@@ -438,7 +483,7 @@ export const ItemsDetails = () => {
                                         { key: "total_amount", label: "Total" },
                                         { key: "status", label: "Status" },
                                     ]}
-                                    renderRow={(row) => row}
+                                    renderRow={(row) => ({ ...row, date: formatDate(row.date) })}
                                 />
                             </>
                         )}
@@ -455,7 +500,7 @@ export const ItemsDetails = () => {
                                         { key: "total_amount", label: "Total" },
                                         { key: "status", label: "Status" },
                                     ]}
-                                    renderRow={(row) => row}
+                                    renderRow={(row) => ({ ...row, date: formatDate(row.date) })}
                                 />
                             </>
                         )}
@@ -471,7 +516,7 @@ export const ItemsDetails = () => {
                             {/* Header */}
                             <div className="p-6 border-b">
                                 <h3 className="text-lg font-semibold flex items-center gap-2">
-                                    <FileText className="h-5 w-5 text-primary" />
+                                    <FileText className="h-5 w-5 text-brand" />
                                     History
                                 </h3>
                             </div>
@@ -490,11 +535,7 @@ export const ItemsDetails = () => {
 
                                             const Icon = isCreated ? CirclePlus : isUpdated ? Edit : FileText;
 
-                                            const iconStyle = isCreated
-                                                ? "bg-green-50 text-green-600 border-green-100"
-                                                : isUpdated
-                                                    ? "bg-sky-50 text-sky-600 border-sky-100"
-                                                    : "bg-gray-50 text-gray-500 border-gray-100";
+                                            const iconStyle = "bg-brand-light text-brand border-brand";
 
                                             return (
                                                 <div key={key} className="flex gap-6 py-5">

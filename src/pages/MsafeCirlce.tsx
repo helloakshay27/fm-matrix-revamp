@@ -178,7 +178,7 @@ const MsafeCirlce = () => {
                         onCheckedChange={() =>
                             handleCheckboxChange(item)
                         }
-                        className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                        className="data-[state=checked]:bg-gray-500 data-[state=checked]:border-gray-500"
                         disabled={updatingStatus[item.id]}
                     />
                 );
@@ -257,7 +257,8 @@ const MsafeCirlce = () => {
                         <div className="pt-4">
                             <Button
                                 type="submit"
-                                className="bg-purple-600 hover:bg-purple-700 text-white w-full"
+                                variant="outline"
+                                className="fm-button-fix fm-button-brand w-full"
                                 disabled={submitting}
                             >
                                 Submit

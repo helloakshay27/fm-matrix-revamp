@@ -147,6 +147,7 @@ export const BookingSetupDetailClubPage = () => {
     seaterInfo: "Select a seater",
     floorInfo: "Select a floor",
     sharedContentInfo: "",
+    location: "",
     slots: [
       {
         startTime: { hour: "00", minute: "00" },
@@ -161,8 +162,10 @@ export const BookingSetupDetailClubPage = () => {
     chargeSetup: {
       member: { selected: false, adult: "", child: "" },
       guest: { selected: false, adult: "", child: "" },
+      hotelGuest: { selected: false, adult: "" },
       minimumPersonAllowed: "1",
       maximumPersonAllowed: "1",
+      fullCourtCharge: "",
     },
     blockDays: [] as Array<{
       id: number;
@@ -372,6 +375,7 @@ export const BookingSetupDetailClubPage = () => {
         }, {}) || {},
         seaterInfo: response.seater_info,
         floorInfo: response.location_info,
+        location: response.location || "",
         sharedContentInfo: response.shared_content,
         slots: response.facility_slots?.map((slot) => ({
           startTime: { hour: slot.facility_slot.start_hour, minute: slot.facility_slot.start_min },
@@ -385,8 +389,10 @@ export const BookingSetupDetailClubPage = () => {
         chargeSetup: {
           member: { selected: response.facility_charge?.adult_member_charge, adult: response.facility_charge?.adult_member_charge, child: response.facility_charge?.child_member_charge },
           guest: { selected: response.facility_charge?.adult_guest_charge, adult: response.facility_charge?.adult_guest_charge, child: response.facility_charge?.child_guest_charge },
+          hotelGuest: { selected: response.facility_charge?.hotel_guest_charge, adult: response.facility_charge?.hotel_guest_charge },
           minimumPersonAllowed: response.min_people,
           maximumPersonAllowed: response.max_people,
+          fullCourtCharge: response.facility_charge?.full_court_charge,
         },
         blockDays: response?.facility_blockings?.map((blocking: any) => ({
           id: blocking.facility_blocking?.id,
@@ -660,13 +666,13 @@ export const BookingSetupDetailClubPage = () => {
                   {formData.isBookable ? "Bookable" : formData.isRequest ? "Request" : "-"}
                 </span>
               </div>
-              {/* <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Department</span>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Location</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
-                  {formData.department ? departments.find(d => d.id === formData.department)?.department_name || "-" : "-"}
+                  {formData.location || "-"}
                 </span>
-              </div> */}
+              </div>
             </div>
           </div>
 
@@ -708,6 +714,20 @@ export const BookingSetupDetailClubPage = () => {
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {formData.chargeSetup.guest.child || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Hotel Guest Adult Charge</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.chargeSetup.hotelGuest.adult || "-"}
+                </span>
+              </div>
+              <div className="flex items-start">
+                <span className="text-gray-500 min-w-[140px]">Full Court Charge</span>
+                <span className="text-gray-500 mx-2">:</span>
+                <span className="text-gray-900 font-medium">
+                  {formData.chargeSetup.fullCourtCharge || "-"}
                 </span>
               </div>
               <div className="flex items-start">

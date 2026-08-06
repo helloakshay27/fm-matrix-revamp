@@ -1,11 +1,12 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Download, Pencil, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { incidentService, type Incident } from '@/services/incidentService';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useIncidentEvents } from '@/components/PostHogIncidentEvents';
 import ReportStep from './Reportstep';
 import InvestigateStep from './InvestigateStep';
 import ProvisionalStep from './ProvisionalStep';
@@ -98,7 +99,12 @@ export interface IncidentInvestigation {
 export const IncidentNewDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { shouldShow } = useDynamicPermissions();
+    const incidentEvents = useIncidentEvents();
+    const detailViewedFiredRef = useRef(false);
+    // Snapshot of the status at load, to measure time_in_previous_status on update
+    const statusLoadedAtRef = useRef<number>(Date.now());
 
     const [currentStep, setCurrentStep] = useState(1);
     const [incident, setIncident] = useState<Incident | null>(null);
@@ -416,6 +422,12 @@ export const IncidentNewDetails = () => {
             if (incidentData) {
                 console.log('Fetched incident data:', incidentData);
                 setIncident(incidentData);
+
+                if (!detailViewedFiredRef.current) {
+                    detailViewedFiredRef.current = true;
+                    const openSource = (location.state as { openSource?: 'search' | 'filter' | 'list' } | null)?.openSource ?? 'list';
+                    incidentEvents.onIncidentDetailOpened(openSource, incidentData.current_status ?? null);
+                }
 
                 // Prefill all form fields from API response
                 // Basic fields
@@ -739,6 +751,7 @@ export const IncidentNewDetails = () => {
                 document.body.removeChild(link);
                 window.URL.revokeObjectURL(url);
                 toast.success('Incident report downloaded successfully');
+                incidentEvents.onIncidentReportDownloaded('pdf');
             } else {
                 toast.error('Failed to download incident report');
             }
@@ -1769,6 +1782,12 @@ export const IncidentNewDetails = () => {
 
             if (response.ok) {
                 toast.success('Status updated successfully');
+                incidentEvents.onIncidentStatusUpdated({
+                    from_status: incident?.current_status ?? null,
+                    to_status: statusUpdateValue,
+                    comment_length: statusComment.trim().length,
+                    time_in_previous_status_sec: Math.round((Date.now() - statusLoadedAtRef.current) / 1000),
+                });
                 closeStatusModal();
                 fetchIncidentDetails();
             } else {
@@ -1781,7 +1800,7 @@ export const IncidentNewDetails = () => {
         } finally {
             setStatusUpdateLoading(false);
         }
-    }, [statusUpdateValue, statusComment, statusRca, statusCorrectiveAction, statusPreventiveAction, id, fetchIncidentDetails, closeStatusModal]);
+    }, [statusUpdateValue, statusComment, statusRca, statusCorrectiveAction, statusPreventiveAction, id, fetchIncidentDetails, closeStatusModal, incident, incidentEvents]);
 
     const steps = [
         { number: 1, label: 'Report' },
@@ -2360,7 +2379,10 @@ export const IncidentNewDetails = () => {
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => navigate(`/safety/incident/edit/${id}`)}
+                            onClick={() => {
+                                incidentEvents.onIncidentEditOpened();
+                                navigate(`/safety/incident/edit/${id}`);
+                            }}
                             className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#F5E6D3]"
                         >
                             <Pencil className="w-4 h-4" />
@@ -2370,7 +2392,10 @@ export const IncidentNewDetails = () => {
 
                     <Button
                         size="sm"
-                        onClick={() => setShowStatusModal(true)}
+                        onClick={() => {
+                            incidentEvents.onIncidentStatusUpdateOpened(incident?.current_status ?? null);
+                            setShowStatusModal(true);
+                        }}
                         className="flex items-center gap-2"
                     >
                         Update Status

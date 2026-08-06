@@ -5,6 +5,7 @@ import { Plus, X } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { usePermitEvents } from "@/components/PostHogPermitEvents";
 
 interface AnswerOption {
     text: string;
@@ -26,6 +27,12 @@ export const AddPermitChecklist = () => {
     React.useEffect(() => {
         setCurrentSection('Safety');
     }, [setCurrentSection]);
+
+    const { onChecklistCreateOpened, onChecklistSaved } = usePermitEvents();
+
+    React.useEffect(() => {
+        onChecklistCreateOpened();
+    }, []);
 
     const [formData, setFormData] = useState({
         category: '',
@@ -195,6 +202,11 @@ export const AddPermitChecklist = () => {
         }
 
         try {
+            onChecklistSaved({
+                question_count: questions.length,
+                has_mandatory: questions.some(q => q.mandatory)
+            });
+
             setIsSubmitting(true);
 
             let baseUrl = localStorage.getItem('baseUrl') || '';
@@ -347,7 +359,7 @@ export const AddPermitChecklist = () => {
                             <Button
                                 type="button"
                                 onClick={addQuestion}
-                                className="bg-[#C72030] hover:bg-[#B8252F] text-white h-8 w-8 rounded-full p-0"
+                                className="bg-brand hover:bg-brand-hover text-white h-8 w-8 rounded-full p-0 [&_svg]:text-white"
                             >
                                 <Plus className="w-4 h-4" />
                             </Button>
@@ -480,11 +492,11 @@ export const AddPermitChecklist = () => {
 
                                     <Button
                                         type="button"
-                                        variant="outline"
                                         onClick={() => addOption(question.id)}
-                                        className="mt-2 h-9 w-9 p-0 border-2 border-dashed border-gray-300 hover:border-gray-400"
+                                        className="mt-2 flex items-center gap-2 bg-brand hover:bg-brand-hover text-white [&_svg]:!text-white"
                                     >
                                         <Plus className="w-4 h-4" />
+                                        Add Option
                                     </Button>
                                 </div>
                             )}
@@ -515,19 +527,21 @@ export const AddPermitChecklist = () => {
                 </div>
 
                 {/* Bottom Buttons */}
-                <div className="flex justify-end space-x-4 mt-8 pt-6 border-t">
+                <div className="flex justify-end gap-3 mt-8 pt-6 border-t">
                     <Button
+                        type="button"
                         variant="outline"
-                        className="px-8"
+                        className="px-8 border-brand text-brand hover:bg-brand-selected hover:text-brand"
                         disabled={isSubmitting}
                         onClick={() => navigate('/safety/permit/checklist')}
                     >
                         Cancel
                     </Button>
                     <Button
+                        type="button"
                         onClick={handleSubmit}
-                        className="bg-[#C72030] hover:bg-[#B8252F] text-white px-8"
-                        disabled={isSubmitting || isLoadingCategories}
+                        className="px-8 !bg-brand hover:!bg-brand-hover !text-white disabled:!opacity-100 disabled:!bg-brand"
+                        disabled={isSubmitting}
                     >
                         {isSubmitting ? 'Saving...' : 'Save Checklist'}
                     </Button>

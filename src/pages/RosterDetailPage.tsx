@@ -452,7 +452,7 @@ export const RosterDetailPage: React.FC = () => {
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[#E5E0D3] text-brand flex items-center justify-center">
               <Eye className="w-5 h-5" />
             </div>
             <div>
@@ -567,7 +567,7 @@ export const RosterDetailPage: React.FC = () => {
                     key={dept.id}
                     label={dept.department_name}
                     size="small"
-                    sx={{ backgroundColor: '#C72030', color: 'white' }}
+                    sx={{ backgroundColor: '#DA7756', color: 'white' }}
                   />
                 ))}
               </div>
@@ -666,7 +666,7 @@ export const RosterDetailPage: React.FC = () => {
 
       {/* Footer Actions */}
       <div className="flex items-center gap-3 justify-center pt-2 border-t border-gray-200">
-        <Button onClick={handleEdit} className="px-8">
+        <Button onClick={handleEdit} className="fm-button-fix fm-button-brand px-4 py-2" variant="ghost">
           <Edit className="w-4 h-4 mr-2" />
           Edit Template
         </Button>

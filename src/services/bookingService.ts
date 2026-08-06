@@ -28,6 +28,8 @@ export interface BookingData {
   companyName: string;
   facility: string;
   facilityType: string;
+  amountWithoutGst?: string | number;
+  amountWithGst?: string | number;
   scheduledDate: string;
   scheduledTime: string;
   bookingStatus: 'Confirmed' | 'Pending' | 'Cancelled';
@@ -74,6 +76,8 @@ const transformBookingData = (apiData: FacilityBookingResponse): BookingData => 
     companyName: safeValue(apiData.company_name),
     facility: safeValue(apiData.facility_name),
     facilityType: safeValue(apiData.fac_type),
+    amountWithoutGst: apiData.sub_total ?? '-',
+    amountWithGst: apiData.amount_full ?? '-',
     scheduledDate: formatDate(apiData.startdate),
     scheduledTime: safeValue(apiData.show_schedule_24_hour),
     bookingStatus: (apiData.current_status as 'Confirmed' | 'Pending' | 'Cancelled') || 'Pending',
@@ -83,7 +87,7 @@ const transformBookingData = (apiData: FacilityBookingResponse): BookingData => 
   };
 };
 
-export const fetchFacilityBookings = async ({ baseUrl, token, pageSize, currentPage, userId }): Promise<FacilityBookingsResponse[]> => {
+export const fetchFacilityBookings = async ({ baseUrl, token, pageSize, currentPage, userId }): Promise<FacilityBookingsResponse> => {
   try {
     const params = new URLSearchParams({
       per_page: String(pageSize),

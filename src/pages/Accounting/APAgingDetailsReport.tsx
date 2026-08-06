@@ -81,12 +81,12 @@ const formatCurrency = (value: number) =>
 const toNumber = (v?: string | number) => parseFloat(String(v ?? 0)) || 0;
 
 const statusBadgeMap: Record<string, string> = {
-  open: "bg-blue-100 text-blue-700",
-  paid: "bg-green-100 text-green-700",
-  draft: "bg-gray-100 text-gray-700",
-  overdue: "bg-orange-100 text-orange-700",
-  void: "bg-red-100 text-red-700",
-  cancelled: "bg-red-100 text-red-700",
+  open: "bg-gray-100 text-gray-800",
+  paid: "bg-gray-100 text-gray-800",
+  draft: "bg-gray-100 text-gray-800",
+  overdue: "bg-gray-100 text-gray-800",
+  void: "bg-gray-100 text-gray-800",
+  cancelled: "bg-gray-100 text-gray-800",
 };
 
 const APAgingDetailsReport: React.FC = () => {
@@ -195,24 +195,24 @@ const APAgingDetailsReport: React.FC = () => {
       date: <span className="text-sm text-gray-600">{isTotal ? "" : formatDate(row.date)}</span>,
       due_date: <span className="text-sm text-gray-600">{isTotal ? "" : formatDate(row.due_date)}</span>,
       transaction_number: (
-        <span className="text-sm font-medium text-blue-600">{isTotal ? "" : row.transaction_number}</span>
+        <span className="text-sm font-medium text-brand">{isTotal ? "" : row.transaction_number}</span>
       ),
       type: <span className="text-sm text-gray-600">{isTotal ? "" : row.type}</span>,
       status: isTotal ? (
         <span className="text-sm font-bold text-[#1A1A1A]">Total</span>
       ) : row.status && row.status !== "-" ? (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadgeMap[row.status.toLowerCase()] || "bg-gray-100 text-gray-700"}`}>
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadgeMap[row.status.toLowerCase()] || "bg-gray-100 text-gray-800"}`}>
           {row.status}
         </span>
       ) : (
         <span className="text-sm text-gray-600">-</span>
       ),
       vendor_name: (
-        <span className="text-sm font-medium text-blue-600">{isTotal ? "" : row.vendor_name}</span>
+        <span className="text-sm font-medium text-brand">{isTotal ? "" : row.vendor_name}</span>
       ),
       age: <span className="text-sm text-gray-600">{isTotal ? "" : row.age}</span>,
       bill_amount: (
-        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-blue-600"}`}>
+        <span className={`text-sm font-medium ${isTotal ? "font-bold text-[#1A1A1A]" : "text-brand"}`}>
           {formatCurrency(row.bill_amount)}
         </span>
       ),

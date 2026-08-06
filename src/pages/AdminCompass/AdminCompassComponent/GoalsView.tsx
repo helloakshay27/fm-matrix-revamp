@@ -1366,11 +1366,11 @@ export const GoalsView = () => {
       {/* ── KANBAN VIEW ── */}
       {view === "kanban" &&
         (isFetchingKanban ? (
-          <div className="gv-kanban-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+          <div className="gv-kanban-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 16 }}>
             {[1, 2, 3, 4].map((n) => <div key={n} className="gv-skeleton" style={{ height: 300, borderRadius: 12 }} />)}
           </div>
         ) : (
-          <div className="gv-kanban-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+          <div className="gv-kanban-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 16 }}>
             {COLUMNS.map((col) => {
               const colGoals = filtered.filter((g) => g.status === col.key);
               const isOver = dragOverCol === col.key;

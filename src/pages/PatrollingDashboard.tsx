@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, RefreshCw } from 'lucide-react';
-import { useNavigate,useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { BulkUploadDialog } from '@/components/BulkUploadDialog';
@@ -19,6 +19,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { userService, User } from '@/services/userService';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { usePatrolEvents } from '@/components/PostHogSecurityEvents';
 
 // Type definitions for the API response
 interface PatrollingItem {
@@ -116,7 +117,7 @@ const columns: ColumnConfig[] = [{
   sortable: true,
   hideable: true,
   draggable: true
-}, 
+},
 // {
 //   key: 'assignee',
 //   label: 'Assignee',
@@ -147,6 +148,7 @@ export const PatrollingDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { shouldShow } = useDynamicPermissions();
+  const { onPatrolStatusToggled } = usePatrolEvents();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -156,10 +158,10 @@ export const PatrollingDashboard = () => {
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedPatrollingId, setSelectedPatrollingId] = useState<number | null>(null);
- const [currentPage, setCurrentPage] = useState(() => {
-  const params = new URLSearchParams(window.location.search);
-  return Number(params.get('page')) || 1;
-});
+  const [currentPage, setCurrentPage] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Number(params.get('page')) || 1;
+  });
   const [perPage, setPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
@@ -242,10 +244,10 @@ export const PatrollingDashboard = () => {
 
       if (result.success) {
         setPatrollingData(result.data);
-        
+
         // Calculate correct pagination values to handle edge cases
         const totalCount = result.pagination.total_count || 0;
-        
+
         // If no data, set pagination to show nothing
         if (totalCount === 0) {
           setPagination({
@@ -259,7 +261,7 @@ export const PatrollingDashboard = () => {
         } else {
           const actualTotalPages = Math.ceil(totalCount / per_page);
           const currentPageNum = Math.min(page, actualTotalPages);
-          
+
           setPagination({
             current_page: currentPageNum,
             per_page: per_page,
@@ -299,12 +301,12 @@ export const PatrollingDashboard = () => {
     };
     loadUsers();
   }, []);
- 
+
   useEffect(() => {
-  navigate(`${location.pathname}?page=${currentPage}`, {
-    replace: true,
-  });
-}, [currentPage]);
+    navigate(`${location.pathname}?page=${currentPage}`, {
+      replace: true,
+    });
+  }, [currentPage]);
   // Load data on component mount and when page/perPage/filters change
   useEffect(() => {
     console.log('Effect triggered - debouncedSearchQuery:', debouncedSearchQuery); // Debug log
@@ -427,7 +429,7 @@ export const PatrollingDashboard = () => {
     setSelectedPatrollingId(id);
     setIsDeleteModalOpen(true);
   };
-  
+
 
   const handleDeleteConfirm = async () => {
     if (!selectedPatrollingId) return;
@@ -548,6 +550,7 @@ export const PatrollingDashboard = () => {
       toast.success(`Patrolling ${!currentStatus ? 'activated' : 'deactivated'} successfully!`, {
         duration: 3000,
       });
+      onPatrolStatusToggled({ patrol_id: id, to_status: !currentStatus ? 'active' : 'inactive' });
     } catch (error: any) {
       console.error('Error toggling patrolling status:', error);
       toast.error(`Failed to update status: ${error.message}`, {
@@ -581,7 +584,8 @@ export const PatrollingDashboard = () => {
             {shouldShow("Patrolling", "create") && (
               <Button
                 size="sm"
-                className='bg-[#C72030] text-white hover:bg-[#C72030]/90'
+                className="fm-button-fix fm-button-brand px-4 py-2"
+                variant="ghost"
                 onClick={() => setShowActionPanel((prev) => !prev)}
               >
                 <Plus className="w-4 h-4 mr-2" /> Action
@@ -595,6 +599,7 @@ export const PatrollingDashboard = () => {
             variant="outline"
             onClick={handleRefreshSchedules}
             disabled={refreshLoading}
+            className="rounded-lg"
           >
             {refreshLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />

@@ -8,6 +8,7 @@ import { VisitorSelector } from './VisitorSelector';
 import { VisitorStatusOverviewCard } from './VisitorStatusOverviewCard';
 import { visitorComparisonAPI, VisitorComparisonResponse } from '@/services/visitorComparisonAPI';
 import { useToast } from '@/hooks/use-toast';
+import { useVisitorEvents } from '@/components/PostHogVisitorEvents';
 import {
   DndContext,
   closestCenter,
@@ -75,6 +76,13 @@ export const VisitorAnalyticsContent = () => {
   const [visitorComparisonData, setVisitorComparisonData] = useState<VisitorComparisonResponse | null>(null);
   const [visibleSections, setVisibleSections] = useState<string[]>(['overview', 'purposeWise', 'statusWise', 'recentVisitors']);
   const { toast } = useToast();
+  const visitorEvents = useVisitorEvents();
+
+  // F4 · Visitor Analytics Viewed — analytics surface mounted (tab opened)
+  useEffect(() => {
+    visitorEvents.onVisitorAnalyticsViewed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Function to get default dates (same as VisitorAnalyticsFilterDialog)
   const getDefaultDates = () => {
@@ -141,8 +149,10 @@ export const VisitorAnalyticsContent = () => {
       setIsLoading(true);
       const data = await visitorComparisonAPI.getVisitorComparison(fromDate, toDate);
       setVisitorComparisonData(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching visitor comparison:', error);
+      // F4 · Visitor Analytics Load Failed — guards the consumption denominator
+      visitorEvents.onVisitorAnalyticsLoadFailed(error?.response?.status ?? error?.code ?? 'fetch_error');
       toast({
         title: "Error",
         description: "Failed to fetch visitor comparison data",
@@ -155,6 +165,8 @@ export const VisitorAnalyticsContent = () => {
 
   const handleFilterApply = (newDateRange: { startDate: string; endDate: string }) => {
     setDateRange(newDateRange);
+    // F4 · Visitor Analytics Filtered
+    visitorEvents.onVisitorAnalyticsFiltered(`${newDateRange.startDate}-${newDateRange.endDate}`);
     if (newDateRange.startDate && newDateRange.endDate) {
       fetchVisitorComparison(newDateRange.startDate, newDateRange.endDate);
     }

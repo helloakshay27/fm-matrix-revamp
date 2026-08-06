@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useGatePassEvents } from '@/components/PostHogGatePassEvents';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,10 @@ import { Loader2 } from 'lucide-react';
 export const GatePassOutwardsDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const gatePassEvents = useGatePassEvents();
+  const openSource = (location.state as { openSource?: string } | null)?.openSource ?? 'direct';
+  const detailViewedFiredRef = useRef(false);
   const [activeTab, setActiveTab] = useState("profile");
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
@@ -56,6 +61,10 @@ export const GatePassOutwardsDetailPage = () => {
         }
       });
       setHandoverView(handoverMap);
+      if (!detailViewedFiredRef.current) {
+        detailViewedFiredRef.current = true;
+        gatePassEvents.onGatePassDetailViewed('profile', openSource);
+      }
     } finally {
       setLoading(false);
     }
@@ -63,7 +72,13 @@ export const GatePassOutwardsDetailPage = () => {
 
   React.useEffect(() => {
     fetchGatePassData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    gatePassEvents.onGatePassDetailViewed(tab as 'profile' | 'details' | 'attachments', openSource);
+  };
 
   const handleReceiveClick = (itemIndex: number) => {
     setSelectedItemIndex(itemIndex);
@@ -72,6 +87,8 @@ export const GatePassOutwardsDetailPage = () => {
     setReceivedDate('');
     setRemarks('');
     setAttachments([]);
+    const material = gatePassData?.gate_pass_materials?.[itemIndex];
+    gatePassEvents.onGatePassHandoverOpened(gatePassData?.id, material?.id ?? itemIndex);
   };
 
   const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,6 +139,14 @@ export const GatePassOutwardsDetailPage = () => {
         });
         setHandoverView(handoverMap);
 
+        gatePassEvents.onGatePassItemHandoverRecorded({
+          pass_id: gatePassData.id,
+          item_id: material.id,
+          received_date: receivedDate,
+          has_attachment: attachments.length > 0,
+          has_remarks: Boolean(remarks.trim()),
+        });
+
         // Close modal and reset form
         setIsReceiveModalOpen(false);
         setHandoverTo('');
@@ -141,10 +166,10 @@ export const GatePassOutwardsDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-32">
-        <div className="flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading...</span>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading gate pass details...</p>
         </div>
       </div>
     );
@@ -381,7 +406,7 @@ export const GatePassOutwardsDetailPage = () => {
 
       {/* Tabs */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <Tabs defaultValue="profile" className="w-full" onValueChange={setActiveTab}>
+        <Tabs defaultValue="profile" className="w-full" onValueChange={handleTabChange}>
           <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
             <TabsTrigger
               value="profile"

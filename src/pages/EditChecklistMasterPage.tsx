@@ -23,6 +23,31 @@ const fieldStyles = {
   },
 };
 
+const textFieldStyles = {
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': {
+      borderColor: '#ddd',
+    },
+    '&:hover fieldset': {
+      borderColor: 'var(--color-primary)',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: 'var(--color-primary)',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    '&.Mui-focused': {
+      color: 'var(--color-primary)',
+    },
+    '&.Mui-focused span': {
+      color: 'var(--color-primary) !important',
+    },
+  },
+  '& .MuiFormLabel-asterisk': {
+    color: 'var(--color-primary)',
+  },
+};
+
 export const EditChecklistMasterPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -429,8 +454,8 @@ export const EditChecklistMasterPage = () => {
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="bg-white border rounded-lg p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">1</div>
-            <h2 className="font-semibold text-lg" style={{ color: '#C72030' }}>Basic Info</h2>
+            <div className="w-6 h-6 bg-[var(--color-primary)] text-white rounded-full flex items-center justify-center text-sm">1</div>
+            <h2 className="font-semibold text-lg" style={{ color: 'var(--color-primary)' }}>Basic Info</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
@@ -442,9 +467,9 @@ export const EditChecklistMasterPage = () => {
                 row
                 sx={{
                   '& .MuiFormControlLabel-root .MuiRadio-root': {
-                    color: '#C72030',
+                    color: 'var(--color-primary)',
                     '&.Mui-checked': {
-                      color: '#C72030',
+                      color: 'var(--color-primary)',
                     },
                   },
                 }}
@@ -468,9 +493,9 @@ export const EditChecklistMasterPage = () => {
                 row
                 sx={{
                   '& .MuiFormControlLabel-root .MuiRadio-root': {
-                    color: '#C72030',
+                    color: 'var(--color-primary)',
                     '&.Mui-checked': {
-                      color: '#C72030',
+                      color: 'var(--color-primary)',
                     },
                   },
                 }}
@@ -496,12 +521,13 @@ export const EditChecklistMasterPage = () => {
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
+              sx={textFieldStyles}
             />
 
             <TextField
               label={
                 <span style={{ fontSize: '16px' }}>
-                  Description <span style={{ color: "red" }}>*</span>
+                  Description <span style={{ color: "var(--color-primary)" }}>*</span>
                 </span>
               }
               placeholder="Enter Description/SOP"
@@ -511,6 +537,7 @@ export const EditChecklistMasterPage = () => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               sx={{
+                ...textFieldStyles,
                 mb: 3,
                 "& textarea": {
                   width: "100% !important",   // force full width
@@ -561,7 +588,7 @@ export const EditChecklistMasterPage = () => {
                 {taskSections.length > 1 && (
                   <IconButton
                     onClick={() => removeTaskSection(section.id)}
-                    sx={{ color: '#C72030' }}
+                    sx={{ color: 'var(--color-primary)' }}
                   >
                     <X />
                   </IconButton>
@@ -640,7 +667,7 @@ export const EditChecklistMasterPage = () => {
                           backgroundColor: 'rgba(255, 255, 255, 0.8)',
                           '&:hover': {
                             backgroundColor: 'rgba(255, 255, 255, 1)',
-                            color: '#C72030'
+                            color: 'var(--color-primary)'
                           }
                         }}
                         size="small"
@@ -656,7 +683,7 @@ export const EditChecklistMasterPage = () => {
                             <MuiCheckbox
                               checked={task.mandatory}
                               onChange={(e) => updateTask(section.id, task.id, 'mandatory', e.target.checked)}
-                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                              sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                             />
                           }
                           label="Mandatory"
@@ -666,7 +693,7 @@ export const EditChecklistMasterPage = () => {
                             <MuiCheckbox
                               checked={task.helpText}
                               onChange={(e) => updateTask(section.id, task.id, 'helpText', e.target.checked)}
-                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                              sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                             />
                           }
                           label="Help Text"
@@ -676,7 +703,7 @@ export const EditChecklistMasterPage = () => {
                             <MuiCheckbox
                               checked={task.reading}
                               onChange={(e) => updateTask(section.id, task.id, 'reading', e.target.checked)}
-                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                              sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                             />
                           }
                           label="Reading"
@@ -692,6 +719,7 @@ export const EditChecklistMasterPage = () => {
                         fullWidth
                         value={task.taskName}
                         onChange={(e) => updateTask(section.id, task.id, 'taskName', e.target.value)}
+                        sx={textFieldStyles}
                       />
 
                       <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
@@ -722,6 +750,7 @@ export const EditChecklistMasterPage = () => {
                           fullWidth
                           value={task.helpTextValue || ''}
                           onChange={(e) => updateTask(section.id, task.id, 'helpTextValue', e.target.value)}
+                          sx={textFieldStyles}
                         />
                       </Box>
                     )}
@@ -759,13 +788,13 @@ export const EditChecklistMasterPage = () => {
                                 task.inputType === 'Checkbox' ? (
                                   <MuiCheckbox
                                     checked={optionIndex === 0}
-                                    sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                   />
                                 ) : (
                                   <Radio
                                     checked={optionIndex === 0}
                                     name={`radio-${section.id}-${task.id}`}
-                                    sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                    sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }}
                                   />
                                 )
                               )}
@@ -776,8 +805,9 @@ export const EditChecklistMasterPage = () => {
                                 placeholder="Enter option value"
                                 value={option.label || ''}
                                 onChange={(e) => updateOption(section.id, task.id, option.id || optionIndex, 'label', e.target.value)}
-                                label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
+                                label={<span>Option{task.mandatory && <span style={{ color: 'var(--color-primary)' }}>&nbsp;*</span>}</span>}
                                 sx={{
+                                  ...textFieldStyles,
                                   '& .MuiOutlinedInput-root': {
                                     backgroundColor: 'white'
                                   }
@@ -803,7 +833,7 @@ export const EditChecklistMasterPage = () => {
                                 <IconButton
                                   size="small"
                                   onClick={() => removeOption(section.id, task.id, option.id || optionIndex)}
-                                  sx={{ color: '#C72030' }}
+                                  sx={{ color: 'var(--color-primary)' }}
                                 >
                                   <X />
                                 </IconButton>
@@ -818,13 +848,13 @@ export const EditChecklistMasterPage = () => {
                               startIcon={<Plus />}
                               onClick={() => addOption(section.id, task.id)}
                               sx={{
-                                color: '#C72030',
-                                borderColor: '#C72030',
+                                color: 'var(--color-primary)',
+                                borderColor: 'var(--color-primary)',
                                 fontSize: '12px',
                                 padding: '4px 12px',
                                 '&:hover': {
-                                  borderColor: '#C72030',
-                                  backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                  borderColor: 'var(--color-primary)',
+                                  backgroundColor: 'var(--color-primary-selected)'
                                 }
                               }}
                             >
@@ -844,7 +874,7 @@ export const EditChecklistMasterPage = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => addQuestion(section.id)}
-                  className="text-red-600 border-red-600 hover:bg-red-50"
+                  className="text-brand border-brand hover:bg-brand-light"
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Add Task
@@ -858,7 +888,7 @@ export const EditChecklistMasterPage = () => {
         <div className="flex justify-end space-x-4 p-6 bg-white">
           <Button
             type="submit"
-            style={{ backgroundColor: '#C72030' }}
+            style={{ backgroundColor: 'var(--color-primary)' }}
             className="text-white hover:opacity-90 px-8"
           >
             Update
@@ -867,7 +897,7 @@ export const EditChecklistMasterPage = () => {
             type="button"
             variant="outline"
             onClick={() => navigate('/master/checklist')}
-            className="text-gray-700 border-gray-300"
+            className="text-brand border-brand"
           >
             Cancel
           </Button>

@@ -271,7 +271,7 @@ export const EmployeeHeaderStatic: React.FC = () => {
         navigate("/employee/dashboard");
         break;
       case "Business Compass":
-        navigate("/business-compass");
+        navigate("/business-compass/profile");
         break;
       case "PATM":
       case "Project Task":

@@ -10,6 +10,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { KRCCFormFilterDialog } from '@/components/KRCCFormFilterDialog';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -51,6 +52,7 @@ interface KRCCApiResponse {
 export const KRCCFormListDashboard = () => {
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
+  const msafeEvents = useMSafeEvents();
 
   // Remote data state
   const [krccForms, setKrccForms] = useState<KRCCForm[]>([]);
@@ -159,9 +161,11 @@ export const KRCCFormListDashboard = () => {
         setCurrentPage(data.pagination.current_page);
         setTotalPages(data.pagination.total_pages);
         setTotalCount(data.pagination.total_count);
+        msafeEvents.onMSafeSubmoduleViewed('krcc', data.pagination.total_count);
       } else {
         setTotalPages(1);
         setTotalCount(mapped.length);
+        msafeEvents.onMSafeSubmoduleViewed('krcc', mapped.length);
       }
       if (searchActive && mapped.length === 0) {
         toast.info('No results found');
@@ -470,7 +474,7 @@ export const KRCCFormListDashboard = () => {
       const status = detailJson?.status || '—';
       const createdAt = detailJson?.created_at || null;
       const updatedAt = detailJson?.updated_at || null;
-  // Removed formType display from PDF per latest request (previously: detailJson?.form_details?.form_type)
+      // Removed formType display from PDF per latest request (previously: detailJson?.form_details?.form_type)
       const formDetails = detailJson?.form_details || {};
       const categories = detailJson?.categories || {};
       const topLevelAtts: Array<{ id?: number; url?: string; doctype?: string | null }> = detailJson?.krcc_attachments || [];
@@ -610,7 +614,7 @@ export const KRCCFormListDashboard = () => {
       };
       // If keys array omitted, automatically include all primitive (non-object) keys except attachments
       // Added optional labelOverrides to customize specific field labels per category (e.g., electrical fit_to_work)
-      const buildCatKV = (cat: any, keys?: string[], labelOverrides?: Record<string,string>) => {
+      const buildCatKV = (cat: any, keys?: string[], labelOverrides?: Record<string, string>) => {
         if (!cat) return '';
         let useKeys = keys && keys.length ? keys : Object.keys(cat).filter(k => k !== 'attachments');
         // Sort according to predefined order then fallback alpha

@@ -3,6 +3,12 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Plus, Download } from "lucide-react";
 import { DesignInsightFilterModal } from '@/components/DesignInsightFilterModal';
 import { ExportModal } from '@/components/ExportModal';
@@ -153,54 +159,71 @@ export const DesignInsightsDashboard = () => {
 
   return (
     <div className="flex-1 p-6 bg-white min-h-screen">
-      <div className="mb-6 flex items-center justify-between">
-  <div>
-    <p className="text-sm text-gray-500 mb-1">
-      Design Insights &gt; Design Insights List
-    </p>
-    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-      Design Insights
-    </h1>
-  </div>
-</div>
+      <div className="mb-6">
+        <p className="text-sm text-gray-500 mb-1">
+          Design Insights &gt; Design Insights List
+        </p>
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          Design Insights
+        </h1>
+      </div>
 
-
-
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        <EnhancedTable
-          data={filteredData}
-          columns={columns}
-          renderCell={renderCell}
-          onRowClick={handleRowClick}
-          storageKey="design-insights-table"
-          emptyMessage={hasActiveFilters ? 'No results found for the selected filters.' : 'No data available.'}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          searchPlaceholder="Search design insights..."
-          enableExport
-          handleExport={handleExportCSV}
-          pagination
-          pageSize={10}
-          enableSearch
-          hideTableExport={false}
-          onFilterClick={() => setIsFilterOpen(true)}
-          leftActions={
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={handleAddClick} className="bg-[#C72030] hover:bg-[#A61B28] text-white">
-                <Plus className="w-4 h-4 mr-2" /> Add
+      <EnhancedTable
+        data={filteredData}
+        columns={columns}
+        renderCell={renderCell}
+        onRowClick={handleRowClick}
+        storageKey="design-insights-table"
+        emptyMessage={hasActiveFilters ? 'No results found for the selected filters.' : 'No data available.'}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search design insights..."
+        enableExport
+        handleExport={handleExportCSV}
+        hideTableExport
+        pagination
+        pageSize={10}
+        enableSearch
+        loading={loading}
+        loadingMessage="Loading..."
+        onFilterClick={() => setIsFilterOpen(true)}
+        leftActions={
+          <Button
+            onClick={handleAddClick}
+            className="bg-brand hover:bg-brand-hover text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Add
+          </Button>
+        }
+        filterAdjacentActions={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-brand text-brand hover:bg-brand-selected hover:text-brand flex items-center rounded-lg"
+                title="Download Report"
+              >
+                <Download className="w-4 h-4" />
               </Button>
-              <Button variant="outline" className="border-[#C72030] text-[#C72030]">
-                <Download className="w-4 h-4 mr-2" /> Download Report With Picture
-              </Button>
-              <Button variant="outline" className="border-[#C72030] text-[#C72030]">
-                <Download className="w-4 h-4 mr-2" /> Download Report Without Picture
-              </Button>
-            </div>
-          }
-        />
-      )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-white border shadow-lg z-50">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => setIsExportOpen(true)}
+              >
+                With Picture
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => setIsExportOpen(true)}
+              >
+                Without Picture
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+      />
 
       <DesignInsightFilterModal
         isOpen={isFilterOpen}

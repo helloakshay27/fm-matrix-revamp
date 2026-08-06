@@ -1,5 +1,7 @@
 'use strict';
 import React, { useState, useEffect } from 'react';
+import { PostHogScheduleActivity } from '@/components/PostHogScheduleActivity';
+import { capturePostHogEvent } from '@/utils/posthogHelpers';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -1336,6 +1338,38 @@ export const EditSchedulePage = () => {
       const result = await response.json();
       console.log('Update response:', result);
 
+      const checklistStepCount = questionSections.reduce(
+        (acc: number, s: any) => acc + s.tasks.filter((t: any) => (t.task || '').trim()).length,
+        0
+      );
+      const associationCount = formData.scheduleFor === 'Service'
+        ? (formData.service?.length || 0)
+        : (formData.checklistType === 'Individual'
+            ? (formData.asset?.length || 0)
+            : (formData.assetSubGroup?.length || 0));
+      const supervisorCount = String(formData.supervisors || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean).length;
+      // Business lifecycle event — fired synchronously since we navigate away immediately
+      capturePostHogEvent('Maintenance Schedule Defined', {
+        schedule_id: customFormCode || id,
+        schedule_type: (formData.type || '').toLowerCase(),
+        schedule_for: (formData.scheduleFor || '').toLowerCase(),
+        checklist_type: formData.checklistType === 'Individual' ? 'individual' : 'asset_group',
+        association_count: associationCount,
+        recurrence_pattern: formData.frequency || '',
+        grace_time_value: formData.graceTimeValue || '',
+        grace_time_unit: (formData.graceTime || '').toLowerCase(),
+        lock_overdue: formData.lockOverdueTask === 'true' || formData.lockOverdueTask === true ? 'yes' : 'no',
+        photo_capture: formData.checkInPhotograph || 'inactive',
+        has_supplier: Boolean(formData.supplier),
+        supervisor_count: supervisorCount,
+        checklist_step_count: checklistStepCount,
+        category: (formData.category || '').toLowerCase().replace(/\s+/g, '_'),
+        is_update: true,
+      });
+
       toast.success('Schedule updated successfully');
       navigate('/maintenance/schedule');
     } catch (error) {
@@ -2416,7 +2450,7 @@ export const EditSchedulePage = () => {
             value="PPM"
             control={
               <Radio
-                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
               />
             }
             label="PPM"
@@ -2425,7 +2459,7 @@ export const EditSchedulePage = () => {
             value="AMC"
             control={
               <Radio
-                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
               />
             }
             label="AMC"
@@ -2434,7 +2468,7 @@ export const EditSchedulePage = () => {
             value="Preparedness"
             control={
               <Radio
-                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
               />
             }
             label="Preparedness"
@@ -2443,7 +2477,7 @@ export const EditSchedulePage = () => {
             value="Routine"
             control={
               <Radio
-                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
               />
             }
             label="Routine"
@@ -2677,7 +2711,7 @@ export const EditSchedulePage = () => {
                   value="Individual"
                   control={
                     <Radio
-                      sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
                     />
                   }
                   label="Individual"
@@ -2686,7 +2720,7 @@ export const EditSchedulePage = () => {
                   value="Asset Group"
                   control={
                     <Radio
-                      sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
                     />
                   }
                   label="Asset Group"
@@ -2711,7 +2745,7 @@ export const EditSchedulePage = () => {
               value="active"
               control={
                 <Radio
-                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                  sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
                 />
               }
               label="Active"
@@ -2720,7 +2754,7 @@ export const EditSchedulePage = () => {
               value="inactive"
               control={
                 <Radio
-                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                  sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
                 />
               }
               label="Inactive"
@@ -3406,12 +3440,12 @@ export const EditSchedulePage = () => {
               >
                 <FormControlLabel
                   value="checklist"
-                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                  control={<Radio sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }} />}
                   label="Checklist Level"
                 />
                 <FormControlLabel
                   value="question"
-                  control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                  control={<Radio sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }} />}
                   label="Question Level"
                 />
               </RadioGroup>
@@ -3587,7 +3621,7 @@ export const EditSchedulePage = () => {
                           <Checkbox
                             checked={task.mandatory}
                             onChange={(e) => updateTaskInSection(section.id, task.id, 'mandatory', e.target.checked)}
-                            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
                           />
                         }
                         label="Mandatory"
@@ -3597,7 +3631,7 @@ export const EditSchedulePage = () => {
                           <Checkbox
                             checked={task.helpText}
                             onChange={(e) => updateTaskInSection(section.id, task.id, 'helpText', e.target.checked)}
-                            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
                           />
                         }
                         label="Help Text"
@@ -3613,7 +3647,7 @@ export const EditSchedulePage = () => {
                                 updateTaskInSection(section.id, task.id, 'inputType', 'number');
                               }
                             }}
-                            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
                           />
                         }
                         label="Reading"
@@ -3624,7 +3658,7 @@ export const EditSchedulePage = () => {
                             <Checkbox
                               checked={task.rating}
                               onChange={(e) => updateTaskInSection(section.id, task.id, 'rating', e.target.checked)}
-                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                              sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
                             />
                           }
                           label="Rating"
@@ -3906,7 +3940,7 @@ export const EditSchedulePage = () => {
                             <Radio
                               checked={valueIndex === 0} // First option selected by default
                               name={`radio-${section.id}-${task.id}`}
-                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                              sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
                             />
 
                             <TextField
@@ -3952,7 +3986,7 @@ export const EditSchedulePage = () => {
                                   const newValues = task.radioValues.filter((_, idx) => idx !== valueIndex);
                                   updateTaskInSection(section.id, task.id, 'radioValues', newValues);
                                 }}
-                                sx={{ color: '#C72030' }}
+                                sx={{ color: '#DA7756' }}
                               >
                                 <Close />
                               </IconButton>
@@ -3970,13 +4004,13 @@ export const EditSchedulePage = () => {
                               updateTaskInSection(section.id, task.id, 'radioValues', newValues);
                             }}
                             sx={{
-                              color: '#C72030',
-                              borderColor: '#C72030',
+                              color: '#DA7756',
+                              borderColor: '#DA7756',
                               fontSize: '12px',
                               padding: '4px 12px',
                               '&:hover': {
-                                borderColor: '#C72030',
-                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                borderColor: '#DA7756',
+                                backgroundColor: 'rgba(218, 119, 86, 0.04)'
                               }
                             }}
                           >
@@ -4014,7 +4048,7 @@ export const EditSchedulePage = () => {
                                 newSelectedStates[valueIndex] = e.target.checked;
                                 updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', newSelectedStates);
                               }}
-                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                              sx={{ color: '#DA7756', '&.Mui-checked': { color: '#DA7756' } }}
                             />
 
                             <TextField
@@ -4044,7 +4078,7 @@ export const EditSchedulePage = () => {
                                   updateTaskInSection(section.id, task.id, 'checkboxValues', newValues);
                                   updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', newSelectedStates);
                                 }}
-                                sx={{ color: '#C72030' }}
+                                sx={{ color: '#DA7756' }}
                               >
                                 <Close />
                               </IconButton>
@@ -4064,13 +4098,13 @@ export const EditSchedulePage = () => {
                               updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', newSelectedStates);
                             }}
                             sx={{
-                              color: '#C72030',
-                              borderColor: '#C72030',
+                              color: '#DA7756',
+                              borderColor: '#DA7756',
                               fontSize: '12px',
                               padding: '4px 12px',
                               '&:hover': {
-                                borderColor: '#C72030',
-                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                borderColor: '#DA7756',
+                                backgroundColor: 'rgba(218, 119, 86, 0.04)'
                               }
                             }}
                           >
@@ -4119,7 +4153,7 @@ export const EditSchedulePage = () => {
                                   const newValues = task.optionsInputsValues.filter((_, idx) => idx !== valueIndex);
                                   updateTaskInSection(section.id, task.id, 'optionsInputsValues', newValues);
                                 }}
-                                sx={{ color: '#C72030' }}
+                                sx={{ color: '#DA7756' }}
                               >
                                 <Close />
                               </IconButton>
@@ -4136,13 +4170,13 @@ export const EditSchedulePage = () => {
                               updateTaskInSection(section.id, task.id, 'optionsInputsValues', newValues);
                             }}
                             sx={{
-                              color: '#C72030',
-                              borderColor: '#C72030',
+                              color: '#DA7756',
+                              borderColor: '#DA7756',
                               fontSize: '12px',
                               padding: '4px 12px',
                               '&:hover': {
-                                borderColor: '#C72030',
-                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                borderColor: '#DA7756',
+                                backgroundColor: 'rgba(218, 119, 86, 0.04)'
                               }
                             }}
                           >
@@ -4218,9 +4252,9 @@ export const EditSchedulePage = () => {
               checked={editTiming}
               onChange={(e) => setEditTiming(e.target.checked)}
               sx={{
-                color: '#C72030',
+                color: '#DA7756',
                 '&.Mui-checked': {
-                  color: '#C72030'
+                  color: '#DA7756'
                 }
               }}
             />
@@ -4280,6 +4314,7 @@ export const EditSchedulePage = () => {
 
   return (
     <Box sx={{ p: 3, maxWidth: '100%', margin: '0 auto' }}>
+      <PostHogScheduleActivity event="Schedule Detail Viewed" />
       {/* Header */}
       <Typography variant="h4" sx={{ mb: 4, fontWeight: 600, color: '#1a1a1a' }}>
         Edit Schedule

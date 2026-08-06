@@ -4,6 +4,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Plus, Eye } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { PostHogAuditActivity } from "@/components/PostHogAuditActivity";
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 interface ScheduleItem {
@@ -112,7 +113,7 @@ export const VendorAuditScheduledDashboard = () => {
       ) : null;
     }
     if (columnKey === 'id') {
-      return <span className="text-blue-600 font-medium">{item.id}</span>;
+      return <span className="text-black font-medium">{item.id}</span>;
     }
     if (columnKey === 'task_assigned_to') {
       return item.task_assigned_to || '-';
@@ -142,6 +143,7 @@ export const VendorAuditScheduledDashboard = () => {
 
   return (
     <div className="p-6">
+      <PostHogAuditActivity event="Audit Schedule List Viewed" />
       <div className="mb-6">
         <div>
 

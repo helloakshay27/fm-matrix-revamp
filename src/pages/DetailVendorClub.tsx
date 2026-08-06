@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { vendorService } from '@/services/vendorService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TextField } from '@mui/material';
-import { Building, FileText, Landmark, ShieldCheck, User, ArrowLeft, Loader2, Eye, Download, FileSpreadsheet, File, Printer } from 'lucide-react';
+import { Building, FileText, Landmark, ShieldCheck, User, ArrowLeft, Loader2, Eye, Download, FileSpreadsheet, File, Printer, Settings2 } from 'lucide-react';
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -170,11 +170,12 @@ interface Vendor {
 const DetailVendorClub = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const [vendor, setVendor] = useState<Vendor | null>(null);
     const [allAttachments, setAllAttachments] = useState<Attachment[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState("basic");
+    const [activeTab, setActiveTab] = useState((location.state as any)?.tab === "statement" ? "statement" : "basic");
     const [selectedDoc, setSelectedDoc] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [statementDownloading, setStatementDownloading] = useState(false);
@@ -322,18 +323,7 @@ const DetailVendorClub = () => {
     const statementStatus = statementBalanceDue > 0 ? 'unpaid' : 'paid';
 
     const getStatusBadgeStyles = (status: string) => {
-        const normalizedStatus = status.toLowerCase();
-        switch (normalizedStatus) {
-            case 'pending':
-                return { backgroundColor: '#f5f2c9', color: '#000' };
-            case 'rejected':
-                return { backgroundColor: '#f5ccc6', color: '#000' };
-            case 'accepted':
-            case 'approved':
-                return { backgroundColor: '#c7ecd9', color: '#000' };
-            default:
-                return { backgroundColor: '#f3f4f6', color: '#000' };
-        }
+        return { backgroundColor: '#f3f4f6', color: '#1f2937' };
     };
 
     if (loading) {
@@ -373,13 +363,13 @@ const DetailVendorClub = () => {
                             <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
                                 {vendor?.company_name}
                             </h1>
-                            <Button
+                            {/* <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => navigate(`/accounting/vendor/edit/${id}`)}
                             >
                                 Edit Vendor
-                            </Button>
+                            </Button> */}
                         </div>
                         <div className="text-sm text-gray-600">
                             Vendor # {vendor?.id} • Created by{" "}
@@ -408,63 +398,63 @@ const DetailVendorClub = () => {
                     <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
                         <TabsTrigger
                             value="basic"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
                         >
                             Basic Information
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="contacts"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
                         >
                             Contact Persons
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="bank"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
                         >
                             Bank Information
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="audits"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
                         >
                             Audits
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="attachments"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
                         >
                             Attachments
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="statement"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
                         >
                             Statement
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="openingBalance"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
                         >
                             Opening Balance
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="financial"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
                         >
                             Financial Summary
                         </TabsTrigger>
 
                         <TabsTrigger
                             value="approval"
-                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-brand-light px-3 py-2 data-[state=active]:text-[#DA7756] border-r border-gray-200 last:border-r-0"
                         >
                             Approval Status
                         </TabsTrigger>
@@ -476,7 +466,7 @@ const DetailVendorClub = () => {
                             <CardHeader className="pb-4 lg:pb-6">
                                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <Building className="w-6 h-6" style={{ color: '#C72030' }} />
+                                        <Building className="w-6 h-6" style={{ color: '#DA7756' }} />
                                     </div>
                                     <span className="uppercase tracking-wide">Basic Information</span>
                                 </CardTitle>
@@ -676,7 +666,7 @@ const DetailVendorClub = () => {
                             <CardHeader className="pb-4 lg:pb-6">
                                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <User className="w-6 h-6" style={{ color: '#C72030' }} />
+                                        <User className="w-6 h-6" style={{ color: '#DA7756' }} />
                                     </div>
                                     <span className="uppercase tracking-wide">Contact Persons</span>
                                 </CardTitle>
@@ -723,7 +713,7 @@ const DetailVendorClub = () => {
                             <CardHeader className="pb-4 lg:pb-6">
                                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <Landmark className="w-6 h-6" style={{ color: '#C72030' }} />
+                                        <Landmark className="w-6 h-6" style={{ color: '#DA7756' }} />
                                     </div>
                                     <span className="uppercase tracking-wide">Bank Information</span>
                                 </CardTitle>
@@ -761,7 +751,7 @@ const DetailVendorClub = () => {
                             <CardHeader className="pb-4 lg:pb-6">
                                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <ShieldCheck className="w-6 h-6" style={{ color: '#C72030' }} />
+                                        <ShieldCheck className="w-6 h-6" style={{ color: '#DA7756' }} />
                                     </div>
                                     <span className="uppercase tracking-wide">Audits Conducted</span>
                                 </CardTitle>
@@ -815,7 +805,7 @@ const DetailVendorClub = () => {
                             <CardHeader className="pb-4 lg:pb-6">
                                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                                        <FileText className="w-6 h-6" style={{ color: '#DA7756' }} />
                                     </div>
                                     <span className="uppercase tracking-wide">Attachments</span>
                                 </CardTitle>
@@ -896,7 +886,7 @@ const DetailVendorClub = () => {
                                 <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-lg font-semibold text-[#1A1A1A]">
                                     <div className="flex items-center gap-3">
                                         <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                            <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                                            <FileText className="w-6 h-6" style={{ color: '#DA7756' }} />
                                         </div>
                                         <span className="uppercase tracking-wide">Vendor Statement</span>
                                     </div>
@@ -904,18 +894,29 @@ const DetailVendorClub = () => {
                                         <Button
                                             size="sm"
                                             variant="outline"
+                                            style={{ borderColor: '#DA7756', color: '#DA7756' }}
                                             onClick={handlePrintStatement}
                                         >
-                                            <Printer className="h-4 w-4 mr-2" />
+                                            <Printer className="h-4 w-4 mr-2" color="#DA7756" />
                                             Print Statement
                                         </Button>
                                         <Button
                                             size="sm"
                                             variant="outline"
+                                            style={{ borderColor: '#DA7756', color: '#DA7756' }}
+                                            onClick={() => navigate("/accounting/vendor/template", { state: { recordId: id } })}
+                                        >
+                                            <Settings2 className="h-4 w-4 mr-2" color="#DA7756" />
+                                            Template Edit
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            style={{ borderColor: '#DA7756', color: '#DA7756' }}
                                             onClick={handleDownloadStatement}
                                             disabled={statementDownloading}
                                         >
-                                            <Download className="h-4 w-4 mr-2" />
+                                            <Download className="h-4 w-4 mr-2" color="#DA7756" />
                                             {statementDownloading ? 'Downloading...' : 'Download Statement'}
                                         </Button>
                                     </div>
@@ -950,7 +951,7 @@ const DetailVendorClub = () => {
                             <CardHeader className="pb-4 lg:pb-6">
                                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <FileSpreadsheet className="w-6 h-6" style={{ color: '#C72030' }} />
+                                        <FileSpreadsheet className="w-6 h-6" style={{ color: '#DA7756' }} />
                                     </div>
                                     <span className="uppercase tracking-wide">Opening Balance</span>
                                 </CardTitle>
@@ -1006,7 +1007,7 @@ const DetailVendorClub = () => {
                             <CardHeader className="pb-4 lg:pb-6">
                                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <Landmark className="w-6 h-6" style={{ color: '#C72030' }} />
+                                        <Landmark className="w-6 h-6" style={{ color: '#DA7756' }} />
                                     </div>
                                     <span className="uppercase tracking-wide">Financial Summary</span>
                                 </CardTitle>
@@ -1053,7 +1054,7 @@ const DetailVendorClub = () => {
                                         <span className="text-gray-500 mx-2">:</span>
                                         <span className="text-gray-900 font-medium">₹{vendor?.financial_summary?.bills_outstanding_amount || 0}</span>
                                     </div>
-                                    <div className="flex items-start col-span-2 p-4 bg-gray-50 rounded-lg border-l-4 border-[#C72030]">
+                                    <div className="flex items-start col-span-2 p-4 bg-gray-50 rounded-lg border-l-4 border-[#DA7756]">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
                                             <div className="flex flex-col">
                                                 <span className="text-gray-500 text-xs uppercase tracking-wide">Total Amount</span>
@@ -1080,7 +1081,7 @@ const DetailVendorClub = () => {
                             <CardHeader className="pb-4 lg:pb-6">
                                 <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
                                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                                        <ShieldCheck className="w-6 h-6" style={{ color: '#C72030' }} />
+                                        <ShieldCheck className="w-6 h-6" style={{ color: '#DA7756' }} />
                                     </div>
                                     <span className="uppercase tracking-wide">Approval Status</span>
                                 </CardTitle>

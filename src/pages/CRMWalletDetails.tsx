@@ -79,6 +79,7 @@ const CRMWalletDetails = () => {
     const [showNewRuleForm, setShowNewRuleForm] = useState(false);
     const [recurringRules, setRecurringRules] = useState([]);
     const [transactionHistory, setTransactionHistory] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [ruleFormData, setRuleFormData] = useState({
         points: "",
         transaction_note: "",
@@ -150,10 +151,19 @@ const CRMWalletDetails = () => {
     };
 
     useEffect(() => {
-        fetchData();
-        fetchRules();
-        fetchCustomersData();
-        getTransactionHistory();
+        const loadAll = async () => {
+            setLoading(true);
+            const minDelay = new Promise(resolve => setTimeout(resolve, 1200));
+            await Promise.all([
+                fetchData(),
+                fetchRules(),
+                fetchCustomersData(),
+                getTransactionHistory(),
+            ]);
+            await minDelay;
+            setLoading(false);
+        };
+        loadAll();
     }, []);
 
     const changeRuleStatus = async (id, status) => {
@@ -219,6 +229,17 @@ const CRMWalletDetails = () => {
         }
     };
 
+    if (loading) {
+        return (
+            <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <p className="text-gray-700">Loading wallet details...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="p-[30px] min-h-screen bg-transparent">
             {/* Header */}
@@ -243,8 +264,11 @@ const CRMWalletDetails = () => {
                     className="bg-[#F6F4EE]"
                     style={{ border: "1px solid #D9D9D9" }}
                 >
-                    <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                        <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                    <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
+                        <span
+                            className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
+                            style={{ color: '#C72030' }}
+                        >
                             C
                         </span>
                         CUSTOMER DETAILS
@@ -311,8 +335,11 @@ const CRMWalletDetails = () => {
                     className="bg-[#F6F4EE]"
                     style={{ border: "1px solid #D9D9D9" }}
                 >
-                    <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                        <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                    <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
+                        <span
+                            className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
+                            style={{ color: '#C72030' }}
+                        >
                             W
                         </span>
                         WALLET DETAILS
@@ -430,8 +457,11 @@ const CRMWalletDetails = () => {
                     style={{ border: "1px solid #D9D9D9" }}
                 >
                     <div className="flex justify-between items-center">
-                        <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                            <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                        <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
+                            <span
+                                className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
+                                style={{ color: '#C72030' }}
+                            >
                                 R
                             </span>
                             RECURRING RULE STATUS
@@ -440,10 +470,9 @@ const CRMWalletDetails = () => {
                         {shouldShow("Wallet", "create") && (
                         <Button
                             onClick={() => setShowRuleCreateAlert(true)}
-                            variant="outline"
-                            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                            className="!bg-[#DA7756] hover:!bg-[#C45F40]"
                         >
-                            + Add
+                            <span className="!text-white font-medium">+ Add</span>
                         </Button>
                         )}
                     </div>

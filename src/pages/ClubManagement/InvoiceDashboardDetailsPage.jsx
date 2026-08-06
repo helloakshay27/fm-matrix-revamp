@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ import {
   Eye,
   ClipboardList,
   X,
+  Settings2,
 } from "lucide-react";
 import {
   Dialog,
@@ -68,14 +69,20 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import AccountingDocumentPdf from "@/components/accounting/AccountingDocumentPdf";
+import {
+  bankMasterListUrl,
+  getBankMasterApiConfig,
+  mapApiBankRecord,
+} from "./bankMasterUtils";
 
 export const InvoiceDashboardDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [invoiceData, setInvoiceData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("invoice-details");
+  const [activeTab, setActiveTab] = useState(location.state?.tab === "pdf" ? "pdf" : "invoice-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showApprovalLog, setShowApprovalLog] = useState(false);
   const [hasInvoiceApproval, setHasInvoiceApproval] = useState(false);
@@ -102,6 +109,7 @@ export const InvoiceDashboardDetailsPage = () => {
   const [sendThankYou, setSendThankYou] = useState(true);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+  const [bankDetail, setBankDetail] = useState(null);
   const invoicePdfRef = useRef(null);
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -112,6 +120,31 @@ export const InvoiceDashboardDetailsPage = () => {
       fetchLockAccount();
     }
   }, [id, baseUrl, token]);
+
+  // Resolve the bank selected on the invoice, if any
+  useEffect(() => {
+    const fetchBankDetail = async () => {
+      const bankId = invoiceData?.bank_master_id || invoiceData?.bank_master?.id;
+      if (!bankId) {
+        setBankDetail(null);
+        return;
+      }
+      if (invoiceData?.bank_master) {
+        setBankDetail(mapApiBankRecord(invoiceData.bank_master));
+        return;
+      }
+      try {
+        const { baseUrl: bmBaseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(bankMasterListUrl(bmBaseUrl, lockAccountId), { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        const found = data.map(mapApiBankRecord).find((b) => String(b.id) === String(bankId));
+        setBankDetail(found || null);
+      } catch (err) {
+        setBankDetail(null);
+      }
+    };
+    fetchBankDetail();
+  }, [invoiceData]);
 
   useEffect(() => {
     if (!baseUrl || !token || !lock_account_id) return;
@@ -250,19 +283,7 @@ export const InvoiceDashboardDetailsPage = () => {
   };
 
   const getStatusColor = (status) => {
-    const colors = {
-      draft: "bg-gray-100 text-gray-800 border-gray-200",
-      sent: "bg-blue-100 text-blue-800 border-blue-200",
-      approved: "bg-green-100 text-green-800 border-green-200",
-      pending_approval: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-      processing: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      shipped: "bg-purple-100 text-purple-800 border-purple-200",
-      delivered: "bg-green-100 text-green-800 border-green-200",
-      cancelled: "bg-red-100 text-red-800 border-red-200",
-      rejected: "bg-red-100 text-red-800 border-red-200",
-    };
-    return colors[status] || "bg-gray-100 text-gray-800 border-gray-200";
+    return "bg-gray-100 text-gray-800 border-gray-200";
   };
 
   // Helper: returns true when the invoice is fully approved (main status OR approval_status object)
@@ -283,10 +304,7 @@ export const InvoiceDashboardDetailsPage = () => {
   };
 
   const getApprovalStatusBadge = (status) => {
-    const s = String(status || "").toLowerCase();
-    if (s === "approved") return "bg-green-100 text-green-800";
-    if (s === "rejected") return "bg-red-100 text-red-800";
-    return "bg-yellow-100 text-yellow-800";
+    return "bg-gray-100 text-gray-800";
   };
 
   const handleEdit = () => {
@@ -560,6 +578,7 @@ export const InvoiceDashboardDetailsPage = () => {
         <div className="text-center">
           <p className="text-lg text-muted-foreground">Invoice not found</p>
           <Button
+            variant="ghost"
             className="mt-4"
             onClick={() => navigate("/accounting/invoices/list")}
           >
@@ -601,7 +620,7 @@ export const InvoiceDashboardDetailsPage = () => {
   const totalCredit = journalData.reduce((sum, r) => sum + r.credit, 0);
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -623,19 +642,19 @@ export const InvoiceDashboardDetailsPage = () => {
             </div>
           </div>
 
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <Badge className={`${getStatusColor(invoiceData.status)} border`}>
-                            {invoiceData.status?.replace(/_/g, " ").toUpperCase()}
-                        </Badge>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={handleEdit}
-                            className="gap-2"
-                        >
-                            <Edit className="h-4 w-4" />
-                            Edit
-                        </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge className={`${getStatusColor(invoiceData.status)} border`}>
+              {invoiceData.status?.replace(/_/g, " ").toUpperCase()}
+            </Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleEdit}
+              className="gap-2"
+            >
+              <Edit className="h-4 w-4" />
+              Edit
+            </Button>
 
             {invoiceData?.approval_status?.approval_levels?.length > 0 && (
               <Button
@@ -662,6 +681,16 @@ export const InvoiceDashboardDetailsPage = () => {
             <Button
               size="sm"
               variant="outline"
+              onClick={() => navigate("/accounting/invoices/template", { state: { recordId: id } })}
+              className="gap-2"
+            >
+              <Settings2 className="h-4 w-4" />
+              Template Edit
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
               onClick={handleDownload}
               disabled={pdfGenerating}
               className="gap-2"
@@ -677,7 +706,7 @@ export const InvoiceDashboardDetailsPage = () => {
                 {invoiceData.status === "draft" && (
                   <Button
                     size="sm"
-                    className="bg-blue-600 text-white hover:bg-blue-700"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("sent")}
                   >
@@ -694,7 +723,7 @@ export const InvoiceDashboardDetailsPage = () => {
                 {invoiceData.status === "draft" && (
                   <Button
                     size="sm"
-                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("pending_approval")}
                   >
@@ -708,7 +737,7 @@ export const InvoiceDashboardDetailsPage = () => {
                     <>
                       <Button
                         size="sm"
-                        className="bg-green-600 text-white hover:bg-green-700"
+                        className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                         disabled={actionLoading}
                         onClick={() => updateApprovalStatus("approved")}
                       >
@@ -716,7 +745,7 @@ export const InvoiceDashboardDetailsPage = () => {
                       </Button>
                       <Button
                         size="sm"
-                        className="bg-red-600 text-white hover:bg-red-700"
+                        className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                         disabled={actionLoading}
                         onClick={() => updateApprovalStatus("rejected")}
                       >
@@ -729,7 +758,7 @@ export const InvoiceDashboardDetailsPage = () => {
                 {isFullyApproved(invoiceData) && (
                   <Button
                     size="sm"
-                    className="bg-blue-600 text-white hover:bg-blue-700"
+                    className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                     disabled={actionLoading}
                     onClick={() => updateStatus("sent")}
                   >
@@ -779,15 +808,15 @@ export const InvoiceDashboardDetailsPage = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex flex-wrap w-full max-w-5xl">
-            <TabsTrigger value="invoice-details">Invoice Details</TabsTrigger>
+          <TabsList className="flex flex-wrap w-full max-w-5xl justify-start">
+            <TabsTrigger value="invoice-details" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Invoice Details</TabsTrigger>
             {invoiceData.status === "Overdue" && (
-              <TabsTrigger value="record-payment">Record Payment</TabsTrigger>
+              <TabsTrigger value="record-payment" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Record Payment</TabsTrigger>
             )}
-            <TabsTrigger value="customer-info">Customer Info</TabsTrigger>
-            <TabsTrigger value="attachments">Attachments & Comms</TabsTrigger>
-            <TabsTrigger value="activity-logs">Activity Logs</TabsTrigger>
-            <TabsTrigger value="pdf">PDF</TabsTrigger>
+            <TabsTrigger value="customer-info" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Customer Info</TabsTrigger>
+            <TabsTrigger value="attachments" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Attachments & Comms</TabsTrigger>
+            <TabsTrigger value="activity-logs" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Activity Logs</TabsTrigger>
+            <TabsTrigger value="pdf" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">PDF</TabsTrigger>
           </TabsList>
 
           {/* Invoice Details Tab */}
@@ -796,7 +825,7 @@ export const InvoiceDashboardDetailsPage = () => {
               <Accordion
                 type="single"
                 collapsible
-                // defaultValue="sales-order"
+              // defaultValue="sales-order"
               >
                 <AccordionItem
                   value="sales-order"
@@ -809,10 +838,10 @@ export const InvoiceDashboardDetailsPage = () => {
                       </span>
 
                       <Badge
-                        variant="secondary"
+                        // variant="secondary"
                         className="h-5 px-2 text-xs rounded-full"
                       >
-                        1
+                        {invoiceData?.sale_order ? 1 : 0}
                       </Badge>
                     </div>
                   </AccordionTrigger>
@@ -837,7 +866,7 @@ export const InvoiceDashboardDetailsPage = () => {
 
                             <TableCell>
                               <button
-                                className="text-blue-600 hover:underline font-medium"
+                                className="text-brand hover:underline font-medium"
                                 onClick={() =>
                                   navigate(
                                     `/accounting/sales-order/${invoiceData.sale_order.id}`
@@ -848,11 +877,11 @@ export const InvoiceDashboardDetailsPage = () => {
                               </button>
                             </TableCell>
 
-                                                        <TableCell>
-                                                            <Badge className={getStatusColor(invoiceData.sale_order.status)}>
-                                                                {invoiceData.sale_order.status?.replace(/_/g, " ").toUpperCase()}
-                                                            </Badge>
-                                                        </TableCell>
+                            <TableCell>
+                              <Badge className={getStatusColor(invoiceData.sale_order.status)}>
+                                {invoiceData.sale_order.status?.replace(/_/g, " ").toUpperCase()}
+                              </Badge>
+                            </TableCell>
 
                             <TableCell>
                               {formatDate(invoiceData.sale_order.shipment_date)}
@@ -866,61 +895,61 @@ export const InvoiceDashboardDetailsPage = () => {
               </Accordion>
             )}
 
-                        {/* Invoice Information */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <FileText className="h-5 w-5 text-primary" />
-                                    Invoice Information
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Invoice Number</p>
-                                        <p className="text-base font-semibold mt-1">{invoiceData.invoice_number}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Order Number</p>
-                                        <p className="text-base font-semibold mt-1">{invoiceData.order_number || "N/A"}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Invoice Date</p>
-                                        <p className="text-base font-semibold mt-1">
-                                            {formatDate(invoiceData.date)}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Due Date</p>
-                                        <p className="text-base font-semibold mt-1">
-                                            {formatDate(invoiceData.due_date)}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Payment Terms</p>
-                                        <p className="text-base font-semibold mt-1">{invoiceData.payment_term || "N/A"}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Salesperson</p>
-                                        <p className="text-base font-semibold mt-1">{invoiceData.sales_person_name || "N/A"}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Subject</p>
-                                        <p className="text-base font-semibold mt-1 break-all">{invoiceData.subject || "N/A"}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Tax Type</p>
-                                        <p className="text-base font-semibold mt-1">{invoiceData.tax_type?.toUpperCase() || "N/A"}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Status</p>
-                                        <Badge className={`${getStatusColor(invoiceData.status)} border mt-1`}>
-                                            {invoiceData.status.replace(/_/g, " ").toUpperCase()}
-                                        </Badge>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+            {/* Invoice Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Invoice Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Invoice Number</p>
+                    <p className="text-base font-semibold mt-1">{invoiceData.invoice_number}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Order Number</p>
+                    <p className="text-base font-semibold mt-1">{invoiceData.order_number || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Invoice Date</p>
+                    <p className="text-base font-semibold mt-1">
+                      {formatDate(invoiceData.date)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Due Date</p>
+                    <p className="text-base font-semibold mt-1">
+                      {formatDate(invoiceData.due_date)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Payment Terms</p>
+                    <p className="text-base font-semibold mt-1">{invoiceData.payment_term || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Salesperson</p>
+                    <p className="text-base font-semibold mt-1">{invoiceData.sales_person_name || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Subject</p>
+                    <p className="text-base font-semibold mt-1 break-all">{invoiceData.subject || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Tax Type</p>
+                    <p className="text-base font-semibold mt-1">{invoiceData.tax_type?.toUpperCase() || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Status</p>
+                    <Badge className={`${getStatusColor(invoiceData.status)} border mt-1`}>
+                      {invoiceData.status.replace(/_/g, " ").toUpperCase()}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Items Table */}
             <Card>
@@ -932,7 +961,7 @@ export const InvoiceDashboardDetailsPage = () => {
               </CardHeader>
               <CardContent>
                 {invoiceData.item_details &&
-                invoiceData.item_details.length > 0 ? (
+                  invoiceData.item_details.length > 0 ? (
                   <>
                     <div className="border border-border rounded-lg overflow-hidden">
                       <Table>
@@ -1057,6 +1086,43 @@ export const InvoiceDashboardDetailsPage = () => {
               </CardContent>
             </Card>
 
+            {/* Bank Details */}
+            {bankDetail && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Bank Details</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
+                    <p className="text-sm mt-1">{bankDetail.bankName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Account Number</p>
+                    <p className="text-sm mt-1">{bankDetail.accountNo}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Beneficiary / Account Name</p>
+                    <p className="text-sm mt-1">{bankDetail.beneficiaryName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">IFSC Code</p>
+                    <p className="text-sm mt-1">{bankDetail.ifscCode}</p>
+                  </div>
+                  {bankDetail.swiftCode && (
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Swift Code</p>
+                      <p className="text-sm mt-1">{bankDetail.swiftCode}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Branch</p>
+                    <p className="text-sm mt-1">{bankDetail.branch}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Notes and Terms */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {invoiceData.customer_notes && (
@@ -1167,7 +1233,7 @@ export const InvoiceDashboardDetailsPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <p className="text-sm font-medium mb-2">
-                      Customer Name<span className="text-red-500">*</span>
+                      Customer Name<span className="text-brand">*</span>
                     </p>
                     <FormControl fullWidth>
                       <MuiSelect
@@ -1191,7 +1257,7 @@ export const InvoiceDashboardDetailsPage = () => {
                     {selectedCustomer?.pan && (
                       <p className="text-xs text-muted-foreground mt-2">
                         PAN:{" "}
-                        <span className="text-blue-600">
+                        <span className="text-brand">
                           {selectedCustomer.pan}
                         </span>
                       </p>
@@ -1199,7 +1265,7 @@ export const InvoiceDashboardDetailsPage = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium mb-2">
-                      Payment #<span className="text-red-500">*</span>
+                      Payment #<span className="text-brand">*</span>
                     </p>
                     <TextField
                       fullWidth
@@ -1214,7 +1280,7 @@ export const InvoiceDashboardDetailsPage = () => {
                   <div>
                     <p className="text-sm font-medium mb-2">
                       Amount Received (INR)
-                      <span className="text-red-500">*</span>
+                      <span className="text-brand">*</span>
                     </p>
                     <TextField
                       fullWidth
@@ -1267,7 +1333,7 @@ export const InvoiceDashboardDetailsPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <p className="text-sm font-medium mb-2">
-                        TDS Tax Account<span className="text-red-500">*</span>
+                        TDS Tax Account<span className="text-brand">*</span>
                       </p>
                       <FormControl fullWidth>
                         <MuiSelect
@@ -1291,7 +1357,7 @@ export const InvoiceDashboardDetailsPage = () => {
 
                     <div>
                       <p className="text-sm font-medium mb-2">
-                        Amount Withheld<span className="text-red-500">*</span>
+                        Amount Withheld<span className="text-brand">*</span>
                       </p>
                       <TextField
                         fullWidth
@@ -1356,7 +1422,7 @@ export const InvoiceDashboardDetailsPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <p className="text-sm font-medium mb-2">
-                      Deposit To<span className="text-red-500">*</span>
+                      Deposit To<span className="text-brand">*</span>
                     </p>
                     <FormControl fullWidth>
                       <MuiSelect
@@ -1474,7 +1540,7 @@ export const InvoiceDashboardDetailsPage = () => {
                   <Button
                     onClick={() => handleRecordPayment("paid")}
                     disabled={paymentSubmitting}
-                    className="bg-[#C72030] hover:bg-[#a81a28]"
+                    className="bg-[#DA7756] hover:bg-[#C45F40]"
                   >
                     {paymentSubmitting ? "Saving..." : "Save as Paid"}
                   </Button>
@@ -1482,7 +1548,7 @@ export const InvoiceDashboardDetailsPage = () => {
                   <Button
                     onClick={() => handleRecordPayment("draft")}
                     disabled={paymentSubmitting}
-                    className="bg-[#C72030] hover:bg-[#a81a28]"
+                    className="bg-[#DA7756] hover:bg-[#C45F40]"
                   >
                     {paymentSubmitting ? "Saving..." : "Save as Draft"}
                   </Button>
@@ -1516,6 +1582,7 @@ export const InvoiceDashboardDetailsPage = () => {
                   <div className="mx-auto bg-white" ref={activeTab === "pdf" ? invoicePdfRef : null}>
                     <AccountingDocumentPdf
                       documentTitle="INVOICE"
+                      documentType="invoice"
                       documentNumber={invoiceData.invoice_number}
                       documentDate={invoiceData.date}
                       status={invoiceData.status}
@@ -1528,6 +1595,7 @@ export const InvoiceDashboardDetailsPage = () => {
                       secondaryDateLabel="Due Date"
                       secondaryDate={invoiceData.due_date}
                       referenceNumber={invoiceData.order_number}
+                      bankDetail={bankDetail}
                     />
                   </div>
                 </div>
@@ -1670,7 +1738,7 @@ export const InvoiceDashboardDetailsPage = () => {
               </CardHeader>
               <CardContent>
                 {Array.isArray(invoiceData.activity_logs) &&
-                invoiceData.activity_logs.length > 0 ? (
+                  invoiceData.activity_logs.length > 0 ? (
                   <div className="divide-y">
                     {invoiceData.activity_logs.map((log, idx) => {
                       const key = `${log?.date || ""}-${log?.time || ""}-${idx}`;
@@ -1695,12 +1763,7 @@ export const InvoiceDashboardDetailsPage = () => {
                           : isAccepted || isSent
                             ? Edit
                             : FileText;
-                      const iconWrapClass =
-                        isConverted || isCreated
-                          ? "bg-green-50 text-green-600 border-green-100"
-                          : isAccepted || isSent
-                            ? "bg-sky-50 text-sky-600 border-sky-100"
-                            : "bg-gray-50 text-gray-500 border-gray-100";
+                      const iconWrapClass = "bg-brand-light text-brand border-brand-light";
 
                       return (
                         <div key={key} className="flex gap-6 py-5">
@@ -1730,7 +1793,7 @@ export const InvoiceDashboardDetailsPage = () => {
                             {isConverted && salesOrderId ? (
                               <button
                                 type="button"
-                                className="mt-2 inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                                className="mt-2 inline-flex items-center gap-2 text-sm text-brand hover:underline"
                                 onClick={() =>
                                   navigate(
                                     `/accounting/sales-order/${salesOrderId}`
@@ -1762,6 +1825,7 @@ export const InvoiceDashboardDetailsPage = () => {
           <div ref={invoicePdfRef}>
             <AccountingDocumentPdf
               documentTitle="INVOICE"
+              documentType="invoice"
               documentNumber={invoiceData.invoice_number}
               documentDate={invoiceData.date}
               status={invoiceData.status}
@@ -1774,6 +1838,7 @@ export const InvoiceDashboardDetailsPage = () => {
               secondaryDateLabel="Due Date"
               secondaryDate={invoiceData.due_date}
               referenceNumber={invoiceData.order_number}
+              bankDetail={bankDetail}
             />
           </div>
         </div>
@@ -1796,7 +1861,11 @@ export const InvoiceDashboardDetailsPage = () => {
             >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button
+              variant="destructive"
+              className="bg-[#dc2626] hover:bg-[#b91c1c] text-white"
+              onClick={handleDelete}
+            >
               Delete
             </Button>
           </div>
@@ -1808,7 +1877,7 @@ export const InvoiceDashboardDetailsPage = () => {
         <DialogContent className="max-w-4xl">
           <div className="flex items-center justify-between">
             <DialogHeader>
-              <DialogTitle className="text-[#C72030]">Approval Log</DialogTitle>
+              <DialogTitle className="text-[#DA7756]">Approval Log</DialogTitle>
             </DialogHeader>
             <button
               type="button"
@@ -1823,7 +1892,7 @@ export const InvoiceDashboardDetailsPage = () => {
           <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
+                <TableRow className="bg-[#DA7756] hover:bg-[#DA7756] [&>th]:!text-white [&>th]:!opacity-100">
                   <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">
                     Sr.No.
                   </TableHead>

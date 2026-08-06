@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select, TextField } from '@mui/material';
 import { toast } from 'sonner';
 import { API_CONFIG } from '@/config/apiConfig';
 
@@ -393,8 +391,8 @@ export const TaxSetupMaster: React.FC = () => {
             className="bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => setAddModalOpen(true)}
           >
-            <Plus className="w-4 h-4 mr-2 !text-white" /> 
-            <span className="!text-white" >Add</span> 
+            <Plus className="w-4 h-4 mr-2 !text-white" />
+            <span className="!text-white" >Add</span>
           </Button>
         )}
       />
@@ -418,498 +416,518 @@ export const TaxSetupMaster: React.FC = () => {
       {/* Add Modal */}
       <Dialog
         open={addModalOpen}
-        onOpenChange={(open) => {
-          setAddModalOpen(open);
-          if (!open) {
-            setAddErrors({});
-            setAddForm({
-              name: '',
-              percentage: '',
-              tax_type: '',
-              higher_rate: false,
-              diff_rate_reason: '',
-              start_date: '',
-              end_date: '',
-              lock_account_tax_section_id: '',
-            });
-            setSections([]);
-          }
+        onClose={() => {
+          setAddModalOpen(false);
+          setAddErrors({});
+          setAddForm({
+            name: '',
+            percentage: '',
+            tax_type: '',
+            higher_rate: false,
+            diff_rate_reason: '',
+            start_date: '',
+            end_date: '',
+            lock_account_tax_section_id: '',
+          });
+          setSections([]);
         }}
+        fullWidth
+        maxWidth="sm"
       >
-        <DialogContent className="max-w-2xl bg-white data-[state=open]:animate-in">
-          <DialogHeader>
-            <DialogTitle>New {addForm.tax_type.toUpperCase()}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 pt-6">
+          <h5 className="text-lg font-semibold">New {addForm.tax_type.toUpperCase()}</h5>
+        </div>
+        <DialogContent>
+          <style>{`
+            .tax-setup-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+              border-color: #DA7756 !important;
+            }
+            .tax-setup-form .MuiInputLabel-root.Mui-focused {
+              color: #DA7756 !important;
+            }
+            .tax-setup-form [class*="MuiFormControl"]:has(.MuiInputBase-multiline) [class*="MuiInputLabel"].Mui-focused,
+            .tax-setup-form [class*="MuiFormControl"]:has(textarea) [class*="MuiInputLabel"].Mui-focused {
+              color: #DA7756 !important;
+            }
+            .tax-setup-form .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+              border-color: #DA7756 !important;
+            }
+            .tax-setup-form .MuiInputLabel-root.Mui-error {
+              color: #DA7756 !important;
+            }
+            .tax-setup-form .MuiFormHelperText-root.Mui-error {
+              color: #DA7756 !important;
+            }
+          `}</style>
+          <form className="tax-setup-form space-y-2 max-h-[60vh] overflow-y-auto">
             {/* Row 1: Tax Name and Rate */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="add-name">Tax Name <span className="text-red-500">*</span></Label>
-                <Input
-                  id="add-name"
-                  value={addForm.name}
-                  onChange={(e) => {
-                    setAddForm((s) => ({ ...s, name: e.target.value }));
-                    if (e.target.value.trim()) setAddErrors((s) => ({ ...s, name: undefined }));
-                  }}
-                  placeholder="Enter tax name"
-                  className={addErrors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                />
-                {addErrors.name && <p className="text-xs text-red-500">{addErrors.name}</p>}
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="add-percentage">Rate (%) <span className="text-red-500">*</span></Label>
-                {/* <Input
-                  id="add-percentage"
-                  type="number"
-                  value={addForm.percentage}
-                  onChange={(e) => {
-                    setAddForm((s) => ({ ...s, percentage: e.target.value }));
-                    if (e.target.value) setAddErrors((s) => ({ ...s, percentage: undefined }));
-                  }}
-                  placeholder="Enter tax rate"
-                  className={addErrors.percentage ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                  step="0.01"
-                /> */}
-
-                <Input
-                  id="add-percentage"
-                  type="number"
-                  value={addForm.percentage}
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  onChange={(e) => {
-                    let value = e.target.value;
-
-                    // Allow only numbers with up to 2 decimal places
-                    const regex = /^\d{0,3}(\.\d{0,2})?$/;
-
-                    if (!regex.test(value)) return;
-
-                    if (Number(value) > 100) value = "100";
-
-                    setAddForm((s) => ({ ...s, percentage: value }));
-
-                    if (value) setAddErrors((s) => ({ ...s, percentage: undefined }));
-                  }}
-                  placeholder="Enter tax rate"
-                  className={addErrors.percentage ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                />
-                {addErrors.percentage && <p className="text-xs text-red-500">{addErrors.percentage}</p>}
-              </div>
+              <TextField
+                fullWidth
+                margin="normal"
+                label={<span>Tax Name<span style={{ color: '#C72030' }}>*</span></span>}
+                name="name"
+                placeholder="Enter tax name"
+                InputLabelProps={{ shrink: true }}
+                value={addForm.name}
+                onChange={(e) => {
+                  setAddForm((s) => ({ ...s, name: e.target.value }));
+                  if (e.target.value.trim()) setAddErrors((s) => ({ ...s, name: undefined }));
+                }}
+                error={!!addErrors.name}
+                helperText={addErrors.name}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                type="number"
+                label={<span>Rate (%)<span style={{ color: '#C72030' }}>*</span></span>}
+                name="percentage"
+                placeholder="Enter tax rate"
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: 0, max: 100, step: 0.01 }}
+                value={addForm.percentage}
+                onChange={(e) => {
+                  let value = e.target.value;
+                  const regex = /^\d{0,3}(\.\d{0,2})?$/;
+                  if (!regex.test(value)) return;
+                  if (Number(value) > 100) value = "100";
+                  setAddForm((s) => ({ ...s, percentage: value }));
+                  if (value) setAddErrors((s) => ({ ...s, percentage: undefined }));
+                }}
+                error={!!addErrors.percentage}
+                helperText={addErrors.percentage}
+              />
             </div>
 
             {/* Row 2: Tax Type */}
-            <div className="space-y-1">
-              <Label htmlFor="add-tax-type">Tax Type <span className="text-red-500">*</span></Label>
-              <Select value={addForm.tax_type} onValueChange={handleAddTaxTypeChange}>
-                <SelectTrigger id="add-tax-type" className={addErrors.tax_type ? 'border-red-500' : ''}>
-                  <SelectValue placeholder="Select tax type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TAX_TYPE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+            <FormControl fullWidth margin="normal">
+              <InputLabel id="add-tax-type-label" shrink error={!!addErrors.tax_type}>
+                Tax Type<span style={{ color: '#C72030' }}>*</span>
+              </InputLabel>
+              <Select
+                labelId="add-tax-type-label"
+                label="Tax Type*"
+                displayEmpty
+                notched
+                value={addForm.tax_type}
+                onChange={(e) => handleAddTaxTypeChange(e.target.value)}
+                error={!!addErrors.tax_type}
+              >
+                <MenuItem value="" disabled>Select tax type</MenuItem>
+                {TAX_TYPE_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                ))}
               </Select>
-              {addErrors.tax_type && <p className="text-xs text-red-500">{addErrors.tax_type}</p>}
-            </div>
+              {addErrors.tax_type && <p className="text-xs mt-1" style={{ color: '#DA7756' }}>{addErrors.tax_type}</p>}
+            </FormControl>
 
             {/* Row 3: Section */}
-            <div className="space-y-1">
-              <Label htmlFor="add-section">Section <span className="text-red-500">*</span></Label>
+            <FormControl fullWidth margin="normal" disabled={loadingSections || sections.length === 0}>
+              <InputLabel id="add-section-label" shrink error={!!addErrors.lock_account_tax_section_id}>
+                Section<span style={{ color: '#C72030' }}>*</span>
+              </InputLabel>
               <Select
+                labelId="add-section-label"
+                label="Section*"
+                displayEmpty
+                notched
                 value={addForm.lock_account_tax_section_id}
-                onValueChange={(value) => {
-                  setAddForm((s) => ({ ...s, lock_account_tax_section_id: value }));
+                onChange={(e) => {
+                  setAddForm((s) => ({ ...s, lock_account_tax_section_id: e.target.value }));
                   setAddErrors((s) => ({ ...s, lock_account_tax_section_id: undefined }));
                 }}
-                disabled={loadingSections || sections.length === 0}
+                error={!!addErrors.lock_account_tax_section_id}
               >
-                <SelectTrigger
-                  id="add-section"
-                  className={addErrors.lock_account_tax_section_id ? 'border-red-500' : ''}
-                >
-                  <SelectValue placeholder={loadingSections ? 'Loading sections...' : 'Select a Tax Type.'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {sections.map((sec) => (
-                    <SelectItem key={sec.id} value={sec.id.toString()}>
-                      {sec.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                <MenuItem value="" disabled>{loadingSections ? 'Loading sections...' : 'Select a Tax Type.'}</MenuItem>
+                {sections.map((sec) => (
+                  <MenuItem key={sec.id} value={sec.id.toString()}>{sec.name}</MenuItem>
+                ))}
               </Select>
               {addErrors.lock_account_tax_section_id && (
-                <p className="text-xs text-red-500">{addErrors.lock_account_tax_section_id}</p>
+                <p className="text-xs mt-1" style={{ color: '#DA7756' }}>{addErrors.lock_account_tax_section_id}</p>
               )}
-            </div>
+            </FormControl>
 
             {/* Info Box */}
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-700">
+            <div className="bg-brand-light border border-brand/20 rounded-md p-3 text-sm text-brand mt-2">
               <span className="font-semibold">ℹ</span> By default, {addForm.tax_type.toUpperCase()} will be tracked under {addForm.tax_type === 'tds' ? 'TDS Payable and TDS Receivable' : 'TCS Payable and TCS Receivable'} accounts.
             </div>
 
             {/* Higher Rate Checkbox */}
-            <div className="flex items-center gap-2">
-              <input
+            <div className="flex items-center gap-2 mt-3">
+              <Checkbox
                 id="add-higher-rate"
-                type="checkbox"
                 checked={addForm.higher_rate}
-                onChange={(e) => {
-                  setAddForm((s) => ({ ...s, higher_rate: e.target.checked }));
-                  if (!e.target.checked) setAddErrors((s) => ({ ...s, diff_rate_reason: undefined }));
+                onCheckedChange={(checked) => {
+                  setAddForm((s) => ({ ...s, higher_rate: !!checked }));
+                  if (!checked) setAddErrors((s) => ({ ...s, diff_rate_reason: undefined }));
                 }}
-                className="w-4 h-4"
-                aria-label="This is a Higher Tax Rate"
               />
-              <Label htmlFor="add-higher-rate" className="cursor-pointer">
+              <label htmlFor="add-higher-rate" className="text-sm cursor-pointer">
                 This is a Higher {addForm.tax_type.toUpperCase()} Rate
-              </Label>
+              </label>
             </div>
 
             {/* Reason for Higher Rate (appears when checkbox is checked) */}
             {addForm.higher_rate && (
-              <div className="space-y-1">
-                <Label htmlFor="add-reason">Reason for Higher {addForm.tax_type.toUpperCase()} Rate <span className="text-red-500">*</span></Label>
-                <Input
-                  id="add-reason"
-                  value={addForm.diff_rate_reason}
-                  onChange={(e) => {
-                    setAddForm((s) => ({ ...s, diff_rate_reason: e.target.value }));
-                    if (e.target.value.trim()) setAddErrors((s) => ({ ...s, diff_rate_reason: undefined }));
-                  }}
-                  placeholder="Enter reason"
-                  className={addErrors.diff_rate_reason ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                />
-                {addErrors.diff_rate_reason && <p className="text-xs text-red-500">{addErrors.diff_rate_reason}</p>}
-              </div>
+              <TextField
+                fullWidth
+                margin="normal"
+                label={<span>Reason for Higher {addForm.tax_type.toUpperCase()} Rate<span style={{ color: '#C72030' }}>*</span></span>}
+                name="diff_rate_reason"
+                placeholder="Enter reason"
+                InputLabelProps={{ shrink: true }}
+                value={addForm.diff_rate_reason}
+                onChange={(e) => {
+                  setAddForm((s) => ({ ...s, diff_rate_reason: e.target.value }));
+                  if (e.target.value.trim()) setAddErrors((s) => ({ ...s, diff_rate_reason: undefined }));
+                }}
+                error={!!addErrors.diff_rate_reason}
+                helperText={addErrors.diff_rate_reason}
+              />
             )}
 
             {/* Applicable Period */}
-            <div>
-              <Label className="text-sm font-semibold">Applicable Period</Label>
-              <div className="grid grid-cols-2 gap-4 mt-2">
-                <div className="space-y-1">
-                  <Label htmlFor="add-start-date">Start Date <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="add-start-date"
-                    type="date"
-                    value={addForm.start_date}
-                    onChange={(e) => {
-                      setAddForm((s) => ({ ...s, start_date: e.target.value }));
-                      if (e.target.value) setAddErrors((s) => ({ ...s, start_date: undefined }));
-                    }}
-                    className={addErrors.start_date ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                  />
-                  {addErrors.start_date && <p className="text-xs text-red-500">{addErrors.start_date}</p>}
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="add-end-date">End Date <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="add-end-date"
-                    type="date"
-                    value={addForm.end_date}
-                    min={addForm.start_date || undefined}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      // If selected end date is before start date, clear it
-                      if (addForm.start_date && val && val < addForm.start_date) {
-                        setAddForm((s) => ({ ...s, end_date: '' }));
-                        setAddErrors((s) => ({ ...s, end_date: 'End Date must be on or after Start Date' }));
-                      } else {
-                        setAddForm((s) => ({ ...s, end_date: val }));
-                        if (val) setAddErrors((s) => ({ ...s, end_date: undefined }));
-                      }
-                    }}
-                    className={addErrors.end_date ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                  />
-                  {addErrors.end_date && <p className="text-xs text-red-500">{addErrors.end_date}</p>}
-                </div>
-              </div>
+            <p className="text-sm font-semibold mt-3 mb-1">Applicable Period</p>
+            <div className="grid grid-cols-2 gap-4">
+              <TextField
+                fullWidth
+                margin="normal"
+                type="date"
+                label={<span>Start Date<span style={{ color: '#C72030' }}>*</span></span>}
+                name="start_date"
+                InputLabelProps={{ shrink: true }}
+                value={addForm.start_date}
+                onChange={(e) => {
+                  setAddForm((s) => ({ ...s, start_date: e.target.value }));
+                  if (e.target.value) setAddErrors((s) => ({ ...s, start_date: undefined }));
+                }}
+                error={!!addErrors.start_date}
+                helperText={addErrors.start_date}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                type="date"
+                label={<span>End Date<span style={{ color: '#C72030' }}>*</span></span>}
+                name="end_date"
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: addForm.start_date || undefined }}
+                value={addForm.end_date}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (addForm.start_date && val && val < addForm.start_date) {
+                    setAddForm((s) => ({ ...s, end_date: '' }));
+                    setAddErrors((s) => ({ ...s, end_date: 'End Date must be on or after Start Date' }));
+                  } else {
+                    setAddForm((s) => ({ ...s, end_date: val }));
+                    if (val) setAddErrors((s) => ({ ...s, end_date: undefined }));
+                  }
+                }}
+                error={!!addErrors.end_date}
+                helperText={addErrors.end_date}
+              />
             </div>
-          </div>
-          <DialogFooter className="flex flex-row gap-2 justify-end">
-            <Button onClick={handleAddTax} disabled={addSubmitting}>
-              {addSubmitting ? 'Saving...' : 'Save'}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setAddModalOpen(false);
-                setAddErrors({});
-                setAddForm({
-                  name: '',
-                  percentage: '',
-                  tax_type: '',
-                  higher_rate: false,
-                  diff_rate_reason: '',
-                  start_date: '',
-                  end_date: '',
-                  lock_account_tax_section_id: '',
-                });
-                setSections([]);
-              }}
-              disabled={addSubmitting}
-            >
-              Cancel
-            </Button>
-          </DialogFooter>
+
+            <div className="mt-4 pt-5 flex justify-center gap-3">
+              <Button
+                type="button"
+                onClick={handleAddTax}
+                disabled={addSubmitting}
+                style={{ backgroundColor: "#C72030" }}
+                className="text-white hover:bg-[#C72030]/90 min-w-[100px]"
+              >
+                {addSubmitting ? 'Saving...' : 'Save'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setAddModalOpen(false);
+                  setAddErrors({});
+                  setAddForm({
+                    name: '',
+                    percentage: '',
+                    tax_type: '',
+                    higher_rate: false,
+                    diff_rate_reason: '',
+                    start_date: '',
+                    end_date: '',
+                    lock_account_tax_section_id: '',
+                  });
+                  setSections([]);
+                }}
+                disabled={addSubmitting}
+                className="min-w-[100px]"
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
 
       {/* Edit Modal */}
       <Dialog
         open={editModalOpen}
-        onOpenChange={(open) => {
-          setEditModalOpen(open);
-          if (!open) {
-            setEditErrors({});
-            setEditForm({
-              id: 0,
-              name: '',
-              percentage: '',
-              tax_type: '',
-              higher_rate: false,
-              diff_rate_reason: '',
-              start_date: '',
-              end_date: '',
-              lock_account_tax_section_id: '',
-            });
-            setSections([]);
-          }
+        onClose={() => {
+          setEditModalOpen(false);
+          setEditErrors({});
+          setEditForm({
+            id: 0,
+            name: '',
+            percentage: '',
+            tax_type: '',
+            higher_rate: false,
+            diff_rate_reason: '',
+            start_date: '',
+            end_date: '',
+            lock_account_tax_section_id: '',
+          });
+          setSections([]);
         }}
+        fullWidth
+        maxWidth="sm"
       >
-        <DialogContent className="max-w-2xl bg-white data-[state=open]:animate-in">
-          <DialogHeader>
-            <DialogTitle>Edit {editForm.tax_type.toUpperCase()}</DialogTitle>
-          </DialogHeader>
+        <div className="flex items-center justify-between px-6 pt-6">
+          <h5 className="text-lg font-semibold">Edit {editForm.tax_type.toUpperCase()}</h5>
+        </div>
+        <DialogContent>
+          <style>{`
+            .tax-setup-form .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+              border-color: #DA7756 !important;
+            }
+            .tax-setup-form .MuiInputLabel-root.Mui-focused {
+              color: #DA7756 !important;
+            }
+            .tax-setup-form [class*="MuiFormControl"]:has(.MuiInputBase-multiline) [class*="MuiInputLabel"].Mui-focused,
+            .tax-setup-form [class*="MuiFormControl"]:has(textarea) [class*="MuiInputLabel"].Mui-focused {
+              color: #DA7756 !important;
+            }
+            .tax-setup-form .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+              border-color: #DA7756 !important;
+            }
+            .tax-setup-form .MuiInputLabel-root.Mui-error {
+              color: #DA7756 !important;
+            }
+            .tax-setup-form .MuiFormHelperText-root.Mui-error {
+              color: #DA7756 !important;
+            }
+          `}</style>
           {editLoading ? (
             <div className="flex items-center justify-center py-8">
               <span className="text-sm text-muted-foreground">Loading...</span>
             </div>
           ) : (
-            <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto">
+            <form className="tax-setup-form space-y-2 max-h-[60vh] overflow-y-auto">
               {/* Row 1: Tax Name and Rate */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="edit-name">Tax Name <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="edit-name"
-                    value={editForm.name}
-                    onChange={(e) => {
-                      setEditForm((s) => ({ ...s, name: e.target.value }));
-                      if (e.target.value.trim()) setEditErrors((s) => ({ ...s, name: undefined }));
-                    }}
-                    placeholder="Enter tax name"
-                    className={editErrors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                  />
-                  {editErrors.name && <p className="text-xs text-red-500">{editErrors.name}</p>}
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="edit-percentage">Rate (%) <span className="text-red-500">*</span></Label>
-                  {/* <Input
-                    id="edit-percentage"
-                    type="number"
-                    value={editForm.percentage}
-                    onChange={(e) => {
-                      setEditForm((s) => ({ ...s, percentage: e.target.value }));
-                      if (e.target.value) setEditErrors((s) => ({ ...s, percentage: undefined }));
-                    }}
-                    placeholder="Enter tax rate"
-                    className={editErrors.percentage ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                    step="0.01"
-                  /> */}
-
-                  <Input
-                    id="edit-percentage"
-                    type="number"
-                    value={editForm.percentage}
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    onChange={(e) => {
-                      let value = e.target.value;
-
-                      const regex = /^\d{0,3}(\.\d{0,2})?$/;
-
-                      if (!regex.test(value)) return;
-
-                      if (Number(value) > 100) value = "100";
-
-                      setEditForm((s) => ({ ...s, percentage: value }));
-
-                      if (value) setEditErrors((s) => ({ ...s, percentage: undefined }));
-                    }}
-                    placeholder="Enter tax rate"
-                    className={editErrors.percentage ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                  />
-                  {editErrors.percentage && <p className="text-xs text-red-500">{editErrors.percentage}</p>}
-                </div>
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label={<span>Tax Name<span style={{ color: '#C72030' }}>*</span></span>}
+                  name="name"
+                  placeholder="Enter tax name"
+                  InputLabelProps={{ shrink: true }}
+                  value={editForm.name}
+                  onChange={(e) => {
+                    setEditForm((s) => ({ ...s, name: e.target.value }));
+                    if (e.target.value.trim()) setEditErrors((s) => ({ ...s, name: undefined }));
+                  }}
+                  error={!!editErrors.name}
+                  helperText={editErrors.name}
+                />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  type="number"
+                  label={<span>Rate (%)<span style={{ color: '#C72030' }}>*</span></span>}
+                  name="percentage"
+                  placeholder="Enter tax rate"
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ min: 0, max: 100, step: 0.01 }}
+                  value={editForm.percentage}
+                  onChange={(e) => {
+                    let value = e.target.value;
+                    const regex = /^\d{0,3}(\.\d{0,2})?$/;
+                    if (!regex.test(value)) return;
+                    if (Number(value) > 100) value = "100";
+                    setEditForm((s) => ({ ...s, percentage: value }));
+                    if (value) setEditErrors((s) => ({ ...s, percentage: undefined }));
+                  }}
+                  error={!!editErrors.percentage}
+                  helperText={editErrors.percentage}
+                />
               </div>
 
               {/* Row 2: Tax Type */}
-              <div className="space-y-1">
-                <Label htmlFor="edit-tax-type">Tax Type <span className="text-red-500">*</span></Label>
-                <Select value={editForm.tax_type} onValueChange={handleEditTaxTypeChange}>
-                  <SelectTrigger id="edit-tax-type" className={editErrors.tax_type ? 'border-red-500' : ''}>
-                    <SelectValue placeholder="Select tax type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TAX_TYPE_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="edit-tax-type-label" shrink error={!!editErrors.tax_type}>
+                  Tax Type<span style={{ color: '#C72030' }}>*</span>
+                </InputLabel>
+                <Select
+                  labelId="edit-tax-type-label"
+                  label="Tax Type*"
+                  displayEmpty
+                  notched
+                  value={editForm.tax_type}
+                  onChange={(e) => handleEditTaxTypeChange(e.target.value)}
+                  error={!!editErrors.tax_type}
+                >
+                  <MenuItem value="" disabled>Select tax type</MenuItem>
+                  {TAX_TYPE_OPTIONS.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
                 </Select>
-                {editErrors.tax_type && <p className="text-xs text-red-500">{editErrors.tax_type}</p>}
-              </div>
+                {editErrors.tax_type && <p className="text-xs mt-1" style={{ color: '#DA7756' }}>{editErrors.tax_type}</p>}
+              </FormControl>
 
               {/* Row 3: Section */}
-              <div className="space-y-1">
-                <Label htmlFor="edit-section">Section <span className="text-red-500">*</span></Label>
+              <FormControl fullWidth margin="normal" disabled={loadingSections || sections.length === 0}>
+                <InputLabel id="edit-section-label" shrink error={!!editErrors.lock_account_tax_section_id}>
+                  Section<span style={{ color: '#C72030' }}>*</span>
+                </InputLabel>
                 <Select
+                  labelId="edit-section-label"
+                  label="Section*"
+                  displayEmpty
+                  notched
                   value={editForm.lock_account_tax_section_id}
-                  onValueChange={(value) => {
-                    setEditForm((s) => ({ ...s, lock_account_tax_section_id: value }));
+                  onChange={(e) => {
+                    setEditForm((s) => ({ ...s, lock_account_tax_section_id: e.target.value }));
                     setEditErrors((s) => ({ ...s, lock_account_tax_section_id: undefined }));
                   }}
-                  disabled={loadingSections || sections.length === 0}
+                  error={!!editErrors.lock_account_tax_section_id}
                 >
-                  <SelectTrigger
-                    id="edit-section"
-                    className={editErrors.lock_account_tax_section_id ? 'border-red-500' : ''}
-                  >
-                    <SelectValue placeholder={loadingSections ? 'Loading sections...' : 'Select a Tax Type.'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sections.map((sec) => (
-                      <SelectItem key={sec.id} value={sec.id.toString()}>
-                        {sec.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                  <MenuItem value="" disabled>{loadingSections ? 'Loading sections...' : 'Select a Tax Type.'}</MenuItem>
+                  {sections.map((sec) => (
+                    <MenuItem key={sec.id} value={sec.id.toString()}>{sec.name}</MenuItem>
+                  ))}
                 </Select>
                 {editErrors.lock_account_tax_section_id && (
-                  <p className="text-xs text-red-500">{editErrors.lock_account_tax_section_id}</p>
+                  <p className="text-xs mt-1" style={{ color: '#DA7756' }}>{editErrors.lock_account_tax_section_id}</p>
                 )}
-              </div>
+              </FormControl>
 
               {/* Info Box */}
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-700">
+              <div className="bg-brand-light border border-brand/20 rounded-md p-3 text-sm text-brand mt-2">
                 <span className="font-semibold">ℹ</span> By default, {editForm.tax_type.toUpperCase()} will be tracked under {editForm.tax_type === 'tds' ? 'TDS Payable and TDS Receivable' : 'TCS Payable and TCS Receivable'} accounts.
               </div>
 
               {/* Higher Rate Checkbox */}
-              <div className="flex items-center gap-2">
-                <input
+              <div className="flex items-center gap-2 mt-3">
+                <Checkbox
                   id="edit-higher-rate"
-                  type="checkbox"
                   checked={editForm.higher_rate}
-                  onChange={(e) => {
-                    setEditForm((s) => ({ ...s, higher_rate: e.target.checked }));
-                    if (!e.target.checked) setEditErrors((s) => ({ ...s, diff_rate_reason: undefined }));
+                  onCheckedChange={(checked) => {
+                    setEditForm((s) => ({ ...s, higher_rate: !!checked }));
+                    if (!checked) setEditErrors((s) => ({ ...s, diff_rate_reason: undefined }));
                   }}
-                  className="w-4 h-4"
-                  aria-label="This is a Higher Tax Rate"
                 />
-                <Label htmlFor="edit-higher-rate" className="cursor-pointer">
+                <label htmlFor="edit-higher-rate" className="text-sm cursor-pointer">
                   This is a Higher {editForm.tax_type.toUpperCase()} Rate
-                </Label>
+                </label>
               </div>
 
               {/* Reason for Higher Rate (appears when checkbox is checked) */}
               {editForm.higher_rate && (
-                <div className="space-y-1">
-                  <Label htmlFor="edit-reason">Reason for Higher {editForm.tax_type.toUpperCase()} Rate <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="edit-reason"
-                    value={editForm.diff_rate_reason}
-                    onChange={(e) => {
-                      setEditForm((s) => ({ ...s, diff_rate_reason: e.target.value }));
-                      if (e.target.value.trim()) setEditErrors((s) => ({ ...s, diff_rate_reason: undefined }));
-                    }}
-                    placeholder="Enter reason"
-                    className={editErrors.diff_rate_reason ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                  />
-                  {editErrors.diff_rate_reason && <p className="text-xs text-red-500">{editErrors.diff_rate_reason}</p>}
-                </div>
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label={<span>Reason for Higher {editForm.tax_type.toUpperCase()} Rate<span style={{ color: '#C72030' }}>*</span></span>}
+                  name="diff_rate_reason"
+                  placeholder="Enter reason"
+                  InputLabelProps={{ shrink: true }}
+                  value={editForm.diff_rate_reason}
+                  onChange={(e) => {
+                    setEditForm((s) => ({ ...s, diff_rate_reason: e.target.value }));
+                    if (e.target.value.trim()) setEditErrors((s) => ({ ...s, diff_rate_reason: undefined }));
+                  }}
+                  error={!!editErrors.diff_rate_reason}
+                  helperText={editErrors.diff_rate_reason}
+                />
               )}
 
               {/* Applicable Period */}
-              <div>
-                <Label className="text-sm font-semibold">Applicable Period</Label>
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="edit-start-date">Start Date <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="edit-start-date"
-                      type="date"
-                      value={editForm.start_date}
-                      onChange={(e) => {
-                        setEditForm((s) => ({ ...s, start_date: e.target.value }));
-                        if (e.target.value) setEditErrors((s) => ({ ...s, start_date: undefined }));
-                      }}
-                      className={editErrors.start_date ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                    />
-                    {editErrors.start_date && <p className="text-xs text-red-500">{editErrors.start_date}</p>}
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="edit-end-date">End Date <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="edit-end-date"
-                      type="date"
-                      value={editForm.end_date}
-                      min={editForm.start_date || undefined}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (editForm.start_date && val && val < editForm.start_date) {
-                          setEditForm((s) => ({ ...s, end_date: '' }));
-                          setEditErrors((s) => ({ ...s, end_date: 'End Date must be on or after Start Date' }));
-                        } else {
-                          setEditForm((s) => ({ ...s, end_date: val }));
-                          if (val) setEditErrors((s) => ({ ...s, end_date: undefined }));
-                        }
-                      }}
-                      className={editErrors.end_date ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                    />
-                    {editErrors.end_date && <p className="text-xs text-red-500">{editErrors.end_date}</p>}
-                  </div>
-                </div>
+              <p className="text-sm font-semibold mt-3 mb-1">Applicable Period</p>
+              <div className="grid grid-cols-2 gap-4">
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  type="date"
+                  label={<span>Start Date<span style={{ color: '#C72030' }}>*</span></span>}
+                  name="start_date"
+                  InputLabelProps={{ shrink: true }}
+                  value={editForm.start_date}
+                  onChange={(e) => {
+                    setEditForm((s) => ({ ...s, start_date: e.target.value }));
+                    if (e.target.value) setEditErrors((s) => ({ ...s, start_date: undefined }));
+                  }}
+                  error={!!editErrors.start_date}
+                  helperText={editErrors.start_date}
+                />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  type="date"
+                  label={<span>End Date<span style={{ color: '#C72030' }}>*</span></span>}
+                  name="end_date"
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ min: editForm.start_date || undefined }}
+                  value={editForm.end_date}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (editForm.start_date && val && val < editForm.start_date) {
+                      setEditForm((s) => ({ ...s, end_date: '' }));
+                      setEditErrors((s) => ({ ...s, end_date: 'End Date must be on or after Start Date' }));
+                    } else {
+                      setEditForm((s) => ({ ...s, end_date: val }));
+                      if (val) setEditErrors((s) => ({ ...s, end_date: undefined }));
+                    }
+                  }}
+                  error={!!editErrors.end_date}
+                  helperText={editErrors.end_date}
+                />
               </div>
-            </div>
+
+              <div className="mt-4 pt-5 flex justify-center gap-3">
+                <Button
+                  type="button"
+                  onClick={handleEditTax}
+                  disabled={editSubmitting}
+                  style={{ backgroundColor: "#C72030" }}
+                  className="text-white hover:bg-[#C72030]/90 min-w-[100px]"
+                >
+                  {editSubmitting ? 'Updating...' : 'Update'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditModalOpen(false);
+                    setEditErrors({});
+                    setEditForm({
+                      id: 0,
+                      name: '',
+                      percentage: '',
+                      tax_type: '',
+                      higher_rate: false,
+                      diff_rate_reason: '',
+                      start_date: '',
+                      end_date: '',
+                      lock_account_tax_section_id: '',
+                    });
+                    setSections([]);
+                  }}
+                  disabled={editSubmitting}
+                  className="min-w-[100px]"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
           )}
-          <DialogFooter className="flex flex-row gap-2 justify-end">
-            <Button onClick={handleEditTax} disabled={editSubmitting || editLoading}>
-              {editSubmitting ? 'Updating...' : 'Update'}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setEditModalOpen(false);
-                setEditErrors({});
-                setEditForm({
-                  id: 0,
-                  name: '',
-                  percentage: '',
-                  tax_type: '',
-                  higher_rate: false,
-                  diff_rate_reason: '',
-                  start_date: '',
-                  end_date: '',
-                  lock_account_tax_section_id: '',
-                });
-                setSections([]);
-              }}
-              disabled={editSubmitting}
-            >
-              Cancel
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

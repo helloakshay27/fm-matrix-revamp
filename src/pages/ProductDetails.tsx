@@ -2538,84 +2538,84 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
             <TabsList className="w-full mb-8 flex-wrap h-auto gap-1">
               <TabsTrigger
                 value="summary"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs whitespace-normal break-words text-center h-auto py-2"
               >
                 <Target className="w-4 h-4 mr-1" />
                 Product Summary
               </TabsTrigger>
               <TabsTrigger
                 value="features"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs whitespace-normal break-words text-center h-auto py-2"
               >
                 <List className="w-4 h-4 mr-1" />
                 Feature List
               </TabsTrigger>
               <TabsTrigger
                 value="market"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs whitespace-normal break-words text-center h-auto py-2"
               >
                 <BarChart3 className="w-4 h-4 mr-1" />
                 Market Analysis
               </TabsTrigger>
               <TabsTrigger
                 value="pricing"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs whitespace-normal break-words text-center h-auto py-2"
               >
                 <DollarSign className="w-4 h-4 mr-1" />
                 Features & Pricing
               </TabsTrigger>
               <TabsTrigger
                 value="usecases"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs whitespace-normal break-words text-center h-auto py-2"
               >
                 <Briefcase className="w-4 h-4 mr-1" />
                 Use Cases
               </TabsTrigger>
               <TabsTrigger
                 value="roadmap"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs whitespace-normal break-words text-center h-auto py-2"
               >
                 <Map className="w-4 h-4 mr-1" />
                 Product Roadmap
               </TabsTrigger>
               <TabsTrigger
                 value="business"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs whitespace-normal break-words text-center h-auto py-2"
               >
                 <Building2 className="w-4 h-4 mr-1" />
                 Business Plan
               </TabsTrigger>
               <TabsTrigger
                 value="gtm"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs whitespace-normal break-words text-center h-auto py-2"
               >
                 <Megaphone className="w-4 h-4 mr-1" />
                 GTM Strategy
               </TabsTrigger>
               <TabsTrigger
                 value="metrics"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs whitespace-normal break-words text-center h-auto py-2"
               >
                 <LineChart className="w-4 h-4 mr-1" />
                 Metrics
               </TabsTrigger>
               <TabsTrigger
                 value="swot"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs whitespace-normal break-words text-center h-auto py-2"
               >
                 <Compass className="w-4 h-4 mr-1" />
                 SWOT Analysis
               </TabsTrigger>
               <TabsTrigger
                 value="enhancements"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs whitespace-normal break-words text-center h-auto py-2"
               >
                 <Rocket className="w-4 h-4 mr-1" />
                 Enhancement Roadmap
               </TabsTrigger>
               <TabsTrigger
                 value="assets"
-                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs"
+                className="flex-1 min-w-[120px] data-[state=active]:bg-[#C4B89D] bg-[#FFFFFF] data-[state=active]:text-[#808080] text-black text-xs whitespace-normal break-words text-center h-auto py-2"
               >
                 <CreditCard className="w-4 h-4 mr-1" />
                 Assets & Credentials

@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import axios from 'axios';
-import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard } from 'lucide-react';
+import { Eye, Plus, Download, Filter, QrCode, Edit, Trash2, Users, CreditCard, Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -429,7 +430,7 @@ export const CustomersDashboard = () => {
   const renderStatusBadge = (startDate: string | null, endDate: string | null, accessCardEnabled: boolean) => {
     if (!startDate && !endDate) {
       return (
-        <Badge className="bg-red-100 text-red-800 border-0">
+        <Badge className="bg-gray-100 text-gray-800 border-0">
           Pending Dates
         </Badge>
       );
@@ -437,14 +438,14 @@ export const CustomersDashboard = () => {
 
     if (!endDate && startDate) {
       return (
-        <Badge className="bg-red-100 text-red-800 border-0">
+        <Badge className="bg-gray-100 text-gray-800 border-0">
           Pending EndDate
         </Badge>
       );
     }
 
     return (
-      <Badge className="bg-green-100 text-green-800 border-0">
+      <Badge className="bg-gray-100 text-gray-800 border-0">
         Approved
       </Badge>
     );
@@ -454,7 +455,7 @@ export const CustomersDashboard = () => {
   const renderCardAllocated = (allocated: boolean) => {
     return (
       <div className="flex items-center justify-center">
-        <div className={`w-10 h-5 rounded-full relative transition-colors ${allocated ? 'bg-green-500' : 'bg-gray-300'}`}>
+        <div className={`w-10 h-5 rounded-full relative transition-colors ${allocated ? 'bg-brand' : 'bg-gray-300'}`}>
           <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform ${allocated ? 'right-0.5' : 'left-0.5'}`} />
         </div>
       </div>
@@ -593,7 +594,7 @@ export const CustomersDashboard = () => {
           <button
             type="button"
             onClick={() => handleToggleStatus(item)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-red-500" : "bg-gray-300"
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isActive ? "bg-brand" : "bg-gray-300"
               }`}
           >
             <span
@@ -602,10 +603,7 @@ export const CustomersDashboard = () => {
             />
           </button>
 
-          <span
-            className={`text-sm font-medium ${isActive ? "text-red-600" : "text-red-600"
-              }`}
-          >
+          <span className="text-sm font-medium text-gray-600">
           </span>
         </div>
     );
@@ -625,7 +623,8 @@ export const CustomersDashboard = () => {
   const renderCustomActions = () => (
     <div className="flex gap-3">
       <Button
-        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+        variant="ghost"
+        className="fm-button-fix fm-button-brand px-8 py-2"
         onClick={handleAddMembership}
       >
         <Plus className="w-4 h-4 mr-2" />
@@ -655,9 +654,9 @@ export const CustomersDashboard = () => {
       {/* Memberships Table */}
       <div className="overflow-x-auto animate-fade-in">
         {searchLoading && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
-            <div className="flex items-center gap-2 text-blue-600">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          <div className="bg-brand-light border border-brand rounded-lg p-3 mb-4 flex items-center justify-center">
+            <div className="flex items-center gap-2 text-brand">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand"></div>
               <span className="text-sm">Searching...</span>
             </div>
           </div>
@@ -680,6 +679,25 @@ export const CustomersDashboard = () => {
           rightActions={renderRightActions()}
           searchPlaceholder="Search "
           onSearchChange={handleSearch}
+          customSearchInput={
+            <div className="relative w-[300px] max-w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search "
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="h-9 pl-10 pr-10 rounded-lg border-gray-300 bg-white text-[#2D2A26] placeholder:text-[#8a7e72]"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => handleSearch('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          }
           hideTableExport={true}
           hideColumnsButton={true}
           className="transition-all duration-500 ease-in-out"

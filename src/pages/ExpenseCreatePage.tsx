@@ -23,8 +23,14 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Close, CloudUpload, Search, EditOutlined } from '@mui/icons-material';
-import { Receipt, FileText } from 'lucide-react';
+import { Receipt, FileText, Landmark, ArrowLeft } from 'lucide-react';
 import { toast as sonnerToast } from 'sonner';
+import {
+  BankRecord,
+  bankMasterListUrl,
+  getBankMasterApiConfig,
+  mapApiBankRecord,
+} from './ClubManagement/bankMasterUtils';
 
 // ── Section wrapper ──────────────────────────────────────────────────────────
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({
@@ -191,6 +197,25 @@ export const ExpenseCreatePage: React.FC = () => {
   // ── Shared header fields (both modes) ────────────────────────────────────
   const [date, setDate] = useState('');
   const [paidThrough, setPaidThrough] = useState('');
+
+  // Bank Details
+  const [bankOptions, setBankOptions] = useState<BankRecord[]>([]);
+  const [selectedBankId, setSelectedBankId] = useState<string>('');
+
+  useEffect(() => {
+    const fetchBanks = async () => {
+      try {
+        const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(`${bankMasterListUrl(baseUrl, lockAccountId)}&active=true`, { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        setBankOptions(data.map(mapApiBankRecord));
+      } catch (err) {
+        setBankOptions([]);
+      }
+    };
+    fetchBanks();
+  }, []);
+
   const [vendor, setVendor] = useState('');
   const [customer, setCustomer] = useState('');
   const [billedOn, setBilledOn] = useState(false);
@@ -510,6 +535,7 @@ export const ExpenseCreatePage: React.FC = () => {
     const e: Record<string, string> = {};
     if (!date) e.date = 'Date is required';
     if (!paidThrough) e.paidThrough = 'Paid through is required';
+    if (!selectedBankId) e.bank = 'Bank is required';
     if (!gstTreatment) e.gstTreatment = 'GST treatment is required';
     if (!sourceOfSupply) e.sourceOfSupply = 'Source of supply is required';
     if (!destinationOfSupply) e.destinationOfSupply = 'Destination is required';
@@ -727,6 +753,7 @@ export const ExpenseCreatePage: React.FC = () => {
       const payload = {
         expense: {
           paid_through_account_id: parseInt(paidThrough),
+          bank_master_id: selectedBankId ? Number(selectedBankId) : null,
           ...(vendor && { vendor_id: parseInt(vendor) }),
           ...(customer && { customer_id: parseInt(customer) }),
           date,
@@ -886,6 +913,16 @@ export const ExpenseCreatePage: React.FC = () => {
           <div className="bg-white p-8 rounded-lg shadow-xl">Creating expense...</div>
         </div>
       )}
+      <div className="mb-2">
+        <button
+          onClick={() => navigate('/accounting/expense')}
+          className="flex items-center gap-2 text-gray-900 hover:text-gray-700 font-medium tracking-wide"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to Expenses List
+        </button>
+      </div>
+
       <header className="sticky top-0 bg-background z-10 pb-4">
         <div className="flex items-start justify-between">
           <div>
@@ -1062,7 +1099,7 @@ export const ExpenseCreatePage: React.FC = () => {
                           {selectedGstDetail?.gstin || vendorDetail?.primary_gst_detail?.gstin || '—'}
                         </span>
                         <IconButton size="small" onClick={() => setGstPickerModalOpen(true)}>
-                          <EditOutlined fontSize="small" className="text-blue-500" />
+                          <EditOutlined fontSize="small" className="text-brand" />
                         </IconButton>
                       </div>
                     </div>
@@ -1099,9 +1136,9 @@ export const ExpenseCreatePage: React.FC = () => {
 
                 {/* ✅ Tax Amount — read-only calculation */}
                 {taxType === 'tax_group' && taxGroupId && (
-                  <div className="mt-3 p-3 bg-blue-50 rounded-md border border-blue-100">
+                  <div className="mt-3 p-3 bg-orange-50 rounded-md border border-orange-100">
                     <p className="text-sm text-gray-700">
-                      Tax Amount = ₹<span className="font-semibold text-blue-600">{taxAmount.toFixed(2)}</span>
+                      Tax Amount = ₹<span className="font-semibold text-brand">{taxAmount.toFixed(2)}</span>
                     </p>
                   </div>
                 )}
@@ -1338,7 +1375,7 @@ export const ExpenseCreatePage: React.FC = () => {
                           {GST_TREATMENTS.find(t => t.value === vendorDetail?.gst_preference)?.label || vendorDetail?.gst_preference || '—'}
                         </span>
                         <IconButton size="small" onClick={() => { setGstTreatmentDraft(vendorDetail?.gst_preference || ''); setGstModalOpen(true); }}>
-                          <EditOutlined fontSize="small" className="text-blue-500" />
+                          <EditOutlined fontSize="small" className="text-brand" />
                         </IconButton>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1347,7 +1384,7 @@ export const ExpenseCreatePage: React.FC = () => {
                           {selectedGstDetail?.gstin || vendorDetail?.primary_gst_detail?.gstin || '—'}
                         </span>
                         <IconButton size="small" onClick={() => setGstPickerModalOpen(true)}>
-                          <EditOutlined fontSize="small" className="text-blue-500" />
+                          <EditOutlined fontSize="small" className="text-brand" />
                         </IconButton>
                       </div>
                     </div>
@@ -1491,7 +1528,7 @@ export const ExpenseCreatePage: React.FC = () => {
                                 )}
                                 <button
                                   type="button"
-                                  className="flex items-center gap-0.5 text-blue-500 hover:text-blue-700 ml-1"
+                                  className="flex items-center gap-0.5 text-brand hover:text-brand ml-1"
                                   onClick={() => updateLine(idx, { hsnSacEditing: true })}
                                 >
                                   <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
@@ -1653,7 +1690,7 @@ export const ExpenseCreatePage: React.FC = () => {
 
               <button
                 type="button"
-                className="text-blue-600 hover:underline text-sm"
+                className="text-brand hover:underline text-sm"
                 onClick={() => setIsItemized(false)}
               >
                 ← Back to single expense view
@@ -1772,7 +1809,7 @@ export const ExpenseCreatePage: React.FC = () => {
                 <h3 className="text-sm font-semibold mb-4">Attachments</h3>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                   <div className="flex flex-col items-center gap-3">
-                    <CloudUpload className="w-10 h-10 text-blue-500" />
+                    <CloudUpload className="w-10 h-10 text-brand" />
                     <div>
                       <p className="font-medium text-sm">Drag or Drop your Receipts</p>
                       <p className="text-xs text-gray-500 mt-1">Maximum file size allowed is 10MB</p>
@@ -1811,13 +1848,57 @@ export const ExpenseCreatePage: React.FC = () => {
           )}
         </Section>
 
+        {/* Bank Details */}
+        <Section title="Bank Details" icon={<Landmark className="w-5 h-5" />}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Bank <span className="text-red-500">*</span>
+              </label>
+              <FormControl fullWidth error={!!errors.bank}>
+                <Select
+                  displayEmpty
+                  value={selectedBankId}
+                  onChange={(e) => {
+                    setSelectedBankId(String(e.target.value));
+                    if (errors.bank) {
+                      setErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.bank;
+                        return next;
+                      });
+                    }
+                  }}
+                  renderValue={(val) =>
+                    val
+                      ? (() => {
+                          const bank = bankOptions.find(b => String(b.id) === String(val));
+                          return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
+                        })()
+                      : <span style={{ color: '#aaa' }}>Select Bank</span>
+                  }
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Bank</em></MenuItem>
+                  {bankOptions.map((bank) => (
+                    <MenuItem key={bank.id} value={String(bank.id)}>
+                      {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {errors.bank && <p className="text-xs text-red-500 mt-1">{errors.bank}</p>}
+            </div>
+          </div>
+        </Section>
+
         {/* Receipts section — single view only */}
         {!isItemized && (
           <Section title="Receipts" icon={<FileText className="w-5 h-5" />}>
             <div className="space-y-4">
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center">
                 <div className="flex flex-col items-center gap-4">
-                  <CloudUpload className="w-12 h-12 text-blue-500" />
+                  <CloudUpload className="w-12 h-12 text-brand" />
                   <div>
                     <p className="font-medium">Drag or Drop your Receipts</p>
                     <p className="text-sm text-gray-500 mt-1">Maximum file size allowed is 10MB</p>
@@ -1857,11 +1938,28 @@ export const ExpenseCreatePage: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-3 pt-6 border-t">
-        <Button variant="outlined" onClick={() => navigate('/accounting/expense')}>
+      <div className="flex justify-center gap-3 pt-6 border-t">
+        <Button
+          variant="outlined"
+          onClick={() => navigate('/accounting/expense')}
+          className="fm-button-fix px-8 py-2"
+          sx={{
+            textTransform: 'none',
+            fontWeight: 600,
+            borderColor: '#DA7756',
+            color: '#DA7756',
+            '&:hover': { borderColor: '#C45F40', bgcolor: '#F2EEE9', color: '#C45F40' },
+          }}
+        >
           Cancel
         </Button>
-        <Button variant="contained" onClick={handleSubmit} disabled={isSubmitting}>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="fm-button-fix fm-button-brand px-8 py-2"
+          sx={{ textTransform: 'none', fontWeight: 600 }}
+        >
           Save
         </Button>
       </div>
@@ -1880,11 +1978,11 @@ export const ExpenseCreatePage: React.FC = () => {
         <DialogActions>
           <Button variant="contained"
             onClick={() => { setGstTreatment(gstTreatmentDraft); setVendorDetail((prev: any) => prev ? { ...prev, gst_preference: gstTreatmentDraft } : prev); setGstModalOpen(false); }}
-            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+            sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}>
             Update
           </Button>
           <Button variant="outlined" onClick={() => setGstModalOpen(false)}
-            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+            sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>
             Cancel
           </Button>
         </DialogActions>
@@ -1907,7 +2005,7 @@ export const ExpenseCreatePage: React.FC = () => {
             ))}
           </div>
           <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
-            <button type="button" className="text-blue-600 text-sm"
+            <button type="button" className="text-brand text-sm"
               onClick={() => { setGstPickerModalOpen(false); setShowNewGstForm(false); setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setGstManageModalOpen(true); }}>
               ⚙ Manage Tax Informations
             </button>
@@ -1925,7 +2023,7 @@ export const ExpenseCreatePage: React.FC = () => {
           <div className="space-y-4">
             <Button variant="contained" size="small"
               onClick={() => { setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setShowNewGstForm(true); }}
-              sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+              sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}>
               Add New Tax Information
             </Button>
             {showNewGstForm && (
@@ -1946,12 +2044,12 @@ export const ExpenseCreatePage: React.FC = () => {
                   onChange={e => setNewGstForm(p => ({ ...p, business_trade_name: e.target.value }))} />
                 <div className="md:col-span-2 flex gap-2">
                   <Button variant="contained" size="small" onClick={handleSaveAndSelectGst}
-                    sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+                    sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}>
                     {editingGstDetailId ? 'Save' : 'Save and Select'}
                   </Button>
                   <Button variant="outlined" size="small"
                     onClick={() => { setShowNewGstForm(false); setEditingGstDetailId(null); }}
-                    sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                    sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>
                     Cancel
                   </Button>
                 </div>
@@ -1984,7 +2082,7 @@ export const ExpenseCreatePage: React.FC = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
           <Button variant="outlined" size="small" onClick={() => setGstManageModalOpen(false)}
-            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>Close</Button>
+            sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>Close</Button>
         </DialogActions>
       </Dialog>
 
@@ -2001,9 +2099,9 @@ export const ExpenseCreatePage: React.FC = () => {
         <DialogActions>
           <Button variant="contained"
             onClick={() => { setSourceOfSupply(sourceDraft); setSourceModalOpen(false); }}
-            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>Update</Button>
+            sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}>Update</Button>
           <Button variant="outlined" onClick={() => setSourceModalOpen(false)}
-            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>Cancel</Button>
+            sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>Cancel</Button>
         </DialogActions>
       </Dialog>
 
@@ -2020,9 +2118,9 @@ export const ExpenseCreatePage: React.FC = () => {
         <DialogActions>
           <Button variant="contained"
             onClick={() => { setDestinationOfSupply(destinationDraft); setDestinationModalOpen(false); }}
-            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>Update</Button>
+            sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}>Update</Button>
           <Button variant="outlined" onClick={() => setDestinationModalOpen(false)}
-            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>Cancel</Button>
+            sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>Cancel</Button>
         </DialogActions>
       </Dialog>
 
@@ -2094,10 +2192,18 @@ export const ExpenseCreatePage: React.FC = () => {
         </DialogContent>
 
         <DialogActions className="px-6 pb-4">
-          <Button variant="contained" onClick={() => setShowTagModal(false)}>
+          <Button
+            variant="contained"
+            onClick={() => setShowTagModal(false)}
+            sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}
+          >
             Save
           </Button>
-          <Button onClick={() => setShowTagModal(false)}>
+          <Button
+            variant="outlined"
+            onClick={() => setShowTagModal(false)}
+            sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}
+          >
             Cancel
           </Button>
         </DialogActions>
@@ -2251,7 +2357,7 @@ export const ExpenseCreatePage: React.FC = () => {
 
               <button
                 type="button"
-                className="text-blue-600 hover:underline text-sm font-medium"
+                className="text-brand hover:underline text-sm font-medium"
                 onClick={addMileageRate}
               >
                 + Add Mileage Rate
@@ -2265,14 +2371,14 @@ export const ExpenseCreatePage: React.FC = () => {
           <Button
             variant="contained"
             onClick={handleMileagePreferencesSave}
-            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}
+            sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}
           >
             Save
           </Button>
           <Button
             variant="outlined"
             onClick={handleMileagePreferencesCancel}
-            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}
+            sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}
           >
             Cancel
           </Button>

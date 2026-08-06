@@ -83,9 +83,9 @@ export const EditCrmCustomer = () => {
                 setDomains(
                     response.domains && response.domains.length > 0
                         ? response.domains.map((domain) => ({
-                              id: domain.id,
-                              domain: domain.domain,
-                          }))
+                            id: domain.id,
+                            domain: domain.domain,
+                        }))
                         : [{ domain: "" }]
                 );
                 if (response.entity.enable_site_ids && Array.isArray(response.entity.enable_site_ids)) {
@@ -259,7 +259,7 @@ export const EditCrmCustomer = () => {
                     free_parking: lease.freeParking,
                     paid_parking: lease.paidParking,
                 })),
-                entity_domains_attributes : domains
+                entity_domains_attributes: domains
                     .filter((domain) => domain._destroy || domain.domain.trim() !== "")
                     .map((domain) => ({
                         ...(domain.id != null && { id: domain.id }),
@@ -393,25 +393,25 @@ export const EditCrmCustomer = () => {
                                 />
                             </div>
                             <div>
-                                  <div>
-                                <TextField
-                                    label="Company Code*"
-                                    variant="outlined"
-                                    fullWidth
-                                    size="small"
-                                    value={formData.companyCode}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        handleInputChange("companyCode", value);
-                                    }}
-                                    sx={{
-                                        "& .MuiOutlinedInput-root": {
-                                            borderRadius: "8px",
-                                        },
-                                    }}
-                                />
-                            </div>
-                              
+                                <div>
+                                    <TextField
+                                        label="Company Code*"
+                                        variant="outlined"
+                                        fullWidth
+                                        size="small"
+                                        value={formData.companyCode}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            handleInputChange("companyCode", value);
+                                        }}
+                                        sx={{
+                                            "& .MuiOutlinedInput-root": {
+                                                borderRadius: "8px",
+                                            },
+                                        }}
+                                    />
+                                </div>
+
                                 {/* <TextField
                                     label="Customer Code"
                                     variant="outlined"
@@ -429,31 +429,31 @@ export const EditCrmCustomer = () => {
                                     }}
                                 /> */}
                             </div>
-                          
-                               <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                <input
-                                            type="color"
-                                            value={formData.colorCode}
-                                            onChange={(e) => handleInputChange("colorCode", e.target.value)}
-                                            className="w-10 h-10 rounded border border-gray-300 cursor-pointer flex-shrink-0 hover:border-gray-400 transition-colors"
-                                        />
-                                        <TextField
-                                            label="Color Code"
-                                            variant="outlined"
-                                            size="small"
-                                            value={formData.colorCode}
-                                            onChange={(e) => handleInputChange("colorCode", e.target.value)}
-                                            sx={{
-                                                flex: 1,
-                                                "& .MuiOutlinedInput-root": {
-                                                    borderRadius: "8px",
-                                                    height: "40px",
-                                                },
-                                            }}
-                                        />
-                                          </div>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="color"
+                                        value={formData.colorCode}
+                                        onChange={(e) => handleInputChange("colorCode", e.target.value)}
+                                        className="w-10 h-10 rounded border border-gray-300 cursor-pointer flex-shrink-0 hover:border-gray-400 transition-colors"
+                                    />
+                                    <TextField
+                                        label="Color Code"
+                                        variant="outlined"
+                                        size="small"
+                                        value={formData.colorCode}
+                                        onChange={(e) => handleInputChange("colorCode", e.target.value)}
+                                        sx={{
+                                            flex: 1,
+                                            "& .MuiOutlinedInput-root": {
+                                                borderRadius: "8px",
+                                                height: "40px",
+                                            },
+                                        }}
+                                    />
                                 </div>
+                            </div>
                         </div>
 
                         {/* Enable Sites Multi-Select */}
@@ -612,7 +612,7 @@ export const EditCrmCustomer = () => {
                         ))}
                         <div className="mt-4">
                             <Button
-                                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg"
+                                variant="outline"
                                 onClick={addNewLease}
                             >
                                 Add Lease
@@ -657,15 +657,15 @@ export const EditCrmCustomer = () => {
                                                 {/* Show trash for existing domains always; for new domains only when not the last visible one */}
                                                 {(domain.id ||
                                                     domains.filter((d) => !d._destroy).length > 1) && (
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        className="p-2 h-10"
-                                                        onClick={() => removeDomain(actualIndex)}
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
-                                                )}
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            className="p-2 h-10"
+                                                            onClick={() => removeDomain(actualIndex)}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    )}
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -673,7 +673,7 @@ export const EditCrmCustomer = () => {
                             })}
                         <div className="mt-4">
                             <Button
-                                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg"
+                                variant="outline"
                                 onClick={addNewDomain}
                             >
                                 Add Domain
@@ -683,7 +683,7 @@ export const EditCrmCustomer = () => {
                     <div className="flex justify-center pt-4 border-t border-gray-200">
                         <Button
                             onClick={handleSave}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2 rounded-lg"
+                            className="bg-[#c72030] text-white px-6 py-2"
                             disabled={isSaving}
                         >
                             {isSaving ? "Saving..." : "Save"}

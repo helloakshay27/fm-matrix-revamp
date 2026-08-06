@@ -1,15 +1,16 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, SlidersHorizontal, Edit, Search } from 'lucide-react';
+import { Plus, Download, Edit } from 'lucide-react';
 import { AddVehicleParkingModal } from '@/components/AddVehicleParkingModal';
 import { RVehicleImportModal } from '@/components/RVehicleImportModal';
 import { RVehicleFilterModal } from '@/components/RVehicleFilterModal';
 import { EditVehicleDialog } from '@/components/EditVehicleDialog';
+import { Switch } from '@/components/ui/switch';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useNavigate } from 'react-router-dom';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useVehicleEvents } from '@/components/PostHogSecurityEvents';
 
 interface Vehicle {
   id: number;
@@ -143,22 +144,20 @@ const initialVehicleData: Vehicle[] = [
   }
 ];
 
-// Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
-  { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
-  { key: 'vehicleNumber', label: 'Vehicle Number', sortable: true, hideable: true, draggable: true },
-  { key: 'parkingSlot', label: 'Parking Slot', sortable: true, hideable: true, draggable: true },
-  { key: 'vehicleCategory', label: 'Vehicle Category', sortable: true, hideable: true, draggable: true },
-  { key: 'vehicleType', label: 'Vehicle Type', sortable: true, hideable: true, draggable: true },
-  { key: 'stickerNumber', label: 'Sticker Number', sortable: true, hideable: true, draggable: true },
-  { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true },
-  { key: 'registrationNumber', label: 'Registration Number', sortable: true, hideable: true, draggable: true },
-  { key: 'activeInactive', label: 'Active/Inactive', sortable: true, hideable: true, draggable: true },
-  { key: 'insuranceNumber', label: 'Insurance Number', sortable: true, hideable: true, draggable: true },
-  { key: 'insuranceValidTill', label: 'Insurance Valid Till', sortable: true, hideable: true, draggable: true },
-  { key: 'staffName', label: 'Staff Name', sortable: true, hideable: true, draggable: true },
-  { key: 'status', label: 'Status', sortable: false, hideable: true, draggable: true },
-  { key: 'qrCode', label: 'QR Code', sortable: false, hideable: true, draggable: true }
+  { key: 'vehicleNumber', label: 'Vehicle Number', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'parkingSlot', label: 'Parking Slot', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'vehicleCategory', label: 'Vehicle Category', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'vehicleType', label: 'Vehicle Type', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'stickerNumber', label: 'Sticker Number', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'registrationNumber', label: 'Registration Number', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'activeInactive', label: 'Active/Inactive', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'insuranceNumber', label: 'Insurance Number', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'insuranceValidTill', label: 'Insurance Valid Till', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'staffName', label: 'Staff Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'status', label: 'Status', sortable: false, hideable: true, draggable: true, defaultVisible: true },
+  { key: 'qrCode', label: 'QR Code', sortable: false, hideable: true, draggable: true, defaultVisible: true },
 ];
 
 export const RVehiclesDashboard = () => {
@@ -169,12 +168,28 @@ export const RVehiclesDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
-  const [vehicleData, setVehicleData] = useState(initialVehicleData);
+  const [vehicleData, setVehicleData] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const { onVehicleStatusToggled } = useVehicleEvents();
 
-  const handleHistoryClick = () => {
-    navigate('/security/vehicle/r-vehicles/history');
-  };
+  useEffect(() => {
+    let active = true;
+    const fetchVehicles = async () => {
+      setLoading(true);
+      try {
+        await new Promise((res) => setTimeout(res, 800));
+        if (active) setVehicleData(initialVehicleData);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchVehicles();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
@@ -193,117 +208,111 @@ export const RVehiclesDashboard = () => {
   };
 
   const handleSaveVehicle = (updatedVehicle: Vehicle) => {
-    setVehicleData(prevData =>
-      prevData.map(vehicle =>
+    setVehicleData((prevData) =>
+      prevData.map((vehicle) =>
         vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle
       )
     );
-    console.log('Vehicle updated:', updatedVehicle);
   };
 
   const handleStatusToggle = (vehicleId: number) => {
-    console.log(`Toggling status for Vehicle ${vehicleId}`);
+    const vehicle = vehicleData.find((v) => v.id === vehicleId);
+    if (vehicle) {
+      onVehicleStatusToggled({
+        vehicle_id: vehicleId.toString(),
+        to_status: vehicle.statusCode === 'Active' ? 'Inactive' : 'Active',
+      });
+    }
 
-    setVehicleData(prev =>
-      prev.map(vehicle =>
-        vehicle.id === vehicleId
-          ? { ...vehicle, statusCode: vehicle.statusCode === 'Active' ? 'Inactive' : 'Active' }
-          : vehicle
+    setVehicleData((prev) =>
+      prev.map((item) =>
+        item.id === vehicleId
+          ? { ...item, statusCode: item.statusCode === 'Active' ? 'Inactive' : 'Active' }
+          : item
       )
     );
   };
 
-  // Render row function for enhanced table
-  const renderRow = (vehicle: any) => ({
-    actions: (
-      <>
-        {shouldShow("R Vehicles", "update") && (
-          <button
-            onClick={() => handleEditClick(vehicle)}
-            className="text-gray-400 hover:text-gray-600"
-            title="Edit vehicle"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-        )}
-      </>
-    ),
-    vehicleNumber: <span className="text-blue-600 font-medium">{vehicle.vehicleNumber}</span>,
-    parkingSlot: vehicle.parkingSlot || '--',
-    vehicleCategory: vehicle.vehicleCategory,
-    vehicleType: vehicle.vehicleType || '--',
-    stickerNumber: vehicle.stickerNumber || '--',
-    category: vehicle.category,
-    registrationNumber: vehicle.registrationNumber || '--',
-    activeInactive: (
-      <input
-        type="checkbox"
-        checked={vehicle.activeInactive}
-        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-        readOnly
-      />
-    ),
-    insuranceNumber: vehicle.insuranceNumber || '--',
-    insuranceValidTill: vehicle.insuranceValidTill,
-    staffName: vehicle.staffName || '--',
-    status: (
-      <div className="flex items-center">
-        <div
-          className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${vehicle.statusCode === 'Active' ? 'bg-green-500' : 'bg-gray-300'
-            }`}
-          onClick={() => handleStatusToggle(vehicle.id)}
-        >
-          <span
-            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${vehicle.statusCode === 'Active' ? 'translate-x-6' : 'translate-x-1'
-              }`}
+  const filteredData = searchTerm
+    ? vehicleData.filter((vehicle) =>
+      Object.values(vehicle).some((value) =>
+        String(value ?? '').toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    )
+    : vehicleData;
+
+  const renderCell = (vehicle: Vehicle, columnKey: string) => {
+    switch (columnKey) {
+      case 'vehicleNumber':
+        return <span className="text-gray-900 font-medium">{vehicle.vehicleNumber}</span>;
+      case 'parkingSlot':
+        return vehicle.parkingSlot || '--';
+      case 'vehicleType':
+        return vehicle.vehicleType || '--';
+      case 'stickerNumber':
+        return vehicle.stickerNumber || '--';
+      case 'registrationNumber':
+        return vehicle.registrationNumber || '--';
+      case 'activeInactive':
+        return (
+          <input
+            type="checkbox"
+            checked={vehicle.activeInactive}
+            className="w-4 h-4 accent-[#C72030] rounded border-gray-300"
+            readOnly
           />
-        </div>
-      </div>
-    ),
-    qrCode: vehicle.qrCode
-  });
+        );
+      case 'insuranceNumber':
+        return vehicle.insuranceNumber || '--';
+      case 'staffName':
+        return vehicle.staffName || '--';
+      case 'status':
+        return (
+          <div className="flex items-center">
+            <Switch
+              checked={vehicle.statusCode === 'Active'}
+              onCheckedChange={() => handleStatusToggle(vehicle.id)}
+              className="data-[state=checked]:bg-[#C72030]"
+            />
+          </div>
+        );
+      case 'qrCode':
+        return vehicle.qrCode;
+      default:
+        return vehicle[columnKey as keyof Vehicle] ?? '--';
+    }
+  };
+
+  const renderActions = (vehicle: Vehicle) =>
+    shouldShow('R Vehicles', 'update') ? (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0 text-[#C72030] hover:bg-[#C72030]/10 hover:text-[#C72030]"
+        title="Edit vehicle"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleEditClick(vehicle);
+        }}
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+    ) : null;
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Vehicle Parkings</h1>
+    <div className="flex-1 p-6 bg-white min-h-screen">
+      <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-6">
+        Vehicle Parkings
+      </h1>
 
-      {/* Action Buttons */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button
-          onClick={() => setIsAddModalOpen(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add
-        </Button>
-        <Button
-          onClick={() => setIsImportModalOpen(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
-        >
-          <Download className="w-4 h-4" />
-          Import
-        </Button>
-        <Button
-          onClick={() => setIsFilterModalOpen(true)}
-          style={{ backgroundColor: '#C72030' }}
-          className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-          Filters
-        </Button>
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="flex border-b border-border bg-background rounded-t-lg">
+      <div className="flex w-full border-b border-[#e4ddd4] rounded-t-lg overflow-hidden mb-4">
         {['History', 'All', 'In', 'Out'].map((tab) => (
           <button
             key={tab}
             onClick={() => handleTabClick(tab)}
-            className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === tab
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === tab
+                ? 'bg-[#DA7756] text-white'
+                : 'bg-[#F2EEE9] text-[#8a7e72] hover:bg-[#ece4db]'
               }`}
           >
             {tab}
@@ -311,32 +320,37 @@ export const RVehiclesDashboard = () => {
         ))}
       </div>
 
-      {/* Enhanced Table */}
       <EnhancedTable
-        data={vehicleData}
+        data={filteredData}
         columns={columns}
-        renderRow={renderRow}
-        enableSearch={true}
-        enableSelection={false}
-        enableExport={true}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        enableSearch
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        enableExport
         storageKey="r-vehicles-table"
         emptyMessage="No vehicles available"
         exportFileName="r-vehicles"
-        searchPlaceholder="Search by vehicle number, parking slot, or staff name"
+        searchPlaceholder="Search by vehicle number"
         hideTableExport={false}
         hideColumnsButton={false}
+        loading={loading}
+        pagination
+        pageSize={10}
+        onFilterClick={() => setIsFilterModalOpen(true)}
         leftActions={
-          <>
-            {shouldShow("R Vehicles", "create") && (
+          shouldShow('R Vehicles', 'create') ? (
+            <div className="flex items-center gap-2">
               <Button
                 onClick={() => setIsAddModalOpen(true)}
-                className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 mr-2" />
                 Add
               </Button>
-            )}
-          </>
+            </div>
+          ) : undefined
         }
         filterAdjacentActions={
           <Button
@@ -344,12 +358,11 @@ export const RVehiclesDashboard = () => {
             title="Import"
             variant="outline"
             size="sm"
-            className="p-2 h-9 w-9 rounded-lg"
+            className="h-9 w-9 p-0 rounded-lg border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
           >
             <Download className="w-4 h-4" />
           </Button>
         }
-        onFilterClick={() => setIsFilterModalOpen(true)}
       />
 
       <AddVehicleParkingModal

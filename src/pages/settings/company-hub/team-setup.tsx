@@ -341,10 +341,14 @@ const TeamSetup: React.FC = () => {
         });
         fetchUsers(1); // Refresh list to catch any status changes
       } else {
-        toast.error(res.message || "Failed to send invitation");
+        toast.error(res.error || res.message || "Failed to send invitation");
       }
-    } catch (error) {
-      toast.error("An error occurred while sending invitation");
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        "An error occurred while sending invitation"
+      );
     } finally {
       setIsInviting(false);
     }
@@ -980,7 +984,7 @@ const TeamSetup: React.FC = () => {
                 onChange={(e) => setInviteForm({ ...inviteForm, mobile: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label>Department</Label>
                 <Select
@@ -991,20 +995,6 @@ const TeamSetup: React.FC = () => {
                   <SelectContent>
                     {departmentsList.map(dept => (
                       <SelectItem key={dept.id} value={dept.id?.toString() || ""}>{dept.department_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <Select
-                  value={inviteForm.role_id as string}
-                  onValueChange={(val) => setInviteForm({ ...inviteForm, role_id: val })}
-                >
-                  <SelectTrigger><SelectValue placeholder="Select Role" /></SelectTrigger>
-                  <SelectContent>
-                    {rolesList.map(role => (
-                      <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

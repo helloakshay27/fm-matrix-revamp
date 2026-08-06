@@ -5,6 +5,7 @@ import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { StatsCard } from "@/components/StatsCard";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -27,7 +28,7 @@ import {
   Plus,
   ExternalLink,
   ChevronDown,
-  Settings2,
+  Settings,
   FileSearch,
   Copy,
   BrainCircuit,
@@ -49,6 +50,15 @@ import {
   ArrowRight,
 } from "lucide-react";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
   Table,
   TableBody,
   TableCell,
@@ -60,6 +70,33 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { cn } from "@/lib/utils";
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 type TabType = "status" | "setup" | "jd" | "samples";
 
@@ -278,22 +315,18 @@ const JobStatusTab = ({
       {
         label: "Total Users",
         value: summary?.total_users?.toString() || "0",
-        color: "text-slate-900",
       },
       {
         label: "With JD",
         value: summary?.with_jd?.toString() || "0",
-        color: "text-emerald-500",
       },
       {
         label: "With KPIs",
         value: summary?.with_kpis?.toString() || "0",
-        color: "text-blue-600",
       },
       {
         label: "Setup Complete",
         value: summary?.setup_complete?.toString() || "0",
-        color: "text-violet-600",
       },
     ],
     [summary]
@@ -469,53 +502,56 @@ const JobStatusTab = ({
   return (
     <div className="space-y-6">
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
-          <Card
+          <StatsCard
             key={i}
-            className="border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-all"
-          >
-            <CardContent className="p-6">
-              <p className="text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider font-work-sans">
-                {stat.label}
-              </p>
-              <p className={cn("text-3xl font-bold font-poppins", stat.color)}>
-                {stat.value}
-              </p>
-            </CardContent>
-          </Card>
+            title={stat.label}
+            value={stat.value}
+            icon={<Settings className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: "#C72030" }} />}
+          />
         ))}
       </div>
 
       {/* Filters */}
       <div className="flex items-center gap-4">
         <div className="w-48">
-          <Select value={deptFilter} onValueChange={setDeptFilter}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Departments" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Departments</SelectItem>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="dept-filter-label">All Departments</InputLabel>
+            <MuiSelect
+              labelId="dept-filter-label"
+              label="All Departments"
+              value={deptFilter}
+              onChange={(e) => setDeptFilter(e.target.value)}
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
+            >
+              <MenuItem value="all">All Departments</MenuItem>
               {departments.map((dept) => (
-                <SelectItem key={dept} value={dept}>
+                <MenuItem key={dept} value={dept}>
                   {dept}
-                </SelectItem>
+                </MenuItem>
               ))}
-            </SelectContent>
-          </Select>
+            </MuiSelect>
+          </FormControl>
         </div>
 
         <div className="w-48">
-          <Select value={setupStatusFilter} onValueChange={setSetupStatusFilter}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="All Users" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Users</SelectItem>
-              <SelectItem value="complete">Setup Complete</SelectItem>
-              <SelectItem value="incomplete">Setup Incomplete</SelectItem>
-            </SelectContent>
-          </Select>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="setup-status-filter-label">All Users</InputLabel>
+            <MuiSelect
+              labelId="setup-status-filter-label"
+              label="All Users"
+              value={setupStatusFilter}
+              onChange={(e) => setSetupStatusFilter(e.target.value)}
+              sx={fieldStyles}
+              MenuProps={selectMenuProps}
+            >
+              <MenuItem value="all">All Users</MenuItem>
+              <MenuItem value="complete">Setup Complete</MenuItem>
+              <MenuItem value="incomplete">Setup Incomplete</MenuItem>
+            </MuiSelect>
+          </FormControl>
         </div>
 
         <Button
@@ -1054,19 +1090,40 @@ const JDTab = ({
   const [selectedJDs, setSelectedJDs] = useState<string[]>([]);
   const [jds, setJds] = useState<JobDescriptionItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
 
   const fetchJDs = useCallback(async () => {
     try {
       setLoading(true);
-      const url = getFullUrl(API_CONFIG.ENDPOINTS.JOB_DESCRIPTIONS);
-      const response = await axios.get(url, {
+      const url = new URL(getFullUrl(API_CONFIG.ENDPOINTS.JOB_DESCRIPTIONS));
+      url.searchParams.set("page", String(currentPage));
+      url.searchParams.set("per_page", String(pageSize));
+      const response = await axios.get(url.toString(), {
         headers: {
           Authorization: getAuthHeader(),
         },
       });
 
       if (response.data.success) {
-        setJds(response.data.data.job_descriptions);
+        const data = response.data.data || {};
+        const rows =
+          data.job_descriptions || response.data.job_descriptions || [];
+        const meta =
+          response.data.pagination ||
+          response.data.meta ||
+          data.pagination ||
+          data.meta ||
+          data;
+        const nextTotalPages =
+          Number(meta?.total_pages || meta?.pages || meta?.last_page) ||
+          (meta?.total_count
+            ? Math.ceil(Number(meta.total_count) / pageSize)
+            : 1);
+
+        setJds(rows);
+        setTotalPages(Math.max(1, nextTotalPages));
       } else {
         toast.error("Failed to fetch job descriptions");
       }
@@ -1076,11 +1133,20 @@ const JDTab = ({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     fetchJDs();
   }, [fetchJDs]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, assignmentFilter, userCountFilter, deptFilter]);
+
+  const handlePageChange = (page: number) => {
+    const safePage = Math.min(Math.max(page, 1), totalPages);
+    if (safePage !== currentPage) setCurrentPage(safePage);
+  };
 
   const handleDeleteJD = async (id: number) => {
     if (
@@ -1299,6 +1365,79 @@ const JDTab = ({
     );
   };
 
+  const renderPageNumbers = () => {
+    const maxVisiblePages = 5;
+    const pages: Array<number | string> = [];
+
+    if (totalPages <= maxVisiblePages) {
+      for (let page = 1; page <= totalPages; page += 1) pages.push(page);
+    } else {
+      const startPage = Math.max(1, currentPage - 2);
+      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+      if (startPage > 1) {
+        pages.push(1);
+        if (startPage > 2) pages.push("ellipsis-start");
+      }
+
+      for (let page = startPage; page <= endPage; page += 1) {
+        pages.push(page);
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) pages.push("ellipsis-end");
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+  const paginationControls =
+    totalPages > 1 ? (
+      <Pagination className="mt-6">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              onClick={() => handlePageChange(currentPage - 1)}
+              className={
+                currentPage === 1
+                  ? "pointer-events-none opacity-50"
+                  : "cursor-pointer"
+              }
+            />
+          </PaginationItem>
+
+          {renderPageNumbers().map((page, index) => (
+            <PaginationItem key={`${page}-${index}`}>
+              {typeof page === "string" ? (
+                <PaginationEllipsis />
+              ) : (
+                <PaginationLink
+                  onClick={() => handlePageChange(page)}
+                  isActive={currentPage === page}
+                  className="cursor-pointer"
+                >
+                  {page}
+                </PaginationLink>
+              )}
+            </PaginationItem>
+          ))}
+
+          <PaginationItem>
+            <PaginationNext
+              onClick={() => handlePageChange(currentPage + 1)}
+              className={
+                currentPage === totalPages
+                  ? "pointer-events-none opacity-50"
+                  : "cursor-pointer"
+              }
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    ) : null;
+
   return (
     <div className="p-6 min-h-screen bg-white">
       {/* Header */}
@@ -1400,9 +1539,15 @@ const JDTab = ({
           emptyMessage="No job descriptions yet"
           className="bg-white rounded-lg border overflow-hidden"
           loading={loading}
+          pagination
+          pageSize={pageSize}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
             Array(6)
               .fill(0)
@@ -1510,7 +1655,9 @@ const JDTab = ({
               </p>
             </div>
           )}
-        </div>
+          </div>
+          {paginationControls}
+        </>
       )}
 
       {/* Selection Info */}

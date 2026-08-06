@@ -387,7 +387,8 @@ const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = nul
                         <div className="flex items-center justify-center gap-4 w-full py-3 bg-white mt-10">
                             <Button
                                 type="submit"
-                                variant="outline"
+                                className="fm-button-fix fm-button-brand px-4 py-2"
+                                variant="ghost"
                                 disabled={isSubmitting}
                             >
                                 {isSubmitting ? 'Submitting...' : isEditMode ? 'Update' : 'Add Todo'}

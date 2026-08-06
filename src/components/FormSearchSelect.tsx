@@ -37,12 +37,16 @@ const buildScheduleSelectStyles = (
     width: '100%',
     fontSize: 14,
     borderRadius: 4,
-    borderColor: hasError ? '#d32f2f' : state.isFocused ? '#1976d2' : '#999',
+    borderColor: hasError
+      ? '#d32f2f'
+      : state.isFocused
+      ? 'var(--color-primary)'
+      : '#999',
     boxShadow: 'none',
     backgroundColor: '#fff',
     cursor: 'pointer',
     '&:hover': {
-      borderColor: hasError ? '#d32f2f' : '#1976d2',
+      borderColor: hasError ? '#d32f2f' : 'var(--color-primary)',
     },
   }),
   indicatorSeparator: () => ({ display: 'none' }),
@@ -74,15 +78,20 @@ const buildScheduleSelectStyles = (
     ...base,
     zIndex: 9999,
     boxSizing: 'border-box',
+    overflow: 'hidden',
   }),
   menuList: (base) => ({
     ...base,
     padding: 0,
-    maxHeight: MENU_MAX_HEIGHT,
+    overflowY: 'auto',
   }),
   option: (base, state) => ({
     ...base,
-    backgroundColor: state.isFocused ? '#eff6ff' : '#fff',
+    backgroundColor: state.isSelected
+      ? 'var(--color-primary-light)'
+      : state.isFocused
+        ? 'var(--color-primary-selected)'
+        : '#fff',
     color: '#000',
     cursor: 'pointer',
     padding: '8px 12px',
@@ -102,30 +111,23 @@ const buildScheduleSelectStyles = (
   }),
 });
 
+const SEARCH_BAR_HEIGHT = 64;
+
 const MenuListWithSearch = (
   props: MenuListProps<ReactSelectOption, false, GroupBase<ReactSelectOption>>
 ) => {
-  const { children, innerRef, innerProps, selectProps } = props;
-  const extra = selectProps as typeof selectProps & FormSearchSelectExtraProps;
+  const { children, maxHeight, innerProps } = props;
+  const extra = props.selectProps as typeof props.selectProps & FormSearchSelectExtraProps;
   const { menuSearch, onMenuSearchChange } = extra;
+  const listMaxHeight = Math.max(120, (maxHeight ?? MENU_MAX_HEIGHT) - SEARCH_BAR_HEIGHT);
 
   return (
-    <components.MenuList
-      {...props}
-      innerRef={innerRef}
-      innerProps={{
-        ...innerProps,
-        onWheel: (e: React.WheelEvent<HTMLDivElement>) => {
-          e.stopPropagation();
-          innerProps?.onWheel?.(e);
-        },
-        style: {
-          ...innerProps?.style,
-          padding: 0,
-          maxHeight: MENU_MAX_HEIGHT,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-        },
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        maxHeight: maxHeight ?? MENU_MAX_HEIGHT,
+        overflow: 'hidden',
       }}
     >
       <div
@@ -149,8 +151,28 @@ const MenuListWithSearch = (
           autoComplete="off"
         />
       </div>
-      {children}
-    </components.MenuList>
+      <components.MenuList
+        {...props}
+        maxHeight={listMaxHeight}
+        innerProps={{
+          ...innerProps,
+          onWheel: (e: React.WheelEvent<HTMLDivElement>) => {
+            // Keep wheel scrolling inside the menu; don't scroll the page.
+            e.stopPropagation();
+            innerProps?.onWheel?.(e);
+          },
+          style: {
+            ...innerProps?.style,
+            maxHeight: listMaxHeight,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            WebkitOverflowScrolling: 'touch',
+          },
+        }}
+      >
+        {children}
+      </components.MenuList>
+    </div>
   );
 };
 
@@ -221,6 +243,7 @@ export const FormSearchSelect: React.FC<FormSearchSelectProps> = ({
           ...base,
           zIndex: 9999,
           boxSizing: 'border-box' as const,
+          overflow: 'hidden' as const,
         };
         if (!measuredWidth) {
           return {
@@ -276,7 +299,7 @@ export const FormSearchSelect: React.FC<FormSearchSelectProps> = ({
       sx={{
         position: 'relative',
         height: '45px',
-        '& .MuiInputLabel-root.Mui-focused': { color: '#1976d2' },
+        '& .MuiInputLabel-root.Mui-focused': { color: 'var(--color-primary)' },
       }}
     >
       {label ? (
@@ -293,7 +316,7 @@ export const FormSearchSelect: React.FC<FormSearchSelectProps> = ({
             backgroundColor: '#fff',
             px: 0.5,
             pointerEvents: 'none',
-            '&.Mui-focused': { color: '#1976d2' },
+            '&.Mui-focused': { color: 'var(--color-primary)' },
           }}
         >
           {label}
@@ -321,7 +344,11 @@ export const FormSearchSelect: React.FC<FormSearchSelectProps> = ({
             typeof document !== 'undefined' ? document.body : null
           }
           menuPosition="fixed"
+          maxMenuHeight={MENU_MAX_HEIGHT}
           styles={selectStyles}
+          formatOptionLabel={(opt) => (
+            <span title={opt.label}>{opt.label}</span>
+          )}
           noOptionsMessage={() =>
             isLoading ? 'Loading...' : 'No options found'
           }

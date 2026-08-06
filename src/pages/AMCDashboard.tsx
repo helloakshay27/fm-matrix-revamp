@@ -77,7 +77,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { DragDropContext, Droppable, Draggable, DroppableProps } from "react-beautiful-dnd";
 import axios from "axios";
+import SelectLib, { MultiValue } from "react-select";
+import { useAMCEvents } from "@/components/PostHogAMCEvents";
 import { toast } from "sonner";
 // Replaced shadcn Dialog with MUI Dialog for Filter modal
 import {
@@ -440,6 +443,13 @@ export const AMCDashboard = () => {
     "coverage_by_location",
   ]);
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
+  
+  const { onAMCStatusChanged, onAMCRedFlagged } = useAMCEvents();
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    // ...
+  };
+
   // Track which summary tile is selected; null means none selected on initial load
   const [selectedSummary, setSelectedSummary] = useState<
     | null
@@ -1376,6 +1386,12 @@ export const AMCDashboard = () => {
                   );
                   if (response.status === 200) {
                     toast.success(`Status updated to ${value}`);
+                    onAMCStatusChanged({
+                      amc_id: String(item.id),
+                      from_status: item.status,
+                      to_status: newStatus,
+                      auto_or_manual: "manual"
+                    });
                     if (activeTab === "analytics") {
                       const { startDate, endDate } = analyticsDateRange;
                       const startDateObj = convertDateStringToDate(startDate);
@@ -1503,6 +1519,11 @@ export const AMCDashboard = () => {
         dispatch(fetchAMCData());
         toast.dismiss();
         toast.success(`Flag ${updatedFlag ? "Activated" : "Deactivated"}`);
+        onAMCRedFlagged({
+          amc_id: String(amcItem.id),
+          reason: "Manual toggle from dashboard",
+          supplier_id: amcItem.supplier_id ? String(amcItem.supplier_id) : "unknown"
+        });
       } else {
         toast.error("Failed to update AMC flag");
       }
@@ -2604,19 +2625,19 @@ export const AMCDashboard = () => {
                 </div>
               </Box>
 
-              <div className="flex justify-center gap-2 mt-12 pt-6 border-t">
+              <div className="flex justify-end gap-2 mt-12 pt-6 border-t">
+                <Button
+                  onClick={handleApplyFilters}
+                  className="fm-button-fix fm-button-brand px-4 py-2"
+                >
+                  Apply Filter
+                </Button>
                 <Button
                   variant="outline"
                   onClick={handleResetFilters}
-                  className="px-4 py-2 text-sm font-medium rounded hover:opacity-80 transition-opacity"
+                  className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
                 >
-                  Clear All
-                </Button>
-                <Button
-                  onClick={handleApplyFilters}
-                  className="h-11 px-6 bg-[#C72030] hover:bg-[#a81c29] text-white"
-                >
-                  Apply Filter
+                  Reset
                 </Button>
               </div>
             </div>

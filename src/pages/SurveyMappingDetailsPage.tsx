@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { LocationSelectionPanel } from "@/components/LocationSelectionPanel";
 import { Button } from "@/components/ui/button";
@@ -1010,12 +1010,10 @@ export const SurveyMappingDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
-          <span className="ml-2 text-gray-600">
-            Loading survey mapping details...
-          </span>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading Survey Details...</p>
         </div>
       </div>
     );
@@ -1113,77 +1111,31 @@ export const SurveyMappingDetailsPage = () => {
               </TabsTrigger>
             ))}
           </TabsList> */}
-          <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200">
+          {/* Custom tab bar — plain buttons for full style control */}
+          <div className="flex w-full border border-gray-200 rounded-t-lg overflow-hidden">
             {[
-              {
-                label: "Survey Information",
-                value: "survey-information",
-                // icon: (
-                //   <svg
-                //     xmlns="http://www.w3.org/2000/svg"
-                //     width="20"
-                //     height="20"
-                //     viewBox="0 0 24 24"
-                //     fill="none"
-                //     strokeWidth={2}
-                //     className="w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
-                //   >
-                //     <path d="M4 4h16v16H4z" />
-                //     <path d="M8 8h8v8H8z" />
-                //   </svg>
-                // ),
-              },
-              {
-                label: "Questions",
-                value: "questions",
-                // icon: (
-                //   <svg
-                //     xmlns="http://www.w3.org/2000/svg"
-                //     width="20"
-                //     height="20"
-                //     viewBox="0 0 24 24"
-                //     fill="none"
-                //     strokeWidth={2}
-                //     className="w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
-                //   >
-                //     <path d="M9 18h6" />
-                //     <path d="M10 14a4 4 0 1 1 4-4c0 2-2 3-2 3" />
-                //     <path d="M12 20h0" />
-                //   </svg>
-                // ),
-              },
-              {
-                label: "Location Details",
-                value: "location-details",
-                // icon: (
-                //   <svg
-                //     xmlns="http://www.w3.org/2000/svg"
-                //     width="20"
-                //     height="20"
-                //     viewBox="0 0 24 24"
-                //     fill="none"
-                //     strokeWidth={2}
-                //     className="w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
-                //   >
-                //     <path d="M12 21C12 21 5 13.6 5 9a7 7 0 0 1 14 0c0 4.6-7 12-7 12z" />
-                //     <circle cx="12" cy="9" r="2.5" />
-                //   </svg>
-                // ),
-              },
-              // {
-              //   label: "Logs",
-              //   value: "logs",
-              // },
+              { label: "Survey Information", value: "survey-information" },
+              { label: "Questions", value: "questions" },
+              { label: "Location Details", value: "location-details" },
             ].map((tab) => (
-              <TabsTrigger
+              <button
                 key={tab.value}
-                value={tab.value}
-                className="group flex items-center gap-2 border-none font-semibold data-[state=active]:bg-[#EDEAE3] data-[state=inactive]:bg-white data-[state=inactive]:text-black"
+                onClick={() => setActiveTab(tab.value)}
+                className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+                  activeTab === tab.value
+                    ? "bg-[#C72030] text-white"
+                    : "bg-white text-black hover:bg-gray-50"
+                }`}
               >
-                {tab.icon}
                 {tab.label}
-              </TabsTrigger>
+              </button>
             ))}
+          </div>
+          {/* Hidden TabsList keeps Radix in sync */}
+          <TabsList className="hidden">
+            <TabsTrigger value="survey-information" />
+            <TabsTrigger value="questions" />
+            <TabsTrigger value="location-details" />
           </TabsList>
 
           {/* Survey Information */}

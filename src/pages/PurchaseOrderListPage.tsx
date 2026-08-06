@@ -368,7 +368,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Eye, Plus, Trash2 } from "lucide-react";
+import { Edit, Eye, Plus, Trash2 } from "lucide-react";
 import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
@@ -735,6 +735,13 @@ export const PurchaseOrderListPage: React.FC = () => {
           <Eye className="w-4 h-4" />
         </button>
         <button
+          onClick={() => navigate(`/accounting/purchase-order/edit/${order.id}`)}
+          className="p-1 text-black hover:bg-gray-100 rounded"
+          title="Edit"
+        >
+          <Edit className="w-4 h-4" />
+        </button>
+        <button
           onClick={() => handleDeleteClick(order.id)}
           className="p-1 text-red-600 hover:bg-red-50 rounded"
           title="Delete"
@@ -755,7 +762,7 @@ export const PurchaseOrderListPage: React.FC = () => {
     purchase_order: (
       <Link
         to={`/accounting/purchase-order/${order.id}`}
-        className="text-blue-600 font-medium hover:underline"
+        className="text-brand font-medium hover:underline"
       >
         PO-{String(order.id).padStart(5, "0")}
       </Link>
@@ -766,8 +773,8 @@ export const PurchaseOrderListPage: React.FC = () => {
     vendor_name: <span>{order.supplier?.company_name || "N/A"}</span>,
 
     status: (
-      <span className="text-blue-600 font-medium">
-        {order.status || (order.all_level_approved ? "approved" : "pending")}
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+        {(order.status || (order.all_level_approved ? "approved" : "pending")).toString().toUpperCase()}
       </span>
     ),
 
@@ -808,8 +815,7 @@ export const PurchaseOrderListPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <Button
               onClick={() => navigate("/accounting/purchase-order/create")}
-              // className="fm-button-fix fm-button-brand gap-2 px-4 py-2"
-              className='fm-button-fix fm-button-brand px-4 py-2P'
+              className='fm-button-fix fm-button-brand px-8 py-2'
             >
               <Plus className="h-4 w-4" />
               Add
@@ -818,14 +824,14 @@ export const PurchaseOrderListPage: React.FC = () => {
             {selectedRows.length > 0 &&
               (hasPurchaseOrderApproval ? (
                 <Button
-                  className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                  className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                   onClick={handleSubmitForApproval}
                 >
                   Submit for Approval
                 </Button>
               ) : (
                 <Button
-                  className="bg-blue-600 text-white hover:bg-blue-700"
+                  className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                   onClick={handleMarkAsIssued}
                 >
                   Mark as Issued
@@ -835,7 +841,7 @@ export const PurchaseOrderListPage: React.FC = () => {
             {selectedRows.length > 0 && (
               <>
                 <Button
-                  className="bg-green-600 text-white hover:bg-green-700"
+                  className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                   onClick={handleMarkAsReceived}
                 >
                   Mark as Received
@@ -899,7 +905,7 @@ export const PurchaseOrderListPage: React.FC = () => {
             </div>
             <div className="px-5 py-3 border-t flex justify-end">
               <Button
-                className="bg-[#C72030] text-white hover:bg-[#a81a28] px-6"
+                className="bg-[#DA7756] text-white hover:bg-[#C45F40] px-6"
                 onClick={() => setErrorModal({ show: false, errors: [] })}
               >
                 OK
@@ -923,13 +929,14 @@ export const PurchaseOrderListPage: React.FC = () => {
             <div className="px-5 py-3 border-t flex justify-end gap-3">
               <Button
                 variant="outline"
+                className="fm-button-fix px-8 py-2"
                 onClick={handleCancelDelete}
                 disabled={deleting}
               >
                 No
               </Button>
               <Button
-                className="bg-red-600 text-white hover:bg-red-700"
+                className="bg-[#dc2626] hover:bg-[#b91c1c] text-white px-8 py-2"
                 onClick={handleConfirmDelete}
                 disabled={deleting}
               >

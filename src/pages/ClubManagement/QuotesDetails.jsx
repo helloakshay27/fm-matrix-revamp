@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +41,7 @@ import {
     Eye,
     ClipboardList,
     X,
+    Settings2,
 } from "lucide-react";
 import {
     Dialog,
@@ -58,16 +59,23 @@ import {
     AccordionTrigger,
     AccordionContent,
 } from "@/components/ui/accordion";
+import {
+    bankMasterListUrl,
+    getBankMasterApiConfig,
+    mapApiBankRecord,
+} from "./bankMasterUtils";
+import { getDocumentTemplateSettings } from "@/utils/documentTemplate";
 
 
 
 export const QuotesDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [quoteData, setQuoteData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState("quote-details");
+    const [activeTab, setActiveTab] = useState(location.state?.tab === "pdf" ? "pdf" : "quote-details");
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [hasQuoteApproval, setHasQuoteApproval] = useState(false);
     const [showDotsMenu, setShowDotsMenu] = useState(false);
@@ -76,6 +84,7 @@ export const QuotesDetails = () => {
     const [showApprovalLog, setShowApprovalLog] = useState(false);
     const [pdfGenerating, setPdfGenerating] = useState(false);
     const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+    const [bankDetail, setBankDetail] = useState(null);
     const quotePdfRef = useRef(null);
 
     const baseUrl = localStorage.getItem("baseUrl");
@@ -94,6 +103,31 @@ export const QuotesDetails = () => {
         document.addEventListener("mousedown", handler);
         return () => document.removeEventListener("mousedown", handler);
     }, []);
+
+    // Resolve the bank selected on the quote, if any
+    useEffect(() => {
+        const fetchBankDetail = async () => {
+            const bankId = quoteData?.bank_master_id || quoteData?.bank_master?.id;
+            if (!bankId) {
+                setBankDetail(null);
+                return;
+            }
+            if (quoteData?.bank_master) {
+                setBankDetail(mapApiBankRecord(quoteData.bank_master));
+                return;
+            }
+            try {
+                const { baseUrl: bmBaseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+                const res = await axios.get(bankMasterListUrl(bmBaseUrl, lockAccountId), { headers });
+                const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+                const found = data.map(mapApiBankRecord).find((b) => String(b.id) === String(bankId));
+                setBankDetail(found || null);
+            } catch (err) {
+                setBankDetail(null);
+            }
+        };
+        fetchBankDetail();
+    }, [quoteData]);
 
     const fetchQuoteDetails = async () => {
         try {
@@ -190,37 +224,15 @@ export const QuotesDetails = () => {
     };
 
     const getStatusColor = (status) => {
-        const colors = {
-            draft: "bg-gray-100 text-gray-800 border-gray-200",
-            sent: "bg-blue-100 text-blue-800 border-blue-200",
-            accepted: "bg-green-100 text-green-800 border-green-200",
-            declined: "bg-red-100 text-red-800 border-red-200",
-            expired: "bg-orange-100 text-orange-800 border-orange-200",
-            converted: "bg-purple-100 text-purple-800 border-purple-200",
-            pending_approval: 'bg-orange-100 text-orange-800',
-        };
-        return colors[status] || colors.draft;
+        return "bg-gray-100 text-gray-800 border-gray-200";
     };
 
-    const getPdfStatusStyle = (status) => {
-        const styles = {
-            draft: { backgroundColor: "#f3f4f6", color: "#1f2937", borderColor: "#e5e7eb" },
-            sent: { backgroundColor: "#dbeafe", color: "#1e40af", borderColor: "#bfdbfe" },
-            accepted: { backgroundColor: "#dcfce7", color: "#166534", borderColor: "#bbf7d0" },
-            declined: { backgroundColor: "#fee2e2", color: "#991b1b", borderColor: "#fecaca" },
-            expired: { backgroundColor: "#ffedd5", color: "#9a3412", borderColor: "#fed7aa" },
-            converted: { backgroundColor: "#f3e8ff", color: "#6b21a8", borderColor: "#e9d5ff" },
-            pending_approval: { backgroundColor: "#ffedd5", color: "#9a3412", borderColor: "#fed7aa" },
-            approved: { backgroundColor: "#dbeafe", color: "#1d4ed8", borderColor: "#bfdbfe" },
-        };
-        return styles[status] || styles.draft;
+    const getPdfStatusStyle = () => {
+        return { backgroundColor: "#f3f4f6", color: "#1f2937", borderColor: "#e5e7eb" };
     };
 
     const getApprovalStatusBadge = (status) => {
-        const s = String(status || "").toLowerCase();
-        if (s === "approved") return "bg-green-100 text-green-800";
-        if (s === "rejected") return "bg-red-100 text-red-800";
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-gray-100 text-gray-800";
     };
 
     const handleEdit = () => {
@@ -340,9 +352,9 @@ export const QuotesDetails = () => {
             <div className="flex items-center justify-center h-screen">
                 <div className="text-center">
                     <p className="text-lg text-muted-foreground">Quote not found</p>
-                    <Button className="mt-4" onClick={() => navigate("/accounting/quotes")}>
+                    <Button variant="ghost" className="mt-4" onClick={() => navigate("/accounting/quotes")}>
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Quotes
+                        {/* Back to Quotes */}
                     </Button>
                 </div>
             </div>
@@ -376,6 +388,7 @@ export const QuotesDetails = () => {
     const statusDisplay = statusLabel.replace(/\b\w/g, (char) => char.toUpperCase());
     const quoteNotes = quoteData.customer_notes ?? quoteData.notes ?? quoteData.note ?? "";
     const quoteTerms = quoteData.terms_and_conditions ?? quoteData.terms ?? quoteData.terms_condition ?? "";
+    const templateSettings = getDocumentTemplateSettings('quote');
     const totalInWords =
         quoteData.amount_in_words ||
         quoteData.total_in_words ||
@@ -404,9 +417,12 @@ export const QuotesDetails = () => {
                 <div className="border border-gray-500 bg-white">
                     <div className="grid grid-cols-[1fr_210px] border-b border-gray-500">
                         <div className="p-3 min-h-[96px]">
+                            {templateSettings.logo && (
+                                <img src={templateSettings.logo} alt="Logo" className="mb-2" style={{ maxHeight: "48px", maxWidth: "180px", objectFit: "contain" }} />
+                            )}
                             <h2 className="text-[17px] font-bold mb-2">{localStorage.getItem("companyName") || "Lockated"}</h2>
                             <div className="space-y-1">
-                                <p>{localStorage.getItem("companyAddress") || "pune Maharashtra 411006"}</p>
+                                <p>{templateSettings.organizationAddress || localStorage.getItem("companyAddress") || "pune Maharashtra 411006"}</p>
                                 <p>{localStorage.getItem("companyCountry") || "India"}</p>
                                 <p>{localStorage.getItem("companyEmail") || "ajay.pihulkar@lockated.com"}</p>
                                 <p>GSTIN: {quoteData?.address_detail?.gst_detail?.gstin || localStorage.getItem("gstin") || "27AGOPL6958QABC"}</p>
@@ -419,7 +435,7 @@ export const QuotesDetails = () => {
                             >
                                 {statusDisplay}
                             </span>
-                            <h1 className="text-[32px] font-serif font-normal tracking-wide">QUOTE</h1>
+                            <h1 className="text-[32px] font-serif font-normal tracking-wide">{templateSettings.templateName ? templateSettings.templateName.toUpperCase() : "QUOTE"}</h1>
                         </div>
                     </div>
 
@@ -467,13 +483,13 @@ export const QuotesDetails = () => {
                     </div>
                     <div className="grid grid-cols-2 border-b border-gray-500 min-h-[30px]">
                         <div className="px-2 py-2 border-r border-gray-500">
-                            <p className="font-bold text-blue-700">{quoteData.customer_name || "N/A"}</p>
+                            <p className="font-bold">{quoteData.customer_name || "N/A"}</p>
                             {formatAddressBlock(billingAddress).map((line, index) => (
                                 <p key={index}>{line}</p>
                             ))}
                         </div>
                         <div className="px-2 py-2">
-                            <p className="font-bold text-blue-700">{quoteData.customer_name || "N/A"}</p>
+                            <p className="font-bold">{quoteData.customer_name || "N/A"}</p>
                             {formatAddressBlock(shippingAddress || billingAddress).map((line, index) => (
                                 <p key={index}>{line}</p>
                             ))}
@@ -533,7 +549,7 @@ export const QuotesDetails = () => {
                                 {quoteData.lock_account_tax_amount ? (
                                     <div className="flex justify-between">
                                         <span>Amount Withheld</span>
-                                        <span className="text-red-600">(-) {Number(quoteData.lock_account_tax_amount || 0).toFixed(2)}</span>
+                                        <span>(-) {Number(quoteData.lock_account_tax_amount || 0).toFixed(2)}</span>
                                     </div>
                                 ) : null}
                                 {taxRows.map(([name, tax], index) => (
@@ -558,18 +574,51 @@ export const QuotesDetails = () => {
 
                     <div className="grid grid-cols-[1fr_305px]">
                         <div className="p-3 border-r border-gray-500 min-h-[190px]">
+                            {bankDetail && (
+                                <div className="mb-4">
+                                    <p className="font-bold">Bank Details</p>
+                                    <div className="mt-2 space-y-1 text-[11px]">
+                                        {[
+                                            ["Bank Name", bankDetail.bankName],
+                                            ["A/c No.", bankDetail.accountNo],
+                                            ["Beneficiary / Account Name", bankDetail.beneficiaryName],
+                                            ["A/c Type", bankDetail.accountType],
+                                            ["IFSC Code", bankDetail.ifscCode],
+                                            ["Swift Code", bankDetail.swiftCode],
+                                            ["Branch", bankDetail.branch],
+                                        ]
+                                            .filter(([, value]) => value)
+                                            .map(([label, value]) => (
+                                                <div key={label} className="flex gap-2">
+                                                    <span className="font-semibold min-w-[120px]">{label}:</span>
+                                                    <span>{value}</span>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
                             <div className="mb-4">
                                 <p className="font-bold">Notes</p>
                                 <p className="whitespace-pre-wrap mt-1">{quoteNotes || "—"}</p>
                             </div>
                             <div>
                                 <p className="font-bold">Terms & Conditions</p>
-                                <p className="whitespace-pre-wrap mt-1">{quoteTerms || "—"}</p>
+                                <p className="whitespace-pre-wrap mt-1">{quoteTerms || templateSettings.termsAndConditions || "—"}</p>
                             </div>
                         </div>
                         <div className="p-3 min-h-[190px] flex flex-col justify-end">
                             <div className="text-right">
-                                <p className="font-bold mb-12">For {localStorage.getItem("companyName") || "Lockated"}</p>
+                                <p className="font-bold mb-2">For {localStorage.getItem("companyName") || "Lockated"}</p>
+                                {templateSettings.signature ? (
+                                    <img
+                                        src={templateSettings.signature}
+                                        alt="Signature"
+                                        className="ml-auto mb-2"
+                                        style={{ maxHeight: "50px", maxWidth: "170px", objectFit: "contain" }}
+                                    />
+                                ) : (
+                                    <div className="mb-12" />
+                                )}
                                 <div className="border-t border-gray-500 ml-auto w-[170px] pt-2 text-center font-bold">
                                     Authorized Signature
                                 </div>
@@ -583,12 +632,13 @@ export const QuotesDetails = () => {
 
     return (
         <div className="min-h-screen bg-background p-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+            <div className="w-full space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={() => navigate("/accounting/quotes")}>
-                            <ArrowLeft className="h-5 w-5" />
+                        <Button variant="ghost" onClick={() => navigate("/accounting/quotes")} className="p-0">
+                            <ArrowLeft className="h-5 w-5 mr-2" />
+                            {/* Back to Quotes */}
                         </Button>
                         <div>
                             <h1 className="text-2xl font-bold flex items-center gap-3">
@@ -635,6 +685,16 @@ export const QuotesDetails = () => {
                         >
                             <FileText className="h-4 w-4" />
                             PDF
+                        </Button>
+
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate("/accounting/quotes/template", { state: { recordId: id } })}
+                            className="gap-2"
+                        >
+                            <Settings2 className="h-4 w-4" />
+                            Template Edit
                         </Button>
 
                         <Button
@@ -700,7 +760,7 @@ export const QuotesDetails = () => {
                                     <div className="relative">
                                         <Button
                                             size="sm"
-                                            className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                            className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                                             onClick={() => setShowConvertMenu((p) => !p)}
                                         >
                                             Convert ▾
@@ -736,7 +796,7 @@ export const QuotesDetails = () => {
                                 {quoteData.status === "draft" && (
                                     <Button
                                         size="sm"
-                                        className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                        className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                                         disabled={actionLoading}
                                         onClick={() => updateStatus("pending_approval")}
                                     >
@@ -815,7 +875,7 @@ export const QuotesDetails = () => {
                                     <div className="relative">
                                         <Button
                                             size="sm"
-                                            className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                                            className="bg-[#DA7756] text-white hover:bg-[#C45F40]"
                                             onClick={() => setShowConvertMenu((p) => !p)}
                                         >
                                             Convert ▾
@@ -851,7 +911,7 @@ export const QuotesDetails = () => {
                     <DialogContent className="max-w-4xl">
                         <div className="flex items-center justify-between">
                             <DialogHeader>
-                                <DialogTitle className="text-[#C72030]">Approval Log</DialogTitle>
+                                <DialogTitle className="text-[#DA7756]">Approval Log</DialogTitle>
                             </DialogHeader>
                             <button
                                 type="button"
@@ -866,7 +926,7 @@ export const QuotesDetails = () => {
                         <div className="rounded-lg border overflow-hidden">
                             <Table>
                                 <TableHeader>
-                                    <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
+                                    <TableRow className="bg-[#DA7756] hover:bg-[#DA7756] [&>th]:!text-white [&>th]:!opacity-100">
                                         <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">Sr.No.</TableHead>
                                         <TableHead className="!text-white !opacity-100 font-semibold">Approval Level</TableHead>
                                         <TableHead className="!text-white !opacity-100 font-semibold">Approved By</TableHead>
@@ -941,11 +1001,11 @@ export const QuotesDetails = () => {
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="grid grid-cols-5 w-full max-w-3xl">
-                        <TabsTrigger value="quote-details">Quote Details</TabsTrigger>
-                        <TabsTrigger value="pdf">PDF</TabsTrigger>
-                        <TabsTrigger value="customer-info">Customer Info</TabsTrigger>
-                        <TabsTrigger value="attachments">Attachments & Comms</TabsTrigger>
-                        <TabsTrigger value="activity-logs">Activity Logs</TabsTrigger>
+                        <TabsTrigger value="quote-details" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Quote Details</TabsTrigger>
+                        <TabsTrigger value="pdf" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">PDF</TabsTrigger>
+                        <TabsTrigger value="customer-info" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Customer Info</TabsTrigger>
+                        <TabsTrigger value="attachments" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Attachments & Comms</TabsTrigger>
+                        <TabsTrigger value="activity-logs" className="data-[state=active]:border-b-2 data-[state=active]:border-brand data-[state=active]:text-brand">Activity Logs</TabsTrigger>
                     </TabsList>
 
                     {/* Quote Details Tab */}
@@ -962,10 +1022,10 @@ export const QuotesDetails = () => {
                                                                     </span>
                         
                                                                     <Badge
-                                                                        variant="secondary"
+                                                                        // variant="secondary"
                                                                         className="h-5 px-2 text-xs rounded-full"
                                                                     >
-                                                                        1
+                                                                        {quoteData?.invoices?.length || 0}
                                                                     </Badge>
                                                                 </div>
                                                             </AccordionTrigger>
@@ -995,7 +1055,7 @@ export const QuotesDetails = () => {
                                                                                     {/* Invoice Number */}
                                                                                     <TableCell>
                                                                                         <button
-                                                                                            className="text-blue-600 hover:underline font-medium"
+                                                                                            className="text-brand hover:underline font-medium"
                                                                                             onClick={() => navigate(`/accounting/invoices/${inv.id}`)}
                                                                                         >
                                                                                             {inv.invoice_number}
@@ -1005,12 +1065,12 @@ export const QuotesDetails = () => {
                                                                                     {/* Status */}
                                                                                     <TableCell>
                                                                                         <span
-                                                                                            className={`text-xs font-semibold ${inv.status === "overdue"
-                                                                                                    ? "text-red-600"
-                                                                                                    : inv.status === "paid"
-                                                                                                        ? "text-green-600"
-                                                                                                        : "text-orange-500"
-                                                                                                }`}
+                                                                                            // className={`text-xs font-semibold ${inv.status === "overdue"
+                                                                                            //         ? "text-red-600"
+                                                                                            //         : inv.status === "paid"
+                                                                                            //             ? "text-green-600"
+                                                                                            //             : "text-orange-500"
+                                                                                            //     }`}
                                                                                         >
                                                                                             {inv.status?.toUpperCase()}
                                                                                         </span>
@@ -1246,6 +1306,43 @@ export const QuotesDetails = () => {
                                 )}
                             </CardContent>
                         </Card>
+
+                        {/* Bank Details */}
+                        {bankDetail && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">Bank Details</CardTitle>
+                                </CardHeader>
+                                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
+                                        <p className="text-sm mt-1">{bankDetail.bankName}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Account Number</p>
+                                        <p className="text-sm mt-1">{bankDetail.accountNo}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Beneficiary / Account Name</p>
+                                        <p className="text-sm mt-1">{bankDetail.beneficiaryName}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">IFSC Code</p>
+                                        <p className="text-sm mt-1">{bankDetail.ifscCode}</p>
+                                    </div>
+                                    {bankDetail.swiftCode && (
+                                        <div>
+                                            <p className="text-sm font-medium text-muted-foreground">Swift Code</p>
+                                            <p className="text-sm mt-1">{bankDetail.swiftCode}</p>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Branch</p>
+                                        <p className="text-sm mt-1">{bankDetail.branch}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
 
                         {/* Notes and Terms */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1521,12 +1618,7 @@ export const QuotesDetails = () => {
                                                     quoteData?.lock_account_sale_order_id;
 
                                                 const Icon = isConverted || isCreated ? CirclePlus : (isAccepted || isSent ? Edit : FileText);
-                                                const iconWrapClass =
-                                                    isConverted || isCreated
-                                                        ? "bg-green-50 text-green-600 border-green-100"
-                                                        : (isAccepted || isSent
-                                                            ? "bg-sky-50 text-sky-600 border-sky-100"
-                                                            : "bg-gray-50 text-gray-500 border-gray-100");
+                                                const iconWrapClass = "bg-brand-light text-brand border-brand/20";
 
                                                 return (
                                                     <div key={key} className="flex gap-6 py-5">
@@ -1549,7 +1641,7 @@ export const QuotesDetails = () => {
                                                             {isConverted && salesOrderId ? (
                                                                 <button
                                                                     type="button"
-                                                                    className="mt-2 inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                                                                    className="mt-2 inline-flex items-center gap-2 text-sm text-brand hover:underline"
                                                                     onClick={() => navigate(`/accounting/sales-order/${salesOrderId}`)}
                                                                 >
                                                                     <Eye className="h-4 w-4" />

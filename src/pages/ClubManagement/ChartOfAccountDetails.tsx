@@ -121,7 +121,7 @@ export const ChartOfAccountDetails = () => {
     if (loading || ledgerLoading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <div className="animate-spin h-8 w-8 border-b-2 border-blue-600 rounded-full" />
+                <div className="animate-spin h-8 w-8 border-b-2 border-brand rounded-full" />
             </div>
         );
     }
@@ -170,9 +170,9 @@ export const ChartOfAccountDetails = () => {
             </div>
 
             {/* Closing Balance */}
-            <div className="bg-[#F9FBFF] border rounded-md p-5 mb-6">
+            <div className="bg-brand-light border rounded-md p-5 mb-6">
                 <p className="text-xs text-gray-500 uppercase mb-1">Closing Balance</p>
-                <p className="text-xl font-semibold text-blue-600">
+                <p className="text-xl font-semibold text-brand">
                     ₹{Math.abs(ledgerDetails?.current_total ?? closingBalance).toFixed(2)}{' '}
                     <span className="text-sm">
                         {(ledgerDetails?.current_total ?? closingBalance) >= 0 ? 'Dr' : 'Cr'}

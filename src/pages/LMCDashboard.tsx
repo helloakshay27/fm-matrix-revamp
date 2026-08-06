@@ -16,6 +16,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import formSchema from './lmc_form.json';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
 const columns = [
     { key: 'actions', label: 'Actions', sortable: false },
@@ -66,6 +67,7 @@ const PAGE_SIZE = 20; // rely on API default page size (adjust if backend suppor
 
 
 const LMCDashboard = () => {
+    const msafeEvents = useMSafeEvents();
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -110,7 +112,7 @@ const LMCDashboard = () => {
             if (appliedUserEmail) params.push(`q[user_email_cont]=${appliedUserEmail.trim()}`);
             else if (searchTerm) params.push(`q[user_email_cont]=${searchTerm.trim()}`);
             if (appliedCreatedByEmail) params.push(`q[created_by_email_cont]=${appliedCreatedByEmail.trim()}`);
-        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+            const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
             const url = `${cleanBaseUrl}/lmcs.json?${params.join('&')}`;
             const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`Failed (${res.status})`);
@@ -133,8 +135,10 @@ const LMCDashboard = () => {
                 setCurrentPage(json.pagination.current_page);
                 setTotalPages(json.pagination.total_pages);
                 setTotalCount(json.pagination.total_count);
+                msafeEvents.onMSafeSubmoduleViewed('lmc', json.pagination.total_count);
             } else {
                 setTotalPages(1); setTotalCount(apiRows.length); setCurrentPage(1);
+                msafeEvents.onMSafeSubmoduleViewed('lmc', apiRows.length);
             }
         } catch (e: any) {
             setError(e.message || 'Failed to load LMCs');
@@ -589,13 +593,13 @@ const LMCDashboard = () => {
                     <Button
                         variant="outline"
                         onClick={handleResetFilters}
-                        className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="border-brand text-brand hover:bg-brand-selected hover:text-brand"
                     >
                         Reset
                     </Button>
                     <Button
                         onClick={handleApplyFilters}
-                        className="bg-red-500 hover:bg-red-600 text-white"
+                        className="!bg-brand hover:!bg-brand-hover !text-white"
                     >
                         Apply
                     </Button>

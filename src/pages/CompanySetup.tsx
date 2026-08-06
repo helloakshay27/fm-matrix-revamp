@@ -581,14 +581,15 @@ const CompanySetup: React.FC = () => {
               <Button
                 variant="outline"
                 onClick={() => navigate(-1)}
-                className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-8"
+                className="border-[#C72030] text-[#C72030] px-8"
               >
                 Cancel
               </Button>
               <Button
+                variant="ghost"
                 onClick={handleCompanyUpdate}
                 disabled={loading}
-                className="bg-[#C72030] text-white hover:bg-[#a61a28] font-semibold px-8"
+                className="fm-button-fix fm-button-brand px-4 py-2"
               >
                 {loading ? "Saving..." : "Save Company Info"}
               </Button>

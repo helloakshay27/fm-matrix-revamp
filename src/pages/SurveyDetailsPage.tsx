@@ -158,6 +158,17 @@ export const SurveyDetailsPage = () => {
     loadData();
   }, [id]);
 
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading Question data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       {/* Header */}
@@ -173,7 +184,8 @@ export const SurveyDetailsPage = () => {
         {!loading && snagChecklist && shouldShow("Survey List", "update") && (
           <Button
             onClick={() => navigate(`/maintenance/survey/edit/${id}`)}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+            variant="ghost"
+            className="fm-button-fix fm-button-brand flex items-center gap-2"
           >
             <Edit className="w-4 h-4" />
             Edit Survey
@@ -214,11 +226,7 @@ export const SurveyDetailsPage = () => {
           </div>
         </CardHeader>
         <CardContent className="p-6">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-gray-500">Loading Question data...</div>
-            </div>
-          ) : !snagChecklist ? (
+          {!snagChecklist ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-gray-500">Question not found</div>
             </div>
@@ -353,7 +361,9 @@ export const SurveyDetailsPage = () => {
                                           ? "bg-purple-100 text-purple-800"
                                           : question.qtype === "description"
                                             ? "bg-indigo-100 text-indigo-800"
-                                            : "bg-gray-100 text-gray-800"
+                                            : question.qtype === "date" || question.qtype === "time"
+                                              ? "bg-teal-100 text-teal-800"
+                                              : "bg-gray-100 text-gray-800"
                                 }
                               `}
                               >
@@ -368,7 +378,11 @@ export const SurveyDetailsPage = () => {
                                         ? "Emoji"
                                         : question.qtype === "description"
                                           ? "Description"
-                                          : question.qtype || "Unknown"}
+                                          : question.qtype === "date"
+                                            ? "Date"
+                                            : question.qtype === "time"
+                                              ? "Time"
+                                              : question.qtype || "Unknown"}
                               </span>
                               {question.quest_mandatory && (
                                 <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
@@ -413,7 +427,9 @@ export const SurveyDetailsPage = () => {
                                                 ? "Checkbox"
                                                 : question.qtype === "date"
                                                   ? "Date"
-                                                  : "Unknown Type"
+                                                  : question.qtype === "time"
+                                                    ? "Time"
+                                                    : "Unknown Type"
                                   }
                                   disabled
                                 >
@@ -441,6 +457,9 @@ export const SurveyDetailsPage = () => {
                                     </SelectItem>
                                     <SelectItem value="Date">
                                       Date
+                                    </SelectItem>
+                                    <SelectItem value="Time">
+                                      Time
                                     </SelectItem>
                                   </SelectContent>
                                 </Select>

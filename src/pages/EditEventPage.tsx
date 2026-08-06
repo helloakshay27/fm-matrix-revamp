@@ -509,16 +509,18 @@ export const EditEventPage = () => {
                 size="small"
                 sx={{
                   '& .MuiSwitch-switchBase': {
-                    color: '#ef4444',
+                    color: '#ffffff',
                     '&.Mui-checked': {
                       color: '#22c55e',
                     },
                     '&.Mui-checked + .MuiSwitch-track': {
                       backgroundColor: '#22c55e',
+                      opacity: 1,
                     },
                   },
                   '& .MuiSwitch-track': {
-                    backgroundColor: '#ef4444',
+                    backgroundColor: '#9ca3af',
+                    opacity: 1,
                   },
                 }}
               />
@@ -821,17 +823,17 @@ export const EditEventPage = () => {
                 >
                   <FormControlLabel
                     value="play"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">Play</span>}
                   />
                   <FormControlLabel
                     value="panasche"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">Panache</span>}
                   />
                   <FormControlLabel
                     value="persuit"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">Pursuit</span>}
                   />
                 </RadioGroup>
@@ -850,12 +852,12 @@ export const EditEventPage = () => {
                 >
                   <FormControlLabel
                     value="yes"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">No</span>}
                   />
                 </RadioGroup>
@@ -874,12 +876,12 @@ export const EditEventPage = () => {
                 >
                   <FormControlLabel
                     value="yes"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">No</span>}
                   />
                 </RadioGroup>
@@ -898,12 +900,12 @@ export const EditEventPage = () => {
                 >
                   <FormControlLabel
                     value="yes"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-[12px] text-gray-600">No</span>}
                   />
                 </RadioGroup>
@@ -976,12 +978,12 @@ export const EditEventPage = () => {
                 >
                   <FormControlLabel
                     value="all"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-sm text-gray-600">All Tech Park</span>}
                   />
                   <FormControlLabel
                     value="individual"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-sm text-gray-600">Individual Tech Park</span>}
                   />
                 </RadioGroup>
@@ -1000,12 +1002,12 @@ export const EditEventPage = () => {
                 >
                   <FormControlLabel
                     value="yes"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-sm text-gray-600">Yes</span>}
                   />
                   <FormControlLabel
                     value="no"
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
+                    control={<Radio sx={{ color: '#da7756', '&.Mui-checked': { color: '#da7756' }, '& .MuiSvgIcon-root': { fontSize: 16 } }} />}
                     label={<span className="text-sm text-gray-600">No</span>}
                   />
                 </RadioGroup>
@@ -1177,16 +1179,18 @@ export const EditEventPage = () => {
 
         <div className="flex justify-end gap-4 mt-8 pb-8">
           <Button
+            type="button"
             onClick={() => navigate(`/pulse/events`)}
             variant="outline"
-            className="bg-[#fdf5f2] border border-[#DA7756] text-[#DA7756] hover:bg-[#f8e7df] min-w-[150px] h-10"
+            className="min-w-[150px] h-10 !border-brand !text-brand bg-white hover:!bg-brand-selected hover:!text-brand"
           >
             Cancel
           </Button>
           <Button
+            type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="fm-button-fix fm-button-brand min-w-[150px] h-10 disabled:opacity-70"
+            className="min-w-[150px] h-10 !bg-brand hover:!bg-brand-hover !text-white disabled:!opacity-100 disabled:!bg-brand"
           >
             {isSubmitting ? "Updating..." : "Update Event"}
           </Button>

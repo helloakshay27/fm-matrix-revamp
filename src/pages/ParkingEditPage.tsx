@@ -427,7 +427,8 @@ export const ParkingEditPage = () => {
                 type="button"
                 onClick={handleLoadParkingSlots}
                 disabled={loadingParkingSlots || !building || !floor || !parkingSlotType}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 disabled:opacity-50"
+                className="fm-button-fix fm-button-brand px-4 py-2 disabled:opacity-50"
+                variant="ghost"
               >
                 {loadingParkingSlots ? 'Loading Slots...' : 'Load Parking Slots'}
               </Button>
@@ -655,16 +656,17 @@ export const ParkingEditPage = () => {
         <div className="flex gap-4 justify-center pt-6">
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             onClick={handleBack}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+            className="fm-button-fix fm-button-brand px-4 py-2"
           >
             Cancel
           </Button>
           <Button
             type="submit"
+            variant="ghost"
             disabled={loadingSubmit || (!showParkingSlots && (!building || !floor || !parkingSlotType || !clientName || !leaser))} // Disable if not ready to load or no slots shown
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-12 py-3"
+            className="fm-button-fix fm-button-brand px-4 py-2"
           >
             {loadingSubmit ? 'Submitting...' : 'Submit Parking'}
           </Button>

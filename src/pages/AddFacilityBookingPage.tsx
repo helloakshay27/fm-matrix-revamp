@@ -121,6 +121,7 @@ export const AddFacilityBookingPage = () => {
     ampm: string;
     wrap_time: number;
     booked_by: string;
+    booked?: boolean;
     formated_start_hour: string;
     formated_end_hour: string;
     formated_start_minute: string;
@@ -136,6 +137,10 @@ export const AddFacilityBookingPage = () => {
     multiple_booking_count?: number;
     concurrent_slots?: number;
   } | null>(null);
+  // True only when booking_rule_for_user errored out — used to lift slot-selection
+  // restrictions entirely, as opposed to bookingRuleData being null simply because
+  // nothing has been fetched yet (which keeps the default single-slot restriction).
+  const [bookingRuleFetchFailed, setBookingRuleFetchFailed] = useState(false);
   const [flexiblePriceData, setFlexiblePriceData] = useState<{
     success: boolean;
     total_minutes: number;
@@ -159,11 +164,15 @@ export const AddFacilityBookingPage = () => {
   // Helper: Max slots user can select
   const maxSelectableSlots = isRequestableType
     ? Infinity // For requestable, allow unlimited consecutive slots
-    : (bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1);
+    : bookingRuleFetchFailed
+      ? Infinity // Booking rule lookup failed — don't restrict slot selection
+      : (bookingRuleData && bookingRuleData.multiple_bookings ? (bookingRuleData.multiple_booking_count || 1) : 1);
   // Helper: Max concurrent slots
   const maxConcurrentSlots = isRequestableType
     ? (facilityDetails?.max_people || 10) // For requestable, enforce consecutive slots up to max_people
-    : (bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1);
+    : bookingRuleFetchFailed
+      ? (facilityDetails?.max_people || 10) // Booking rule lookup failed — don't restrict slot selection
+      : (bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1);
 
   // Helper: Check if consecutive selection is valid
   const isConsecutiveSelection = (slots: number[]) => {
@@ -177,36 +186,26 @@ export const AddFacilityBookingPage = () => {
     return true;
   };
 
-  // Helper: Check if a slot can be selected (enforce consecutive rule for requestable)
+  // Helper: Check if a slot can be selected
   const isSlotSelectable = (slotId: number) => {
     if (!canSelectSlots) return false;
     if (selectedSlots.includes(slotId)) return true; // allow deselect
+    if (slots.find((s) => s.id === slotId)?.booked) return false;
 
     if (isRequestableType) {
       // For requestable type, enforce consecutive slots only
       const newSelection = [...selectedSlots, slotId];
 
       // Check if adding this slot maintains consecutive pattern
-      if (!isConsecutiveSelection(newSelection)) return false;
+      // if (!isConsecutiveSelection(newSelection)) return false;
 
       // Check if total doesn't exceed max
       if (newSelection.length > maxSelectableSlots) return false;
 
       return true;
     } else {
-      // For bookable type, use existing logic
-      if (selectedSlots.length >= maxSelectableSlots) return false;
-      const all = [...selectedSlots, slotId].sort((a, b) => a - b);
-      let maxConsec = 1, curr = 1;
-      for (let i = 1; i < all.length; i++) {
-        if (all[i] === all[i - 1] + 1) {
-          curr++;
-          maxConsec = Math.max(maxConsec, curr);
-        } else {
-          curr = 1;
-        }
-      }
-      return maxConsec <= maxConcurrentSlots;
+      // For bookable type: allow free multi-selection
+      return true;
     }
   };
   const [openCancelPolicy, setOpenCancelPolicy] = useState(false);
@@ -463,6 +462,7 @@ export const AddFacilityBookingPage = () => {
           });
           console.log('Booking Rule for User Response:', bookingRuleResponse.data);
           // Store booking rule data in state
+          setBookingRuleFetchFailed(false);
           if (bookingRuleResponse.data) {
             setBookingRuleData(bookingRuleResponse.data);
             console.log('Booking rule rate:', bookingRuleResponse.data.rate);
@@ -479,11 +479,16 @@ export const AddFacilityBookingPage = () => {
               console.warn('Server error (500): The API encountered an internal error. Check if user_id and facility_setup_id are valid.');
             }
           }
+          // Clear any stale booking rule data (e.g. from a previous facility/user) and mark the
+          // lookup as failed so slot selection is never left restricted because of it.
+          setBookingRuleData(null);
+          setBookingRuleFetchFailed(true);
         }
       };
       fetchAmenityBooking();
     } else {
       console.log('❌ Amenity API not called - condition not met');
+      setBookingRuleFetchFailed(false);
     }
   }, [userType, selectedUser, selectedFacility]);
 
@@ -585,29 +590,6 @@ export const AddFacilityBookingPage = () => {
 
       const facilityId = typeof selectedFacility === 'object' ? selectedFacility.id : selectedFacility;
 
-      // --- Cost calculation based on per_slot_charge and accessories ---
-      const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
-      const slotsCount = selectedSlots.length;
-
-      // Calculate slot total
-      const slotTotal = slotsCount * perSlotCharge;
-
-      // Calculate accessory total with quantities
-      const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
-        const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
-        return total + ((accessory?.price || 0) * (quantity || 0));
-      }, 0);
-
-      // Subtotal includes slots and accessories
-      const subtotalBeforeDiscount = slotTotal + accessoryTotal;
-      const discountAmount = (subtotalBeforeDiscount * (discountPercentage || 0)) / 100;
-      const subtotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
-      const gstPercentage = facilityDetails?.gst || 0;
-      const sgstPercentage = facilityDetails?.sgst || 0;
-      const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
-      const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
-      const amountFull = subtotalAfterDiscount + gstAmount + sgstAmount;
-
       // Build booked_members_attributes array from people table
       const bookedMembersAttributes = peopleTable
         .filter(row => row.role && row.user) // Only include rows with both role and user selected
@@ -632,8 +614,11 @@ export const AddFacilityBookingPage = () => {
 
         let basePrice = 0;
 
-        // For requestable type, use slab_price from API; for others, use slot charges
-        if (isRequestableType && flexiblePriceData) {
+        // Complementary bookings: slot/base charges are waived, only accessories are chargeable
+        if (paymentMethod === 'complementary') {
+          basePrice = 0;
+        } else if (isRequestableType && flexiblePriceData) {
+          // For requestable type, use slab_price from API; for others, use slot charges
           basePrice = flexiblePriceData.slab_price;
         } else {
           const perSlotCharge = facilityDetails?.facility_charge?.per_slot_charge ?? 0;
@@ -957,23 +942,28 @@ export const AddFacilityBookingPage = () => {
           {slots.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {slots.map((slot) => {
+                const isSelected = selectedSlots.includes(slot.id);
+                const isBooked = !!slot.booked && !isSelected;
                 const disabled = !isSlotSelectable(slot.id);
                 return (
-                  <div key={slot.id} className={`flex items-center space-x-2 p-3 border rounded-lg ${disabled ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'}`}>
+                  <div key={slot.id} className={`flex items-center space-x-2 p-3 border rounded-lg ${isBooked ? 'bg-red-50 opacity-60 border-red-300' : disabled ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'}`}>
                     <input
                       type="checkbox"
                       id={`slot-${slot.id}`}
-                      checked={selectedSlots.includes(slot.id)}
+                      checked={isSelected}
                       onChange={() => handleSlotSelection(slot.id)}
                       className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                       disabled={!canSelectSlots || disabled}
                     />
                     <Label
                       htmlFor={`slot-${slot.id}`}
-                      className={`cursor-pointer text-sm font-medium flex items-center gap-2 ${disabled ? 'text-gray-400' : ''}`}
+                      className={`cursor-pointer text-sm font-medium flex items-center gap-2 ${isBooked ? 'text-red-600' : disabled ? 'text-gray-400' : ''}`}
                     >
                       {slot.ampm}
-                      {slot.is_premium && slot.premium_percentage && (
+                      {isBooked && (
+                        <span className="text-xs font-semibold text-red-600">Booked</span>
+                      )}
+                      {slot.is_premium && slot.premium_percentage && !isBooked && (
                         <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
                             <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
@@ -1004,10 +994,10 @@ export const AddFacilityBookingPage = () => {
                 `You can select multiple consecutive slots. Selected slots must be continuous.`
               ) : (
                 <>
-                  {bookingRuleData?.multiple_bookings
+                  {/* {bookingRuleData?.multiple_bookings
                     ? `You can select up to ${maxSelectableSlots} slots. `
                     : 'You can select only one slot. '}
-                  {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`}
+                  {maxConcurrentSlots > 1 && `You can select up to ${maxConcurrentSlots} consecutive slots.`} */}
                 </>
               )}
             </div>
@@ -1146,19 +1136,29 @@ export const AddFacilityBookingPage = () => {
                       const accessory = availableAccessories.find(a => a.id === parseInt(accessoryId));
                       return total + ((accessory?.price || 0) * (quantity || 0));
                     }, 0);
-                    const subtotalWithAccessories = flexiblePriceData.slab_price + accessoryTotal;
+                    const slabPrice = paymentMethod === 'complementary' ? 0 : flexiblePriceData.slab_price;
+                    const subtotalWithAccessories = slabPrice + accessoryTotal;
                     const calculatedDiscountAmount = discountType === 'percentage'
                       ? (subtotalWithAccessories * (discountPercentage || 0)) / 100
                       : (discountAmount || 0);
                     const subtotalAfterDiscount = subtotalWithAccessories - calculatedDiscountAmount;
-                    const grandTotal = subtotalAfterDiscount + flexiblePriceData.cgst_amount + flexiblePriceData.sgst_amount;
+                    const gstPercentage = facilityDetails?.gst || 0;
+                    const sgstPercentage = facilityDetails?.sgst || 0;
+                    const gstAmount = (subtotalAfterDiscount * gstPercentage) / 100;
+                    const sgstAmount = (subtotalAfterDiscount * sgstPercentage) / 100;
+                    const grandTotal = subtotalAfterDiscount + gstAmount + sgstAmount;
 
                     return (
                       <>
                         {/* Slab Price */}
                         <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-gray-700">Base Price</span>
-                          <span className="font-medium">₹{flexiblePriceData.slab_price.toFixed(2)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">Base Price</span>
+                            {paymentMethod === 'complementary' && (
+                              <span className="text-sm text-gray-500">(Complementary)</span>
+                            )}
+                          </div>
+                          <span className="font-medium">₹{slabPrice.toFixed(2)}</span>
                         </div>
 
                         {/* Booking Duration */}
@@ -1242,16 +1242,22 @@ export const AddFacilityBookingPage = () => {
                           </div>
                         )}
 
-                        {/* CGST from API */}
+                        {/* CGST (on subtotal after discount) */}
                         <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-gray-700">CGST</span>
-                          <span className="font-medium">₹{flexiblePriceData.cgst_amount.toFixed(2)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">CGST</span>
+                            <span className="text-sm text-gray-500">({gstPercentage}%)</span>
+                          </div>
+                          <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
                         </div>
 
-                        {/* SGST from API */}
+                        {/* SGST (on subtotal after discount) */}
                         <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-gray-700">SGST</span>
-                          <span className="font-medium">₹{flexiblePriceData.sgst_amount.toFixed(2)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-700">SGST</span>
+                            <span className="text-sm text-gray-500">({sgstPercentage}%)</span>
+                          </div>
+                          <span className="font-medium">₹{sgstAmount.toFixed(2)}</span>
                         </div>
 
                         {/* Grand Total */}
@@ -1270,9 +1276,10 @@ export const AddFacilityBookingPage = () => {
                   const perSlotCharge = facilityDetails.facility_charge?.per_slot_charge ?? 0;
                   const slotsCount = selectedSlots.length;
                   const hasSlots = slotsCount > 0;
+                  const isComplementary = paymentMethod === 'complementary';
 
-                  // Calculate slot total
-                  const slotTotal = slotsCount * perSlotCharge;
+                  // Calculate slot total (waived for complementary bookings)
+                  const slotTotal = isComplementary ? 0 : slotsCount * perSlotCharge;
 
                   // Calculate accessory total with quantities
                   const accessoryTotal = Object.entries(selectedAccessories).reduce((total, [accessoryId, quantity]) => {
@@ -1310,7 +1317,11 @@ export const AddFacilityBookingPage = () => {
                         <div className="flex justify-between items-center py-2 border-b border-gray-200">
                           <div className="flex items-center gap-2">
                             <span className="text-gray-700">Slot Charges</span>
-                            <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
+                            {isComplementary ? (
+                              <span className="text-sm text-gray-500">(Complementary)</span>
+                            ) : (
+                              <span className="text-sm text-gray-500">({selectedSlots.length} x ₹{perSlotCharge.toFixed(2)})</span>
+                            )}
                           </div>
                           <span className="font-medium">₹{slotTotal.toFixed(2)}</span>
                         </div>
@@ -1430,7 +1441,8 @@ export const AddFacilityBookingPage = () => {
         <div className="flex justify-center">
           <Button
             type="submit"
-            className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white px-8 py-2"
+            className="fm-button-fix fm-button-brand px-4 py-2"
+            variant="ghost"
           >
             Submit
           </Button>

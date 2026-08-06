@@ -410,9 +410,10 @@ export const VisitorDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="p-6 bg-white min-h-screen">
-        <div className="flex items-center justify-center h-64">
-          <span className="text-gray-500">Loading visitor details...</span>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading visitor details...</p>
         </div>
       </div>
     );
@@ -465,10 +466,10 @@ export const VisitorDetailsPage = () => {
                     visitorData.vstatus === "checked_in"
                       ? "bg-green-100 text-green-800"
                       : visitorData.vstatus === "checked_out"
-                      ? "bg-blue-100 text-blue-800"
-                      : visitorData.vstatus === "expected"
-                      ? "bg-orange-100 text-orange-800"
-                      : "bg-gray-100 text-gray-800"
+                        ? "bg-blue-100 text-blue-800"
+                        : visitorData.vstatus === "expected"
+                          ? "bg-orange-100 text-orange-800"
+                          : "bg-gray-100 text-gray-800"
                   }
                 >
                   {visitorData.vstatus.replace(/_/g, " ").toUpperCase()}
@@ -482,12 +483,13 @@ export const VisitorDetailsPage = () => {
             {visitorData.approve === 0 && (
               <Button
                 onClick={handleSkipApproval}
-                className="bg-blue-600 text-white hover:bg-blue-700"
+                variant="ghost"
+                className="fm-button-fix fm-button-brand px-4 py-2"
               >
                 Skip Approval
               </Button>
             )}
-            
+
             {visitorData.vstatus !== "checked_in" &&
               visitorData.vstatus !== "checked_out" &&
               visitorData.approve === 1 && (
@@ -524,8 +526,9 @@ export const VisitorDetailsPage = () => {
                   toast.error('Gate pass not available');
                 }
               }}
-              className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-            >
+              className="fm-button-fix fm-button-brand px-4 py-2"
+              variant="ghost">
+
               <svg
                 width="14"
                 height="15"
@@ -536,21 +539,21 @@ export const VisitorDetailsPage = () => {
               >
                 <path
                   d="M0.332031 4.20609V0.935059H3.66536V2.24347H1.66536V4.20609H0.332031ZM0.332031 14.0192V10.7481H1.66536V12.7108H3.66536V14.0192H0.332031ZM10.332 14.0192V12.7108H12.332V10.7481H13.6654V14.0192H10.332ZM12.332 4.20609V2.24347H10.332V0.935059H13.6654V4.20609H12.332ZM10.6654 11.0752H11.6654V12.0566H10.6654V11.0752ZM10.6654 9.11263H11.6654V10.0939H10.6654V9.11263ZM9.66536 10.0939H10.6654V11.0752H9.66536V10.0939ZM8.66536 11.0752H9.66536V12.0566H8.66536V11.0752ZM7.66536 10.0939H8.66536V11.0752H7.66536V10.0939ZM9.66536 8.13132H10.6654V9.11263H9.66536V8.13132ZM8.66536 9.11263H9.66536V10.0939H8.66536V9.11263ZM7.66536 8.13132H8.66536V9.11263H7.66536V8.13132ZM11.6654 2.89768V6.82291H7.66536V2.89768H11.6654ZM6.33203 8.13132V12.0566H2.33203V8.13132H6.33203ZM6.33203 2.89768V6.82291H2.33203V2.89768H6.33203ZM5.33203 11.0752V9.11263H3.33203V11.0752H5.33203ZM5.33203 5.8416V3.87898H3.33203V5.8416H5.33203ZM10.6654 5.8416V3.87898H8.66536V5.8416H10.6654Z"
-                  fill="#bf213e"
+                  fill="white"
                 />
               </svg>
               View Pass
             </Button>
 
-            {shouldShow("Visitor", "update") && (
+            {/* {shouldShow("Visitor", "update") && (
               <Button
                 onClick={handleUpdate}
-                className="bg-white text-white hover:bg-[#C72030]/90"
+                className="bg-white text-white hover:bg-[#C72030]/90 [&_svg]:text-white"
               >
                 <Pencil className="w-4 h-4 mr-2" />
               </Button>
-            )}
-             {/* <Button
+            )} */}
+            {/* <Button
                               onClick={handleUpdate}
                               variant="outline"
                               className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
@@ -641,7 +644,7 @@ export const VisitorDetailsPage = () => {
                         alt={visitorData.guest_name || "Visitor"}
                         className="ml-9 w-40 h-40 object-cover rounded-lg border-2 border-gray-200"
                         onError={(e) => {
-                          const target =  e.target as HTMLImageElement;
+                          const target = e.target as HTMLImageElement;
                           target.src = "/placeholder.svg";
                         }}
                       />
@@ -674,7 +677,7 @@ export const VisitorDetailsPage = () => {
                       </div>
                     )}
 
-                     {hasData(visitorData.guest_vehicle_number) && (
+                    {hasData(visitorData.guest_vehicle_number) && (
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Guest Vehicle Number</span>
                         <span className="text-gray-500 mx-2">:</span>
@@ -779,7 +782,7 @@ export const VisitorDetailsPage = () => {
                         </span>
                       </div>
                     )} */}
-                     {hasData(visitorData.created_at) && (
+                    {hasData(visitorData.created_at) && (
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Created Date & Time</span>
                         <span className="text-gray-500 mx-2">:</span>
@@ -840,7 +843,7 @@ export const VisitorDetailsPage = () => {
                         <span className="text-gray-900 font-medium">{visitorData.time_since_in}</span>
                       </div>
                     )}
-                  
+
 
                     {visitorData.additional_visitors && visitorData.additional_visitors.length > 0 && (
                       <div className="flex items-start">
@@ -867,7 +870,7 @@ export const VisitorDetailsPage = () => {
                         <span className="text-gray-900 font-medium">{visitorData.notes}</span>
                       </div>
                     )}
-                     {hasData(visitorData.plus_person) && (
+                    {hasData(visitorData.plus_person) && (
                       <div className="flex items-start md:col-span-2">
                         <span className="text-gray-500 min-w-[140px]">Additional Visitor Count</span>
                         <span className="text-gray-500 mx-2">:</span>
@@ -883,62 +886,62 @@ export const VisitorDetailsPage = () => {
             {(hasData(visitorData.pass_start_date) ||
               hasData(visitorData.pass_end_date) ||
               (visitorData.pass_days && visitorData.pass_days.length > 0)) && (
-              <Card className="w-full">
-                <CardHeader className="pb-4 lg:pb-6">
-                  <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <CreditCard className="w-6 h-6" style={{ color: '#C72030' }} />
-                    </div>
-                    <span className="uppercase tracking-wide">Pass Information</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                    {hasData(visitorData.pass_start_date) && (
-                      <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Pass Start Date</span>
-                        <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">
-                          {(() => {
-                            const raw = visitorData.pass_start_date;
-                            if (!raw) return '-';
-                            const parts = raw.split('/');
-                            if (parts.length === 3) {
-                              const [dd, mm, yy] = parts;
-                              const fullYear = parseInt(yy) < 100 ? 2000 + parseInt(yy) : parseInt(yy);
-                              const d = new Date(fullYear, parseInt(mm) - 1, parseInt(dd));
-                              if (!isNaN(d.getTime())) return `${dd}/${mm}/${fullYear}`;
-                            }
-                            const d = new Date(raw);
-                            return isNaN(d.getTime()) ? raw : d.toLocaleDateString('en-GB');
-                          })()}
-                        </span>
+                <Card className="w-full">
+                  <CardHeader className="pb-4 lg:pb-6">
+                    <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <CreditCard className="w-6 h-6" style={{ color: '#C72030' }} />
                       </div>
-                    )}
+                      <span className="uppercase tracking-wide">Pass Information</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                      {hasData(visitorData.pass_start_date) && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Pass Start Date</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">
+                            {(() => {
+                              const raw = visitorData.pass_start_date;
+                              if (!raw) return '-';
+                              const parts = raw.split('/');
+                              if (parts.length === 3) {
+                                const [dd, mm, yy] = parts;
+                                const fullYear = parseInt(yy) < 100 ? 2000 + parseInt(yy) : parseInt(yy);
+                                const d = new Date(fullYear, parseInt(mm) - 1, parseInt(dd));
+                                if (!isNaN(d.getTime())) return `${dd}/${mm}/${fullYear}`;
+                              }
+                              const d = new Date(raw);
+                              return isNaN(d.getTime()) ? raw : d.toLocaleDateString('en-GB');
+                            })()}
+                          </span>
+                        </div>
+                      )}
 
-                    {hasData(visitorData.pass_end_date) && (
-                      <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Pass End Date</span>
-                        <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">
-                          {(() => {
-                            const raw = visitorData.pass_end_date;
-                            if (!raw) return '-';
-                            const parts = raw.split('/');
-                            if (parts.length === 3) {
-                              const [dd, mm, yy] = parts;
-                              const fullYear = parseInt(yy) < 100 ? 2000 + parseInt(yy) : parseInt(yy);
-                              const d = new Date(fullYear, parseInt(mm) - 1, parseInt(dd));
-                              if (!isNaN(d.getTime())) return `${dd}/${mm}/${fullYear}`;
-                            }
-                            const d = new Date(raw);
-                            return isNaN(d.getTime()) ? raw : d.toLocaleDateString('en-GB');
-                          })()}
-                        </span>
-                      </div>
-                    )}
+                      {hasData(visitorData.pass_end_date) && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Pass End Date</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">
+                            {(() => {
+                              const raw = visitorData.pass_end_date;
+                              if (!raw) return '-';
+                              const parts = raw.split('/');
+                              if (parts.length === 3) {
+                                const [dd, mm, yy] = parts;
+                                const fullYear = parseInt(yy) < 100 ? 2000 + parseInt(yy) : parseInt(yy);
+                                const d = new Date(fullYear, parseInt(mm) - 1, parseInt(dd));
+                                if (!isNaN(d.getTime())) return `${dd}/${mm}/${fullYear}`;
+                              }
+                              const d = new Date(raw);
+                              return isNaN(d.getTime()) ? raw : d.toLocaleDateString('en-GB');
+                            })()}
+                          </span>
+                        </div>
+                      )}
 
-                    {/* {visitorData.pass_days && visitorData.pass_days.length > 0 && (
+                      {/* {visitorData.pass_days && visitorData.pass_days.length > 0 && (
                       <div className="flex items-start col-span-2">
                         <span className="text-gray-500 min-w-[140px]">Pass Days</span>
                         <span className="text-gray-500 mx-2">:</span>
@@ -951,33 +954,33 @@ export const VisitorDetailsPage = () => {
                         </div>
                       </div>
                     )} */}
-                     {hasData(visitorData.pass_details) && (
-                      <div className="flex items-start md:col-span-2">
-                        <span className="text-gray-500 min-w-[140px]">Pass Details</span>
-                        <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{visitorData.pass_details}</span>
-                      </div>
-                    )}
+                      {hasData(visitorData.pass_details) && (
+                        <div className="flex items-start md:col-span-2">
+                          <span className="text-gray-500 min-w-[140px]">Pass Details</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{visitorData.pass_details}</span>
+                        </div>
+                      )}
 
-                    {visitorData.pass_valid !== undefined && (
-                      <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Pass Valid</span>
-                        <span className="text-gray-500 mx-2">:</span>
-                        <Badge
-                          className={
-                            visitorData.pass_valid
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }
-                        >
-                          {visitorData.pass_valid ? "Valid" : "Invalid"}
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                      {visitorData.pass_valid !== undefined && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Pass Valid</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <Badge
+                            className={
+                              visitorData.pass_valid
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }
+                          >
+                            {visitorData.pass_valid ? "Valid" : "Invalid"}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
             {/* Check-in/Check-out Information Card */}
             {/* {(hasData(visitorData.guest_entry_time) ||
@@ -1054,7 +1057,7 @@ export const VisitorDetailsPage = () => {
                 >
                   <div>
                     <h3 className="text-base font-semibold text-gray-900 mb-4">
-                    Visitor {index + 1}                    
+                      Visitor {index + 1}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                       {hasData(visitor?.name) && (
@@ -1073,7 +1076,7 @@ export const VisitorDetailsPage = () => {
                         </div>
                       )}
 
-                       {hasData(visitor?.pass_number) && (
+                      {hasData(visitor?.pass_number) && (
                         <div className="flex items-start">
                           <span className="text-gray-500 min-w-[140px]">Pass Number</span>
                           <span className="text-gray-500 mx-2">:</span>
@@ -1182,81 +1185,81 @@ export const VisitorDetailsPage = () => {
             {/* Main Visitor's Assets */}
             {visitorData.assets && visitorData.assets.length > 0 && (
               <div className="space-y-6">
-<h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
-  {visitorData?.guest_name
-    ? `${visitorData.guest_name}'s Assets`
-    : 'Main Visitor Assets'}
+                <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                  {visitorData?.guest_name
+                    ? `${visitorData.guest_name}'s Assets`
+                    : 'Main Visitor Assets'}
 
-  <span className="ml-2 text-sm font-normal text-gray-600">
-    (Primary Visitor)
-  </span>
-</h2>
+                  <span className="ml-2 text-sm font-normal text-gray-600">
+                    (Primary Visitor)
+                  </span>
+                </h2>
                 {visitorData.assets.map((asset: AssetItem, index: number) => (
                   <div key={asset.id || index} className="border rounded-lg p-6 bg-gray-50">
                     <h3 className="text-base font-semibold text-gray-900 mb-4">
                       {/* {asset?.asset_name || asset?.asset_category_name || `Asset ${index + 1}`} */}
                     </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                    {hasData(asset?.asset_category_name) && (
-                      <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Asset Category</span>
-                        <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{asset.asset_category_name}</span>
-                      </div>
-                    )}
-
-                    {hasData(asset?.asset_name) && (
-                      <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Asset Name</span>
-                        <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{asset.asset_name}</span>
-                      </div>
-                    )}
-
-                    {hasData(asset?.serial_model_number) && (
-                      <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Serial/ Model No</span>
-                        <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{asset.serial_model_number}</span>
-                      </div>
-                    )}
-
-                    {hasData(asset?.notes) && (
-                      <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Notes</span>
-                        <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{asset.notes}</span>
-                      </div>
-                    )}
-
-                    {asset?.documents && asset.documents.length > 0 && (
-                      <div className="flex items-start col-span-2">
-                        <span className="text-gray-500 min-w-[140px]">Attachments</span>
-                        <span className="text-gray-500 mx-2">:</span>
-                        <div className="flex-1 flex flex-wrap gap-2">
-                          {asset.documents.map((doc, docIndex) => (
-                            <Button
-                              key={doc.id}
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedDoc({
-                                  id: doc.id,
-                                  url: doc.document_url,
-                                  document_name: `Attachment ${docIndex + 1}`,
-                                });
-                                setIsModalOpen(true);
-                              }}
-                            >
-                              Attachment {docIndex + 1}
-                            </Button>
-                          ))}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                      {hasData(asset?.asset_category_name) && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Asset Category</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{asset.asset_category_name}</span>
                         </div>
-                      </div>
-                    )}
+                      )}
+
+                      {hasData(asset?.asset_name) && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Asset Name</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{asset.asset_name}</span>
+                        </div>
+                      )}
+
+                      {hasData(asset?.serial_model_number) && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Serial/ Model No</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{asset.serial_model_number}</span>
+                        </div>
+                      )}
+
+                      {hasData(asset?.notes) && (
+                        <div className="flex items-start">
+                          <span className="text-gray-500 min-w-[140px]">Notes</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <span className="text-gray-900 font-medium">{asset.notes}</span>
+                        </div>
+                      )}
+
+                      {asset?.documents && asset.documents.length > 0 && (
+                        <div className="flex items-start col-span-2">
+                          <span className="text-gray-500 min-w-[140px]">Attachments</span>
+                          <span className="text-gray-500 mx-2">:</span>
+                          <div className="flex-1 flex flex-wrap gap-2">
+                            {asset.documents.map((doc, docIndex) => (
+                              <Button
+                                key={doc.id}
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedDoc({
+                                    id: doc.id,
+                                    url: doc.document_url,
+                                    document_name: `Attachment ${docIndex + 1}`,
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                              >
+                                Attachment {docIndex + 1}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
               </div>
             )}
 
@@ -1406,57 +1409,73 @@ export const VisitorDetailsPage = () => {
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-6">
                   {visitorData?.guest_name ? `${visitorData.guest_name}'s Identity Details` : 'Main Visitor Identity'}
-                    <span className="ml-2 text-sm font-normal text-gray-600">
-                     (Primary Visitor)
-                    </span>
+                  <span className="ml-2 text-sm font-normal text-gray-600">
+                    (Primary Visitor)
+                  </span>
                 </h2>
                 <div className="border rounded-lg p-6 bg-gray-50">
                   <h3 className="text-base font-semibold text-gray-900 mb-4">
                     Identity Information
                   </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-6">
-                  {hasData(visitorData.visitor_identity?.identity_type) && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">ID Type</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{visitorData.visitor_identity.identity_type}</span>
-                    </div>
-                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-6">
+                    {hasData(visitorData.visitor_identity?.identity_type) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">ID Type</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.visitor_identity.identity_type}</span>
+                      </div>
+                    )}
 
-                  {hasData(visitorData.visitor_identity?.government_id_number) && (
-                    <div className="flex items-start">
-                      <span className="text-gray-500 min-w-[140px]">Government ID</span>
-                      <span className="text-gray-500 mx-2">:</span>
-                      <span className="text-gray-900 font-medium">{visitorData.visitor_identity.government_id_number}</span>
-                    </div>
-                  )}
-                </div>
+                    {hasData(visitorData.visitor_identity?.government_id_number) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Government ID</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">{visitorData.visitor_identity.government_id_number}</span>
+                      </div>
+                    )}
+                  </div>
 
-                {visitorData.visitor_identity.documents && visitorData.visitor_identity.documents.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Identity Documents</h4>
-                    <div className="flex flex-wrap gap-4">
-                      {visitorData.visitor_identity.documents.map((document: DocumentItem, docIndex: number) => {
-                        const url = document.document_url;
-                        const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
+                  {visitorData.visitor_identity.documents && visitorData.visitor_identity.documents.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Identity Documents</h4>
+                      <div className="flex flex-wrap gap-4">
+                        {visitorData.visitor_identity.documents.map((document: DocumentItem, docIndex: number) => {
+                          const url = document.document_url;
+                          const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
 
-                        return isImage ? (
-                          <div key={document.id} className="relative inline-block">
-                            <img
-                              src={url}
-                              alt={`Document ${docIndex + 1}`}
-                              className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200 cursor-pointer"
-                              onClick={() => {
-                                setSelectedDoc({
-                                  id: document.id,
-                                  url,
-                                  document_name: url.split("/").pop() || `Document_${document.id}`,
-                                });
-                                setIsModalOpen(true);
-                              }}
-                            />
-                            <button
-                              className="absolute top-2 right-2 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100"
+                          return isImage ? (
+                            <div key={document.id} className="relative inline-block">
+                              <img
+                                src={url}
+                                alt={`Document ${docIndex + 1}`}
+                                className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200 cursor-pointer"
+                                onClick={() => {
+                                  setSelectedDoc({
+                                    id: document.id,
+                                    url,
+                                    document_name: url.split("/").pop() || `Document_${document.id}`,
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                              />
+                              <button
+                                className="absolute top-2 right-2 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100"
+                                onClick={() => {
+                                  setSelectedDoc({
+                                    id: document.id,
+                                    url,
+                                    document_name: url.split("/").pop() || `Document_${document.id}`,
+                                  });
+                                  setIsModalOpen(true);
+                                }}
+                              >
+                                <Eye className="w-4 h-4 text-gray-600" />
+                              </button>
+                            </div>
+                          ) : (
+                            <Button
+                              key={document.id}
+                              variant="outline"
                               onClick={() => {
                                 setSelectedDoc({
                                   id: document.id,
@@ -1466,31 +1485,15 @@ export const VisitorDetailsPage = () => {
                                 setIsModalOpen(true);
                               }}
                             >
-                              <Eye className="w-4 h-4 text-gray-600" />
-                            </button>
-                          </div>
-                        ) : (
-                          <Button
-                            key={document.id}
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedDoc({
-                                id: document.id,
-                                url,
-                                document_name: url.split("/").pop() || `Document_${document.id}`,
-                              });
-                              setIsModalOpen(true);
-                            }}
-                          >
-                            <FileText className="w-4 h-4 mr-2" />
-                            View Document {docIndex + 1}
-                          </Button>
-                        );
-                      })}
+                              <FileText className="w-4 h-4 mr-2" />
+                              View Document {docIndex + 1}
+                            </Button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -1588,13 +1591,13 @@ export const VisitorDetailsPage = () => {
               ))
             )}
 
-            {!visitorData.visitor_documents?.length && 
-             !visitorData.visitor_identity && 
-             !visitorData.additional_visitors?.some(v => v.identity) && (
-              <div className="text-center py-12 text-gray-500">
-                No identity verification documents found
-              </div>
-            )}
+            {!visitorData.visitor_documents?.length &&
+              !visitorData.visitor_identity &&
+              !visitorData.additional_visitors?.some(v => v.identity) && (
+                <div className="text-center py-12 text-gray-500">
+                  No identity verification documents found
+                </div>
+              )}
 
             {/* QR Code Section */}
             {/* {hasData(visitorData.qr_code_url) && (
@@ -1646,7 +1649,7 @@ export const VisitorDetailsPage = () => {
               </button>
             </div>
             <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
-              <VisitorPassWeb 
+              <VisitorPassWeb
                 apiUrl={`https://live-api.gophygital.work/pms/visitors/${visitorData.encrypted_gatekeeper_id}/gate_pass.json`}
               />
             </div>

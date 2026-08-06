@@ -203,7 +203,7 @@ export const AddClubBroadcastPage = () => {
                                 width: 32,
                                 height: 32,
                                 borderRadius: "50%",
-                                bgcolor: "#dc2626",
+                                bgcolor: "#DA7756",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -326,7 +326,7 @@ export const AddClubBroadcastPage = () => {
                                 width: 32,
                                 height: 32,
                                 borderRadius: "50%",
-                                bgcolor: "#dc2626",
+                                bgcolor: "#DA7756",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -465,7 +465,7 @@ export const AddClubBroadcastPage = () => {
                                 width: 32,
                                 height: 32,
                                 borderRadius: "50%",
-                                bgcolor: "#dc2626",
+                                bgcolor: "#DA7756",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -561,10 +561,20 @@ export const AddClubBroadcastPage = () => {
 
                 {/* Submit Button */}
                 <Box sx={{ display: "flex", justifyContent: "center", mt: 4, gap: 2 }}>
-                    <Button onClick={() => navigate(-1)} className="px-8 py-3 text-base">
+                    <Button
+                        type="button"
+                        onClick={() => navigate(-1)}
+                        variant="outline"
+                        className="px-8 py-3 text-base border-brand text-brand hover:bg-brand-selected hover:text-brand"
+                    >
                         Cancel
                     </Button>
-                    <Button onClick={handleSubmit} className="px-8 py-3 text-base" disabled={isSubmitting}>
+                    <Button
+                        type="button"
+                        onClick={handleSubmit}
+                        className="px-8 py-3 text-base !bg-brand hover:!bg-brand-hover !text-white disabled:!bg-brand disabled:!text-white disabled:opacity-100"
+                        disabled={isSubmitting}
+                    >
                         Submit
                     </Button>
                 </Box>

@@ -368,8 +368,8 @@ export const PatrollingDetailPage: React.FC = () => {
               q.qtype === "multiple"
                 ? "multiple_choice"
                 : q.qtype === "yesno"
-                ? "yes_no"
-                : q.qtype || "text",
+                  ? "yes_no"
+                  : q.qtype || "text",
             mandatory: !!q.quest_mandatory,
             qnumber: index + 1,
             options: q.snag_quest_options
@@ -482,12 +482,12 @@ export const PatrollingDetailPage: React.FC = () => {
       setPatrolling((prev) =>
         prev
           ? {
-              ...prev,
-              checkpoints: prev.checkpoints.map((cp) => {
-                const updated = reordered.find((r) => r.id === cp.id);
-                return updated ? { ...cp, order_sequence: updated.order_sequence } : cp;
-              }),
-            }
+            ...prev,
+            checkpoints: prev.checkpoints.map((cp) => {
+              const updated = reordered.find((r) => r.id === cp.id);
+              return updated ? { ...cp, order_sequence: updated.order_sequence } : cp;
+            }),
+          }
           : prev
       );
     } catch (error: unknown) {
@@ -728,15 +728,15 @@ export const PatrollingDetailPage: React.FC = () => {
     const q = checkpointSearch.trim().toLowerCase();
     let rows = q
       ? checkpointTableData.filter(
-          (r) =>
-            r.name.toLowerCase().includes(q) ||
-            r.description.toLowerCase().includes(q) ||
-            r.building_name.toLowerCase().includes(q) ||
-            r.wing_name.toLowerCase().includes(q) ||
-            r.area_name.toLowerCase().includes(q) ||
-            r.floor_name.toLowerCase().includes(q) ||
-            r.room_name.toLowerCase().includes(q)
-        )
+        (r) =>
+          r.name.toLowerCase().includes(q) ||
+          r.description.toLowerCase().includes(q) ||
+          r.building_name.toLowerCase().includes(q) ||
+          r.wing_name.toLowerCase().includes(q) ||
+          r.area_name.toLowerCase().includes(q) ||
+          r.floor_name.toLowerCase().includes(q) ||
+          r.room_name.toLowerCase().includes(q)
+      )
       : [...checkpointTableData];
 
     // Apply location filters (name-based matching from dialog)
@@ -871,12 +871,10 @@ export const PatrollingDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
-          <span className="ml-2 text-gray-600">
-            Loading patrolling details...
-          </span>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading patrolling details...</p>
         </div>
       </div>
     );
@@ -893,7 +891,7 @@ export const PatrollingDetailPage: React.FC = () => {
             The requested patrolling could not be found.
           </p>
           <Button
-           onClick={() => navigate(-1)}
+            onClick={() => navigate(-1)}
             className="mt-4"
           >
             Back to Patrolling List
@@ -908,7 +906,7 @@ export const PatrollingDetailPage: React.FC = () => {
       {/* Header */}
       <div className="mb-6">
         <button
-        onClick={() => navigate(-1)}
+          onClick={() => navigate(-1)}
           className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -944,9 +942,9 @@ export const PatrollingDetailPage: React.FC = () => {
                 onClick={handleEdit}
                 variant="outline"
                 size="sm"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756]/10"
               >
-                <Edit className="w-4 h-4 mr-2" />
+                <Edit className="w-4 h-4 mr-2 text-[#DA7756]" />
                 Edit
               </Button>
             )}
@@ -986,161 +984,161 @@ export const PatrollingDetailPage: React.FC = () => {
               ))}
             </TabsList>
 
-          {/* Patrol Information */}
-          <TabsContent value="patrol-information" className="p-4 sm:p-6">
-            {/* Summary Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600">Duration</p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {patrolling.grace_period_minutes} min
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                    <ListChecks className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600">Questions</p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {patrolling.summary?.questions_count || 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                    <Users className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600">Schedules</p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {patrolling.summary?.schedules_count || 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                    <MapPin className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-600">Checkpoints</p>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {patrolling.summary?.checkpoints_count || 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Patrol Information Card */}
-            <Card className="mb-6 border-none bg-transparent shadow-none">
-              <div className="figma-card-header">
-                <div className="flex items-center gap-3">
-                  <div className="figma-card-icon-wrapper">
-                    <Shield className="figma-card-icon" />
-                  </div>
-                  <h3 className="figma-card-title">Patrol Information</h3>
-                </div>
-              </div>
-              <div className="figma-card-content">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-xs mb-1">Name</span>
-                    <span className="font-medium text-gray-900">{patrolling.name}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-xs mb-1">Description</span>
-                    <span className="font-medium text-gray-900">{patrolling.description || "—"}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-xs mb-1">Start Date</span>
-                    <span className="font-medium text-gray-900">{formatDate(patrolling.validity_start_date)}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-xs mb-1">End Date</span>
-                    <span className="font-medium text-gray-900">{formatDate(patrolling.validity_end_date)}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-xs mb-1">Grace Period</span>
-                    <span className="font-medium text-gray-900">{patrolling.grace_period_minutes} minutes</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-xs mb-1">Status</span>
+            {/* Patrol Information */}
+            <TabsContent value="patrol-information" className="p-4 sm:p-6">
+              {/* Summary Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-orange-600" />
+                    </div>
                     <div>
-                      <Badge
-                        variant={patrolling.active ? "default" : "secondary"}
-                        className="text-xs"
-                      >
-                        {patrolling.active ? "Active" : "Inactive"}
-                      </Badge>
+                      <p className="text-xs text-gray-600">Duration</p>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {patrolling.grace_period_minutes} min
+                      </p>
                     </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-gray-600 text-xs mb-1">Created On</span>
-                    <span className="font-medium text-gray-900">{formatDateTime(patrolling.created_at)}</span>
+                </div>
+
+                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <ListChecks className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600">Questions</p>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {patrolling.summary?.questions_count || 0}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600">Schedules</p>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {patrolling.summary?.schedules_count || 0}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                      <MapPin className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600">Checkpoints</p>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {patrolling.summary?.checkpoints_count || 0}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </Card>
 
-            {/* Checklist Information */}
-            {patrolling.checklist && (
+              {/* Patrol Information Card */}
               <Card className="mb-6 border-none bg-transparent shadow-none">
                 <div className="figma-card-header">
                   <div className="flex items-center gap-3">
                     <div className="figma-card-icon-wrapper">
-                      <ListChecks className="figma-card-icon" />
+                      <Shield className="figma-card-icon" />
                     </div>
-                    <h3 className="figma-card-title">Checklist Information</h3>
+                    <h3 className="figma-card-title">Patrol Information</h3>
                   </div>
                 </div>
                 <div className="figma-card-content">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                     <div className="flex flex-col">
-                      <span className="text-gray-600 text-xs mb-1">Checklist Name</span>
-                      <span className="font-medium text-gray-900">{patrolling.checklist.name}</span>
+                      <span className="text-gray-600 text-xs mb-1">Name</span>
+                      <span className="font-medium text-gray-900">{patrolling.name}</span>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-gray-600 text-xs mb-1">Check Type</span>
-                      <span className="font-medium text-gray-900">{patrolling.checklist.check_type}</span>
+                      <span className="text-gray-600 text-xs mb-1">Description</span>
+                      <span className="font-medium text-gray-900">{patrolling.description || "—"}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-gray-600 text-xs mb-1">Start Date</span>
+                      <span className="font-medium text-gray-900">{formatDate(patrolling.validity_start_date)}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-gray-600 text-xs mb-1">End Date</span>
+                      <span className="font-medium text-gray-900">{formatDate(patrolling.validity_end_date)}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-gray-600 text-xs mb-1">Grace Period</span>
+                      <span className="font-medium text-gray-900">{patrolling.grace_period_minutes} minutes</span>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-gray-600 text-xs mb-1">Status</span>
                       <div>
                         <Badge
-                          variant="outline"
-                          className={`text-xs ${patrolling.checklist.active ? "bg-red-100 text-red-800 border-red-200" : "bg-gray-100 text-gray-600 border-gray-200"}`}
+                          variant={patrolling.active ? "default" : "secondary"}
+                          className="text-xs"
                         >
-                          {patrolling.checklist.active ? "Active" : "Inactive"}
+                          {patrolling.active ? "Active" : "Inactive"}
                         </Badge>
                       </div>
                     </div>
                     <div className="flex flex-col">
                       <span className="text-gray-600 text-xs mb-1">Created On</span>
-                      <span className="font-medium text-gray-900">{formatDateTime(patrolling.checklist.created_at)}</span>
+                      <span className="font-medium text-gray-900">{formatDateTime(patrolling.created_at)}</span>
                     </div>
                   </div>
                 </div>
               </Card>
-            )}
 
-            {/* QR Code Section */}
-            {/* {patrolling.checkpoints &&
+              {/* Checklist Information */}
+              {patrolling.checklist && (
+                <Card className="mb-6 border-none bg-transparent shadow-none">
+                  <div className="figma-card-header">
+                    <div className="flex items-center gap-3">
+                      <div className="figma-card-icon-wrapper">
+                        <ListChecks className="figma-card-icon" />
+                      </div>
+                      <h3 className="figma-card-title">Checklist Information</h3>
+                    </div>
+                  </div>
+                  <div className="figma-card-content">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                      <div className="flex flex-col">
+                        <span className="text-gray-600 text-xs mb-1">Checklist Name</span>
+                        <span className="font-medium text-gray-900">{patrolling.checklist.name}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-gray-600 text-xs mb-1">Check Type</span>
+                        <span className="font-medium text-gray-900">{patrolling.checklist.check_type}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-gray-600 text-xs mb-1">Status</span>
+                        <div>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${patrolling.checklist.active ? "bg-red-100 text-red-800 border-red-200" : "bg-gray-100 text-gray-600 border-gray-200"}`}
+                          >
+                            {patrolling.checklist.active ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-gray-600 text-xs mb-1">Created On</span>
+                        <span className="font-medium text-gray-900">{formatDateTime(patrolling.checklist.created_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* QR Code Section */}
+              {/* {patrolling.checkpoints &&
               patrolling.checkpoints.some &&
               patrolling.checkpoints.some((cp) => cp.qr_code_available) && (
                 <Card className="mb-6 border-none bg-transparent shadow-none">
@@ -1379,28 +1377,117 @@ export const PatrollingDetailPage: React.FC = () => {
                   </div>
                 </Card>
               )} */}
-          </TabsContent>
+            </TabsContent>
 
-          {/* Questions */}
-          <TabsContent value="questions" className="p-4 sm:p-6">
-            {patrolling.checklist && checklistQuestions.length > 0 ? (
-              // Show checklist questions
-              <>
-                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Info className="w-5 h-5 text-blue-600" />
-                    <div>
-                      <p className="text-sm font-medium text-blue-800">
-                        Questions from Checklist
-                      </p>
-                      <p className="text-xs text-blue-600">
-                        Questions are loaded from the selected checklist:{" "}
-                        <strong>{patrolling.checklist.name}</strong>
-                      </p>
+            {/* Questions */}
+            <TabsContent value="questions" className="p-4 sm:p-6">
+              {patrolling.checklist && checklistQuestions.length > 0 ? (
+                // Show checklist questions
+                <>
+                  <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Info className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-800">
+                          Questions from Checklist
+                        </p>
+                        <p className="text-xs text-blue-600">
+                          Questions are loaded from the selected checklist:{" "}
+                          <strong>{patrolling.checklist.name}</strong>
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
 
+                  <Card className="mb-6 border-none bg-transparent shadow-none">
+                    <div className="figma-card-header">
+                      <div className="flex items-center gap-3">
+                        <div className="figma-card-icon-wrapper">
+                          <ListChecks className="figma-card-icon" />
+                        </div>
+                        <h3 className="figma-card-title">
+                          Checklist Questions ({checklistQuestions.length})
+                          {loadingChecklistQuestions && (
+                            <Loader2 className="w-4 h-4 animate-spin ml-2 text-[#C72030]" />
+                          )}
+                        </h3>
+                      </div>
+                    </div>
+                    <div className="figma-card-content">
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Q#</TableHead>
+                              <TableHead>ID</TableHead>
+                              <TableHead>Task</TableHead>
+                              <TableHead>Type</TableHead>
+                              <TableHead>Mandatory</TableHead>
+                              <TableHead>Options</TableHead>
+                              <TableHead>Created on</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody className="bg-white">
+                            {checklistQuestions.map((question) => (
+                              <TableRow key={question.id}>
+                                <TableCell>
+                                  <Badge variant="outline" className="text-xs">
+                                    Q{question.qnumber}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>{question.id}</TableCell>
+                                <TableCell>{question.task}</TableCell>
+                                <TableCell>
+                                  <Badge variant="outline" className="text-xs">
+                                    {question.type}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {question.mandatory ? (
+                                    <Badge
+                                      variant="destructive"
+                                      className="text-xs"
+                                    >
+                                      Required
+                                    </Badge>
+                                  ) : (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      Optional
+                                    </Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {question.options.length > 0 ? (
+                                    <div className="flex flex-wrap gap-1">
+                                      {question.options.map((option, index) => (
+                                        <span
+                                          key={index}
+                                          className="text-xs bg-gray-100 px-2 py-1 rounded"
+                                        >
+                                          {option}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    "—"
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-xs text-gray-600">
+                                  {formatDateTime(question.created_at)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  </Card>
+                </>
+              ) : (
+                // Show patrolling questions
                 <Card className="mb-6 border-none bg-transparent shadow-none">
                   <div className="figma-card-header">
                     <div className="flex items-center gap-3">
@@ -1408,21 +1495,22 @@ export const PatrollingDetailPage: React.FC = () => {
                         <ListChecks className="figma-card-icon" />
                       </div>
                       <h3 className="figma-card-title">
-                        Checklist Questions ({checklistQuestions.length})
-                        {loadingChecklistQuestions && (
+                        Questions ({patrolling.questions?.length || 0})
+                        {patrolling.checklist && loadingChecklistQuestions && (
                           <Loader2 className="w-4 h-4 animate-spin ml-2 text-[#C72030]" />
                         )}
                       </h3>
                     </div>
                   </div>
                   <div className="figma-card-content">
+
+
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
                           <TableRow>
                             <TableHead>Q#</TableHead>
-                            <TableHead>ID</TableHead>
-                            <TableHead>Task</TableHead>
+                            <TableHead>Question</TableHead>
                             <TableHead>Type</TableHead>
                             <TableHead>Mandatory</TableHead>
                             <TableHead>Options</TableHead>
@@ -1430,156 +1518,632 @@ export const PatrollingDetailPage: React.FC = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody className="bg-white">
-                          {checklistQuestions.map((question) => (
-                            <TableRow key={question.id}>
-                              <TableCell>
-                                <Badge variant="outline" className="text-xs">
-                                  Q{question.qnumber}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>{question.id}</TableCell>
-                              <TableCell>{question.task}</TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className="text-xs">
-                                  {question.type}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                {question.mandatory ? (
-                                  <Badge
-                                    variant="destructive"
-                                    className="text-xs"
-                                  >
-                                    Required
+                          {patrolling.questions &&
+                            patrolling.questions.length > 0 ? (
+                            patrolling.questions.map((question) => (
+                              <TableRow key={question.id}>
+                                <TableCell>
+                                  <Badge variant="outline" className="text-xs">
+                                    Q{question.qnumber}
                                   </Badge>
-                                ) : (
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs"
-                                  >
-                                    Optional
+                                </TableCell>
+                                <TableCell>{question.task}</TableCell>
+                                <TableCell>
+                                  <Badge variant="outline" className="text-xs">
+                                    {question.type}
                                   </Badge>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {question.options.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1">
-                                    {question.options.map((option, index) => (
-                                      <span
-                                        key={index}
-                                        className="text-xs bg-gray-100 px-2 py-1 rounded"
-                                      >
-                                        {option}
-                                      </span>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  "—"
-                                )}
-                              </TableCell>
-                              <TableCell className="text-xs text-gray-600">
-                                {formatDateTime(question.created_at)}
+                                </TableCell>
+                                <TableCell>
+                                  {question.mandatory ? (
+                                    <Badge
+                                      variant="destructive"
+                                      className="text-xs"
+                                    >
+                                      Required
+                                    </Badge>
+                                  ) : (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      Optional
+                                    </Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {question.options.length > 0 ? (
+                                    <div className="flex flex-wrap gap-1">
+                                      {question.options.map((option, index) => (
+                                        <span
+                                          key={index}
+                                          className="text-xs bg-gray-100 px-2 py-1 rounded"
+                                        >
+                                          {option}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    "—"
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-xs text-gray-600">
+                                  {formatDateTime(question.created_at)}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell
+                                colSpan={7}
+                                className="text-center text-gray-600"
+                              >
+                                No questions available.
                               </TableCell>
                             </TableRow>
-                          ))}
+                          )}
                         </TableBody>
                       </Table>
                     </div>
                   </div>
                 </Card>
-              </>
-            ) : (
-              // Show patrolling questions
+              )}
+            </TabsContent>
+
+            {/* Schedules */}
+            <TabsContent value="schedules" className="p-4 sm:p-6">
+              <Card className="mb-6 border-none bg-transparent shadow-none">
+                <div className="figma-card-header">
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-3">
+                      <div className="figma-card-icon-wrapper">
+                        <Calendar className="figma-card-icon" />
+                      </div>
+                      <h3 className="figma-card-title">Schedules ({patrolling.schedules?.length || 0})</h3>
+                    </div>
+                    {patrolling.schedules && patrolling.schedules.length > 0 && (
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-[#C72030] rounded-full animate-pulse"></div>
+                          <span className="text-[#C72030] font-medium">
+                            Active: {patrolling.schedules.filter(s => s.active).length}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                          <span className="text-gray-600 font-medium">
+                            Inactive: {patrolling.schedules.filter(s => !s.active).length}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="figma-card-content">
+                  {patrolling.schedules && patrolling.schedules.length > 0 ? (
+                    <div className="space-y-6">
+                      {patrolling.schedules.map((schedule) => (
+                        <div key={schedule.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-300">
+                          {/* Schedule Header */}
+                          <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 ${schedule.active ? 'bg-[#C72030]' : 'bg-gray-400'} text-white rounded-full flex items-center justify-center font-semibold shadow-sm`}>
+                                #{schedule.id}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-gray-900 text-lg">
+                                  Schedule #{schedule.id}
+                                </h3>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <p className="text-sm text-gray-500 flex items-center">
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    Created {formatDateTime(schedule.created_at)}
+                                  </p>
+                                  {schedule.cron_setting?.cron_expression && (
+                                    <Badge variant="outline" className="text-xs px-2 py-0.5">
+                                      <Clock className="w-3 h-3 mr-1" />
+                                      Scheduled
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <Badge
+                              variant={schedule.active ? "default" : "secondary"}
+                              className={`px-3 py-1 ${schedule.active ? 'bg-red-100 text-red-800 border-red-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}
+                            >
+                              {schedule.active ? (
+                                <>
+                                  <div className="w-2 h-2 bg-[#C72030] rounded-full mr-2 animate-pulse" />
+                                  Active
+                                </>
+                              ) : (
+                                <>
+                                  <div className="w-2 h-2 bg-gray-400 rounded-full mr-2" />
+                                  Inactive
+                                </>
+                              )}
+                            </Badge>
+                          </div>
+
+                          {/* Schedule Details Grid */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            {/* Personnel Information */}
+                            <div className="space-y-4">
+                              <div className="border-l-4 pl-4">
+                                <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                                  <Users className="w-4 h-4 mr-2 text-gray-600" />
+                                  Personnel Assignment
+                                </h4>
+                                <div className="space-y-3">
+                                  <div className="bg-gray-50 border border-gray-200 p-3 rounded-lg">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <Shield className="w-4 h-4 text-gray-600" />
+                                      <span className="text-sm font-medium text-gray-900">Guards</span>
+                                    </div>
+                                    {schedule.eligible_guards && schedule.eligible_guards.length > 0 ? (
+                                      <div className="space-y-1.5">
+                                        {schedule.eligible_guards.map((guard) => (
+                                          <div
+                                            key={guard.id}
+                                            className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded border border-gray-200"
+                                          >
+                                            <span className="text-sm font-medium text-gray-900">
+                                              {guard.name}
+                                            </span>
+                                            <Badge variant="outline" className="text-xs text-gray-500 ml-2 shrink-0">
+                                              ID: {guard.id}
+                                            </Badge>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <p className="text-sm text-gray-800 font-medium">
+                                        {schedule.assigned_guard_name || (
+                                          <span className="text-gray-600 bg-gray-100 px-2 py-1 rounded text-xs">
+                                            ID: {schedule.assigned_guard_id}
+                                          </span>
+                                        )}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="bg-gray-50 border border-gray-200 p-3 rounded-lg">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <Eye className="w-4 h-4 text-gray-600" />
+                                      <span className="text-sm font-medium text-gray-900">Supervisor</span>
+                                    </div>
+                                    <p className="text-sm text-gray-800 font-medium">
+                                      {schedule.supervisor_name ||
+                                        <span className="text-gray-600 bg-gray-100 px-2 py-1 rounded text-xs">
+                                          ID: {schedule.supervisor_id}
+                                        </span>
+                                      }
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Schedule Timing */}
+                            <div className="space-y-4">
+                              <div className="border-l-4 border-gray-500 pl-4">
+                                <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                                  <Clock className="w-4 h-4 mr-2 text-gray-600" />
+                                  Schedule Timing
+                                </h4>
+                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                  {schedule.cron_setting?.cron_expression ? (
+                                    <div className="space-y-3">
+                                      {(() => {
+                                        const cronData = formatCronExpression(
+                                          schedule.cron_setting.cron_expression
+                                        );
+                                        return cronData ? (
+                                          <>
+                                            <div className="grid grid-cols-2 gap-3">
+                                              <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                                                <div className="text-xs text-gray-700 font-medium mb-1">Hours</div>
+                                                <div className="text-sm font-bold text-gray-900">
+                                                  {cronData.hours}
+                                                </div>
+                                              </div>
+                                              <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                                                <div className="text-xs text-gray-700 font-medium mb-1">Minutes</div>
+                                                <div className="text-sm font-bold text-gray-900">
+                                                  {cronData.minutes}
+                                                </div>
+                                              </div>
+                                              <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                                                <div className="text-xs text-gray-700 font-medium mb-1">Day of Week</div>
+                                                <div className="text-sm font-bold text-gray-900">
+                                                  {cronData.dayOfWeek}
+                                                </div>
+                                              </div>
+                                              <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                                                <div className="text-xs text-gray-700 font-medium mb-1">Month</div>
+                                                <div className="text-sm font-bold text-gray-900">
+                                                  {cronData.months}
+                                                </div>
+                                              </div>
+                                            </div>
+
+                                          </>
+                                        ) : (
+                                          <div className="space-y-2">
+                                            <div className="flex items-center gap-2 mb-2">
+                                              <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">
+                                                <AlertCircle className="w-3 h-3 mr-1" />
+                                                Custom Schedule
+                                              </Badge>
+                                            </div>
+                                            <div className="bg-gray-900 text-green-400 p-3 rounded-lg text-xs font-mono border overflow-x-auto shadow-inner">
+                                              {schedule.cron_setting.cron_expression}
+                                            </div>
+                                          </div>
+                                        );
+                                      })()}
+                                    </div>
+                                  ) : (
+                                    <div className="text-center text-gray-400 py-6">
+                                      <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                      <p className="text-sm font-medium">No schedule timing configured</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-200">
+                      <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        No Schedules Configured
+                      </h3>
+                      <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                        No patrol schedules have been set up yet. Schedules define when and how often patrols should be conducted.
+                      </p>
+                      <Button
+                        onClick={() => navigate(`/security/patrolling/edit/${id}`)}
+                        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Schedule
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            </TabsContent>
+
+            {/* Checkpoints */}
+            <TabsContent value="checkpoints" className="mt-4">
+              <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                <CardHeader className="bg-[#F6F4EE] mb-6">
+                  <CardTitle className="text-lg flex items-center">
+                    <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
+                      <MapPin className="h-5 w-5 text-[#C72030]" />
+                    </div>
+                    Checkpoints ({patrolling.checkpoints?.length || 0})
+                    {isReordering && (
+                      <span className="ml-4 flex items-center gap-1 text-sm font-normal text-gray-500">
+                        <Loader2 className="w-4 h-4 animate-spin text-[#C72030]" />
+                        Saving order...
+                      </span>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="relative">
+                  {selectedCheckpointIds.length > 0 && (
+                    <LocationSelectionPanel
+                      selectedLocations={selectedCheckpointIds}
+                      selectedLocationObjects={selectedCheckpointObjects.map((cp) => ({
+                        site_name: "",
+                        building_name: cp.name,
+                      }))}
+                      onMoveAssets={() => { }}
+                      onPrintQR={handlePrintCheckpointQR}
+                      onDownload={() => { }}
+                      onDispose={() => { }}
+                      onClearSelection={handleClearCheckpointSelection}
+                    />
+                  )}
+
+                  {/* Search bar + Filter button — above table */}
+                  <div className="mb-3 flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      {(checkpointSearch || activeCpFilterCount > 0) && (
+                        <span className="text-xs text-gray-500">
+                          {filteredSortedCheckpointData.length} of {checkpointTableData.length} results
+                        </span>
+                      )}
+                      {/* Active filter tags */}
+                      {activeCpFilterCount > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {cpFilters.buildingName && (
+                            <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
+                              Building: {cpFilters.buildingName}
+                              <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, buildingId: "", buildingName: "", wingId: "", wingName: "", areaId: "", areaName: "", floorId: "", floorName: "", roomId: "", roomName: "" }))} />
+                            </Badge>
+                          )}
+                          {cpFilters.wingName && (
+                            <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
+                              Wing: {cpFilters.wingName}
+                              <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, wingId: "", wingName: "", areaId: "", areaName: "", floorId: "", floorName: "", roomId: "", roomName: "" }))} />
+                            </Badge>
+                          )}
+                          {cpFilters.areaName && (
+                            <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
+                              Area: {cpFilters.areaName}
+                              <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, areaId: "", areaName: "", floorId: "", floorName: "", roomId: "", roomName: "" }))} />
+                            </Badge>
+                          )}
+                          {cpFilters.floorName && (
+                            <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
+                              Floor: {cpFilters.floorName}
+                              <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, floorId: "", floorName: "", roomId: "", roomName: "" }))} />
+                            </Badge>
+                          )}
+                          {cpFilters.roomName && (
+                            <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
+                              Room: {cpFilters.roomName}
+                              <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, roomId: "", roomName: "" }))} />
+                            </Badge>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={clearAllCpFilters}
+                            className="text-xs text-[#C72030] hover:text-[#C72030] hover:bg-red-50 h-6 px-1.5"
+                          >
+                            Clear All
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="relative w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                        <Input
+                          placeholder="Search checkpoints..."
+                          value={checkpointSearch}
+                          onChange={(e) => setCheckpointSearch(e.target.value)}
+                          className="pl-9 h-9 text-sm"
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsCpFilterOpen(true)}
+                        className={`flex items-center gap-1.5 h-9 text-sm ${activeCpFilterCount > 0
+                            ? "border-[#C72030] text-[#C72030] bg-red-50 hover:bg-red-100"
+                            : ""
+                          }`}
+                      >
+                        <Filter className="w-4 h-4" />
+                        {/* Filter */}
+                        {/* {activeCpFilterCount > 0 && (
+                        <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] rounded-full">
+                          {activeCpFilterCount}
+                        </Badge>
+                      )} */}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleCheckpointDragEnd}
+                  >
+                    <SortableContext
+                      items={paginatedCheckpointData.map((item) => item.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-auto">
+                        <Table className="w-full min-w-max">
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="bg-[#f6f4ee] w-10 min-w-10" />
+                              <TableHead className="bg-[#f6f4ee] w-10 min-w-10 text-center">
+                                <div className="flex justify-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={
+                                      paginatedCheckpointData.length > 0 &&
+                                      paginatedCheckpointData.every((r) =>
+                                        selectedCheckpointIds.includes(r.id)
+                                      )
+                                    }
+                                    ref={(el) => {
+                                      if (el) {
+                                        const selected = paginatedCheckpointData.filter((r) =>
+                                          selectedCheckpointIds.includes(r.id)
+                                        ).length;
+                                        el.indeterminate =
+                                          selected > 0 && selected < paginatedCheckpointData.length;
+                                      }
+                                    }}
+                                    onChange={(e) => handleSelectAllCheckpoints(e.target.checked)}
+                                    aria-label="Select all checkpoints"
+                                    className="w-4 h-4 rounded border-gray-300 cursor-pointer"
+                                  />
+                                </div>
+                              </TableHead>
+                              {/* Sortable column headers */}
+                              {([
+                                { key: "order_sequence", label: "Order", sortable: true, minW: "min-w-24" },
+                                { key: "name", label: "Name", sortable: true, minW: "min-w-36" },
+                                { key: "description", label: "Description", sortable: false, minW: "min-w-40" },
+                                { key: "building_name", label: "Building", sortable: true, minW: "min-w-32" },
+                                { key: "wing_name", label: "Wing", sortable: false, minW: "min-w-28" },
+                                { key: "area_name", label: "Area", sortable: false, minW: "min-w-28" },
+                                { key: "floor_name", label: "Floor", sortable: false, minW: "min-w-28" },
+                                { key: "room_name", label: "Room", sortable: false, minW: "min-w-28" },
+                                { key: "location_qr_code_url", label: "QR Code", sortable: false, minW: "min-w-28" },
+                                { key: "created_at", label: "Created On", sortable: true, minW: "min-w-36" },
+                              ] as { key: string; label: string; sortable: boolean; minW: string }[]).map((col) => (
+                                <TableHead
+                                  key={col.key}
+                                  className={`bg-[#f6f4ee] text-black ${col.minW} ${col.sortable ? "cursor-pointer select-none" : ""}`}
+                                  onClick={col.sortable ? () => handleCheckpointSortToggle(col.key) : undefined}
+                                >
+                                  <div className="flex items-center gap-1">
+                                    {col.label}
+                                    {col.sortable && (
+                                      checkpointSort?.column === col.key ? (
+                                        checkpointSort.direction === "asc" ? (
+                                          <ChevronUp className="w-3.5 h-3.5 text-[#C72030]" />
+                                        ) : (
+                                          <ChevronDown className="w-3.5 h-3.5 text-[#C72030]" />
+                                        )
+                                      ) : (
+                                        <ChevronsUpDown className="w-3.5 h-3.5 text-gray-400" />
+                                      )
+                                    )}
+                                  </div>
+                                </TableHead>
+                              ))}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {paginatedCheckpointData.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={12} className="text-center py-8 text-gray-500">
+                                  {checkpointSearch || activeCpFilterCount > 0
+                                    ? `No checkpoints match the current filters`
+                                    : "No checkpoints available"}
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              paginatedCheckpointData.map((item) => (
+                                <SortableCheckpointRow
+                                  key={item.id}
+                                  item={item}
+                                  isSelected={selectedCheckpointIds.includes(item.id)}
+                                  onSelect={(checked) => handleCheckpointSelect(String(item.id), checked)}
+                                >
+                                  <TableCell className="p-3">{renderCheckpointCell(item, "order_sequence")}</TableCell>
+                                  <TableCell className="p-3">{renderCheckpointCell(item, "name")}</TableCell>
+                                  <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "description")}</TableCell>
+                                  <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "building_name")}</TableCell>
+                                  <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "wing_name")}</TableCell>
+                                  <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "area_name")}</TableCell>
+                                  <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "floor_name")}</TableCell>
+                                  <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "room_name")}</TableCell>
+                                  <TableCell className="p-3">{renderCheckpointCell(item, "location_qr_code_url")}</TableCell>
+                                  <TableCell className="p-3">{renderCheckpointCell(item, "created_at")}</TableCell>
+                                </SortableCheckpointRow>
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+
+                  {/* Pagination */}
+                  {filteredSortedCheckpointData.length > 0 && (
+                    <TicketPagination
+                      currentPage={cpPage}
+                      totalPages={cpTotalPages}
+                      totalRecords={filteredSortedCheckpointData.length}
+                      perPage={cpPageSize}
+                      isLoading={false}
+                      onPageChange={(page) => setCpPage(page)}
+                      onPerPageChange={() => { }}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Recent Sessions */}
+            <TabsContent value="recent-sessions" className="p-4 sm:p-6">
               <Card className="mb-6 border-none bg-transparent shadow-none">
                 <div className="figma-card-header">
                   <div className="flex items-center gap-3">
                     <div className="figma-card-icon-wrapper">
-                      <ListChecks className="figma-card-icon" />
+                      <Activity className="figma-card-icon" />
                     </div>
-                    <h3 className="figma-card-title">
-                      Questions ({patrolling.questions?.length || 0})
-                      {patrolling.checklist && loadingChecklistQuestions && (
-                        <Loader2 className="w-4 h-4 animate-spin ml-2 text-[#C72030]" />
-                      )}
-                    </h3>
+                    <h3 className="figma-card-title">Recent Sessions ({patrolling.recent_sessions?.length || 0})</h3>
                   </div>
                 </div>
                 <div className="figma-card-content">
-         
-
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Q#</TableHead>
-                          <TableHead>Question</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Mandatory</TableHead>
-                          <TableHead>Options</TableHead>
-                          <TableHead>Created on</TableHead>
+                          <TableHead>Session Date</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Guard</TableHead>
+                          <TableHead>Progress</TableHead>
+                          <TableHead>Action</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody className="bg-white">
-                        {patrolling.questions &&
-                        patrolling.questions.length > 0 ? (
-                          patrolling.questions.map((question) => (
-                            <TableRow key={question.id}>
+                        {patrolling.recent_sessions &&
+                          patrolling.recent_sessions.length > 0 ? (
+                          patrolling.recent_sessions.map((session) => (
+                            <TableRow key={session.id}>
                               <TableCell>
-                                <Badge variant="outline" className="text-xs">
-                                  Q{question.qnumber}
+                                {formatDateTime(session.session_date)}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    session.status === "completed"
+                                      ? "default"
+                                      : session.status === "in_progress"
+                                        ? "secondary"
+                                        : "destructive"
+                                  }
+                                >
+                                  {session.status.replace("_", " ")}
                                 </Badge>
                               </TableCell>
-                              <TableCell>{question.task}</TableCell>
+                              <TableCell>{session.guard_name || "—"}</TableCell>
                               <TableCell>
-                                <Badge variant="outline" className="text-xs">
-                                  {question.type}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                {question.mandatory ? (
-                                  <Badge
-                                    variant="destructive"
-                                    className="text-xs"
-                                  >
-                                    Required
-                                  </Badge>
-                                ) : (
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs"
-                                  >
-                                    Optional
-                                  </Badge>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {question.options.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1">
-                                    {question.options.map((option, index) => (
-                                      <span
-                                        key={index}
-                                        className="text-xs bg-gray-100 px-2 py-1 rounded"
-                                      >
-                                        {option}
-                                      </span>
-                                    ))}
+                                <div className="text-sm">
+                                  {session.checkpoints_completed}/
+                                  {session.total_checkpoints} checkpoints
+                                  <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                    <div
+                                      className="bg-[#C72030] h-2 rounded-full"
+                                      style={{
+                                        width: `${(session.checkpoints_completed /
+                                            session.total_checkpoints) *
+                                          100
+                                          }%`,
+                                      }}
+                                    ></div>
                                   </div>
-                                ) : (
-                                  "—"
-                                )}
+                                </div>
                               </TableCell>
-                              <TableCell className="text-xs text-gray-600">
-                                {formatDateTime(question.created_at)}
+                              <TableCell>
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="w-4 h-4" />
+                                </Button>
                               </TableCell>
                             </TableRow>
                           ))
                         ) : (
                           <TableRow>
                             <TableCell
-                              colSpan={7}
-                              className="text-center text-gray-600"
+                              colSpan={6}
+                              className="text-center text-gray-600 py-8"
                             >
-                              No questions available.
+                              <div className="flex flex-col items-center">
+                                <Activity className="w-12 h-12 text-gray-300 mb-2" />
+                                <p>No recent sessions found.</p>
+                                <p className="text-sm text-gray-500">
+                                  Sessions will appear here once patrolling
+                                  starts.
+                                </p>
+                              </div>
                             </TableCell>
                           </TableRow>
                         )}
@@ -1588,576 +2152,8 @@ export const PatrollingDetailPage: React.FC = () => {
                   </div>
                 </div>
               </Card>
-            )}
-          </TabsContent>
-
-          {/* Schedules */}
-          <TabsContent value="schedules" className="p-4 sm:p-6">
-            <Card className="mb-6 border-none bg-transparent shadow-none">
-              <div className="figma-card-header">
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-3">
-                    <div className="figma-card-icon-wrapper">
-                      <Calendar className="figma-card-icon" />
-                    </div>
-                    <h3 className="figma-card-title">Schedules ({patrolling.schedules?.length || 0})</h3>
-                  </div>
-                  {patrolling.schedules && patrolling.schedules.length > 0 && (
-                    <div className="flex items-center gap-4 text-sm">
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 bg-[#C72030] rounded-full animate-pulse"></div>
-                        <span className="text-[#C72030] font-medium">
-                          Active: {patrolling.schedules.filter(s => s.active).length}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                        <span className="text-gray-600 font-medium">
-                          Inactive: {patrolling.schedules.filter(s => !s.active).length}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="figma-card-content">
-                {patrolling.schedules && patrolling.schedules.length > 0 ? (
-                  <div className="space-y-6">
-                    {patrolling.schedules.map((schedule) => (
-                      <div key={schedule.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-300">
-                        {/* Schedule Header */}
-                        <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 ${schedule.active ? 'bg-[#C72030]' : 'bg-gray-400'} text-white rounded-full flex items-center justify-center font-semibold shadow-sm`}>
-                              #{schedule.id}
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-gray-900 text-lg">
-                                Schedule #{schedule.id}
-                              </h3>
-                              <div className="flex items-center gap-3 mt-1">
-                                <p className="text-sm text-gray-500 flex items-center">
-                                  <Calendar className="w-3 h-3 mr-1" />
-                                  Created {formatDateTime(schedule.created_at)}
-                                </p>
-                                {schedule.cron_setting?.cron_expression && (
-                                  <Badge variant="outline" className="text-xs px-2 py-0.5">
-                                    <Clock className="w-3 h-3 mr-1" />
-                                    Scheduled
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <Badge
-                            variant={schedule.active ? "default" : "secondary"}
-                            className={`px-3 py-1 ${schedule.active ? 'bg-red-100 text-red-800 border-red-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}
-                          >
-                            {schedule.active ? (
-                              <>
-                                <div className="w-2 h-2 bg-[#C72030] rounded-full mr-2 animate-pulse" />
-                                Active
-                              </>
-                            ) : (
-                              <>
-                                <div className="w-2 h-2 bg-gray-400 rounded-full mr-2" />
-                                Inactive
-                              </>
-                            )}
-                          </Badge>
-                        </div>
-
-                        {/* Schedule Details Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                          {/* Personnel Information */}
-                          <div className="space-y-4">
-                            <div className="border-l-4 pl-4">
-                              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                                <Users className="w-4 h-4 mr-2 text-gray-600" />
-                                Personnel Assignment
-                              </h4>
-                              <div className="space-y-3">
-                                <div className="bg-gray-50 border border-gray-200 p-3 rounded-lg">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <Shield className="w-4 h-4 text-gray-600" />
-                                    <span className="text-sm font-medium text-gray-900">Guards</span>
-                                  </div>
-                                  {schedule.eligible_guards && schedule.eligible_guards.length > 0 ? (
-                                    <div className="space-y-1.5">
-                                      {schedule.eligible_guards.map((guard) => (
-                                        <div
-                                          key={guard.id}
-                                          className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded border border-gray-200"
-                                        >
-                                          <span className="text-sm font-medium text-gray-900">
-                                            {guard.name}
-                                          </span>
-                                          <Badge variant="outline" className="text-xs text-gray-500 ml-2 shrink-0">
-                                            ID: {guard.id}
-                                          </Badge>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <p className="text-sm text-gray-800 font-medium">
-                                      {schedule.assigned_guard_name || (
-                                        <span className="text-gray-600 bg-gray-100 px-2 py-1 rounded text-xs">
-                                          ID: {schedule.assigned_guard_id}
-                                        </span>
-                                      )}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="bg-gray-50 border border-gray-200 p-3 rounded-lg">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <Eye className="w-4 h-4 text-gray-600" />
-                                    <span className="text-sm font-medium text-gray-900">Supervisor</span>
-                                  </div>
-                                  <p className="text-sm text-gray-800 font-medium">
-                                    {schedule.supervisor_name || 
-                                      <span className="text-gray-600 bg-gray-100 px-2 py-1 rounded text-xs">
-                                        ID: {schedule.supervisor_id}
-                                      </span>
-                                    }
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Schedule Timing */}
-                          <div className="space-y-4">
-                            <div className="border-l-4 border-gray-500 pl-4">
-                              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                                <Clock className="w-4 h-4 mr-2 text-gray-600" />
-                                Schedule Timing
-                              </h4>
-                              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                                {schedule.cron_setting?.cron_expression ? (
-                                  <div className="space-y-3">
-                                    {(() => {
-                                      const cronData = formatCronExpression(
-                                        schedule.cron_setting.cron_expression
-                                      );
-                                      return cronData ? (
-                                        <>
-                                          <div className="grid grid-cols-2 gap-3">
-                                            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                                              <div className="text-xs text-gray-700 font-medium mb-1">Hours</div>
-                                              <div className="text-sm font-bold text-gray-900">
-                                                {cronData.hours}
-                                              </div>
-                                            </div>
-                                            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                                              <div className="text-xs text-gray-700 font-medium mb-1">Minutes</div>
-                                              <div className="text-sm font-bold text-gray-900">
-                                                {cronData.minutes}
-                                              </div>
-                                            </div>
-                                            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                                              <div className="text-xs text-gray-700 font-medium mb-1">Day of Week</div>
-                                              <div className="text-sm font-bold text-gray-900">
-                                                {cronData.dayOfWeek}
-                                              </div>
-                                            </div>
-                                            <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                                              <div className="text-xs text-gray-700 font-medium mb-1">Month</div>
-                                              <div className="text-sm font-bold text-gray-900">
-                                                {cronData.months}
-                                              </div>
-                                            </div>
-                                          </div>
-                                        
-                                        </>
-                                      ) : (
-                                        <div className="space-y-2">
-                                          <div className="flex items-center gap-2 mb-2">
-                                            <Badge variant="outline" className="text-xs border-gray-300 text-gray-700">
-                                              <AlertCircle className="w-3 h-3 mr-1" />
-                                              Custom Schedule
-                                            </Badge>
-                                          </div>
-                                          <div className="bg-gray-900 text-green-400 p-3 rounded-lg text-xs font-mono border overflow-x-auto shadow-inner">
-                                            {schedule.cron_setting.cron_expression}
-                                          </div>
-                                        </div>
-                                      );
-                                    })()}
-                                  </div>
-                                ) : (
-                                  <div className="text-center text-gray-400 py-6">
-                                    <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                                    <p className="text-sm font-medium">No schedule timing configured</p>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                    
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-200">
-                    <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No Schedules Configured
-                    </h3>
-                    <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                      No patrol schedules have been set up yet. Schedules define when and how often patrols should be conducted.
-                    </p>
-                    <Button 
-                      onClick={() => navigate(`/security/patrolling/edit/${id}`)}
-                      className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Schedule
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* Checkpoints */}
-          <TabsContent value="checkpoints" className="mt-4">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded-full mr-3">
-                    <MapPin className="h-5 w-5 text-[#C72030]" />
-                  </div>
-                  Checkpoints ({patrolling.checkpoints?.length || 0})
-                  {isReordering && (
-                    <span className="ml-4 flex items-center gap-1 text-sm font-normal text-gray-500">
-                      <Loader2 className="w-4 h-4 animate-spin text-[#C72030]" />
-                      Saving order...
-                    </span>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="relative">
-                {selectedCheckpointIds.length > 0 && (
-                  <LocationSelectionPanel
-                    selectedLocations={selectedCheckpointIds}
-                    selectedLocationObjects={selectedCheckpointObjects.map((cp) => ({
-                      site_name: "",
-                      building_name: cp.name,
-                    }))}
-                    onMoveAssets={() => {}}
-                    onPrintQR={handlePrintCheckpointQR}
-                    onDownload={() => {}}
-                    onDispose={() => {}}
-                    onClearSelection={handleClearCheckpointSelection}
-                  />
-                )}
-
-                {/* Search bar + Filter button — above table */}
-                <div className="mb-3 flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    {(checkpointSearch || activeCpFilterCount > 0) && (
-                      <span className="text-xs text-gray-500">
-                        {filteredSortedCheckpointData.length} of {checkpointTableData.length} results
-                      </span>
-                    )}
-                    {/* Active filter tags */}
-                    {activeCpFilterCount > 0 && (
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {cpFilters.buildingName && (
-                          <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
-                            Building: {cpFilters.buildingName}
-                            <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, buildingId: "", buildingName: "", wingId: "", wingName: "", areaId: "", areaName: "", floorId: "", floorName: "", roomId: "", roomName: "" }))} />
-                          </Badge>
-                        )}
-                        {cpFilters.wingName && (
-                          <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
-                            Wing: {cpFilters.wingName}
-                            <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, wingId: "", wingName: "", areaId: "", areaName: "", floorId: "", floorName: "", roomId: "", roomName: "" }))} />
-                          </Badge>
-                        )}
-                        {cpFilters.areaName && (
-                          <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
-                            Area: {cpFilters.areaName}
-                            <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, areaId: "", areaName: "", floorId: "", floorName: "", roomId: "", roomName: "" }))} />
-                          </Badge>
-                        )}
-                        {cpFilters.floorName && (
-                          <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
-                            Floor: {cpFilters.floorName}
-                            <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, floorId: "", floorName: "", roomId: "", roomName: "" }))} />
-                          </Badge>
-                        )}
-                        {cpFilters.roomName && (
-                          <Badge variant="secondary" className="text-xs px-2 py-0.5 gap-1">
-                            Room: {cpFilters.roomName}
-                            <X className="w-3 h-3 cursor-pointer" onClick={() => setCpFilters((prev) => ({ ...prev, roomId: "", roomName: "" }))} />
-                          </Badge>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={clearAllCpFilters}
-                          className="text-xs text-[#C72030] hover:text-[#C72030] hover:bg-red-50 h-6 px-1.5"
-                        >
-                          Clear All
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="relative w-64">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                      <Input
-                        placeholder="Search checkpoints..."
-                        value={checkpointSearch}
-                        onChange={(e) => setCheckpointSearch(e.target.value)}
-                        className="pl-9 h-9 text-sm"
-                      />
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsCpFilterOpen(true)}
-                      className={`flex items-center gap-1.5 h-9 text-sm ${
-                        activeCpFilterCount > 0
-                          ? "border-[#C72030] text-[#C72030] bg-red-50 hover:bg-red-100"
-                          : ""
-                      }`}
-                    >
-                      <Filter className="w-4 h-4" />
-                             {/* Filter */}
-                      {/* {activeCpFilterCount > 0 && (
-                        <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px] rounded-full">
-                          {activeCpFilterCount}
-                        </Badge>
-                      )} */}
-                    </Button>
-                  </div>
-                </div>
-
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleCheckpointDragEnd}
-                >
-                  <SortableContext
-                    items={paginatedCheckpointData.map((item) => item.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-auto">
-                      <Table className="w-full min-w-max">
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="bg-[#f6f4ee] w-10 min-w-10" />
-                            <TableHead className="bg-[#f6f4ee] w-10 min-w-10 text-center">
-                              <div className="flex justify-center">
-                                <input
-                                  type="checkbox"
-                                  checked={
-                                    paginatedCheckpointData.length > 0 &&
-                                    paginatedCheckpointData.every((r) =>
-                                      selectedCheckpointIds.includes(r.id)
-                                    )
-                                  }
-                                  ref={(el) => {
-                                    if (el) {
-                                      const selected = paginatedCheckpointData.filter((r) =>
-                                        selectedCheckpointIds.includes(r.id)
-                                      ).length;
-                                      el.indeterminate =
-                                        selected > 0 && selected < paginatedCheckpointData.length;
-                                    }
-                                  }}
-                                  onChange={(e) => handleSelectAllCheckpoints(e.target.checked)}
-                                  aria-label="Select all checkpoints"
-                                  className="w-4 h-4 rounded border-gray-300 cursor-pointer"
-                                />
-                              </div>
-                            </TableHead>
-                            {/* Sortable column headers */}
-                            {([
-                              { key: "order_sequence", label: "Order", sortable: true, minW: "min-w-24" },
-                              { key: "name", label: "Name", sortable: true, minW: "min-w-36" },
-                              { key: "description", label: "Description", sortable: false, minW: "min-w-40" },
-                              { key: "building_name", label: "Building", sortable: true, minW: "min-w-32" },
-                              { key: "wing_name", label: "Wing", sortable: false, minW: "min-w-28" },
-                              { key: "area_name", label: "Area", sortable: false, minW: "min-w-28" },
-                              { key: "floor_name", label: "Floor", sortable: false, minW: "min-w-28" },
-                              { key: "room_name", label: "Room", sortable: false, minW: "min-w-28" },
-                              { key: "location_qr_code_url", label: "QR Code", sortable: false, minW: "min-w-28" },
-                              { key: "created_at", label: "Created On", sortable: true, minW: "min-w-36" },
-                            ] as { key: string; label: string; sortable: boolean; minW: string }[]).map((col) => (
-                              <TableHead
-                                key={col.key}
-                                className={`bg-[#f6f4ee] text-black ${col.minW} ${col.sortable ? "cursor-pointer select-none" : ""}`}
-                                onClick={col.sortable ? () => handleCheckpointSortToggle(col.key) : undefined}
-                              >
-                                <div className="flex items-center gap-1">
-                                  {col.label}
-                                  {col.sortable && (
-                                    checkpointSort?.column === col.key ? (
-                                      checkpointSort.direction === "asc" ? (
-                                        <ChevronUp className="w-3.5 h-3.5 text-[#C72030]" />
-                                      ) : (
-                                        <ChevronDown className="w-3.5 h-3.5 text-[#C72030]" />
-                                      )
-                                    ) : (
-                                      <ChevronsUpDown className="w-3.5 h-3.5 text-gray-400" />
-                                    )
-                                  )}
-                                </div>
-                              </TableHead>
-                            ))}
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedCheckpointData.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={12} className="text-center py-8 text-gray-500">
-                                {checkpointSearch || activeCpFilterCount > 0
-                                  ? `No checkpoints match the current filters`
-                                  : "No checkpoints available"}
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            paginatedCheckpointData.map((item) => (
-                              <SortableCheckpointRow
-                                key={item.id}
-                                item={item}
-                                isSelected={selectedCheckpointIds.includes(item.id)}
-                                onSelect={(checked) => handleCheckpointSelect(String(item.id), checked)}
-                              >
-                                <TableCell className="p-3">{renderCheckpointCell(item, "order_sequence")}</TableCell>
-                                <TableCell className="p-3">{renderCheckpointCell(item, "name")}</TableCell>
-                                <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "description")}</TableCell>
-                                <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "building_name")}</TableCell>
-                                <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "wing_name")}</TableCell>
-                                <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "area_name")}</TableCell>
-                                <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "floor_name")}</TableCell>
-                                <TableCell className="p-3 text-sm text-gray-600">{renderCheckpointCell(item, "room_name")}</TableCell>
-                                <TableCell className="p-3">{renderCheckpointCell(item, "location_qr_code_url")}</TableCell>
-                                <TableCell className="p-3">{renderCheckpointCell(item, "created_at")}</TableCell>
-                              </SortableCheckpointRow>
-                            ))
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </SortableContext>
-                </DndContext>
-
-                {/* Pagination */}
-                {filteredSortedCheckpointData.length > 0 && (
-                  <TicketPagination
-                    currentPage={cpPage}
-                    totalPages={cpTotalPages}
-                    totalRecords={filteredSortedCheckpointData.length}
-                    perPage={cpPageSize}
-                    isLoading={false}
-                    onPageChange={(page) => setCpPage(page)}
-                    onPerPageChange={() => {}}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Recent Sessions */}
-          <TabsContent value="recent-sessions" className="p-4 sm:p-6">
-            <Card className="mb-6 border-none bg-transparent shadow-none">
-              <div className="figma-card-header">
-                <div className="flex items-center gap-3">
-                  <div className="figma-card-icon-wrapper">
-                    <Activity className="figma-card-icon" />
-                  </div>
-                  <h3 className="figma-card-title">Recent Sessions ({patrolling.recent_sessions?.length || 0})</h3>
-                </div>
-              </div>
-              <div className="figma-card-content">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Session Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Guard</TableHead>
-                        <TableHead>Progress</TableHead>
-                        <TableHead>Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody className="bg-white">
-                      {patrolling.recent_sessions &&
-                      patrolling.recent_sessions.length > 0 ? (
-                        patrolling.recent_sessions.map((session) => (
-                          <TableRow key={session.id}>
-                            <TableCell>
-                              {formatDateTime(session.session_date)}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={
-                                  session.status === "completed"
-                                    ? "default"
-                                    : session.status === "in_progress"
-                                    ? "secondary"
-                                    : "destructive"
-                                }
-                              >
-                                {session.status.replace("_", " ")}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{session.guard_name || "—"}</TableCell>
-                            <TableCell>
-                              <div className="text-sm">
-                                {session.checkpoints_completed}/
-                                {session.total_checkpoints} checkpoints
-                                <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                                  <div
-                                    className="bg-[#C72030] h-2 rounded-full"
-                                    style={{
-                                      width: `${
-                                        (session.checkpoints_completed /
-                                          session.total_checkpoints) *
-                                        100
-                                      }%`,
-                                    }}
-                                  ></div>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Button variant="ghost" size="sm">
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell
-                            colSpan={6}
-                            className="text-center text-gray-600 py-8"
-                          >
-                            <div className="flex flex-col items-center">
-                              <Activity className="w-12 h-12 text-gray-300 mb-2" />
-                              <p>No recent sessions found.</p>
-                              <p className="text-sm text-gray-500">
-                                Sessions will appear here once patrolling
-                                starts.
-                              </p>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
+            </TabsContent>
+          </Tabs>
         </Card>
       </div>
 

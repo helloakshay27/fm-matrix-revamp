@@ -101,9 +101,9 @@ export const AddSeatTypeDialog: React.FC<AddSeatTypeDialogProps> = ({
           <div className="pt-4">
             <Button 
               onClick={handleSubmit}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white h-10"
+              className="w-full !bg-[#DA7756] hover:!bg-[#C45F40] h-10"
             >
-              Submit
+              <span className="!text-white font-medium">Submit</span>
             </Button>
           </div>
         </div>

@@ -926,8 +926,8 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                         {showFilter && (
                             <Button
                                 onClick={() => setIsAnalyticsFilterOpen(true)}
-                                variant="outline"
-                                className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+                                variant="ghost"
+                                className="fm-button-fix fm-button-brand flex items-center gap-2 px-4 py-2"
                             >
                                 <CalendarIcon className="w-4 h-4 text-gray-600" />
                                 <span className="text-sm font-medium text-gray-700">

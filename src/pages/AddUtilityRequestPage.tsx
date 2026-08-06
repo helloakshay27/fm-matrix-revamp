@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileChartLine } from 'lucide-react';
 import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent, CircularProgress } from '@mui/material';
 import { toast } from 'sonner';
+import { useUtilityEvents } from '@/components/PostHogUtilityEvents';
 
 interface UtilizationFormData {
   entity: string;
@@ -72,6 +73,12 @@ export const AddUtilityRequestPage = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [plantError, setPlantError] = useState<string | null>(null);
+  
+  const { onCustomerConsumptionFormOpened, onCustomerConsumptionSubmitted } = useUtilityEvents();
+
+  useEffect(() => {
+    onCustomerConsumptionFormOpened();
+  }, [onCustomerConsumptionFormOpened]);
 
   // Fetch entities from API on component mount
   // Fetch entities from API on component mount
@@ -248,6 +255,19 @@ export const AddUtilityRequestPage = () => {
 
       const responseData = await response.json();
       console.log('Utilization submitted successfully:', responseData);
+
+      const d1 = new Date(formData.fromDate);
+      const d2 = new Date(formData.toDate);
+      const period_days = (!isNaN(d1.getTime()) && !isNaN(d2.getTime())) ? Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 3600 * 24)) : 0;
+
+      onCustomerConsumptionSubmitted({
+        entity_id: formData.entity,
+        period_days: period_days,
+        total_consumption: totalConsumption,
+        rate: rate,
+        amount: amount,
+        reading_type: formData.readingType
+      });
 
       // Show success message
       toast.success('Utilization compiled successfully!');

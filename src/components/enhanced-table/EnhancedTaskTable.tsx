@@ -110,7 +110,7 @@ interface EnhancedTableProps<T> {
   data: T[];
   columns: ColumnConfig[];
   renderCell?: (item: T, columnKey: string) => React.ReactNode;
-  renderRow?: (item: T) => Record<string, any>;
+  renderRow?: (item: T, index: number) => Record<string, any>;
   renderActions?: (item: T) => React.ReactNode;
   onRowClick?: (item: T) => void;
   storageKey?: string;
@@ -133,6 +133,7 @@ interface EnhancedTableProps<T> {
   pagination?: boolean;
   pageSize?: number;
   loading?: boolean;
+  loadingMessage?: string;
   enableSearch?: boolean;
   enableSelection?: boolean;
   hideTableExport?: boolean;
@@ -141,6 +142,7 @@ interface EnhancedTableProps<T> {
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
   onFilterClick?: () => void;
+  onColumnCustomise?: () => void;
   handleExport?: (columnVisibility?: Record<string, boolean>) => void;
   toolbarClassName?: string;
   tableWrapperClassName?: string;
@@ -179,6 +181,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
   pagination = false,
   pageSize = 10,
   loading = false,
+  loadingMessage = "Loading...",
   enableSearch = false,
   enableSelection = false,
   hideTableExport = false,
@@ -187,6 +190,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
   leftActions,
   rightActions,
   onFilterClick,
+  onColumnCustomise,
   toolbarClassName,
   tableWrapperClassName,
   headerCellClassName,
@@ -294,6 +298,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
         JSON.stringify(updatedVisibility)
       );
     }
+    onColumnCustomise?.();
   };
 
   // Use API search results or filter data based on search term
@@ -352,6 +357,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
           JSON.stringify(newOrder)
         );
       }
+      onColumnCustomise?.();
     }
   };
 
@@ -495,7 +501,12 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
 
   return (
     <div className="space-y-4">
-      <div className={cn("flex items-center justify-between gap-4", toolbarClassName)}>
+      <div
+        className={cn(
+          "flex items-center justify-between gap-4",
+          toolbarClassName
+        )}
+      >
         <div className="flex items-center gap-4 flex-1">
           {leftActions}
 
@@ -506,7 +517,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
 
         <div className="flex items-center gap-2">
           {!hideTableSearch && enableSearch && (
-            <div className="relative max-w-sm">
+            <div className="relative w-[300px] max-w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder={searchPlaceholder}
@@ -516,7 +527,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                     : searchInput
                 }
                 onChange={(e) => handleSearchInputChange(e.target.value)}
-                className="pl-10 pr-10"
+                className="h-9 pl-10 pr-10 rounded-lg border-gray-300 bg-white text-[#2D2A26] placeholder:text-[#8a7e72]"
               />
               {(externalSearchTerm !== undefined
                 ? externalSearchTerm
@@ -533,10 +544,11 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
 
           {onFilterClick && (
             <Button
-              variant="ghost"
-              size="sm"
-              className="fm-button-fix !h-9 !w-9 !min-h-9 !p-0 !bg-white hover:!bg-white !border !border-[#DA7756] !text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
+              variant="outline"
+              size="icon"
+              className="!rounded-lg border border-brand text-brand"
               onClick={onFilterClick}
+              title="Filter"
             >
               <Filter className="w-4 h-4" />
             </Button>
@@ -546,7 +558,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
           {!hideTableExport && enableExport && (
             <Button
               variant="outline"
-              size="sm"
+              size="icon"
               onClick={
                 exportFileName === "schedules"
                   ? handleSchedulesExport
@@ -555,11 +567,15 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                         ? handleExport(columnVisibility)
                         : exportToExcel(
                             filteredData,
-                            visibleColumns,
+                            visibleColumns.filter(
+                              (col) =>
+                                col.key !== "action" && col.key !== "actions"
+                            ),
                             exportFileName
                           )
               }
-              className="flex items-center gap-2"
+              className="!rounded-lg border border-brand text-brand"
+              title="Export"
             >
               <Download className="w-4 h-4" />
             </Button>
@@ -578,7 +594,12 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
         </div>
       </div>
 
-      <div className={cn("rounded-lg border border-[#D5DbDB] overflow-hidden", tableWrapperClassName)}>
+      <div
+        className={cn(
+          "rounded-lg border border-[#D5DbDB] overflow-hidden",
+          tableWrapperClassName
+        )}
+      >
         <div className="overflow-x-auto enhancedTable">
           <DndContext
             sensors={sensors}
@@ -663,7 +684,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                     >
                       <div className="flex items-center justify-center">
                         <Loader2 className="h-8 w-8 animate-spin" />
-                        <span className="ml-2">Loading...</span>
+                        <span className="ml-2">{loadingMessage}</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -734,7 +755,7 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
                         )}
                         {visibleColumns.map((column) => {
                           const renderedRow = renderRow
-                            ? renderRow(item)
+                            ? renderRow(item, index)
                             : item;
                           const cellContent = renderRow
                             ? renderedRow[column.key]

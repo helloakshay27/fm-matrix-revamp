@@ -15,7 +15,7 @@ const Members = ({ allNames, projectOwner }) => {
             <div className="left-name-container w-35 flex-shrink-0 pr-4 py-2 my-auto mx-auto">
                 <span className="text-gray-700">{projectOwner}</span>
             </div>
-            <div className="divider w-px bg-pink-500 self-stretch mx-4"></div>
+            <div className="divider w-px bg-[#da7756] self-stretch mx-4"></div>
             <div className="names-grid-container flex-grow overflow-x-auto">
                 <div
                     className="
@@ -34,7 +34,7 @@ const Members = ({ allNames, projectOwner }) => {
 };
 
 const STATUS_COLORS = {
-    active: "bg-[#E4636A] text-white",
+    active: "bg-[#da7756] text-white",
     "in_progress": "bg-[#08AEEA] text-white",
     "on_hold": "bg-[#7BD2B5] text-black",
     overdue: "bg-[#FF2733] text-white",
@@ -524,7 +524,14 @@ const ProjectDetailsPage = () => {
     );
 
     if (isLoading) {
-        return <SkeletonLoader />;
+        return (
+            <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+                    <p className="text-gray-700">Loading project details...</p>
+                </div>
+            </div>
+        );
     }
 
     return (

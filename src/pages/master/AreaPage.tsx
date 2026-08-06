@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -21,31 +21,44 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { MoreHorizontal } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
 import { apiClient } from "@/utils/apiClient";
 import { AddAreaDialog } from '@/components/AddAreaDialog';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
 export const AreaPage = () => {
   const { shouldShow } = useDynamicPermissions();
   const [areas, setAreas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -74,6 +87,8 @@ export const AreaPage = () => {
     } catch (error) {
       console.error('Error fetching areas:', error);
       toast.error('Failed to fetch areas');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -324,16 +339,16 @@ export const AreaPage = () => {
               <Button
                 variant="outline"
                 onClick={handleDownloadTemplate}
-                className="flex items-center gap-2"
+                className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
               >
-                <Download className="h-4 w-4" />
+                <Download className="h-4 w-4 mr-2" />
                 Download Sample Format
               </Button>
 
               <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Upload className="h-4 w-4" />
+                  <Button variant="outline" className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]">
+                    <Upload className="h-4 w-4 mr-2" />
                     Import Areas
                   </Button>
                 </DialogTrigger>
@@ -381,6 +396,7 @@ export const AreaPage = () => {
                       <Button
                         onClick={handleImportAreas}
                         disabled={!importFile || isImportingFile}
+                        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 [&_svg]:text-white"
                       >
                         {isImportingFile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Import
@@ -393,9 +409,9 @@ export const AreaPage = () => {
               {shouldShow("Area", "create") && (
                 <Button
                   onClick={() => setIsAddModalOpen(true)}
-                  className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
+                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap [&_svg]:text-white"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 mr-2" />
                   Add Area
                 </Button>
               )}
@@ -407,177 +423,110 @@ export const AreaPage = () => {
             <div className="text-sm text-muted-foreground">
               Total: {totalItems} areas
             </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Search:</span>
-              <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-64"
-                placeholder="Search areas..."
-              />
-            </div>
           </div>
 
           {/* Table */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="px-4 py-3 text-left font-medium">Actions</TableHead>
-                  <TableHead className="px-4 py-3 text-left font-medium">Name</TableHead>
-                  <TableHead className="px-4 py-3 text-left font-medium">Building</TableHead>
-                  <TableHead className="px-4 py-3 text-left font-medium">Wing</TableHead>
-                  <TableHead className="px-4 py-3 text-left font-medium">QR Code</TableHead>
-                  <TableHead className="px-4 py-3 text-left font-medium">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {areas.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-4">
-                      No areas found
-                    </TableCell>
-                  </TableRow>
-                ) : filteredAreas.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-4">
-                      No areas match your search
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  currentAreas.map((area) => (
-                    <TableRow key={area.id}>
-                      <TableCell>
-                        {shouldShow("Area", "update") && (
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(area)}>
-                            <Edit className="w-4 h-4 text-[#C72030]" />
-                          </Button>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-medium">{area.name}</TableCell>
-                      <TableCell>{area.building?.name || 'N/A'}</TableCell>
-                      <TableCell>{area.wing?.name || 'N/A'}</TableCell>
-                      <TableCell>
-                        {area.qr_code_url ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedQrCode(area.qr_code_url);
-                              setIsQrModalOpen(true);
-                            }}
-                            className="text-[#C72030] hover:text-[#C72030]/80"
-                          >
-                            <QrCode className="w-4 h-4" />
-                          </Button>
-                        ) : (
-                          <span className="text-gray-400 text-sm">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <button onClick={() => handleToggleStatus(area)} className="cursor-pointer">
-                          {area.active ? (
-                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
-                              <Check className="w-3 h-3 text-white" />
-                            </div>
-                          ) : (
-                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
-                              <span className="text-white text-xs">✗</span>
-                            </div>
-                          )}
-                        </button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+          <div className="w-full min-w-0 max-w-full">
+            <EnhancedTable
+              data={filteredAreas}
+              columns={[
+                { key: 'name', label: 'Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'building', label: 'Building', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'wing', label: 'Wing', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'qr_code', label: 'QR Code', sortable: false, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'status', label: 'Status', sortable: false, hideable: true, draggable: true, defaultVisible: true },
+              ] as ColumnConfig[]}
+              renderCell={(area: any, columnKey: string) => {
+                switch (columnKey) {
+                  case 'name':
+                    return <span className="font-medium text-gray-900">{area.name}</span>;
+                  case 'building':
+                    return area.building?.name || 'N/A';
+                  case 'wing':
+                    return area.wing?.name || 'N/A';
+                  case 'qr_code':
+                    return area.qr_code_url ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedQrCode(area.qr_code_url);
+                          setIsQrModalOpen(true);
+                        }}
+                        className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+                        title="QR Code"
+                      >
+                        <QrCode className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <span className="text-gray-400 text-sm">-</span>
+                    );
+                  case 'status':
+                    return (
+                      <Switch
+                        checked={area.active}
+                        onCheckedChange={() => handleToggleStatus(area)}
+                        className="data-[state=checked]:bg-brand"
+                      />
+                    );
+                  default:
+                    return area[columnKey] ?? '--';
+                }
+              }}
+              renderActions={(area: any) =>
+                shouldShow("Area", "update") ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(area)}
+                    className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                ) : null
+              }
+              storageKey="areas-table"
+              enableSearch
+              searchTerm={searchTerm}
+              onSearchChange={(value) => {
+                setSearchTerm(value);
+                setCurrentPage(1);
+              }}
+              disableClientSearch
+              searchPlaceholder="Search areas..."
+              hideTableExport
+              loading={loading}
+              emptyMessage={
+                areas.length === 0
+                  ? 'No areas available'
+                  : 'No areas match your search'
+              }
+              pagination
+              pageSize={itemsPerPage}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
           </div>
-
-          {/* Pagination Controls */}
-          {areas.length > 0 && (
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-muted-foreground">
-                Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} areas
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToPrevious}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Prev
-                </Button>
-
-                <div className="flex items-center space-x-1">
-                  {/* Show first page */}
-                  {currentPage > 3 && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goToPage(1)}
-                        className="w-8 h-8 p-0"
-                      >
-                        1
-                      </Button>
-                      {currentPage > 4 && <span className="px-2">...</span>}
-                    </>
-                  )}
-
-                  {/* Show pages around current page */}
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(page => page >= currentPage - 2 && page <= currentPage + 2)
-                    .map((page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => goToPage(page)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {page}
-                      </Button>
-                    ))}
-
-                  {/* Show last page */}
-                  {currentPage < totalPages - 2 && (
-                    <>
-                      {currentPage < totalPages - 3 && <span className="px-2">...</span>}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goToPage(totalPages)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {totalPages}
-                      </Button>
-                    </>
-                  )}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToNext}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
 
 
 
         {/* Edit Modal */}
-        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-          <DialogContent className="max-w-2xl">
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen} modal={false}>
+          <DialogContent
+            className="max-w-2xl bg-white overflow-visible"
+            onPointerDownOutside={(e) => {
+              if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                e.preventDefault();
+              }
+            }}
+            onInteractOutside={(e) => {
+              if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                e.preventDefault();
+              }
+            }}
+          >
             <DialogHeader className="flex flex-row items-center justify-between pb-0">
               <DialogTitle>Edit Area Details</DialogTitle>
               <button
@@ -589,67 +538,76 @@ export const AreaPage = () => {
             </DialogHeader>
             <div className="grid grid-cols-2 gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Area Name</Label>
-                <Input
-                  id="name"
+                <TextField
+                  label="Area Name"
+                  variant="outlined"
+                  fullWidth
+                  placeholder="Enter Area Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter Area Name"
+                  sx={fieldStyles}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="building">Select Building</Label>
-                <Select
-                  value={buildingId}
-                  onValueChange={(value) => {
-                    setBuildingId(value);
-                    setWingId(''); // Reset wing when building changes
-                    if (value) {
-                      fetchWings(parseInt(value)); // Fetch wings for selected building
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white z-50">
+                <MuiFormControl fullWidth variant="outlined">
+                  <InputLabel id="edit-area-building-label">Select Building</InputLabel>
+                  <MuiSelect
+                    labelId="edit-area-building-label"
+                    label="Select Building"
+                    value={buildingId}
+                    onChange={(e) => {
+                      setBuildingId(e.target.value);
+                      setWingId(''); // Reset wing when building changes
+                      if (e.target.value) {
+                        fetchWings(parseInt(e.target.value)); // Fetch wings for selected building
+                      }
+                    }}
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value=""><em>Select Building</em></MenuItem>
                     {buildings.map((building) => (
-                      <SelectItem key={building.id} value={building.id.toString()}>
+                      <MenuItem key={building.id} value={building.id.toString()}>
                         {building.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="wing">Select Wing</Label>
-                <Select
-                  value={wingId}
-                  onValueChange={setWingId}
-                  disabled={!buildingId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Wing" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white z-50">
+                <MuiFormControl fullWidth variant="outlined">
+                  <InputLabel id="edit-area-wing-label">Select Wing</InputLabel>
+                  <MuiSelect
+                    labelId="edit-area-wing-label"
+                    label="Select Wing"
+                    value={wingId}
+                    onChange={(e) => setWingId(e.target.value)}
+                    disabled={!buildingId}
+                    sx={fieldStyles}
+                    MenuProps={selectMenuProps}
+                  >
+                    <MenuItem value=""><em>Select Wing</em></MenuItem>
                     {wings.map((wing) => (
-                      <SelectItem key={wing.id} value={wing.id.toString()}>
+                      <MenuItem key={wing.id} value={wing.id.toString()}>
                         {wing.name}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </MuiSelect>
+                </MuiFormControl>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="active">Status</Label>
+                <span className="block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Status
+                </span>
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="active"
                     checked={active}
                     onCheckedChange={setActive}
+                    className="data-[state=checked]:bg-brand"
                   />
                   <span className="text-sm">{active ? 'Active' : 'Inactive'}</span>
                 </div>
@@ -659,7 +617,8 @@ export const AreaPage = () => {
             <div className="flex justify-end pt-4">
               <Button
                 onClick={handleUpdateArea}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                variant="ghost"
+                className="fm-button-fix fm-button-brand px-8"
                 disabled={!name.trim() || !buildingId}
               >
                 Submit
@@ -701,7 +660,7 @@ export const AreaPage = () => {
                       document.body.removeChild(link);
                       toast.success('QR Code downloaded successfully');
                     }}
-                    className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                    className="fm-button-fix fm-button-brand"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Download QR Code

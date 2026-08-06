@@ -1,37 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Eye, FileText, Plus } from 'lucide-react';
 import { CreateScheduleModal } from '@/components/CreateScheduleModal';
 import { OSRDashboardFilterModal } from '@/components/OSRDashboardFilterModal';
-import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
+
+interface OSREntry {
+  id: string;
+  schedule: string;
+  amountPaid: number;
+  paymentStatus: string;
+  paymentMode: string;
+  createdBy: string;
+  flat: string;
+  category: string;
+  subCategory: string;
+  status: string;
+  rating: string;
+  createdOn: string;
+}
+
+const columns: ColumnConfig[] = [
+  { key: 'id', label: 'ID', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'schedule', label: 'Schedule', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'amountPaid', label: 'Amount Paid', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'paymentStatus', label: 'Payment Status', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'paymentMode', label: 'Payment Mode', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'createdBy', label: 'Created By', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'flat', label: 'Flat', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'category', label: 'Category', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'subCategory', label: 'Sub Category', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'status', label: 'Status', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'rating', label: 'Rating', sortable: true, hideable: true, defaultVisible: true },
+  { key: 'createdOn', label: 'Created On', sortable: true, hideable: true, defaultVisible: true },
+];
+
+const brandButtonClass =
+  'bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap [&_svg]:text-white';
+
+const getStatusBadgeColor = (status: string) => {
+  switch (status) {
+    case 'Work Pending':
+      return 'bg-[#F2EBC9] text-gray-800';
+    case 'Payment Pending':
+      return 'bg-[#F2EBC9] text-gray-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
 
 export const OSRDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
-
-  // Column configuration for EnhancedTaskTable
-  const columns: ColumnConfig[] = [
-    { key: 'id', label: 'ID', sortable: true, hideable: true, defaultVisible: true },
-    { key: 'schedule', label: 'Schedule', sortable: true, hideable: true, defaultVisible: true },
-    { key: 'amountPaid', label: 'Amount Paid', sortable: true, hideable: true, defaultVisible: true },
-    { key: 'paymentStatus', label: 'Payment Status', sortable: true, hideable: true, defaultVisible: true },
-    { key: 'paymentMode', label: 'Payment Mode', sortable: true, hideable: true, defaultVisible: true },
-    { key: 'createdBy', label: 'Created By', sortable: true, hideable: true, defaultVisible: true },
-    { key: 'flat', label: 'Flat', sortable: true, hideable: true, defaultVisible: true },
-    { key: 'category', label: 'Category', sortable: true, hideable: true, defaultVisible: true },
-    { key: 'subCategory', label: 'Sub Category', sortable: true, hideable: true, defaultVisible: true },
-    { key: 'status', label: 'Status', sortable: true, hideable: true, defaultVisible: true },
-    { key: 'rating', label: 'Rating', sortable: true, hideable: true, defaultVisible: true },
-    { key: 'createdOn', label: 'Created On', sortable: true, hideable: true, defaultVisible: true }
-  ];
+  const [loading, setLoading] = useState(true);
 
   // Sample data matching the image structure
-  const osrData = [
+  const osrData: OSREntry[] = [
     {
       id: '1244',
       schedule: '24/06/2025 17:00 To 18:00',
@@ -44,7 +73,7 @@ export const OSRDashboard = () => {
       subCategory: 'Residential Apart...',
       status: 'Work Pending',
       rating: '',
-      createdOn: '23/06/2025'
+      createdOn: '23/06/2025',
     },
     {
       id: '1243',
@@ -58,7 +87,7 @@ export const OSRDashboard = () => {
       subCategory: 'Residential Apart...',
       status: 'Payment Pending',
       rating: '',
-      createdOn: '23/06/2025'
+      createdOn: '23/06/2025',
     },
     {
       id: '1242',
@@ -72,7 +101,7 @@ export const OSRDashboard = () => {
       subCategory: '4D Cockroach Cont...',
       status: 'Payment Pending',
       rating: '',
-      createdOn: '23/06/2025'
+      createdOn: '23/06/2025',
     },
     {
       id: '1241',
@@ -86,7 +115,7 @@ export const OSRDashboard = () => {
       subCategory: 'Grouting Of Tiles',
       status: 'Payment Pending',
       rating: '',
-      createdOn: '19/04/2025'
+      createdOn: '19/04/2025',
     },
     {
       id: '1240',
@@ -100,7 +129,7 @@ export const OSRDashboard = () => {
       subCategory: 'Sofa Cleaning',
       status: 'Payment Pending',
       rating: '',
-      createdOn: '14/04/2025'
+      createdOn: '14/04/2025',
     },
     {
       id: '1239',
@@ -114,7 +143,7 @@ export const OSRDashboard = () => {
       subCategory: 'Standard Cockroac...',
       status: 'Payment Pending',
       rating: '',
-      createdOn: '29/03/2025'
+      createdOn: '29/03/2025',
     },
     {
       id: '1238',
@@ -128,7 +157,7 @@ export const OSRDashboard = () => {
       subCategory: 'Bathroom Cleaning',
       status: 'Payment Pending',
       rating: '',
-      createdOn: '05/03/2025'
+      createdOn: '05/03/2025',
     },
     {
       id: '1237',
@@ -142,7 +171,7 @@ export const OSRDashboard = () => {
       subCategory: 'Bathroom Cleaning',
       status: 'Payment Pending',
       rating: '',
-      createdOn: '14/02/2025'
+      createdOn: '14/02/2025',
     },
     {
       id: '1236',
@@ -156,16 +185,24 @@ export const OSRDashboard = () => {
       subCategory: 'Standard Cockroac...',
       status: 'Payment Pending',
       rating: '',
-      createdOn: '12/02/2025'
-    }
+      createdOn: '12/02/2025',
+    },
   ];
 
-  // Filter data based on search term
-  const filteredData = osrData.filter(entry =>
-    Object.values(entry).some(value =>
-      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const filteredData = useMemo(() => {
+    if (!searchTerm) return osrData;
+    const q = searchTerm.toLowerCase();
+    return osrData.filter((entry) =>
+      Object.values(entry).some((value) =>
+        value.toString().toLowerCase().includes(q)
+      )
+    );
+  }, [searchTerm]);
 
   const handleViewDetails = (id: string) => {
     navigate(`/vas/osr/details/${id}`);
@@ -188,128 +225,97 @@ export const OSRDashboard = () => {
     toast.success('Filters reset successfully!');
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'Work Pending':
-        return 'bg-orange-100 text-orange-800';
-      case 'Payment Pending':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // Render cell content based on column key
-  interface OSREntry {
-    id: string;
-    schedule: string;
-    amountPaid: number;
-    paymentStatus: string;
-    paymentMode: string;
-    createdBy: string;
-    flat: string;
-    category: string;
-    subCategory: string;
-    status: string;
-    rating: string;
-    createdOn: string;
-  }
-
   const renderCell = (entry: OSREntry, columnKey: string) => {
     switch (columnKey) {
       case 'id':
         return (
           <button
             onClick={() => handleViewDetails(entry.id)}
-            className="text-blue-600 hover:underline font-medium"
+            className="text-gray-900 hover:underline font-medium"
           >
             {entry.id}
           </button>
         );
       case 'paymentStatus':
         return (
-          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-[#F2EBC9] text-gray-800">
             {entry.paymentStatus}
           </span>
         );
       case 'status':
         return (
-          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(entry.status)}`}>
+          <span
+            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(entry.status)}`}
+          >
             {entry.status}
           </span>
         );
+      case 'paymentMode':
+        return entry.paymentMode || '--';
+      case 'rating':
+        return entry.rating || '--';
       default:
-        return entry[columnKey] || '';
+        return entry[columnKey as keyof OSREntry] ?? '';
     }
   };
 
-  // Render actions column
   const renderActions = (entry: OSREntry) => (
     <Button
       variant="ghost"
       size="sm"
       onClick={() => handleViewDetails(entry.id)}
-      className="p-1"
+      className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+      title="View Details"
     >
-      <Eye className="w-4 h-4 text-blue-600" />
+      <Eye className="w-4 h-4" />
     </Button>
-  );
-
-  // Left actions - buttons on the left side
-  const leftActions = (
-    <div className="flex items-center gap-2">
-      <Button 
-        onClick={handleGenerateReceipt}
-        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
-      >
-        <FileText className="w-4 h-4" />
-        Generate Receipt
-      </Button>
-      
-      <Button 
-        onClick={() => setShowCreateModal(true)}
-        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none flex items-center gap-2"
-      >
-        <Plus className="w-4 h-4" />
-        Add
-      </Button>
-    </div>
   );
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">OSR</h1>
-      <div className="bg-white rounded-lg border border-gray-200">
-        {/* EnhancedTaskTable with integrated toolbar */}
-        <EnhancedTaskTable
-          data={filteredData}
-          columns={columns}
-          renderCell={renderCell}
-          renderActions={renderActions}
-          enableSearch={true}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          searchPlaceholder="Search"
-          leftActions={leftActions}
-          onFilterClick={() => setShowFilterModal(true)}
-          hideColumnsButton={false}
-          hideTableSearch={false}
-          hideTableExport={true}
-          storageKey="osr-dashboard"
-          emptyMessage="No OSR records found"
-          getItemId={(item) => item.id}
-          toolbarClassName="bg-white"
-        />
-      </div>
+      <h1 className="text-2xl font-bold text-[#2D2A26] mb-6">OSR</h1>
 
-      {/* Create Schedule Modal */}
+      <EnhancedTable
+        data={filteredData}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        enableSearch
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        disableClientSearch
+        searchPlaceholder="Search"
+        onFilterClick={() => setShowFilterModal(true)}
+        hideColumnsButton={false}
+        hideTableExport
+        storageKey="osr-dashboard"
+        emptyMessage="No OSR records found"
+        loading={loading}
+        pagination
+        pageSize={10}
+        leftActions={
+          <div className="flex items-center gap-2">
+            <Button onClick={handleGenerateReceipt} className={brandButtonClass}>
+              <FileText className="w-4 h-4 mr-2" />
+              Generate Receipt
+            </Button>
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className={brandButtonClass}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add
+            </Button>
+          </div>
+        }
+      />
+
       <CreateScheduleModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreateSchedule}
       />
 
-      {/* Filter Modal */}
       <OSRDashboardFilterModal
         isOpen={showFilterModal}
         onClose={() => setShowFilterModal(false)}

@@ -100,9 +100,9 @@ export const VendorSidebar: React.FC = () => {
                     }`}
                 >
                   {active && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]" />
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#DA7756]" />
                   )}
-                  <Icon className={`w-5 h-5 ${active ? "text-[#C72030]" : "text-[#1a1a1a]"}`} />
+                  <Icon className={`w-5 h-5 ${active ? "text-[#DA7756]" : "text-[#1a1a1a]"}`} />
                 </button>
               );
             }
@@ -111,11 +111,11 @@ export const VendorSidebar: React.FC = () => {
               <button
                 key={item.href}
                 onClick={() => handleNavigation(item.href)}
-                className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium relative transition-colors ${active ? "bg-[#f0e8dc] shadow-inner text-[#C72030]" : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
+                className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium relative transition-colors ${active ? "bg-[#f0e8dc] shadow-inner text-[#DA7756]" : "text-[#1a1a1a] hover:bg-[#DBC2A9]"
                   }`}
               >
                 {active && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]" />
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#DA7756]" />
                 )}
 
                 <Icon className={`w-5 h-5 flex-shrink-0 ${active ? "text-[#C72030]" : ""}`} />

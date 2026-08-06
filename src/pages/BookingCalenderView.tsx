@@ -13,6 +13,7 @@ const BookingCalenderView = () => {
 
     const baseUrl = localStorage.getItem("baseUrl")
     const token = localStorage.getItem("token")
+    const isPulsePath = window.location.pathname.startsWith('/pulse/amenity');
 
     // Initialize today's date
     const today = new Date();
@@ -38,7 +39,7 @@ const BookingCalenderView = () => {
 
     const getFacilities = async () => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/admin/facility_setups.json?q[fac_type_eq]=${bookingType}`, {
+            const response = await axios.get(`https://${baseUrl}/pms/admin/facility_setups.json?q[fac_type_eq]=${bookingType}&q[active_eq]=1`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -289,19 +290,31 @@ const BookingCalenderView = () => {
 
     const selectedDateInfo = dates.find((d) => d.date === selectedDate);
 
+    const selectionActions = [
+        ...(isPulsePath
+            ? [
+                {
+                    label: 'Add Previous',
+                    icon: Plus,
+                    onClick: () => navigate('/pulse/amenity/previous-booking/add'),
+                },
+            ]
+            : []),
+    ];
+
     return (
         <div className="pt-2 space-y-6">
             {/* Header Controls */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
-                    {shouldShow( "Bookings","create")&&(
-                    <Button
-                        className="fm-button-fix fm-button-brand px-4 py-2"
-                        onClick={handleAddBooking}
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add
-                    </Button>)}
+                    {shouldShow("Bookings", "create") && (
+                        <Button
+                            className="fm-button-fix fm-button-brand px-4 py-2"
+                            onClick={() => setShowActionPanel(true)}
+                        >
+                            <Plus className="w-4 h-4" />
+                            Action
+                        </Button>)}
 
                     <RadioGroup row value={bookingType} onChange={(e) => setBookingType(e.target.value)}>
                         <FormControlLabel
@@ -327,19 +340,23 @@ const BookingCalenderView = () => {
                     <Button
                         variant="outline"
                         size="sm"
-                        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
+                        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2 !rounded-md"
                         title="Filter"
                     >
                         <Filter className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" className="w-[40px] h-[40px]">
+                    <Button variant="outline" className="w-[40px] h-[40px] !rounded-md">
                         <Bell className="w-5 h-5" />
                     </Button>
                 </div>
             </div>
 
             {showActionPanel && (
-                <SelectionPanel onAdd={handleAddBooking} onClearSelection={() => setShowActionPanel(false)} />
+                <SelectionPanel
+                    actions={selectionActions}
+                    onAdd={handleAddBooking}
+                    onClearSelection={() => setShowActionPanel(false)}
+                />
             )}
 
             {/* Calendar Container */}

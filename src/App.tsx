@@ -9,6 +9,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { getProductLandingPageUrl } from "./pages/products/landingPageUrls";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster, toast } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
@@ -149,6 +150,10 @@ const UtilityWasteGenerationSetupDashboard = lazy(() => import("./pages/UtilityW
 const AddWasteGenerationPage = lazy(() => import("./pages/AddWasteGenerationPage"));
 const EditWasteGenerationPage = lazy(() => import("./pages/EditWasteGenerationPage"));
 const WasteGenerationDetailsPage = lazy(() => import("./pages/WasteGenerationDetailsPage").then(m => ({ default: m.WasteGenerationDetailsPage })));
+const WasteDispatchPage = lazy(() => import("./pages/WasteDispatchPage"));
+const WasteDispatchHistoryPage = lazy(() => import("./pages/WasteDispatchHistoryPage"));
+const RecycleEntryPage = lazy(() => import("./pages/RecycleEntryPage"));
+const WasteDispatchDetailPage = lazy(() => import("./pages/WasteDispatchDetailPage"));
 
 // Import Survey pages
 const SurveyListDashboard = lazy(() => import("./pages/SurveyListDashboard").then(m => ({ default: m.SurveyListDashboard })));
@@ -216,6 +221,7 @@ const PermitChecklistList = lazy(() => import("./pages/PermitChecklistList").the
 const PermitChecklistDetails = lazy(() => import("./pages/PermitChecklistDetails").then(m => ({ default: m.PermitChecklistDetails })));
 const EditPermitChecklist = lazy(() => import("./pages/EditPermitCheklist").then(m => ({ default: m.EditPermitChecklist })));
 const CompanySetup = lazy(() => import("./pages/CompanySetup"));
+const BusinessCardSetupPage = lazy(() => import("./pages/admin/BusinessCardSetupPage"));
 const EmployeeOfTheMonthSetup = lazy(() => import("./pages/EmployeeOfTheMonthSetup"));
 const AnnouncementsSetup = lazy(() => import("./pages/AnnouncementsSetup"));
 const TeamSetup = lazy(() => import("./pages/settings/company-hub/team-setup"));
@@ -225,7 +231,6 @@ const EditPermitPage = lazy(() => import("./pages/EditPermitPage").then(m => ({ 
 
 const LeadDashboard = lazy(() => import("./pages/LeadDashboard").then(m => ({ default: m.LeadDashboard })));
 const EnergyDashboard = lazy(() => import("./pages/EnergyDashboard").then(m => ({ default: m.EnergyDashboard })));
-const BusinessCardSetupPage = lazy(() => import("./pages/admin/BusinessCardSetupPage"));
 // // Import Inventory pages
 // import { InventoryDashboard } from "./pages/InventoryDashboard";
 // import { InventoryDetailsPage } from "./pages/InventoryDetailsPage";
@@ -804,6 +809,7 @@ const HolidayCalendarPage = lazy(() => import("./pages/HolidayCalendarPage").the
 const LoginPage = lazy(() => import("@/pages/LoginPage").then(m => ({ default: m.LoginPage })));
 const OTPVerificationPage = lazy(() => import("@/pages/OTPVerificationPage").then(m => ({ default: m.OTPVerificationPage })));
 const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage").then(m => ({ default: m.ForgotPasswordPage })));
+const RegisterInvitationPage = lazy(() => import("@/pages/RegisterInvitationPage").then(m => ({ default: m.RegisterInvitationPage })));
 const ForgotPasswordOTPPage = lazy(() => import("@/pages/ForgotPasswordOTPPage").then(m => ({ default: m.ForgotPasswordOTPPage })));
 const NewPasswordPage = lazy(() => import("@/pages/NewPasswordPage").then(m => ({ default: m.NewPasswordPage })));
 const LoginSuccessPage = lazy(() => import("@/pages/LoginSuccessPage").then(m => ({ default: m.LoginSuccessPage })));
@@ -861,6 +867,7 @@ const EditPODashboard = lazy(() => import("./pages/EditPODashboard").then(m => (
 const EditWODashboard = lazy(() => import("./pages/EditWODashboard").then(m => ({ default: m.EditWODashboard })));
 const GateNumberPage = lazy(() => import("./pages/master/GateNumberPage"));
 const FieldsSetupPage = lazy(() => import("./pages/master/FieldsSetupPage"));
+const QrSetupPage = lazy(() => import("./pages/master/QrSetupPage"));
 const GatePassTypePage = lazy(() => import("./pages/master/GatePassTypePage"));
 const InventoryTypePage = lazy(() => import("./pages/master/InventoryTypePage"));
 const InventorySubTypePage = lazy(() => import("./pages/master/InventorySubTypePage"));
@@ -974,6 +981,7 @@ const DirectPDFDownloadPage = lazy(() => import("./pages/DirectPDFDownloadPage")
 const DirectPDFDownloadAPIPage = lazy(() => import("./pages/DirectPDFDownloadAPIPage").then(m => ({ default: m.DirectPDFDownloadAPIPage })));
 const DeletedPRs = lazy(() => import("./pages/DeletedPRs").then(m => ({ default: m.DeletedPRs })));
 const MsafeDashboardVI = lazy(() => import("./pages/MsafeDashboardVI"));
+const MsafeDashboardPage = lazy(() => import("./features/msafe-dashboard/MsafeDashboardPage").then(m => ({ default: m.MsafeDashboardPage })));
 const DashboardMobile = lazy(() => import("./pages/DashboardMobile").then(m => ({ default: m.DashboardMobile })));
 const SafetyCheckAudit = lazy(() => import("./pages/SafetyCheckAudit"));
 const MsafeCirlce = lazy(() => import("./pages/MsafeCirlce"));
@@ -1150,6 +1158,17 @@ const RecurringJournalDetails = lazy(() => import("./pages/ClubManagement/Recurr
 const SalesOrderCreatePage = lazy(() => import("./pages/SalesOrderCreatePage").then(m => ({ default: m.SalesOrderCreatePage })));
 const EditSalesOrderPage = lazy(() => import("./pages/EditSalesOrderPage").then(m => ({ default: m.EditSalesOrderPage })));
 const SalesOrderDetailPage = lazy(() => import("./pages/SalesOrderDetailPage").then(m => ({ default: m.SalesOrderDetailPage })));
+const SalesOrderTemplateEditPage = lazy(() => import("./pages/ClubManagement/SalesOrderTemplateEditPage"));
+const InvoiceTemplateEditPage = lazy(() => import("./pages/ClubManagement/InvoiceTemplateEditPage"));
+const RecurringInvoiceTemplateEditPage = lazy(() => import("./pages/ClubManagement/RecurringInvoiceTemplateEditPage"));
+const PaymentReceivedTemplateEditPage = lazy(() => import("./pages/ClubManagement/PaymentReceivedTemplateEditPage"));
+const CreditNoteTemplateEditPage = lazy(() => import("./pages/ClubManagement/CreditNoteTemplateEditPage"));
+const PurchaseOrderTemplateEditPage = lazy(() => import("./pages/ClubManagement/PurchaseOrderTemplateEditPage"));
+const BillTemplateEditPage = lazy(() => import("./pages/ClubManagement/BillTemplateEditPage"));
+const RecurringBillTemplateEditPage = lazy(() => import("./pages/ClubManagement/RecurringBillTemplateEditPage"));
+const VendorCreditTemplateEditPage = lazy(() => import("./pages/ClubManagement/VendorCreditTemplateEditPage"));
+const PaymentMadeTemplateEditPage = lazy(() => import("./pages/ClubManagement/PaymentMadeTemplateEditPage"));
+const VendorStatementTemplateEditPage = lazy(() => import("./pages/ClubManagement/VendorStatementTemplateEditPage"));
 const SalesOrderListPage = lazy(() => import("./pages/SalesOrderListPage").then(m => ({ default: m.SalesOrderListPage })));
 const TransactionsDetails = lazy(() => import("./pages/ClubManagement/TransationsDetails").then(m => ({ default: m.TransactionsDetails })));
 const ViewClubOccupantUser = lazy(() => import("./pages/master/ViewClubOccupantUser").then(m => ({ default: m.ViewClubOccupantUser })));
@@ -1232,6 +1251,12 @@ import PaymentMadeDetailsPage from "./pages/components/PaymentDetailView.tsx";
 import RideSettingsPage from "./pages/pulse/RideSettingsPage.tsx";
 import PATMCeoDashboard from "./pages/PATMCeoDashboard/index.tsx";
 import { EditPaymentPage } from "./pages/PaymentMadeEdit.tsx";
+import SalesBySalesPersonDetails from "./pages/SalesBySalesPersonDetails.tsx";
+import BusinessCompassTasksPage from "./pages/BusinessCompass/BusinessCompassTasksPage.tsx";
+import BusinessCompassTaskDetailsPage from "./pages/BusinessCompass/BusinessCompassTaskDetailsPage.tsx";
+import BusinessCompassIssuesPage from "./pages/BusinessCompass/BusinessCompassIssuesPage.tsx";
+import BusinessCompassIssueDetailsPage from "./pages/BusinessCompass/BusinessCompassIssueDetailsPage.tsx";
+import BusinessCompassTodoPage from "./pages/BusinessCompass/BusinessCompassTodoPage.tsx";
 import PatrollingCheckpointHistoryPage from "./pages/PatrollingCheckpointHistoryPage.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
@@ -1242,6 +1267,7 @@ const QuotesDashboard = lazy(() => import("./pages/ClubManagement/QuotesDashboar
 const QuotesAdd = lazy(() => import("./pages/ClubManagement/QuotesAdd").then(m => ({ default: m.QuotesAdd })));
 const QuotesEdit = lazy(() => import("./pages/ClubManagement/QuotesEdit").then(m => ({ default: m.QuotesEdit })).catch(() => import("./pages/ClubManagement/QuotesEdit")));
 const QuotesDetails = lazy(() => import("./pages/ClubManagement/QuotesDetails").then(m => ({ default: m.QuotesDetails })));
+const QuotesTemplateEditPage = lazy(() => import("./pages/ClubManagement/QuotesTemplateEditPage"));
 const RideReviews = lazy(() => import("./pages/pulse/RideReviews").then(m => ({ default: m.RideReviews })));
 const UserDetail = lazy(() => import("./pages/pulse/UserDetail").then(m => ({ default: m.UserDetail })));
 const ActiveReports = lazy(() => import("./pages/pulse/ActiveReports").then(m => ({ default: m.ActiveReports })));
@@ -1268,6 +1294,10 @@ const TaxRateSetupPage = lazy(() => import("./pages/ClubManagement/TaxRateSetupP
 const DefaultTaxPreferencesPage = lazy(() => import("./pages/ClubManagement/DefaultTaxPreferencesPage"));
 const SalesPersonMaster = lazy(() => import("./pages/ClubManagement/SalesPersonMaster"));
 const PaymentTermsMaster = lazy(() => import("./pages/ClubManagement/PaymentTermsMaster"));
+const BankMaster = lazy(() => import("./pages/ClubManagement/BankMaster"));
+const BankMasterAdd = lazy(() => import("./pages/ClubManagement/BankMasterAdd"));
+const BankMasterEdit = lazy(() => import("./pages/ClubManagement/BankMasterEdit"));
+const UomMasterPage = lazy(() => import("./pages/ClubManagement/UnitMaster").then(m => ({ default: m.UnitMaster })));
 const CustomersDetails = lazy(() => import("./pages/ClubManagement/CustomersDetails").then(m => ({ default: m.CustomersDetails })));
 const BillsAdd = lazy(() => import("./pages/ClubManagement/BillsAdd").then(m => ({ default: m.BillsAdd })));
 const BillDetails = lazy(() => import("./pages/ClubManagement/BillDetails"));
@@ -1355,6 +1385,11 @@ const BusinessCompassDailyReport = lazy(() => import("./pages/BusinessCompass/Bu
 const BusinessPlanAndGoles = lazy(() => import("./pages/AdminCompass/BusinessPlanAndGoles"));
 const DailyMeeting = lazy(() => import("./pages/AdminCompass/DailyMeeting"));
 const KPI = lazy(() => import("./pages/AdminCompass/KPI"));
+const AdminCompassJobsLayout = lazy(() => import("./pages/AdminCompass/Jobs/JobsLayout"));
+const AdminCompassJobs = lazy(() => import("./pages/AdminCompass/Jobs"));
+const AdminCompassJobsCreate = lazy(() => import("./pages/AdminCompass/Jobs/JobsCreatePage"));
+const AdminCompassJobsView = lazy(() => import("./pages/AdminCompass/Jobs/JobsViewPage"));
+const AdminCompassJobsEdit = lazy(() => import("./pages/AdminCompass/Jobs/JobsEditPage"));
 const ReportAnalytics = lazy(() => import("./pages/ReportAnalytics"));
 const WeeklyMeetings = lazy(() => import("./pages/AdminCompass/WeeklyMeetings"));
 const TeamDashboard = lazy(() => import("./pages/AdminCompass/TeamDashboard"));
@@ -1371,6 +1406,9 @@ const PulseContests = lazy(() => import("./pages/PulseContests.tsx"));
 const PulseContestRewards = lazy(() => import("./pages/PulseContestRewards.tsx"));
 const PulseContestRewardsDetails = lazy(() => import("./pages/PulseContestRewardsDetails.tsx"));
 const PulseContestRewardCreate = lazy(() => import("./pages/PulseContestRewardCreate.tsx"));
+const PosthogDashboardPage = lazy(() => import("./features/posthog-dashboard/PosthogDashboardPage").then(m => ({ default: m.PosthogDashboardPage })));
+const FmAdoptionDashboardPage = lazy(() => import("./features/fm-adoption-dashboard/FmAdoptionDashboardPage").then(m => ({ default: m.FmAdoptionDashboardPage })));
+const RevampDashboardPage = lazy(() => import("./pages/RevampDashboardPage"));
 
 const queryClient = new QueryClient();
 
@@ -1508,11 +1546,21 @@ const ProductLandingButton: React.FC = () => {
   }
 
   const productPath = location.pathname.replace(/\/$/, "");
+  const productSlug = productPath.split("/").pop();
+  const externalLandingUrl = getProductLandingPageUrl(productSlug);
+
+  const openLandingPage = () => {
+    if (externalLandingUrl) {
+      window.open(externalLandingUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+    navigate(`${productPath}/landing`);
+  };
 
   return (
     <button
       type="button"
-      onClick={() => navigate(`${productPath}/landing`)}
+      onClick={openLandingPage}
       className="fixed right-6 top-28 z-50 rounded-full border border-[#DA7756]/30 bg-[#DA7756] px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-[#DA7756]/20 transition-all hover:bg-[#C9684B] focus:outline-none focus:ring-2 focus:ring-[#DA7756]/30"
     >
       Landing Page
@@ -1698,12 +1746,16 @@ function App() {
                             element={<OnlyOfficePublicEditorPage />}
                           />
                           <Route
-                            path="/booking/:token"
-                            element={<BookingWebviewPage />}
+                            path="/posthog-dashboard"
+                            element={<PosthogDashboardPage />}
                           />
                           <Route
-                            path="/booking/:token/confirmed"
-                            element={<BookingConfirmedPage />}
+                            path="/fm-adoption-dashboard"
+                            element={<FmAdoptionDashboardPage />}
+                          />
+                          <Route
+                            path="/dashboard-revamp"
+                            element={<RevampDashboardPage />}
                           />
 
                           {/* Backend Routes */}
@@ -1937,6 +1989,10 @@ function App() {
                             element={<ForgotPasswordPage />}
                           />
                           <Route
+                            path="/register-invitation"
+                            element={<RegisterInvitationPage />}
+                          />
+                          <Route
                             path="/forgot-password-otp"
                             element={<ForgotPasswordOTPPage />}
                           />
@@ -2005,6 +2061,15 @@ function App() {
 
                           <Route
                             path="/msafedashboard"
+                            element={
+                              <ProtectedRoute>
+                                <MsafeDashboardPage />
+                              </ProtectedRoute>
+                            }
+                          />
+
+                          <Route
+                            path="/msafedashboard-legacy"
                             element={
                               <ProtectedRoute>
                                 <MsafeDashboardVI />
@@ -2261,6 +2326,15 @@ function App() {
                               element={<ChatTaskDetailsPage />}
                             />
                             <Route
+                              path="/business-compass"
+                              element={
+                                <Navigate
+                                  to="/business-compass/dashboard"
+                                  replace
+                                />
+                              }
+                            />
+                            <Route
                               path="/business-compass/profile"
                               element={<BusinessCompassProfile />}
                             />
@@ -2273,10 +2347,6 @@ function App() {
                               element={<BusinessCompassDailyReport />}
                             />
                             <Route
-                              path="/business-compass/ceo-dashboard"
-                              element={<PATMCeoDashboard />}
-                            />
-                            <Route
                               path="/business-compass/weekly-report"
                               element={<WeeklyReports />}
                             />
@@ -2286,23 +2356,23 @@ function App() {
                           /> */}
                             <Route
                               path="/business-compass/tasks"
-                              element={<ProjectTasksPage />}
+                              element={<BusinessCompassTasksPage />}
                             />
                             <Route
                               path="/business-compass/tasks/:taskId"
-                              element={<ProjectTaskDetails />}
+                              element={<BusinessCompassTaskDetailsPage />}
                             />
                             <Route
                               path="/business-compass/issues"
-                              element={<IssuesListPage />}
+                              element={<BusinessCompassIssuesPage />}
                             />
                             <Route
                               path="/business-compass/issues/:id"
-                              element={<IssueDetailsPage />}
+                              element={<BusinessCompassIssueDetailsPage />}
                             />
                             <Route
                               path="/business-compass/todo"
-                              element={<Todo />}
+                              element={<BusinessCompassTodoPage />}
                             />
                             <Route
                               path="/business-compass/channels"
@@ -2375,6 +2445,15 @@ function App() {
                               path="/admin-compass/team-setup"
                               element={<TeamSetup />}
                             />
+                            <Route
+                              path="/admin-compass/jobs"
+                              element={<AdminCompassJobsLayout />}
+                            >
+                              <Route index element={<AdminCompassJobs />} />
+                              <Route path="create" element={<AdminCompassJobsCreate />} />
+                              <Route path="edit/:id" element={<AdminCompassJobsEdit />} />
+                              <Route path=":id" element={<AdminCompassJobsView />} />
+                            </Route>
                             <Route
                               path="/admin-compass/disc-report"
                               element={<DiscReport />}
@@ -2544,6 +2623,10 @@ function App() {
                               path="/accounting/payments-made/edit/:id"
                               element={<EditPaymentPage />}
                             />
+                            <Route
+                              path="/accounting/payments-made/template"
+                              element={<PaymentMadeTemplateEditPage />}
+                            />
                             -{/* Settings Checklist Setup Routes */}
                             <Route
                               path="/settings/checklist-setup/groups"
@@ -2648,8 +2731,8 @@ function App() {
                               element={<PlantDetailSetupPage />}
                             />
                             <Route
-                              path="/master/fields-setup"
-                              element={<FieldsSetupPage />}
+                              path="/settings/ticket-management/qr-setup"
+                              element={<QrSetupPage />}
                             />
                             {/* CRM Routes */}
                             <Route
@@ -2690,15 +2773,15 @@ function App() {
                             />
                             <Route
                               path="/crm/broadcast"
-                              element={<BroadcastDashboard />}
+                              element={(hostname === "vi-web.gophygital.work" || hostname === "localhost") ? <ClubBroadcastDashboard /> : <BroadcastDashboard />}
                             />
                             <Route
                               path="/crm/broadcast/add"
-                              element={<AddBroadcastPage />}
+                              element={(hostname === "vi-web.gophygital.work" || hostname === "localhost") ? <AddClubBroadcastPage /> : <AddBroadcastPage />}
                             />
                             <Route
                               path="/crm/broadcast/details/:id"
-                              element={<BroadcastDetailsPage />}
+                              element={(hostname === "vi-web.gophygital.work" || hostname === "localhost") ? <ClubBroadcastDetailsPage /> : <BroadcastDetailsPage />}
                             />
                             <Route path="/crm/polls" element={<CRMPollsPage />} />
                             <Route
@@ -2932,6 +3015,10 @@ function App() {
                             <Route
                               path="/accounting/vendor-credits/edit/:id"
                               element={<VendorCreditsEdit />}
+                            />
+                            <Route
+                              path="/accounting/vendor-credits/template"
+                              element={<VendorCreditTemplateEditPage />}
                             />
                             <Route
                               path="/accounting/chart-journal"
@@ -3219,6 +3306,18 @@ function App() {
                               element={<SalesBySalesPersonReport />}
                             />
                             <Route
+                              path="/accounting/reports/sales-by-sales-person/details"
+                              element={<SalesBySalesPersonDetails />}
+                            />
+                            <Route
+                              path="/reports/sales-by-sp"
+                              element={<SalesBySalesPersonReport />}
+                            />
+                            <Route
+                              path="/reports/sales-details-by-sp"
+                              element={<SalesBySalesPersonDetails />}
+                            />
+                            <Route
                               path="/accounting/reports/sales-summary"
                               element={<SalesSummaryReport />}
                             />
@@ -3486,6 +3585,10 @@ function App() {
                               element={<EditSalesOrderPage />}
                             />
                             <Route
+                              path="/accounting/sales-order/template"
+                              element={<SalesOrderTemplateEditPage />}
+                            />
+                            <Route
                               path="/accounting/invoices/list"
                               element={<InvoiceDashboardAccounting />}
                             />
@@ -3496,6 +3599,10 @@ function App() {
                             <Route
                               path="/accounting/invoices/edit/:id"
                               element={<EditInvoicePage />}
+                            />
+                            <Route
+                              path="/accounting/invoices/template"
+                              element={<InvoiceTemplateEditPage />}
                             />
                             <Route
                               path="/accounting/dashboard/invoices/:id"
@@ -3518,6 +3625,10 @@ function App() {
                               element={<QuotesDetails />}
                             />
                             <Route
+                              path="/accounting/quotes/template"
+                              element={<QuotesTemplateEditPage />}
+                            />
+                            <Route
                               path="/accounting/delivery-challans"
                               element={<DeliveryChallansDashboard />}
                             />
@@ -3538,6 +3649,10 @@ function App() {
                               element={<EditRecurringInvoicePage />}
                             />
                             <Route
+                              path="/accounting/recurring-invoices/template"
+                              element={<RecurringInvoiceTemplateEditPage />}
+                            />
+                            <Route
                               path="/accounting/recurring-invoices/details/:id"
                               element={<RecurringInvoiceDetailsPage />}
                             />
@@ -3552,6 +3667,10 @@ function App() {
                             <Route
                               path="/accounting/payments-received/edit/:id"
                               element={<EditPaymentReceivedPage />}
+                            />
+                            <Route
+                              path="/accounting/payments-received/template"
+                              element={<PaymentReceivedTemplateEditPage />}
                             />
                             <Route
                               path="/accounting/payments-received/:id"
@@ -3573,6 +3692,10 @@ function App() {
                               path="/accounting/credit-note/edit/:id"
                               element={<CreditNoteEditPage />}
                             />
+                            <Route
+                              path="/accounting/credit-note/template"
+                              element={<CreditNoteTemplateEditPage />}
+                            />
                             {/* Purchase Order Routes */}
                             <Route
                               path="/accounting/purchase-order"
@@ -3589,6 +3712,10 @@ function App() {
                             <Route
                               path="/accounting/purchase-order/edit/:id"
                               element={<PurchaseOrderEditPage />}
+                            />
+                            <Route
+                              path="/accounting/purchase-order/template"
+                              element={<PurchaseOrderTemplateEditPage />}
                             />
                             {/* Bills Routes */}
                             <Route
@@ -3615,6 +3742,10 @@ function App() {
                               path="/accounting/bills/edit/:id"
                               element={<BillEdit />}
                             />
+                            <Route
+                              path="/accounting/bills/template"
+                              element={<BillTemplateEditPage />}
+                            />
                             {/* Recurring Bills Routes */}
                             <Route
                               path="/accounting/recurring-bills"
@@ -3633,11 +3764,19 @@ function App() {
                               element={<RecurringBillEdit />}
                             />
                             <Route
+                              path="/accounting/recurring-bills/template"
+                              element={<RecurringBillTemplateEditPage />}
+                            />
+                            <Route
                               path="/accounting/recurring-expenses"
                               element={<RecurringExpensesListPage />}
                             />
                             <Route
                               path="/accounting/recurring-expenses/create"
+                              element={<NewRecurringExpensePage />}
+                            />
+                            <Route
+                              path="/accounting/recurring-expenses/edit/:id"
                               element={<NewRecurringExpensePage />}
                             />
                             <Route
@@ -3688,6 +3827,22 @@ function App() {
                             <Route
                               path="/accounting/payment-terms"
                               element={<PaymentTermsMaster />}
+                            />
+                            <Route
+                              path="/accounting/bank-master"
+                              element={<BankMaster />}
+                            />
+                            <Route
+                              path="/accounting/bank-master/add"
+                              element={<BankMasterAdd />}
+                            />
+                            <Route
+                              path="/accounting/bank-master/edit/:id"
+                              element={<BankMasterEdit />}
+                            />
+                            <Route
+                              path="/accounting/uom-master"
+                              element={<UomMasterPage />}
                             />
                             <Route
                               path="/accounting/organisation"
@@ -4260,12 +4415,28 @@ function App() {
                               element={<UtilityWasteGenerationSetupDashboard />}
                             />
                             <Route
+                              path="/maintenance/waste/dispatch"
+                              element={<WasteDispatchHistoryPage />}
+                            />
+                            <Route
+                              path="/maintenance/waste/dispatch/recycle-entry/:id"
+                              element={<RecycleEntryPage />}
+                            />
+                            <Route
+                              path="/maintenance/waste/dispatch/:id"
+                              element={<WasteDispatchDetailPage />}
+                            />
+                            <Route
                               path="/maintenance/waste/generation/add"
                               element={<AddWasteGenerationPage />}
                             />
                             <Route
                               path="/maintenance/waste/generation/edit/:id"
                               element={<EditWasteGenerationPage />}
+                            />
+                            <Route
+                              path="/maintenance/waste/generation/dispatch"
+                              element={<WasteDispatchPage />}
                             />
                             <Route
                               path="/maintenance/waste/generation/:id"
@@ -4810,7 +4981,14 @@ function App() {
                               path="/accounting/vendor/edit/:id"
                               element={<EditVendorPage />}
                             ></Route>
-
+                            <Route
+                              path="/accounting/vendor/template"
+                              element={<VendorStatementTemplateEditPage />}
+                            />
+                            <Route
+                              path="/vas/ceo-dashboard"
+                              element={<PATMCeoDashboard />}
+                            />
                             <Route
                               path="/vas/projects"
                               element={<ProjectsDashboard />}
@@ -5196,6 +5374,10 @@ function App() {
                             <Route
                               path="/security/patrolling/response/details/:id"
                               element={<PatrollingDetailPage />}
+                            />
+                            <Route
+                              path="/security/patrolling/checkpoints/:checkpointId/history"
+                              element={<PatrollingCheckpointHistoryPage />}
                             />
                             <Route
                               path="/security/patrolling/checkpoints/:checkpointId/history"
@@ -5663,10 +5845,6 @@ function App() {
                             />
                             {/* Payments Made Routes */}
                             {/* Master Ticket Routes */}
-                            <Route
-                              path="/master/ticket/golden-qr"
-                              element={<GoldenQrSetupPage />}
-                            />
                             {/* Master Location Routes */}
                             <Route
                               path="/master/location/building"

@@ -67,8 +67,7 @@ export function TicketSelector({ onSelectionChange, customOptions, title }: Tick
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
-          className="bg-white border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] hover:bg-[hsl(var(--analytics-background))]"
+          className="fm-button-fix fm-button-brand"
         >
           {displayTitle} ({selectedCount})
           <ChevronDown className="ml-2 h-4 w-4" />

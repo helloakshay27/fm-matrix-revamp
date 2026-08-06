@@ -19,15 +19,42 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import {
+  FormControl as MuiFormControl,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
+
+// Matches the MUI field/menu styling used by the sibling ticket-management tabs.
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 const statusSchema = z.object({
   name: z.string().min(1, 'Status name is required'),
@@ -273,25 +300,33 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({
               <FormField
                 control={form.control}
                 name="fixedState"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <FormItem>
                     <FormLabel>Fixed State
                       {/* <span className="text-red-500">*</span> */}
                       </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select fixed state" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {fixedStates.map((state) => (
-                          <SelectItem key={state.value} value={state.value}>
-                            {state.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <MuiFormControl fullWidth size="small" error={!!fieldState.error}>
+                        <MuiSelect
+                          displayEmpty
+                          value={field.value ?? ''}
+                          onChange={(event) => field.onChange(event.target.value)}
+                          onBlur={field.onBlur}
+                          inputRef={field.ref}
+                          sx={fieldStyles}
+                          MenuProps={selectMenuProps}
+                        >
+                          <MenuItem value="" disabled>
+                            <em>Select fixed state</em>
+                          </MenuItem>
+                          {fixedStates.map((state) => (
+                            <MenuItem key={state.value} value={state.value}>
+                              {state.label}
+                            </MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </MuiFormControl>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

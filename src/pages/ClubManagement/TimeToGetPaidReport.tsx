@@ -150,7 +150,7 @@ const TimeToGetPaidReport: React.FC = () => {
       ) : (
         <button
           onClick={() => navigate(`/accounting/customers/details/${row.customerId}`)}
-          className="text-sm font-medium !text-blue-600 hover:underline text-left"
+          className="text-sm font-medium !text-brand hover:underline text-left"
         >
           {row.customer_name}
         </button>

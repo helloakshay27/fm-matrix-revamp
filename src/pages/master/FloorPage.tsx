@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Building, X, ChevronLeft, ChevronRight, Check, Download, Upload, Loader2, Plus, QrCode } from 'lucide-react';
+import { Edit, Building, X, ChevronLeft, ChevronRight, Download, Upload, Loader2, Plus, QrCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import {
   fetchBuildings,
@@ -18,6 +20,34 @@ import {
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 export function FloorPage() {
   const dispatch = useAppDispatch();
@@ -300,16 +330,16 @@ export function FloorPage() {
               <Button
                 variant="outline"
                 onClick={handleDownloadTemplate}
-                className="flex items-center gap-2"
+                className="h-9 px-4 text-sm font-medium whitespace-nowrap  border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
               >
-                <Download className="h-4 w-4" />
+                <Download className="h-4 w-4 mr-2" />
                 Download Sample Format
               </Button>
 
               <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Upload className="h-4 w-4" />
+                  <Button variant="outline" className="h-9 px-4 text-sm font-medium whitespace-nowrap  border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]">
+                    <Upload className="h-4 w-4 mr-2" />
                     Import Floors
                   </Button>
                 </DialogTrigger>
@@ -357,6 +387,7 @@ export function FloorPage() {
                       <Button
                         onClick={handleImportFloors}
                         disabled={!importFile || isImporting}
+                        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 [&_svg]:text-white"
                       >
                         {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Import
@@ -369,9 +400,9 @@ export function FloorPage() {
               {shouldShow("Floor", "create") && (
                 <Button
                   onClick={() => setShowAddDialog(true)}
-                  className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
+                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap  [&_svg]:text-white"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4 mr-2" />
                   Add Floor
                 </Button>
               )}
@@ -379,176 +410,110 @@ export function FloorPage() {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-end mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Search:</span>
-              <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-64"
-                placeholder="Search floors..."
-              />
-            </div>
-          </div>
+          <div className="mb-4" />
 
           {/* Table */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Actions</TableHead>
-                  <TableHead>Building</TableHead>
-                  <TableHead>Wing</TableHead>
-                  <TableHead>Area</TableHead>
-                  <TableHead>Floor</TableHead>
-                  <TableHead>QR Code</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {floors.loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-4">
-                      Loading floors...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredFloors.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-4">
-                      {floors.data.length === 0 ? 'No floors available' : 'No floors match your search'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  currentFloors.map((floor, index) => (
-                    <TableRow key={floor.id}>
-                      <TableCell>
-                        {shouldShow("Floor", "update") && (
-                          <Button variant="ghost" size="sm" onClick={() => handleEditFloor(floor)}>
-                            <Edit className="w-4 h-4 text-[#C72030]" />
-                          </Button>
-                        )}
-                      </TableCell>
-                      <TableCell>{floor.building?.name || 'N/A'}</TableCell>
-                      <TableCell>{floor.wing?.name || 'N/A'}</TableCell>
-                      <TableCell>{floor.area?.name || 'N/A'}</TableCell>
-                      <TableCell>{floor.name}</TableCell>
-                      <TableCell>
-                        {floor.qr_code_url ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedQrCode(floor.qr_code_url);
-                              setIsQrModalOpen(true);
-                            }}
-                            className="text-[#C72030] hover:text-[#C72030]/80"
-                          >
-                            <QrCode className="w-4 h-4" />
-                          </Button>
-                        ) : (
-                          <span className="text-gray-400 text-sm">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <button onClick={() => toggleFloorStatus(floor.id)} className="cursor-pointer">
-                          {floor.active ? (
-                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
-                              <Check className="w-3 h-3 text-white" />
-                            </div>
-                          ) : (
-                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
-                              <span className="text-white text-xs">✗</span>
-                            </div>
-                          )}
-                        </button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+          <div className="w-full min-w-0 max-w-full">
+            <EnhancedTable
+              data={filteredFloors}
+              columns={[
+                { key: 'building', label: 'Building', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'wing', label: 'Wing', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'area', label: 'Area', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'name', label: 'Floor', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'qr_code', label: 'QR Code', sortable: false, hideable: true, draggable: true, defaultVisible: true },
+                { key: 'status', label: 'Status', sortable: false, hideable: true, draggable: true, defaultVisible: true },
+              ] as ColumnConfig[]}
+              renderCell={(floor: any, columnKey: string) => {
+                switch (columnKey) {
+                  case 'building':
+                    return floor.building?.name || 'N/A';
+                  case 'wing':
+                    return floor.wing?.name || 'N/A';
+                  case 'area':
+                    return floor.area?.name || 'N/A';
+                  case 'name':
+                    return <span className="font-medium text-gray-900">{floor.name}</span>;
+                  case 'qr_code':
+                    return floor.qr_code_url ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedQrCode(floor.qr_code_url);
+                          setIsQrModalOpen(true);
+                        }}
+                        className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+                        title="QR Code"
+                      >
+                        <QrCode className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <span className="text-gray-400 text-sm">-</span>
+                    );
+                  case 'status':
+                    return (
+                      <Switch
+                        checked={floor.active}
+                        onCheckedChange={() => toggleFloorStatus(floor.id)}
+                        className="data-[state=checked]:bg-brand"
+                      />
+                    );
+                  default:
+                    return floor[columnKey] ?? '--';
+                }
+              }}
+              renderActions={(floor: any) =>
+                shouldShow("Floor", "update") ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEditFloor(floor)}
+                    className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                ) : null
+              }
+              storageKey="floors-table"
+              enableSearch
+              searchTerm={searchTerm}
+              onSearchChange={(value) => {
+                setSearchTerm(value);
+                setCurrentPage(1);
+              }}
+              disableClientSearch
+              searchPlaceholder="Search floors..."
+              hideTableExport
+              loading={floors.loading}
+              emptyMessage={
+                floors.data.length === 0
+                  ? 'No floors available'
+                  : 'No floors match your search'
+              }
+              pagination
+              pageSize={itemsPerPage}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
           </div>
 
-          {/* Pagination Controls */}
-          {floors.data.length > 0 && (
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-muted-foreground">
-                Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} floors
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToPrevious}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
-
-                <div className="flex items-center space-x-1">
-                  {/* Show first page */}
-                  {currentPage > 3 && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goToPage(1)}
-                        className="w-8 h-8 p-0"
-                      >
-                        1
-                      </Button>
-                      {currentPage > 4 && <span className="px-2">...</span>}
-                    </>
-                  )}
-
-                  {/* Show pages around current page */}
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(page => page >= currentPage - 2 && page <= currentPage + 2)
-                    .map((page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => goToPage(page)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {page}
-                      </Button>
-                    ))}
-
-                  {/* Show last page */}
-                  {currentPage < totalPages - 2 && (
-                    <>
-                      {currentPage < totalPages - 3 && <span className="px-2">...</span>}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goToPage(totalPages)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {totalPages}
-                      </Button>
-                    </>
-                  )}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToNext}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Add Floor Dialog */}
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <DialogContent>
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog} modal={false}>
+            <DialogContent
+              className="max-w-lg bg-white overflow-visible"
+              onPointerDownOutside={(e) => {
+                if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                  e.preventDefault();
+                }
+              }}
+              onInteractOutside={(e) => {
+                if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                  e.preventDefault();
+                }
+              }}
+            >
               <DialogHeader className="flex flex-row items-center justify-between pb-0">
                 <DialogTitle>ADD FLOOR</DialogTitle>
                 <button
@@ -560,67 +525,76 @@ export function FloorPage() {
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Select Building</label>
-                  <Select
-                    value={newFloorBuilding?.toString() || ''}
-                    onValueChange={(value) => setNewFloorBuilding(parseInt(value))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select building" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <MuiFormControl fullWidth variant="outlined">
+                    <InputLabel id="add-floor-building-label">Select Building *</InputLabel>
+                    <MuiSelect
+                      labelId="add-floor-building-label"
+                      label="Select Building *"
+                      value={newFloorBuilding?.toString() || ''}
+                      onChange={(e) => setNewFloorBuilding(e.target.value ? parseInt(e.target.value) : null)}
+                      sx={fieldStyles}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select building</em></MenuItem>
                       {buildings.data.map((building) => (
-                        <SelectItem key={building.id} value={building.id.toString()}>
+                        <MenuItem key={building.id} value={building.id.toString()}>
                           {building.name}
-                        </SelectItem>
+                        </MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </MuiSelect>
+                  </MuiFormControl>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Select Wing</label>
-                  <Select
-                    value={newFloorWing?.toString() || ''}
-                    onValueChange={(value) => setNewFloorWing(parseInt(value))}
-                    disabled={!newFloorBuilding}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select wing" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <MuiFormControl fullWidth variant="outlined">
+                    <InputLabel id="add-floor-wing-label">Select Wing</InputLabel>
+                    <MuiSelect
+                      labelId="add-floor-wing-label"
+                      label="Select Wing"
+                      value={newFloorWing?.toString() || ''}
+                      onChange={(e) => setNewFloorWing(e.target.value ? parseInt(e.target.value) : null)}
+                      disabled={!newFloorBuilding}
+                      sx={fieldStyles}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select wing</em></MenuItem>
                       {wings.data.map((wing) => (
-                        <SelectItem key={wing.id} value={wing.id.toString()}>
+                        <MenuItem key={wing.id} value={wing.id.toString()}>
                           {wing.name}
-                        </SelectItem>
+                        </MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </MuiSelect>
+                  </MuiFormControl>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Select Area</label>
-                  <Select
-                    value={newFloorArea?.toString() || ''}
-                    onValueChange={(value) => setNewFloorArea(parseInt(value))}
-                    disabled={!newFloorBuilding}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select area" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <MuiFormControl fullWidth variant="outlined">
+                    <InputLabel id="add-floor-area-label">Select Area</InputLabel>
+                    <MuiSelect
+                      labelId="add-floor-area-label"
+                      label="Select Area"
+                      value={newFloorArea?.toString() || ''}
+                      onChange={(e) => setNewFloorArea(e.target.value ? parseInt(e.target.value) : null)}
+                      disabled={!newFloorBuilding}
+                      sx={fieldStyles}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select area</em></MenuItem>
                       {areas.data.map((area) => (
-                        <SelectItem key={area.id} value={area.id.toString()}>
+                        <MenuItem key={area.id} value={area.id.toString()}>
                           {area.name}
-                        </SelectItem>
+                        </MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </MuiSelect>
+                  </MuiFormControl>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Enter Floor Name</label>
-                  <Input
+                  <TextField
+                    label="Enter Floor Name"
+                    variant="outlined"
+                    fullWidth
                     value={newFloorName}
                     onChange={(e) => setNewFloorName(e.target.value)}
                     placeholder="Enter floor name"
+                    sx={fieldStyles}
                   />
                 </div>
                 <div className="flex justify-end gap-2">
@@ -649,8 +623,20 @@ export function FloorPage() {
           </Dialog>
 
           {/* Edit Floor Dialog */}
-          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-            <DialogContent>
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog} modal={false}>
+            <DialogContent
+              className="max-w-lg bg-white overflow-visible"
+              onPointerDownOutside={(e) => {
+                if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                  e.preventDefault();
+                }
+              }}
+              onInteractOutside={(e) => {
+                if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                  e.preventDefault();
+                }
+              }}
+            >
               <DialogHeader className="flex flex-row items-center justify-between pb-0">
                 <DialogTitle>Edit Floor</DialogTitle>
                 <button
@@ -662,90 +648,94 @@ export function FloorPage() {
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Building</label>
-                  <Select
-                    value={editFloorBuilding?.toString() || ''}
-                    onValueChange={(value) => {
-                      const buildingId = parseInt(value);
-                      console.log('🏢 Building changed in edit:', {
-                        newBuildingId: buildingId,
-                        previousBuilding: editFloorBuilding,
-                        previousWing: editSelectedWing,
-                        previousArea: editSelectedArea
-                      });
-                      setEditFloorBuilding(buildingId);
-                      setEditSelectedWing(null);
-                      setEditSelectedArea(null);
-                      console.log('📡 Fetching wings and areas for building:', buildingId);
-                      // Fetch wings and areas for new building immediately
-                      dispatch(fetchWings(buildingId));
-                      dispatch(fetchAreas({ buildingId, wingId: undefined }));
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select building" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <MuiFormControl fullWidth variant="outlined">
+                    <InputLabel id="edit-floor-building-label">Building *</InputLabel>
+                    <MuiSelect
+                      labelId="edit-floor-building-label"
+                      label="Building *"
+                      value={editFloorBuilding?.toString() || ''}
+                      onChange={(e) => {
+                        const buildingId = e.target.value ? parseInt(e.target.value) : null;
+                        setEditFloorBuilding(buildingId);
+                        setEditSelectedWing(null);
+                        setEditSelectedArea(null);
+                        // Fetch wings and areas for new building immediately
+                        if (buildingId) {
+                          dispatch(fetchWings(buildingId));
+                          dispatch(fetchAreas({ buildingId, wingId: undefined }));
+                        }
+                      }}
+                      sx={fieldStyles}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select building</em></MenuItem>
                       {buildings.data.map((building) => (
-                        <SelectItem key={building.id} value={building.id.toString()}>
+                        <MenuItem key={building.id} value={building.id.toString()}>
                           {building.name}
-                        </SelectItem>
+                        </MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </MuiSelect>
+                  </MuiFormControl>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Wing</label>
-                  <Select
-                    value={editSelectedWing?.toString() || ''}
-                    onValueChange={(value) => {
-                      const wingId = parseInt(value);
-                      setEditSelectedWing(wingId);
-                      setEditSelectedArea(null);
-                      // Fetch areas for selected building and wing
-                      if (editFloorBuilding) {
-                        dispatch(fetchAreas({ buildingId: editFloorBuilding, wingId }));
-                      }
-                    }}
-                    disabled={!editFloorBuilding}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Wing" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <MuiFormControl fullWidth variant="outlined">
+                    <InputLabel id="edit-floor-wing-label">Wing</InputLabel>
+                    <MuiSelect
+                      labelId="edit-floor-wing-label"
+                      label="Wing"
+                      value={editSelectedWing?.toString() || ''}
+                      onChange={(e) => {
+                        const wingId = e.target.value ? parseInt(e.target.value) : null;
+                        setEditSelectedWing(wingId);
+                        setEditSelectedArea(null);
+                        // Fetch areas for selected building and wing
+                        if (editFloorBuilding && wingId) {
+                          dispatch(fetchAreas({ buildingId: editFloorBuilding, wingId }));
+                        }
+                      }}
+                      disabled={!editFloorBuilding}
+                      sx={fieldStyles}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Wing</em></MenuItem>
                       {wings.data.map((wing) => (
-                        <SelectItem key={wing.id} value={wing.id.toString()}>
+                        <MenuItem key={wing.id} value={wing.id.toString()}>
                           {wing.name}
-                        </SelectItem>
+                        </MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </MuiSelect>
+                  </MuiFormControl>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Area</label>
-                  <Select
-                    value={editSelectedArea?.toString() || ''}
-                    onValueChange={(value) => setEditSelectedArea(parseInt(value))}
-                    disabled={!editFloorBuilding}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Area" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <MuiFormControl fullWidth variant="outlined">
+                    <InputLabel id="edit-floor-area-label">Area</InputLabel>
+                    <MuiSelect
+                      labelId="edit-floor-area-label"
+                      label="Area"
+                      value={editSelectedArea?.toString() || ''}
+                      onChange={(e) => setEditSelectedArea(e.target.value ? parseInt(e.target.value) : null)}
+                      disabled={!editFloorBuilding}
+                      sx={fieldStyles}
+                      MenuProps={selectMenuProps}
+                    >
+                      <MenuItem value=""><em>Select Area</em></MenuItem>
                       {areas.data.map((area) => (
-                        <SelectItem key={area.id} value={area.id.toString()}>
+                        <MenuItem key={area.id} value={area.id.toString()}>
                           {area.name}
-                        </SelectItem>
+                        </MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </MuiSelect>
+                  </MuiFormControl>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Floor Name</label>
-                  <Input
+                  <TextField
+                    label="Floor Name"
+                    variant="outlined"
+                    fullWidth
                     value={editFloorName}
                     onChange={(e) => setEditFloorName(e.target.value)}
                     placeholder="Enter floor name"
+                    sx={fieldStyles}
                   />
                 </div>
                 <div className="flex items-center space-x-2">

@@ -124,6 +124,7 @@ const ProjectEditModal = ({
   const [owners, setOwners] = useState<Owner[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
+    projectCode: "",
     title: "",
     isChannel: false,
     isTemplate: false,
@@ -222,6 +223,7 @@ const ProjectEditModal = ({
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
+      projectCode: project?.project_code || "",
       title: project?.title || "",
       description: project?.description || "",
       startDate: project?.start_date || "",
@@ -326,6 +328,7 @@ const ProjectEditModal = ({
     setSubmitting(true);
     const payload: any = {
       project_management: {
+        project_code: formData.projectCode,
         title: formData.title,
         description: formData.description,
         start_date: formData.startDate,
@@ -385,6 +388,21 @@ const ProjectEditModal = ({
         >
           <form onSubmit={handleSubmit}>
             <div className="max-w-[90%] mx-auto pr-3">
+              <div className="mt-4 space-y-2">
+                <TextField
+                  label="Project Code"
+                  name="projectCode"
+                  placeholder="Enter Project Code"
+                  fullWidth
+                  variant="outlined"
+                  value={formData.projectCode}
+                  onChange={handleChange}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+              </div>
+
               <div className="mt-4 space-y-2">
                 <TextField
                   label="Project Title"

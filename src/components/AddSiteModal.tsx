@@ -681,6 +681,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                 <TextField
                   label="Latitude"
                   placeholder="Enter latitude"
+                  type="number"
                   value={formData.latitude}
                   onChange={(e) =>
                     handleInputChange("latitude", e.target.value)
@@ -688,13 +689,14 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  InputProps={{ sx: fieldStyles, inputProps: { step: "0.00000001", min: -90, max: 90 } }}
                   disabled={isLoading}
                 />
 
                 <TextField
                   label="Longitude"
                   placeholder="Enter longitude"
+                  type="number"
                   value={formData.longitude}
                   onChange={(e) =>
                     handleInputChange("longitude", e.target.value)
@@ -702,7 +704,7 @@ export const AddSiteModal: React.FC<AddSiteModalProps> = ({
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  InputProps={{ sx: fieldStyles, inputProps: { step: "0.00000001", min: -180, max: 180 } }}
                   disabled={isLoading}
                 />
 

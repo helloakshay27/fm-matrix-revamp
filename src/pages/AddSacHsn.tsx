@@ -233,7 +233,7 @@ const AddSacHsn: React.FC = () => {
 
                     <div className="mt-6 flex justify-end gap-4">
                         <Button variant="outline" onClick={handleReset} className="px-6 py-2" disabled={isSubmitting}>Reset</Button>
-                        <Button onClick={handleApply} style={{ backgroundColor: '#6C2150' }} className="text-white px-6 py-2" disabled={isSubmitting}>
+                        <Button variant="outline" onClick={handleApply} className="fm-button-fix fm-button-brand px-6 py-2" disabled={isSubmitting}>
                             {isSubmitting ? (
                                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Please wait...</>
                             ) : (

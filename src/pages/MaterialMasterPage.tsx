@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Edit, Plus, Trash2, Search } from 'lucide-react';
+import { Edit, Plus, Trash2, Search, Loader2 } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useToast } from '@/hooks/use-toast';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
@@ -88,8 +88,17 @@ export const MaterialMasterPage = () => {
     setCurrentSection('Master');
   }, [setCurrentSection]);
 
-  const [materials, setMaterials] = useState(materialData);
+  const [materials, setMaterials] = useState<typeof materialData>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMaterials(materialData);
+      setLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleDelete = (id: number) => {
     setMaterials(prev => prev.filter(material => material.id !== id));
@@ -142,6 +151,7 @@ export const MaterialMasterPage = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="font-medium">Actions</TableHead>
                 <TableHead className="font-medium">Component Name</TableHead>
                 <TableHead className="font-medium">Category</TableHead>
                 <TableHead className="font-medium">Specification</TableHead>
@@ -152,22 +162,26 @@ export const MaterialMasterPage = () => {
                 <TableHead className="font-medium">Consumed In</TableHead>
                 <TableHead className="font-medium">CapEx</TableHead>
                 <TableHead className="font-medium">Tracking</TableHead>
-                <TableHead className="font-medium">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredMaterials.map((material) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={11} className="text-center py-8">
+                    <div className="flex items-center justify-center gap-2 text-black">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Loading ...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : filteredMaterials.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={11} className="text-center py-4 text-muted-foreground">
+                    No materials found
+                  </TableCell>
+                </TableRow>
+              ) : filteredMaterials.map((material) => (
                 <TableRow key={material.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{material.componentName}</TableCell>
-                  <TableCell>{material.category}</TableCell>
-                  <TableCell>{material.specification}</TableCell>
-                  <TableCell>{material.quantityUsed}</TableCell>
-                  <TableCell>{material.unitOfMeasure}</TableCell>
-                  <TableCell>₹{material.estimatedUnitCost.toLocaleString()}</TableCell>
-                  <TableCell>₹{material.totalEstimatedCost.toLocaleString()}</TableCell>
-                  <TableCell>{material.consumedIn}</TableCell>
-                  <TableCell>{material.includedInCapEx ? 'Yes' : 'No'}</TableCell>
-                  <TableCell>{material.inventoryTracking ? 'Yes' : 'No'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {shouldShow("Material Master -> EBom", "update") && (
@@ -202,6 +216,16 @@ export const MaterialMasterPage = () => {
                       </AlertDialog>
                     </div>
                   </TableCell>
+                  <TableCell className="font-medium">{material.componentName}</TableCell>
+                  <TableCell>{material.category}</TableCell>
+                  <TableCell>{material.specification}</TableCell>
+                  <TableCell>{material.quantityUsed}</TableCell>
+                  <TableCell>{material.unitOfMeasure}</TableCell>
+                  <TableCell>₹{material.estimatedUnitCost.toLocaleString()}</TableCell>
+                  <TableCell>₹{material.totalEstimatedCost.toLocaleString()}</TableCell>
+                  <TableCell>{material.consumedIn}</TableCell>
+                  <TableCell>{material.includedInCapEx ? 'Yes' : 'No'}</TableCell>
+                  <TableCell>{material.inventoryTracking ? 'Yes' : 'No'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

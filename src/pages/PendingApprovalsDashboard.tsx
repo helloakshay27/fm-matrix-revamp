@@ -10,6 +10,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+import { useProcurementEvents } from "@/components/PostHogProcurementEvents";
 
 const columns: ColumnConfig[] = [
   {
@@ -97,6 +98,7 @@ export const PendingApprovalsDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { shouldShow } = useDynamicPermissions()
+  const procurementEvents = useProcurementEvents();
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -163,6 +165,8 @@ export const PendingApprovalsDashboard = () => {
       type: filters.type,
       search: searchQuery,
     }, pagination.current_page);
+    // instrument queue viewed
+    try { procurementEvents.onApprovalQueueViewed({ pending_count: pagination.total_count || 0 }); } catch (err) {}
   }, [pagination.current_page]);
 
   const debouncedFetchData = useCallback(
@@ -211,11 +215,10 @@ export const PendingApprovalsDashboard = () => {
             size="sm"
             variant="ghost"
             className="p-1"
-            onClick={() =>
-              navigate(
-                `/${url}/${item.id}?level_id=${item.level_id}&user_id=${item.user_id}`
-              )
-            }
+            onClick={() => {
+              try { procurementEvents.onApprovalItemOpened({ doc_type: item.type, level: item.level, pr_class: item.prType }); } catch (err) {}
+              navigate(`/${url}/${item.id}?level_id=${item.level_id}&user_id=${item.user_id}`);
+            }}
           >
             <Eye className="h-4 w-4" />
           </Button>
@@ -435,8 +438,7 @@ export const PendingApprovalsDashboard = () => {
           <div className="flex gap-3 pt-4">
             <Button
               onClick={handleApply}
-              className="flex-1 text-white"
-              style={{ backgroundColor: '#C72030' }}
+              className="flex-1 !bg-brand hover:!bg-brand-hover !text-white"
             >
               Apply
             </Button>

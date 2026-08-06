@@ -41,9 +41,21 @@ const EditApprovalMatrixPage = () => {
 
   const functionOptions = [
     { label: 'Purchase Order', value: 'purchase_order' },
+    { label: 'Purchase Order (Technical)', value: 'purchase_order_technical' },
+    { label: 'Purchase Order (Non Technical)', value: 'purchase_order_non-technical' },
+    { label: 'Purchase Order (Security)', value: 'purchase_order_security' },
     { label: 'GRN', value: 'grn' },
+    { label: 'GRN (Technical)', value: 'grn_technical' },
+    { label: 'GRN (Non Technical)', value: 'grn_non-technical' },
+    { label: 'GRN (Security)', value: 'grn_security' },
     { label: 'Work Order', value: 'work_order' },
+    { label: 'Work Order (Technical)', value: 'work_order_technical' },
+    { label: 'Work Order (Non Technical)', value: 'work_order_non-technical' },
+    { label: 'Work Order (Security)', value: 'work_order_security' },
     { label: 'Work Order Invoice', value: 'work_order_invoice' },
+    { label: 'Work Order Invoice (Technical)', value: 'work_order_invoice_technical' },
+    { label: 'Work Order Invoice (Non Technical)', value: 'work_order_invoice_non-technical' },
+    { label: 'Work Order Invoice (Security)', value: 'work_order_invoice_security' },
     { label: 'Bill', value: 'bill' },
     { label: 'Vendor Evaluation', value: 'vendor_audit' },
     { label: 'Permit', value: 'permit' },
@@ -411,7 +423,7 @@ const EditApprovalMatrixPage = () => {
                           <MenuItem key={user.id} value={user.id.toString()}>
                             <Checkbox
                               checked={level.users.includes(user.id.toString())}
-                              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                              sx={{ color: '#F97316', '&.Mui-checked': { color: '#F97316' } }}
                             />
                             {user.full_name}
                           </MenuItem>
@@ -429,7 +441,7 @@ const EditApprovalMatrixPage = () => {
                       <Checkbox
                         checked={level.sendEmails}
                         onChange={(e) => updateApprovalLevel(index, 'sendEmails', e.target.checked)}
-                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                        sx={{ color: '#F97316', '&.Mui-checked': { color: '#F97316' } }}
                       />
                     }
                     label="Send Emails"
@@ -441,7 +453,7 @@ const EditApprovalMatrixPage = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => removeApprovalLevel(index)}
-                      className="bg-[#f6f4ee] hover:bg-[#e8e5dc] text-[#C72030] min-w-[32px] h-8 p-0"
+                      className="bg-brand text-white [&_svg]:!text-white min-w-[32px] h-8 p-0"
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -455,7 +467,7 @@ const EditApprovalMatrixPage = () => {
           <Button
             variant="ghost"
             onClick={addApprovalLevel}
-            className="bg-[#f6f4ee] hover:bg-[#e8e5dc] text-[#6B2C91] w-12 h-12 rounded-lg p-0"
+            className="bg-brand text-white [&_svg]:!text-white w-12 h-12 rounded-lg p-0"
           >
             <Plus className="w-6 h-6" />
           </Button>
@@ -466,7 +478,8 @@ const EditApprovalMatrixPage = () => {
           <Button
             onClick={handleUpdate}
             disabled={isSubmitting || isLoading}
-            className="bg-[#6B2C91] hover:bg-[#5A2478] text-white px-8 disabled:opacity-50"
+            className="fm-button-fix fm-button-brand px-4 py-2"
+            variant="ghost"
           >
             {isSubmitting ? 'Updating...' : 'Update'}
           </Button>
@@ -474,7 +487,7 @@ const EditApprovalMatrixPage = () => {
           <Button
             variant="outline"
             onClick={() => navigate('/settings/approval-matrix/setup')}
-            className="border-[#6B2C91] text-[#6B2C91] hover:bg-[#6B2C91] hover:text-white px-8"
+            className="fm-button-fix px-4 py-2"
           >
             Cancel
           </Button>

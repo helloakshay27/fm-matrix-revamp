@@ -2,17 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import { X, Plus, ArrowLeft, CheckCircle, Upload, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
@@ -31,7 +22,6 @@ import {
   Select as MuiSelect,
   FormControlLabel,
   Switch,
-  SelectChangeEvent,
 } from "@mui/material";
 
 // --- Interface Definitions ---
@@ -122,6 +112,21 @@ const textareaStyles = {
       borderColor: "#C72030",
     },
   },
+};
+
+const selectMenuProps = {
+  PaperProps: {
+    sx: {
+      backgroundColor: "#fff",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow: "0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06)",
+      zIndex: 9999,
+    },
+  },
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+  disablePortal: false,
 };
 
 export const EditSurveyPage = () => {
@@ -456,15 +461,17 @@ export const EditSurveyPage = () => {
                         ? "input-box"
                         : q.qtype === "input_box"
                           ? "input-box"
-                          : q.qtype === "rating"
-                            ? "rating"
-                            : q.qtype === "emoji"
-                              ? "emojis"
-                              : q.qtype === "text"
-                                ? "input-box"
-                                : q.qtype === "description"
-                                  ? "description"
-                                  : "description",
+                          : q.qtype === "input_box"
+                            ? "input-box"
+                            : q.qtype === "rating"
+                              ? "rating"
+                              : q.qtype === "emoji"
+                                ? "emojis"
+                                : q.qtype === "text"
+                                  ? "input-box"
+                                  : q.qtype === "description"
+                                    ? "description"
+                                    : "description",
             mandatory: q.quest_mandatory,
             placeholderText: q.placeholder_text || "",
             maxLength: q.max_length ? String(q.max_length) : "",
@@ -1529,8 +1536,8 @@ export const EditSurveyPage = () => {
                     <label
                       htmlFor="survey-image"
                       className={`block w-full px-4 py-2 text-sm text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isSubmitting
-                          ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
-                          : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
+                        ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
+                        : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
                         }`}
                     >
                       {surveyImage
@@ -1711,7 +1718,7 @@ export const EditSurveyPage = () => {
                         <Label className="text-sm font-medium">
                           Question Text <span className="text-red-500">*</span>
                         </Label>
-                        <Textarea
+                        <TextField
                           value={question.text}
                           onChange={(e) =>
                             handleQuestionChange(
@@ -1721,47 +1728,67 @@ export const EditSurveyPage = () => {
                             )
                           }
                           placeholder="Enter your Question"
-                          className="min-h-20"
+                          fullWidth
+                          variant="outlined"
+                          multiline
+                          minRows={3}
                           required
+                          sx={textareaStyles}
+                          InputLabelProps={{
+                            shrink: true,
+                            sx: {
+                              "& .MuiInputLabel-asterisk": {
+                                color: "#ef4444",
+                              },
+                            },
+                          }}
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label>
-                          Select Answer Type{" "}
-                          <span className="text-red-500">*</span>
-                        </Label>
-                        <Select
-                          value={question.answerType}
-                          onValueChange={(value) =>
-                            handleQuestionChange(
-                              question.id!,
-                              "answerType",
-                              value
-                            )
-                          }
+                        <FormControl
+                          fullWidth
+                          required
+                          sx={{
+                            ...fieldStyles,
+                            "& .MuiInputLabel-asterisk": {
+                              color: "#ef4444",
+                            },
+                          }}
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose Answer Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="multiple-choice">
+                          <InputLabel id={`answer-type-label-${question.id}`}>
+                            Select Answer Type
+                          </InputLabel>
+                          <MuiSelect
+                            labelId={`answer-type-label-${question.id}`}
+                            value={question.answerType}
+                            label="Select Answer Type"
+                            onChange={(e) =>
+                              handleQuestionChange(
+                                question.id!,
+                                "answerType",
+                                e.target.value
+                              )
+                            }
+                            MenuProps={selectMenuProps}
+                          >
+                            <MenuItem value="multiple-choice">
                               Multiple Choice
-                            </SelectItem>
-                            <SelectItem value="rating">Rating</SelectItem>
-                            <SelectItem value="emojis">Emojis</SelectItem>
-                            <SelectItem value="input-box">Input Box</SelectItem>
-                            <SelectItem value="checkbox">Checkbox</SelectItem>
-                            <SelectItem value="date">Date</SelectItem>
-                            <SelectItem value="time">Time</SelectItem>
-                          </SelectContent>
-                        </Select>
+                            </MenuItem>
+                            <MenuItem value="rating">Rating</MenuItem>
+                            <MenuItem value="emojis">Emojis</MenuItem>
+                            <MenuItem value="input-box">Input Box</MenuItem>
+                            <MenuItem value="checkbox">Checkbox</MenuItem>
+                            <MenuItem value="date">Date</MenuItem>
+                            <MenuItem value="time">Time</MenuItem>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
 
                       {question.answerType === "input-box" && (
                         <div className="space-y-2">
                           <Label>Placeholder</Label>
-                          <Input
+                          <TextField
                             value={question.placeholderText || ""}
                             onChange={(e) =>
                               handleQuestionChange(
@@ -1771,9 +1798,143 @@ export const EditSurveyPage = () => {
                               )
                             }
                             placeholder="Enter placeholder"
+                            fullWidth
+                            variant="outlined"
+                            sx={fieldStyles}
                           />
                         </div>
                       )}
+
+                      {question.answerType === "input-box" && (
+                        <div className="space-y-2">
+                          <Label>Max Length</Label>
+                          <TextField
+                            type="number"
+                            inputProps={{ min: 0 }}
+                            value={question.maxLength || ""}
+                            onChange={(e) =>
+                              handleQuestionChange(
+                                question.id!,
+                                "maxLength",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Enter max length"
+                            fullWidth
+                            variant="outlined"
+                            sx={fieldStyles}
+                          />
+                        </div>
+                      )}
+
+                      {/* Multiple Choice, Rating, and Emoji Options */}
+                      {["multiple-choice", "rating", "emojis", "checkbox"].includes(
+                        question.answerType
+                      ) && (
+                          <div className="space-y-3 pt-2">
+                            <Label className="text-sm font-medium text-gray-700">
+                              {question.answerType === "rating"
+                                ? "Rating Options"
+                                : question.answerType === "emojis"
+                                  ? "Emoji Options"
+                                  : "Answer Options"}
+                            </Label>
+                            {(question.answerOptions || []).map(
+                              (option, optionIndex) => (
+                                <div
+                                  key={optionIndex}
+                                  className="flex items-center gap-3"
+                                >
+                                  {question.answerType === "emojis" ? (
+                                    <div className="flex items-center justify-center w-12 h-12">
+                                      <span className="text-3xl">
+                                        {EMOJIS[optionIndex]}
+                                      </span>
+                                    </div>
+                                  ) : question.answerType === "rating" ? (
+                                    <div className="flex items-center justify-center w-28 h-12">
+                                      <span className="text-base">
+                                        {RATING_STARS[optionIndex]}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="w-12 h-12 flex items-center justify-center text-gray-400">
+                                      {optionIndex + 1}
+                                    </div>
+                                  )}
+                                  <TextField
+                                    placeholder={
+                                      question.answerType === "rating"
+                                        ? `Enter rating description`
+                                        : question.answerType === "emojis"
+                                          ? `Enter description for ${EMOJIS[optionIndex]}`
+                                          : `Option ${optionIndex + 1}`
+                                    }
+                                    value={option.text}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      handleAnswerOptionChange(
+                                        question.id!,
+                                        optionIndex,
+                                        value
+                                      );
+                                    }}
+                                    fullWidth
+                                    variant="outlined"
+                                    InputProps={{
+                                      sx: {
+                                        ...fieldStyles,
+                                        height: "40px",
+                                        backgroundColor: "white",
+                                      },
+                                    }}
+                                  />
+                                  <MuiSelect
+                                    value={option.type}
+                                    onChange={(e) =>
+                                      handleAnswerOptionTypeChange(
+                                        question.id!,
+                                        optionIndex,
+                                        e.target.value as "P" | "N"
+                                      )
+                                    }
+                                    sx={{
+                                      ...fieldStyles,
+                                      width: "80px",
+                                      minWidth: "80px",
+                                    }}
+                                    MenuProps={selectMenuProps}
+                                  >
+                                    <MenuItem value="P">P</MenuItem>
+                                    <MenuItem value="N">N</MenuItem>
+                                  </MuiSelect>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() =>
+                                      handleRemoveAnswerOption(
+                                        question.id!,
+                                        optionIndex
+                                      )
+                                    }
+                                    className="p-2 text-gray-400 hover:text-red-500"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              )
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleAddAnswerOption(question.id!)}
+                              className="p-0 h-auto font-medium text-red-600 hover:text-red-700 flex items-center"
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Add Option
+                            </Button>
+                          </div>
+                        )}
 
                       {question.answerType === "input-box" && (
                         <div className="space-y-2">
@@ -1968,8 +2129,8 @@ export const EditSurveyPage = () => {
                                     <div
                                       key={fieldIndex}
                                       className={`grid gap-3 items-end ${isOnlyField
-                                          ? "grid-cols-1 md:grid-cols-2"
-                                          : "grid-cols-1 md:grid-cols-3"
+                                        ? "grid-cols-1 md:grid-cols-2"
+                                        : "grid-cols-1 md:grid-cols-3"
                                         }`}
                                     >
                                       <TextField
@@ -2267,9 +2428,9 @@ export const EditSurveyPage = () => {
                 <Button
                   onClick={handleAddQuestion}
                   variant="outline"
-                  className="border-dashed border-red-400 text-red-600 hover:bg-red-50"
+                  className="fm-button-fix border-dashed"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-4 h-4 mr-2 text-[#C72030]" />
                   Add More Questions
                 </Button>
               </div>
@@ -2278,14 +2439,15 @@ export const EditSurveyPage = () => {
                 <Button
                   onClick={handleUpdateQuestion}
                   disabled={loading || isSubmitting}
-                  className="bg-red-600 hover:bg-red-700 text-white px-8"
+                  variant="ghost"
+                  className="fm-button-fix fm-button-brand px-8"
                 >
                   {loading || isSubmitting ? "Updating..." : "Update Question"}
                 </Button>
                 <Button
                   onClick={() => navigate("/master/survey/list")}
                   variant="outline"
-                  className="border-red-600 text-red-600 hover:bg-red-50 px-8"
+                  className="fm-button-fix px-8"
                 >
                   Cancel
                 </Button>

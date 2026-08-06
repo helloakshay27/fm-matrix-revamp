@@ -114,15 +114,18 @@ const CRMWalletPointExpiry = () => {
     }
 
     return (
-        <div className="p-[30px] min-h-screen bg-transparent">
+        <div className="p-[30px] min-h-screen bg-[#F6F4EE]">
             <Card className="mb-6" style={{ border: "1px solid #D9D9D9" }}>
                 <CardHeader
                     className="bg-[#F6F4EE]"
                     style={{ border: "1px solid #D9D9D9" }}
                 >
                     <div className='flex items-center justify-between'>
-                        <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                            <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                        <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
+                            <span
+                                className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
+                                style={{ color: '#C72030' }}
+                            >
                                 R
                             </span>
                             RULE SETUP
@@ -132,7 +135,7 @@ const CRMWalletPointExpiry = () => {
                             !addAllowed && shouldShow("Wallet", "update") && (
                                 <Button
                                     variant="ghost"
-                                        className="fm-button-fix fm-button-brand px-4 py-2"
+                                    className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg shadow-sm"
                                     onClick={() => navigate('/crm/point-expiry/edit')}
                                 >
                                     <Pen size={15} /> Edit
@@ -142,7 +145,7 @@ const CRMWalletPointExpiry = () => {
                     </div>
                 </CardHeader>
                 <CardContent
-                    className="px-[50px] py-[25px] bg-[#F6F7F7]"
+                    className="px-[50px] py-[25px] bg-white"
                     style={{ border: "1px solid #D9D9D9" }}
                 >
                     <TextField
@@ -156,10 +159,10 @@ const CRMWalletPointExpiry = () => {
                         disabled={!addAllowed}
                         sx={{
                             '& .MuiOutlinedInput-root': {
-                                background: '#F6F7F7 !important',
+                                    background: '#ffffff !important',
                             },
                             '& .MuiInputLabel-root': {
-                                background: '#F6F7F7 !important',
+                                    background: '#ffffff !important',
                             },
                         }}
                     />
@@ -176,10 +179,10 @@ const CRMWalletPointExpiry = () => {
                             disabled={!addAllowed}
                             sx={{
                                 '& .MuiOutlinedInput-root': {
-                                    background: '#F6F7F7 !important',
+                                    background: '#ffffff !important',
                                 },
                                 '& .MuiInputLabel-root': {
-                                    background: '#F6F7F7 !important',
+                                    background: '#ffffff !important',
                                 },
                             }}
                         >
@@ -201,10 +204,10 @@ const CRMWalletPointExpiry = () => {
                             disabled={!addAllowed}
                             sx={{
                                 '& .MuiOutlinedInput-root': {
-                                    background: '#F6F7F7 !important',
+                                    background: '#ffffff !important',
                                 },
                                 '& .MuiInputLabel-root': {
-                                    background: '#F6F7F7 !important',
+                                    background: '#ffffff !important',
                                 },
                             }}
                         >
@@ -224,8 +227,7 @@ const CRMWalletPointExpiry = () => {
                         {shouldShow("Wallet", "create") && (
                         <Button
                             onClick={() => setShowRuleCreateAlert(true)}
-                            style={{ backgroundColor: "#C72030" }}
-                            className="text-white hover:bg-[#C72030]/90"
+                            className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg shadow-sm"
                         >
                             Create Rule
                         </Button>
@@ -233,7 +235,7 @@ const CRMWalletPointExpiry = () => {
                         <Button
                             onClick={resetForm}
                             variant="outline"
-                            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                            className="fm-button-fix border-[#DA7756] text-[#DA7756] hover:bg-[#fdf0ea]"
                         >
                             Cancel
                         </Button>
@@ -247,15 +249,18 @@ const CRMWalletPointExpiry = () => {
                         className="bg-[#F6F4EE]"
                         style={{ border: "1px solid #D9D9D9" }}
                     >
-                        <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                            <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                        <CardTitle className="flex items-center gap-4 text-[20px] font-semibold text-[#1A1A1A]">
+                            <span
+                                className="w-[40px] h-[40px] bg-[#E5E0D3] rounded-full flex items-center justify-center text-md font-bold"
+                                style={{ color: '#C72030' }}
+                            >
                                 L
                             </span>
                             LOGS
                         </CardTitle>
                     </CardHeader>
                     <CardContent
-                        className="px-[50px] py-[25px] bg-[#F6F7F7]"
+                        className="px-[50px] py-[25px] bg-white"
                         style={{ border: "1px solid #D9D9D9" }}
                     >
                         <div className="">

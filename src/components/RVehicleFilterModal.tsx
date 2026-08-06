@@ -62,9 +62,9 @@ export const RVehicleFilterModal = ({ isOpen, onClose }: RVehicleFilterModalProp
               Reset
             </Button>
             <Button
-              variant="secondary"
+              variant="ghost"
               onClick={handleApply}
-              className="px-6 py-2"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
               Apply
             </Button>

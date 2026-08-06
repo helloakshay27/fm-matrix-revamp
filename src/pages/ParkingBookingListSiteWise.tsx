@@ -2344,43 +2344,43 @@ const ParkingBookingListSiteWise = () => {
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger
             value="parking"
-            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              strokeWidth={2}
-              className="lucide lucide-car w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+           className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
-              <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
-              <circle cx="7" cy="17" r="2" />
-              <path d="M9 17h6" />
-              <circle cx="17" cy="17" r="2" />
-            </svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                strokeWidth={2}
+                className="lucide lucide-ticket w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+              >
+                <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+                <path d="M13 5v2" />
+                <path d="M13 17v2" />
+                <path d="M13 11v2" />
+              </svg>
             Parking List
           </TabsTrigger>
 
           <TabsTrigger
             value="analytics"
-            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              strokeWidth={2}
-              className="lucide lucide-chart-column w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+           className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
             >
-              <path d="M3 3v16a2 2 0 0 0 2 2h16" />
-              <path d="M18 17V9" />
-              <path d="M13 17V5" />
-              <path d="M8 17v-3" />
-            </svg>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                strokeWidth={2}
+                className="lucide lucide-ticket w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+              >
+                <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+                <path d="M13 5v2" />
+                <path d="M13 17v2" />
+                <path d="M13 11v2" />
+              </svg>
             Analytics
           </TabsTrigger>
         </TabsList>
@@ -2427,7 +2427,7 @@ const ParkingBookingListSiteWise = () => {
                       }
                     >
                       <div className="w-14 h-14 bg-[#C4B89D54] flex items-center justify-center">
-                        <IconComponent className="w-6 h-6 text-[#C72030]" />
+                        <IconComponent className="w-6 h-6 text-[#DA7756]" />
                       </div>
                       <div>
                         <div className="text-2xl font-semibold text-[#1A1A1A]">
@@ -2505,26 +2505,27 @@ const ParkingBookingListSiteWise = () => {
               {/* Filter Button */}
               <Button
                 onClick={handleToggleFilters}
-                className="fm-button-fix fm-button-brand px-8 py-2"
+                variant="outline"
+                className="border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756]/10 px-3 py-2 rounded-lg"
               >
                 <Filter className="w-4 h-4" />
               </Button>
 
               {/* Export Button */}
+              <Button
+                onClick={handleExport}
+                variant="outline"
+                className="border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756]/10 px-3 py-2 rounded-lg"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
 
               {/* Column Visibility */}
               <ColumnVisibilityDropdown
                 columns={columns}
                 onColumnToggle={handleColumnToggle}
-                className="fm-button-fix fm-button-brand px-8 py-2"
+                className="border-[#DA7756] text-[#DA7756] px-3 py-2 rounded-lg"
               />
-
-              <Button
-                onClick={handleExport}
-                className="fm-button-fix fm-button-brand px-8 py-2"
-              >
-                <Download className="w-4 h-4" />
-              </Button>
             </div>
           </div>
 
@@ -3131,9 +3132,9 @@ const ParkingBookingListSiteWise = () => {
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 pt-6">
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     onClick={handleApplyFilters}
-                    className="flex-1 h-11"
+                    className="fm-button-fix fm-button-brand px-4 py-2 flex-1 h-11"
                   >
                     Apply
                   </Button>
@@ -3233,14 +3234,14 @@ const ParkingBookingListSiteWise = () => {
                 setAnalyticsDraftRange(analyticsDateRange);
                 setIsAnalyticsFilterOpen(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-gray-300"
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border-[#da7756]"
             >
-              <Calendar className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">
+              <Calendar className="w-4 h-4 text-[#da7756]" />
+              <span className="text-sm font-medium text-[#da7756]">
                 {analyticsDateRange.rangeA.label} vs{" "}
                 {analyticsDateRange.rangeB.label}
               </span>
-              <Filter className="w-4 h-4 text-gray-600" />
+              <Filter className="w-4 h-4 text-[#da7756]" />
             </Button>
 
             <ParkingAnalyticsSelector

@@ -447,19 +447,19 @@ const IssuesListPage = ({
     return savedOrder
       ? JSON.parse(savedOrder)
       : [
-          "id",
-          "project_name",
-          "milestone_name",
-          "task_name",
-          "sub_task_name",
-          "title",
-          "issue_type",
-          "priority",
-          "status",
-          "assigned_to",
-          "start_date",
-          "due_date",
-        ];
+        "id",
+        "project_name",
+        "milestone_name",
+        "task_name",
+        "sub_task_name",
+        "title",
+        "issue_type",
+        "priority",
+        "status",
+        "assigned_to",
+        "start_date",
+        "due_date",
+      ];
   });
 
   // Kanban/List view state - initialized from URL, fallback to localStorage
@@ -739,7 +739,8 @@ const IssuesListPage = ({
 
   const fetchSprintsList = useCallback(async () => {
     try {
-      const result = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
+      const user_id = localStorage.getItem("userId")
+      const result = await dispatch(fetchSprints({ token, baseUrl, filters: { "q[owner_id_eq]": user_id } })).unwrap();
       const list =
         result?.sprints ||
         result?.data?.sprints ||
@@ -975,7 +976,7 @@ const IssuesListPage = ({
       toast.success("Issue started successfully");
       refetchIssues();
     } catch (error) {
-      toast.error("Failed to start issue");
+      toast.error(error.response?.data?.error || "Failed to start issue");
     }
   };
 
@@ -1806,7 +1807,7 @@ const IssuesListPage = ({
                 }
                 className={
                   pagination.current_page === pagination.total_pages ||
-                  isFetching
+                    isFetching
                     ? "pointer-events-none opacity-50"
                     : "cursor-pointer"
                 }

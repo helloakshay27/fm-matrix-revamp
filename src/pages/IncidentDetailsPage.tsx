@@ -235,12 +235,10 @@ export const IncidentDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="p-6 bg-white min-h-screen">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="flex items-center gap-3">
-            <Loader2 className="w-6 h-6 animate-spin" />
-            <span>Loading incident details...</span>
-          </div>
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading Incident Details...</p>
         </div>
       </div>
     );

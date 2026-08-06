@@ -13,7 +13,6 @@ import {
   Loader2,
   Save,
   X,
-  Edit,
 } from "lucide-react";
 import {
   FormControl,
@@ -948,7 +947,7 @@ export const RosterEditPage: React.FC = () => {
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[#E5E0D3] text-brand flex items-center justify-center">
               <Edit className="w-5 h-5" />
             </div>
             <div>
@@ -1753,8 +1752,8 @@ export const RosterEditPage: React.FC = () => {
       {/* Footer Actions */}
       <div className="flex items-center gap-3 justify-center pt-2">
         <Button
-          variant="destructive"
-          className="px-8"
+          variant="ghost"
+          className="fm-button-fix fm-button-brand px-4 py-2"
           onClick={handleSubmit}
           disabled={isSubmitting}
         >
@@ -1771,8 +1770,8 @@ export const RosterEditPage: React.FC = () => {
           )}
         </Button>
         <Button
-          variant="outline"
-          className="px-8"
+          variant="ghost"
+          className="fm-button-fix fm-button-brand px-4 py-2"
           onClick={handleCancel}
           disabled={isSubmitting}
         >

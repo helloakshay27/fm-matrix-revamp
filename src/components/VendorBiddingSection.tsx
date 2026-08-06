@@ -68,9 +68,12 @@ export const VendorBiddingSection: React.FC<VendorBiddingSectionProps> = ({
             {index === vendorBids.length - 1 && (
               <Button
                 type="button"
+                variant="icon"
                 size="icon"
                 onClick={addVendorBid}
-                className="h-8 w-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full"
+                className="h-8 w-8 rounded-full bg-brand p-0 text-white hover:bg-brand-hover [&_svg]:text-white"
+                aria-label="Add vendor bid row"
+                title="Add vendor bid row"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -78,9 +81,12 @@ export const VendorBiddingSection: React.FC<VendorBiddingSectionProps> = ({
             {vendorBids.length > 1 && (
               <Button
                 type="button"
+                variant="icon"
                 size="icon"
                 onClick={() => removeVendorBid(index)}
-                className="h-8 w-8 bg-red-600 hover:bg-red-700 text-white rounded-full"
+                className="h-8 w-8 rounded-full bg-brand p-0 text-white hover:bg-brand-hover [&_svg]:text-white"
+                aria-label="Remove vendor bid row"
+                title="Remove vendor bid row"
               >
                 <Minus className="h-4 w-4" />
               </Button>

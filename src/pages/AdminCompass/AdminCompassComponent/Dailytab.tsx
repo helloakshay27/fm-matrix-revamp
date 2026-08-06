@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import {
   Calendar,
   FileText,
+  FilePen,
+  CircleAlert,
+  ListTodo,
+  NotepadText,
   ChevronDown,
   AlertTriangle,
   RefreshCw,
@@ -25,12 +29,66 @@ import {
 import { cn } from "@/lib/utils";
 import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { getAuthHeaders, getBaseUrl } from "./Shared";
+import { isPatmBcLinked } from "@/utils/auth";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
 import AddIssueModal from "../../../components/AddIssueModal";
 import AddToDoModal from "../../../components/AddToDoModal";
 import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+
+// Task glyph — checklist rows inside a rounded frame. Lucide me iska boxed
+// variant nahi hai, isliye inline SVG (baaki icons jaisa hi currentColor +
+// stroke-2 pattern follow karta hai).
+export const TaskChecksIcon = ({
+  className = "",
+  ...rest
+}: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+    {...rest}
+  >
+    <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" />
+    <path d="m6.5 9.5 1.4 1.4 2.6-2.9" />
+    <path d="M13.5 9.8H18" />
+    <path d="m6.5 15.5 1.4 1.4 2.6-2.9" />
+    <path d="M13.5 15.8H18" />
+  </svg>
+);
+
+// Member badge ka color + initials — Daily Log ke detail modal me bhi wahi
+// rows dikhti hain, isliye ye module level par hain (dono jagah shared).
+export const getMemberBadgeClass = (name: any) => {
+  const colors = [
+    "bg-[#E7E3FF] text-[#6756C9]",
+    "bg-[#FFE2A8] text-[#8B5A00]",
+    "bg-[#BFEADF] text-[#0E6F5E]",
+    "bg-[#F0E8FF] text-[#7564C9]",
+    "bg-[#FFD9B5] text-[#A15305]",
+    "bg-[#DDEBFF] text-[#315FAD]",
+  ];
+  const seed = String(name || "")
+    .split("")
+    .reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return colors[seed % colors.length];
+};
+
+export const getMemberShortName = (name: any) => {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return "";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+};
 
 // ── UI Components ──
 const BtnIcon = ({
@@ -83,23 +141,74 @@ const SearchableSelect = ({
   onChange,
   options,
   placeholder = "All",
+  disabled = false,
+  disabledHint,
 }: any) => {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const ref = React.useRef<HTMLDivElement>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  // Menu is portalled to <body> so no ancestor with overflow can clip it.
+  const [menuRect, setMenuRect] = React.useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
 
   const selected = options.find((o: any) => String(o.value) === String(value));
   const displayValue = selected?.label || placeholder;
 
+  const updateMenuPosition = React.useCallback(() => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    setMenuRect({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+  }, []);
+
   React.useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        ref.current &&
+        !ref.current.contains(target) &&
+        (!menuRef.current || !menuRef.current.contains(target))
+      ) {
         setOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    updateMenuPosition();
+    window.addEventListener("scroll", updateMenuPosition, true);
+    window.addEventListener("resize", updateMenuPosition);
+    return () => {
+      window.removeEventListener("scroll", updateMenuPosition, true);
+      window.removeEventListener("resize", updateMenuPosition);
+    };
+  }, [open, updateMenuPosition]);
+
+  // Keep the menu mounted for the exit animation after `open` flips to false
+  const [isMenuMounted, setIsMenuMounted] = React.useState(false);
+  React.useEffect(() => {
+    if (open) {
+      setIsMenuMounted(true);
+      return;
+    }
+    if (!isMenuMounted) return;
+    const timer = window.setTimeout(() => setIsMenuMounted(false), 120);
+    return () => window.clearTimeout(timer);
+  }, [open, isMenuMounted]);
+
+  // A select that becomes disabled while open must not leave its menu hanging.
+  React.useEffect(() => {
+    if (disabled) {
+      setOpen(false);
+      setSearch("");
+    }
+  }, [disabled]);
 
   const filteredOptions = options.filter((o: any) =>
     (o.label || "").toLowerCase().includes(search.toLowerCase())
@@ -110,61 +219,89 @@ const SearchableSelect = ({
       ref={ref}
       className="relative w-full sm:w-auto"
       style={{ fontFamily: "'Poppins', sans-serif" }}
+      title={disabled ? disabledHint : undefined}
     >
       <div className="relative flex items-center min-w-0 sm:min-w-[160px]">
         <input
           type="text"
-          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 pr-8 text-sm font-medium text-neutral-700 shadow-sm focus:outline-none focus:border-[#CE7A5A]/60 hover:border-[#CE7A5A]/60 transition-all cursor-pointer placeholder:text-neutral-700"
+          disabled={disabled}
+          className={cn(
+            "w-full bg-white border border-gray-200 rounded-xl px-3 py-2 pr-8 text-sm font-medium text-neutral-700 shadow-sm focus:outline-none transition-all placeholder:text-neutral-700",
+            disabled
+              ? "cursor-not-allowed bg-gray-50 text-neutral-400 placeholder:text-neutral-400"
+              : "cursor-pointer focus:border-[#CE7A5A]/60 hover:border-[#CE7A5A]/60"
+          )}
           placeholder={placeholder}
           value={open ? search : displayValue}
           onClick={() => {
+            if (disabled) return;
             setOpen(true);
-            search("");
+            setSearch("");
           }}
           onChange={(e) => {
+            if (disabled) return;
             setSearch(e.target.value);
             setOpen(true);
           }}
         />
         <ChevronDown
           className={cn(
-            "absolute right-3 w-4 h-4 text-neutral-400 transition-transform pointer-events-none",
+            "absolute right-3 w-4 h-4 transition-transform pointer-events-none",
+            disabled ? "text-neutral-300" : "text-neutral-400",
             open && "rotate-180"
           )}
         />
       </div>
-      {open && (
-        <div
-          className="absolute top-full left-0 mt-1 z-[999] bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden min-w-full"
-          style={{ maxHeight: 220, overflowY: "auto" }}
-        >
-          {filteredOptions.length === 0 ? (
-            <div className="px-4 py-2.5 text-sm font-medium text-neutral-500 text-center">
-              No results found
-            </div>
-          ) : (
-            filteredOptions.map((opt: any) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => {
-                  onChange(opt.value);
-                  setOpen(false);
-                  setSearch("");
-                }}
-                className={cn(
-                  "w-full text-left px-4 py-2.5 text-sm font-medium transition-colors truncate",
-                  String(value) === String(opt.value)
-                    ? "bg-[#FFF3EE] text-[#CE7A5A] font-semibold"
-                    : "text-neutral-700 hover:bg-[#FFF3EE] hover:text-[#CE7A5A]"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))
-          )}
-        </div>
-      )}
+      {isMenuMounted &&
+        menuRect &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className={cn(
+              "bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden",
+              open ? "dd-menu-enter" : "dd-menu-exit"
+            )}
+            style={{
+              position: "fixed",
+              top: menuRect.top,
+              left: menuRect.left,
+              minWidth: Math.max(menuRect.width, 200),
+              maxWidth: 320,
+              maxHeight: 220,
+              overflowY: "auto",
+              zIndex: 9999,
+              fontFamily: "'Poppins', sans-serif",
+            }}
+          >
+            {filteredOptions.length === 0 ? (
+              <div className="px-4 py-2.5 text-sm font-medium text-neutral-500 text-center">
+                No results found
+              </div>
+            ) : (
+              filteredOptions.map((opt: any) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  title={opt.label}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                    setSearch("");
+                  }}
+                  className={cn(
+                    "dd-option w-full text-left px-4 py-2.5 text-sm font-medium leading-snug break-words",
+                    String(value) === String(opt.value)
+                      ? "bg-[#FFF3EE] text-[#CE7A5A] font-semibold"
+                      : "text-neutral-700 hover:bg-[#FFF3EE] hover:text-[#CE7A5A]"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
@@ -223,6 +360,38 @@ const getMemberResponsiblePrefill = (member: any) => {
   return id ? { id: String(id), name } : null;
 };
 
+const stripIgnoredDailyMeetingFields = (value: any): any => {
+  const ignoredNestedReportsKey = ["reportee", "reports"].join("_");
+
+  if (Array.isArray(value)) {
+    let changed = false;
+    const cleaned = value.map((item) => {
+      const next = stripIgnoredDailyMeetingFields(item);
+      if (next !== item) changed = true;
+      return next;
+    });
+    return changed ? cleaned : value;
+  }
+
+  if (!value || typeof value !== "object") return value;
+
+  let changed = false;
+  const cleaned: Record<string, any> = {};
+
+  Object.entries(value).forEach(([key, item]) => {
+    if (key === ignoredNestedReportsKey) {
+      changed = true;
+      return;
+    }
+
+    const next = stripIgnoredDailyMeetingFields(item);
+    if (next !== item) changed = true;
+    cleaned[key] = next;
+  });
+
+  return changed ? cleaned : value;
+};
+
 const fetchDailyMeetingData = async ({
   meetingId,
   dateStr,
@@ -239,7 +408,8 @@ const fetchDailyMeetingData = async ({
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return await res.json();
+  const json = await res.json();
+  return stripIgnoredDailyMeetingFields(json);
 };
 
 // ── Helpers ──
@@ -272,6 +442,7 @@ const normalizeReportData = (rd: any) => {
       accomplishments: [],
       tasks_issues: [],
       tomorrow_plan: [],
+      not_accomplished_plan: [],
       big_win: null,
       self_rating: null,
       total_score: null,
@@ -288,10 +459,25 @@ const normalizeReportData = (rd: any) => {
     accomplishments = rd.accomplishments.items;
   }
 
+  // Not Accomplished Plan — API `non_completed_accomplishments` bhejta hai.
+  // Plain array aur `{ items: [...] }` dono shapes accept karte hain, aur
+  // purane/alternate key naam bhi, taki backend jo bheje wahi chal jaaye.
+  const notAccomplishedRaw =
+    rd.non_completed_accomplishments ??
+    rd.not_accomplished_plan ??
+    rd.not_accomplished ??
+    null;
+  const not_accomplished_plan: any[] = Array.isArray(notAccomplishedRaw)
+    ? notAccomplishedRaw
+    : Array.isArray(notAccomplishedRaw?.items)
+      ? notAccomplishedRaw.items
+      : [];
+
   return {
     accomplishments,
     tasks_issues: Array.isArray(rd.tasks_issues) ? rd.tasks_issues : [],
     tomorrow_plan: Array.isArray(rd.tomorrow_plan) ? rd.tomorrow_plan : [],
+    not_accomplished_plan,
     big_win: rd.big_win ?? null,
     self_rating: rd.self_rating ?? null,
     total_score: rd.total_score ?? null,
@@ -299,6 +485,28 @@ const normalizeReportData = (rd: any) => {
     absent_reason: rd.absent_reason ?? null,
     kpis: rd.kpis && typeof rd.kpis === "object" ? rd.kpis : {},
   };
+};
+
+const isAdminAddedMissedPlanReport = (report: any) => {
+  const draft = report?.daily_report;
+  if (!draft || report?.checked_in_meeting === true || report?.journal_id)
+    return false;
+
+  const normalized = normalizeReportData(draft.report_data);
+  const hasTomorrowPlan = normalized.tomorrow_plan.length > 0;
+  const hasSubmittedContent =
+    normalized.accomplishments.length > 0 ||
+    normalized.tasks_issues.length > 0 ||
+    !!normalized.big_win ||
+    normalized.self_rating !== null ||
+    normalized.total_score !== null ||
+    Object.keys(normalized.kpis || {}).length > 0;
+
+  return (
+    hasTomorrowPlan &&
+    !hasSubmittedContent &&
+    String(draft.status || "").toLowerCase() !== "submitted"
+  );
 };
 
 const fmtItemDate = (d?: string): string | null => {
@@ -415,7 +623,13 @@ export const ReportItemMeta = ({ item }: { item: any }) => {
   const status = (item?.status || d?.status || "").toLowerCase();
   const isDone = ["completed", "closed", "done"].includes(status);
   const targetRaw =
-    d?.target_date || d?.due_date || d?.end_date || item?.target_date;
+    d?.target_date ||
+    d?.due_date ||
+    d?.end_date ||
+    item?.target_date ||
+    item?.due_date ||
+    // tasks_issues rows carry end_date on the row itself (daily_meeting API).
+    item?.end_date;
   const dueDate = fmtItemDate(targetRaw);
   const overdueLabel = isDone ? null : getItemOverdueLabel(targetRaw);
   const effortEst = fmtItemHours(d?.total_allocated_hours || d?.estimated_hour);
@@ -474,15 +688,108 @@ const isCompletedStatus = (status: string) =>
 
 const getCalendarDisplayStatus = (status: any) => {
   const normalizedStatus = String(status || "").toLowerCase();
+  if (normalizedStatus === "draft") {
+    return "submitted";
+  }
   if (["holiday", "non_meeting"].includes(normalizedStatus)) {
     return "holiday";
   }
   return normalizedStatus;
 };
 
+const getMemberId = (member: any) =>
+  member?.user_id ?? member?.id ?? member?.user?.id ?? null;
+
+const getMemberFilterKey = (name: any) =>
+  String(name || "").trim().toLowerCase();
+
+// Row kis member ki hai — sirf explicit owner tagging se: manually added rows
+// par `owner_name`, purane payloads me `member` / `member_name` / `user_name`.
+//
+// `originalData.responsible_person` jaan-boojh kar NAHI padha jata: wo us
+// task/issue ka assignee hai, report kisne bheja usse koi lena-dena nahi. Usse
+// padhne par dusre logon ki rows (jaise Bilal ke naam ka task) report owner ke
+// card me un logon ki rows ban kar dikhti thin, aur member dropdown me aise
+// naam aa jate the jo us report owner ki team me hi nahi hain.
+// Tag na mile to row report owner ki maani jati hai (see `getRowMemberName`).
+//
+// `name` bhi chhoda hai: kai items par wo title hota hai, owner nahi.
+const getItemMemberName = (item: any) =>
+  String(
+    item?.member ||
+    item?.member_name ||
+    item?.owner_name ||
+    item?.user_name ||
+    ""
+  ).trim();
+
+const getMemberCalendar = (member: any) => {
+  const calendar = member?.daily_calendar || member?.daily_calender;
+  return Array.isArray(calendar) ? calendar : [];
+};
+
+const mergeCalendarWithFallback = (
+  memberCalendar: any[],
+  fallbackRow: any[] = []
+) => {
+  const fallbackByDate = new Map(
+    fallbackRow.map((item: any) => [item.full_date, item])
+  );
+
+  return memberCalendar.map((item: any) => {
+    const fallback = fallbackByDate.get(item.full_date) || {};
+    return {
+      ...fallback,
+      ...item,
+      is_meeting: item.is_meeting ?? fallback.is_meeting ?? true,
+    };
+  });
+};
+
+const getSelectedMemberCalendarRow = (
+  data: any,
+  memberId: string,
+  fallbackRow: any[] = []
+) => {
+  if (!data || memberId === "all") return [];
+
+  const targetId = String(memberId);
+  const pools = [
+    ...(data.member_reports || []),
+    ...(data.reports || []),
+    ...(data.missed_members || []),
+  ];
+  const member = pools.find(
+    (item: any) => String(getMemberId(item)) === targetId
+  );
+  const memberCalendar = getMemberCalendar(member);
+
+  if (!memberCalendar.length) return [];
+
+  return mergeCalendarWithFallback(memberCalendar, fallbackRow);
+};
+
+// Row ka type pill. Sirf `type` par bharosa nahi karte — team member ki rows
+// (manager ke report me aane wali) kabhi `type` ke bina, sirf `source_type` /
+// `originalData.source_type` ke saath aati hain; unhe "note" dikhana galat hai.
 const getItemType = (item: any): string => {
-  if (!item || typeof item !== "object") return "task";
-  return String(item.type || "task").toLowerCase();
+  if (!item || typeof item !== "object") return "note";
+  const raw = String(
+    item.type ||
+      item.source_type ||
+      item.sourceType ||
+      item.originalData?.source_type ||
+      item.originalData?.sourceType ||
+      ""
+  ).toLowerCase();
+  const rawId = String(item.id || item.source_id || "").toLowerCase();
+
+  if (raw.includes("issue") || rawId.startsWith("issue-")) return "issue";
+  if (raw.includes("todo") || raw.includes("to_do") || rawId.startsWith("todo-"))
+    return "todo";
+  if (raw.includes("task") || rawId.startsWith("task-")) return "task";
+
+  return raw || "note";
 };
 
 const getViewSourceType = (item: any): string => {
@@ -502,6 +809,58 @@ const getViewSourceType = (item: any): string => {
   if (rawType.includes("task") || rawId.startsWith("task-")) return "task";
 
   return getItemType(item);
+};
+
+const getItemTagNames = (item: any): string[] => {
+  const rawTags =
+    item?.tags ||
+    item?.tag_names ||
+    item?.project_tags ||
+    item?.task_tags ||
+    item?.originalData?.tags ||
+    item?.originalData?.tag_names ||
+    item?.originalData?.project_tags ||
+    item?.originalData?.task_tags;
+  const singleTags = [
+    item?.tag,
+    item?.tag_name,
+    item?.project_tag,
+    item?.originalData?.tag,
+    item?.originalData?.tag_name,
+    item?.originalData?.project_tag,
+  ];
+
+  const normalizeTag = (tag: any) => {
+    if (!tag) return "";
+    if (typeof tag === "string") return tag;
+    return tag.name || tag.title || tag.label || "";
+  };
+
+  const arrayTags = Array.isArray(rawTags) ? rawTags : [];
+  return [...arrayTags, ...singleTags]
+    .map(normalizeTag)
+    .map((tag) => String(tag).trim())
+    .filter(Boolean);
+};
+
+const getItemProjectName = (item: any): string => {
+  const project =
+    item?.project_management_title ||
+    item?.project_title ||
+    item?.project_name ||
+    item?.project?.name ||
+    item?.project?.title ||
+    item?.project_management?.name ||
+    item?.project_management?.title ||
+    item?.originalData?.project_management_title ||
+    item?.originalData?.project_title ||
+    item?.originalData?.project_name ||
+    item?.originalData?.project?.name ||
+    item?.originalData?.project?.title ||
+    item?.originalData?.project_management?.name ||
+    item?.originalData?.project_management?.title ||
+    "";
+  return String(project).trim();
 };
 
 const getViewSourceId = (item: any): any => {
@@ -546,7 +905,413 @@ const getPayloadSourceType = (item: any): any => {
   if (rawType.includes("todo") || rawType.includes("to_do") || rawId.startsWith("todo-")) return "todo";
   if (rawType.includes("task") || rawId.startsWith("task-")) return "task";
 
-  return null;
+  return "note";
+};
+
+// ── Tasks / Issues / To-Do column with a 7 / 14 / 30 day range filter ──
+const TASK_RANGE_OPTIONS = [
+  { value: 7, label: "7 Days" },
+  { value: 14, label: "14 Days" },
+  { value: 30, label: "30 Days" },
+];
+
+const parseDateValue = (value: any): Date | null => {
+  if (!value) return null;
+  const dt = new Date(value);
+  return isNaN(dt.getTime()) ? null : dt;
+};
+
+// Start date of an item — explicit start_date if the task/issue/todo has one,
+// warna created_at (jab item raise hua).
+const getItemStartDateValue = (item: any, detail?: any): Date | null => {
+  const d = item?.originalData || detail || {};
+  return (
+    parseDateValue(item?.start_date) ||
+    parseDateValue(d?.start_date) ||
+    // Tasks par start `expected_start_date` / `estimated_start_date` me aata hai.
+    parseDateValue(item?.expected_start_date) ||
+    parseDateValue(d?.expected_start_date) ||
+    parseDateValue(item?.estimated_start_date) ||
+    parseDateValue(d?.estimated_start_date) ||
+    parseDateValue(item?.from_date) ||
+    parseDateValue(d?.from_date) ||
+    parseDateValue(item?.created_at) ||
+    parseDateValue(d?.created_at)
+  );
+};
+
+// Target/due date of an item (from the row itself or the fetched detail).
+const getItemTargetDateValue = (item: any, detail?: any): Date | null => {
+  const d = item?.originalData || detail || {};
+  return (
+    parseDateValue(item?.target_date) ||
+    parseDateValue(item?.due_date) ||
+    // tasks_issues rows carry end_date on the row itself (daily_meeting API).
+    parseDateValue(item?.end_date) ||
+    parseDateValue(d?.target_date) ||
+    parseDateValue(d?.due_date) ||
+    parseDateValue(d?.end_date)
+  );
+};
+
+// Row ke paas khud dono dates (start + end) hain? Na hon to detail fetch karke
+// dates laani padti hain.
+const itemHasOwnDates = (item: any): boolean => {
+  const d = item?.originalData || {};
+  const hasStart = !!(
+    item?.start_date ||
+    item?.expected_start_date ||
+    item?.estimated_start_date ||
+    item?.from_date ||
+    item?.created_at ||
+    d?.start_date ||
+    d?.expected_start_date ||
+    d?.estimated_start_date ||
+    d?.from_date ||
+    d?.created_at
+  );
+  const hasEnd = !!(
+    item?.target_date ||
+    item?.due_date ||
+    item?.end_date ||
+    d?.target_date ||
+    d?.due_date ||
+    d?.end_date
+  );
+  return hasStart && hasEnd;
+};
+
+/**
+ * Range filter (7 / 14 / 30 days).
+ *
+ * Window = aaj se N din pehle tak, aaj included: [aaj-(N-1) 00:00, aaj 23:59].
+ * Item us window ka maana jata hai jab uska [start, end] span window ko touch
+ * karta ho — yaani:
+ *   • target date window ke andar ho (last N din me due / overdue hua), YA
+ *   • kaam window me ya usse pehle shuru hua ho aur ab bhi chal raha ho
+ *     (target aaj ya aage).
+ * Window se **purana** item (end window se pehle hi nikal gaya) bahar rehta hai,
+ * isliye 7 → 14 → 30 badalne par list aur count badalte hain.
+ *
+ * Sirf date-less pending rows chhoot jaati hain: unhe kisi window me rakha nahi
+ * ja sakta, aur chhupa dein to wo kahin dikhengi hi nahi — isliye har window me
+ * dikhati hain.
+ */
+const isItemInRange = (
+  item: any,
+  detail: any,
+  windowStart: Date,
+  windowEnd: Date
+): boolean => {
+  const start = getItemStartDateValue(item, detail);
+  const end = getItemTargetDateValue(item, detail);
+  const effectiveStart = start || end;
+  const effectiveEnd = end || start;
+  if (!effectiveStart || !effectiveEnd)
+    return !isCompletedStatus(getItemStatus(item));
+  if (effectiveEnd.getTime() < windowStart.getTime()) return false;
+  if (effectiveStart.getTime() > windowEnd.getTime()) return false;
+  return true;
+};
+
+const TASK_STATUS_BUCKETS = [
+  {
+    key: "overdue",
+    label: "Overdue",
+    statuses: ["overdue", "overdued"],
+    colorClass: "text-red-700",
+    headerBg: "bg-red-50",
+    pillBg: "bg-red-100 text-red-700",
+  },
+  {
+    key: "in_progress",
+    label: "In Progress",
+    statuses: ["in_progress", "in progress", "started", "wip"],
+    colorClass: "text-sky-700",
+    headerBg: "bg-sky-50",
+    pillBg: "bg-sky-100 text-sky-700",
+  },
+  {
+    key: "open",
+    label: "Open",
+    statuses: ["open", "pending", "reopen", "reopened", "new", "to_do", "todo"],
+    colorClass: "text-slate-600",
+    headerBg: "bg-slate-50",
+    pillBg: "bg-slate-100 text-slate-600",
+  },
+  {
+    key: "on_hold",
+    label: "On Hold",
+    statuses: ["on_hold", "hold"],
+    colorClass: "text-orange-700",
+    headerBg: "bg-orange-50",
+    pillBg: "bg-orange-100 text-orange-700",
+  },
+];
+
+// Item ki representative date — target/due date, warna start date.
+const getItemGroupDate = (item: any, detail?: any): Date | null =>
+  getItemTargetDateValue(item, detail) || getItemStartDateValue(item, detail);
+
+const bucketItemsByStatus = (items: any[], details: Record<string, any>) => {
+  const groups: Record<string, any[]> = {};
+  TASK_STATUS_BUCKETS.forEach((bucket) => {
+    groups[bucket.key] = [];
+  });
+
+  items.forEach((item) => {
+    // Bucket item ke apne status se banta hai — Overdue sirf tab jab status
+    // hi "overdue" ho. Sirf target date nikal jane se open/in-progress item
+    // Overdue me nahi jata; uspar red "Xd Yh overdue" badge phir bhi dikhta hai
+    // (see getItemOverdueLabel), taki late hona saaf pata chale.
+    const status = String(getItemStatus(item)).toLowerCase();
+    const bucket = TASK_STATUS_BUCKETS.find((b) => b.statuses.includes(status));
+    groups[bucket ? bucket.key : "open"].push(item);
+  });
+
+  return groups;
+};
+
+// Window = last N days including today: [today - (days - 1) 00:00, today 23:59].
+const getRangeWindow = (days: number) => {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - (days - 1));
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+};
+
+const TasksIssuesTodoCard = ({
+  items,
+  showMemberBadges,
+  renderRows,
+  isAbsent = false,
+  itemProps,
+}: {
+  items: any[];
+  showMemberBadges: boolean;
+  renderRows: (
+    rows: any[],
+    showMemberBadges: boolean,
+    emptyText?: string,
+    itemProps?: (item: any) => React.HTMLAttributes<HTMLLIElement> | undefined,
+    showMeta?: boolean
+  ) => React.ReactNode;
+  isAbsent?: boolean;
+  // Makes each row draggable so it can be dropped into Tomorrow's Plan.
+  itemProps?: (item: any) => React.HTMLAttributes<HTMLLIElement> | undefined;
+}) => {
+  const [rangeDays, setRangeDays] = useState(7);
+  const [details, setDetails] = useState<Record<string, any>>({});
+
+  const sourceItems = isAbsent ? [] : items;
+
+  // tasks_issues rows from the daily_meeting API carry no dates, so pull the
+  // start (created_at/start_date) and end (target/due/end) dates on demand —
+  // range filter dono par depend karta hai (cached in itemDetailCache).
+  const pendingDetailItems = useMemo(
+    () =>
+      sourceItems
+        .map((item) => ({
+          item,
+          type: getViewSourceType(item),
+          id: getViewSourceId(item),
+        }))
+        .filter(
+          ({ item, type, id }) =>
+            !item?.originalData &&
+            !itemHasOwnDates(item) &&
+            !!id &&
+            ["task", "issue", "todo"].includes(type)
+        )
+        .map(({ type, id }) => ({ type, id, key: `${type}:${id}` })),
+    [sourceItems]
+  );
+
+  useEffect(() => {
+    let active = true;
+    const pending = pendingDetailItems.filter(({ key }) => !(key in details));
+    if (!pending.length) return;
+
+    Promise.all(
+      pending.map(async ({ type, id, key }) => {
+        const data = await fetchItemDetail(type, id);
+        // `null` bhi store karte hain — isse pata chalta hai ki fetch ho chuka
+        // hai (bhale detail na mili), aur pending vs resolved me farq rehta hai.
+        return [key, data ?? null] as [string, any];
+      })
+    ).then((entries) => {
+      if (!active) return;
+      setDetails((prev) => {
+        const missing = entries.filter(([key]) => !(key in prev));
+        if (!missing.length) return prev;
+        const merged = { ...prev };
+        missing.forEach(([key, value]) => {
+          merged[key] = value;
+        });
+        return merged;
+      });
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [pendingDetailItems, details]);
+
+  const filteredItems = useMemo(() => {
+    const { start, end } = getRangeWindow(rangeDays);
+    // Jinki detail abhi fetch ho rahi hai unhe filter na karein, warna rows
+    // pehle dikhkar gayab hote hain. Fetch resolve hone par asli date par
+    // faisla ho jaata hai.
+    const awaitingDetail = new Set(
+      pendingDetailItems
+        .filter(({ key }) => !(key in details))
+        .map(({ key }) => key)
+    );
+    return sourceItems.filter((item) => {
+      const key = `${getViewSourceType(item)}:${getViewSourceId(item)}`;
+      if (awaitingDetail.has(key)) return true;
+      return isItemInRange(item, details[key], start, end);
+    });
+  }, [sourceItems, details, rangeDays, pendingDetailItems]);
+
+  // Pehle date ke hisaab se group, phir har date ke andar
+  // Overdue / In Progress / Open / On Hold buckets.
+  const dateGroups = useMemo(() => {
+    const groups = new Map<
+      string,
+      { key: string; label: string; sortValue: number; items: any[] }
+    >();
+
+    filteredItems.forEach((item) => {
+      const detail =
+        details[`${getViewSourceType(item)}:${getViewSourceId(item)}`];
+      const date = getItemGroupDate(item, detail);
+      const key = date
+        ? `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+        : "no-date";
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          label: (date && fmtItemDate(date.toISOString())) || "No date",
+          sortValue: date
+            ? new Date(
+              date.getFullYear(),
+              date.getMonth(),
+              date.getDate()
+            ).getTime()
+            : Number.POSITIVE_INFINITY,
+          items: [],
+        });
+      }
+      groups.get(key)!.items.push(item);
+    });
+
+    return Array.from(groups.values())
+      .sort((a, b) => a.sortValue - b.sortValue)
+      .map((group) => ({
+        ...group,
+        buckets: bucketItemsByStatus(group.items, details),
+      }));
+  }, [filteredItems, details]);
+
+  return (
+    <div className="bg-white border border-[#E8E2DE] rounded-xl p-0 overflow-hidden">
+      <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+        <NotepadText className="w-4 h-4 shrink-0 text-[#DA7756]" />
+        <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase min-w-0 truncate">
+          Tasks, Issues &amp; To Do ({filteredItems.length})
+        </h4>
+        <div className="relative ml-auto shrink-0">
+          <select
+            value={rangeDays}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => setRangeDays(Number(e.target.value))}
+            className="appearance-none cursor-pointer rounded-full border border-[#E8E2DE] bg-white pl-3 pr-7 py-1 text-[11px] font-semibold text-neutral-600 focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)]"
+          >
+            {TASK_RANGE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
+        </div>
+      </div>
+      <div className="p-4">
+        {filteredItems.length === 0 ? (
+          renderRows([], showMemberBadges)
+        ) : (
+          <div className="space-y-4">
+            {dateGroups.map((group) => (
+              <div key={group.key} className="space-y-2">
+                {/* Date heading — items us din ki target (ya start) date par */}
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-3 h-3 shrink-0 text-neutral-400" />
+                  <span className="text-[11px] font-extrabold tracking-wide text-neutral-500">
+                    {group.label}
+                  </span>
+                  <span className="h-px flex-1 bg-[#EFE7E2]" />
+                  <span className="text-[10px] font-bold text-neutral-400">
+                    {group.items.length}
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {TASK_STATUS_BUCKETS.map((bucket) => {
+                    const bucketItems = group.buckets[bucket.key] || [];
+                    if (!bucketItems.length) return null;
+                    return (
+                      <div key={bucket.key} className="space-y-1.5">
+                        <div
+                          className={cn(
+                            "flex items-center gap-2 px-2 py-1.5 rounded-[6px]",
+                            bucket.headerBg
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "flex-1 text-[10px] font-black uppercase tracking-wider",
+                              bucket.colorClass
+                            )}
+                          >
+                            {bucket.label}
+                          </span>
+                          <span
+                            className={cn(
+                              "rounded-full px-1.5 py-0.5 text-[9px] font-bold",
+                              bucket.pillBg
+                            )}
+                          >
+                            {bucketItems.length}
+                          </span>
+                        </div>
+                        {renderRows(
+                          bucketItems,
+                          showMemberBadges,
+                          undefined,
+                          itemProps,
+                          // Date / overdue / effort meta sirf isi column me
+                          true
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const getApiErrorMessage = (responseData: any, fallback: string) => {
+  if (Array.isArray(responseData?.errors) && responseData.errors.length > 0) {
+    return responseData.errors.join(", ");
+  }
+  return responseData?.message || responseData?.error || fallback;
 };
 
 const mergeUniqueItems = (primary: any[] = [], fallback: any[] = []) => {
@@ -639,6 +1404,16 @@ const formatSelfRating = (rating: any): string => {
   return ratingText.includes("/") ? ratingText : `${ratingText}/10`;
 };
 
+// ── Report cards are titled by department, not by the HOD's own name ──
+// Falls back to the person's name when the department is missing or the API
+// sends the literal placeholder "No Department".
+const formatDepartmentLabel = (department: any, fallbackName?: any): string => {
+  const dept = String(department ?? "").trim();
+  const name = String(fallbackName ?? "").trim();
+  if (!dept || /^no\s*department$/i.test(dept)) return name || "No Department";
+  return /department$/i.test(dept) ? dept : `${dept} Department`;
+};
+
 // ── Strip missed-members prefix from textarea value before saving ──
 const stripMissedMembersPrefix = (text: string): string => {
   const missedHeaderMatch = text.match(
@@ -718,12 +1493,21 @@ const DailyTab = ({
   >(() => externalSelectedMeetingId || null);
   const [membersList, setMembersList] = useState<any[]>([]);
   const [selectedMember, setSelectedMember] = useState("all");
+  const [selectedHod, setSelectedHod] = useState("all");
+  const [selectedTag, setSelectedTag] = useState("all");
+  const [selectedProject, setSelectedProject] = useState("all");
+  // Tag/Project filters only exist when the org has PATM linked to Business
+  // Compass. Read once — the flag is written at organization-select time.
+  const patmBcLinked = React.useMemo(() => isPatmBcLinked(), []);
   const [dailyData, setDailyData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [calendarDateRow, setCalendarDateRow] = useState<any[]>([]);
   const isArrowNav = React.useRef(false);
   const [expandedReports, setExpandedReports] = useState<any[]>([]);
+  const [expandedDepartments, setExpandedDepartments] = useState<string[]>([]);
+  const [reportMemberFilters, setReportMemberFilters] = useState<Record<string, string>>({});
+  const [reportProjectFilters, setReportProjectFilters] = useState<Record<string, string>>({});
   const [selectedReports, setSelectedReports] = useState<any[]>([]);
   const [meetingNotes, setMeetingNotes] = useState("");
   const [savedMeetingNotes, setSavedMeetingNotes] = useState("");
@@ -845,6 +1629,17 @@ const DailyTab = ({
     setSelectedMeetingIdState(meetingId);
     if (meetingId) onSelectedMeetingChange?.(String(meetingId));
   };
+
+  // Every dependent filter's option list is derived from the selected meeting's
+  // payload, so a selection carried across meetings would filter out everything.
+  useEffect(() => {
+    setSelectedMember("all");
+    setSelectedHod("all");
+    setSelectedTag("all");
+    setSelectedProject("all");
+    setReportMemberFilters({});
+    setReportProjectFilters({});
+  }, [selectedMeetingId]);
 
   const navigate = useNavigate();
 
@@ -1021,7 +1816,11 @@ const DailyTab = ({
             );
             const pureMissed = [
               ...allReports
-                .filter((r: any) => r.status === "pending" && !r.daily_report)
+                .filter(
+                  (r: any) =>
+                    (r.status === "pending" && !r.daily_report) ||
+                    isAdminAddedMissedPlanReport(r)
+                )
                 .map((r: any) => r.name),
               ...(json.data?.missed_members || [])
                 .filter(
@@ -1097,7 +1896,13 @@ const DailyTab = ({
   // ── updateJournal ──
   const updateJournal = async (
     report: any,
-    patch: { self_rating?: number; tomorrow_plan_item?: string }
+    patch: {
+      self_rating?: number;
+      tomorrow_plan_item?: string;
+      // Full row appended as-is (drag & drop from the Tasks column) so the plan
+      // entry keeps its task/issue identity instead of degrading to a title.
+      tomorrow_plan_entry?: any;
+    }
   ) => {
     // The card renders the member's OWN daily report (resolveRawSource →
     // daily_report.report_data), so updates must target that same record.
@@ -1116,15 +1921,18 @@ const DailyTab = ({
     const baseReportData =
       report.daily_report?.report_data || report.report_data || rawSource || {};
 
-    if (patch.tomorrow_plan_item) {
+    const planEntry =
+      patch.tomorrow_plan_entry ??
+      (patch.tomorrow_plan_item
+        ? { title: patch.tomorrow_plan_item.trim() }
+        : null);
+
+    if (planEntry) {
       const existingPlan: any[] = Array.isArray(baseReportData.tomorrow_plan)
         ? baseReportData.tomorrow_plan
         : [];
 
-      const updatedPlan = [
-        ...existingPlan,
-        { title: patch.tomorrow_plan_item.trim() },
-      ];
+      const updatedPlan = [...existingPlan, planEntry];
       const updatedReportData = {
         ...baseReportData,
         tomorrow_plan: updatedPlan,
@@ -1216,10 +2024,23 @@ const DailyTab = ({
     }
   };
 
-  const toggleExpand = (id: any) =>
+  const toggleExpand = (id: any) => {
+    const isCollapsing = expandedReports.includes(id);
     setExpandedReports((p) =>
       p.includes(id) ? p.filter((r) => r !== id) : [...p, id]
     );
+    // Card band karne par uske andar ke Member/Project filters reset
+    if (!isCollapsing) return;
+    const cardKey = String(id);
+    const clearCardFilter = (prev: Record<string, string>) => {
+      if (!(cardKey in prev)) return prev;
+      const next = { ...prev };
+      delete next[cardKey];
+      return next;
+    };
+    setReportMemberFilters(clearCardFilter);
+    setReportProjectFilters(clearCardFilter);
+  };
 
   const buildCombinedData = (allReports: any[]) => {
     const allAccomplishments: any[] = [];
@@ -1492,8 +2313,7 @@ const DailyTab = ({
 
       const responseData = await res.json().catch(() => null);
       if (!res.ok || (responseData && responseData.success === false)) {
-        const errorMsg =
-          responseData?.message || responseData?.error || `HTTP ${res.status}`;
+        const errorMsg = getApiErrorMessage(responseData, `HTTP ${res.status}`);
         throw new Error(errorMsg);
       }
 
@@ -1518,7 +2338,7 @@ const DailyTab = ({
 
       await loadDailyData(true);
     } catch (err: any) {
-      toast.error("Error saving meeting: " + err.message);
+      toast.error(err.message || "Error saving meeting");
     } finally {
       setIsSavingMeeting(false);
     }
@@ -1574,8 +2394,7 @@ const DailyTab = ({
 
       const responseData = await res.json().catch(() => null);
       if (!res.ok || (responseData && responseData.success === false)) {
-        const errorMsg =
-          responseData?.message || responseData?.error || `HTTP ${res.status}`;
+        const errorMsg = getApiErrorMessage(responseData, `HTTP ${res.status}`);
         throw new Error(errorMsg);
       }
 
@@ -1677,8 +2496,7 @@ const DailyTab = ({
 
       const responseData = await res.json().catch(() => null);
       if (!res.ok || (responseData && responseData.success === false)) {
-        const errorMsg =
-          responseData?.message || responseData?.error || `HTTP ${res.status}`;
+        const errorMsg = getApiErrorMessage(responseData, `HTTP ${res.status}`);
         throw new Error(errorMsg);
       }
 
@@ -1694,7 +2512,16 @@ const DailyTab = ({
 
   // ── Derived Data ──
   const dateRow = dailyData?.date_row || [];
-  const calendarRow = calendarDateRow.length > 0 ? calendarDateRow : dateRow;
+  const baseCalendarRow = calendarDateRow.length > 0 ? calendarDateRow : dateRow;
+  const selectedMemberCalendarRow = getSelectedMemberCalendarRow(
+    dailyData,
+    selectedMember,
+    baseCalendarRow
+  );
+  const calendarRow =
+    selectedMemberCalendarRow.length > 0
+      ? selectedMemberCalendarRow
+      : baseCalendarRow;
   const config = dailyData?.config;
   const topDateStr = dailyData?.date || activeDate;
   const isNextDateDisabled = activeDate >= getLocalDateKey();
@@ -1719,7 +2546,148 @@ const DailyTab = ({
         sensitivity: "base",
       })
     );
-  let failedMembers = dailyData?.missed_members || [];
+  // `missed_members` carries no `department`, so resolve it from the report
+  // owners before any filter narrows `memberReports`.
+  const departmentByUserId = new Map<string, string>();
+  ((dailyData?.member_reports || dailyData?.reports || []) as any[]).forEach(
+    (report: any) => {
+      if (report?.user_id != null && report?.department)
+        departmentByUserId.set(String(report.user_id), report.department);
+    }
+  );
+  const resolveDepartmentLabel = (entity: any): string => {
+    if (typeof entity === "string") return entity;
+    const entityId = String(entity?.user_id ?? entity?.id ?? "");
+    return formatDepartmentLabel(
+      entity?.department || departmentByUserId.get(entityId),
+      entity?.name
+    );
+  };
+  // Stable grouping key for the department filter. Unlike `resolveDepartmentLabel`
+  // this never falls back to a person's name — everyone without a real department
+  // collapses into a single "No Department" bucket.
+  const NO_DEPARTMENT_KEY = "No Department";
+  const resolveDepartmentKey = (entity: any): string => {
+    const entityId = String(entity?.user_id ?? entity?.id ?? "");
+    const raw = String(
+      entity?.department || departmentByUserId.get(entityId) || ""
+    ).trim();
+    return !raw || /^no\s*department$/i.test(raw) ? NO_DEPARTMENT_KEY : raw;
+  };
+
+  // The Members dropdown is scoped to the selected meeting: its participants are
+  // the report owners (and anyone listed as missed) — not every user in the org,
+  // which is what `membersList` holds.
+  const meetingMemberOptions = (() => {
+    const nameById = new Map<string, string>();
+    const addMember = (person: any) => {
+      const personId = person?.user_id ?? person?.id;
+      if (personId == null) return;
+      const key = String(personId);
+      const name = String(person?.name || "").trim();
+      if (!nameById.has(key)) nameById.set(key, name || `User ${key}`);
+    };
+    ((dailyData?.member_reports || dailyData?.reports || []) as any[]).forEach(
+      (report: any) => {
+        addMember(report);
+      }
+    );
+    ((dailyData?.missed_members || []) as any[]).forEach(addMember);
+    return Array.from(nameById.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) =>
+        a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+      );
+  })();
+  // Before the first payload lands there is nothing to scope to, so fall back to
+  // the org-wide list rather than rendering an empty dropdown.
+  const memberFilterOptions =
+    meetingMemberOptions.length > 0
+      ? meetingMemberOptions
+      : membersList.map((m: any) => ({ value: String(m.id), label: m.name }));
+
+  // One option per department, not per HOD — two HODs in the same department
+  // (e.g. Sadanand Gupta and Vinayak Mane both in Quality Assurance) previously
+  // produced two indistinguishable rows. Options come from every member, not just
+  // HODs, so departments without an HOD are still reachable.
+  const departmentFilterKeys = Array.from(
+    new Set(memberReports.map((report: any) => resolveDepartmentKey(report)))
+  ).sort((a: string, b: string) => {
+    // Keep the catch-all bucket last.
+    if (a === NO_DEPARTMENT_KEY) return 1;
+    if (b === NO_DEPARTMENT_KEY) return -1;
+    return a.localeCompare(b, undefined, { sensitivity: "base" });
+  });
+  const hodOptions = [
+    { value: "all", label: "All Departments" },
+    ...departmentFilterKeys.map((key: string) => ({
+      value: key,
+      label: key === NO_DEPARTMENT_KEY ? key : `${key} Department`,
+    })),
+  ];
+
+  const getReportFilterItems = (report: any) => {
+    const reportData = normalizeReportData(resolveRawSource(report));
+    return [
+      ...reportData.accomplishments,
+      ...reportData.tasks_issues,
+      ...reportData.tomorrow_plan,
+    ];
+  };
+  const addFilterOption = (map: Map<string, string>, label: string) => {
+    const cleanLabel = String(label || "").trim();
+    if (!cleanLabel) return;
+    const key = cleanLabel.toLowerCase();
+    if (!map.has(key)) map.set(key, cleanLabel);
+  };
+  const tagOptionMap = new Map<string, string>();
+  const projectOptionMap = new Map<string, string>();
+  memberReports.forEach((report: any) => {
+    getReportFilterItems(report).forEach((item: any) => {
+      getItemTagNames(item).forEach((tag) => addFilterOption(tagOptionMap, tag));
+      addFilterOption(projectOptionMap, getItemProjectName(item));
+    });
+  });
+  const tagOptions = [
+    { value: "all", label: "All Tags" },
+    ...Array.from(tagOptionMap.entries()).map(([value, label]) => ({
+      value,
+      label,
+    })),
+  ];
+  const projectOptions = [
+    { value: "all", label: "All Projects" },
+    ...Array.from(projectOptionMap.entries()).map(([value, label]) => ({
+      value,
+      label,
+    })),
+  ];
+  const adminPlanMissedMembers = memberReports.filter(
+    isAdminAddedMissedPlanReport
+  );
+  const adminPlanMissedById = new Map(
+    adminPlanMissedMembers.map((report: any) => [String(report.user_id), report])
+  );
+  const baseMissedMembers = (dailyData?.missed_members || []).map(
+    (member: any) => {
+      const memberId = String(member.id || member.user_id);
+      const planReport = adminPlanMissedById.get(memberId);
+      return planReport ? { ...planReport, ...member, id: memberId } : member;
+    }
+  );
+  const failedMemberIdSet = new Set(
+    baseMissedMembers.map((member: any) => String(member.id || member.user_id))
+  );
+  let failedMembers = [
+    ...baseMissedMembers,
+    ...adminPlanMissedMembers
+      .filter((report: any) => !failedMemberIdSet.has(String(report.user_id)))
+      .map((report: any) => ({
+        ...report,
+        id: report.user_id,
+        user_id: report.user_id,
+      })),
+  ];
   const absentSubmittedUserIds = new Set(
     memberReports
       .filter((report: any) => isReportAbsent(report, resolveRawSource(report)))
@@ -1729,12 +2697,35 @@ const DailyTab = ({
     (member: any) =>
       !absentSubmittedUserIds.has(String(member.id || member.user_id))
   );
+  if (selectedHod !== "all") {
+    memberReports = memberReports.filter(
+      (r: any) => resolveDepartmentKey(r) === selectedHod
+    );
+    failedMembers = failedMembers.filter(
+      (m: any) => resolveDepartmentKey(m) === selectedHod
+    );
+  }
   if (selectedMember !== "all") {
     memberReports = memberReports.filter(
       (r: any) => String(r.user_id) === selectedMember
     );
     failedMembers = failedMembers.filter(
       (m: any) => String(m.id) === selectedMember
+    );
+  }
+  if (selectedTag !== "all" || selectedProject !== "all") {
+    memberReports = memberReports.filter((report: any) =>
+      getReportFilterItems(report).some((item: any) => {
+        const matchesTag =
+          selectedTag === "all" ||
+          getItemTagNames(item).some(
+            (tag) => tag.toLowerCase() === selectedTag
+          );
+        const matchesProject =
+          selectedProject === "all" ||
+          getItemProjectName(item).toLowerCase() === selectedProject;
+        return matchesTag && matchesProject;
+      })
     );
   }
 
@@ -1783,6 +2774,26 @@ const DailyTab = ({
     }
   };
 
+  // Department card ka checkbox — us department ke saare reports ek saath
+  // select/deselect. Jo already meeting me check-in ho chuke hain (locked)
+  // unhe chhod deta hai.
+  const setDepartmentSelection = (reports: any[], checked: boolean) => {
+    const ids = reports
+      .filter((report: any) => report.checked_in_meeting !== true)
+      .map((report: any) => report.journal_id || report.user_id);
+    if (!ids.length) return;
+
+    setSelectedReports((prev) => {
+      if (checked) {
+        const existing = new Set(prev.map((id) => String(id)));
+        const additions = ids.filter((id: any) => !existing.has(String(id)));
+        return additions.length ? [...prev, ...additions] : prev;
+      }
+      const removing = new Set(ids.map((id: any) => String(id)));
+      return prev.filter((id) => !removing.has(String(id)));
+    });
+  };
+
   const handleFeedback = () => {
     navigate("/admin-compass/feedback-dashboard");
   };
@@ -1810,6 +2821,113 @@ const DailyTab = ({
     }
   };
 
+  // ── Drag a Tasks/Issues/Todos row → drop it into Tomorrow's Plan ──
+  // Tomorrow's Plan is the only drop target, and only within the same report
+  // card (`cardId`), so nothing can be dragged across members.
+  const [draggedPlanItem, setDraggedPlanItem] = useState<{
+    cardId: any;
+    report: any;
+    item: any;
+  } | null>(null);
+  const [planDropTargetId, setPlanDropTargetId] = useState<any>(null);
+
+  const clearPlanDrag = () => {
+    setDraggedPlanItem(null);
+    setPlanDropTargetId(null);
+  };
+
+  const buildPlanEntryFromItem = (item: any) => {
+    const ownerName = getItemMemberName(item);
+    return {
+      title: getItemTitle(item),
+      is_starred: false,
+      source_type: item.source_type ?? item.sourceType ?? getViewSourceType(item),
+      source_id: item.source_id ?? item.sourceId ?? getViewSourceId(item),
+      ...(ownerName
+        ? { owner_name: ownerName, owner_id: item.owner_id ?? item.user_id }
+        : {}),
+    };
+  };
+
+  const handleDropItemToPlan = async (report: any, item: any) => {
+    const title = getItemTitle(item).trim();
+    if (!title) {
+      toast.error("This item has no title to add.");
+      return;
+    }
+
+    const currentPlan = normalizeReportData(resolveRawSource(report)).tomorrow_plan;
+    const alreadyPlanned = currentPlan.some(
+      (planItem: any) =>
+        getItemTitle(planItem).trim().toLowerCase() === title.toLowerCase()
+    );
+    if (alreadyPlanned) {
+      toast.info("Already in tomorrow's plan.");
+      return;
+    }
+
+    setIsSavingPlan(true);
+    const ok = await updateJournal(report, {
+      tomorrow_plan_entry: buildPlanEntryFromItem(item),
+    });
+    setIsSavingPlan(false);
+    if (ok) {
+      toast.success("Added to tomorrow's plan!");
+      await loadDailyData(true);
+    }
+  };
+
+  const handleAddMissedMemberPlan = async (member: any) => {
+    const text = quickActionText.trim();
+    if (!text) {
+      toast.error("Please enter a plan item.");
+      return;
+    }
+
+    const userId = member?.user_id || member?.id || member?.user?.id;
+    if (!userId) {
+      toast.error("User ID not found for this member.");
+      return;
+    }
+
+    const currentPlan = normalizeReportData(resolveRawSource(member)).tomorrow_plan;
+
+    setIsSavingPlan(true);
+    try {
+      const res = await fetch(
+        `${getBaseUrl()}/user_journals/upsert_member_tomorrow_plan`,
+        {
+          method: "POST",
+          headers: {
+            ...getAuthHeaders(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_id: Number(userId) || userId,
+            report_date: activeDate,
+            tomorrow_plan: [
+              ...currentPlan,
+              {
+                title: text,
+                is_starred: false,
+              },
+            ],
+          }),
+        }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      toast.success("Added to tomorrow's plan!");
+      setQuickActionOpenId(null);
+      setQuickActionText("");
+      await loadDailyData(true);
+    } catch (err: any) {
+      toast.error("Error updating plan: " + err.message);
+    } finally {
+      setIsSavingPlan(false);
+    }
+  };
+
   const resetFeedbackForm = () => {
     setFeedbackRating(0);
     setFeedbackMessage("");
@@ -1831,7 +2949,266 @@ const DailyTab = ({
     }, 180);
   };
 
-  const visibleReportIds = memberReports.map((r: any) =>
+  const renderCompactReportItems = (
+    items: any[] = [],
+    emptyText = "None recorded."
+  ) => {
+    if (!items.length) {
+      return <p className="text-xs text-neutral-300 italic">{emptyText}</p>;
+    }
+
+    return (
+      <ul className="space-y-2">
+        {items.map((item: any, index: number) => {
+          const type = getViewSourceType(item);
+          const hasDetails = ["task", "issue", "todo"].includes(type);
+          const typePillStyle =
+            type === "issue"
+              ? "bg-red-100 text-red-700 border-red-200"
+              : type === "todo"
+                ? "bg-violet-100 text-violet-700 border-violet-200"
+                : type === "task"
+                  ? "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30"
+                  : "bg-gray-100 text-gray-600 border-gray-200";
+
+          const typeLabel =
+            type === "task"
+              ? "Task"
+              : type === "issue"
+                ? "Issue"
+                : type === "todo"
+                  ? "Todo"
+                  : "Note";
+
+          return (
+            <li
+              key={index}
+              title={hasDetails ? `${typeLabel} · Click to open` : typeLabel}
+              onClick={hasDetails ? () => handleViewTaskIssueTodoItem(item) : undefined}
+              className={cn(
+                "flex flex-col rounded-[10px] border border-gray-100 bg-gray-50/70 transition-all",
+                hasDetails && "cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]"
+              )}
+            >
+              <div className="flex items-center gap-2 px-3 py-2.5">
+                <span
+                  className={cn(
+                    "shrink-0 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border",
+                    typePillStyle
+                  )}
+                >
+                  {type}
+                </span>
+                <span className="flex-1 min-w-0 text-xs font-semibold text-neutral-800 leading-tight">
+                  {getItemTitle(item)}
+                </span>
+                {hasDetails && (
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleViewTaskIssueTodoItem(item);
+                    }}
+                    className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                    title={`View ${type}`}
+                  >
+                    <Eye className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              <ReportItemMeta item={item} />
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
+  const renderAccomplishmentRows = (
+    items: any[] = [],
+    _showMemberBadge = false,
+    emptyText = "None recorded.",
+    // Optional per-row props — used to make the Tasks column rows draggable.
+    itemProps?: (item: any) => React.HTMLAttributes<HTMLLIElement> | undefined,
+    // Date / overdue / effort / active time sirf Tasks, Issues & To-Do column
+    // me dikhti hai — Accomplishments, Tomorrow's Plan aur Not Accomplished
+    // Plan me nahi.
+    showMeta = false
+  ) => {
+    if (!items.length) {
+      return <p className="px-1 py-2 text-xs text-neutral-300 italic">{emptyText}</p>;
+    }
+
+    return (
+      <ul className="space-y-3">
+        {items.map((item: any, index: number) => {
+          const type = getViewSourceType(item);
+          const hasDetails = ["task", "issue", "todo"].includes(type);
+          // Design: tasks ka checklist glyph, issues ka alert-circle glyph aur
+          // todos ka list-todo glyph — teeno orange; notes ka blue
+          // document-with-pen glyph (notes ka type tag hata diya gaya hai,
+          // icon hi unhe identify karta hai).
+          const isNotepadLike = type !== "note";
+          const ItemIcon =
+            type === "task"
+              ? TaskChecksIcon
+              : type === "issue"
+                ? CircleAlert
+                : type === "todo"
+                  ? ListTodo
+                  : FilePen;
+          // Type ka tag hata diya gaya hai — icon hi item ka type batata hai.
+          const typeLabel =
+            type === "task"
+              ? "Task"
+              : type === "issue"
+                ? "Issue"
+                : type === "todo"
+                  ? "Todo"
+                  : "Note";
+          // `__ownerTag` display-only fallback hai — report owner (HOD) ki apni
+          // rows par bhi badge dikhe (see `withOwnerTag`).
+          const memberName = getItemMemberName(item) || item?.__ownerTag || "";
+          const extraProps = itemProps?.(item);
+          // Poori row par hover tooltip — sirf icon par nahi, taki admin ko row
+          // ke kisi bhi hisse par hover karke pata chal jaye ki ye Task / Issue
+          // / Todo / Note hai, aur khulne wali rows par hint bhi mile.
+          const rowTooltip = hasDetails
+            ? `${typeLabel} · Click to open`
+            : typeLabel;
+
+          return (
+            <li
+              key={`${getItemTitle(item)}-${memberName}-${index}`}
+              title={rowTooltip}
+              onClick={hasDetails ? () => handleViewTaskIssueTodoItem(item) : undefined}
+              {...extraProps}
+              className={cn(
+                "flex min-h-[54px] flex-col rounded-[10px] border border-[#ECEFF3] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)]",
+                hasDetails &&
+                "row-action cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]",
+                extraProps?.className
+              )}
+            >
+              <div className="flex flex-1 items-center gap-3 px-4 py-3">
+                <ItemIcon
+                  // Global black overrides (index.css) se bachne ke liye —
+                  // color inline --glyph-color se aata hai, kyunki plain
+                  // Tailwind class un `!important` rules se haar jaati hai.
+                  data-icon-color="true"
+                  title={typeLabel}
+                  style={
+                    {
+                      "--glyph-color": isNotepadLike ? "#F36A3D" : "#4BA3F2",
+                    } as React.CSSProperties
+                  }
+                  className="h-[18px] w-[18px] shrink-0"
+                />
+                <span className="min-w-0 flex-1 text-[13px] font-medium leading-[16px] text-[#2B2F38]">
+                  {getItemTitle(item)}
+                </span>
+                {memberName && (
+                  <span
+                    className={cn(
+                      "flex h-[22px] min-w-[22px] shrink-0 items-center justify-center rounded-full px-1.5 text-[9px] font-extrabold leading-none",
+                      getMemberBadgeClass(memberName)
+                    )}
+                    title={memberName}
+                  >
+                    {getMemberShortName(memberName)}
+                  </span>
+                )}
+              </div>
+              {/* Target date + overdue + estimated effort + active time */}
+              {showMeta && <ReportItemMeta item={item} />}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
+  const visibleReports = memberReports.filter(
+    (report: any) =>
+      !isAdminAddedMissedPlanReport(report) &&
+      (report.status !== "pending" || !!report.daily_report)
+  );
+
+  // Report cards are grouped one level up by department — a department card
+  // opens to its managers, and each manager card opens to their own report.
+  const departmentGroups = (() => {
+    const groups = new Map<string, { key: string; label: string; reports: any[] }>();
+    visibleReports.forEach((report: any) => {
+      const key = resolveDepartmentKey(report);
+      if (!groups.has(key))
+        groups.set(key, {
+          key,
+          label: key === NO_DEPARTMENT_KEY ? key : `${key} Department`,
+          reports: [],
+        });
+      groups.get(key)!.reports.push(report);
+    });
+    return Array.from(groups.values()).sort((a, b) => {
+      // Keep the catch-all bucket last.
+      if (a.key === NO_DEPARTMENT_KEY) return 1;
+      if (b.key === NO_DEPARTMENT_KEY) return -1;
+      return a.label.localeCompare(b.label, undefined, { sensitivity: "base" });
+    });
+  })();
+
+  // Same one-level-up grouping for the "failed to submit" list. Keys are
+  // prefixed so a department card here doesn't share expand state with the
+  // report card of the same department above.
+  const failedMemberGroups = (() => {
+    const groups = new Map<string, { key: string; label: string; members: any[] }>();
+    failedMembers.forEach((member: any) => {
+      const key = resolveDepartmentKey(member);
+      if (!groups.has(key))
+        groups.set(key, {
+          key: `missed:${key}`,
+          label: key === NO_DEPARTMENT_KEY ? key : `${key} Department`,
+          members: [],
+        });
+      groups.get(key)!.members.push(member);
+    });
+    return Array.from(groups.values()).sort((a, b) => {
+      if (a.label === NO_DEPARTMENT_KEY) return 1;
+      if (b.label === NO_DEPARTMENT_KEY) return -1;
+      return a.label.localeCompare(b.label, undefined, { sensitivity: "base" });
+    });
+  })();
+
+  // Saare meeting members ek hi department ke hon to department-wise
+  // segregation ka matlab nahi — us case me department card skip karke
+  // member cards seedhe flat list me dikhte hain.
+  const showDepartmentGrouping =
+    new Set<string>([
+      ...visibleReports.map((report: any) => resolveDepartmentKey(report)),
+      ...failedMembers.map((member: any) => resolveDepartmentKey(member)),
+    ]).size > 1;
+
+  const toggleDepartment = (key: string) =>
+    setExpandedDepartments((prev) =>
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]
+    );
+
+  // Only one department in view (usually because the Department filter is set)
+  // → open it straight away instead of making the user click twice.
+  const soleDepartmentKey =
+    departmentGroups.length === 1 ? departmentGroups[0].key : null;
+  const soleFailedDepartmentKey =
+    failedMemberGroups.length === 1 ? failedMemberGroups[0].key : null;
+  useEffect(() => {
+    const keys = [soleDepartmentKey, soleFailedDepartmentKey].filter(
+      Boolean
+    ) as string[];
+    if (!keys.length) return;
+    setExpandedDepartments((prev) => {
+      const missing = keys.filter((key) => !prev.includes(key));
+      return missing.length ? [...prev, ...missing] : prev;
+    });
+  }, [soleDepartmentKey, soleFailedDepartmentKey]);
+
+  const visibleReportIds = visibleReports.map((r: any) =>
     String(r.journal_id || r.user_id)
   );
   const areAllVisibleReportsSelected =
@@ -1841,10 +3218,6 @@ const DailyTab = ({
     );
 
   const noMeetings = meetingsLoaded && meetingsList.length === 0;
-
-  const visibleReports = memberReports.filter(
-    (report: any) => report.status !== "pending" || !!report.daily_report
-  );
 
   return (
     <div
@@ -1863,6 +3236,38 @@ const DailyTab = ({
           }
           .feedback-panel-enter { animation: feedbackPanelIn 180ms ease-out both; }
           .feedback-panel-exit { animation: feedbackPanelOut 180ms ease-in both; }
+
+          /* Dropdown open / close */
+          @keyframes ddMenuIn {
+            from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes ddMenuOut {
+            from { opacity: 1; transform: translateY(0) scale(1); }
+            to { opacity: 0; transform: translateY(-4px) scale(0.98); }
+          }
+          .dd-menu-enter { animation: ddMenuIn 150ms cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: top center; }
+          .dd-menu-exit { animation: ddMenuOut 120ms ease-in both; transform-origin: top center; }
+          .dd-option { transition: background-color 120ms ease, color 120ms ease, padding-left 120ms ease; }
+          .dd-option:hover { padding-left: 20px; }
+
+          /* Expanding a report card */
+          @keyframes cardBodyIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .card-body-enter { animation: cardBodyIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+          /* Row click → navigate / open details */
+          .row-action { transition: transform 130ms ease, box-shadow 130ms ease, border-color 130ms ease, background-color 130ms ease; }
+          .row-action:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15,23,42,0.07); }
+          .row-action:active { transform: scale(0.985); box-shadow: none; }
+
+          @media (prefers-reduced-motion: reduce) {
+            .dd-menu-enter, .dd-menu-exit, .card-body-enter,
+            .feedback-panel-enter, .feedback-panel-exit { animation: none !important; }
+            .row-action, .row-action:hover, .row-action:active { transform: none; }
+          }
         `}
       </style>
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6 items-stretch">
@@ -1870,12 +3275,10 @@ const DailyTab = ({
         <div className="h-full">
           {/* ══ CALENDAR CARD ══ */}
           <div className="rounded-2xl border border-gray-200 bg-white shadow-sm h-full flex flex-col">
-            <div className="p-5">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div className="p-5 flex-1 flex flex-col justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="bg-blue-50 p-2 rounded-lg">
-                    <Calendar size={20} className="text-blue-600" />
-                  </div>
+                  <Calendar size={20} className="text-neutral-500 shrink-0" />
                   <span className="text-base sm:text-lg font-bold text-[#1a1a1a] tracking-tight leading-tight">
                     Daily Meeting for {topDateStr}
                   </span>
@@ -1928,7 +3331,7 @@ const DailyTab = ({
                   </div>
                 </div>
               ) : (
-                <div className="flex gap-4 overflow-x-auto overflow-y-visible pb-8 pt-4 scrollbar-none snap-x">
+                <div className="grid grid-cols-7 gap-2 sm:gap-3 overflow-y-visible pb-3 pt-2">
                   {calendarRow.map((dateItem: any) => {
                     const isSelected = dateItem.full_date === activeDate;
                     let rawStatus = dateItem.status;
@@ -1973,13 +3376,13 @@ const DailyTab = ({
                             : () => setActiveDate(dateItem.full_date)
                         }
                         className={cn(
-                          "min-w-[80px] h-[80px] rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all shrink-0 snap-center relative",
+                          "w-full h-[104px] rounded-xl flex flex-col items-center justify-center gap-1.5 transition-all relative",
                           isHoliday || isUpcoming
                             ? "cursor-not-allowed opacity-70"
                             : "cursor-pointer"
                         )}
                         style={{
-                          background: isSelected ? "#FFFFFF" : "#F5F5F5",
+                          background: isSelected ? "#FFFFFF" : "#F5F3EE",
                           border: isSelected
                             ? "1.5px solid #DA7756"
                             : "1.5px solid transparent",
@@ -1992,50 +3395,29 @@ const DailyTab = ({
                             ? "Holiday - not selectable"
                             : isUpcoming
                               ? "Upcoming - not selectable"
-                              : undefined
+                              : displayLabel
                         }
                       >
                         {topBarColor !== "transparent" && (
                           <div
-                            className="absolute top-[-1.5px] left-[-1.5px] right-[-1.5px] z-10 h-2.5 rounded-t-xl"
+                            className="absolute top-[-1.5px] left-[-1.5px] right-[-1.5px] z-10 h-3 rounded-t-xl"
                             style={{ backgroundColor: topBarColor }}
                           />
                         )}
                         {isUpcoming && !isSelected && (
                           <div
-                            className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full border border-white"
+                            className="absolute top-0 right-0 z-20 w-2.5 h-2.5 rounded-full border border-white"
                             style={{
                               backgroundColor: "#E28B8B",
                               transform: "translate(30%, -30%)",
                             }}
                           />
                         )}
-                        <span className="text-[11px] font-semibold text-gray-500 mt-2">
+                        <span className="text-[13px] font-semibold text-neutral-500 mt-2">
                           {dateItem.day}
                         </span>
-                        <span className="text-[22px] font-black text-gray-800 leading-tight">
+                        <span className="text-[24px] font-black text-neutral-800 leading-tight">
                           {dateItem.date}
-                        </span>
-                        <span
-                          className="text-[9px] font-bold uppercase tracking-tight px-1.5 py-0.5 rounded-[4px] mt-0.5"
-                          style={{
-                            color: isFilled
-                              ? "#0f9e7b"
-                              : isMissed
-                                ? "#c0392b"
-                                : isHoliday
-                                  ? "#6b7280"
-                                  : "#94a3b8",
-                            background: isFilled
-                              ? "#e6faf6"
-                              : isMissed
-                                ? "#fce8e8"
-                                : isHoliday
-                                  ? "#f1f5f9"
-                                  : "#f1f5f9",
-                          }}
-                        >
-                          {displayLabel}
                         </span>
                       </div>
                     );
@@ -2044,13 +3426,13 @@ const DailyTab = ({
               )}
 
               {!noMeetings && (
-                <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 pt-4 border-t border-gray-100 mt-3">
+                <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 pt-3 border-t border-gray-100 mt-1">
                   <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-semibold">
                     <span
                       className="w-3 h-3 rounded-sm"
                       style={{ background: "#61CDBB" }}
                     />
-                    Filled
+                    Held
                   </div>
                   <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-semibold">
                     <span
@@ -2115,21 +3497,36 @@ const DailyTab = ({
               </div>
 
               {/* Stats row */}
-              <div className="flex items-center gap-2 flex-wrap px-4 py-3 border-b border-gray-100">
-                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-[#CE7A5A] text-white shadow-sm">
-                  Total: {dailyData.total_members || 0}
-                </span>
-                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-white text-green-600 border border-green-400/50 shadow-sm">
-                  Submitted: {dailyData.submitted || 0}
-                </span>
-                <span className="px-3.5 py-1.5 rounded-2xl text-xs font-bold bg-white text-[#b91c1c] border border-[#b91c1c]/70 shadow-sm">
-                  Missed: {dailyData.missed || 0}
-                </span>
+              <div className="grid grid-cols-3 gap-3 px-4 py-3">
+                <div className="rounded-xl px-4 py-3 bg-[#F2F1EC]">
+                  <div className="text-[26px] font-black text-neutral-800 leading-none">
+                    {dailyData.total_members || 0}
+                  </div>
+                  <div className="text-[11px] font-semibold text-neutral-500 mt-1.5">
+                    Total
+                  </div>
+                </div>
+                <div className="rounded-xl px-4 py-3 bg-[#CFEDE4]">
+                  <div className="text-[26px] font-black text-neutral-800 leading-none">
+                    {dailyData.submitted || 0}
+                  </div>
+                  <div className="text-[11px] font-semibold text-neutral-600 mt-1.5">
+                    Submitted
+                  </div>
+                </div>
+                <div className="rounded-xl px-4 py-3 bg-[#F9DDD8]">
+                  <div className="text-[26px] font-black text-neutral-800 leading-none">
+                    {dailyData.missed || 0}
+                  </div>
+                  <div className="text-[11px] font-semibold text-neutral-600 mt-1.5">
+                    Missed
+                  </div>
+                </div>
               </div>
 
               {/* Meeting Notes — grows to fill height */}
               <div className="p-4 flex-1 flex flex-col">
-                <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
+                <p className="text-[11px] font-bold text-neutral-500 mb-2">
                   Meeting Notes
                 </p>
                 <textarea
@@ -2144,57 +3541,7 @@ const DailyTab = ({
                 />
               </div>
 
-              {/* Footer: Select All + Save */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-gray-50 px-4 py-3 border-t border-gray-100 mt-auto">
-                <label className="flex shrink-0 items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={areAllVisibleReportsSelected}
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 shrink-0 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
-                  />
-                  <span className="text-sm font-bold leading-tight text-[#1A1A1A] whitespace-nowrap">
-                    Select All
-                  </span>
-                </label>
-                {isActiveDateSubmitted ? (
-                  <div className="flex w-full min-w-0 flex-col items-stretch gap-2 sm:flex-1 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
-                    {!notesChanged && (
-                      <span className="min-w-0 max-w-[150px] text-[11px] leading-tight text-neutral-400 font-medium italic">
-                        Edit notes to enable update
-                      </span>
-                    )}
-                    <BtnPrimary
-                      icon={isSavingMeeting ? Loader2 : RefreshCw}
-                      onClick={handleUpdateNotesOnly}
-                      disabled={isSavingMeeting || !notesChanged}
-                      loading={isSavingMeeting}
-                    className="min-h-[44px] min-w-0 whitespace-nowrap rounded-full bg-[#6E8EEB] px-5 py-2.5 text-[13px] leading-tight hover:bg-[#5F7FE0] border-[#6E8EEB] shadow-none disabled:bg-[#9AAEF0] disabled:text-white disabled:opacity-100 sm:min-w-[156px]"
-                    >
-                      {isSavingMeeting ? "Updating..." : "Update Notes"}
-                    </BtnPrimary>
-                  </div>
-                ) : meetingJournalId ? (
-                  <BtnPrimary
-                    icon={isSavingMeeting ? Loader2 : RefreshCw}
-                    onClick={handleUpdateMeeting}
-                    disabled={isSavingMeeting}
-                    loading={isSavingMeeting}
-                    className="bg-blue-600 hover:bg-blue-700 border-blue-700"
-                  >
-                    {isSavingMeeting ? "Updating..." : "Update Meeting"}
-                  </BtnPrimary>
-                ) : (
-                  <BtnPrimary
-                    icon={isSavingMeeting ? Loader2 : FileText}
-                    onClick={handleSaveMeeting}
-                    disabled={isSavingMeeting}
-                    loading={isSavingMeeting}
-                  >
-                    {isSavingMeeting ? "Saving..." : "Save Meeting"}
-                  </BtnPrimary>
-                )}
-              </div>
+              {/* Select All + Save Meeting moved to the filter bar below */}
             </div>
           )}
         </div>
@@ -2204,11 +3551,8 @@ const DailyTab = ({
 
       {/* ══ FULL WIDTH BELOW — Filters ══ */}
       {/* ══ FILTERS ══ */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-          <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest whitespace-nowrap">
-            Meeting
-          </span>
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm px-4 py-3 flex flex-wrap items-center gap-3 sm:gap-4">
+        <div className="flex shrink-0 items-center gap-2">
           {noMeetings ? (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
               <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
@@ -2231,24 +3575,49 @@ const DailyTab = ({
 
         {!noMeetings && (
           <>
-            <div className="hidden sm:block w-px h-5 bg-gray-200 shrink-0" />
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-              <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest whitespace-nowrap">
-                Members
-              </span>
+            <div className="flex shrink-0 items-center gap-2">
               <SearchableSelect
                 value={selectedMember}
                 onChange={setSelectedMember}
                 placeholder="All Members"
                 options={[
                   { value: "all", label: "All Members" },
-                  ...membersList.map((m: any) => ({
-                    value: m.id,
-                    label: m.name,
-                  })),
+                  ...memberFilterOptions,
                 ]}
               />
             </div>
+
+            {/* Tags + Projects filters — abhi ke liye comment kiye hain.
+                Ye far right me aate the, aur sirf tab jab org ka PATM Business
+                Compass se linked ho (tags/projects wahin se aate hain). Dono
+                mutually exclusive the — ek chuno to doosra "all" tak disabled.
+
+            {patmBcLinked && (
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 sm:ml-auto">
+              <div className="flex shrink-0 items-center gap-2">
+                <SearchableSelect
+                  value={selectedTag}
+                  onChange={setSelectedTag}
+                  placeholder="All Tags"
+                  options={tagOptions}
+                  disabled={selectedProject !== "all"}
+                  disabledHint="Clear the Project filter to filter by tag."
+                />
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                <SearchableSelect
+                  value={selectedProject}
+                  onChange={setSelectedProject}
+                  placeholder="All Projects"
+                  options={projectOptions}
+                  disabled={selectedTag !== "all"}
+                  disabledHint="Clear the Tag filter to filter by project."
+                />
+              </div>
+            </div>
+            )}
+            */}
           </>
         )}
       </div>
@@ -2330,6 +3699,76 @@ const DailyTab = ({
       {/* ══ REPORTS SECTION — member cards in left col ══ */}
       {!isLoading && dailyData && !noMeetings && (
         <>
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 space-y-4">
+          {/* ══ Action bar: HOD filter + Select All + Save Meeting ══ */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex shrink-0 items-center gap-2">
+              <SearchableSelect
+                value={selectedHod}
+                onChange={(value: string) => {
+                  setSelectedHod(value);
+                  // HOD badalne par member + project filters wapas "all" par
+                  setSelectedMember("all");
+                  setSelectedProject("all");
+                  setReportMemberFilters({});
+                  setReportProjectFilters({});
+                }}
+                placeholder="Select Department"
+                options={hodOptions}
+              />
+            </div>
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 sm:gap-4">
+              <label className="flex shrink-0 items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={areAllVisibleReportsSelected}
+                  onChange={handleSelectAll}
+                  className="w-4 h-4 shrink-0 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
+                />
+                <span className="text-sm font-bold leading-tight text-[#1A1A1A] whitespace-nowrap">
+                  Select All
+                </span>
+              </label>
+              {isActiveDateSubmitted ? (
+                <>
+                  {!notesChanged && (
+                    <span className="max-w-[150px] text-[11px] leading-tight text-neutral-400 font-medium italic">
+                      Edit notes to enable update
+                    </span>
+                  )}
+                  <BtnPrimary
+                    icon={isSavingMeeting ? Loader2 : RefreshCw}
+                    onClick={handleUpdateNotesOnly}
+                    disabled={isSavingMeeting || !notesChanged}
+                    loading={isSavingMeeting}
+                    className="min-h-[44px] whitespace-nowrap rounded-full bg-[#6E8EEB] px-5 py-2.5 text-[13px] leading-tight hover:bg-[#5F7FE0] border-[#6E8EEB] shadow-none disabled:bg-[#9AAEF0] disabled:text-white disabled:opacity-100"
+                  >
+                    {isSavingMeeting ? "Updating..." : "Update Notes"}
+                  </BtnPrimary>
+                </>
+              ) : meetingJournalId ? (
+                <BtnPrimary
+                  icon={isSavingMeeting ? Loader2 : RefreshCw}
+                  onClick={handleUpdateMeeting}
+                  disabled={isSavingMeeting}
+                  loading={isSavingMeeting}
+                  className="bg-blue-600 hover:bg-blue-700 border-blue-700"
+                >
+                  {isSavingMeeting ? "Updating..." : "Update Meeting"}
+                </BtnPrimary>
+              ) : (
+                <BtnPrimary
+                  icon={isSavingMeeting ? Loader2 : FileText}
+                  onClick={handleSaveMeeting}
+                  disabled={isSavingMeeting}
+                  loading={isSavingMeeting}
+                >
+                  {isSavingMeeting ? "Saving..." : "Save Meeting"}
+                </BtnPrimary>
+              )}
+            </div>
+          </div>
+
           {visibleReports.length === 0 && failedMembers.length === 0 && (
             <div className="p-10 text-center text-sm font-bold text-neutral-400 bg-white border border-gray-200 rounded-2xl">
               No reports found for this selection.
@@ -2338,10 +3777,98 @@ const DailyTab = ({
 
           {visibleReports.length > 0 && (
             <div>
-              {/* ══ Report Cards ══ */}
+              {/* ══ Department → Manager → Report ══ */}
               <div className="space-y-4">
-                {visibleReports
-                  .map((report: any) => {
+                {departmentGroups.map((group) => {
+                  const isDepartmentExpanded = expandedDepartments.includes(
+                    group.key
+                  );
+                  const managerCount = group.reports.length;
+                  // Locked (already checked-in) rows count as selected, exactly
+                  // like the per-member checkbox does.
+                  const selectedReportKeys = new Set(
+                    selectedReports.map((id) => String(id))
+                  );
+                  const groupSelectedCount = group.reports.filter(
+                    (report: any) =>
+                      report.checked_in_meeting === true ||
+                      selectedReportKeys.has(
+                        String(report.journal_id || report.user_id)
+                      )
+                  ).length;
+                  const isGroupFullySelected =
+                    managerCount > 0 && groupSelectedCount === managerCount;
+                  const isGroupPartiallySelected =
+                    groupSelectedCount > 0 && !isGroupFullySelected;
+                  const groupHasSelectableReports = group.reports.some(
+                    (report: any) => report.checked_in_meeting !== true
+                  );
+                  return (
+                    <div
+                      key={group.key}
+                      className={cn(
+                        showDepartmentGrouping &&
+                        "bg-white border border-[#F0E8E3] rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden"
+                      )}
+                    >
+                      {showDepartmentGrouping && (
+                        <div
+                          onClick={() => toggleDepartment(group.key)}
+                          className={cn(
+                            "flex min-h-[72px] w-full cursor-pointer items-center gap-3 px-5 py-5 text-left transition-colors hover:bg-[#FFF8F5]",
+                            isDepartmentExpanded && "border-b border-[#F0E8E3]"
+                          )}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isGroupFullySelected}
+                            disabled={!groupHasSelectableReports}
+                            ref={(element) => {
+                              if (element)
+                                element.indeterminate = isGroupPartiallySelected;
+                            }}
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={(event) => {
+                              event.stopPropagation();
+                              setDepartmentSelection(
+                                group.reports,
+                                event.target.checked
+                              );
+                            }}
+                            title={`Select all reports in ${group.label}`}
+                            className={cn(
+                              "h-[15px] w-[15px] shrink-0 rounded border-[#DADDE3] accent-[#CE7A5A]",
+                              groupHasSelectableReports
+                                ? "cursor-pointer"
+                                : "opacity-60 cursor-not-allowed"
+                            )}
+                          />
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF3EE]">
+                            <Users className="h-4 w-4 text-[#DA7756]" />
+                          </div>
+                          <span className="min-w-0 flex-1 truncate text-[15px] font-extrabold text-[#3E342F]">
+                            {group.label}
+                          </span>
+                          <span className="shrink-0 rounded-full bg-[#F4F1EE] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#6B625C]">
+                            {managerCount} Manager{managerCount === 1 ? "" : "s"}
+                          </span>
+                          <ChevronDown
+                            className={cn(
+                              "h-4 w-4 shrink-0 text-neutral-400 transition-transform",
+                              isDepartmentExpanded && "rotate-180"
+                            )}
+                          />
+                        </div>
+                      )}
+
+                      {(!showDepartmentGrouping || isDepartmentExpanded) && (
+                        <div
+                          className={cn(
+                            "space-y-4",
+                            showDepartmentGrouping && "bg-[#FBF9F7] p-3"
+                          )}
+                        >
+                          {group.reports.map((report: any) => {
                     const rId = report.journal_id || report.user_id;
                     const isExpanded = expandedReports.includes(rId);
                     const isFeedbackVisible =
@@ -2375,36 +3902,223 @@ const DailyTab = ({
                       ? "bg-red-50 text-red-700 border-red-100"
                       : "bg-green-50 text-green-700 border-green-100";
 
-                    const normalizedReportName = (report.name || "")
-                      .trim()
-                      .toLowerCase();
+                    // The manager's own daily report already carries their team
+                    // members' rows (each tagged with `member`), so nothing is
+                    // filtered out by owner name here.
+                    const userAccomplishments = displayRd.accomplishments;
 
-                    const userAccomplishments =
-                      displayRd.accomplishments.filter(
-                        (item: any) =>
-                          !item.member ||
-                          String(item.member).trim().toLowerCase() ===
-                          normalizedReportName
-                      );
-
-                    const userTasksIssues = displayRd.tasks_issues.filter(
-                      (item: any) =>
-                        !item.member ||
-                        String(item.member).trim().toLowerCase() ===
-                        normalizedReportName
-                    );
+                    const userTasksIssues = displayRd.tasks_issues;
                     const visibleTasksIssues = userTasksIssues.filter(
                       (item: any) => !isCompletedStatus(getItemStatus(item))
                     );
 
-                    const userTomorrowPlan = displayRd.tomorrow_plan.filter(
-                      (item: any) =>
-                        !item.member ||
-                        String(item.member).trim().toLowerCase() ===
-                        normalizedReportName
-                    );
+                    const userTomorrowPlan = displayRd.tomorrow_plan;
 
                     // ── NEW LOGIC FOR SCORING ──
+                    // Rows come straight from the report owner's own payload —
+                    // each already carries its own `owner_name`; untagged rows
+                    // belong to the report owner.
+                    const combinedAccomplishmentRows = userAccomplishments;
+                    const combinedTasksIssueRows = visibleTasksIssues;
+                    const combinedTomorrowPlanRows = userTomorrowPlan;
+                    const reportMemberKey = String(rId);
+                    const allReportRows = [
+                      ...combinedAccomplishmentRows,
+                      ...combinedTasksIssueRows,
+                      ...combinedTomorrowPlanRows,
+                    ];
+                    const getRowMemberName = (item: any) =>
+                      getItemMemberName(item) || report.name;
+                    const getRowMemberKey = (item: any) =>
+                      getMemberFilterKey(getRowMemberName(item));
+
+                    // Raw per-card selections (before validating against options)
+                    const selectedReportMember =
+                      reportMemberFilters[reportMemberKey] || "all";
+                    const selectedReportProject =
+                      reportProjectFilters[reportMemberKey] || "all";
+                    const memberScopeKey = selectedReportMember;
+
+                    // Project list is scoped to the selected member — only the
+                    // projects that member actually worked on stay selectable.
+                    const reportProjectMap = new Map<string, string>();
+                    allReportRows
+                      .filter(
+                        (item: any) =>
+                          memberScopeKey === "all" ||
+                          getRowMemberKey(item) === memberScopeKey
+                      )
+                      .forEach((item: any) => {
+                        const projectName = getItemProjectName(item);
+                        if (!projectName) return;
+                        const key = projectName.toLowerCase();
+                        if (!reportProjectMap.has(key))
+                          reportProjectMap.set(key, projectName);
+                      });
+                    const reportProjectOptions = [
+                      { value: "all", label: "All Projects" },
+                      ...Array.from(reportProjectMap.entries()).map(
+                        ([value, label]) => ({ value, label })
+                      ),
+                    ];
+                    const activeReportProject = reportProjectOptions.some(
+                      (option) => String(option.value) === String(selectedReportProject)
+                    )
+                      ? selectedReportProject
+                      : "all";
+
+                    // Member list is scoped to the selected project — only members
+                    // who actually have items on that project stay selectable.
+                    // Options come from the rows themselves: the owner's report
+                    // already carries their team members' items, each tagged
+                    // with `member`.
+                    const ownerMemberKey = getMemberFilterKey(
+                      report.name || report.email
+                    );
+                    const memberLabelByKey = new Map<string, string>();
+                    memberLabelByKey.set(
+                      ownerMemberKey,
+                      report.name || report.email || "Member"
+                    );
+                    allReportRows.forEach((item: any) => {
+                      const label = String(getRowMemberName(item) || "").trim();
+                      if (!label) return;
+                      const key = getMemberFilterKey(label);
+                      if (!memberLabelByKey.has(key))
+                        memberLabelByKey.set(key, label);
+                    });
+                    const hasTeamRows = memberLabelByKey.size > 1;
+                    const baseMemberOptions = Array.from(
+                      memberLabelByKey.entries()
+                    )
+                      .map(([value, label]) => ({
+                        value,
+                        label:
+                          value === ownerMemberKey && hasTeamRows
+                            ? `${String(label).trim()} (HOD)`
+                            : label,
+                      }))
+                      .sort((a, b) => {
+                        if (a.value === ownerMemberKey) return -1;
+                        if (b.value === ownerMemberKey) return 1;
+                        return a.label.localeCompare(b.label, undefined, {
+                          sensitivity: "base",
+                        });
+                      });
+                    const memberKeysInProject = new Set(
+                      allReportRows
+                        .filter(
+                          (item: any) =>
+                            activeReportProject === "all" ||
+                            getItemProjectName(item).toLowerCase() ===
+                            activeReportProject
+                        )
+                        .map(getRowMemberKey)
+                    );
+                    const scopedMemberOptions =
+                      activeReportProject === "all"
+                        ? baseMemberOptions
+                        : baseMemberOptions.filter((option) =>
+                          memberKeysInProject.has(String(option.value))
+                        );
+                    const reportMemberOptions = [
+                      { value: "all", label: "All Members" },
+                      ...scopedMemberOptions,
+                    ].filter((option, index, options) =>
+                      option.value === "all" ||
+                      options.findIndex((item) => item.value === option.value) === index
+                    );
+                    // Count = jitne members dropdown mein selectable hain (HOD included)
+                    const reportMemberCount = reportMemberOptions.length - 1;
+                    const reportMemberOptionExists = reportMemberOptions.some(
+                      (option) => String(option.value) === String(memberScopeKey)
+                    );
+                    const activeReportMember = reportMemberOptionExists
+                      ? memberScopeKey
+                      : "all";
+
+                    const filterRowsForSelectedMember = (items: any[]) => {
+                      return items.filter((item: any) => {
+                        const memberName = getRowMemberName(item);
+                        const matchesMember =
+                          activeReportMember === "all" ||
+                          getMemberFilterKey(memberName) === activeReportMember;
+                        const matchesTag =
+                          selectedTag === "all" ||
+                          getItemTagNames(item).some(
+                            (tag) => tag.toLowerCase() === selectedTag
+                          );
+                        const itemProject = getItemProjectName(item).toLowerCase();
+                        const matchesProject =
+                          selectedProject === "all" || itemProject === selectedProject;
+                        const matchesReportProject =
+                          activeReportProject === "all" ||
+                          itemProject === activeReportProject;
+                        return (
+                          matchesMember &&
+                          matchesTag &&
+                          matchesProject &&
+                          matchesReportProject
+                        );
+                      });
+                    };
+                    // Badge har row par dikhna chahiye — team member ki rows par
+                    // unka naam pehle se hota hai, aur jin par owner tag nahi hai
+                    // wo report owner (HOD) ki hain. `__ownerTag` sirf display ke
+                    // liye hai (asli `member`/`owner_name` fields chhedte nahi),
+                    // taki drag-to-plan aur save payload par koi asar na pade.
+                    const withOwnerTag = (items: any[] = []) =>
+                      items.map((item: any) =>
+                        getItemMemberName(item)
+                          ? item
+                          : { ...item, __ownerTag: report.name }
+                      );
+                    const filteredAccomplishmentRows = withOwnerTag(
+                      filterRowsForSelectedMember(combinedAccomplishmentRows)
+                    );
+                    const filteredTasksIssueRows = withOwnerTag(
+                      filterRowsForSelectedMember(combinedTasksIssueRows)
+                    );
+                    const filteredTomorrowPlanRows = withOwnerTag(
+                      filterRowsForSelectedMember(combinedTomorrowPlanRows)
+                    );
+                    // API se aane par ye bucket bhar jaayega; tab tak khaali
+                    // rehta hai to header render hi nahi hota.
+                    const filteredNotAccomplishedRows = withOwnerTag(
+                      filterRowsForSelectedMember(
+                        displayRd.not_accomplished_plan
+                      )
+                    );
+                    const showFilteredMemberBadges =
+                      hasTeamRows && activeReportMember === "all";
+
+                    // ── Drag a Tasks/Issues/Todos row → drop into this card's
+                    // Tomorrow's Plan (the only drop target). Absent reports
+                    // have nothing to plan, so dragging stays off there.
+                    const canDragToPlan = !isAbsentReport;
+                    const taskDragProps = canDragToPlan
+                      ? (item: any) => ({
+                        draggable: true,
+                        className: "cursor-grab active:cursor-grabbing",
+                        onDragStart: (event: React.DragEvent<HTMLLIElement>) => {
+                          event.stopPropagation();
+                          event.dataTransfer.effectAllowed = "copy";
+                          event.dataTransfer.setData(
+                            "text/plain",
+                            getItemTitle(item)
+                          );
+                          setDraggedPlanItem({ cardId: rId, report, item });
+                        },
+                        onDragEnd: () => clearPlanDrag(),
+                      })
+                      : undefined;
+                    const isPlanDragActive =
+                      canDragToPlan &&
+                      !!draggedPlanItem &&
+                      String(draggedPlanItem.cardId) === String(rId);
+                    const isPlanDropHovered =
+                      isPlanDragActive && String(planDropTargetId) === String(rId);
+
                     const sections =
                       draftRaw?.sections ||
                       rawDisplayRd?.sections ||
@@ -2464,27 +4178,34 @@ const DailyTab = ({
 
                     const canExpand = !isPending || hasDraft;
                     const isSelected = selectedReports.includes(rId);
+                    const reportCalendar = getMemberCalendar(report);
+                    const reportCalendarRow = reportCalendar.length
+                      ? mergeCalendarWithFallback(reportCalendar, baseCalendarRow)
+                      : dateRow;
+                    const reportStatusInitial = isRawPending
+                      ? "M"
+                      : attendanceLabel.toLowerCase().startsWith("absent")
+                        ? "A"
+                        : "P";
 
                     return (
                       <div
                         key={rId}
                         className={cn(
-                          "bg-white border rounded-xl shadow-sm overflow-hidden transition-all",
-                          isSelected
-                            ? "border-[#4A90E2] border-l-[4px]"
-                            : "border-[#EAE3DF]"
+                          "min-h-[92px] bg-white border border-[#D1D5DB] rounded-[14px] shadow-none overflow-hidden transition-all",
+                          isSelected && "ring-1 ring-[#7AD5CC]"
                         )}
                       >
                         <div
                           className={cn(
-                            "p-4 transition-colors flex items-start gap-3 sm:gap-4",
+                            "px-5 py-3 transition-colors flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between",
                             canExpand
-                              ? "cursor-pointer hover:bg-gray-50"
+                              ? "cursor-pointer hover:bg-[#FAFAFA]"
                               : "cursor-default"
                           )}
                           onClick={() => canExpand && toggleExpand(rId)}
                         >
-                          <div className="flex items-start gap-3 pt-1">
+                          <div className="flex items-start gap-3 pt-[1px]">
                             <input
                               type="checkbox"
                               checked={isPermanentlyChecked || isSelected}
@@ -2500,7 +4221,7 @@ const DailyTab = ({
                               }}
                               onClick={(e) => e.stopPropagation()}
                               className={cn(
-                                "w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] shrink-0 mt-3",
+                                "w-[15px] h-[15px] rounded border-[#DADDE3] accent-[#CE7A5A] shrink-0 mt-0.5",
                                 isPermanentlyChecked
                                   ? "opacity-60 cursor-not-allowed"
                                   : "cursor-pointer"
@@ -2512,23 +4233,27 @@ const DailyTab = ({
                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                  <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
-                                    {report.name}
+                                  {/* Department parent card par dikh raha hai,
+                                      to member card ka heading member ka naam
+                                      hai — department nahi. */}
+                                  <h3 className="font-bold text-[#202124] text-[18px] leading-[22px] truncate">
+                                    {report.name?.trim() ||
+                                      resolveDepartmentLabel(report)}
                                   </h3>
                                   {(report.name?.includes("HOD") ||
                                     report.name?.includes("TL")) && (
-                                      <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                                      <span className="hidden items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
                                         <Crown className="w-3 h-3 fill-orange-400" />{" "}
                                         HOD
                                       </span>
                                     )}
                                   {report.department && (
-                                    <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                    <span className="hidden border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
                                       {report.department}
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[11px] text-gray-400 mb-2 truncate">
+                                <div className="hidden text-[11px] text-gray-400 mb-2 truncate">
                                   {report.email || "Report submitted"}
                                   {report.submitted_at && (
                                     <span className="ml-1">
@@ -2536,22 +4261,42 @@ const DailyTab = ({
                                     </span>
                                   )}
                                 </div>
+                                <div className="flex flex-wrap items-center gap-[8px] mt-8">
+                                  <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                                    KPI: {kpiStr}
+                                  </span>
+                                  <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                                    Tasks, Issues &amp; Todos: {tasksIssuesStr}
+                                  </span>
+                                  <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                                    Planning: {planStr}
+                                  </span>
+                                  <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                                    Timing: {timeStr}
+                                  </span>
+                                </div>
                               </div>
 
-                              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                                {isPending && !hasDraft && (
-                                  <span className="text-red-500 text-xs font-semibold">
-                                    Not submitted
+                              <div className="flex flex-wrap items-center gap-[12px] shrink-0">
+                                <span className="flex h-[21px] w-[21px] items-center justify-center rounded-full border border-[#39CFC5] bg-[#DDF8F3] text-[10px] font-bold text-[#088F86]">
+                                  {reportStatusInitial}
+                                </span>
+                                {/* Not submitted → "Missed", never Absent/Present */}
+                                {isRawPending && (
+                                  <span className="flex h-[19px] min-w-[96px] items-center justify-center rounded-full bg-red-50 px-4 text-[9px] font-extrabold uppercase text-red-600 shrink-0">
+                                    Not Submitted
                                   </span>
                                 )}
-                                {!isPending && (
+                                {/* Attendance is only meaningful for a submitted report —
+                                    never tag a non-submitted member as Absent/Present */}
+                                {!isRawPending && (
                                   <>
-                                    <span className="text-[10px] font-bold text-white bg-[#10B981] border border-[#10B981] px-2 py-0.5 rounded-full shrink-0">
+                                <span className="flex h-[19px] min-w-[96px] items-center justify-center rounded-full bg-[#72CFC5] px-4 text-[9px] font-extrabold uppercase text-white shrink-0">
                                       Submitted
                                     </span>
                                     <span
                                       className={cn(
-                                        "border text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0",
+                                        "hidden border text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0",
                                         attendanceBadgeClass
                                       )}
                                     >
@@ -2563,7 +4308,7 @@ const DailyTab = ({
                                   </>
                                 )}
                                 {canExpand && (
-                                  <button className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform">
+                                  <button className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[#EEF0F2] text-[#111827] shrink-0 transition-transform">
                                     <ChevronDown
                                       className={cn(
                                         "w-4 h-4 transition-transform",
@@ -2575,54 +4320,41 @@ const DailyTab = ({
                               </div>
                             </div>
 
-                            {canExpand && (
-                              <div className="flex flex-wrap items-center gap-2 mb-1">
-                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                  KPI: {kpiStr}
-                                </span>
-                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                  Task, Issues & To-do's: {tasksIssuesStr}
-                                </span>
-                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                  Planning: {planStr}
-                                </span>
-                                <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                  Timing: {timeStr}
-                                </span>
-                              </div>
-                            )}
-
-                            {canExpand && dateRow.length > 0 && (
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
-                                <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
+                            {canExpand && reportCalendarRow.length > 0 && (
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 mt-2">
+                                <span className="hidden text-[10px] text-gray-500 font-medium whitespace-nowrap">
                                   {configName}
                                 </span>
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  {dateRow.map((d: any, i: number) => {
-                                    const s = getCalendarDisplayStatus(d.status);
-                                    return (
-                                      <div
-                                        key={i}
-                                        className={cn(
-                                          "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
-                                          s === "done" || s === "submitted"
-                                            ? "bg-[#10B981] text-white border-[#10B981]"
-                                            : s === "missed"
-                                              ? "bg-[#EF4444] text-white border-[#EF4444]"
-                                              : s === "holiday"
-                                                ? "bg-[#D1D5DB] text-white border-[#D1D5DB]"
-                                                : "bg-gray-100 text-gray-400 border-gray-200"
-                                        )}
-                                      >
-                                        <span className="text-[8px] opacity-90 leading-none mb-0.5">
-                                          {d.day ? d.day.charAt(0) : ""}
-                                        </span>
-                                        <span className="leading-none">
-                                          {d.date ?? ""}
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
+                                <div className="flex items-center gap-[6px] flex-wrap">
+                                  {reportCalendarRow.map(
+                                    (d: any, i: number) => {
+                                      const s = getCalendarDisplayStatus(
+                                        d.status
+                                      );
+                                      return (
+                                        <div
+                                          key={i}
+                                          className={cn(
+                                            "flex h-[25px] w-[25px] items-center justify-center rounded-full border text-[9px] font-bold",
+                                            s === "done" || s === "submitted"
+                                              ? "bg-[#D7F8F3] text-[#078C83] border-[#33CFC4]"
+                                              : s === "missed"
+                                                ? "bg-[#FFE4EA] text-[#C71D3C] border-[#FF7D95]"
+                                                : s === "holiday"
+                                                  ? "bg-[#F3F4F6] text-[#9CA3AF] border-[#E5E7EB]"
+                                                  : "bg-white text-[#9CA3AF] border-[#E5E7EB]"
+                                          )}
+                                        >
+                                          <span className="hidden text-[8px] opacity-90 leading-none mb-0.5">
+                                            {d.day ? d.day.charAt(0) : ""}
+                                          </span>
+                                          <span className="leading-none">
+                                            {d.date ?? ""}
+                                          </span>
+                                        </div>
+                                      );
+                                    }
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -2630,7 +4362,7 @@ const DailyTab = ({
                         </div>
 
                         {isExpanded && canExpand && (
-                          <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
+                          <div className="card-body-enter bg-[#FFFAF8] border-t border-[#EAE3DF]">
                             <div className="p-5 space-y-5">
                               <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm mb-4">
                                 <span>
@@ -2638,15 +4370,6 @@ const DailyTab = ({
                                 </span>
                                 <span className="text-gray-400">
                                   Total Score: {totalScoreStr}
-                                </span>
-                                <span
-                                  className={cn(
-                                    "font-semibold",
-                                    isAbsentReport ? "text-red-600" : "text-green-600"
-                                  )}
-                                >
-                                  {attendanceLabel}
-                                  {absentReasonText ? `: ${absentReasonText}` : ""}
                                 </span>
                               </div>
 
@@ -2664,74 +4387,74 @@ const DailyTab = ({
                                 </div>
                               )}
 
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <p className="text-sm font-extrabold text-[#2B2F38]">
+                                  Total Members: {reportMemberCount}
+                                </p>
+                                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
+                                  <SearchableSelect
+                                    value={activeReportMember}
+                                    onChange={(value: string) => {
+                                      setReportMemberFilters((prev) => ({
+                                        ...prev,
+                                        [reportMemberKey]: value,
+                                      }));
+                                      // "All Members" yahan se choose kiya to
+                                      // upar wala global Members filter bhi reset
+                                      if (value === "all") setSelectedMember("all");
+                                    }}
+                                    placeholder="Member"
+                                    options={reportMemberOptions}
+                                  />
+                                  {/* Per-card Project filter — abhi ke liye
+                                      comment kiya hai. Sirf tab dikhta tha jab
+                                      org ka PATM Business Compass se linked ho.
+
+                                  {patmBcLinked && (
+                                    <SearchableSelect
+                                      value={activeReportProject}
+                                      onChange={(value: string) =>
+                                        setReportProjectFilters((prev) => ({
+                                          ...prev,
+                                          [reportMemberKey]: value,
+                                        }))
+                                      }
+                                      placeholder="Project"
+                                      options={reportProjectOptions}
+                                    />
+                                  )}
+                                  */}
+                                </div>
+                              </div>
+
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {/* Accomplishments */}
-                                <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                                    <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                                      <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-                                    </div>
-                                    <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                                <div className="bg-white border border-[#E8E2DE] rounded-xl p-0 overflow-hidden">
+                                  <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+                                    <CheckCircle2 className="w-4 h-4 text-[#798c5e] shrink-0" />
+                                    <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase">
                                       Accomplishments
                                     </h4>
                                   </div>
-                                  {isAbsentReport || userAccomplishments.length === 0 ? (
-                                    <p className="text-xs text-neutral-300 italic">
-                                      None recorded.
-                                    </p>
-                                  ) : (
-                                    <ul className="space-y-2">
-                                      {userAccomplishments.map(
-                                        (item: any, i: number) => {
-                                          const type = (item.source_type || "note").toLowerCase();
-                                          const typePillStyle =
-                                            type === "issue"
-                                              ? "bg-red-100 text-red-700 border-red-200"
-                                              : type === "todo"
-                                                ? "bg-violet-100 text-violet-700 border-violet-200"
-                                                : type === "task"
-                                                  ? "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30"
-                                                  : "bg-gray-100 text-gray-600 border-gray-200";
-                                          const hasDetails = ["task", "issue", "todo"].includes(type);
-
-                                          return (
-                                            <li
-                                              key={i}
-                                              className="flex flex-col rounded-[10px] border transition-all bg-green-50/60 border-green-100"
-                                            >
-                                              <div className="flex items-center gap-2 px-3 py-2.5">
-                                                <span
-                                                  className={cn(
-                                                    "shrink-0 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border",
-                                                    typePillStyle
-                                                  )}
-                                                >
-                                                  {type}
-                                                </span>
-                                                <span className="flex-1 min-w-0 text-xs font-semibold text-neutral-800 leading-tight">
-                                                  {getItemTitle(item)}
-                                                </span>
-                                                {hasDetails && (
-                                                  <button
-                                                    onClick={() => handleViewReportItem(item)}
-                                                    className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
-                                                    title={`View ${type}`}
-                                                  >
-                                                    <Eye className="w-3 h-3" />
-                                                  </button>
-                                                )}
-                                              </div>
-                                              <ReportItemMeta item={item} />
-                                            </li>
-                                          );
-                                        }
+                                  <div className="p-4">
+                                    {isAbsentReport
+                                      ? renderAccomplishmentRows([], false)
+                                      : renderAccomplishmentRows(
+                                        filteredAccomplishmentRows,
+                                        showFilteredMemberBadges
                                       )}
-                                    </ul>
-                                  )}
+                                  </div>
                                 </div>
 
-                                {/* Tasks & Issues — status buckets */}
-                                <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                                {/* Tasks & Issues — 7 / 14 / 30 day range filter */}
+                                <TasksIssuesTodoCard
+                                  items={filteredTasksIssueRows}
+                                  showMemberBadges={showFilteredMemberBadges}
+                                  isAbsent={isAbsentReport}
+                                  renderRows={renderAccomplishmentRows}
+                                  itemProps={taskDragProps}
+                                />
+                                <div className="hidden bg-white border border-[#F0E8E3] rounded-xl p-4">
                                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
                                     <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
                                       <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
@@ -2862,17 +4585,19 @@ const DailyTab = ({
                                                 {bucketItems.length}
                                               </span>
                                             </div>
-                                            <ul className="space-y-1.5 pl-1 mb-1">
+                                            <ul className="space-y-2.5 pl-1 mb-1">
                                               {bucketItems.map(
                                                 (item: any, i: number) => {
                                                   const type =
                                                     getItemType(item);
                                                   const typePillStyle =
                                                     type === "issue"
-                                                      ? "bg-red-100 text-red-700 border-red-200"
+                                                      ? "bg-red-50 text-red-700 border-red-200"
                                                       : type === "todo"
-                                                        ? "bg-violet-100 text-violet-700 border-violet-200"
-                                                        : "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30";
+                                                        ? "bg-violet-50 text-violet-700 border-violet-200"
+                                                        : type === "note"
+                                                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                                                          : "bg-[#FFF3EE] text-[#DA7756] border-[#DA7756]/30";
                                                   const priority =
                                                     item.priority ||
                                                     item.urgency ||
@@ -2937,31 +4662,34 @@ const DailyTab = ({
                                                         hasDetails && "cursor-pointer hover:border-[#DA7756]/40 hover:bg-[#FFF8F5]"
                                                       )}
                                                     >
-                                                      <div className="flex items-center gap-2 px-3 py-2.5">
+                                                      <div className="flex items-start gap-3 px-3 py-3">
                                                         {/* Type pill */}
                                                         <span
                                                           className={cn(
-                                                            "shrink-0 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border",
+                                                            "shrink-0 mt-0.5 text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full border",
                                                             typePillStyle
                                                           )}
                                                         >
                                                           {type}
                                                         </span>
-                                                        {/* Title */}
-                                                        <span className="flex-1 min-w-0 text-xs font-semibold text-neutral-800 leading-tight">
-                                                          {getItemTitle(item)}
-                                                        </span>
-                                                        {/* Priority */}
-                                                        {priorityPill && (
-                                                          <span
-                                                            className={cn(
-                                                              "shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full border",
-                                                              priorityPill
-                                                            )}
-                                                          >
-                                                            {priority}
+                                                        
+                                                        {/* Title & Priority */}
+                                                        <div className="flex-1 min-w-0 flex flex-col gap-1">
+                                                          <span className="text-[13px] font-bold text-[#0F172A] leading-snug">
+                                                            {getItemTitle(item)}
                                                           </span>
-                                                        )}
+                                                          {priorityPill && (
+                                                            <span
+                                                              className={cn(
+                                                                "self-start text-[9px] font-bold px-2 py-0.5 rounded-full border",
+                                                                priorityPill
+                                                              )}
+                                                            >
+                                                              {priority}
+                                                            </span>
+                                                          )}
+                                                        </div>
+
                                                         {/* View button — always shown for task/issue */}
                                                         {hasDetails && (
                                                           <button
@@ -2969,11 +4697,10 @@ const DailyTab = ({
                                                               event.stopPropagation();
                                                               handleViewTaskIssueTodoItem(viewItem);
                                                             }}
-                                                            className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-[6px] bg-white border border-gray-200 text-[#DA7756] hover:bg-[#FFF3EE] transition-colors shadow-sm"
+                                                            className="shrink-0 flex items-center justify-center w-[26px] h-[26px] rounded-[6px] bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
                                                             title={`View ${type}`}
                                                           >
-                                                            <Eye className="w-3 h-3" />
-                                                            {/* <span className="text-[9px] font-bold">View</span> */}
+                                                            <Eye className="w-3.5 h-3.5" />
                                                           </button>
                                                         )}
                                                       </div>
@@ -2991,8 +4718,96 @@ const DailyTab = ({
                                   )}
                                 </div>
 
-                                {/* Tomorrow's Plan */}
-                                <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
+                                {/* Third column = Not Accomplished Plan card
+                                    ke upar, Tomorrow's Plan card neeche. */}
+                                <div className="flex flex-col gap-4">
+                                <div className="bg-white border border-[#E8E2DE] rounded-xl p-0 overflow-hidden">
+                                  <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+                                    <AlertTriangle className="w-4 h-4 shrink-0 text-[#B4690E]" />
+                                    <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase min-w-0 truncate">
+                                      Not Accomplished Plan
+                                    </h4>
+                                    <span className="ml-auto shrink-0 rounded-full bg-[#F8E4C7] px-2 py-0.5 text-[9px] font-bold text-[#B4690E]">
+                                      {isAbsentReport
+                                        ? 0
+                                        : filteredNotAccomplishedRows.length}
+                                    </span>
+                                  </div>
+                                  <div className="p-4">
+                                    {renderAccomplishmentRows(
+                                      isAbsentReport
+                                        ? []
+                                        : filteredNotAccomplishedRows,
+                                      showFilteredMemberBadges,
+                                      "Nothing pending from the plan."
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div
+                                  onDragOver={(event) => {
+                                    if (!isPlanDragActive) return;
+                                    event.preventDefault();
+                                    event.dataTransfer.dropEffect = "copy";
+                                    setPlanDropTargetId(rId);
+                                  }}
+                                  onDragLeave={(event) => {
+                                    if (!isPlanDragActive) return;
+                                    // Ignore bubbling leaves from child rows.
+                                    if (
+                                      event.currentTarget.contains(
+                                        event.relatedTarget as Node
+                                      )
+                                    )
+                                      return;
+                                    setPlanDropTargetId((current: any) =>
+                                      String(current) === String(rId)
+                                        ? null
+                                        : current
+                                    );
+                                  }}
+                                  onDrop={(event) => {
+                                    if (!isPlanDragActive) return;
+                                    event.preventDefault();
+                                    const dropped = draggedPlanItem;
+                                    clearPlanDrag();
+                                    if (dropped)
+                                      handleDropItemToPlan(
+                                        dropped.report,
+                                        dropped.item
+                                      );
+                                  }}
+                                  className={cn(
+                                    "bg-white border rounded-xl p-0 overflow-hidden transition-colors",
+                                    isPlanDropHovered
+                                      ? "border-[#DA7756] bg-[#FFF8F5] ring-2 ring-[#DA7756]/20"
+                                      : isPlanDragActive
+                                        ? "border-dashed border-[#DA7756]/60"
+                                        : "border-[#E8E2DE]"
+                                  )}
+                                >
+                                  <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+                                    <Calendar className="w-4 h-4 text-[#6b9bcc] shrink-0" />
+                                    <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase">
+                                      Tomorrow's Plan
+                                    </h4>
+                                  </div>
+                                  <div className="p-4">
+                                    {isPlanDragActive && (
+                                      <p className="mb-3 rounded-[10px] border border-dashed border-[#DA7756]/60 bg-[#FFF8F5] px-3 py-2 text-[11px] font-bold text-[#DA7756]">
+                                        Drop here to add to tomorrow's plan
+                                      </p>
+                                    )}
+                                    {isAbsentReport
+                                      ? renderAccomplishmentRows([], false)
+                                      : renderAccomplishmentRows(
+                                        filteredTomorrowPlanRows,
+                                        showFilteredMemberBadges
+                                      )}
+                                  </div>
+                                </div>
+                                </div>
+                                <div className="hidden bg-white border border-[#F0E8E3] rounded-xl p-4">
                                   <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
                                     <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
                                       <Calendar className="w-3.5 h-3.5 text-blue-600" />
@@ -3397,10 +5212,16 @@ const DailyTab = ({
                         )}
                       </div>
                     );
-                  })}
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
+          </div>
         </>
       )}
 
@@ -3417,198 +5238,243 @@ const DailyTab = ({
             </span>
           </div>
           <div className="space-y-4">
-            {failedMembers.map((member: any, i: number) => {
+            {failedMemberGroups.map((group) => {
+              const isDepartmentExpanded = expandedDepartments.includes(
+                group.key
+              );
+              const missedCount = group.members.length;
+              return (
+                <div
+                  key={group.key}
+                  className={cn(
+                    showDepartmentGrouping &&
+                    "bg-white border border-[#F0E8E3] rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.04)] overflow-hidden"
+                  )}
+                >
+                  {showDepartmentGrouping && (
+                    <button
+                      type="button"
+                      onClick={() => toggleDepartment(group.key)}
+                      className={cn(
+                        "flex min-h-[72px] w-full items-center gap-3 px-5 py-5 text-left transition-colors hover:bg-[#FFF8F5]",
+                        isDepartmentExpanded && "border-b border-[#F0E8E3]"
+                      )}
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF3EE]">
+                        <Users className="h-4 w-4 text-[#DA7756]" />
+                      </div>
+                      <span className="min-w-0 flex-1 truncate text-[15px] font-extrabold text-[#3E342F]">
+                        {group.label}
+                      </span>
+                      <span className="shrink-0 rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-red-600">
+                        {missedCount} Not Submitted
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 shrink-0 text-neutral-400 transition-transform",
+                          isDepartmentExpanded && "rotate-180"
+                        )}
+                      />
+                    </button>
+                  )}
+
+                  {(!showDepartmentGrouping || isDepartmentExpanded) && (
+                    <div
+                      className={cn(
+                        "space-y-4",
+                        showDepartmentGrouping && "bg-[#FBF9F7] p-3"
+                      )}
+                    >
+                      {group.members.map((member: any, i: number) => {
               const missedId = `missed-${member.id || member.user_id || member.name || i}`;
               const isMissedExpanded = expandedReports.includes(missedId);
               const isMissedFeedbackVisible =
                 feedbackOpenId === missedId || feedbackClosingId === missedId;
               const isMissedFeedbackClosing = feedbackClosingId === missedId;
+              const missedMemberData = normalizeReportData(
+                resolveRawSource(member)
+              );
+              const missedTomorrowPlan = missedMemberData.tomorrow_plan;
+              const missedMemberCalendar = getMemberCalendar(member);
+              const missedMemberCalendarRow = missedMemberCalendar.length
+                ? mergeCalendarWithFallback(
+                    missedMemberCalendar,
+                    baseCalendarRow
+                  )
+                : dateRow;
 
               return (
                 <div
                   key={missedId}
-                  onClick={() => toggleExpand(missedId)}
-                  className="bg-white border border-[#4A90E2] border-l-[4px] rounded-xl shadow-sm overflow-hidden transition-all cursor-pointer"
+                  className="min-h-[92px] bg-white border border-[#D1D5DB] rounded-[14px] shadow-none overflow-hidden transition-all"
                 >
-                  <div className="p-4 flex items-start gap-4">
-                    <div className="flex items-start gap-3 pt-1">
+                  <div
+                    className="px-5 py-3 transition-colors flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between cursor-pointer hover:bg-[#FAFAFA]"
+                    onClick={() => toggleExpand(missedId)}
+                  >
+                    <div className="flex items-start gap-3 pt-[1px]">
                       <input
                         type="checkbox"
                         checked
                         readOnly
                         disabled
-                        className="w-4 h-4 rounded border-gray-300 shrink-0 mt-3 opacity-60 cursor-not-allowed"
+                        className="w-[15px] h-[15px] rounded border-[#DADDE3] accent-[#CE7A5A] shrink-0 mt-0.5 opacity-60 cursor-not-allowed"
                       />
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="flex items-center justify-center w-11 h-11 rounded-full border-[1.5px] border-[#CE7A5A] text-[#CE7A5A] font-extrabold text-[16px] shrink-0 bg-white">
-                          0
-                        </div>
-                        <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-100 rounded-full px-1.5 py-0.5 whitespace-nowrap">
-                          Missed
-                        </span>
-                      </div>
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
-                              {member.name || member}
+                            {/* Department parent card par hai — yahan member ka
+                                naam hi heading hai. */}
+                            <h3 className="font-bold text-[#202124] text-[18px] leading-[22px] truncate">
+                              {member?.name?.trim() ||
+                                resolveDepartmentLabel(member)}
                             </h3>
                             {member.department && (
-                              <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                              <span className="hidden border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
                                 {member.department}
                               </span>
                             )}
-                            <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full shrink-0">
-                              NOT SUBMITTED
-                            </span>
                           </div>
-                          <div className="text-[11px] text-gray-400 mb-2 truncate">
+                          <div className="hidden text-[11px] text-gray-400 mb-2 truncate">
                             {member.email ||
                               "Report not submitted for this date"}
                           </div>
+                          <div className="flex flex-wrap items-center gap-[8px] mt-8">
+                            <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                              KPI: 0/20
+                            </span>
+                            <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                              Tasks, Issues &amp; Todos: 0/20
+                            </span>
+                            <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                              Planning: 0/20
+                            </span>
+                            <span className="h-[21px] inline-flex items-center rounded-full border border-[#EA725C] bg-white px-[10px] text-[10px] font-bold text-[#EA725C]">
+                              Timing: 0/20
+                            </span>
+                          </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleExpand(missedId);
-                          }}
-                          className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform"
-                        >
-                          <ChevronDown
-                            className={cn(
-                              "w-4 h-4 transition-transform",
-                              isMissedExpanded && "rotate-180"
-                            )}
-                          />
-                        </button>
+
+                        <div className="flex flex-wrap items-center gap-[12px] shrink-0">
+                          <span className="flex h-[21px] w-[21px] items-center justify-center rounded-full border border-[#39CFC5] bg-[#DDF8F3] text-[10px] font-bold text-[#088F86]">
+                            M
+                          </span>
+                          <span className="flex h-[19px] min-w-[96px] items-center justify-center rounded-full bg-red-50 px-4 text-[9px] font-extrabold uppercase text-red-600 shrink-0">
+                            Not Submitted
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(missedId);
+                            }}
+                            className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[#EEF0F2] text-[#111827] shrink-0 transition-transform"
+                          >
+                            <ChevronDown
+                              className={cn(
+                                "w-4 h-4 transition-transform",
+                                isMissedExpanded && "rotate-180"
+                              )}
+                            />
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                          KPI: 0/20
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                          Tasks, Issues & Todos: 0/20
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                          Planning: 0/20
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                          Timing: 0/20
-                        </span>
-                      </div>
-
-                      <p className="text-[10px] text-gray-400 italic mb-0 mt-1">
-                        Click to view missed submission details
-                      </p>
-
-                      {dateRow.length > 0 && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
+                      {missedMemberCalendarRow.length > 0 && (
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 mt-2">
+                          <span className="hidden text-[10px] text-gray-500 font-medium whitespace-nowrap">
                             {configName}
                           </span>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            {dateRow.map((d: any, dateIndex: number) => {
-                              const s =
-                                d.full_date === activeDate
-                                  ? "missed"
-                                  : getCalendarDisplayStatus(d.status);
+                          <div className="flex items-center gap-[6px] flex-wrap">
+                            {missedMemberCalendarRow.map(
+                              (d: any, dateIndex: number) => {
+                                const s =
+                                  d.full_date === activeDate
+                                    ? "missed"
+                                    : getCalendarDisplayStatus(d.status);
 
-                              return (
-                                <div
-                                  key={dateIndex}
-                                  className={cn(
-                                    "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
-                                    s === "done" || s === "submitted"
-                                      ? "bg-[#10B981] text-white border-[#10B981]"
-                                      : s === "missed"
-                                        ? "bg-[#EF4444] text-white border-[#EF4444]"
-                                        : s === "holiday"
-                                          ? "bg-[#D1D5DB] text-white border-[#D1D5DB]"
-                                          : "bg-gray-100 text-gray-400 border-gray-200"
-                                  )}
-                                >
-                                  <span className="text-[8px] opacity-90 leading-none mb-0.5">
-                                    {d.day ? d.day.charAt(0) : ""}
-                                  </span>
-                                  <span className="leading-none">
-                                    {d.date ?? ""}
-                                  </span>
-                                </div>
-                              );
-                            })}
+                                return (
+                                  <div
+                                    key={dateIndex}
+                                    className={cn(
+                                      "flex h-[25px] w-[25px] items-center justify-center rounded-full border text-[9px] font-bold",
+                                      s === "done" || s === "submitted"
+                                        ? "bg-[#D7F8F3] text-[#078C83] border-[#33CFC4]"
+                                        : s === "missed"
+                                          ? "bg-[#FFE4EA] text-[#C71D3C] border-[#FF7D95]"
+                                          : s === "holiday"
+                                            ? "bg-[#F3F4F6] text-[#9CA3AF] border-[#E5E7EB]"
+                                            : "bg-white text-[#9CA3AF] border-[#E5E7EB]"
+                                    )}
+                                  >
+                                    <span className="hidden text-[8px] opacity-90 leading-none mb-0.5">
+                                      {d.day ? d.day.charAt(0) : ""}
+                                    </span>
+                                    <span className="leading-none">
+                                      {d.date ?? ""}
+                                    </span>
+                                  </div>
+                                );
+                              }
+                            )}
                           </div>
                         </div>
                       )}
                     </div>
                   </div>
                   {isMissedExpanded && (
-                    <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
+                    <div className="card-body-enter bg-[#FFFAF8] border-t border-[#EAE3DF]">
                       <div className="p-5 space-y-5">
-                        <div className="flex flex-wrap gap-3">
-                          <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
-                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                            <span className="text-sm font-bold text-yellow-800">
-                              Self Rating: 0/10
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
-                            <span className="text-sm font-bold text-purple-800">
-                              Total Score: 0
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 rounded-xl px-4 py-2.5 border bg-red-50 border-red-100">
-                            <span className="text-sm font-bold text-red-700">
-                              Missed
-                            </span>
-                          </div>
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm mb-4">
+                          <span>⭐ Self rating 0/10</span>
+                          <span className="text-gray-400">Total Score: 0</span>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                              <div className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                          {/* Accomplishments */}
+                          <div className="bg-white border border-[#E8E2DE] rounded-xl p-0 overflow-hidden">
+                            <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+                              <div className="w-5 h-5 rounded-full border border-[#252A31] flex items-center justify-center shrink-0">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-[#252A31]" />
                               </div>
-                              <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                              <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase">
                                 Accomplishments
                               </h4>
                             </div>
-                            <p className="text-xs text-neutral-300 italic">
-                              None recorded.
-                            </p>
+                            <div className="p-2">
+                              {renderAccomplishmentRows([], false)}
+                            </div>
                           </div>
 
-                          <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                              <div className="w-6 h-6 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
-                                <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
-                              </div>
-                              <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                Tasks, Issues & Todos
+                          {/* Task, Issues & To Do */}
+                          <div className="bg-white border border-[#E8E2DE] rounded-xl p-0 overflow-hidden">
+                            <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+                              <NotepadText className="w-4 h-4 shrink-0 text-[#252A31]" />
+                              <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase">
+                                Task, Issues &amp; To Do (0)
                               </h4>
                             </div>
-                            <p className="text-xs text-neutral-300 italic">
-                              None recorded.
-                            </p>
+                            <div className="p-2">
+                              {renderAccomplishmentRows([], false)}
+                            </div>
                           </div>
 
-                          <div className="bg-white border border-[#F0E8E3] rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
-                              <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                                <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                          {/* Tomorrow's Plan */}
+                          <div className="bg-white border border-[#E8E2DE] rounded-xl p-0 overflow-hidden">
+                            <div className="flex items-center gap-2 px-3 py-3 border-b border-[#EFE7E2]">
+                              <div className="w-5 h-5 rounded-full border border-[#4BA3F2] flex items-center justify-center shrink-0">
+                                <Calendar className="w-3.5 h-3.5 text-[#4BA3F2]" />
                               </div>
-                              <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
+                              <h4 className="text-[13px] font-extrabold text-[#3E342F] tracking-[0.14em] uppercase">
                                 Tomorrow's Plan
                               </h4>
                             </div>
-                            <p className="text-xs text-neutral-300 italic">
-                              None recorded.
-                            </p>
+                            <div className="p-2">
+                              {renderAccomplishmentRows(missedTomorrowPlan, false)}
+                            </div>
                           </div>
                         </div>
 
@@ -3643,6 +5509,20 @@ const DailyTab = ({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
+                              toggleAddToPlan(missedId);
+                            }}
+                            className={cn(
+                              "flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm transition-colors",
+                              quickActionOpenId === missedId
+                                ? "text-white bg-indigo-600 border border-indigo-700 hover:bg-indigo-700"
+                                : "text-indigo-600 bg-white border border-indigo-200 hover:bg-indigo-50"
+                            )}
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Add to Plan
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (feedbackOpenId === missedId) {
                                 closeFeedbackPanel(missedId);
                               } else {
@@ -3657,6 +5537,56 @@ const DailyTab = ({
                             <MessageSquare className="w-3.5 h-3.5" /> Feedback
                           </button>
                         </div>
+
+                        {quickActionOpenId === missedId && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="border-t border-[#EAE3DF] pt-3 mt-2"
+                          >
+                            <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
+                              Add to Tomorrow's Plan
+                            </p>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-wrap">
+                              <input
+                                autoFocus
+                                value={quickActionText}
+                                onChange={(e) =>
+                                  setQuickActionText(e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && !isSavingPlan) {
+                                    handleAddMissedMemberPlan(member);
+                                  }
+                                }}
+                                placeholder="Enter a plan item for tomorrow..."
+                                className="w-full flex-1 min-w-0 sm:min-w-[200px] border border-gray-300 rounded-xl px-4 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] placeholder:text-neutral-400"
+                              />
+                              <button
+                                onClick={() => handleAddMissedMemberPlan(member)}
+                                disabled={
+                                  isSavingPlan || !quickActionText.trim()
+                                }
+                                className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                {isSavingPlan ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Plus className="w-4 h-4" />
+                                )}
+                                Add
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setQuickActionOpenId(null);
+                                  setQuickActionText("");
+                                }}
+                                className="px-5 py-2 rounded-xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
 
                         {isMissedFeedbackVisible && (
                           <div
@@ -3878,6 +5808,11 @@ const DailyTab = ({
                           </div>
                         )}
                       </div>
+                    </div>
+                  )}
+                </div>
+              );
+                      })}
                     </div>
                   )}
                 </div>

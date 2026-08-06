@@ -314,7 +314,7 @@ const PlusServiceDashboard = () => {
   return (
     <div className="p-6">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Plus Services</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Services</h1>
       </div>
 
       <EnhancedTable

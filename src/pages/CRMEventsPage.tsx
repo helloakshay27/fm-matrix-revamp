@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { fetchEvents, updateEvent } from '@/store/slices/eventSlice';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { CRMEventsFilterModal } from '@/components/CRMEventsFilterModal';
-import { Switch as MuiSwitch } from '@mui/material';
+import { Switch } from '@/components/ui/switch';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
 
 export const CRMEventsPage = () => {
@@ -275,25 +275,11 @@ const [pagination, setPagination] = useState(() => {
 
         return (
           <div className="flex items-center gap-2">
-            <MuiSwitch
+            <Switch
               checked={isChecked}
-              onChange={(e) => handleStatusChange(item, e.target.checked)}
+              onCheckedChange={(checked) => handleStatusChange(item, checked)}
               disabled={updatingStatus[item.id]}
-              size="small"
-              sx={{
-                '& .MuiSwitch-switchBase': {
-                  color: '#ef4444',
-                  '&.Mui-checked': {
-                    color: '#22c55e',
-                  },
-                  '&.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#22c55e',
-                  },
-                },
-                '& .MuiSwitch-track': {
-                  backgroundColor: '#ef4444',
-                },
-              }}
+              className="data-[state=checked]:bg-green-500"
             />
             {isChecked ? "Active" : "Inactive"}
           </div>

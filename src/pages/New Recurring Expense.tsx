@@ -504,7 +504,7 @@
 //       {isSubmitting && (
 //         <div className="fixed inset-0 bg-black/45 flex items-center justify-center z-50">
 //           <div className="bg-card px-10 py-7 rounded-lg flex items-center gap-3">
-//             <CircularProgress size={20} />
+//             <CircularProgress size={20} sx={{ color: '#DA7756' }} />
 //             <span className="text-sm">Creating recurring expense…</span>
 //           </div>
 //         </div>
@@ -823,7 +823,7 @@
 //                     ))}
 //                   </Select>
 //                 </FormControl>
-//                 {vendorDetailLoading && <CircularProgress size={18} />}
+//                 {vendorDetailLoading && <CircularProgress size={18} sx={{ color: '#DA7756' }} />}
 //               </div>
 //             </div>
 
@@ -1119,8 +1119,14 @@
 // export default NewRecurringExpensePage;
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import {
+  BankRecord,
+  bankMasterListUrl,
+  getBankMasterApiConfig,
+  mapApiBankRecord,
+} from "./ClubManagement/bankMasterUtils";
 import {
   Checkbox,
   CircularProgress,
@@ -1132,15 +1138,15 @@ import {
   RadioGroup,
   Select,
   TextField,
-  Button,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
 } from "@mui/material";
+import { Button } from "@/components/ui/button";
 import { EditOutlined, Close as CloseIcon } from "@mui/icons-material";
-import { Receipt, Calendar, FileText, CreditCard } from "lucide-react";
+import { Receipt, Calendar, FileText, CreditCard, Landmark, ArrowLeft } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1305,8 +1311,15 @@ const Section: React.FC<{
 
 const NewRecurringExpensePage: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = !!id;
+  const [existingActive, setExistingActive] = useState(true);
+  const [existingLineItemId, setExistingLineItemId] = useState<number | null>(null);
+  const [fetchingExisting, setFetchingExisting] = useState(isEditMode);
 
-  useEffect(() => { document.title = "New Recurring Expense"; }, []);
+  useEffect(() => {
+    document.title = isEditMode ? "Edit Recurring Expense" : "New Recurring Expense";
+  }, [isEditMode]);
 
   // ── Recurring state ───────────────────────────────────────────────────────
   const [profileName, setProfileName] = useState("");
@@ -1322,6 +1335,25 @@ const NewRecurringExpensePage: React.FC = () => {
   const [currency, setCurrency] = useState("INR");
   const [amount, setAmount] = useState("");
   const [paidThrough, setPaidThrough] = useState("");
+
+  // Bank Details
+  const [bankOptions, setBankOptions] = useState<BankRecord[]>([]);
+  const [selectedBankId, setSelectedBankId] = useState<string>('');
+
+  useEffect(() => {
+    const fetchBanks = async () => {
+      try {
+        const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+        const res = await axios.get(`${bankMasterListUrl(baseUrl, lockAccountId)}&active=true`, { headers });
+        const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+        setBankOptions(data.map(mapApiBankRecord));
+      } catch (err) {
+        setBankOptions([]);
+      }
+    };
+    fetchBanks();
+  }, []);
+
   const [expenseType, setExpenseType] = useState<"goods" | "services">("goods");
   const [hsnCode, setHsnCode] = useState("");
   const [sacCode, setSacCode] = useState("");
@@ -1474,6 +1506,69 @@ const NewRecurringExpensePage: React.FC = () => {
       .catch(() => sonnerToast.error("Failed to load customers"))
       .finally(() => setLoadingCustomers(false));
   }, []);
+
+  // Fetch existing recurring expense — edit mode only
+  useEffect(() => {
+    if (!id) return;
+    const fetchExisting = async () => {
+      setFetchingExisting(true);
+      try {
+        const apiUrl = getApiUrl();
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`${apiUrl}/recurring_expenses/${id}.json`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = res.data || {};
+        const lineItem = Array.isArray(data.expense_accounts) && data.expense_accounts.length > 0
+          ? data.expense_accounts[0]
+          : null;
+
+        setProfileName(data.profile_name || "");
+        if (data.repeat_every === "custom") {
+          setRepeatEvery("custom");
+          setCustomNum(data.custom_repeat_every || 1);
+          setCustomFreq(data.custom_repeat_unit || "Week(s)");
+        } else {
+          setRepeatEvery(data.repeat_every || "week");
+        }
+        setStartDate(data.start_date || new Date().toISOString().split("T")[0]);
+        setNeverExpires(!!data.never_expires);
+        setEndsOn(data.end_date || "");
+        setExpenseAccount(data.account_id != null ? String(data.account_id) : "");
+        setCurrency(data.currency || "INR");
+        setAmount(data.amount != null ? String(data.amount) : "");
+        setPaidThrough(data.paid_through_account_id != null ? String(data.paid_through_account_id) : "");
+        setSelectedBankId(data.bank_master_id != null ? String(data.bank_master_id) : "");
+
+        const expType = (lineItem?.account_type || data.expense_type || "goods") as "goods" | "services";
+        setExpenseType(expType);
+        const hsnSac = lineItem?.hsn_sac_code ?? data.hsn_code ?? "";
+        if (expType === "goods") { setHsnCode(hsnSac); setSacCode(""); }
+        else { setSacCode(hsnSac); setHsnCode(""); }
+
+        setVendor(data.vendor_id != null ? String(data.vendor_id) : "");
+        setCustomer(data.lock_account_customer_id != null ? String(data.lock_account_customer_id) : "");
+        setGstTreatment(data.gst_treatment ? normalizeGstTreatment(data.gst_treatment) : "");
+        setGstin(data.vendor_gstin || data.gstin || "");
+        setSourceOfSupply(data.source_of_supply || "");
+        setDestinationOfSupply(data.destination_of_supply || "Maharashtra");
+        setReverseCharge(!!data.reverse_charge);
+        setTaxType(lineItem?.tax_type || "");
+        setTaxGroupId(lineItem?.tax_group_id ?? null);
+        setTaxExemptionId(lineItem?.tax_exemption_id ?? null);
+        setAmountIs(data.tax_amount_type === "tax_inclusive" ? "inclusive" : "exclusive");
+        setNotes(data.notes || "");
+        setDescription(data.description || "");
+        setExistingActive(data.active !== false);
+        setExistingLineItemId(lineItem?.id ?? null);
+      } catch {
+        sonnerToast.error("Failed to load recurring expense");
+      } finally {
+        setFetchingExisting(false);
+      }
+    };
+    fetchExisting();
+  }, [id]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // Vendor detail — same as ExpenseCreatePage
@@ -1682,6 +1777,7 @@ const NewRecurringExpensePage: React.FC = () => {
     if (!expenseAccount) e.expenseAccount = "Expense account is required";
     if (!amount || parseFloat(amount) <= 0) e.amount = "Valid amount required";
     if (!paidThrough) e.paidThrough = "Paid through is required";
+    if (!selectedBankId) e.bank = "Bank is required";
     if (!gstTreatment) e.gstTreatment = "GST treatment is required";
     if (!sourceOfSupply) e.sourceOfSupply = "Source of supply is required";
     if (!destinationOfSupply) e.destinationOfSupply = "Destination is required";
@@ -1737,6 +1833,7 @@ const NewRecurringExpensePage: React.FC = () => {
       // ── Expense account line ──────────────────────────────────────────────
       const expenseAccountsAttributes = [
         {
+          ...(isEditMode && existingLineItemId ? { id: existingLineItemId } : {}),
           lock_account_ledger_id: parseInt(expenseAccount),
           account_type: expenseType,
           amount: parseFloat(amount),
@@ -1756,11 +1853,12 @@ const NewRecurringExpensePage: React.FC = () => {
           start_date: startDate,
           end_date: neverExpires ? null : endsOn || null,
           never_expires: neverExpires,
-          active: true,
+          active: isEditMode ? existingActive : true,
 
           // Accounts
           account_id: parseInt(expenseAccount),   // spec: account_id
           paid_through_account_id: parseInt(paidThrough),
+          bank_master_id: selectedBankId ? Number(selectedBankId) : null,
 
           // Parties (omit if empty)
           ...(vendor && { vendor_id: parseInt(vendor) }),
@@ -1788,25 +1886,29 @@ const NewRecurringExpensePage: React.FC = () => {
         },
       };
 
-      // ── POST request — same fetch pattern as ExpenseCreatePage ────────────
-      const res = await window.fetch(
-        `${apiUrl}/recurring_expenses.json?lock_account_id=${lockAccountId}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      // ── POST (create) / PUT (edit) — same fetch pattern as ExpenseCreatePage ──
+      const url = isEditMode
+        ? `${apiUrl}/recurring_expenses/${id}.json?lock_account_id=${lockAccountId}`
+        : `${apiUrl}/recurring_expenses.json?lock_account_id=${lockAccountId}`;
+      const res = await window.fetch(url, {
+        method: isEditMode ? "PUT" : "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
       if (res.ok) {
-        sonnerToast.success("Recurring expense created successfully!");
+        sonnerToast.success(
+          isEditMode ? "Recurring expense updated successfully!" : "Recurring expense created successfully!"
+        );
         navigate(-1);
       } else {
         const err = await res.json().catch(() => ({}));
-        sonnerToast.error(err?.message || err?.error || "Failed to create recurring expense");
+        sonnerToast.error(
+          err?.message || err?.error || (isEditMode ? "Failed to update recurring expense" : "Failed to create recurring expense")
+        );
       }
     } catch {
       sonnerToast.error("Network error. Please try again.");
@@ -1827,22 +1929,42 @@ const NewRecurringExpensePage: React.FC = () => {
       {isSubmitting && (
         <div className="fixed inset-0 bg-black/45 flex items-center justify-center z-50">
           <div className="bg-card px-10 py-7 rounded-lg flex items-center gap-3">
-            <CircularProgress size={20} />
-            <span className="text-sm">Creating recurring expense…</span>
+            <CircularProgress size={20} sx={{ color: '#DA7756' }} />
+            <span className="text-sm">{isEditMode ? "Updating recurring expense…" : "Creating recurring expense…"}</span>
           </div>
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto space-y-6">
+      {/* Loading existing record overlay */}
+      {fetchingExisting && (
+        <div className="fixed inset-0 bg-black/45 flex items-center justify-center z-50">
+          <div className="bg-card px-10 py-7 rounded-lg flex items-center gap-3">
+            <CircularProgress size={20} sx={{ color: '#DA7756' }} />
+            <span className="text-sm">Loading recurring expense…</span>
+          </div>
+        </div>
+      )}
+
+      <div className="w-full space-y-6">
+        <div className="mb-2">
+          <button
+            onClick={() => navigate('/accounting/recurring-expenses')}
+            className="flex items-center gap-2 text-gray-900 hover:text-gray-700 font-medium tracking-wide"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back to Recurring Expenses List
+          </button>
+        </div>
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-3">
               <Receipt className="h-6 w-6 text-primary" />
-              New Recurring Expense
+              {isEditMode ? "Edit Recurring Expense" : "New Recurring Expense"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Create a new recurring expense profile
+              {isEditMode ? "Update recurring expense profile details" : "Create a new recurring expense profile"}
             </p>
           </div>
         </div>
@@ -2121,6 +2243,54 @@ const NewRecurringExpensePage: React.FC = () => {
         </Section>
 
         {/* ══════════════════════════════════════════════════════════════════
+            SECTION 3.5 — Bank Details
+        ══════════════════════════════════════════════════════════════════ */}
+        <Section title="Bank Details" icon={<Landmark className="h-3.5 w-3.5" />}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium mb-2 text-red-500">
+                Bank*
+              </label>
+              <FormControl fullWidth error={!!errors.bank}>
+                <Select
+                  displayEmpty
+                  value={selectedBankId}
+                  onChange={(e) => {
+                    setSelectedBankId(String(e.target.value));
+                    if (errors.bank) {
+                      setErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.bank;
+                        return next;
+                      });
+                    }
+                  }}
+                  renderValue={(val) =>
+                    val
+                      ? (() => {
+                          const bank = bankOptions.find(b => String(b.id) === String(val));
+                          return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
+                        })()
+                      : <span style={{ color: '#aaa' }}>Select Bank</span>
+                  }
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Bank</em></MenuItem>
+                  {bankOptions.map((bank) => (
+                    <MenuItem key={bank.id} value={String(bank.id)}>
+                      {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {errors.bank && (
+                <p className="text-xs text-red-500 mt-1">{errors.bank}</p>
+              )}
+            </div>
+          </div>
+        </Section>
+
+        {/* ══════════════════════════════════════════════════════════════════
             SECTION 4 — Vendor & GST Details
         ══════════════════════════════════════════════════════════════════ */}
         <Section title="Vendor & GST Details" icon={<Receipt className="h-3.5 w-3.5" />}>
@@ -2145,7 +2315,7 @@ const NewRecurringExpensePage: React.FC = () => {
                     ))}
                   </Select>
                 </FormControl>
-                {vendorDetailLoading && <CircularProgress size={18} />}
+                {vendorDetailLoading && <CircularProgress size={18} sx={{ color: '#DA7756' }} />}
               </div>
             </div>
 
@@ -2182,7 +2352,7 @@ const NewRecurringExpensePage: React.FC = () => {
                   {gstin || selectedGstDetail?.gstin || vendorDetail?.primary_gst_detail?.gstin || '—'}
                 </span>
                 <IconButton size="small" onClick={() => setGstPickerModalOpen(true)} disabled={!vendor}>
-                  <EditOutlined fontSize="small" className="text-blue-500" />
+                  <EditOutlined fontSize="small" className="text-brand" />
                 </IconButton>
               </div>
             </div>
@@ -2288,9 +2458,9 @@ const NewRecurringExpensePage: React.FC = () => {
 
             {/* ✅ Tax Amount — read-only calculation */}
             {taxType === "tax_group" && taxGroupId && (
-              <div className="p-3 bg-blue-50 rounded-md border border-blue-100">
+              <div className="p-3 bg-orange-50 rounded-md border border-orange-100">
                 <p className="text-sm text-gray-700">
-                  Tax Amount = ₹<span className="font-semibold text-blue-600">{taxAmount.toFixed(2)}</span>
+                  Tax Amount = ₹<span className="font-semibold text-brand">{taxAmount.toFixed(2)}</span>
                 </p>
               </div>
             )}
@@ -2448,35 +2618,17 @@ const NewRecurringExpensePage: React.FC = () => {
         {/* Action Buttons */}
         <div className="flex justify-center gap-4 pt-2 pb-6">
           <Button
-            variant="contained"
             onClick={handleSave}
             disabled={isSubmitting}
-            sx={{
-              textTransform: "none",
-              backgroundColor: "#DA7756",
-              color: "#ffffff",
-              borderRadius: "6px",
-              boxShadow: "none",
-              padding: "8px 24px",
-              fontWeight: 600,
-              "&:hover": { backgroundColor: "#C45F40", boxShadow: "none" },
-            }}
+            className="fm-button-fix fm-button-brand px-8 py-2"
           >
-            {isSubmitting ? "Saving…" : "Save"}
+            {isSubmitting ? (isEditMode ? "Updating…" : "Saving…") : (isEditMode ? "Update" : "Save")}
           </Button>
           <Button
-            variant="outlined"
             onClick={handleCancel}
             disabled={isSubmitting}
-            sx={{
-              textTransform: "none",
-              color: "#DA7756",
-              borderColor: "#DA7756",
-              borderRadius: "6px",
-              padding: "8px 24px",
-              fontWeight: 600,
-              "&:hover": { borderColor: "#C45F40", backgroundColor: "transparent" },
-            }}
+            variant="outline"
+            className="fm-button-fix px-8 py-2"
           >
             Cancel
           </Button>
@@ -2506,7 +2658,7 @@ const NewRecurringExpensePage: React.FC = () => {
           <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
             <button
               type="button"
-              className="text-blue-600 text-sm"
+              className="text-brand text-sm"
               onClick={() => {
                 setGstPickerModalOpen(false);
                 setShowNewGstForm(false);
@@ -2532,14 +2684,13 @@ const NewRecurringExpensePage: React.FC = () => {
         <DialogContent>
           <div className="space-y-4">
             <Button
-              variant="contained"
-              size="small"
+              size="sm"
               onClick={() => {
                 setEditingGstDetailId(null);
                 setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' });
                 setShowNewGstForm(true);
               }}
-              sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}
+              className="fm-button-fix fm-button-brand"
             >
               Add New Tax Information
             </Button>
@@ -2589,21 +2740,20 @@ const NewRecurringExpensePage: React.FC = () => {
                 />
                 <div className="md:col-span-2 flex gap-2">
                   <Button
-                    variant="contained"
-                    size="small"
+                    size="sm"
                     onClick={handleSaveAndSelectGst}
-                    sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}
+                    className="fm-button-fix fm-button-brand"
                   >
                     {editingGstDetailId ? 'Save' : 'Save and Select'}
                   </Button>
                   <Button
-                    variant="outlined"
-                    size="small"
+                    variant="outline"
+                    size="sm"
                     onClick={() => {
                       setShowNewGstForm(false);
                       setEditingGstDetailId(null);
                     }}
-                    sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}
+                    className="fm-button-fix"
                   >
                     Cancel
                   </Button>
@@ -2657,10 +2807,10 @@ const NewRecurringExpensePage: React.FC = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
           <Button
-            variant="outlined"
-            size="small"
+            variant="outline"
+            size="sm"
             onClick={() => setGstManageModalOpen(false)}
-            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}
+            className="fm-button-fix"
           >
             Close
           </Button>

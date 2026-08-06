@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { capturePostHogEvent } from '@/utils/posthogHelpers';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
@@ -385,6 +386,7 @@ export const TicketListDashboard = () => {
   };
 
   const handleAddTicket = () => {
+    capturePostHogEvent('Ticket Create Form Opened');
     navigate('/maintenance/tickets/add');
   };
 

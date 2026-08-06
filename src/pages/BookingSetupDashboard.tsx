@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Filter, Eye, Pencil } from "lucide-react";
 import { BookingSetupFilterModal } from "@/components/BookingSetupFilterModal";
 import { apiClient } from "@/utils/apiClient";
@@ -328,7 +329,8 @@ export const BookingSetupDashboard = () => {
     <div className="flex items-center gap-2">
       <Button
         onClick={() => setShowActionPanel(true)}
-        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
+        className="fm-button-fix fm-button-brand px-4 py-2"
+        variant="ghost"
       >
         <Plus className="w-4 h-4" />
         Action
@@ -361,10 +363,10 @@ export const BookingSetupDashboard = () => {
           renderActions={renderActions}
           storageKey="booking-setup-table"
           className="min-w-full"
-          emptyMessage={loading ? "Loading booking data..." : "No booking data found"}
+          emptyMessage=""
+          loading={loading}
           leftActions={leftActions}
           enableSearch={true}
-          // onFilterClick={() => setIsFilterOpen(true)}
           enableSelection={false}
           hideTableExport={true}
           pagination={false}

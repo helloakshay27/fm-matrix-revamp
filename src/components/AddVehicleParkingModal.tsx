@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useVehicleEvents } from '@/components/PostHogSecurityEvents';
 
 interface AddVehicleParkingModalProps {
   isOpen: boolean;
@@ -12,6 +13,13 @@ interface AddVehicleParkingModalProps {
 }
 
 export const AddVehicleParkingModal = ({ isOpen, onClose }: AddVehicleParkingModalProps) => {
+  const { onVehicleAdded } = useVehicleEvents();
+  
+  const handleSave = () => {
+    onVehicleAdded({ is_bulk_import: false, category: 'car', type: 'sedan', is_approved: true });
+    onClose();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-white">
@@ -138,16 +146,17 @@ export const AddVehicleParkingModal = ({ isOpen, onClose }: AddVehicleParkingMod
         {/* Action Buttons */}
         <div className="flex justify-end gap-3 mt-6">
           <Button 
-            variant="outline" 
+            variant="ghost" 
             onClick={onClose}
-            className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="fm-button-fix fm-button-brand px-4 py-2"
           >
             Close
           </Button>
           <Button 
-            className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white"
+            className="px-6 py-2 !bg-[#DA7756] hover:!bg-[#C45F40]"
+            onClick={handleSave}
           >
-            Save
+            <span className="!text-white font-medium">Save</span>
           </Button>
         </div>
       </DialogContent>

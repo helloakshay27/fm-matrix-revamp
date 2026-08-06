@@ -1,12 +1,19 @@
 import { X, Search, ChevronRight, ChevronDown } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import clsx from "clsx";
+import { renderGroupedUserCheckboxList } from "@/components/GroupedUserCheckboxList";
 
 interface TodoFilterModalProps {
     isModalOpen: boolean;
     setIsModalOpen: (open: boolean) => void;
     onApplyFilters: (filters: TodoFilters) => void;
-    users?: Array<{ id: number | string; full_name: string; name?: string }>;
+    users?: Array<{
+        id: number | string;
+        full_name: string;
+        name?: string;
+        department_id?: number | string | null;
+        department_name?: string | null;
+    }>;
 }
 
 export interface TodoFilters {
@@ -20,10 +27,10 @@ export interface TodoFilters {
 }
 
 const PRIORITY_OPTIONS = [
-    { label: "P1 - Urgent & Important", value: "P1", color: "bg-red-500" },
-    { label: "P2 - Important, Not Urgent", value: "P2", color: "bg-green-500" },
-    { label: "P3 - Urgent, Not Important", value: "P3", color: "bg-yellow-500" },
-    { label: "P4 - Not Urgent or Important", value: "P4", color: "bg-blue-500" },
+    { label: "Q1 - Urgent & Important", value: "P1", color: "bg-red-500" },
+    { label: "Q2 - Important, Not Urgent", value: "P2", color: "bg-green-500" },
+    { label: "Q3 - Urgent, Not Important", value: "P3", color: "bg-yellow-500" },
+    { label: "Q4 - Not Urgent or Important", value: "P4", color: "bg-blue-500" },
 ];
 
 const TodoFilterModal = ({
@@ -79,11 +86,6 @@ const TodoFilterModal = ({
     const [assignedToSearch, setAssignedToSearch] = useState(
         getInitialFilters().assignedToSearch
     );
-
-    const userOptions = users.map((user: any) => ({
-        label: user.full_name || user.name || "Unknown",
-        value: user.id,
-    }));
 
     // Save filters to localStorage
     useEffect(() => {
@@ -363,8 +365,8 @@ const TodoFilterModal = ({
                                         onChange={(e) => setCreatorSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(
-                                    userOptions,
+                                {renderGroupedUserCheckboxList(
+                                    users,
                                     selectedCreators,
                                     setSelectedCreators,
                                     creatorSearch
@@ -401,8 +403,8 @@ const TodoFilterModal = ({
                                         onChange={(e) => setAssignedToSearch(e.target.value)}
                                     />
                                 </div>
-                                {renderCheckboxList(
-                                    userOptions,
+                                {renderGroupedUserCheckboxList(
+                                    users,
                                     selectedAssignedTo,
                                     setSelectedAssignedTo,
                                     assignedToSearch

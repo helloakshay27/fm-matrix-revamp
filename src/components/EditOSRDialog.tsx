@@ -92,7 +92,7 @@ export const EditOSRDialog = ({ open, onOpenChange, osrDetails, onSubmit }: Edit
         <div className="flex justify-center pt-4">
           <Button 
             onClick={handleSubmit}
-            className="bg-green-600 hover:bg-green-700 text-white px-8"
+            className="!bg-[#C72030] hover:bg-[#C72030]/90 !text-white px-8"
           >
             Submit
           </Button>

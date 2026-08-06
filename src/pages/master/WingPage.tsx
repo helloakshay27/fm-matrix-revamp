@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { FormControl as MuiFormControl, InputLabel, Select as MuiSelect, MenuItem, TextField } from '@mui/material';
+import { Switch } from '@/components/ui/switch';
 import { Plus, X, Edit, Check, ChevronLeft, ChevronRight, Download, Upload, Loader2, QrCode } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import {
@@ -18,6 +20,34 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { wingSchema, type WingFormData } from '@/schemas/wingSchema';
 import { toast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 export function WingPage() {
   const dispatch = useAppDispatch();
@@ -276,16 +306,19 @@ export function WingPage() {
               <Button
                 variant="outline"
                 onClick={handleDownloadTemplate}
-                className="flex items-center gap-2"
+                className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
               >
-                <Download className="h-4 w-4" />
+                <Download className="h-4 w-4 mr-2" />
                 Download Sample Format
               </Button>
 
               <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Upload className="h-4 w-4" />
+                  <Button
+                    variant="outline"
+                    className="h-9 px-4 text-sm font-medium whitespace-nowrap border border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 [&_svg]:text-[#C72030]"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
                     Import Wings
                   </Button>
                 </DialogTrigger>
@@ -342,16 +375,28 @@ export function WingPage() {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog} modal={false}>
                 {shouldShow("Wing", "create") && (
                   <DialogTrigger asChild>
-                    <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">
+                    <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium whitespace-nowrap [&_svg]:text-white">
                       <Plus className="mr-2 h-4 w-4" />
                       Add Wing
                     </Button>
                   </DialogTrigger>
                 )}
-                <DialogContent className="max-w-2xl">
+                <DialogContent
+                  className="max-w-2xl bg-white overflow-visible"
+                  onPointerDownOutside={(e) => {
+                    if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onInteractOutside={(e) => {
+                    if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
                   <DialogHeader className="flex flex-row items-center justify-between pb-0">
                     <DialogTitle className="flex items-center gap-2">
                       <Plus className="w-5 h-5" />
@@ -373,9 +418,15 @@ export function WingPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Wing Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Enter wing name" {...field} />
-                              </FormControl>
+                              <TextField
+                                label="Wing Name *"
+                                variant="outlined"
+                                fullWidth
+                                placeholder="Enter wing name"
+                                value={field.value}
+                                onChange={field.onChange}
+                                sx={fieldStyles}
+                              />
                               <FormMessage />
                             </FormItem>
                           )}
@@ -387,20 +438,24 @@ export function WingPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Select Building</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select Building" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
+                              <MuiFormControl fullWidth variant="outlined">
+                                <InputLabel id="create-building-label">Select Building *</InputLabel>
+                                <MuiSelect
+                                  labelId="create-building-label"
+                                  label="Select Building *"
+                                  value={field.value}
+                                  onChange={(e) => field.onChange(e.target.value)}
+                                  sx={fieldStyles}
+                                  MenuProps={selectMenuProps}
+                                >
+                                  <MenuItem value=""><em>Select Building</em></MenuItem>
                                   {buildings.data.map((building) => (
-                                    <SelectItem key={building.id} value={building.id.toString()}>
+                                    <MenuItem key={building.id} value={building.id.toString()}>
                                       {building.name}
-                                    </SelectItem>
+                                    </MenuItem>
                                   ))}
-                                </SelectContent>
-                              </Select>
+                                </MuiSelect>
+                              </MuiFormControl>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -432,176 +487,136 @@ export function WingPage() {
           </div>
 
           {/* Search Controls */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4">
             <div className="text-sm text-muted-foreground">
               Total: {totalItems} wings
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Search:</span>
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-64"
-                placeholder="Search wings..."
-              />
             </div>
           </div>
 
           {/* Table */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="px-4 py-3 text-left font-medium">Actions</TableHead>
-                  <TableHead className="px-4 py-3 text-left font-medium">Building</TableHead>
-                  <TableHead className="px-4 py-3 text-left font-medium">Wing Name</TableHead>
-                  <TableHead className="px-4 py-3 text-left font-medium">QR Code</TableHead>
-                  <TableHead className="px-4 py-3 text-left font-medium">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {wings.loading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4">
-                      Loading wings...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredWings.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4">
-                      {wings.data.length === 0 ? 'No wings available' : 'No wings match your search'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  currentWings.map((wing) => (
-                    <TableRow key={wing.id}>
-                      <TableCell>
-                        {shouldShow("Wing", "update") && (
-                          <Button variant="ghost" size="sm" onClick={() => openEditDialog(wing)}>
-                            <Edit className="w-4 h-4 text-[#C72030]" />
-                          </Button>
-                        )}
-                      </TableCell>
-                      <TableCell>{wing.building?.name || 'N/A'}</TableCell>
-                      <TableCell>{wing.name}</TableCell>
-                      <TableCell>
-                        {wing.qr_code_url ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedQrCode(wing.qr_code_url);
-                              setIsQrModalOpen(true);
-                            }}
-                            className="text-[#C72030] hover:text-[#C72030]/80"
-                          >
-                            <QrCode className="w-4 h-4" />
-                          </Button>
-                        ) : (
-                          <span className="text-gray-400 text-sm">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <button onClick={() => handleToggleStatus(wing.id, wing.active)} className="cursor-pointer">
-                          {wing.active ? (
-                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
-                              <Check className="w-3 h-3 text-white" />
-                            </div>
-                          ) : (
-                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
-                              <span className="text-white text-xs">✗</span>
-                            </div>
-                          )}
-                        </button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+          <div className="w-full min-w-0 max-w-full">
+            <EnhancedTable
+              data={filteredWings}
+              columns={[
+                {
+                  key: 'building',
+                  label: 'Building',
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                  defaultVisible: true,
+                },
+                {
+                  key: 'name',
+                  label: 'Wing Name',
+                  sortable: true,
+                  hideable: true,
+                  draggable: true,
+                  defaultVisible: true,
+                },
+                {
+                  key: 'qr_code',
+                  label: 'QR Code',
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                  defaultVisible: true,
+                },
+                {
+                  key: 'status',
+                  label: 'Status',
+                  sortable: false,
+                  hideable: true,
+                  draggable: true,
+                  defaultVisible: true,
+                },
+              ] as ColumnConfig[]}
+              renderCell={(wing: any, columnKey: string) => {
+                switch (columnKey) {
+                  case 'building':
+                    return wing.building?.name || 'N/A';
+                  case 'name':
+                    return <span className="font-medium text-gray-900">{wing.name}</span>;
+                  case 'qr_code':
+                    return wing.qr_code_url ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedQrCode(wing.qr_code_url);
+                          setIsQrModalOpen(true);
+                        }}
+                        className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+                        title="QR Code"
+                      >
+                        <QrCode className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <span className="text-gray-400 text-sm">-</span>
+                    );
+                  case 'status':
+                    return (
+                      <Switch
+                        checked={wing.active}
+                        onCheckedChange={() => handleToggleStatus(wing.id, wing.active)}
+                        className="data-[state=checked]:bg-brand"
+                      />
+                    );
+                  default:
+                    return wing[columnKey] ?? '--';
+                }
+              }}
+              renderActions={(wing: any) =>
+                shouldShow('Wing', 'update') ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openEditDialog(wing)}
+                    className="h-8 w-8 p-0 text-black hover:bg-gray-100"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                ) : null
+              }
+              storageKey="wings-table"
+              enableSearch
+              searchTerm={search}
+              onSearchChange={(value) => {
+                setSearch(value);
+                setCurrentPage(1);
+              }}
+              disableClientSearch
+              searchPlaceholder="Search wings..."
+              hideTableExport
+              loading={wings.loading}
+              emptyMessage={
+                wings.data.length === 0
+                  ? 'No wings available'
+                  : 'No wings match your search'
+              }
+              pagination
+              pageSize={itemsPerPage}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
           </div>
 
-          {/* Pagination Controls */}
-          {wings.data.length > 0 && (
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-muted-foreground">
-                Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} wings
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToPrevious}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Previous
-                </Button>
-
-                <div className="flex items-center space-x-1">
-                  {/* Show first page */}
-                  {currentPage > 3 && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goToPage(1)}
-                        className="w-8 h-8 p-0"
-                      >
-                        1
-                      </Button>
-                      {currentPage > 4 && <span className="px-2">...</span>}
-                    </>
-                  )}
-
-                  {/* Show pages around current page */}
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(page => page >= currentPage - 2 && page <= currentPage + 2)
-                    .map((page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => goToPage(page)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {page}
-                      </Button>
-                    ))}
-
-                  {/* Show last page */}
-                  {currentPage < totalPages - 2 && (
-                    <>
-                      {currentPage < totalPages - 3 && <span className="px-2">...</span>}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goToPage(totalPages)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {totalPages}
-                      </Button>
-                    </>
-                  )}
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={goToNext}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Edit Dialog */}
-          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-            <DialogContent className="max-w-2xl">
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog} modal={false}>
+            <DialogContent
+              className="max-w-2xl bg-white overflow-visible"
+              onPointerDownOutside={(e) => {
+                if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                  e.preventDefault();
+                }
+              }}
+              onInteractOutside={(e) => {
+                if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+                  e.preventDefault();
+                }
+              }}
+            >
               <DialogHeader className="flex flex-row items-center justify-between pb-0">
                 <DialogTitle>Edit Wing Details</DialogTitle>
                 <button
@@ -620,9 +635,15 @@ export function WingPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Wing Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter wing name" {...field} />
-                          </FormControl>
+                          <TextField
+                            label="Wing Name *"
+                            variant="outlined"
+                            fullWidth
+                            placeholder="Enter wing name"
+                            value={field.value}
+                            onChange={field.onChange}
+                            sx={fieldStyles}
+                          />
                           <FormMessage />
                         </FormItem>
                       )}
@@ -634,20 +655,24 @@ export function WingPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Select Building</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select Building" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="bg-white z-50">
+                          <MuiFormControl fullWidth variant="outlined">
+                            <InputLabel id="edit-building-label">Select Building *</InputLabel>
+                            <MuiSelect
+                              labelId="edit-building-label"
+                              label="Select Building *"
+                              value={field.value}
+                              onChange={(e) => field.onChange(e.target.value)}
+                              sx={fieldStyles}
+                              MenuProps={selectMenuProps}
+                            >
+                              <MenuItem value=""><em>Select Building</em></MenuItem>
                               {buildings.data.map((building) => (
-                                <SelectItem key={building.id} value={building.id.toString()}>
+                                <MenuItem key={building.id} value={building.id.toString()}>
                                   {building.name}
-                                </SelectItem>
+                                </MenuItem>
                               ))}
-                            </SelectContent>
-                          </Select>
+                            </MuiSelect>
+                          </MuiFormControl>
                           <FormMessage />
                         </FormItem>
                       )}

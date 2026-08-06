@@ -202,7 +202,7 @@ const Styles = () => (
     .bh-card-actions .edit:hover { color:${C.primary}; background:#fff3ed; }
     .bh-card-actions .del:hover { color:#ef4444; background:#fee2e2; }
 
-    .bh-initiative-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; }
+    .bh-initiative-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
     @media (max-width: 768px) { .bh-initiative-grid { grid-template-columns:1fr; } }
 
     .bh-modal-portal { position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,0.42); backdrop-filter:blur(4px); }
@@ -434,11 +434,7 @@ const Modal = ({ children, onClose }) => {
 // ── Skeleton ──
 const SkeletonCards = () => (
   <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-      gap: 14,
-    }}
+    className="bh-initiative-grid"
   >
     {[1, 2, 3, 4].map((n) => (
       <div

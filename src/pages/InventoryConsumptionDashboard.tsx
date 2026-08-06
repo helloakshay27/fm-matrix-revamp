@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
-import { Eye, X, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { Eye, X, ChevronDown, ChevronUp, RefreshCw, Download } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import bio from '@/assets/bio.png';
@@ -23,48 +23,64 @@ const InventoryConsumptionDashboard = () => {
   const { inventories, loading, error } = useSelector((state: RootState) => state.inventoryConsumption);
 
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
-  const [monthData, setMonthData] = useState<Record<string, { loading: boolean; inventories: any[]; total_cost: number | null }>>({});
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [categoryData, setCategoryData] = useState<Record<string, { loading: boolean; inventories: any[]; total_cost: number | null }>>({});
   // New state for monthly costs from API
   const [monthlyCosts, setMonthlyCosts] = useState<Record<string, number>>({});
 
+  const categories = [
+    { name: 'Non Technical', value: 'Non Technical', icon: '📦' },
+    { name: 'Technical', value: 'Technical', icon: '⚙️' },
+    { name: 'Housekeeping', value: 'Houskeeping', icon: '🧹' },
+    { name: 'Stationary', value: 'Stationary', icon: '📎' },
+    { name: 'Pantry', value: 'Pantry', icon: '☕' },
+  ];
+
+  const fetchMonthlyCosts = async () => {
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const year = new Date().getFullYear();
+      const url = `https://${baseUrl}/pms/inventories/consumption_cost_by_month.json?year=${year}`;
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const fullMonths = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+      const abbrevToFull: Record<string, string> = {
+        Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April', May: 'May', Jun: 'June',
+        Jul: 'July', Aug: 'August', Sep: 'September', Oct: 'October', Nov: 'November', Dec: 'December'
+      };
+      const costs: Record<string, number> = {};
+      const list = response.data?.monthly_costs || response.data || [];
+      if (Array.isArray(list)) {
+        list.forEach((item: any) => {
+          let fullName = '';
+          if (typeof item.month === 'number') {
+            fullName = fullMonths[item.month - 1];
+          } else if (typeof item.month === 'string') {
+            const key = item.month.slice(0, 3); // ensure first 3 letters
+            fullName = abbrevToFull[key] || item.month;
+          }
+          if (fullName) costs[fullName] = item.total_cost ?? 0;
+        });
+      }
+      setMonthlyCosts(costs);
+    } catch (err) {
+      console.error('Error fetching monthly costs:', err);
+    }
+  };
+
   // Fetch monthly costs on mount
   useEffect(() => {
-    const fetchMonthlyCosts = async () => {
-      try {
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
-        const year = new Date().getFullYear();
-        const url = `https://${baseUrl}/pms/inventories/consumption_cost_by_month.json?year=${year}`;
-        const response = await axios.get(url, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const fullMonths = ['January', 'February', 'March', 'April', 'May', 'June',
-          'July', 'August', 'September', 'October', 'November', 'December'];
-        const abbrevToFull: Record<string, string> = {
-          Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April', May: 'May', Jun: 'June',
-          Jul: 'July', Aug: 'August', Sep: 'September', Oct: 'October', Nov: 'November', Dec: 'December'
-        };
-        const costs: Record<string, number> = {};
-        const list = response.data?.monthly_costs || response.data || [];
-        if (Array.isArray(list)) {
-          list.forEach((item: any) => {
-            let fullName = '';
-            if (typeof item.month === 'number') {
-              fullName = fullMonths[item.month - 1];
-            } else if (typeof item.month === 'string') {
-              const key = item.month.slice(0, 3); // ensure first 3 letters
-              fullName = abbrevToFull[key] || item.month;
-            }
-            if (fullName) costs[fullName] = item.total_cost ?? 0;
-          });
-        }
-        setMonthlyCosts(costs);
-      } catch (err) {
-        console.error('Error fetching monthly costs:', err);
-      }
-    };
     fetchMonthlyCosts();
   }, []);
+
+  const getCurrencySymbol = () => {
+    const currency = localStorage.getItem('currency');
+    if (currency === 'INR') return '₹';
+    return currency || '₹';
+  };
 
   useEffect(() => {
     dispatch(fetchInventoryConsumptionHistory());
@@ -185,11 +201,13 @@ const InventoryConsumptionDashboard = () => {
   // Define table columns for expanded view (API response)
   const expandedColumns: ColumnConfig[] = [
     { key: 'action', label: 'Action', sortable: false, draggable: false, defaultVisible: true },
-    { key: 'name', label: 'Name', sortable: true, draggable: false, defaultVisible: true },
-    { key: 'quantity', label: 'Content Quantity', sortable: true, draggable: false, defaultVisible: true },
-    { key: 'cost', label: 'Cost', sortable: true, draggable: false, defaultVisible: true },
-    { key: 'consumption', label: 'Consumed', sortable: true, draggable: false, defaultVisible: true },
-    { key: 'total_cost', label: 'Amount', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'category', label: 'Category', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'name', label: 'Item Name', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'unit', label: 'Unit', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'quantity', label: 'Available Stock', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'consumption', label: 'Consumed Quantity', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'cost', label: 'Unit Cost (₹)', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'total_cost', label: 'Consumption Cost Total (₹)', sortable: true, draggable: false, defaultVisible: true },
   ];
 
   // Render cell content for expanded table
@@ -230,7 +248,7 @@ const InventoryConsumptionDashboard = () => {
         console.warn('Cost value missing for item:', item); // Debug logging
       }
 
-      return <span className="font-semibold text-green-600">{costValue !== null && costValue !== undefined ? `₹${formatNumber(costValue)}` : '-'}</span>;
+      return <span className="font-semibold text-green-600">{costValue !== null && costValue !== undefined ? `${getCurrencySymbol()}${formatNumber(costValue)}` : '-'}</span>;
     }
     if (columnKey === 'name') {
       return <span className="font-medium text-gray-900">{value}</span>;
@@ -238,8 +256,11 @@ const InventoryConsumptionDashboard = () => {
     if (columnKey === 'quantity' || columnKey === 'consumption') {
       return <span className="text-gray-700">{value !== null && value !== undefined ? formatNumber(value) : '-'}</span>;
     }
+    if (columnKey === 'category') {
+      return <span className="text-gray-700">{value !== null && value !== undefined ? value : '-'}</span>;
+    }
     if (columnKey === 'total_cost') {
-      return <span className="font-semibold text-red-600">{value !== null && value !== undefined ? `₹${formatNumber(value)}` : '-'}</span>;
+      return <span className="font-semibold text-red-600">{value !== null && value !== undefined ? `${getCurrencySymbol()}${formatNumber(value)}` : '-'}</span>;
     }
     if (columnKey === 'criticality') {
       return <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">{value}</span>;
@@ -259,65 +280,83 @@ const InventoryConsumptionDashboard = () => {
     }
   };
 
-  // Toggle month expansion and fetch data if needed
-  const toggleMonth = async (month: string) => {
+  // Toggle month expansion
+  const toggleMonth = (month: string) => {
     if (isMonthDisabled(month)) return;
     if (expandedMonth === month) {
       setExpandedMonth(null);
+      setExpandedCategory(null);
       return;
     }
     setExpandedMonth(month);
-    // If already loaded, don't fetch again
-    if (monthData[month] && monthData[month].inventories && monthData[month].inventories.length > 0) {
-      console.log(`Data already loaded for ${month}, skipping fetch`);
+    setExpandedCategory(null);
+    
+    // Fetch data for all categories in the background to get totals
+    categories.forEach(cat => {
+      const key = `${month}-${cat.value}`;
+      if (!categoryData[key] || (!categoryData[key].loading && categoryData[key].total_cost === null)) {
+        fetchCategoryData(month, cat.value);
+      }
+    });
+  };
+
+  const fetchCategoryData = async (month: string, categoryValue: string, isRefresh = false) => {
+    const key = `${month}-${categoryValue}`;
+    if (!isRefresh && categoryData[key] && categoryData[key].inventories && categoryData[key].inventories.length > 0) {
       return;
     }
-    // Fetch data for this month
-    setMonthData((prev) => ({ ...prev, [month]: { loading: true, inventories: [], total_cost: null } }));
+    
+    setCategoryData((prev) => ({ ...prev, [key]: { loading: true, inventories: prev[key]?.inventories || [], total_cost: prev[key]?.total_cost ?? null } }));
     try {
       const { start, end } = getMonthDateRange(month);
       const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
-      const url = `https://${baseUrl}/pms/inventories/inventory_consumption_history.json?q[created_at_gteq]=${start}&q[created_at_lteq]=${end}`;
-      console.log(`🔍 FETCHING DATA FOR ${month}:`);
-      console.log(`  - Date Range: ${start} to ${end}`);
-      console.log(`  - API Request URL: ${url}`);
-
+      const url = `https://${baseUrl}/pms/inventories/inventory_consumption_history.json?q[created_at_gteq]=${start}&q[created_at_lteq]=${end}&s[category_eq]=${categoryValue}`;
+      
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log(`✅ API Response for ${month}:`, response.data);
-      console.log(`  - Total inventories count: ${response.data.inventories?.length || 0}`);
-      if (response.data.inventories && response.data.inventories.length > 0) {
-        console.log(`  - First inventory item:`, response.data.inventories[0]);
-        console.log(`  - Has cost field: ${'cost' in response.data.inventories[0]}`);
-      }
+      const fetchedInventories = response.data.inventories || [];
+      const computedTotalCost = fetchedInventories.reduce((sum: number, item: any) => sum + (item.total_cost || 0), 0);
 
-      setMonthData((prev) => ({
+      setCategoryData((prev) => ({
         ...prev,
-        [month]: {
+        [key]: {
           loading: false,
-          inventories: response.data.inventories || [],
-          total_cost: response.data.total_cost || null,
+          inventories: fetchedInventories,
+          total_cost: computedTotalCost,
         },
       }));
-      // If API returned items that include `cost`, clear any persisted per-month column visibility
-      // so the table falls back to the default visibility (which enables `cost` by default).
+      
       try {
         const firstItem = response.data.inventories && response.data.inventories.length > 0 ? response.data.inventories[0] : null;
         if (firstItem && ('cost' in firstItem)) {
-          const storageKeyName = `consumption-table-${month}`;
+          const storageKeyName = `consumption-table-${key}`;
           localStorage.removeItem(`${storageKeyName}-columns`);
           localStorage.removeItem(`${storageKeyName}-column-order`);
-          console.log(`Cleared persisted column visibility for ${storageKeyName} because API returned cost field.`);
         }
       } catch (err) {
-        console.warn('Failed to reset column visibility for month after fetch:', err);
+        console.warn('Failed to reset column visibility for category after fetch:', err);
       }
     } catch (error) {
-      console.error(`❌ Error fetching data for ${month}:`, error);
-      setMonthData((prev) => ({ ...prev, [month]: { loading: false, inventories: [], total_cost: null } }));
+      console.error(`❌ Error fetching data for ${key}:`, error);
+      setCategoryData((prev) => ({ ...prev, [key]: { loading: false, inventories: [], total_cost: 0 } }));
+    }
+  };
+
+  // Toggle category expansion and fetch data if needed
+  const toggleCategory = async (month: string, categoryValue: string) => {
+    if (expandedCategory === categoryValue) {
+      setExpandedCategory(null);
+      return;
+    }
+    setExpandedCategory(categoryValue);
+    
+    const key = `${month}-${categoryValue}`;
+    // Fetch if not already loaded (though it should be loading in background now)
+    if (!categoryData[key] || categoryData[key].total_cost === null) {
+      fetchCategoryData(month, categoryValue);
     }
   };
 
@@ -331,52 +370,70 @@ const InventoryConsumptionDashboard = () => {
 
   const currentMonth = getCurrentMonth();
 
-  // Function to force refresh data for a month
-  const refreshMonthData = async (month: string) => {
-    console.log(`🔄 Force refreshing data for ${month}`);
-    // Clear existing data
-    setMonthData((prev) => ({ ...prev, [month]: { loading: true, inventories: [], total_cost: null } }));
+  // Function to force refresh data for a category
+  const refreshCategoryData = async (month: string, categoryValue: string) => {
+    fetchCategoryData(month, categoryValue, true);
+  };
 
-    try {
-      const { start, end } = getMonthDateRange(month);
-      const baseUrl = localStorage.getItem('baseUrl');
-      const token = localStorage.getItem('token');
-      const url = `https://${baseUrl}/pms/inventories/inventory_consumption_history.json?q[created_at_gteq]=${start}&q[created_at_lteq]=${end}`;
-      console.log(`🔍 FORCE REFRESH FOR ${month}:`);
-      console.log(`  - Date Range: ${start} to ${end}`);
-      console.log(`  - API URL: ${url}`);
+  const refreshMonthData = (month: string) => {
+    categories.forEach(cat => {
+      refreshCategoryData(month, cat.value);
+    });
+    fetchMonthlyCosts();
+  };
 
-      const response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      console.log(`✅ Refreshed data for ${month}:`, response.data);
-      console.log(`  - Count: ${response.data.inventories?.length || 0}`);
-
-      setMonthData((prev) => ({
-        ...prev,
-        [month]: {
-          loading: false,
-          inventories: response.data.inventories || [],
-          total_cost: response.data.total_cost || null,
-        },
-      }));
-      // If API returned items with `cost`, reset persisted column visibility so defaults show the Cost column
-      try {
-        const firstItem = response.data.inventories && response.data.inventories.length > 0 ? response.data.inventories[0] : null;
-        if (firstItem && ('cost' in firstItem)) {
-          const storageKeyName = `consumption-table-${month}`;
-          localStorage.removeItem(`${storageKeyName}-columns`);
-          localStorage.removeItem(`${storageKeyName}-column-order`);
-          console.log(`Cleared persisted column visibility for ${storageKeyName} after manual refresh.`);
-        }
-      } catch (err) {
-        console.warn('Failed to reset column visibility for month after refresh:', err);
+  const downloadMonthData = (month: string) => {
+    const allItems: any[] = [];
+    categories.forEach(cat => {
+      const key = `${month}-${cat.value}`;
+      const data = categoryData[key];
+      if (data && data.inventories) {
+        const itemsWithCategory = data.inventories.map((item: any) => ({
+          ...item,
+          category: item.category || cat.name
+        }));
+        allItems.push(...itemsWithCategory);
       }
-    } catch (error) {
-      console.error(`❌ Error refreshing ${month}:`, error);
-      setMonthData((prev) => ({ ...prev, [month]: { loading: false, inventories: [], total_cost: null } }));
+    });
+
+    if (allItems.length === 0) {
+      alert("No data available to download. Please wait for data to load or expand the month to load data.");
+      return;
     }
+
+    const headers = ['Category', 'Item Name', 'Unit', 'Available Stock', 'Consumed Quantity', 'Unit Cost', 'Consumption Cost Total'];
+    const csvRows = [headers.join(',')];
+
+    allItems.forEach(item => {
+      const costValue = item.cost !== undefined && item.cost !== null
+        ? item.cost
+        : item.unit_cost !== undefined && item.unit_cost !== null
+          ? item.unit_cost
+          : item.price !== undefined && item.price !== null
+            ? item.price
+            : 0;
+
+      const row = [
+        `"${item.category || ''}"`,
+        `"${(item.name || '').replace(/"/g, '""')}"`,
+        `"${item.unit || ''}"`,
+        item.quantity || 0,
+        item.consumption || 0,
+        costValue || 0,
+        item.total_cost || 0
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Consumption_Data_${month}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Navigate to view page
@@ -395,37 +452,6 @@ const InventoryConsumptionDashboard = () => {
     navigate(`/maintenance/inventory-consumption/view/${item.id}?start_date=${start}&end_date=${end}`);
   };
 
-  // Add small '(Consumed)' label beneath the Amount header (without changing EnhancedTable)
-  useEffect(() => {
-    if (!expandedMonth) return;
-    let tries = 0;
-    const maxTries = 12; // ~1.2s total
-    const attempt = () => {
-      const monthSection = document.getElementById(`month-${expandedMonth}`);
-      if (!monthSection) return false;
-      const headers = monthSection.querySelectorAll('thead th');
-      for (const th of Array.from(headers)) {
-        const text = th.textContent?.trim() || '';
-        if (text.startsWith('Amount') && !th.querySelector('.consumed-sub-label')) {
-          const sub = document.createElement('div');
-          sub.className = 'consumed-sub-label text-[10px] text-gray-500 leading-none';
-          sub.textContent = '(Consumed)';
-          th.appendChild(sub);
-          return true;
-        }
-      }
-      return false;
-    };
-    // Try immediately and then retry until table header present
-    if (attempt()) return;
-    const interval = setInterval(() => {
-      tries++;
-      if (attempt() || tries >= maxTries) {
-        clearInterval(interval);
-      }
-    }, 100);
-    return () => clearInterval(interval);
-  }, [expandedMonth, monthData]);
 
   return (
     <div className="p-6 space-y-6">
@@ -462,21 +488,35 @@ const InventoryConsumptionDashboard = () => {
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-xl font-bold text-red-600">
-                  {`${localStorage.getItem('currency')}${formatNumber(monthlyCosts[m.month] ?? 0)}`}
+                  {`${getCurrencySymbol()}${formatNumber(monthlyCosts[m.month] ?? 0)}`}
                 </span>
                 {expandedMonth === m.month && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 w-8 p-0 hover:bg-gray-200"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      refreshMonthData(m.month);
-                    }}
-                    title="Refresh data"
-                  >
-                    <RefreshCw className="w-4 h-4 text-gray-600" />
-                  </Button>
+                  <>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 hover:bg-gray-200"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        downloadMonthData(m.month);
+                      }}
+                      title="Download month data"
+                    >
+                      <Download className="w-4 h-4 text-gray-600" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 hover:bg-gray-200"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        refreshMonthData(m.month);
+                      }}
+                      title="Refresh data"
+                    >
+                      <RefreshCw className="w-4 h-4 text-gray-600" />
+                    </Button>
+                  </>
                 )}
                 {expandedMonth === m.month ? (
                   <ChevronUp className="w-5 h-5 text-gray-400" />
@@ -486,30 +526,94 @@ const InventoryConsumptionDashboard = () => {
               </div>
             </div>
 
-            {/* Expanded Table */}
+            {/* Expanded Month - Show Categories */}
             {expandedMonth === m.month && (
-              <div className="border-t border-gray-200 bg-gray-50">
-                <div className="p-4">
-                  {monthData[m.month]?.loading ? (
-                    <div className="flex justify-center items-center h-24 text-gray-500">Loading...</div>
-                  ) : (
-                    <EnhancedTable
-                      data={monthData[m.month]?.inventories || []}
-                      columns={expandedColumns}
-                      renderCell={renderExpandedCell}
-                      storageKey={`consumption-table-${m.month}`}
-                      emptyMessage="No consumption data available"
-                      enableExport={false}
-                      hideTableExport={true}
-                      hideTableSearch={true}
-                      hideColumnsButton={true}
-                      loading={false}
-                      pagination={false}
-                      selectable={false}
-                      getItemId={(item) => item.id}
-                    />
-                  )}
-                </div>
+              <div className="border-t border-gray-200 bg-gray-50 p-4 space-y-3">
+                {categories.map((cat) => {
+                  const catKey = `${m.month}-${cat.value}`;
+                  const isCatExpanded = expandedCategory === cat.value;
+                  const data = categoryData[catKey];
+                  
+                  return (
+                    <div 
+                      key={cat.value}
+                      id={`category-${m.month}-${cat.value}`}
+                      className="border rounded-lg bg-white shadow-sm overflow-hidden"
+                    >
+                      <div 
+                        className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => toggleCategory(m.month, cat.value)}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xl">
+                            {cat.icon}
+                          </div>
+                          <div>
+                            <h3 className="font-medium text-gray-900">{cat.name}</h3>
+                            <p className="text-xs text-gray-500">
+                              {data && !data.loading && data.inventories 
+                                ? `${data.inventories.length} items` 
+                                : 'Loading items...'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-4">
+                          <span className="font-semibold text-red-600">
+                            {data && !data.loading && data.total_cost !== null 
+                              ? `${getCurrencySymbol()}${formatNumber(data.total_cost)}` 
+                              : `${getCurrencySymbol()}0`}
+                          </span>
+                          
+                          {isCatExpanded && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 hover:bg-gray-200"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                refreshCategoryData(m.month, cat.value);
+                              }}
+                              title="Refresh data"
+                            >
+                              <RefreshCw className="w-4 h-4 text-gray-600" />
+                            </Button>
+                          )}
+                          {isCatExpanded ? (
+                            <ChevronUp className="w-5 h-5 text-gray-400" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Expanded Category Table */}
+                      {isCatExpanded && (
+                        <div className="border-t border-gray-100 p-4">
+                          {data?.loading ? (
+                            <div className="flex justify-center items-center h-24 text-gray-500">Loading...</div>
+                          ) : (
+                            <EnhancedTable
+                              data={data?.inventories || []}
+                              columns={expandedColumns}
+                              renderCell={renderExpandedCell}
+                              storageKey={`consumption-table-${catKey}`}
+                              emptyMessage="No consumption data available"
+                              enableExport={true}
+                              hideTableExport={false}
+                              hideTableSearch={false}
+                              hideColumnsButton={false}
+                              loading={false}
+                              pagination={true}
+                              selectable={false}
+                              getItemId={(item) => item.id}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

@@ -37,13 +37,19 @@ import {
     CheckCircle,
     EditOutlined
 } from '@mui/icons-material';
-import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAddresses, getInventories } from '@/store/slices/materialPRSlice';
 import ItemSearchInput from '@/components/ItemSearchInput';
 
 import { useAppDispatch } from '@/store/hooks';
 import axios from 'axios';
+import {
+    BankRecord,
+    bankMasterListUrl,
+    getBankMasterApiConfig,
+    mapApiBankRecord,
+} from './ClubManagement/bankMasterUtils';
 
 // Section component
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -110,6 +116,7 @@ interface Item {
     taxRate: number;
     amount: number;
     account_id: number;
+    account_name?: string;
     // fields used by the tax dropdown (tax groups/exemptions)
     item_tax_type?: string;
     tax_group_id?: number | null;
@@ -257,6 +264,24 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const [vendorNotes, setVendorNotes] = useState('');
     const [termsAndConditions, setTermsAndConditions] = useState('');
     const [attachments, setAttachments] = useState<File[]>([]);
+
+    // Bank Details
+    const [bankOptions, setBankOptions] = useState<BankRecord[]>([]);
+    const [selectedBankId, setSelectedBankId] = useState<string>('');
+
+    useEffect(() => {
+        const fetchBanks = async () => {
+            try {
+                const { baseUrl, lockAccountId, headers } = getBankMasterApiConfig();
+                const res = await axios.get(`${bankMasterListUrl(baseUrl, lockAccountId)}&active=true`, { headers });
+                const data = Array.isArray(res.data) ? res.data : (res.data?.bank_masters || res.data?.data || []);
+                setBankOptions(data.map(mapApiBankRecord));
+            } catch (err) {
+                setBankOptions([]);
+            }
+        };
+        fetchBanks();
+    }, []);
     const [paymentTermsOptions, setPaymentTermsOptions] = useState<
         { id: string; name: string; days: number }[]
     >([]);
@@ -442,6 +467,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     rate: Number(item.purchase_rate ?? item.rate ?? 0),
                     description: item.sale_description || item.description || '',
                     account: item.purchase_lock_account_ledger_id || '',
+                    account_name: item.purchase_lock_account_ledger_name || '',
                     sku: item.sku || '',
                     tax_preference: item.tax_preference || '',
                     tax_exemption_id: item.tax_exemption_id || null,
@@ -1114,9 +1140,21 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         if (files) {
+            const allowedMimeTypes = [
+                'application/pdf',
+                'image/jpeg',
+                'image/png',
+                'application/msword', // .doc
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+            ];
+            const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx'];
+
             const newFiles = Array.from(files).filter(file => {
-                if (file.type !== 'application/pdf') {
-                    alert(`${file.name}: Only PDF files are accepted`);
+                const ext = '.' + (file.name.split('.').pop()?.toLowerCase() || '');
+                const isValidType = allowedMimeTypes.includes(file.type) || allowedExtensions.includes(ext);
+
+                if (!isValidType) {
+                    alert(`${file.name}: Unsupported file type. Allowed: JPG, PNG, PDF, DOC, DOCX`);
                     return false;
                 }
                 if (file.size > 5 * 1024 * 1024) {
@@ -1289,11 +1327,11 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                         <div
                                             key={item.id}
                                             onClick={() => toggleItem(item)}
-                                            className={`flex items-center justify-between px-4 py-3 cursor-pointer border-b border-gray-100 transition-colors ${selected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                                            className={`flex items-center justify-between px-4 py-3 cursor-pointer border-b border-gray-100 transition-colors ${selected ? 'bg-orange-50' : 'hover:bg-gray-50'
                                                 }`}
                                         >
                                             <div>
-                                                <p className={`text-sm font-medium ${selected ? 'text-blue-600' : 'text-gray-800'}`}>
+                                                <p className={`text-sm font-medium ${selected ? 'text-brand' : 'text-gray-800'}`}>
                                                     {item.inventory_name}
                                                 </p>
                                                 <p className="text-xs text-gray-500 mt-0.5">
@@ -1370,7 +1408,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                         variant="contained"
                         onClick={handleAdd}
                         disabled={selectedItems.length === 0}
-                        sx={{ bgcolor: '#2563eb', '&:hover': { bgcolor: '#1d4ed8' }, textTransform: 'none', borderRadius: 1.5, px: 3 }}
+                        sx={{ bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' }, textTransform: 'none', borderRadius: 1.5, px: 3 }}
                     >
                         Add Items
                     </Button>
@@ -1396,6 +1434,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         if (!purchaseOrderDate) newErrors.purchaseOrderDate = 'Purchase order date is required';
         if (!expectedDeliveryDate) newErrors.expectedDeliveryDate = 'Expected delivery date is required';
         if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
+        if (!selectedBankId) newErrors.bank = 'Bank is required';
 
         if (referenceNumber && !/^\d{4,5}$/.test(referenceNumber)) {
             newErrors.referenceNumber = 'Reference number must be 4 to 5 digits';
@@ -1433,7 +1472,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     rate: item.rate,
                     total_value: item.amount,
                     ledger_id: item.account_id,
-                    prod_desc: item.description
+                    prod_desc: item.description,
+
+                    tax_type: item.item_tax_type,
+                    tax_group_id: item.tax_group_id
                 };
             });
 
@@ -1461,6 +1503,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     delivery_method: deliveryMethod,
                     vendor_note: vendorNotes,
                     terms_conditions: termsAndConditions,
+                    bank_master_id: selectedBankId ? Number(selectedBankId) : null,
                     account_id: accountId,
                     tax_id: selectedTaxObj?.id,
                     tax_type: taxType,
@@ -1483,6 +1526,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 },
                 attachments: [] // Attachment upload logic implementation if needed, passing empty for now as per curl
             };
+            console.log("PO Payload:", JSON.stringify(payload, null, 2));
+
 
             const response = await axios.post(`https://${baseUrl}/pms/purchase_orders.json?access_token=${token}`, payload, {
                 headers: {
@@ -1542,6 +1587,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 rate: Number(selectedItem.rate) || 0,
                 description: selectedItem.description || '',
                 account_id: selectedItem.account || '',
+                account_name: selectedItem.account_name || '',
                 item_tax_type: newItemTaxType,
                 tax_group_id: newTaxGroupId,
                 tax_exemption_id: selectedItem.tax_preference === 'non_taxable' ? selectedItem.tax_exemption_id : null,
@@ -1794,6 +1840,16 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 </div>
             )}
 
+            <div className="mb-2">
+                <button
+                    onClick={() => navigate('/accounting/purchase-order')}
+                    className="flex items-center gap-2 text-gray-900 hover:text-gray-700 font-medium tracking-wide"
+                >
+                    <ArrowLeft className="w-5 h-5" />
+                    Back to Purchase Orders List
+                </button>
+            </div>
+
             <header className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">New Purchase Order</h1>
             </header>
@@ -1934,7 +1990,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Billing Address*
                                             <IconButton size="small" onClick={() => openAddressListModal('billing')}>
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedBillingAddress?.address ? (
@@ -1950,7 +2006,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                             </div>
                                         ) : (
                                             <button type="button" onClick={() => openAddressFormModal('new', 'billing')}
-                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100">
+                                                className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100">
                                                 + New Address
                                             </button>
                                         )}
@@ -1961,7 +2017,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Shipping Address*
                                             <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                                <EditOutlined fontSize="small" className="text-brand" />
                                             </IconButton>
                                         </div>
                                         {selectedShippingAddress?.address ? (
@@ -1977,7 +2033,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                             </div>
                                         ) : (
                                             <button type="button" onClick={() => openAddressFormModal('new', 'shipping')}
-                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100">
+                                                className="text-xs text-[#DA7756] font-medium py-1 px-2 bg-red-50 rounded border border-red-100">
                                                 + New Address
                                             </button>
                                         )}
@@ -1994,7 +2050,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                             setGstTreatmentDraft(vendorDetail?.gst_preference || '');
                                             setGstModalOpen(true);
                                         }}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -2003,7 +2059,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                             {selectedGstDetail?.gstin || vendorDetail?.primary_gst_detail?.gstin || '—'}
                                         </span>
                                         <IconButton size="small" onClick={() => setGstPickerModalOpen(true)}>
-                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                            <EditOutlined fontSize="small" className="text-brand" />
                                         </IconButton>
                                     </div>
                                 </div>
@@ -2253,8 +2309,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                             );
                                         }}
                                         sx={{
-                                            color: 'primary.main',
-                                            '&.Mui-checked': { color: 'primary.main' },
+                                            color: 'var(--color-primary)',
+                                            '&.Mui-checked': { color: 'var(--color-primary)' },
                                         }}
                                     />
                                 }
@@ -2309,6 +2365,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                             rate: selected.rate || 0,
                                                             description: selected.description || '',
                                                             account_id: String((selected as any).account || ''),
+                                                            account_name: (selected as any).account_name || '',
                                                             item_tax_type: selected.tax_preference === 'non_taxable' ? 'non_taxable'
                                                                 : selected.tax_preference === 'taxable' ? (isSameState ? 'tax_group' : 'tax_rate')
                                                                     : selected.tax_preference === 'out_of_scope' ? 'out_of_scope'
@@ -2339,10 +2396,15 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                     <Select
                                                         value={String(item.account_id || '')}
                                                         onChange={(e) => {
-                                                            updateItem(index, 'account_id', e.target.value);
-                                                            // Optional: if you need to store account name as well
-                                                            // const selectedAccount = accountLedgers.find(acc => acc.id === e.target.value);
-                                                            // updateItem(index, 'account_name', selectedAccount?.name);
+                                                            const selectedId = e.target.value;
+                                                            const allLedgers = accountGroups.length > 0
+                                                                ? accountGroups.flatMap((group: any) => group.ledgers || [])
+                                                                : accountLedgers;
+                                                            const selectedLedger = allLedgers.find((ledger: any) => String(ledger.id) === String(selectedId));
+                                                            updateItemFields(index, {
+                                                                account_id: selectedId,
+                                                                account_name: selectedLedger?.name || '',
+                                                            });
                                                         }}
                                                         displayEmpty
                                                         size="small"
@@ -2350,6 +2412,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                         {console.log('item.account_id:', item.account_id, 'accountGroups:', accountGroups)}
 
                                                         <MenuItem value="">Select Account</MenuItem>
+                                                        {item.account_id && item.account_name &&
+                                                            !(accountGroups.length > 0
+                                                                ? accountGroups.some((group: any) => (group.ledgers || []).some((ledger: any) => String(ledger.id) === String(item.account_id)))
+                                                                : accountLedgers.some((ledger: any) => String(ledger.id) === String(item.account_id))) && (
+                                                                <MenuItem value={String(item.account_id)}>{item.account_name}</MenuItem>
+                                                            )}
                                                         {/* if accountGroups is populated, render grouped dropdown like BillsAdd.tsx */}
                                                         {accountGroups.length > 0
                                                             ? accountGroups.map((group) =>
@@ -2598,12 +2666,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                 >
                                     <FormControlLabel
                                         value="TDS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                                         label={<span className="text-sm">TDS</span>}
                                     />
                                     <FormControlLabel
                                         value="TCS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                                        control={<Radio size="small" sx={{ color: 'var(--color-primary)', '&.Mui-checked': { color: 'var(--color-primary)' } }} />}
                                         label={<span className="text-sm">TCS</span>}
                                     />
                                 </RadioGroup>
@@ -2703,6 +2771,45 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                             },
                         }}
                     />
+
+                    <div className="mt-4 w-1/2">
+                        <label className="block text-sm font-medium mb-2">
+                            Bank<span className="text-red-500">*</span>
+                        </label>
+                        <FormControl fullWidth size="small" error={!!errors.bank}>
+                            <Select
+                                displayEmpty
+                                value={selectedBankId}
+                                onChange={(e) => {
+                                    setSelectedBankId(String(e.target.value));
+                                    if (errors.bank) {
+                                        setErrors((prev) => {
+                                            const next = { ...prev };
+                                            delete next.bank;
+                                            return next;
+                                        });
+                                    }
+                                }}
+                                renderValue={(val) =>
+                                    val
+                                        ? (() => {
+                                            const bank = bankOptions.find(b => String(b.id) === String(val));
+                                            return bank ? `${bank.bankName} - ${bank.accountNo} (${bank.beneficiaryName})` : '';
+                                        })()
+                                        : <span style={{ color: '#aaa' }}>Select Bank</span>
+                                }
+                                sx={fieldStyles}
+                            >
+                                <MenuItem value=""><em>Select Bank</em></MenuItem>
+                                {bankOptions.map((bank) => (
+                                    <MenuItem key={bank.id} value={String(bank.id)}>
+                                        {bank.bankName} - {bank.accountNo} ({bank.beneficiaryName})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        {errors.bank && <p className="text-xs text-red-500 mt-1">{errors.bank}</p>}
+                    </div>
                 </Section>
 
                 {/* Terms & Conditions */}
@@ -2796,16 +2903,13 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     variant="outlined"
                     onClick={() => navigate('/accounting/purchase-order')}
                     disabled={isSubmitting}
+                    className="fm-button-fix px-8 py-2"
                     sx={{
                         textTransform: 'none',
-                        px: 4,
-                        borderColor: 'divider',
-                        color: 'text.secondary',
-                        '&:hover': {
-                            borderColor: 'primary.main',
-                            bgcolor: 'primary.main',
-                            color: 'white'
-                        }
+                        fontWeight: 600,
+                        borderColor: '#DA7756',
+                        color: '#DA7756',
+                        '&:hover': { borderColor: '#C45F40', bgcolor: '#F2EEE9', color: '#C45F40' }
                     }}
                 >
                     Cancel
@@ -2814,16 +2918,13 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     variant="outlined"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
+                    className="fm-button-fix px-8 py-2"
                     sx={{
                         textTransform: 'none',
-                        px: 4,
-                        borderColor: 'primary.main',
-                        color: 'primary.main',
-                        '&:hover': {
-                            borderColor: 'primary.dark',
-                            bgcolor: 'primary.main',
-                            color: 'white'
-                        }
+                        fontWeight: 600,
+                        borderColor: '#DA7756',
+                        color: '#DA7756',
+                        '&:hover': { borderColor: '#C45F40', bgcolor: '#F2EEE9', color: '#C45F40' }
                     }}
                 >
                     Save as Draft
@@ -2832,15 +2933,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     variant="contained"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
-                    sx={{
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        px: 4,
-                        '&:hover': {
-                            bgcolor: 'primary.dark'
-                        },
-                        textTransform: 'none'
-                    }}
+                    className="fm-button-fix fm-button-brand px-8 py-2"
+                    sx={{ textTransform: 'none', fontWeight: 600 }}
                 >
                     {isSubmitting ? 'Submitting...' : 'Save and Send'}
                 </Button>
@@ -2857,8 +2951,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     <div className="p-6 space-y-6">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <span className="text-xl font-bold text-blue-600">
+                                <div className="w-12 h-12 rounded-full bg-brand-light flex items-center justify-center">
+                                    <span className="text-xl font-bold text-brand">
                                         {selectedVendor.name.charAt(0)}
                                     </span>
                                 </div>
@@ -2887,7 +2981,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                     Outstanding Receivables
                                 </Typography>
                             </div>
-                            <div className="bg-green-50 rounded-lg p-4 text-center">
+                            <div className="bg-orange-50 rounded-lg p-4 text-center">
                                 <Typography variant="h6" className="font-bold">
                                     ₹{selectedVendor.unusedCredits.toLocaleString()}
                                 </Typography>
@@ -3025,7 +3119,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                 <Typography variant="body2">Outstanding Payables</Typography>
                             </div>
 
-                            <div className="bg-green-50 rounded-lg p-4 text-center">
+                            <div className="bg-orange-50 rounded-lg p-4 text-center">
                                 <Typography variant="h6" className="font-bold">
                                     ₹0
                                 </Typography>
@@ -3258,7 +3352,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                         Cancel
                     </button>
                     <button
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                        className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                         onClick={() => {
                             if (currentItemIndex !== null) {
                                 updateItem(currentItemIndex, "tax_exemption_id", selectedExemption);
@@ -3284,7 +3378,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                         {getAddressBookByType(activeAddressType).map((addr) => (
                             <div key={addr.id}
                                 className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
-                                    ? 'border-[#C72030] bg-red-50' : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-[#DA7756] bg-red-50' : 'border-gray-200 hover:border-gray-300'
                                     }`}
                                 onClick={() => {
                                     if (activeAddressType === 'billing') setSelectedBillingAddressId(addr.id);
@@ -3303,7 +3397,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                         e.stopPropagation();
                                         openAddressFormModal('edit', activeAddressType, addr);
                                     }}>
-                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                        <EditOutlined fontSize="small" className="text-brand" />
                                     </IconButton>
                                 </div>
                             </div>
@@ -3311,12 +3405,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions sx={{ justifyContent: 'space-between', px: 3 }}>
-                    <button type="button" className="text-blue-600 text-sm font-medium"
+                    <button type="button" className="text-brand text-sm font-medium"
                         onClick={() => openAddressFormModal('new', activeAddressType)}>
                         + New address
                     </button>
                     <Button onClick={() => setAddressListModalOpen(false)} variant="outlined" size="small"
-                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                        sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>
                         Close
                     </Button>
                 </DialogActions>
@@ -3366,9 +3460,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 </DialogContent>
                 <DialogActions sx={{ justifyContent: 'flex-start', px: 3, py: 2 }}>
                     <Button variant="contained" onClick={handleSaveAddressForm}
-                        sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>Save</Button>
+                        sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}>Save</Button>
                     <Button variant="outlined" onClick={() => setAddressFormModalOpen(false)}
-                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>Cancel</Button>
+                        sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>Cancel</Button>
                 </DialogActions>
             </Dialog>
 
@@ -3389,7 +3483,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                         ))}
                     </div>
                     <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
-                        <button type="button" className="text-blue-600 text-sm flex items-center gap-1"
+                        <button type="button" className="text-brand text-sm flex items-center gap-1"
                             onClick={() => { setGstPickerModalOpen(false); setShowNewGstForm(false); setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setGstManageModalOpen(true); }}>
                             ⚙ Manage Tax Informations
                         </button>
@@ -3412,11 +3506,11 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     <Button variant="contained" onClick={() => {
                         setVendorDetail((prev: any) => prev ? { ...prev, gst_preference: gstTreatmentDraft } : prev);
                         setGstModalOpen(false);
-                    }} sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+                    }} sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}>
                         Update
                     </Button>
                     <Button variant="outlined" onClick={() => setGstModalOpen(false)}
-                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                        sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>
                         Cancel
                     </Button>
                 </DialogActions>
@@ -3438,7 +3532,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                 setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' });
                                 setShowNewGstForm(true);
                             }}
-                            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+                            sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}>
                             Add New Tax Information
                         </Button>
                         {showNewGstForm && (
@@ -3459,12 +3553,12 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                     onChange={(e) => setNewGstForm(p => ({ ...p, business_trade_name: e.target.value }))} />
                                 <div className="md:col-span-2 flex gap-2">
                                     <Button variant="contained" size="small" onClick={handleSaveAndSelectGst}
-                                        sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+                                        sx={{ textTransform: 'none', bgcolor: '#DA7756', '&:hover': { bgcolor: '#C45F40' } }}>
                                         {editingGstDetailId ? 'Save' : 'Save and Select'}
                                     </Button>
                                     <Button variant="outlined" size="small"
                                         onClick={() => { setShowNewGstForm(false); setEditingGstDetailId(null); }}
-                                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                                        sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>
                                         Cancel
                                     </Button>
                                 </div>
@@ -3511,7 +3605,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 3 }}>
                     <Button variant="outlined" size="small" onClick={() => setGstManageModalOpen(false)}
-                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                        sx={{ textTransform: 'none', borderColor: '#DA7756', color: '#DA7756' }}>
                         Close
                     </Button>
                 </DialogActions>
