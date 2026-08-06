@@ -213,6 +213,7 @@ export interface DailyReportContextValue {
   hasMoreIssues: boolean;
   completedTasksIssuesToday: any[];
   completedItemsLoading: boolean;
+  fetchCompletedItemsForDate: (forDate: string) => void;
   tomorrowScheduledItems: any[];
   tomorrowScheduledLoading: boolean;
   tomorrowFetchDone: boolean;
@@ -616,84 +617,91 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, baseUrl, token, userId]);
 
-  useEffect(() => {
-    const forDate = startDate;
-    if (!baseUrl || !token || !userId || !forDate) return;
-    let active = true;
-    setCompletedItemsLoading(true);
-    fetchCompletedItemsForDate(apiCtx(), forDate)
-      .then(({ tasks, issues, todos }) => {
-        const transformedTasks = tasks.map((task: any) => ({
-          id: `task-${task.id}`,
-          title: task.title,
-          type: "task",
-          status: task.status || "completed",
-          priority: task.priority || "Medium",
-          created_at: task.created_at,
-          responsible: task.responsible_person_id,
-          originalData: task,
-        }));
+  const refetchCompletedItemsForDate = useCallback(
+    (forDate: string) => {
+      if (!baseUrl || !token || !userId || !forDate) return;
+      let active = true;
+      setCompletedItemsLoading(true);
+      fetchCompletedItemsForDate(apiCtx(), forDate)
+        .then(({ tasks, issues, todos }) => {
+          const transformedTasks = tasks.map((task: any) => ({
+            id: `task-${task.id}`,
+            title: task.title,
+            type: "task",
+            status: task.status || "completed",
+            priority: task.priority || "Medium",
+            created_at: task.created_at,
+            responsible: task.responsible_person_id,
+            originalData: task,
+          }));
 
-        const transformedIssues = issues.map((issue: any) => ({
-          id: `issue-${issue.id}`,
-          title: issue.title,
-          type: "issue",
-          status: issue.status || "completed",
-          priority: issue.priority || "Medium",
-          created_at: issue.created_at,
-          responsible: issue.responsible_person_id,
-          originalData: issue,
-        }));
+          const transformedIssues = issues.map((issue: any) => ({
+            id: `issue-${issue.id}`,
+            title: issue.title,
+            type: "issue",
+            status: issue.status || "completed",
+            priority: issue.priority || "Medium",
+            created_at: issue.created_at,
+            responsible: issue.responsible_person_id,
+            originalData: issue,
+          }));
 
-        const transformedTodos = todos.map((todo: any) => {
-          if (todo.task_management) {
-            const task = todo.task_management;
+          const transformedTodos = todos.map((todo: any) => {
+            if (todo.task_management) {
+              const task = todo.task_management;
+              return {
+                id: `task-${task.id}`,
+                title: task.title || todo.title,
+                type: "task",
+                status: task.status || "completed",
+                priority: task.priority || todo.priority || "Medium",
+                created_at: task.created_at,
+                responsible: task.responsible_person_id,
+                originalData: task,
+              };
+            }
             return {
-              id: `task-${task.id}`,
-              title: task.title || todo.title,
-              type: "task",
-              status: task.status || "completed",
-              priority: task.priority || todo.priority || "Medium",
-              created_at: task.created_at,
-              responsible: task.responsible_person_id,
-              originalData: task,
+              id: `todo-${todo.id}`,
+              title: todo.title,
+              type: "todo",
+              status: todo.status || "completed",
+              priority: todo.priority || "Medium",
+              created_at: todo.created_at,
+              responsible: todo.user_id,
+              originalData: todo,
             };
-          }
-          return {
-            id: `todo-${todo.id}`,
-            title: todo.title,
-            type: "todo",
-            status: todo.status || "completed",
-            priority: todo.priority || "Medium",
-            created_at: todo.created_at,
-            responsible: todo.user_id,
-            originalData: todo,
-          };
+          });
+
+          const todoPromotedTaskIds = new Set(
+            transformedTodos.filter((t) => t.type === "task").map((t) => t.id)
+          );
+          const dedupedTasks = transformedTasks.filter(
+            (t: any) => !todoPromotedTaskIds.has(t.id)
+          );
+
+          if (active)
+            setCompletedTasksIssuesToday([
+              ...dedupedTasks,
+              ...transformedIssues,
+              ...transformedTodos,
+            ]);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch completed items for date:", err);
+        })
+        .finally(() => {
+          if (active) setCompletedItemsLoading(false);
         });
+      return () => {
+        active = false;
+      };
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [baseUrl, token, userId]
+  );
 
-        const todoPromotedTaskIds = new Set(
-          transformedTodos.filter((t) => t.type === "task").map((t) => t.id)
-        );
-        const dedupedTasks = transformedTasks.filter(
-          (t: any) => !todoPromotedTaskIds.has(t.id)
-        );
-
-        if (active)
-          setCompletedTasksIssuesToday([
-            ...dedupedTasks,
-            ...transformedIssues,
-            ...transformedTodos,
-          ]);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch completed items for date:", err);
-      })
-      .finally(() => {
-        if (active) setCompletedItemsLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+  useEffect(() => {
+    return refetchCompletedItemsForDate(startDate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, baseUrl, token, userId]);
 
@@ -3155,6 +3163,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
     hasMoreIssues,
     completedTasksIssuesToday,
     completedItemsLoading,
+    fetchCompletedItemsForDate: refetchCompletedItemsForDate,
     tomorrowScheduledItems,
     tomorrowScheduledLoading,
     tomorrowFetchDone,
