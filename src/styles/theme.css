@@ -3939,3 +3939,30 @@ rect[fill="#E6DDCD"] {
 .bg-\[\#f0e8dc\] {
   background-color: #f0e8dc !important;
 }
+
+/* ===========================================
+   BRAND ACCENT TEXT — wins over table/card black overrides
+   Use on labels/headers that must stay brand orange
+   =========================================== */
+.text-brand-accent,
+table th.text-brand-accent,
+table td.text-brand-accent,
+thead th.text-brand-accent,
+tbody td.text-brand-accent,
+tbody td.text-brand-accent span,
+table td:first-child.text-brand-accent,
+[class*="CardHeader"] .text-brand-accent,
+[class*="CardHeader"] .font-semibold.text-brand-accent,
+.text-2xl.font-semibold.text-brand-accent,
+.text-lg.font-semibold.text-brand-accent,
+.text-base.font-semibold.text-brand-accent,
+.text-sm.font-semibold.text-brand-accent,
+.text-sm.font-medium.text-brand-accent,
+label.text-brand-accent,
+div.text-brand-accent,
+h1.text-brand-accent,
+h2.text-brand-accent,
+h3.text-brand-accent,
+span.text-brand-accent {
+  color: var(--color-primary) !important;
+}

@@ -11,26 +11,26 @@ export const EscalationMatrixPage: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-brand">Escalation Matrix</h1>
+        <h1 className="text-2xl font-bold text-brand-accent">Escalation Matrix</h1>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200">
           <TabsTrigger
             value="response-escalation"
-            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-[#888780] border-none font-semibold"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-[#888780] border-none font-semibold"
           >
             Response Escalation
           </TabsTrigger>
           <TabsTrigger
             value="resolution-escalation"
-            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-[#888780] border-none font-semibold"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-[#888780] border-none font-semibold"
           >
             Resolution Escalation
           </TabsTrigger>
           <TabsTrigger
             value="executive-escalation"
-            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-brand data-[state=inactive]:bg-white data-[state=inactive]:text-[#888780] border-none font-semibold"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-[#888780] border-none font-semibold"
           >
             Executive Escalation
           </TabsTrigger>
