@@ -63,11 +63,13 @@ export const fetchTomorrowScheduled = async (
     ),
   ]);
 
+  console.log(tasksRes, issuesRes, todosRes)
+
   return {
     tasks:
       tasksRes.status === "fulfilled"
-        ? tasksRes.value.data?.task_managements ||
-        tasksRes.value.data?.data?.task_managements ||
+        ? tasksRes.value.data?.tasks ||
+        tasksRes.value.data?.data?.tasks ||
         []
         : [],
     issues:
