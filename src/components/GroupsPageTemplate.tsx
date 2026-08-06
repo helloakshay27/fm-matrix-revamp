@@ -423,7 +423,7 @@ export const GroupsPageTemplate = ({
         );
       case "subGroupName":
         return (
-          <span className="text-gray-400">
+          <span className="text-gray-900">
             {item.children.length > 0
               ? `${item.children.length} sub group${item.children.length === 1 ? "" : "s"}`
               : "—"}

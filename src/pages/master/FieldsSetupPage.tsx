@@ -502,7 +502,7 @@ const FieldsSetupPage = () => {
                     <Button
                       variant="outline"
                       onClick={() => setShowAddDialog(false)}
-                      className="border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3] hover:text-[#C72030]"
+                      className="border-[#C72030] text-[#C72030]"
                     >
                       Cancel
                     </Button>
