@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 export type TableBadgeTone = "red" | "amber" | "green" | "blue" | "grey" | "terra";
 
 const BADGE_TONE_STYLE: Record<TableBadgeTone, React.CSSProperties> = {
-  red: { backgroundColor: "rgba(231, 132, 142, 0.125)", color: "#C0303D" },
+  red: { backgroundColor: "rgba(218, 119, 86, 0.125)", color: "#C0303D" },
   amber: { backgroundColor: "rgba(237, 196, 136, 0.145)", color: "#B8860B" },
   green: { backgroundColor: "rgba(16, 140, 114, 0.082)", color: "#108C72" },
   blue: { backgroundColor: "rgba(107, 155, 204, 0.125)", color: "#2a5f8f" },
@@ -30,7 +30,7 @@ export function TableBadge({ tone, children }: { tone: TableBadgeTone; children:
 export function TrendLabel({ delta, good }: { delta: string; good?: boolean }) {
   const isFlat = delta.trim().startsWith("0") || delta.trim() === "·";
   const Icon = isFlat ? Minus : delta.trim().startsWith("-") ? ArrowDown : ArrowUp;
-  const colorClass = isFlat ? "text-brand-text-light" : good ? "text-brand-success" : "text-brand-error";
+  const colorClass = isFlat ? "text-brand-text-light" : good ? "text-brand-success" : "text-brand";
   return (
     <span className={cn("inline-flex items-center gap-0.5 text-brand-body-5 font-medium", colorClass)}>
       <Icon className="w-3 h-3" />
