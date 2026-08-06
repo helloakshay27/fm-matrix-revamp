@@ -589,15 +589,6 @@ export const Header = () => {
                   Msafe Dashboard Revamp
                 </button>
               )}
-              {isLocalhost && (
-                <button
-                  onClick={() => (window.location.href = "/posthog-dashboard")}
-                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-                >
-                  <Activity className="w-4 h-4" />
-                  Usage Analytics
-                </button>
-              )}
             </div>
           )}
 
@@ -1036,6 +1027,15 @@ export const Header = () => {
                   <User className="w-4 h-4 mr-2 text-gray-500" />
                   <span className="font-medium">My Profile</span>
                 </DropdownMenuItem>
+                {isLocalhost && (
+                  <DropdownMenuItem
+                    onClick={() => (window.location.href = "/posthog-dashboard")}
+                    className="mx-2 my-1 rounded-md"
+                  >
+                    <Activity className="w-4 h-4 mr-2 text-gray-500" />
+                    <span className="font-medium">Usage Analytics</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   onClick={() => navigate("/settings")}
                   className="mx-2 my-1 rounded-md"

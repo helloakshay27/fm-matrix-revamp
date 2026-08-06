@@ -2,8 +2,59 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  FormControl as MuiFormControl,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
 import { MaterialDatePicker } from "@/components/ui/material-date-picker";
+
+const fieldStyles = {
+  height: '40px',
+  backgroundColor: '#fff',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#d1d5db',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '& .MuiSelect-select': {
+    fontSize: '14px',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+// Radix's modal Dialog sets `pointer-events: none` on <body>, which the portaled
+// menu inherits — without pointerEvents:'auto' the backdrop never receives the
+// click that closes the menu.
+const selectMenuProps = {
+  sx: { pointerEvents: 'auto' },
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+const LOCATION_OPTIONS = ['HDFC Ergo Bhandup', 'Main Office', 'Branch Office'];
+
+const FLOOR_OPTIONS = [
+  'Floor 1 - Wing 1 - HDFC',
+  'Floor 2 - Wing 1 - HDFC',
+  'Floor 3 - Wing 1 - HDFC',
+];
 
 interface RosterCalendarFilterDialogProps {
   open: boolean;
@@ -54,30 +105,46 @@ export const RosterCalendarFilterDialog: React.FC<RosterCalendarFilterDialogProp
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Location</label>
-              <Select value={filters.location} onValueChange={(value) => setFilters({ ...filters, location: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="HDFC Ergo Bhandup">HDFC Ergo Bhandup</SelectItem>
-                  <SelectItem value="Main Office">Main Office</SelectItem>
-                  <SelectItem value="Branch Office">Branch Office</SelectItem>
-                </SelectContent>
-              </Select>
+              <MuiFormControl fullWidth size="small">
+                <MuiSelect
+                  displayEmpty
+                  value={filters.location}
+                  onChange={(event) => setFilters({ ...filters, location: event.target.value })}
+                  renderValue={(selected) =>
+                    selected || <span className="text-gray-500">Select Location</span>
+                  }
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  {LOCATION_OPTIONS.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </MuiFormControl>
             </div>
             
             <div>
               <label className="text-sm font-medium mb-2 block">Floor</label>
-              <Select value={filters.floor} onValueChange={(value) => setFilters({ ...filters, floor: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Floor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Floor 1 - Wing 1 - HDFC">Floor 1 - Wing 1 - HDFC</SelectItem>
-                  <SelectItem value="Floor 2 - Wing 1 - HDFC">Floor 2 - Wing 1 - HDFC</SelectItem>
-                  <SelectItem value="Floor 3 - Wing 1 - HDFC">Floor 3 - Wing 1 - HDFC</SelectItem>
-                </SelectContent>
-              </Select>
+              <MuiFormControl fullWidth size="small">
+                <MuiSelect
+                  displayEmpty
+                  value={filters.floor}
+                  onChange={(event) => setFilters({ ...filters, floor: event.target.value })}
+                  renderValue={(selected) =>
+                    selected || <span className="text-gray-500">Select Floor</span>
+                  }
+                  sx={fieldStyles}
+                  MenuProps={selectMenuProps}
+                >
+                  {FLOOR_OPTIONS.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </MuiFormControl>
             </div>
           </div>
 
@@ -114,7 +181,7 @@ export const RosterCalendarFilterDialog: React.FC<RosterCalendarFilterDialogProp
           </Button>
           <Button 
             onClick={handleApply}
-            className="flex-1 bg-[#C72030] hover:bg-[#A01020] text-white"
+            className="flex-1 bg-brand hover:bg-brand-hover text-white"
           >
             Apply
           </Button>
