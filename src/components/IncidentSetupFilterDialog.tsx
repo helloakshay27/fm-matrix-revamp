@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { TextField } from "@mui/material";
 import { X } from "lucide-react";
 
 export interface IncidentSetupFilters {
@@ -19,6 +18,16 @@ interface IncidentSetupFilterDialogProps {
 
 const emptyFilters: IncidentSetupFilters = {
   name: "",
+};
+
+const fieldStyles = {
+  height: { xs: 36, sm: 40, md: 45 },
+  '& .MuiInputBase-input': {
+    padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+  },
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: 'white',
+  },
 };
 
 export const IncidentSetupFilterDialog = ({
@@ -48,8 +57,23 @@ export const IncidentSetupFilterDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+    // modal={false} lets portaled MUI Select menus receive clicks/scroll
+    // (Radix modal mode otherwise traps pointer events outside DialogContent).
+    <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
+      <DialogContent
+        className="w-full sm:max-w-[500px] bg-white overflow-visible"
+        onPointerDownOutside={(e) => {
+          // Keep dialog open when interacting with MUI overlays
+          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if ((e.target as HTMLElement).closest('.MuiPopover-root, .MuiModal-root, .MuiMenu-root')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
@@ -64,21 +88,23 @@ export const IncidentSetupFilterDialog = ({
           </div>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label htmlFor="incident-setup-name">Name</Label>
-            <Input
-              id="incident-setup-name"
-              placeholder="Enter Name"
-              value={localFilters.name}
-              onChange={(e) =>
-                setLocalFilters((prev) => ({ ...prev, name: e.target.value }))
-              }
-            />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+          <TextField
+            id="incident-setup-name"
+            label="Name"
+            placeholder="Enter Name"
+            value={localFilters.name}
+            onChange={(e) =>
+              setLocalFilters((prev) => ({ ...prev, name: e.target.value }))
+            }
+            fullWidth
+            variant="outlined"
+            sx={fieldStyles}
+            InputLabelProps={{ shrink: true }}
+          />
         </div>
 
-        <div className="flex justify-end gap-3 pt-2">
+        <div className="flex justify-end gap-3 pt-4">
           <Button
             onClick={handleApply}
             className="bg-brand text-white hover:bg-brand-hover px-4 py-2"

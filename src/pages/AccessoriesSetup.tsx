@@ -1,6 +1,7 @@
 import AddAccessoriesModal from '@/components/AddAccessoriesModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable'
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { ColumnConfig } from '@/hooks/useEnhancedTable'
 import axios from 'axios';
 import { Eye, Pencil, Plus } from 'lucide-react';
@@ -124,14 +125,10 @@ const AccessoriesSetup = () => {
             const active = item.active;
             return (
                 <div className="flex items-center justify-center">
-                    <div
-                        className={`relative inline-flex items-center h-5 rounded-full w-10 cursor-pointer transition-colors ${active ? '!bg-green-500' : 'bg-gray-300'}`}
-                        onClick={() => handleStatusToggle(item)}
-                    >
-                        <span
-                            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-all absolute top-0.5 ${active ? 'right-0.5' : 'left-0.5'}`}
-                        />
-                    </div>
+                    <Switch
+                        checked={active}
+                        onCheckedChange={() => handleStatusToggle(item)}
+                    />
                 </div>
             );
         }

@@ -37,24 +37,6 @@ function normalise(raw: ApiSite[]): Site[] {
  * Falls back to `allowed_sites` if the scoped list is empty or unavailable.
  */
 export async function fetchAllSites(): Promise<Site[]> {
-  const orgId =
-    localStorage.getItem('selectedOrgId') ??
-    localStorage.getItem('organization_id') ??
-    localStorage.getItem('org_id');
-
-  // Try the org-scoped call first
-  try {
-    const url = orgId
-      ? `${ENDPOINTS.SITES}?organization_id=${orgId}`
-      : `${ENDPOINTS.SITES}`;
-    const res = await apiClient.get(url);
-    const sites = normalise(readList<ApiSite>(res.data, 'sites', 'data'));
-    if (sites.length) return sites;
-  } catch {
-    // fall through to allowed_sites below
-  }
-
-  // Fallback: allowed_sites for the current user
   const userId =
     localStorage.getItem('userId') ??
     sessionStorage.getItem('userId') ??
@@ -66,9 +48,28 @@ export async function fetchAllSites(): Promise<Site[]> {
       }
     })();
 
-  if (!userId) return [];
+  // Try allowed_sites for the current user first so they see all sites they have access to
+  if (userId) {
+    try {
+      const res = await apiClient.get(`${ENDPOINTS.ALLOWED_SITES}?user_id=${userId}`);
+      const sites = normalise(readList<ApiSite>(res.data, 'sites', 'data'));
+      if (sites.length) return sites;
+    } catch {
+      // fall through to org-scoped sites below
+    }
+  }
+
+  // Fallback: org-scoped sites
+  const orgId =
+    localStorage.getItem('selectedOrgId') ??
+    localStorage.getItem('organization_id') ??
+    localStorage.getItem('org_id');
+
   try {
-    const res = await apiClient.get(`${ENDPOINTS.ALLOWED_SITES}?user_id=${userId}`);
+    const url = orgId
+      ? `${ENDPOINTS.SITES}?organization_id=${orgId}`
+      : `${ENDPOINTS.SITES}`;
+    const res = await apiClient.get(url);
     return normalise(readList<ApiSite>(res.data, 'sites', 'data'));
   } catch {
     // Never throw: an empty list just means the dashboard reports tenant-wide numbers.

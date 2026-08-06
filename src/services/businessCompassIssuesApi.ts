@@ -13,6 +13,7 @@ const getBaseUrl = () => {
 export const fetchBusinessCompassIssues = async (
   page = 1,
   filters = "",
+  my = false,
 ) => {
   const token = getToken();
   const baseUrl = getBaseUrl();
@@ -21,7 +22,7 @@ export const fetchBusinessCompassIssues = async (
   if (filters) queryString += `&${filters}`;
 
   const { data } = await axios.get(
-    `https://${baseUrl}/business_compass/issues?${queryString}`,
+    `https://${baseUrl}/business_compass/issues${my ? "/my_issues" : ""}.json?${queryString}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

@@ -47,13 +47,13 @@ function SiteMultiSelect({
 
   const selectAll = () => onChange([]);
 
-  // Label shown on the trigger button
+  // Label shown on the trigger button — shows IDs comma-separated when multiple selected
   const label =
     all
       ? `All sites (${sites.length})`
       : selectedIds.length === 1
         ? sites.find((s) => s.id === selectedIds[0])?.name ?? selectedIds[0]
-        : `${selectedIds.length} sites selected`;
+        : selectedIds.join(',');
 
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>

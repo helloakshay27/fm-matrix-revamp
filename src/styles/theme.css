@@ -426,6 +426,14 @@ select:focus {
   color: var(--color-primary) !important;
 }
 
+/* MUI Radio - unchecked/base state. Several pages set inline
+   sx={{ color: '#C72030', ... }} for the *unchecked* ring specifically, which
+   the checked-only rule below never touches — force the base color too. */
+.MuiRadio-root,
+[class*="MuiRadio-root"] {
+  color: var(--color-primary) !important;
+}
+
 /* MUI Radio with any checked state - override inline sx styles */
 .MuiRadio-root.Mui-checked,
 [class*="MuiRadio-root"].Mui-checked {
@@ -438,10 +446,24 @@ select:focus {
   color: inherit !important;
 }
 
-/* MUI Checkbox with any checked state */
+/* MUI Checkbox - unchecked/base state. Several pages set inline
+   sx={{ color: '#C72030', ... }} for the *unchecked* ring specifically, which
+   the checked-only rule below never touches — force the base color too. */
+.MuiCheckbox-root,
+[class*="MuiCheckbox-root"] {
+  color: var(--color-primary) !important;
+}
+
+/* MUI Checkbox with any checked state - override inline sx styles */
 .MuiCheckbox-root.Mui-checked,
 [class*="MuiCheckbox-root"].Mui-checked {
   color: var(--color-primary) !important;
+}
+
+/* MUI Checkbox SVG icon */
+.MuiCheckbox-root svg,
+[class*="MuiCheckbox-root"] svg {
+  color: inherit !important;
 }
 
 /* MUI Switches */
@@ -3916,4 +3938,31 @@ rect[fill="#E6DDCD"] {
 }
 .bg-\[\#f0e8dc\] {
   background-color: #f0e8dc !important;
+}
+
+/* ===========================================
+   BRAND ACCENT TEXT — wins over table/card black overrides
+   Use on labels/headers that must stay brand orange
+   =========================================== */
+.text-brand-accent,
+table th.text-brand-accent,
+table td.text-brand-accent,
+thead th.text-brand-accent,
+tbody td.text-brand-accent,
+tbody td.text-brand-accent span,
+table td:first-child.text-brand-accent,
+[class*="CardHeader"] .text-brand-accent,
+[class*="CardHeader"] .font-semibold.text-brand-accent,
+.text-2xl.font-semibold.text-brand-accent,
+.text-lg.font-semibold.text-brand-accent,
+.text-base.font-semibold.text-brand-accent,
+.text-sm.font-semibold.text-brand-accent,
+.text-sm.font-medium.text-brand-accent,
+label.text-brand-accent,
+div.text-brand-accent,
+h1.text-brand-accent,
+h2.text-brand-accent,
+h3.text-brand-accent,
+span.text-brand-accent {
+  color: var(--color-primary) !important;
 }

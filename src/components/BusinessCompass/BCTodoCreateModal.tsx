@@ -23,18 +23,22 @@ interface BCTodoCreateModalProps {
     onClose: () => void;
     onSuccess?: () => void;
     prefilledDate?: string;
+    prefilledTitle?: string;
     dateResetKey?: number;
 }
 
-const BCTodoCreateModal = ({ isOpen, onClose, onSuccess, prefilledDate, dateResetKey }: BCTodoCreateModalProps) => {
+const BCTodoCreateModal = ({ isOpen, onClose, onSuccess, prefilledDate, prefilledTitle, dateResetKey }: BCTodoCreateModalProps) => {
     const baseURL = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
-    const [title, setTitle] = useState('');
+    const [title, setTitle] = useState(prefilledTitle || '');
     const [description, setDescription] = useState("")
     const [date, setDate] = useState<string | null>(() => prefilledDate ?? null);
 
     useEffect(() => {
         setDate(prefilledDate ?? null);
+        if (prefilledTitle) {
+            setTitle(prefilledTitle);
+        }
     }, [dateResetKey]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);

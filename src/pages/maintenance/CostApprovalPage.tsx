@@ -542,10 +542,10 @@ export const CostApprovalPage: React.FC = () => {
                         Cost Range
                       </Label>
                       <Select value={selectedCostFilter} onValueChange={setSelectedCostFilter}>
-                        <SelectTrigger className="w-48 border-gray-200 focus:border-[#C72030] focus:ring-[#C72030]">
+                        <SelectTrigger className="w-48 bg-white border-gray-300 focus:border-gray-500 focus:ring-gray-300">
                           <SelectValue placeholder="Select Cost Range" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white border-[#e2e8f0]">
                           <SelectItem value="all">All Ranges</SelectItem>
                           {rules
                             .filter(rule => rule.related_to === (activeTab === 'fm' ? 'FM' : 'Project') && rule.active === true)
@@ -568,7 +568,7 @@ export const CostApprovalPage: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="fm-button-fix fm-button-brand px-4 py-2"
+                      className="bg-white border border-brand text-brand hover:bg-brand-selected px-4 py-2"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Reset
@@ -688,10 +688,10 @@ export const CostApprovalPage: React.FC = () => {
                         Cost Range
                       </Label>
                       <Select value={selectedCostFilter} onValueChange={setSelectedCostFilter}>
-                        <SelectTrigger className="w-48 border-gray-200 focus:border-[#C72030] focus:ring-[#C72030]">
+                        <SelectTrigger className="w-48 bg-white border-gray-300 focus:border-gray-500 focus:ring-gray-300">
                           <SelectValue placeholder="Select Cost Range" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white border-[#e2e8f0]">
                           <SelectItem value="all">All Ranges</SelectItem>
                           {rules
                             .filter(rule => rule.related_to === (activeTab === 'fm' ? 'FM' : 'Project') && rule.active === true)
@@ -714,7 +714,7 @@ export const CostApprovalPage: React.FC = () => {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="fm-button-fix fm-button-brand px-4 py-2"
+                      className="bg-white border border-brand text-brand hover:bg-brand-selected px-4 py-2"
                       onClick={() => setSelectedCostFilter('all')}
                     >
                       Reset
