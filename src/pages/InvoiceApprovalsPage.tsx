@@ -316,106 +316,6 @@ export const InvoiceApprovalsPage = () => {
 
       <h1 className="text-2xl font-bold text-gray-900">INVOICE APPROVALS</h1>
 
-<<<<<<< HEAD
-      {/* Add + Search Row */}
-      <div className="flex items-center justify-between">
-        <Button
-          className="fm-button-fix fm-button-brand px-8 py-2"
-          onClick={() => navigate('/accounting/invoice-approvals/add')}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
-
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Search"
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-10 w-64"
-          />
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="w-20 text-center">Edit</TableHead>
-              <TableHead className="w-24 text-center">Id</TableHead>
-              <TableHead className="text-center">Function</TableHead>
-              <TableHead className="w-32 text-center">Created On</TableHead>
-              <TableHead className="w-32 text-center">Created by</TableHead>
-              <TableHead className="w-36 text-center">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="pt-4 pb-16">
-                  <div className="w-full flex items-center justify-start gap-3 pl-4">
-                    <div
-                      className="h-5 w-5 rounded-full animate-spin"
-                      style={{
-                        border: "2px solid #000000",
-                        borderTopColor: "transparent",
-                      }}
-                    />
-                    <span className="text-sm text-black">
-                      Loading ...
-                    </span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : filteredData.length > 0 ? (
-              filteredData.map((item) => (
-                <TableRow key={item.id} className="hover:bg-gray-50">
-                  <TableCell className="text-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="p-1"
-                      onClick={() => navigate(`/accounting/invoice-approvals/edit/${item.id}`)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                  <TableCell className="text-center font-medium">
-                    {item.id}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {item.approval_function_name}
-                  </TableCell>
-                  <TableCell className="text-center text-gray-600">
-                    {formatDate(item.created_at)}
-                  </TableCell>
-                  <TableCell className="text-center text-gray-600">
-                    {item.created_by}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <StatusDropdown
-                      id={item.id}
-                      active={item.active}
-                      onStatusChange={handleStatusChange}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : null}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Footer */}
-      <div className="flex justify-center pt-8">
-        <div className="flex items-center text-sm text-gray-500">
-          <span>Powered by</span>
-          <span className="ml-2 font-semibold">goPhygital.work</span>
-        </div>
-      </div>
-=======
       <EnhancedTable
         data={filteredData}
         columns={columns}
@@ -449,7 +349,6 @@ export const InvoiceApprovalsPage = () => {
         onApplyFilters={setFilters}
         onResetFilters={() => setFilters(emptyFilters)}
       />
->>>>>>> api-integration-ui
     </div>
   );
 };
