@@ -217,7 +217,7 @@ export const SlotConfigurationPage = () => {
       <Button
         onClick={() => setIsBulkUploadOpen(true)}
         variant="outline"
-        className="h-9 px-4 border-gray-300"
+        className="h-9 px-4 border-brand"
       >
         <Upload className="w-4 h-4 mr-2" />
         Import
