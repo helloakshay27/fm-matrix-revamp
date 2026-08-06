@@ -2,13 +2,45 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Edit, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { toast as sonnerToast } from 'sonner';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
+
+const fieldStyles = {
+    height: { xs: 36, sm: 40, md: 45 },
+    backgroundColor: '#fff',
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+        padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+    },
+    '& .MuiOutlinedInput-root': {
+        backgroundColor: '#fff',
+        '& fieldset': { borderColor: '#e5e7eb' },
+        '&:hover fieldset': { borderColor: '#C72030' },
+        '&.Mui-focused fieldset': { borderColor: '#C72030' },
+        '&.Mui-disabled': {
+            backgroundColor: '#fff',
+            '& fieldset': { borderColor: '#e5e7eb' },
+        },
+    },
+    '& .MuiSelect-select.Mui-disabled': {
+        color: '#1a1a1a',
+        WebkitTextFillColor: '#1a1a1a',
+        opacity: 1,
+    },
+    '& .MuiSelect-icon.Mui-disabled': {
+        color: 'rgba(0, 0, 0, 0.54)',
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+        color: '#C72030',
+    },
+    '& .MuiInputLabel-root.Mui-disabled': {
+        color: 'rgba(0, 0, 0, 0.6)',
+    },
+};
 
 interface ChecklistQuestion {
     id: number;
@@ -461,7 +493,7 @@ export const PermitChecklistDetails = () => {
                                     value={question.question}
                                     readOnly
                                     rows={2}
-                                    className="w-full border border-gray-200 rounded-md p-3 text-gray-800 bg-white resize-none"
+                                    className="w-full border border-gray-200 rounded-md p-3 text-gray-800 bg-gray-50 resize-none"
                                 />
                             </div>
 
@@ -470,12 +502,21 @@ export const PermitChecklistDetails = () => {
                                 {/* Left Section */}
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="text-sm text-gray-600 block mb-1">Answer Type :</label>
-                                        <Input
-                                            value={question.answerType}
-                                            readOnly
-                                            className="w-full border border-gray-200 bg-white text-gray-800"
-                                        />
+                                        <FormControl fullWidth variant="outlined">
+                                            <InputLabel shrink>Answer Type</InputLabel>
+                                            <MuiSelect
+                                                label="Answer Type"
+                                                notched
+                                                displayEmpty
+                                                value={question.answerType}
+                                                disabled
+                                                sx={fieldStyles}
+                                            >
+                                                <MenuItem value="Multiple Choice">Multiple Choice</MenuItem>
+                                                <MenuItem value="Input Box">Input Box</MenuItem>
+                                                <MenuItem value="Description Box">Description Box</MenuItem>
+                                            </MuiSelect>
+                                        </FormControl>
                                     </div>
 
                                     <div className="flex items-center gap-8">
@@ -483,7 +524,7 @@ export const PermitChecklistDetails = () => {
                                             <span className="text-sm text-gray-600">Question Mandatory</span>
                                             <Switch
                                                 checked={question.isQuestionMandatory}
-                                                className="data-[state=checked]:bg-green-500"
+                                                className="data-[state=checked]:bg-[#C72030]"
                                                 disabled
                                             />
                                         </div>
@@ -491,7 +532,7 @@ export const PermitChecklistDetails = () => {
                                             <span className="text-sm text-gray-600">Image Mandatory</span>
                                             <Switch
                                                 checked={question.isImageMandatory}
-                                                className="data-[state=checked]:bg-green-500"
+                                                className="data-[state=checked]:bg-[#C72030]"
                                                 disabled
                                             />
                                         </div>
@@ -500,20 +541,20 @@ export const PermitChecklistDetails = () => {
 
                                 {/* Right Section */}
                                 <div>
-                                    <label className="text-sm text-gray-600 block mb-2">Answers:</label>
+                                    <div className="text-sm text-gray-500 mb-2">Answers</div>
                                     {question.answerType === 'Multiple Choice' && question.answers ? (
                                         <div className="flex flex-wrap gap-2">
                                             {question.answers.map((ans, idx) => (
                                                 <span
                                                     key={idx}
-                                                    className="px-3 py-1 bg-gray-100 border border-gray-200 rounded-md text-sm text-gray-700"
+                                                    className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-md text-sm font-medium text-gray-800"
                                                 >
                                                     {ans}
                                                 </span>
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-sm text-gray-500 italic">
+                                        <div className="text-sm text-gray-500 italic bg-gray-50 border border-gray-200 rounded-md p-2">
                                             {question.answerType === 'Input Box'
                                                 ? 'Text input field'
                                                 : 'Description text area'}
