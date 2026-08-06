@@ -1193,7 +1193,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
             <div className="flex justify-end">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button className="!bg-[#c72030] hover:bg-[#c72030] !text-white">
+                        <Button>
                             <Plus className="w-4 h-4 mr-2" color="white" />
                             Create Post
                         </Button>
@@ -1391,7 +1391,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                                 Cancel
                             </Button>
                             <Button
-                                className="!bg-[#c72030] !hover:bg-[#b01d2a] !text-white rounded-[8px]"
+                                className="rounded-[8px]"
                                 onClick={handleCreatePost}
                             >
                                 {isEditMode ? 'Update Post' : 'Publish Post'}
@@ -1579,7 +1579,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                                 <Button
                                     variant="outline"
                                     onClick={handleAddPollOption}
-                                    className="w-auto !border-gray-300 !bg-[#F9F8F6] !text-gray-700 hover:bg-gray-50 rounded-[8px] flex items-center gap-2"
+                                    className="w-auto rounded-[8px] flex items-center gap-2"
                                 >
                                     Add Option
                                 </Button>
@@ -1604,7 +1604,7 @@ const CommunityFeedTab = ({ communityId, communityName, communityImg }: Communit
                                 Cancel
                             </Button>
                             <Button
-                                className="!bg-[#c72030] !hover:bg-[#b01d2a] !text-white rounded-[8px]"
+                                className="rounded-[8px]"
                                 onClick={handleCreatePoll}
                             >
                                 {isEditMode ? 'Update Poll' : 'Publish Poll'}

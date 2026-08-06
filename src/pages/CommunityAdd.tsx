@@ -386,14 +386,14 @@ const CommunityAdd = () => {
                     <Button
                         onClick={handleSubmit}
                         disabled={isSubmitting}
-                        className="disabled:!bg-[#DF808B] !bg-[#C72030] hover:bg-[#d0606e] !text-white min-w-[150px] h-10"
+                        className="min-w-[150px] h-10"
                     >
                         {isSubmitting ? "Submitting..." : "Submit"}
                     </Button>
                     <Button
                         onClick={() => navigate(-1)}
                         variant="outline"
-                        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white min-w-[150px] h-10"
+                        className="min-w-[150px] h-10"
                     >
                         Cancel
                     </Button>
