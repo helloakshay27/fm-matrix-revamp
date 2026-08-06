@@ -2254,7 +2254,7 @@ export const EditBookingSetupPage = () => {
                                                         <div className="flex items-center justify-center gap-2">
                                                             <button
                                                                 onClick={() => setEditingBlockIndex(editingBlockIndex === index ? null : index)}
-                                                                className={`p-1.5 rounded transition-colors ${editingBlockIndex === index ? "bg-purple-100 text-purple-700" : "hover:bg-gray-100 text-gray-500 hover:text-purple-600"}`}
+                                                                className="p-1.5 rounded text-gray-900"
                                                                 title="Edit"
                                                             >
                                                                 <Pencil className="w-4 h-4" />
@@ -2266,7 +2266,7 @@ export const EditBookingSetupPage = () => {
                                                                     setFormData({ ...formData, blockDays: newBlockDays });
                                                                     if (editingBlockIndex === index) setEditingBlockIndex(null);
                                                                 }}
-                                                                className="p-1.5 rounded hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
+                                                                className="p-1.5 rounded text-gray-900"
                                                                 title="Delete"
                                                             >
                                                                 <Trash2 className="w-4 h-4" />
