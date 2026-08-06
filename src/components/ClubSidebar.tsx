@@ -42,6 +42,7 @@ import {
   House,
   TrendingUp,
   Code,
+  Award,
 } from "lucide-react";
 
 type SidebarItem = {
@@ -235,6 +236,19 @@ const modulesByPackage = {
         },
       ],
     },
+
+    {
+      name: "Club Privilege",
+      icon: Award,
+      subItems: [
+        { name: "Service", href: "/pulse/pulse-privilege/plus-service" },
+        {
+          name: "Service Category",
+          href: "/pulse/pulse-privilege/service-category",
+        },
+      ],
+    },
+
     {
       name: "Roles (RACI)",
       icon: UserCheck,
@@ -350,7 +364,7 @@ const modulesByPackage = {
           name: "Payment Terms",
           href: "/accounting/payment-terms",
         },
-        
+
         // {
         //   name: "Tax Sections",
         //   href: "/accounting/section",
@@ -376,7 +390,7 @@ const modulesByPackage = {
           name: "Organization",
           href: "/accounting/organisation",
         },
-         {
+        {
           name: "UOM Master",
           href: "/accounting/uom-master",
         },
@@ -384,7 +398,7 @@ const modulesByPackage = {
           name: "Bank Master",
           href: "/accounting/bank-master",
         },
-        
+
         // { name: "Charges ", href: "/accounting/charge-setup" },
         // { name: "Bill Cycles ", href: "/accounting/bill-cycles" },
       ],
@@ -1147,7 +1161,7 @@ export const ClubSidebar: React.FC = () => {
     const isExpanded = expandedItems.includes(key);
     const isActive = item.href
       ? isActiveRoute(item.href, "prefix") ||
-        (item.additionalRoutes ?? []).some((r) => isActiveRoute(r, "prefix"))
+      (item.additionalRoutes ?? []).some((r) => isActiveRoute(r, "prefix"))
       : false;
 
     if (hasSubItems) {
@@ -1219,7 +1233,7 @@ export const ClubSidebar: React.FC = () => {
     const isExpanded = expandedItems.includes(item.name);
     const active = item.href
       ? isActiveRoute(item.href, "prefix") ||
-        (item.additionalRoutes ?? []).some((r) => isActiveRoute(r, "prefix"))
+      (item.additionalRoutes ?? []).some((r) => isActiveRoute(r, "prefix"))
       : false;
 
     if (isStaticItem) {
