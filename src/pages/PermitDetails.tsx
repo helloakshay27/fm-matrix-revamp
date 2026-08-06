@@ -1561,7 +1561,7 @@ export const PermitDetails = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => navigate(`/safety/permit/fill-form/${id}`)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                                className="bg-brand hover:bg-brand-hover text-white border-brand"
                             >
                                 <Clipboard className="w-4 h-4 mr-2" />
                                 Complete Form
@@ -1746,15 +1746,15 @@ export const PermitDetails = () => {
                                 value={
                                     <Badge
                                         className={`text-white ${permitData?.permit?.status === 'Draft'
-                                            ? 'bg-[#0d6efd]'
+                                            ? 'bg-brand'
                                             : permitData?.permit?.status === 'Extended'
-                                                ? 'bg-[#0dcaf0]'
+                                                ? 'bg-[#9ec8ba]'
                                                 : permitData?.permit?.status === 'Expired'
-                                                    ? 'bg-[#01C833]'
+                                                    ? 'bg-brand-error'
                                                     : permitData?.permit?.status === 'Approved'
-                                                        ? 'bg-[#ffc40b]'
+                                                        ? 'bg-brand-success'
                                                         : permitData?.permit?.status === 'Hold'
-                                                            ? 'bg-[#808080]'
+                                                            ? 'bg-[#888780]'
                                                             : 'bg-gray-400'
                                             }`}
                                     >

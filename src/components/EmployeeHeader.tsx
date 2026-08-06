@@ -22,7 +22,7 @@ import {
   Wallet,
   Compass,
 } from "lucide-react";
-import recessLogo from "../assets/recess-logo";
+import { RecessClubLogo } from "./RecessClubLogo";
 
 import { useNavigate } from "react-router-dom";
 import {
@@ -590,11 +590,7 @@ export const EmployeeHeader: React.FC = () => {
               alt=""
             />
           ) : isClubSite ? (
-            <img
-              src={recessLogo}
-              alt="Recess Logo"
-              style={{ height: 60, width: "auto", objectFit: "contain" }}
-            />
+            <RecessClubLogo />
           ) : isPulseSite ? (
             <img
               src="https://www.panchshil.com/assets/images/home/logo.png"

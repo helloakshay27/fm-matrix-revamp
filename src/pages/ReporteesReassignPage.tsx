@@ -1,10 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { TextField } from '@mui/material';
+import React, { useMemo, useState, useEffect } from 'react';
+import { TextField, Autocomplete, CircularProgress } from '@mui/material';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, ArrowLeft, Users, Repeat, ClipboardList } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Loader2, Users, Repeat, ClipboardList } from 'lucide-react';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { useMSafeEvents } from '@/components/PostHogMSafeEvents';
 
@@ -16,11 +14,87 @@ type ReassignResult = {
     reassigned_reportees?: Array<{ id: number; name: string; email: string; mobile: string }>;
 };
 
+type UserOption = {
+    id: number | string;
+    email: string;
+    name?: string;
+};
+
+const fieldStyles = {
+    height: { xs: 36, sm: 40, md: 45 },
+    backgroundColor: '#fff',
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+        padding: { xs: '8px 12px', sm: '10px 14px', md: '12px 14px' },
+    },
+    '& .MuiOutlinedInput-root': {
+        backgroundColor: '#fff',
+        '& fieldset': { borderColor: '#e5e7eb' },
+        '&:hover fieldset': { borderColor: '#C72030' },
+        '&.Mui-focused fieldset': { borderColor: '#C72030' },
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+        color: '#C72030',
+    },
+} as const;
+
+const useEmailUserSearch = (query: string) => {
+    const [options, setOptions] = useState<UserOption[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const q = query.trim();
+        if (q.length < 3) {
+            setOptions([]);
+            setLoading(false);
+            return;
+        }
+
+        let active = true;
+        const timer = setTimeout(async () => {
+            try {
+                setLoading(true);
+                const baseUrl = localStorage.getItem('baseUrl');
+                const token = localStorage.getItem('token');
+                const companyId = localStorage.getItem('selectedCompanyId');
+                if (!baseUrl || !token || !companyId) return;
+
+                const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+                const url = `${cleanBaseUrl}/pms/users/company_wise_users.json?company_id=${companyId}&q[email_cont]=${encodeURIComponent(q)}`;
+                const resp = await fetch(url, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (!active) return;
+                const users = (data?.users || []).map((u: any) => ({
+                    id: u.id,
+                    email: u.email || '',
+                    name: u.name || `${u.firstname || ''} ${u.lastname || ''}`.trim(),
+                })).filter((u: UserOption) => u.email);
+                setOptions(users);
+            } catch (e) {
+                console.error('User email search error', e);
+                if (active) setOptions([]);
+            } finally {
+                if (active) setLoading(false);
+            }
+        }, 300);
+
+        return () => {
+            active = false;
+            clearTimeout(timer);
+        };
+    }, [query]);
+
+    return { options, loading };
+};
+
 const ReporteesReassignPage = () => {
-    const navigate = useNavigate();
     const msafeEvents = useMSafeEvents();
     const [currentEmail, setCurrentEmail] = useState('');
     const [updatedEmail, setUpdatedEmail] = useState('');
+    const [currentInput, setCurrentInput] = useState('');
+    const [updatedInput, setUpdatedInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [results, setResults] = useState<ReassignResult[]>([]);
     const [reportees, setReportees] = useState<Array<{ id: number; name?: string; email?: string; mobile?: string }>>([]);
@@ -30,23 +104,22 @@ const ReporteesReassignPage = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
 
-    const fieldStyles = {
-        height: { xs: 28, sm: 36, md: 45 },
-        '& .MuiInputBase-input, & .MuiSelect-select': {
-            padding: { xs: '8px', sm: '10px', md: '12px' },
-        },
-    } as const;
+    const { options: currentOptions, loading: currentLoading } = useEmailUserSearch(currentInput);
+    const { options: updatedOptions, loading: updatedLoading } = useEmailUserSearch(updatedInput);
 
     // Prefill currentEmail from query param if provided
-    React.useEffect(() => {
+    useEffect(() => {
         try {
             const params = new URLSearchParams(window.location.search);
             const fromQ = (params.get('current_email') || '').trim();
-            if (fromQ && !currentEmail) setCurrentEmail(fromQ.toLowerCase());
+            if (fromQ && !currentEmail) {
+                setCurrentEmail(fromQ.toLowerCase());
+                setCurrentInput(fromQ.toLowerCase());
+            }
         } catch { }
     }, []); // run once
 
-    React.useEffect(() => {
+    useEffect(() => {
         msafeEvents.onReporteesReassignOpened();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -259,6 +332,7 @@ console.log("Reassign payload:", {
             msafeEvents.onReporteesReassigned(resultData?.total_reassigned ?? selectedIds.size, false);
             setResults(prev => [...prev, resultData || {}]);
             setUpdatedEmail('');
+            setUpdatedInput('');
             // Refresh the reportees list so the table reflects the latest state
             await handleFetchReportees();
         } catch (e: any) {
@@ -312,51 +386,171 @@ console.log("Reassign payload:", {
                     <h2 className="text-lg font-bold tracking-wide">DETAILS</h2>
                 </div>
                 <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <span className="text-gray-500 text-sm">Current Report To</span>
-                        <TextField
-                            type="email"
-                            placeholder="Enter current report-to email"
-                            value={currentEmail}
-                            onChange={(e) => setCurrentEmail(e.target.value)}
-                            fullWidth
-                            variant="outlined"
-                            autoComplete="off"
-                            slotProps={{ inputLabel: { shrink: true } as any }}
-                            InputProps={{ sx: fieldStyles }}
-                            inputProps={{ autoComplete: 'off', autoCorrect: 'off', autoCapitalize: 'none', spellCheck: 'false' }}
-                            disabled={isSubmitting}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <span className="text-gray-500 text-sm">Updated Report To</span>
-                        <TextField
-                            type="email"
-                            placeholder="Enter updated report-to email"
-                            value={updatedEmail}
-                            onChange={(e) => setUpdatedEmail(e.target.value)}
-                            fullWidth
-                            variant="outlined"
-                            autoComplete="off"
-                            slotProps={{ inputLabel: { shrink: true } as any }}
-                            InputProps={{ sx: fieldStyles }}
-                            inputProps={{ autoComplete: 'off', autoCorrect: 'off', autoCapitalize: 'none', spellCheck: 'false' }}
-                            disabled={isSubmitting}
-                        />
-                    </div>
+                    <Autocomplete
+                        freeSolo
+                        options={currentOptions}
+                        loading={currentLoading}
+                        disabled={isSubmitting}
+                        inputValue={currentInput}
+                        onInputChange={(_, value) => {
+                            setCurrentInput(value);
+                            setCurrentEmail(value);
+                        }}
+                        value={currentEmail || null}
+                        onChange={(_, value) => {
+                            const email =
+                                typeof value === 'string'
+                                    ? value
+                                    : value?.email || '';
+                            setCurrentEmail(email);
+                            setCurrentInput(email);
+                        }}
+                        getOptionLabel={(option) =>
+                            typeof option === 'string' ? option : option.email || ''
+                        }
+                        isOptionEqualToValue={(option, value) => {
+                            const optEmail = typeof option === 'string' ? option : option.email;
+                            const valEmail = typeof value === 'string' ? value : value?.email;
+                            return String(optEmail || '').toLowerCase() === String(valEmail || '').toLowerCase();
+                        }}
+                        filterOptions={(x) => x}
+                        renderOption={(props, option) => (
+                            <li {...props} key={String(option.id)}>
+                                <div className="flex flex-col py-0.5">
+                                    <span className="text-sm text-gray-900">{option.email}</span>
+                                    {option.name ? (
+                                        <span className="text-xs text-gray-500">{option.name}</span>
+                                    ) : null}
+                                </div>
+                            </li>
+                        )}
+                        slotProps={{
+                            paper: {
+                                sx: {
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                                },
+                            },
+                        }}
+                        sx={{
+                            '& .MuiAutocomplete-popupIndicator': { color: '#888' },
+                            '& .MuiOutlinedInput-root': {
+                                paddingTop: '0 !important',
+                                paddingBottom: '0 !important',
+                            },
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Current Report To"
+                                placeholder="Search email (min 3 chars)"
+                                variant="outlined"
+                                InputLabelProps={{ shrink: true }}
+                                sx={fieldStyles}
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                        <>
+                                            {currentLoading ? (
+                                                <CircularProgress color="inherit" size={16} />
+                                            ) : null}
+                                            {params.InputProps.endAdornment}
+                                        </>
+                                    ),
+                                }}
+                            />
+                        )}
+                    />
+                    <Autocomplete
+                        freeSolo
+                        options={updatedOptions}
+                        loading={updatedLoading}
+                        disabled={isSubmitting}
+                        inputValue={updatedInput}
+                        onInputChange={(_, value) => {
+                            setUpdatedInput(value);
+                            setUpdatedEmail(value);
+                        }}
+                        value={updatedEmail || null}
+                        onChange={(_, value) => {
+                            const email =
+                                typeof value === 'string'
+                                    ? value
+                                    : value?.email || '';
+                            setUpdatedEmail(email);
+                            setUpdatedInput(email);
+                        }}
+                        getOptionLabel={(option) =>
+                            typeof option === 'string' ? option : option.email || ''
+                        }
+                        isOptionEqualToValue={(option, value) => {
+                            const optEmail = typeof option === 'string' ? option : option.email;
+                            const valEmail = typeof value === 'string' ? value : value?.email;
+                            return String(optEmail || '').toLowerCase() === String(valEmail || '').toLowerCase();
+                        }}
+                        filterOptions={(x) => x}
+                        renderOption={(props, option) => (
+                            <li {...props} key={String(option.id)}>
+                                <div className="flex flex-col py-0.5">
+                                    <span className="text-sm text-gray-900">{option.email}</span>
+                                    {option.name ? (
+                                        <span className="text-xs text-gray-500">{option.name}</span>
+                                    ) : null}
+                                </div>
+                            </li>
+                        )}
+                        slotProps={{
+                            paper: {
+                                sx: {
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                                },
+                            },
+                        }}
+                        sx={{
+                            '& .MuiAutocomplete-popupIndicator': { color: '#888' },
+                            '& .MuiOutlinedInput-root': {
+                                paddingTop: '0 !important',
+                                paddingBottom: '0 !important',
+                            },
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Updated Report To"
+                                placeholder="Search email (min 3 chars)"
+                                variant="outlined"
+                                InputLabelProps={{ shrink: true }}
+                                sx={fieldStyles}
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                        <>
+                                            {updatedLoading ? (
+                                                <CircularProgress color="inherit" size={16} />
+                                            ) : null}
+                                            {params.InputProps.endAdornment}
+                                        </>
+                                    ),
+                                }}
+                            />
+                        )}
+                    />
                 </div>
                 <div className="px-4 pb-4 flex gap-3 flex-wrap justify-start">
                     <Button
                         onClick={handleFetchReportees}
                         variant="outline"
-                        className="flex items-center !border-brand !text-brand hover:!bg-brand-light disabled:!border-brand disabled:!text-brand disabled:opacity-100"
+                        className="flex items-center border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3]"
                         disabled={isFetching || !currentEmail.trim()}
                     >
                         {isFetching ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Fetching...</>) : 'Fetch Reportees'}
                     </Button>
                     <Button
                         onClick={handleReassign}
-                        className="flex items-center !bg-brand hover:!bg-brand-hover !text-white disabled:!bg-brand disabled:!text-white disabled:opacity-100"
+                        className="flex items-center bg-brand hover:bg-brand-hover text-white"
                         disabled={isSubmitting || selectedIds.size === 0 || !updatedEmail.trim()}
                     >
                         {isSubmitting ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Submitting...</>) : 'Reassign Selected'}

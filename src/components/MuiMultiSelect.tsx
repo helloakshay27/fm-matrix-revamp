@@ -5,8 +5,6 @@ import {
     Select,
     Chip,
 } from "@mui/material";
-import { SyntheticEvent } from "react";
-import CloseIcon from "@mui/icons-material/Close";
 
 interface Option {
     label: string;
@@ -27,6 +25,8 @@ interface MuiMultiSelectProps {
     maxHeight?: string | number;
 }
 
+const BRAND = '#C72030';
+
 export const MuiMultiSelect = ({
     label,
     options,
@@ -37,7 +37,7 @@ export const MuiMultiSelect = ({
     placeholder,
     fullWidth = true,
     disabled = false,
-    maxHeight = "65px",
+    maxHeight = "45px",
 }: MuiMultiSelectProps) => {
     const handleChange = (event: any) => {
         const selectedValues = event.target.value;
@@ -57,10 +57,9 @@ export const MuiMultiSelect = ({
         }
     };
 
-    // Determine min height based on max height
     const minHeight = typeof maxHeight === 'string'
-        ? (maxHeight === '36px' ? '36px' : '65px')
-        : (maxHeight as number) < 50 ? '36px' : '65px';
+        ? (maxHeight === '36px' ? '36px' : '45px')
+        : (maxHeight as number) < 50 ? '36px' : '45px';
 
     return (
         <FormControl
@@ -70,13 +69,20 @@ export const MuiMultiSelect = ({
             sx={{
                 "& .MuiInputBase-root": {
                     minHeight: minHeight,
-                    maxHeight: maxHeight,
-                    height: "auto",
+                    maxHeight: value.length > 1 ? maxHeight : minHeight,
+                    height: value.length > 1 ? "auto" : minHeight,
+                    backgroundColor: "#fff",
+                },
+                "& .MuiOutlinedInput-root": {
+                    "& fieldset": { borderColor: "#e5e7eb" },
+                    "&:hover fieldset": { borderColor: BRAND },
+                    "&.Mui-focused fieldset": { borderColor: BRAND },
                 },
                 "& .MuiInputLabel-root": {
                     backgroundColor: "white",
                     padding: "0 4px",
                     marginLeft: "-2px",
+                    "&.Mui-focused": { color: BRAND },
                 },
                 "& .MuiInputLabel-shrink": {
                     transform: "translate(14px, -9px) scale(0.75)",
@@ -94,14 +100,22 @@ export const MuiMultiSelect = ({
                 label={label}
                 disabled={disabled}
                 displayEmpty
+                notched
                 MenuProps={{
                     PaperProps: {
                         style: {
                             maxHeight: 300,
+                            backgroundColor: "white",
+                            border: "1px solid #e2e8f0",
+                            borderRadius: "8px",
+                            zIndex: 9999,
                         },
                     },
+                    disablePortal: false,
+                    disableAutoFocus: true,
+                    disableEnforceFocus: true,
                 }}
-                renderValue={(selected) => (
+                renderValue={() => (
                     <div
                         style={{
                             display: "flex",
@@ -111,8 +125,8 @@ export const MuiMultiSelect = ({
                             maxHeight: maxHeight,
                             overflowY: "auto",
                             width: "100%",
-                            scrollbarWidth: "none", // For Firefox
-                            msOverflowStyle: "none", // For Internet Explorer and Edge
+                            scrollbarWidth: "none",
+                            msOverflowStyle: "none",
                         }}
                         className="custom-scrollbar"
                     >
@@ -145,14 +159,18 @@ export const MuiMultiSelect = ({
                                         e.stopPropagation();
                                     }}
                                     sx={{
-                                        height: "18px",
-                                        fontSize: "0.65rem",
+                                        height: "22px",
+                                        fontSize: "0.75rem",
+                                        borderColor: "rgba(199, 32, 48, 0.35)",
+                                        color: BRAND,
                                         "& .MuiChip-label": {
-                                            padding: "0 5px",
+                                            padding: "0 6px",
                                         },
                                         "& .MuiChip-deleteIcon": {
-                                            fontSize: "12px",
-                                            margin: "0 1px 0 -3px",
+                                            fontSize: "14px",
+                                            color: BRAND,
+                                            margin: "0 2px 0 -2px",
+                                            "&:hover": { color: BRAND },
                                         },
                                     }}
                                 />
@@ -166,16 +184,11 @@ export const MuiMultiSelect = ({
                 )}
                 sx={{
                     "& .MuiSelect-select": {
-                        padding: "6px 12px !important",
-                        minHeight: "45px !important",
+                        padding: "8px 14px !important",
+                        minHeight: `${minHeight} !important`,
                         display: "flex !important",
                         alignItems: "center",
-                        paddingTop: "4px !important",
-                        paddingBottom: "4px !important",
                         boxSizing: "border-box",
-                    },
-                    "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "rgba(0, 0, 0, 0.23)",
                     },
                 }}
             >

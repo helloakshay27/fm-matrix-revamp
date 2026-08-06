@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   TextField,
@@ -1198,18 +1198,16 @@ export const EditExternalUserPage = () => {
         <Button
           onClick={handleCancel}
           variant="outline"
-          className="px-8 py-2"
+          className="px-8 py-2 border-[#C72030] text-[#C72030] hover:bg-[#EDEAE3]"
           disabled={saving}
         >
           Cancel
         </Button>
         <Button
           onClick={handleSubmit}
-          style={{ backgroundColor: "#C72030" }}
-          className="text-white hover:bg-[#C72030]/90 px-8 py-2"
+          className="bg-brand hover:bg-brand-hover text-white px-8 py-2"
           disabled={saving || saveBlocked}
         >
-          <Save className="h-4 w-4 mr-2" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
