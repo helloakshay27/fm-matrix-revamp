@@ -886,11 +886,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                   <div key={rule.id} className="border-b last:border-b-0">
                     <div className="flex items-center justify-between p-4 bg-gray-50">
                       <div className="flex items-center space-x-4">
-<<<<<<< HEAD
-                        <span className="font-semibold">Rule {index + 1}</span>
-=======
                         <span className="font-semibold text-brand-accent">Rule {index + 1}</span>
->>>>>>> api-integration-ui
                         <div className="flex items-center space-x-4 text-sm">
                           <span><strong>Category Type:</strong> {categoryName}</span>
                         </div>
