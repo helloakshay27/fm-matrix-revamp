@@ -3091,14 +3091,17 @@ const DailyTab = ({
             >
               <div className="flex flex-1 items-center gap-3 px-4 py-3">
                 <ItemIcon
-                  // Draggable rows (Tasks column) ke global black override se
-                  // bachne ke liye — icon ka apna color rehna chahiye.
+                  // Global black overrides (index.css) se bachne ke liye —
+                  // color inline --glyph-color se aata hai, kyunki plain
+                  // Tailwind class un `!important` rules se haar jaati hai.
                   data-icon-color="true"
                   title={typeLabel}
-                  className={cn(
-                    "h-[18px] w-[18px] shrink-0",
-                    isNotepadLike ? "text-[#F36A3D]" : "text-[#4BA3F2]"
-                  )}
+                  style={
+                    {
+                      "--glyph-color": isNotepadLike ? "#F36A3D" : "#4BA3F2",
+                    } as React.CSSProperties
+                  }
+                  className="h-[18px] w-[18px] shrink-0"
                 />
                 <span className="min-w-0 flex-1 text-[13px] font-medium leading-[16px] text-[#2B2F38]">
                   {getItemTitle(item)}

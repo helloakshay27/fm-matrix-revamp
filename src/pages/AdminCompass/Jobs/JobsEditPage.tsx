@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useJobs } from "./JobsContext";
 import { useFetchJobDetail } from "./hooks/useFetchJobDetail";
 import EditJdScreen from "./components/EditJdScreen";
+import { SkeletonDetail } from "./components/UI";
 
 export default function JobsEditPage() {
   const { id } = useParams();
@@ -38,13 +39,7 @@ export default function JobsEditPage() {
     return () => setEditingJd(null);
   }, []);
 
-  if (isLoading) {
-    return (
-      <div style={{ padding: 40, textAlign: "center", color: "#888", fontSize: 14 }}>
-        Loading job description…
-      </div>
-    );
-  }
+  if (isLoading) return <SkeletonDetail sections={3} fields={4} />;
 
   if (error || !data) {
     navigate("/admin-compass/jobs", { replace: true });

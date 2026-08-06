@@ -296,6 +296,175 @@ export const AiBar = ({ text, sub, onClick, label }) => (
   </div>
 );
 
+/* ── Skeletons ──────────────────────────────────────────────────────────
+   Jobs module ke saare list/detail screens ek hi shimmer language use karte
+   hain. Keyframes `SkeletonStyles` se aate hain — har skeleton container use
+   ek baar render karta hai (duplicate <style> browser ignore kar deta hai). */
+
+export const SkeletonStyles = () => (
+  <style>{`@keyframes jobsShimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}`}</style>
+);
+
+export const Skeleton = ({ w = "100%", h = 12, r = 6, style: sx }) => (
+  <span
+    aria-hidden="true"
+    style={{
+      display: "block",
+      width: w,
+      height: h,
+      borderRadius: r,
+      background: `linear-gradient(90deg, rgba(44,44,44,.06) 25%, rgba(44,44,44,.12) 37%, rgba(44,44,44,.06) 63%)`,
+      backgroundSize: "300% 100%",
+      animation: "jobsShimmer 1.4s ease-in-out infinite",
+      flexShrink: 0,
+      ...sx,
+    }}
+  />
+);
+
+/** Card-per-row lists — Job Descriptions, KRAs. */
+export const SkeletonList = ({ rows = 4, showMeta = true }) => (
+  <div
+    role="status"
+    aria-label="Loading"
+    style={{ display: "flex", flexDirection: "column", gap: 12 }}
+  >
+    <SkeletonStyles />
+    {Array.from({ length: rows }).map((_, i) => (
+      <div
+        key={i}
+        style={{
+          ...card,
+          padding: "18px 20px",
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+        }}
+      >
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+          <Skeleton w={`${45 + ((i * 13) % 30)}%`} h={14} />
+          {showMeta && <Skeleton w="28%" h={10} />}
+        </div>
+        <Skeleton w={38} h={12} />
+        <Skeleton w={58} h={12} />
+        <Skeleton w={72} h={22} r={999} />
+        <Skeleton w={28} h={28} r={8} />
+        <Skeleton w={28} h={28} r={8} />
+      </div>
+    ))}
+  </div>
+);
+
+/** `minmax(360px, 1fr)` jaise tokens ki wajah se simple split kaam nahi karta. */
+const countColumns = (template) =>
+  String(template)
+    .replace(/\([^)]*\)/g, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+
+/**
+ * Sirf rows — jab table ka container/header pehle se render ho raha ho
+ * (jaise Activity Logs) tab isko header ke neeche rakhein.
+ */
+export const SkeletonRows = ({
+  rows = 6,
+  columns = "1fr 110px 110px 90px 90px",
+  padding = "14px 20px",
+  gap = 10,
+}) => {
+  const cols = countColumns(columns);
+  return (
+    <div role="status" aria-label="Loading">
+      <SkeletonStyles />
+      {Array.from({ length: rows }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            display: "grid",
+            gridTemplateColumns: columns,
+            justifyContent: "start",
+            gap,
+            padding,
+            alignItems: "center",
+            borderBottom: i < rows - 1 ? `1px solid ${T.borderSoft}` : "none",
+          }}
+        >
+          {Array.from({ length: cols }).map((_col, c) => (
+            <Skeleton key={c} w={c === 0 ? `${55 + ((i * 11) % 25)}%` : "70%"} h={12} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/** Table view — `columns` wahi grid-template hai jo asli table use karta hai. */
+export const SkeletonTable = ({ rows = 6, columns = "1fr 110px 110px 90px 90px" }) => (
+  <div
+    style={{
+      background: T.surface,
+      border: `1px solid ${T.borderSoft}`,
+      borderRadius: T.rlg,
+      overflow: "hidden",
+    }}
+  >
+    <SkeletonRows rows={rows} columns={columns} />
+  </div>
+);
+
+/** Grid/card view — KPI cards, unit chips. */
+export const SkeletonCards = ({ count = 6, minWidth = 280, height = 116 }) => (
+  <div
+    role="status"
+    aria-label="Loading"
+    style={{
+      display: "grid",
+      gridTemplateColumns: `repeat(auto-fill, minmax(${minWidth}px, 1fr))`,
+      gap: 14,
+    }}
+  >
+    <SkeletonStyles />
+    {Array.from({ length: count }).map((_, i) => (
+      <div key={i} style={{ ...card, padding: 18, minHeight: height, display: "flex", flexDirection: "column", gap: 10 }}>
+        <Skeleton w={`${60 + ((i * 9) % 30)}%`} h={13} />
+        <Skeleton w="45%" h={10} />
+        <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
+          <Skeleton w={48} h={20} r={999} />
+          <Skeleton w={64} h={20} r={999} />
+          <Skeleton w={56} h={20} r={999} />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+/** Detail / form screens — heading block + content cards. */
+export const SkeletonDetail = ({ sections = 3, fields = 4 }) => (
+  <div role="status" aria-label="Loading">
+    <SkeletonStyles />
+    <div style={{ marginBottom: 24, display: "flex", flexDirection: "column", gap: 10 }}>
+      <Skeleton w={260} h={22} r={8} />
+      <Skeleton w={400} h={12} />
+    </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {Array.from({ length: sections }).map((_, s) => (
+        <div key={s} style={{ ...card, display: "flex", flexDirection: "column", gap: 14 }}>
+          <Skeleton w={180} h={14} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            {Array.from({ length: fields }).map((_f, f) => (
+              <div key={f} style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                <Skeleton w="35%" h={10} />
+                <Skeleton h={38} r={10} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 export const Loader = ({ text }) => (
   <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, minHeight: 100, marginBottom: 16 }}>
     <div style={{ width: 32, height: 32, borderRadius: "50%", background: T.aiGrad, display: "grid", placeItems: "center", animation: "pulse 1.5s ease infinite" }}>

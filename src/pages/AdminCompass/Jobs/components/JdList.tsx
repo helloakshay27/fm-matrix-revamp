@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useJobs } from "../JobsContext";
 import { T, COLORS } from "../constants";
 import { I, ico } from "../icons";
-import { Btn, StatusPill, aBtn, Loader } from "./UI";
+import { Btn, StatusPill, aBtn, SkeletonList } from "./UI";
 import { useFetchJobs } from "../hooks/useFetchJobs";
 
 const initials = (name) =>
@@ -102,9 +102,7 @@ export default function JdList() {
         </Btn>
       </div>
 
-      {isLoading && (
-        <Loader text="Loading job descriptions…" />
-      )}
+      {isLoading && <SkeletonList rows={5} />}
 
       {error && (
         <div

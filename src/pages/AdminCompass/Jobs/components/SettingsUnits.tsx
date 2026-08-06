@@ -2,7 +2,7 @@
 import { useJobs } from "../JobsContext";
 import { T } from "../constants";
 import { ico } from "../icons";
-import { card, FI, Btn, SH, aBtn } from "./UI";
+import { card, FI, Btn, SH, aBtn, SkeletonRows } from "./UI";
 
 export default function SettingsUnits() {
   const {
@@ -44,9 +44,7 @@ export default function SettingsUnits() {
           }}
         >
           {unitsLoading && (
-            <p style={{ fontSize: 12.5, color: T.inkMuted, margin: 0, padding: "10px 0" }}>
-              Loading units…
-            </p>
+            <SkeletonRows rows={5} columns="1fr 32px" padding="12px 14px" />
           )}
           {!unitsLoading && unitsError && (
             <p style={{ fontSize: 12.5, color: T.danger, margin: 0, padding: "10px 0" }}>

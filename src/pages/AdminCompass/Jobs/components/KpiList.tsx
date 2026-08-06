@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { useJobs } from "../JobsContext";
 import { T, COLORS } from "../constants";
 import { I, ico } from "../icons";
-import { card, gBtn, aBtn, Btn, FilterSelect, FilterSearchSelect } from "./UI";
+import { card, gBtn, aBtn, Btn, FilterSelect, FilterSearchSelect, SkeletonCards, SkeletonTable } from "./UI";
 import { useDepartments } from "../hooks/useDepartments";
 
 export default function KpiList() {
@@ -81,6 +81,12 @@ export default function KpiList() {
         </div>
       )}
 
+      {kpisLoading && filteredKpis.length === 0 && (kpiViewMode === "card" ? (
+        <SkeletonCards count={6} minWidth={240} height={128} />
+      ) : (
+        <SkeletonTable rows={8} columns="1fr 110px 110px 50px 60px 70px 90px 100px" />
+      ))}
+
       {!kpisLoading && filteredKpis.length === 0 && (
         <div style={{ ...card, textAlign: "center", color: T.inkMuted, fontSize: 13 }}>
           No KPIs found.
@@ -148,8 +154,10 @@ export default function KpiList() {
               <span style={{ color: T.inkSoft, fontSize: 11.5 }}>{kraName(kpi.kraId)}</span>
               <span style={{ fontWeight: 600 }}>{kpi.weightage}%</span>
               <span style={{ fontWeight: 600 }}>{kpi.target}</span>
-              <span style={{ padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600, background: T.kpiLav }}>{kpi.freq}</span>
-              <span style={{ padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600, background: kpi.updateType === "automatic" ? T.kpiMint : T.kpiCream }}>
+              {/* Pills apne text ko hug karein — grid cell ki poori width par
+                  stretch na hon. */}
+              <span style={{ justifySelf: "start", display: "inline-flex", alignItems: "center", whiteSpace: "nowrap", padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600, background: T.kpiLav }}>{kpi.freq}</span>
+              <span style={{ justifySelf: "start", display: "inline-flex", alignItems: "center", whiteSpace: "nowrap", padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600, background: kpi.updateType === "automatic" ? T.kpiMint : T.kpiCream }}>
                 {kpi.updateType === "automatic" ? `Auto · ${kpi.dataSource}` : "Manual"}
               </span>
               <div style={{ display: "flex", gap: 4 }}>

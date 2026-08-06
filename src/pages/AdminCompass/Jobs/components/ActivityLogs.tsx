@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useJobs } from "../JobsContext";
 import { T } from "../constants";
 import { ico } from "../icons";
+import { SkeletonRows } from "./UI";
 
 const actionColors = {
   create: T.growth,
@@ -98,16 +99,10 @@ export default function ActivityLogs() {
           <span>By</span>
         </div>
         {logsLoading ? (
-          <div
-            style={{
-              padding: "48px 20px",
-              textAlign: "center",
-              fontSize: 13,
-              color: T.inkMuted,
-            }}
-          >
-            Loading activity logs...
-          </div>
+          <SkeletonRows
+            rows={8}
+            columns="112px 106px 62px 190px minmax(360px, 1fr) 130px"
+          />
         ) : logsError ? (
           <div
             style={{

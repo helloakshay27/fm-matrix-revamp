@@ -4,7 +4,7 @@ import {
   getApiContext,
   buildApiUrl,
   apiHeaders,
-  unwrapRows,
+  fetchAllPages,
   firstDefined,
 } from "./apiClient";
 
@@ -65,17 +65,20 @@ export const fetchKras = async ({
 } = {}) => {
   const { baseUrl, token } = getApiContext();
   if (!baseUrl || !token) return null;
-  const res = await fetch(buildApiUrl("/kras.json", {
-    department_id: departmentId,
-    job_description_id: jobDescriptionId,
-    assignee_id: assigneeId,
-    kra_type: kraType,
-    status,
-    search,
-  }), { headers: apiHeaders() });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = await res.json().catch(() => []);
-  return unwrapRows(json, "kras").map(normalizeKra).filter(Boolean);
+  // 20 rows/page — saare pages chahiye, warna list adhoori dikhti hai.
+  const rows = await fetchAllPages(
+    "/kras.json",
+    {
+      department_id: departmentId,
+      job_description_id: jobDescriptionId,
+      assignee_id: assigneeId,
+      kra_type: kraType,
+      status,
+      search,
+    },
+    "kras"
+  );
+  return rows.map(normalizeKra).filter(Boolean);
 };
 
 /**
@@ -86,10 +89,8 @@ export const fetchKras = async ({
 export const fetchAllKras = async () => {
   const { baseUrl, token } = getApiContext();
   if (!baseUrl || !token) return null;
-  const res = await fetch(buildApiUrl("/kras.json"), { headers: apiHeaders() });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = await res.json().catch(() => []);
-  return unwrapRows(json, "kras").map(normalizeKra).filter(Boolean);
+  const rows = await fetchAllPages("/kras.json", {}, "kras");
+  return rows.map(normalizeKra).filter(Boolean);
 };
 
 /**
