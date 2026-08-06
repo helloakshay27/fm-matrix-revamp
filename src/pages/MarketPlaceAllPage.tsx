@@ -182,9 +182,6 @@ const MarketPlaceAllPage = () => {
       
       {/* Hover overlay effect */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#C72030]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      
-      {/* Bottom border animation */}
-      <div className="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-[#C72030] to-red-400 group-hover:w-full transition-all duration-500 ease-out"></div>
     </div>;
   return <div className="p-4 sm:p-6 min-h-screen">
       {/* Header */}
