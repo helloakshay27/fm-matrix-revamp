@@ -1232,6 +1232,8 @@ import PATMCeoDashboard from "./pages/PATMCeoDashboard/index.tsx";
 import { EditPaymentPage } from "./pages/PaymentMadeEdit.tsx";
 import BusinessCompassTaskDetailsPage from "./pages/BusinessCompass/BusinessCompassTaskDetailsPage.tsx";
 import BusinessCompassIssueDetailsPage from "./pages/BusinessCompass/BusinessCompassIssueDetailsPage.tsx";
+import BusinessCompassTasksPage from "./pages/BusinessCompass/BusinessCompassTasksPage.tsx";
+import BusinessCompassIssuesPage from "./pages/BusinessCompass/BusinessCompassIssuesPage.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
@@ -2277,7 +2279,7 @@ function App() {
                           /> */}
                             <Route
                               path="/business-compass/tasks"
-                              element={<ProjectTasksPage />}
+                              element={<BusinessCompassTasksPage />}
                             />
                             <Route
                               path="/business-compass/tasks/:taskId"
@@ -2285,7 +2287,7 @@ function App() {
                             />
                             <Route
                               path="/business-compass/issues"
-                              element={<IssuesListPage />}
+                              element={<BusinessCompassIssuesPage />}
                             />
                             <Route
                               path="/business-compass/issues/:id"
