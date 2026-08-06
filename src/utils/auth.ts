@@ -246,12 +246,12 @@ const isViSite =
   hostname.includes("vi-web.gophygital.work") ||
   hostname.includes("web.gophygital.work") ||
   hostname.includes("lockated.gophygital.work") ||
-  hostname.includes("community.gophygital.work")
+  hostname.includes("community.gophygital.work") ||
+  hostname === "localhost";
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
-  hostname === "fm-matrix.lockated.com" ||
-  hostname === "localhost";
+  hostname === "fm-matrix.lockated.com"
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
@@ -291,9 +291,9 @@ export const getOrganizationsByEmail = async (
     };
 
     const h = window.location.hostname;
-    if (h.includes("oig.gophygital.work") || h.includes("fm.") || h === "fm-matrix.lockated.com" || h.includes("localhost"))
+    if (h.includes("oig.gophygital.work") || h.includes("fm.") || h === "fm-matrix.lockated.com")
       apiBase = baseUrls.fm;
-    else if (h.includes("vi-web.gophygital.work") || h.includes("web.gophygital.work") || h.includes("lockated.gophygital.work"))
+    else if (h.includes("vi-web.gophygital.work") || h.includes("web.gophygital.work") || h.includes("lockated.gophygital.work") || h.includes("localhost"))
       apiBase = baseUrls.vi;
     else if (h.includes("dev-fm-matrix") || h.includes("dev-api"))
       apiBase = baseUrls.dev;
