@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Eye, Download, Recycle, Truck, Trash2, RefreshCw, Package, Activity } from 'lucide-react';
+import { Eye, Download, Recycle, Truck, Clock, CheckCircle2, Scale } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { useDynamicPermissions } from '@/hooks/useDynamicPermissions';
-import { DUMMY_DISPATCH_RECORDS, DispatchRecord } from '@/data/wasteDispatchDummyData';
+import { fetchWasteDispatches, WasteDispatch } from '@/services/wasteDispatchAPI';
+import { DispatchRecord } from '@/data/wasteDispatchDummyData';
 
 // Table 2 — Waste Dispatch List columns. "Checkbox" isn't listed here since
 // EnhancedTable renders its own selection column via the `selectable` prop.
@@ -28,106 +30,158 @@ const columns = [
   { key: 'destination_facility', label: 'Destination Facility' },
   { key: 'disposal_method', label: 'Disposal Method' },
   { key: 'supporting_documents', label: 'Supporting Documents' },
-  { key: 'vendor_acknowledge', label: 'Vendor Acknowledge' },
+  { key: 'manifest_no', label: 'Manifest No.' },
   { key: 'status', label: 'Status' },
-  { key: 'recycling_status', label: 'Recycling Status' },
 ];
 
-const renderDispatchCell = (item: DispatchRecord, key: string) => {
-  if (key === 'id') return item.dispatchId;
-  if (key === 'dispatch_datetime') return `${item.dispatchDate} ${item.dispatchTime}`.trim();
-  if (key === 'waste_category') return item.category;
-  if (key === 'waste_type') return item.wasteItem;
-  if (key === 'total_generated_kg') return item.totalGeneratedWeightKg != null ? `${item.totalGeneratedWeightKg} KG` : '-';
-  if (key === 'dispatch_weight_kg') return item.dispatchWeightKg != null ? `${item.dispatchWeightKg} KG` : '-';
-  if (key === 'recycled_weight_kg') return item.recycledWeightKg != null ? `${item.recycledWeightKg} KG` : '-';
-  if (key === 'total_generated_ltr') return item.totalGeneratedWeightLtr != null ? `${item.totalGeneratedWeightLtr} L` : '-';
-  if (key === 'dispatch_weight_ltr') return item.dispatchWeightLtr != null ? `${item.dispatchWeightLtr} L` : '-';
-  if (key === 'recycled_weight_ltr') return item.recycledWeightLtr != null ? `${item.recycledWeightLtr} L` : '-';
-  if (key === 'vendor_name') return item.destination;
-  if (key === 'vehicle_no') return item.vehicleNumber;
-  if (key === 'driver_name') return item.driverName;
-  if (key === 'contact_no') return item.contactNo;
-  if (key === 'destination_facility') return item.destinationFacility;
-  if (key === 'disposal_method') return item.disposalMethod;
-  if (key === 'supporting_documents') return item.supportingDocumentsCount > 0 ? `${item.supportingDocumentsCount} file(s)` : '-';
-  if (key === 'vendor_acknowledge') return item.vendorAcknowledge;
-  if (key === 'status') return item.status;
-  if (key === 'recycling_status') return item.recycleDetail?.recyclingStatus || 'Not Recycled';
+// The dispatch record returned by the API doesn't carry a waste-category/type
+// breakdown or a recycled-quantity figure — those were only ever generated
+// (per waste_generation), not tracked on the dispatch itself. Those columns
+// show '-' until/unless the backend adds that data to this endpoint.
+const renderDispatchCell = (item: WasteDispatch, key: string) => {
+  if (key === 'id') return item.id;
+  if (key === 'dispatch_datetime') {
+    let timePart = '';
+    if (item.created_at) {
+      try { timePart = new Date(item.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); }
+      catch { timePart = ''; }
+    }
+    return [item.dispatch_date, timePart].filter(Boolean).join(' ') || '-';
+  }
+  if (key === 'waste_category') return '-';
+  if (key === 'waste_type') return '-';
+  if (key === 'total_generated_kg') return '-';
+  if (key === 'dispatch_weight_kg') return item.dispatch_weight_kg != null ? `${item.dispatch_weight_kg} KG` : '-';
+  if (key === 'recycled_weight_kg') return '-';
+  if (key === 'total_generated_ltr') return '-';
+  if (key === 'dispatch_weight_ltr') return item.dispatch_weight_ltr != null ? `${item.dispatch_weight_ltr} L` : '-';
+  if (key === 'recycled_weight_ltr') return '-';
+  if (key === 'vendor_name') return item.vendor?.company_name || item.vendor?.full_name || '-';
+  if (key === 'vehicle_no') return item.vehicle_number || '-';
+  if (key === 'driver_name') return item.driver_name || '-';
+  if (key === 'contact_no') return item.driver_contact || '-';
+  if (key === 'destination_facility') return item.destination_type || '-';
+  if (key === 'disposal_method') return item.disposal_method_kg || item.disposal_method_ltr || '-';
+  if (key === 'supporting_documents') return item.attachments && item.attachments.length > 0 ? `${item.attachments.length} file(s)` : '-';
+  if (key === 'manifest_no') return item.waste_transfer_note || '-';
+  if (key === 'status') return item.approval_status || '-';
   return '-';
+};
+
+// Bridges a real API record into the shape WasteDispatchDetailPage.tsx still
+// expects (it isn't wired to a real endpoint yet) — fields the dispatch API
+// doesn't return fall back to '-' rather than being guessed.
+const toDispatchRecordView = (item: WasteDispatch): DispatchRecord => {
+  let timePart = '';
+  if (item.created_at) {
+    try { timePart = new Date(item.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }); }
+    catch { timePart = ''; }
+  }
+  return {
+    id: item.id.toString(),
+    dispatchId: item.id.toString(),
+    wasteItem: '-',
+    category: '-',
+    dispatchWeight: item.dispatch_weight_kg != null
+      ? `${item.dispatch_weight_kg} KG`
+      : (item.dispatch_weight_ltr != null ? `${item.dispatch_weight_ltr} L` : '-'),
+    destination: item.vendor?.company_name || item.vendor?.full_name || '-',
+    vehicleNumber: item.vehicle_number || '-',
+    dispatchedBy: item.department?.department_name || item.authorized_by_type || '-',
+    dispatchDate: item.dispatch_date || '-',
+    manifestNumber: item.waste_transfer_note || '-',
+    status: item.approval_status || '-',
+    site: '-',
+    weightEntries: [],
+    dispatchTime: timePart,
+    totalGeneratedWeightKg: null,
+    dispatchWeightKg: item.dispatch_weight_kg ?? null,
+    recycledWeightKg: null,
+    totalGeneratedWeightLtr: null,
+    dispatchWeightLtr: item.dispatch_weight_ltr ?? null,
+    recycledWeightLtr: null,
+    driverName: item.driver_name || '-',
+    contactNo: item.driver_contact || '-',
+    destinationFacility: item.destination_type || '-',
+    disposalMethod: item.disposal_method_kg || item.disposal_method_ltr || '-',
+    supportingDocumentsCount: item.attachments?.length ?? 0,
+    vendorAcknowledge: '-',
+  };
 };
 
 const WasteDispatchHistoryPage: React.FC = () => {
   const navigate = useNavigate();
   const { shouldShow } = useDynamicPermissions();
 
-  // TODO: replace with a real fetch (e.g. fetchWasteDispatches()) once the
-  // backend exposes a dispatch-history endpoint. Using placeholder data until then.
-  const [dispatchRecords] = useState<DispatchRecord[]>(DUMMY_DISPATCH_RECORDS);
-  const [isLoading] = useState(false);
+  const [dispatchRecords, setDispatchRecords] = useState<WasteDispatch[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-  const filteredRecords = dispatchRecords.filter((record) => {
-    if (!searchTerm) return true;
-    const q = searchTerm.toLowerCase();
-    return (
-      record.wasteItem.toLowerCase().includes(q) ||
-      record.dispatchId.toLowerCase().includes(q) ||
-      record.manifestNumber.toLowerCase().includes(q)
-    );
-  });
+  useEffect(() => {
+    const loadDispatches = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetchWasteDispatches(1);
+        setDispatchRecords(response.waste_dispatches);
+      } catch (error) {
+        console.error('Error loading waste dispatches:', error);
+        toast.error('Failed to load waste dispatch history.');
+        setDispatchRecords([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadDispatches();
+  }, []);
 
-  const summaryCards = [
-    {
-      label: 'Total Dispatch Requests',
-      value: dispatchRecords.length,
-      icon: <Truck className="w-6 h-6 text-[#C72030]" />,
-    },
-    {
-      label: 'Hazardous Dispatched',
-      value: dispatchRecords
-        .filter((r) => r.category.toLowerCase().includes('hazard'))
-        .length,
-      icon: <Trash2 className="w-6 h-6 text-[#C72030]" />,
-    },
-    {
-      label: 'E-Waste Dispatched',
-      value: dispatchRecords.filter((r) => r.category.toLowerCase().includes('e-waste')).length,
-      icon: <RefreshCw className="w-6 h-6 text-[#C72030]" />,
-    },
-    {
-      label: 'Recyclable Dispatched',
-      value: dispatchRecords.filter((r) => r.category.toLowerCase().includes('recycl')).length,
-      icon: <Package className="w-6 h-6 text-[#C72030]" />,
-    },
-    {
-      label: 'General Dispatched',
-      value: dispatchRecords.filter((r) => r.category.toLowerCase().includes('general')).length,
-      icon: <Activity className="w-6 h-6 text-[#C72030]" />,
-    },
-  ];
+  const filteredRecords = useMemo(() => {
+    if (!searchTerm) return dispatchRecords;
+    const q = searchTerm.toLowerCase();
+    return dispatchRecords.filter((record) =>
+      record.id.toString().includes(q) ||
+      (record.vehicle_number || '').toLowerCase().includes(q) ||
+      (record.waste_transfer_note || '').toLowerCase().includes(q) ||
+      (record.destination_type || '').toLowerCase().includes(q) ||
+      (record.vendor?.company_name || record.vendor?.full_name || '').toLowerCase().includes(q)
+    );
+  }, [dispatchRecords, searchTerm]);
+
+  const summaryCards = useMemo(() => {
+    const totalKg = dispatchRecords.reduce((sum, r) => sum + (r.dispatch_weight_kg || 0), 0);
+    const totalLtr = dispatchRecords.reduce((sum, r) => sum + (r.dispatch_weight_ltr || 0), 0);
+    const pendingApproval = dispatchRecords.filter((r) => r.approval_status === 'pending_approval').length;
+    const approved = dispatchRecords.filter((r) => r.approval_status === 'approved').length;
+
+    return [
+      { label: 'Total Dispatch Requests', value: dispatchRecords.length, icon: <Truck className="w-6 h-6 text-[#C72030]" /> },
+      { label: 'Pending Approval', value: pendingApproval, icon: <Clock className="w-6 h-6 text-[#C72030]" /> },
+      { label: 'Approved', value: approved, icon: <CheckCircle2 className="w-6 h-6 text-[#C72030]" /> },
+      { label: 'Total Dispatch Weight (Kg)', value: `${totalKg.toLocaleString('en-IN')} KG`, icon: <Scale className="w-6 h-6 text-[#C72030]" /> },
+      { label: 'Total Dispatch Weight (Ltr)', value: `${totalLtr.toLocaleString('en-IN')} L`, icon: <Scale className="w-6 h-6 text-[#C72030]" /> },
+    ];
+  }, [dispatchRecords]);
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedItems(checked ? filteredRecords.map((r) => r.id) : []);
+    setSelectedItems(checked ? filteredRecords.map((r) => r.id.toString()) : []);
   };
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
     setSelectedItems((prev) => (checked ? [...prev, itemId] : prev.filter((id) => id !== itemId)));
   };
 
-  const handleView = (record: DispatchRecord) => {
-    navigate(`/maintenance/waste/dispatch/${record.id}`, { state: { record } });
+  const handleView = (record: WasteDispatch) => {
+    navigate(`/maintenance/waste/dispatch/${record.id}`, { state: { record: toDispatchRecordView(record) } });
   };
 
   const handleRecycleEntry = () => {
-    const record = dispatchRecords.find((r) => r.id === selectedItems[0]);
+    const record = dispatchRecords.find((r) => r.id.toString() === selectedItems[0]);
     if (!record) return;
-    navigate(`/maintenance/waste/dispatch/recycle-entry/${record.id}`, { state: { record } });
+    navigate(`/maintenance/waste/dispatch/recycle-entry/${record.id}`, { state: { record: toDispatchRecordView(record) } });
   };
 
   const handleExportSelected = () => {
-    const rows = dispatchRecords.filter((r) => selectedItems.includes(r.id));
+    const rows = dispatchRecords.filter((r) => selectedItems.includes(r.id.toString()));
     const headers = columns.filter((c) => c.key !== 'actions').map((c) => c.label);
     const csvRows = rows.map((r) =>
       columns.filter((c) => c.key !== 'actions').map((c) => renderDispatchCell(r, c.key))
@@ -174,7 +228,7 @@ const WasteDispatchHistoryPage: React.FC = () => {
         loading={isLoading}
         loadingMessage="Loading..."
         columns={columns}
-        renderCell={(item: DispatchRecord, key: string) => {
+        renderCell={(item: WasteDispatch, key: string) => {
           if (key === 'actions') {
             return shouldShow('Waste Generation', 'show') ? (
               <Button variant="ghost" onClick={() => handleView(item)}>
@@ -184,14 +238,14 @@ const WasteDispatchHistoryPage: React.FC = () => {
           }
           return renderDispatchCell(item, key);
         }}
-        getItemId={(item) => item.id}
+        getItemId={(item) => item.id.toString()}
         selectable={true}
         selectedItems={selectedItems}
         onSelectAll={handleSelectAll}
         onSelectItem={handleSelectItem}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        searchPlaceholder="Search by waste item, dispatch ID, or manifest no..."
+        searchPlaceholder="Search by vehicle no, vendor, or manifest no..."
         pagination
         pageSize={10}
         emptyMessage="No dispatch history yet"
