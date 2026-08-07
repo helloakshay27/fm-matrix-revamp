@@ -94,6 +94,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "rejection_reason",
+    label: "Rejection Reason",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "created_by",
     label: "Created By",
     sortable: true,
