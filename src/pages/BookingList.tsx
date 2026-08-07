@@ -1,12 +1,25 @@
+import { useSearchParams } from "react-router-dom"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import BookingListDashboard from "./BookingListDashboard"
 import BookingCalenderView from "./BookingCalenderView"
 
 const BookingList = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeTab = searchParams.get("tab") === "list" ? "list" : "calender";
+
+    const handleTabChange = (tab: string) => {
+        if (tab === "list") {
+            setSearchParams({ tab: "list" });
+        } else {
+            setSearchParams({});
+        }
+    };
+
     return (
         <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
             <Tabs
-                defaultValue="calender"
+                value={activeTab}
+                onValueChange={handleTabChange}
                 className="w-full"
             >
                 <TabsList className="w-full bg-white border border-gray-200">
