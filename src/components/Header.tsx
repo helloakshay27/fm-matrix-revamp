@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import posthog from "posthog-js";
 import { RecessClubLogo } from "./RecessClubLogo";
+import recessLogo from "../assets/recess-logo";
 import {
   Bell,
   User,
@@ -500,7 +501,11 @@ export const Header = () => {
                 alt=""
               />
             ) : isClubSite ? (
-              <RecessClubLogo className={logoClassName} />
+              <img
+                src={recessLogo}
+                alt="Recess Logo"
+                className={logoClassName}
+              />
             ) : isPulseSite ? (
               <img
                 src="https://www.panchshil.com/assets/images/home/logo.png"
@@ -790,11 +795,11 @@ export const Header = () => {
                     </DropdownMenuItem>
                   )} */}
                 {canShowMSafeDashboard && (
-                    <DropdownMenuItem onClick={handleMSafeDashboardRevamp}>
-                      <Shield className="w-4 h-4 mr-2" />
-                      Msafe Dashboard Revamp
-                    </DropdownMenuItem>
-                  )}
+                  <DropdownMenuItem onClick={handleMSafeDashboardRevamp}>
+                    <Shield className="w-4 h-4 mr-2" />
+                    Msafe Dashboard Revamp
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
