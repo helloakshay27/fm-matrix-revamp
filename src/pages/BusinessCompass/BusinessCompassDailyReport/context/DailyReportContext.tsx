@@ -1564,7 +1564,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
         await postComment(apiCtx(), {
           body: `Closure Remarks: ${closureRemarks}`,
           commentable_id: await realId,
-          commentable_type: isTask ? "TaskManagement" : isTodo ? "Todo" : "Issue",
+          commentable_type: isTask ? "BusinessCompassTask" : isTodo ? "BusinessCompassTodo" : "BusinessCompassIssue",
           commentor_id: userId,
           active: true,
         });
@@ -1658,7 +1658,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
           await postComment(apiCtx(), {
             body: `Reopened: ${reason}`,
             commentable_id: Number(realId),
-            commentable_type: "TaskManagement",
+            commentable_type: "BusinessCompassTask",
             commentor_id: userId,
           });
         }
@@ -1670,7 +1670,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
           await postComment(apiCtx(), {
             body: `Reopened: ${reason}`,
             commentable_id: Number(realId),
-            commentable_type: "Issue",
+            commentable_type: "BusinessCompassIssues",
             commentor_id: userId,
           });
         }
@@ -1718,7 +1718,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
       await postComment(apiCtx(), {
         body: `Overdue reason: ${reason}`,
         commentable_id: realId,
-        commentable_type: isTask ? "TaskManagement" : isTodo ? "Todo" : "Issue",
+        commentable_type: isTask ? "BusinessCompassTask" : isTodo ? "BusinessCompassTodo" : "BusinessCompassIssue",
         commentor_id: userId,
         active: true,
       });
@@ -1763,7 +1763,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
       await postComment(apiCtx(), {
         body: `Paused with reason: ${reason}`,
         commentable_id: taskId,
-        commentable_type: "TaskManagement",
+        commentable_type: "BusinessCompassTask",
         commentor_id: JSON.parse(localStorage.getItem("user") || "{}")?.id,
         active: true,
       });
@@ -1807,7 +1807,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
       await postComment(apiCtx(), {
         body: `Paused with reason: ${reason}`,
         commentable_id: issueId,
-        commentable_type: "Issue",
+        commentable_type: "BusinessCompassIssue",
         commentor_id: JSON.parse(localStorage.getItem("user") || "{}")?.id,
         active: true,
       });
