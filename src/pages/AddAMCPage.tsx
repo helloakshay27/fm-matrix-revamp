@@ -1310,7 +1310,6 @@ export const AddAMCPage = () => {
       disabled={loading || isSubmitting}
       error={!!errors.supplier}
       helperText={errors.supplier}
-      size="compact"
       label={
         <>
           Supplier <span style={{ color: '#DA7756' }}>*</span>
@@ -2998,55 +2997,30 @@ export const AddAMCPage = () => {
                             )) as string[];
                             return (
                               <div className="grid grid-cols-2 gap-3 mb-3">
-                                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                                  <InputLabel shrink>Group</InputLabel>
-                                  <MuiSelect
-                                    label="Group"
-                                    notched
-                                    displayEmpty
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 mb-1">Group</label>
+                                  <select
                                     value={indivGroupFilter}
-                                    onChange={(e) => {
-                                      setIndivGroupFilter(e.target.value as string);
-                                      setIndivSubGroupFilter('');
-                                    }}
+                                    onChange={e => { setIndivGroupFilter(e.target.value); setIndivSubGroupFilter(''); }}
                                     disabled={isSubmitting}
-                                    renderValue={(selected) =>
-                                      selected ? String(selected) : <span style={{ color: '#aaa' }}>All Groups</span>
-                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#DA7756]"
                                   >
-                                    <MenuItem value="">
-                                      <em>All Groups</em>
-                                    </MenuItem>
-                                    {uniqueGroups.map((g) => (
-                                      <MenuItem key={g} value={g}>
-                                        {g}
-                                      </MenuItem>
-                                    ))}
-                                  </MuiSelect>
-                                </FormControl>
-                                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                                  <InputLabel shrink>Sub Group</InputLabel>
-                                  <MuiSelect
-                                    label="Sub Group"
-                                    notched
-                                    displayEmpty
+                                    <option value="">All Groups</option>
+                                    {uniqueGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 mb-1">Sub Group</label>
+                                  <select
                                     value={indivSubGroupFilter}
-                                    onChange={(e) => setIndivSubGroupFilter(e.target.value as string)}
+                                    onChange={e => setIndivSubGroupFilter(e.target.value)}
                                     disabled={isSubmitting || !indivGroupFilter}
-                                    renderValue={(selected) =>
-                                      selected ? String(selected) : <span style={{ color: '#aaa' }}>All Sub Groups</span>
-                                    }
+                                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-[#DA7756] disabled:bg-gray-50 disabled:text-gray-400"
                                   >
-                                    <MenuItem value="">
-                                      <em>All Sub Groups</em>
-                                    </MenuItem>
-                                    {uniqueSubGroups.map((sg) => (
-                                      <MenuItem key={sg} value={sg}>
-                                        {sg}
-                                      </MenuItem>
-                                    ))}
-                                  </MuiSelect>
-                                </FormControl>
+                                    <option value="">All Sub Groups</option>
+                                    {uniqueSubGroups.map(sg => <option key={sg} value={sg}>{sg}</option>)}
+                                  </select>
+                                </div>
                               </div>
                             );
                           })()}
@@ -3412,45 +3386,107 @@ export const AddAMCPage = () => {
 
 
                       <FormControl fullWidth error={!!errors.technician}>
-                        <Autocomplete
-                          options={technicianOptions || []}
-                          getOptionLabel={(option: any) =>
-                            option?.full_name || option?.name || ''
-                          }
-                          isOptionEqualToValue={(option: any, value: any) =>
-                            String(option?.id) === String(value?.id)
-                          }
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#444",
+                          }}
+                        >
+                          Technician
+                        </Typography>
+
+                        <Select
+                          options={(technicianOptions || []).map((item) => ({
+                            value: item.id,
+                            label: item.full_name || item.name,
+                          }))}
                           value={
-                            (technicianOptions || []).find(
-                              (item: any) =>
-                                String(item.id) === String(formData.technician)
-                            ) || null
+                            (technicianOptions || [])
+                              .filter(
+                                (item) =>
+                                  String(item.id) ===
+                                  String(formData.technician)
+                              )
+                              .map((item) => ({
+                                value: item.id,
+                                label: item.full_name || item.name,
+                              }))[0] || null
                           }
-                          onChange={(_, selected: any) => {
+                          onChange={(selected: any) => {
                             handleInputChange(
-                              'technician',
-                              selected ? String(selected.id) : ''
+                              "technician",
+                              selected ? String(selected.value) : ""
                             );
+
                             setErrors((prev: any) => ({
                               ...prev,
-                              technician: '',
+                              technician: "",
                             }));
                           }}
-                          disabled={
+                          isDisabled={
                             loading || techniciansLoading || isSubmitting
                           }
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Technician"
-                              placeholder="Search Technician"
-                              error={!!errors.technician}
-                              helperText={errors.technician}
-                              InputLabelProps={{ shrink: true }}
-                              sx={fieldStyles}
-                            />
-                          )}
+                          isClearable
+                          placeholder="Search Technician"
+                          styles={{
+                            control: (base, state) => ({
+                              ...base,
+                              minHeight: "56px",
+                              borderRadius: "4px",
+                              borderColor: errors.technician
+                                ? "#d32f2f"
+                                : state.isFocused
+                                  ? "#DA7756"
+                                  : "#c4c4c4",
+                              boxShadow: "none",
+                              "&:hover": {
+                                borderColor: "#DA7756",
+                              },
+                            }),
+
+                            menu: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+
+                            // option: (base, state) => ({
+                            //   ...base,
+                            //   backgroundColor: state.isFocused
+                            //     ? "rgba(199,32,48,0.08)"
+                            //     : "#fff",
+                            //   color: "#000",
+                            //   cursor: "pointer",
+                            // }),
+
+
+                            option: (base, state) => ({
+                              ...base,
+                              backgroundColor: state.isFocused
+                                ? "#eff6ff" // faint blue on hover
+                                : "#fff",
+                              color: "#000",
+                              cursor: "pointer",
+                            }),
+
+                            placeholder: (base) => ({
+                              ...base,
+                              color: "#999",
+                            }),
+
+                            singleValue: (base) => ({
+                              ...base,
+                              color: "#000",
+                            }),
+                          }}
                         />
+
+                        {errors.technician && (
+                          <FormHelperText>
+                            {errors.technician}
+                          </FormHelperText>
+                        )}
                       </FormControl>
                     </>
                   ) : (

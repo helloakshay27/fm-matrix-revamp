@@ -570,7 +570,7 @@ export const Header = () => {
               )}
 
 
-              {canShowViMSafeDashboard && (
+              {/* {canShowViMSafeDashboard && (
                 <button
                   onClick={handleMSafeDashboard}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -579,8 +579,8 @@ export const Header = () => {
                   MSafe Dashboard
 
                 </button>
-              )}
-              {/* {canShowMSafeDashboard && (
+              )} */}
+              {canShowMSafeDashboard && (
                 <button
                   onClick={handleMSafeDashboardRevamp}
                   className="flex items-center gap-2 px-3 py-1.5 text-[13px] whitespace-nowrap font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -588,7 +588,7 @@ export const Header = () => {
                   <Shield className="w-4 h-4" />
                   Msafe Dashboard Revamp
                 </button>
-              )} */}
+              )}
               {isLocalhost && (
                 <button
                   onClick={() => (window.location.href = "/posthog-dashboard")}
@@ -783,18 +783,18 @@ export const Header = () => {
                     Executive Dashboard
                   </DropdownMenuItem>
                 )}
-                {canShowMSafeDashboard && (
+                {/* {canShowMSafeDashboard && (
                     <DropdownMenuItem onClick={handleMSafeDashboard}>
                       <Home className="w-4 h-4 mr-2" />
                       MSafe Dashboard
                     </DropdownMenuItem>
-                  )}
-                {/* {canShowMSafeDashboard && (
+                  )} */}
+                {canShowMSafeDashboard && (
                   <DropdownMenuItem onClick={handleMSafeDashboardRevamp}>
                     <Shield className="w-4 h-4 mr-2" />
                     Msafe Dashboard Revamp
                   </DropdownMenuItem>
-                )} */}
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}

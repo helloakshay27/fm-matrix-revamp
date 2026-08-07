@@ -4,8 +4,51 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  FormControl as MuiFormControl,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
 import { X } from 'lucide-react';
+
+const fieldStyles = {
+  height: '40px',
+  backgroundColor: '#fff',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#d1d5db',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '& .MuiSelect-select': {
+    fontSize: '14px',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+// Radix's modal Dialog sets `pointer-events: none` on <body>, which the portaled
+// menu inherits — without pointerEvents:'auto' the backdrop never receives the
+// click that closes the menu.
+const selectMenuProps = {
+  sx: { pointerEvents: 'auto' },
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 interface EditOSRDialogProps {
   open: boolean;
@@ -46,33 +89,47 @@ export const EditOSRDialog = ({ open, onOpenChange, osrDetails, onSubmit }: Edit
             <Label htmlFor="status" className="text-sm font-medium mb-2 block">
               Status
             </Label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Work Pending">Work Pending</SelectItem>
-                <SelectItem value="Payment Pending">Payment Pending</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-                <SelectItem value="Cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
+            <MuiFormControl fullWidth size="small">
+              <MuiSelect
+                id="status"
+                displayEmpty
+                value={status}
+                onChange={(event) => setStatus(event.target.value)}
+                renderValue={(selected) =>
+                  selected || <span className="text-gray-500">Select Status</span>
+                }
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="Work Pending">Work Pending</MenuItem>
+                <MenuItem value="Payment Pending">Payment Pending</MenuItem>
+                <MenuItem value="Completed">Completed</MenuItem>
+                <MenuItem value="Cancelled">Cancelled</MenuItem>
+              </MuiSelect>
+            </MuiFormControl>
           </div>
 
           <div>
             <Label htmlFor="assignedTo" className="text-sm font-medium mb-2 block">
               Assigned to
             </Label>
-            <Select value={assignedTo} onValueChange={setAssignedTo}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Assignee" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Test Test">Test Test</SelectItem>
-                <SelectItem value="John Doe">John Doe</SelectItem>
-                <SelectItem value="Jane Smith">Jane Smith</SelectItem>
-              </SelectContent>
-            </Select>
+            <MuiFormControl fullWidth size="small">
+              <MuiSelect
+                id="assignedTo"
+                displayEmpty
+                value={assignedTo}
+                onChange={(event) => setAssignedTo(event.target.value)}
+                renderValue={(selected) =>
+                  selected || <span className="text-gray-500">Select Assignee</span>
+                }
+                sx={fieldStyles}
+                MenuProps={selectMenuProps}
+              >
+                <MenuItem value="Test Test">Test Test</MenuItem>
+                <MenuItem value="John Doe">John Doe</MenuItem>
+                <MenuItem value="Jane Smith">Jane Smith</MenuItem>
+              </MuiSelect>
+            </MuiFormControl>
           </div>
 
           <div>
@@ -92,7 +149,7 @@ export const EditOSRDialog = ({ open, onOpenChange, osrDetails, onSubmit }: Edit
         <div className="flex justify-center pt-4">
           <Button 
             onClick={handleSubmit}
-            className="!bg-[#C72030] hover:bg-[#C72030]/90 !text-white px-8"
+            className="!bg-brand hover:!bg-brand-hover !text-white px-8"
           >
             Submit
           </Button>

@@ -882,7 +882,7 @@ export const RoomPage = () => {
                       <TableCell>
                         {shouldShow("Room", "update") && (
                           <Button variant="ghost" size="sm" onClick={() => handleEditRoom(room)}>
-                            <Edit className="w-4 h-4 text-[#C72030]" />
+                            <Edit className="w-4 h-4 text-gray-900" />
                           </Button>
                         )}
                       </TableCell>

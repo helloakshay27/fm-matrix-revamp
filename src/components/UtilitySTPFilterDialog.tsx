@@ -4,8 +4,89 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  FormControl as MuiFormControl,
+  Select as MuiSelect,
+  MenuItem,
+} from '@mui/material';
 import { X } from 'lucide-react';
+
+// `rounded-none` on the old triggers is preserved via borderRadius: 0.
+const fieldStyles = {
+  height: '40px',
+  borderRadius: 0,
+  backgroundColor: '#fff',
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderRadius: 0,
+    borderColor: '#d1d5db',
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'var(--color-primary)',
+  },
+  '& .MuiSelect-select': {
+    fontSize: '14px',
+  },
+};
+
+// Portals to document.body so the menu anchors under the field instead of
+// inheriting the Radix Dialog's translate transform (which mispositions it).
+const selectMenuProps = {
+  // Radix's modal Dialog sets `pointer-events: none` on <body>, which the
+  // portaled menu inherits — without this the backdrop never receives the
+  // click that closes the menu.
+  sx: { pointerEvents: 'auto' },
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+interface FilterSelectProps {
+  label: string;
+  placeholder: string;
+  options: { value: string; label: string }[];
+}
+
+// Uncontrolled, matching the shadcn selects this replaced — nothing reads these
+// values yet, so they keep their own internal state via defaultValue.
+const FilterSelect: React.FC<FilterSelectProps> = ({ label, placeholder, options }) => (
+  <div className="space-y-2">
+    <Label>{label}</Label>
+    <MuiFormControl fullWidth size="small">
+      <MuiSelect
+        defaultValue=""
+        displayEmpty
+        renderValue={(selected) =>
+          selected ? (
+            options.find((option) => option.value === selected)?.label ?? selected
+          ) : (
+            <span className="text-gray-500">{placeholder}</span>
+          )
+        }
+        sx={fieldStyles}
+        MenuProps={selectMenuProps}
+      >
+        {options.map((option) => (
+          <MenuItem key={option.value} value={option.value}>
+            {option.label}
+          </MenuItem>
+        ))}
+      </MuiSelect>
+    </MuiFormControl>
+  </div>
+);
 
 interface UtilitySTPFilterDialogProps {
   isOpen: boolean;
@@ -72,32 +153,24 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Group</Label>
-                <Select>
-                  <SelectTrigger className="rounded-none">
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="stp">STP Equipment</SelectItem>
-                    <SelectItem value="water">Water Treatment</SelectItem>
-                    <SelectItem value="waste">Waste Management</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Subgroup</Label>
-                <Select>
-                  <SelectTrigger className="rounded-none">
-                    <SelectValue placeholder="Select Sub Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="primary">Primary Treatment</SelectItem>
-                    <SelectItem value="secondary">Secondary Treatment</SelectItem>
-                    <SelectItem value="tertiary">Tertiary Treatment</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FilterSelect
+                label="Group"
+                placeholder="Select Category"
+                options={[
+                  { value: 'stp', label: 'STP Equipment' },
+                  { value: 'water', label: 'Water Treatment' },
+                  { value: 'waste', label: 'Waste Management' },
+                ]}
+              />
+              <FilterSelect
+                label="Subgroup"
+                placeholder="Select Sub Group"
+                options={[
+                  { value: 'primary', label: 'Primary Treatment' },
+                  { value: 'secondary', label: 'Secondary Treatment' },
+                  { value: 'tertiary', label: 'Tertiary Treatment' },
+                ]}
+              />
             </div>
           </div>
 
@@ -105,74 +178,54 @@ export const UtilitySTPFilterDialog = ({ isOpen, onClose }: UtilitySTPFilterDial
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-[#C72030]">Location Details</h3>
             <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Building</Label>
-                <Select>
-                  <SelectTrigger className="rounded-none">
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="building-a">Building A</SelectItem>
-                    <SelectItem value="building-b">Building B</SelectItem>
-                    <SelectItem value="building-c">Building C</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Wing</Label>
-                <Select>
-                  <SelectTrigger className="rounded-none">
-                    <SelectValue placeholder="Select Wing" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="east">East Wing</SelectItem>
-                    <SelectItem value="west">West Wing</SelectItem>
-                    <SelectItem value="north">North Wing</SelectItem>
-                    <SelectItem value="south">South Wing</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Area</Label>
-                <Select>
-                  <SelectTrigger className="rounded-none">
-                    <SelectValue placeholder="Select Area" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="treatment">Treatment Area</SelectItem>
-                    <SelectItem value="storage">Storage Area</SelectItem>
-                    <SelectItem value="maintenance">Maintenance Area</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FilterSelect
+                label="Building"
+                placeholder="Select Building"
+                options={[
+                  { value: 'building-a', label: 'Building A' },
+                  { value: 'building-b', label: 'Building B' },
+                  { value: 'building-c', label: 'Building C' },
+                ]}
+              />
+              <FilterSelect
+                label="Wing"
+                placeholder="Select Wing"
+                options={[
+                  { value: 'east', label: 'East Wing' },
+                  { value: 'west', label: 'West Wing' },
+                  { value: 'north', label: 'North Wing' },
+                  { value: 'south', label: 'South Wing' },
+                ]}
+              />
+              <FilterSelect
+                label="Area"
+                placeholder="Select Area"
+                options={[
+                  { value: 'treatment', label: 'Treatment Area' },
+                  { value: 'storage', label: 'Storage Area' },
+                  { value: 'maintenance', label: 'Maintenance Area' },
+                ]}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Floor</Label>
-                <Select>
-                  <SelectTrigger className="rounded-none">
-                    <SelectValue placeholder="Select Floor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ground">Ground Floor</SelectItem>
-                    <SelectItem value="first">First Floor</SelectItem>
-                    <SelectItem value="second">Second Floor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Room</Label>
-                <Select>
-                  <SelectTrigger className="rounded-none">
-                    <SelectValue placeholder="Select Room" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="room-101">Room 101</SelectItem>
-                    <SelectItem value="room-102">Room 102</SelectItem>
-                    <SelectItem value="room-103">Room 103</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FilterSelect
+                label="Floor"
+                placeholder="Select Floor"
+                options={[
+                  { value: 'ground', label: 'Ground Floor' },
+                  { value: 'first', label: 'First Floor' },
+                  { value: 'second', label: 'Second Floor' },
+                ]}
+              />
+              <FilterSelect
+                label="Room"
+                placeholder="Select Room"
+                options={[
+                  { value: 'room-101', label: 'Room 101' },
+                  { value: 'room-102', label: 'Room 102' },
+                  { value: 'room-103', label: 'Room 103' },
+                ]}
+              />
             </div>
           </div>
         </div>
