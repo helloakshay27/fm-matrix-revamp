@@ -1670,7 +1670,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
           await postComment(apiCtx(), {
             body: `Reopened: ${reason}`,
             commentable_id: Number(realId),
-            commentable_type: "BusinessCompassIssues",
+            commentable_type: "BusinessCompassIssue",
             commentor_id: userId,
           });
         }
