@@ -11,6 +11,8 @@ import { CustomTabs } from "@/components/CustomTabs";
 import { LogsTimeline } from "@/components/LogTimeline";
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { toast } from "sonner";
 
@@ -52,6 +54,7 @@ export const BookingDetailsPage = () => {
       timestamp: "",
     }
   ]);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -109,7 +112,36 @@ export const BookingDetailsPage = () => {
     }
   };
 
-  console.log(logs)
+  const handleCancelBooking = async () => {
+    if (!id || !bookings?.user_id) {
+      toast.error('User ID not found in booking details. Cannot cancel booking.');
+      return;
+    }
+    try {
+      await axios.patch(
+        `https://${baseUrl}/pms/admin/facility_bookings/${id}.json`,
+        {
+          facility_booking: {
+            canceled_by: 'user',
+            canceler_id: bookings.user_id,
+            comment: 'User cancelled via API',
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      toast.success('Booking cancelled successfully!');
+      setShowCancelModal(false);
+      fetchDetails();
+    } catch (error) {
+      toast.error('Failed to cancel booking');
+      console.error('Cancel booking error:', error);
+    }
+  };
 
   const { cgstAmount, sgstAmount } = getTaxAmounts(bookings);
 
@@ -374,15 +406,54 @@ export const BookingDetailsPage = () => {
         </button>
       </div>
       <>
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center justify-between gap-4 mb-6">
           <h1 className="text-[24px] font-semibold text-[#1a1a1a]">
             {bookings.facility_name}
           </h1>
+
+          {bookings?.current_status === 'Confirmed' && bookings?.can_cancel_bool && (
+            <Button
+              variant="outline"
+              className="border-[#C72030] text-[#C72030] hover:bg-red-50"
+              onClick={() => setShowCancelModal(true)}
+            >
+              Cancel Booking
+            </Button>
+          )}
         </div>
 
         <div className="bg-white rounded-lg border-2 border-gray-200">
           <CustomTabs tabs={tabs} defaultValue="details" onValueChange={setActiveTab} />
         </div>
+
+        {/* Cancel Booking Modal */}
+        <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>Cancel Booking</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-gray-700 text-base">
+                Are you sure you want to cancel this booking?
+              </p>
+              {bookings?.can_cancel && (
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
+                  <span className="text-gray-800 text-sm">
+                    You will get a refund of <b>₹{bookings.can_cancel.amount}.</b>
+                  </span>
+                </div>
+              )}
+            </div>
+            <DialogFooter className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowCancelModal(false)}>
+                Go Back
+              </Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleCancelBooking}>
+                Cancel Booking
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </>
     </div>
   );
