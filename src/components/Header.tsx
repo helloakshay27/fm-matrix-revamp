@@ -382,7 +382,7 @@ export const Header = () => {
 
   const tempSwitchToEmployee = tempType === "pms_organization_admin";
 
-  const canShowMsafeForSelectedCompany = selectedCompany?.id !== 294;
+  const canShowMsafeForSelectedCompany = localStorage.getItem("org_id") === "34";
   const canShowMSafeDashboard =
     !isRestrictedUser && canShowMsafeForSelectedCompany;
   const hasHeaderDashboardActions = !isRestrictedUser;
@@ -784,11 +784,11 @@ export const Header = () => {
                   </DropdownMenuItem>
                 )}
                 {canShowMSafeDashboard && (
-                    <DropdownMenuItem onClick={handleMSafeDashboard}>
-                      <Home className="w-4 h-4 mr-2" />
-                      MSafe Dashboard
-                    </DropdownMenuItem>
-                  )}
+                  <DropdownMenuItem onClick={handleMSafeDashboard}>
+                    <Home className="w-4 h-4 mr-2" />
+                    MSafe Dashboard
+                  </DropdownMenuItem>
+                )}
                 {/* {canShowMSafeDashboard && (
                   <DropdownMenuItem onClick={handleMSafeDashboardRevamp}>
                     <Shield className="w-4 h-4 mr-2" />
