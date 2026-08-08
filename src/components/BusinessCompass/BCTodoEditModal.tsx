@@ -176,7 +176,7 @@ const BCTodoEditModal = ({ isOpen, onClose, onSuccess, editData }: BCTodoEditMod
                 },
             };
 
-            await axios.put(`https://${baseURL}/business_compass/todos/${todoId}`, payload, {
+            await axios.put(`https://${baseURL}/business_compass/todos/${todoId}.json`, payload, {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
