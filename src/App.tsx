@@ -198,6 +198,7 @@ const VisitingPurposePage = lazy(() => import("./pages/VisitingPurposePage").the
 
 // Import Carpool pages
 const CarpoolDashboard = lazy(() => import("./pages/pulse/CarpoolDashboard").then(m => ({ default: m.CarpoolDashboard })));
+const CarConfigurationPage = lazy(() => import("./pages/pulse/CarConfigurationPage"));
 
 // Import Pulse Analytics Dashboard
 const PulseDashboardPage = lazy(() => import("./pages/pulse/PulseDashboardPage").then(m => ({ default: m.PulseDashboardPage })));
@@ -6597,6 +6598,11 @@ function App() {
                             <Route
                               path="/pulse/carpool/tracking"
                               element={<RideTracking />}
+                            />
+
+                            <Route
+                              path="/pulse/carpool/car-configuration"
+                              element={<CarConfigurationPage />}
                             />
 
                             <Route
