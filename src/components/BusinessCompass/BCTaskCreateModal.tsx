@@ -515,7 +515,7 @@ const SimpleTaskForm = ({
       files.forEach((file) => {
         formDataPayload.append("task[attachments][]", file);
       });
-      await axios.post(`https://${baseUrl}/business_compass/tasks`, formDataPayload, {
+      await axios.post(`https://${baseUrl}/business_compass/tasks.json`, formDataPayload, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
       });
       toast.success("Task created successfully.");

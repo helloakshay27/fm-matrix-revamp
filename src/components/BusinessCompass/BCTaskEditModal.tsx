@@ -506,8 +506,8 @@ const SimpleTaskForm = ({
     setIsSubmitting(true);
     try {
       const url = taskId
-        ? `https://${baseUrl}/business_compass/tasks/${taskId}`
-        : `https://${baseUrl}/business_compass/tasks`;
+        ? `https://${baseUrl}/business_compass/tasks/${taskId}.json`
+        : `https://${baseUrl}/business_compass/tasks.json`;
       const method = taskId ? "put" : "post";
 
       const formDataPayload = new FormData();
