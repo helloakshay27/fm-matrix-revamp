@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FileCheck, History } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, FileCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,19 +8,13 @@ import {
   Table,
   TableHeader,
   TableBody,
+  TableFooter,
   TableHead,
   TableRow,
   TableCell,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { DUMMY_DISPATCH_RECORDS, DispatchRecord, WeightEntry } from '@/data/wasteDispatchDummyData';
-
-const statusBadgeClass = (status: string) => {
-  const s = status.toLowerCase();
-  if (s.includes('delivered')) return 'bg-blue-100 text-blue-700';
-  if (s.includes('transit')) return 'bg-amber-100 text-amber-700';
-  return 'bg-gray-100 text-gray-700';
-};
+import { fetchWasteDispatchById, WasteDispatch } from '@/services/wasteDispatchAPI';
 
 const categoryBadgeClass = (category: string) => {
   const c = category.toLowerCase();
@@ -37,6 +31,8 @@ const formatDual = (kg: number | null | undefined, ltr: number | null | undefine
   const ltrPart = ltr != null ? `${ltr.toLocaleString('en-IN')} Litre` : '- Litre';
   return `${kgPart} | ${ltrPart}`;
 };
+
+const titleCase = (value: string) => value.replace(/\b\w/g, (c) => c.toUpperCase());
 
 type Field = { label: string; value: string | number | null | undefined };
 
@@ -80,7 +76,7 @@ const CardShell = ({
   badge?: React.ReactNode;
   children: React.ReactNode;
 }) => (
-  <Card className="w-full bg-white rounded-lg shadow-sm border">
+  <Card className="w-full bg-white rounded-lg shadow-sm border mb-6">
     <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
       <h3 className="text-lg font-semibold uppercase text-black">{title}</h3>
       {badge}
@@ -89,7 +85,7 @@ const CardShell = ({
   </Card>
 );
 
-const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+const InfoField = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div>
     <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">{label}</p>
     <div className="text-sm font-semibold text-gray-900">{children}</div>
@@ -98,27 +94,40 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
 
 const WasteDispatchDetailPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { id } = useParams();
 
-  const record: DispatchRecord | null = useMemo(() => {
-    const fromState = (location.state as { record?: DispatchRecord } | null)?.record;
-    if (fromState) return fromState;
-    return DUMMY_DISPATCH_RECORDS.find((r) => r.id === id) ?? null;
-  }, [location.state, id]);
-
+  const [dispatchData, setDispatchData] = useState<WasteDispatch | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('dispatch-details');
-  const [weightEntries, setWeightEntries] = useState<WeightEntry[]>(record?.weightEntries ?? []);
+
+  useEffect(() => {
+    const loadDispatch = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchWasteDispatchById(parseInt(id, 10));
+        setDispatchData(data);
+      } catch (err) {
+        console.error('Error fetching waste dispatch details:', err);
+        setError('Failed to fetch waste dispatch details');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadDispatch();
+  }, [id]);
 
   const wastageKg = useMemo(() => {
-    if (!record || record.dispatchWeightKg == null || record.recycledWeightKg == null) return null;
-    return Math.max(record.dispatchWeightKg - record.recycledWeightKg, 0);
-  }, [record]);
+    if (!dispatchData || dispatchData.dispatch_weight_kg == null || dispatchData.recycle_entry?.recycled_quantity_kg == null) return null;
+    return Math.max(dispatchData.dispatch_weight_kg - dispatchData.recycle_entry.recycled_quantity_kg, 0);
+  }, [dispatchData]);
 
   const wastageLtr = useMemo(() => {
-    if (!record || record.dispatchWeightLtr == null || record.recycledWeightLtr == null) return null;
-    return Math.max(record.dispatchWeightLtr - record.recycledWeightLtr, 0);
-  }, [record]);
+    if (!dispatchData || dispatchData.dispatch_weight_ltr == null || dispatchData.recycle_entry?.recycled_quantity_ltr == null) return null;
+    return Math.max(dispatchData.dispatch_weight_ltr - dispatchData.recycle_entry.recycled_quantity_ltr, 0);
+  }, [dispatchData]);
 
   const handleBack = () => navigate('/maintenance/waste/dispatch');
 
@@ -127,82 +136,135 @@ const WasteDispatchDetailPage: React.FC = () => {
     toast.info('Certificate generation is not yet available.');
   };
 
-  const handleDeleteWeightEntry = (entryId: string) => {
-    // Client-side only — no backend endpoint to persist this deletion yet.
-    setWeightEntries((prev) => prev.filter((e) => e.id !== entryId));
-    toast.success('Weight entry removed.');
-  };
+  // Weight Table — one row per waste generation folded into this dispatch.
+  // Each generation's total weight is the sum of its category breakdown
+  // (which is itself the sum of that category's bag weights, per the create
+  // flow) — falling back to that sum if the generation's own waste_unit isn't
+  // present on older records.
+  const weightTableRows = useMemo(() => {
+    if (!dispatchData) return [];
+    return (dispatchData.waste_generations || []).map((gen) => {
+      const categories = gen.categories || [];
+      const categorySum = categories.reduce((sum, c) => sum + (c.waste_unit || 0), 0);
+      const weight = gen.waste_unit ?? categorySum;
+      const units = Array.from(new Set(categories.map((c) => c.uom).filter(Boolean)));
+      const unit = units.length > 0 ? units.join(', ') : '-';
+      const breakdown = categories.length > 0
+        ? categories
+            .map((c) => `${c.category_name}${c.commodity_name ? ` / ${c.commodity_name}` : ''} (${c.waste_unit} ${c.uom})`)
+            .join(', ')
+        : '-';
+      return {
+        key: `gen-${gen.id}`,
+        generationId: gen.id,
+        referenceNumber: gen.reference_number,
+        date: gen.wg_date,
+        breakdown,
+        weight,
+        unit,
+      };
+    });
+  }, [dispatchData]);
 
-  // Every column shown on the Waste Dispatch List page (Table 2), plus the
-  // extra reference fields (Manifest No., Site) already tracked on this record.
-  const dispatchListFields: Field[] = record
-    ? [
-        { label: 'Id', value: record.dispatchId },
-        { label: 'Dispatch Date & Time', value: `${record.dispatchDate} ${record.dispatchTime}`.trim() },
-        { label: 'Waste Category', value: record.category },
-        { label: 'Waste Type', value: record.wasteItem },
-        { label: 'Total Generated Weight (KG)', value: record.totalGeneratedWeightKg != null ? `${record.totalGeneratedWeightKg} KG` : undefined },
-        { label: 'Dispatch Weight (KG)', value: record.dispatchWeightKg != null ? `${record.dispatchWeightKg} KG` : undefined },
-        { label: 'Recycled Weight (KG)', value: record.recycledWeightKg != null ? `${record.recycledWeightKg} KG` : undefined },
-        { label: 'Total Generated Weight (L)', value: record.totalGeneratedWeightLtr != null ? `${record.totalGeneratedWeightLtr} L` : undefined },
-        { label: 'Dispatch Weight (L)', value: record.dispatchWeightLtr != null ? `${record.dispatchWeightLtr} L` : undefined },
-        { label: 'Recycled Weight (L)', value: record.recycledWeightLtr != null ? `${record.recycledWeightLtr} L` : undefined },
-        { label: 'Vendor Name', value: record.destination },
-        { label: 'Vehicle No', value: record.vehicleNumber },
-        { label: 'Driver Name', value: record.driverName },
-        { label: 'Contact No', value: record.contactNo },
-        { label: 'Destination Facility', value: record.destinationFacility },
-        { label: 'Disposal Method', value: record.disposalMethod },
-        { label: 'Supporting Documents', value: record.supportingDocumentsCount > 0 ? `${record.supportingDocumentsCount} file(s)` : '-' },
-        { label: 'Vendor Acknowledge', value: record.vendorAcknowledge },
-        { label: 'Status', value: record.status },
-        { label: 'Recycling Status', value: record.recycleDetail?.recyclingStatus || 'Not Recycled' },
-        { label: 'Manifest No.', value: record.manifestNumber },
-        { label: 'Site', value: record.site },
-        { label: 'Dispatched By', value: record.dispatchedBy },
-      ]
-    : [];
-
-  // Logs tab — a best-effort activity history built from the timestamps and
+  // Logs tab — a best-effort activity history built from real timestamps and
   // fields already on this record. There's no dedicated audit-log API yet,
   // so this isn't a complete history, just what can be honestly derived today.
   const logEntries = useMemo(() => {
-    if (!record) return [];
+    if (!dispatchData) return [];
     const entries: { date: string; activity: string; performedBy: string; remarks: string }[] = [];
     entries.push({
-      date: `${record.dispatchDate} ${record.dispatchTime}`.trim(),
+      date: dispatchData.dispatch_date || '-',
       activity: 'Dispatch Created',
-      performedBy: record.dispatchedBy,
-      remarks: `Vehicle ${record.vehicleNumber}, Driver ${record.driverName}`,
+      performedBy: dispatchData.created_by?.full_name || '-',
+      remarks: `Vehicle ${dispatchData.vehicle_number || '-'}, Driver ${dispatchData.driver_name || '-'}`,
     });
-    entries.push({
-      date: `${record.dispatchDate} ${record.dispatchTime}`.trim(),
-      activity: `Status: ${record.status}`,
-      performedBy: '-',
-      remarks: `To ${record.destination}${record.destinationFacility ? ` (${record.destinationFacility})` : ''}`,
-    });
-    if (record.recycleDetail) {
+    if (dispatchData.updated_at && dispatchData.updated_at !== dispatchData.created_at) {
       entries.push({
-        date: record.recycleDetail.confirmationDate,
+        date: new Date(dispatchData.updated_at).toLocaleString(),
+        activity: 'Record Updated',
+        performedBy: dispatchData.created_by?.full_name || '-',
+        remarks: '-',
+      });
+    }
+    entries.push({
+      date: dispatchData.updated_at ? new Date(dispatchData.updated_at).toLocaleString() : dispatchData.dispatch_date || '-',
+      activity: `Status: ${dispatchData.approval_status || '-'}`,
+      performedBy: dispatchData.approved_by?.full_name || '-',
+      remarks: dispatchData.vendor?.company_name ? `To ${dispatchData.vendor.company_name}` : '-',
+    });
+    if (dispatchData.recycle_entry) {
+      entries.push({
+        date: dispatchData.recycle_entry.recycling_confirmation_date || '-',
         activity: 'Recycling Confirmed',
-        performedBy: record.recycleDetail.confirmedBy,
-        remarks: `${record.recycleDetail.recycledQuantity} recycled (${record.recycleDetail.recyclingStatus})`,
+        performedBy: dispatchData.recycle_entry.confirmed_by_vendor_contact || '-',
+        remarks: [
+          dispatchData.recycle_entry.recycled_quantity_kg != null ? `${dispatchData.recycle_entry.recycled_quantity_kg} Kg` : null,
+          dispatchData.recycle_entry.recycled_quantity_ltr != null ? `${dispatchData.recycle_entry.recycled_quantity_ltr} L` : null,
+          dispatchData.recycle_entry.recycling_status,
+        ].filter(Boolean).join(' · ') || '-',
       });
     }
     return entries;
-  }, [record]);
+  }, [dispatchData]);
 
-  if (!record) {
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-700">Loading waste dispatch details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !dispatchData) {
     return (
       <div className="p-6 bg-gray-50 min-h-screen">
         <Button variant="ghost" onClick={handleBack} className="p-0 mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
-        <div className="text-center text-gray-500 py-16">Dispatch record not found.</div>
+        <div className="text-center text-gray-500 py-16">{error || 'Dispatch record not found.'}</div>
       </div>
     );
   }
+
+  // Every field the API returns for this dispatch record.
+  const dispatchFields: Field[] = [
+    { label: 'Dispatch ID', value: dispatchData.id },
+    { label: 'Destination Type', value: dispatchData.destination_type },
+    { label: 'Vendor / Facility', value: dispatchData.vendor?.company_name || dispatchData.vendor?.full_name },
+    { label: 'Source Site', value: dispatchData.source_site?.name },
+    { label: 'Source Building', value: dispatchData.source_building?.name },
+    { label: 'Vehicle Number', value: dispatchData.vehicle_number },
+    { label: 'Driver Name', value: dispatchData.driver_name },
+    { label: 'Driver Contact', value: dispatchData.driver_contact },
+    { label: 'Dispatch Date', value: dispatchData.dispatch_date },
+    { label: 'Waste Category', value: dispatchData.category_names },
+    { label: 'Commodity', value: dispatchData.commodity_names },
+    { label: 'Waste Type', value: dispatchData.waste_type ? titleCase(dispatchData.waste_type) : undefined },
+    { label: 'Total Waste Captured (Kg)', value: dispatchData.total_waste_captured_kg != null ? `${dispatchData.total_waste_captured_kg} Kg` : undefined },
+    { label: 'Total Waste Captured (Ltr)', value: dispatchData.total_waste_captured_ltr != null ? `${dispatchData.total_waste_captured_ltr} L` : undefined },
+    { label: 'Dispatch Weight (Kg)', value: dispatchData.dispatch_weight_kg != null ? `${dispatchData.dispatch_weight_kg} Kg` : undefined },
+    { label: 'Disposal Method (Kg)', value: dispatchData.disposal_method_kg },
+    { label: 'Dispatch Weight (Ltr)', value: dispatchData.dispatch_weight_ltr != null ? `${dispatchData.dispatch_weight_ltr} L` : undefined },
+    { label: 'Disposal Method (Ltr)', value: dispatchData.disposal_method_ltr },
+    { label: 'Waste Transfer Note / Manifest No.', value: dispatchData.waste_transfer_note },
+    { label: 'Authorized By', value: dispatchData.authorized_by_type },
+    { label: 'Department', value: dispatchData.department?.name || dispatchData.department?.department_name },
+    { label: 'Approved By', value: dispatchData.approved_by?.full_name },
+    { label: 'Approval Status', value: dispatchData.approval_status },
+    { label: 'Created By', value: dispatchData.created_by?.full_name },
+    { label: 'Created At', value: dispatchData.created_at ? new Date(dispatchData.created_at).toLocaleString() : undefined },
+    { label: 'Updated At', value: dispatchData.updated_at ? new Date(dispatchData.updated_at).toLocaleString() : undefined },
+    {
+      label: 'Supporting Documents',
+      value: dispatchData.attachments && dispatchData.attachments.length > 0 ? `${dispatchData.attachments.length} file(s)` : undefined,
+    },
+  ];
+
+  const recycleEntry = dispatchData.recycle_entry;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -215,7 +277,7 @@ const WasteDispatchDetailPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">WASTE DISPATCH DETAILS</h1>
           <p className="text-sm text-gray-600 mt-1">
-            {record.dispatchId} · {record.wasteItem}
+            Dispatch #{dispatchData.id}{dispatchData.category_names ? ` · ${dispatchData.category_names}` : ''}
           </p>
         </div>
         <Button
@@ -233,13 +295,13 @@ const WasteDispatchDetailPage: React.FC = () => {
         <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-gray-400 bg-white">
           <p className="text-xs text-gray-500 mb-1">Dispatch Quantity</p>
           <p className="text-lg font-bold text-gray-900">
-            {formatDual(record.dispatchWeightKg, record.dispatchWeightLtr)}
+            {formatDual(dispatchData.dispatch_weight_kg, dispatchData.dispatch_weight_ltr)}
           </p>
         </div>
         <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-green-700 bg-white">
           <p className="text-xs text-gray-500 mb-1">Recycled Quantity</p>
           <p className="text-lg font-bold text-gray-900">
-            {formatDual(record.recycledWeightKg, record.recycledWeightLtr)}
+            {formatDual(recycleEntry?.recycled_quantity_kg, recycleEntry?.recycled_quantity_ltr)}
           </p>
         </div>
         <div className="border border-gray-200 rounded-lg p-4 border-l-4 border-l-red-600 bg-white">
@@ -268,31 +330,36 @@ const WasteDispatchDetailPage: React.FC = () => {
           ))}
         </TabsList>
 
-        {/* Dispatch Details — every field shown on the Dispatch List page */}
+        {/* Dispatch Details — every field the API returns for this record */}
         <TabsContent value="dispatch-details">
           <CardShell
             title="Dispatch Details"
             badge={
-              <span className={`inline-block px-2.5 py-1 rounded text-xs font-semibold ${categoryBadgeClass(record.category)}`}>
-                {record.category}
-              </span>
+              dispatchData.category_names ? (
+                <span className={`inline-block px-2.5 py-1 rounded text-xs font-semibold ${categoryBadgeClass(dispatchData.category_names)}`}>
+                  {dispatchData.category_names}
+                </span>
+              ) : undefined
             }
           >
-            <FieldColumns fields={dispatchListFields} />
+            <FieldColumns fields={dispatchFields} />
           </CardShell>
         </TabsContent>
 
         {/* Recycle Detail */}
         <TabsContent value="recycle-detail">
           <CardShell title="Recycle Confirmation">
-            {record.recycleDetail ? (
+            {recycleEntry ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <Field label="Recycled Quantity">{record.recycleDetail.recycledQuantity}</Field>
-                <Field label="Recycling Confirmation Date">{record.recycleDetail.confirmationDate}</Field>
-                <Field label="Recycling Status">{record.recycleDetail.recyclingStatus}</Field>
-                <Field label="Recycling Method">{record.recycleDetail.recyclingMethod}</Field>
-                <Field label="Recycling Certificate No.">{record.recycleDetail.certificateNumber}</Field>
-                <Field label="Confirmed By">{record.recycleDetail.confirmedBy}</Field>
+                <InfoField label="Recycled Quantity (Kg)">{recycleEntry.recycled_quantity_kg ?? '-'}</InfoField>
+                <InfoField label="Recycled Quantity (Ltr)">{recycleEntry.recycled_quantity_ltr ?? '-'}</InfoField>
+                <InfoField label="Recycling Method (Kg)">{recycleEntry.recycling_method_kg || '-'}</InfoField>
+                <InfoField label="Recycling Method (Ltr)">{recycleEntry.recycling_method_ltr || '-'}</InfoField>
+                <InfoField label="Recycling Confirmation Date">{recycleEntry.recycling_confirmation_date || '-'}</InfoField>
+                <InfoField label="Recycling Status">{recycleEntry.recycling_status || '-'}</InfoField>
+                <InfoField label="Recycling Certificate No.">{recycleEntry.recycling_certificate_no || '-'}</InfoField>
+                <InfoField label="Confirmed By (Vendor Contact)">{recycleEntry.confirmed_by_vendor_contact || '-'}</InfoField>
+                <InfoField label="Comments">{recycleEntry.comments || '-'}</InfoField>
               </div>
             ) : (
               <p className="text-sm text-gray-500">
@@ -302,49 +369,51 @@ const WasteDispatchDetailPage: React.FC = () => {
           </CardShell>
         </TabsContent>
 
-        {/* Weight Table */}
+        {/* Weight Table — waste-generation-wise, weight = sum of that
+            generation's category bag-weight totals */}
         <TabsContent value="weight-table">
           <CardShell title="Weight Table">
             <div className="overflow-x-auto -m-4">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
+                    <TableHead>Generation ID</TableHead>
+                    <TableHead>Reference No.</TableHead>
                     <TableHead>Date</TableHead>
-                    <TableHead>Customer Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Subcategory</TableHead>
-                    <TableHead>Weight/Unit</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>Category / Commodity Breakdown</TableHead>
+                    <TableHead>Weight</TableHead>
+                    <TableHead>Unit</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {weightEntries.length === 0 ? (
+                  {weightTableRows.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center text-gray-400 py-6">
-                        No weight entries.
+                        No waste generations linked to this dispatch.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    weightEntries.map((entry) => (
-                      <TableRow key={entry.id}>
-                        <TableCell>{entry.date}</TableCell>
-                        <TableCell className="font-medium text-gray-900">{entry.customerName}</TableCell>
-                        <TableCell>{entry.category}</TableCell>
-                        <TableCell>{entry.subcategory}</TableCell>
-                        <TableCell>{entry.weight}</TableCell>
-                        <TableCell>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteWeightEntry(entry.id)}
-                            className="text-red-600 hover:underline text-sm font-medium"
-                          >
-                            Delete
-                          </button>
-                        </TableCell>
+                    weightTableRows.map((row) => (
+                      <TableRow key={row.key}>
+                        <TableCell className="font-medium text-gray-900">{row.generationId}</TableCell>
+                        <TableCell>{row.referenceNumber ?? '-'}</TableCell>
+                        <TableCell>{row.date || '-'}</TableCell>
+                        <TableCell className="max-w-[360px]">{row.breakdown}</TableCell>
+                        <TableCell>{row.weight}</TableCell>
+                        <TableCell>{row.unit}</TableCell>
                       </TableRow>
                     ))
                   )}
                 </TableBody>
+                {weightTableRows.length > 0 && (
+                  <TableFooter>
+                    <TableRow className="bg-gray-50 font-semibold">
+                      <TableCell colSpan={4} className="text-right">Total</TableCell>
+                      <TableCell>{weightTableRows.reduce((sum, r) => sum + (r.weight || 0), 0)}</TableCell>
+                      <TableCell>{dispatchData.total_waste_captured_kg != null ? 'Kg' : '-'}</TableCell>
+                    </TableRow>
+                  </TableFooter>
+                )}
               </Table>
             </div>
           </CardShell>

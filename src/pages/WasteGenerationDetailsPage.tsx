@@ -27,24 +27,19 @@ import {
 } from "../services/wasteGenerationAPI";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
-interface BagRow {
-  id: string;
-  category: string;
-  subCategory: string;
-  weight: string;
+// One category/commodity "section" for the Waste Detail table and the Bag
+// Details tab — built either from the newer `categories` breakdown (records
+// created with multiple waste entries) or, for older single-category
+// records, synthesized from the top-level category/commodity/waste_bag_details.
+interface CategoryGroup {
+  key: string;
+  categoryName: string;
+  commodityName: string;
+  uom: string;
+  totalWeight: number | null;
+  bagCount: number;
+  bags: { label: string; weight: string }[];
 }
-
-// Defensively pull a value out of a loosely-typed bag object by trying a list
-// of key-name patterns, since the API doesn't guarantee a fixed shape here.
-const extractBagField = (bagObj: Record<string, unknown>, patterns: RegExp[]): string | null => {
-  for (const key of Object.keys(bagObj)) {
-    if (patterns.some((p) => p.test(key))) {
-      const val = bagObj[key];
-      if (val !== null && val !== undefined && val !== "") return String(val);
-    }
-  }
-  return null;
-};
 
 export const WasteGenerationDetailsPage = () => {
   const { id } = useParams();
@@ -54,7 +49,6 @@ export const WasteGenerationDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("waste-details");
-  const [bagRows, setBagRows] = useState<BagRow[]>([]);
 
   const hasData = (value: string | number | null | undefined | object) => {
     if (typeof value === "object" && value !== null) {
@@ -81,23 +75,6 @@ export const WasteGenerationDetailsPage = () => {
         const wasteGeneration = await fetchWasteGenerationById(parseInt(id));
 
         setWasteData(wasteGeneration);
-
-        const rows: BagRow[] = (wasteGeneration.waste_bag_details || []).map((bag: unknown, idx: number) => {
-          const bagObj = bag as Record<string, unknown>;
-          const category = extractBagField(bagObj, [/^category$/i, /category_name/i])
-            ?? wasteGeneration.category?.category_name
-            ?? "-";
-          const subCategory = extractBagField(bagObj, [/sub.?categ/i, /commodity/i])
-            ?? wasteGeneration.commodity?.category_name
-            ?? "-";
-          const weightVal = extractBagField(bagObj, [/value|weight/i]);
-          const weight =
-            weightVal !== null && !isNaN(Number(weightVal))
-              ? `${Number(weightVal)} kg`
-              : weightVal ?? "-";
-          return { id: `bag-${idx}`, category, subCategory, weight };
-        });
-        setBagRows(rows);
       } catch (err) {
         console.error("Error fetching waste generation details:", err);
         setError("Failed to fetch waste generation details");
@@ -127,11 +104,48 @@ export const WasteGenerationDetailsPage = () => {
     toast.info("Certificate generation is not yet available.");
   };
 
-  const handleDeleteBagRow = (rowId: string) => {
-    // Client-side only — no backend endpoint to persist this deletion yet.
-    setBagRows((prev) => prev.filter((r) => r.id !== rowId));
-    toast.success("Bag entry removed.");
-  };
+  // Section-wise category/commodity breakdown, used by both the Waste Detail
+  // table and the Bag Details tab. Prefers the newer `categories` array
+  // (multi-category records from the create_waste endpoint); falls back to
+  // the legacy top-level category/commodity/waste_bag_details for older
+  // single-category records.
+  const categoryGroups: CategoryGroup[] = useMemo(() => {
+    if (!wasteData) return [];
+
+    if (wasteData.categories && wasteData.categories.length > 0) {
+      return wasteData.categories.map((entry) => ({
+        key: `cat-${entry.id}`,
+        categoryName: entry.category?.category_name || "-",
+        commodityName: entry.commodity?.category_name || "-",
+        uom: entry.uom || "-",
+        totalWeight: entry.waste_unit ?? null,
+        bagCount: entry.bag_counts ?? entry.waste_bag_details?.length ?? 0,
+        bags: (entry.waste_bag_details || []).map((bag, idx) => ({
+          label: bag.field_description || `Bag ${idx + 1}`,
+          weight: bag.field_value,
+        })),
+      }));
+    }
+
+    if (wasteData.category || wasteData.commodity || (wasteData.waste_bag_details?.length ?? 0) > 0) {
+      return [
+        {
+          key: "legacy",
+          categoryName: wasteData.category?.category_name || "-",
+          commodityName: wasteData.commodity?.category_name || "-",
+          uom: "-",
+          totalWeight: wasteData.waste_unit ?? null,
+          bagCount: wasteData.bag_counts ?? wasteData.waste_bag_details?.length ?? 0,
+          bags: (wasteData.waste_bag_details || []).map((bag, idx) => ({
+            label: bag.field_description || `Bag ${idx + 1}`,
+            weight: bag.field_value,
+          })),
+        },
+      ];
+    }
+
+    return [];
+  }, [wasteData]);
 
   // Logs tab — a best-effort activity history built from real timestamps
   // already on the record. There's no dedicated audit-log API yet, so this
@@ -143,11 +157,12 @@ export const WasteGenerationDetailsPage = () => {
     const dispatchApplicable = hasData(wasteData.vendor?.company_name);
     const entries: { date: string; activity: string; performedBy: string; remarks: string }[] = [];
     if (wasteData.wg_date) {
+      const categoryNames = categoryGroups.map((g) => g.categoryName).filter((n) => n !== "-").join(", ");
       entries.push({
         date: new Date(wasteData.wg_date).toLocaleString(),
         activity: "Waste Generated",
         performedBy: wasteData.user_name || wasteData.created_by?.full_name || "-",
-        remarks: wasteData.category?.category_name ? `Category: ${wasteData.category.category_name}` : "-",
+        remarks: categoryNames ? `Category: ${categoryNames}` : "-",
       });
     }
     if (wasteData.updated_at && wasteData.updated_at !== wasteData.created_at) {
@@ -175,7 +190,7 @@ export const WasteGenerationDetailsPage = () => {
       });
     }
     return entries;
-  }, [wasteData]);
+  }, [wasteData, categoryGroups]);
 
   if (loading) {
     return (
@@ -276,8 +291,19 @@ export const WasteGenerationDetailsPage = () => {
     // No dedicated "floor" field on the record — Area is the closest/most
     // granular location field the API returns.
     { label: "Floor", value: wasteData.area_name || wasteData.wing_name },
-    { label: "Waste Category", value: wasteData.category?.category_name },
-    { label: "Total Bags", value: wasteData.bag_counts != null ? wasteData.bag_counts.toString() : undefined },
+    {
+      label: "Waste Category",
+      value: categoryGroups.map((g) => g.categoryName).filter((n) => n !== "-").join(", ") || undefined,
+    },
+    {
+      label: "Total Bags",
+      value:
+        categoryGroups.length > 0
+          ? categoryGroups.reduce((sum, g) => sum + (g.bagCount || 0), 0).toString()
+          : wasteData.bag_counts != null
+          ? wasteData.bag_counts.toString()
+          : undefined,
+    },
     { label: "Quantity (Kg)", value: wasteData.waste_unit != null ? wasteData.waste_unit : undefined },
     { label: "Quantity (Ltr)", value: undefined },
     { label: "Recycle %", value: recycledPct },
@@ -298,17 +324,6 @@ export const WasteGenerationDetailsPage = () => {
     { label: "Status", value: wasteData.status },
     { label: "Dispatch Weight (Kg)", value: wasteData.waste_unit != null ? wasteData.waste_unit : undefined },
     { label: "Recycled (Kg)", value: wasteData.recycled_unit != null ? wasteData.recycled_unit : undefined },
-  ];
-
-  // Table 1.2 — Waste Detail breakdown (single row, since one waste
-  // generation record only carries one category).
-  const wasteDetailTableRows = [
-    {
-      category: wasteData.category?.category_name || "-",
-      totalWeight: wasteData.waste_unit != null ? `${wasteData.waste_unit} kg` : "-",
-      dispatchWeight: dispatchApplicable && wasteData.waste_unit != null ? `${wasteData.waste_unit} kg` : "-",
-      recycleWeight: wasteData.recycled_unit != null ? `${wasteData.recycled_unit} kg` : "-",
-    },
   ];
 
   const userDetailsFields: Field[] = [
@@ -333,14 +348,6 @@ export const WasteGenerationDetailsPage = () => {
       label: "Updated At",
       value: wasteData.updated_at ? new Date(wasteData.updated_at).toLocaleString() : undefined,
     },
-  ];
-
-  const bagDetailsFields: Field[] = [
-    { label: "Category", value: wasteData.category?.category_name },
-    { label: "Subcategory", value: wasteData.commodity?.category_name },
-    { label: "No. of Bags", value: wasteData.bag_counts != null ? wasteData.bag_counts.toString() : undefined },
-    { label: "Device", value: wasteData.device_id != null ? wasteData.device_id.toString() : undefined },
-    { label: "Status", value: wasteData.status || undefined },
   ];
 
   return (
@@ -414,20 +421,30 @@ export const WasteGenerationDetailsPage = () => {
                 <TableHeader>
                   <TableRow className="bg-gray-50">
                     <TableHead>Category</TableHead>
+                    <TableHead>Commodity</TableHead>
+                    <TableHead>UOM</TableHead>
                     <TableHead>Total Weight</TableHead>
-                    <TableHead>Dispatch Weight</TableHead>
-                    <TableHead>Recycle Weight</TableHead>
+                    <TableHead>No. of Bags</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {wasteDetailTableRows.map((row, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell className="font-medium text-gray-900">{row.category}</TableCell>
-                      <TableCell>{row.totalWeight}</TableCell>
-                      <TableCell>{row.dispatchWeight}</TableCell>
-                      <TableCell>{row.recycleWeight}</TableCell>
+                  {categoryGroups.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-gray-400 py-6">
+                        No category breakdown available.
+                      </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    categoryGroups.map((group) => (
+                      <TableRow key={group.key}>
+                        <TableCell className="font-medium text-gray-900">{group.categoryName}</TableCell>
+                        <TableCell>{group.commodityName}</TableCell>
+                        <TableCell>{group.uom}</TableCell>
+                        <TableCell>{group.totalWeight != null ? `${group.totalWeight} ${group.uom !== "-" ? group.uom : "kg"}` : "-"}</TableCell>
+                        <TableCell>{group.bagCount}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -441,52 +458,58 @@ export const WasteGenerationDetailsPage = () => {
         </TabsContent>
 
         <TabsContent value="bag-details">
-          <DetailCard icon={ShoppingBag} title="Bag Details">
-            <FieldColumns fields={bagDetailsFields} />
-            <div className="mt-6">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                Bag Details Tab
-              </h4>
-              <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead>Category</TableHead>
-                      <TableHead>Sub Category</TableHead>
-                      <TableHead>Total Weight (unit)</TableHead>
-                      <TableHead>Delete</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bagRows.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center text-gray-400 py-6">
-                          No bag entries.
-                        </TableCell>
+          {categoryGroups.length === 0 ? (
+            <DetailCard icon={ShoppingBag} title="Bag Details">
+              <p className="text-sm text-gray-500">No bag details available.</p>
+            </DetailCard>
+          ) : (
+            categoryGroups.map((group, groupIdx) => (
+              <DetailCard
+                key={group.key}
+                icon={ShoppingBag}
+                title={`${groupIdx + 1}. ${group.categoryName} — ${group.commodityName}`}
+              >
+                <FieldColumns
+                  fields={[
+                    { label: "Category", value: group.categoryName },
+                    { label: "Commodity", value: group.commodityName },
+                    { label: "UOM", value: group.uom },
+                    {
+                      label: "Total Weight",
+                      value: group.totalWeight != null ? `${group.totalWeight} ${group.uom !== "-" ? group.uom : "kg"}` : undefined,
+                    },
+                    { label: "No. of Bags", value: group.bagCount },
+                  ]}
+                />
+                <div className="mt-4 border border-gray-200 rounded-md overflow-hidden bg-white">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gray-50">
+                        <TableHead>Bag</TableHead>
+                        <TableHead>Weight</TableHead>
                       </TableRow>
-                    ) : (
-                      bagRows.map((row) => (
-                        <TableRow key={row.id}>
-                          <TableCell className="font-medium text-gray-900">{row.category}</TableCell>
-                          <TableCell>{row.subCategory}</TableCell>
-                          <TableCell>{row.weight}</TableCell>
-                          <TableCell>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteBagRow(row.id)}
-                              className="text-red-600 hover:underline text-sm font-medium"
-                            >
-                              Delete
-                            </button>
+                    </TableHeader>
+                    <TableBody>
+                      {group.bags.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={2} className="text-center text-gray-400 py-6">
+                            No bag entries.
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </DetailCard>
+                      ) : (
+                        group.bags.map((bag, bagIdx) => (
+                          <TableRow key={bagIdx}>
+                            <TableCell className="font-medium text-gray-900">{bag.label}</TableCell>
+                            <TableCell>{bag.weight} {group.uom !== "-" ? group.uom : ""}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </DetailCard>
+            ))
+          )}
         </TabsContent>
 
         <TabsContent value="logs">

@@ -34,10 +34,8 @@ const columns = [
   { key: 'status', label: 'Status' },
 ];
 
-// The dispatch record returned by the API doesn't carry a waste-category/type
-// breakdown or a recycled-quantity figure — those were only ever generated
-// (per waste_generation), not tracked on the dispatch itself. Those columns
-// show '-' until/unless the backend adds that data to this endpoint.
+// Some columns (recycled weight) still have no backing data on this endpoint
+// — those show '-' until/unless the backend adds it.
 const renderDispatchCell = (item: WasteDispatch, key: string) => {
   if (key === 'id') return item.id;
   if (key === 'dispatch_datetime') {
@@ -48,12 +46,12 @@ const renderDispatchCell = (item: WasteDispatch, key: string) => {
     }
     return [item.dispatch_date, timePart].filter(Boolean).join(' ') || '-';
   }
-  if (key === 'waste_category') return '-';
-  if (key === 'waste_type') return '-';
-  if (key === 'total_generated_kg') return '-';
+  if (key === 'waste_category') return item.category_names || '-';
+  if (key === 'waste_type') return item.waste_type ? item.waste_type.replace(/\b\w/g, (c) => c.toUpperCase()) : '-';
+  if (key === 'total_generated_kg') return item.total_waste_captured_kg != null ? `${item.total_waste_captured_kg} KG` : '-';
   if (key === 'dispatch_weight_kg') return item.dispatch_weight_kg != null ? `${item.dispatch_weight_kg} KG` : '-';
   if (key === 'recycled_weight_kg') return '-';
-  if (key === 'total_generated_ltr') return '-';
+  if (key === 'total_generated_ltr') return item.total_waste_captured_ltr != null ? `${item.total_waste_captured_ltr} L` : '-';
   if (key === 'dispatch_weight_ltr') return item.dispatch_weight_ltr != null ? `${item.dispatch_weight_ltr} L` : '-';
   if (key === 'recycled_weight_ltr') return '-';
   if (key === 'vendor_name') return item.vendor?.company_name || item.vendor?.full_name || '-';
@@ -171,7 +169,9 @@ const WasteDispatchHistoryPage: React.FC = () => {
   };
 
   const handleView = (record: WasteDispatch) => {
-    navigate(`/maintenance/waste/dispatch/${record.id}`, { state: { record: toDispatchRecordView(record) } });
+    // WasteDispatchDetailPage fetches the record itself via fetchWasteDispatchById,
+    // so no need to pass it through router state.
+    navigate(`/maintenance/waste/dispatch/${record.id}`);
   };
 
   const handleRecycleEntry = () => {
