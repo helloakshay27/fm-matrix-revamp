@@ -497,6 +497,10 @@ const DailyTab = ({ selectedDateId, setSelectedDateId }) => {
         </div>,
         document.body
       )}
+
+      {/* Readiness marker for headless PDF export (see ReportPdfRenderPage) —
+          this component has no async data fetching, so it's ready as soon as it mounts. */}
+      <div data-component="daily-report" data-loading="false" style={{ display: 'none' }} />
     </div>
   );
 };

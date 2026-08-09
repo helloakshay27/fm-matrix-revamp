@@ -955,6 +955,7 @@ const TestimonialDetailsPage = lazy(() => import("./pages/TestimonialDetailsPage
 const AmenityDetailsPage = lazy(() => import("./pages/AmenityDetailsPage"));
 const ViewOccupantUserPage = lazy(() => import("./pages/master/ViewOccupantUserPage").then(m => ({ default: m.ViewOccupantUserPage })));
 const WeeklyReport = lazy(() => import("./components/WeeklyReport"));
+const ReportPdfRenderPage = lazy(() => import("./pages/ReportPdfRenderPage"));
 const LocationAccountPage = lazy(() => import("./pages/master/LocationAccountPage").then(m => ({ default: m.LocationAccountPage })));
 const LMCPage = lazy(() => import("./pages/LMCPage"));
 const ChannelsLayout = lazy(() => import("./pages/ChannelsLayout").then(m => ({ default: m.ChannelsLayout })));
@@ -1986,6 +1987,7 @@ function App() {
                           <Route path="/thepdf" element={<AllContent />} />
                           <Route path="/dailypdf" element={<DailyReport selectedDateId={undefined} setSelectedDateId={undefined} />} />
                           <Route path="/weeklypdf" element={<WeeklyReport />} />
+                          <Route path="/reports/pdf-render" element={<ReportPdfRenderPage />} />
                           <Route
                             path="/visitor/gatepass"
                             element={<VisitorPassWeb />}
