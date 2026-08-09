@@ -974,7 +974,7 @@ const BusinessCompassTodoPage = () => {
                 comment: {
                     body: `Paused with reason: ${reason}`,
                     commentable_id: taskId,
-                    commentable_type: "Task",
+                    commentable_type: "BusinessCompassTask",
                     commentor_id: JSON.parse(localStorage.getItem("user") || "{}")?.id,
                     active: true,
                 },

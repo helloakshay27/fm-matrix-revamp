@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import { toast } from 'sonner';
 import { DUMMY_DISPATCH_RECORDS, DispatchRecord } from '@/data/wasteDispatchDummyData';
+import { createWasteRecycleEntry } from '@/services/wasteRecycleEntryAPI';
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -30,8 +31,12 @@ const selectMenuProps = {
   disableEnforceFocus: true,
 };
 
-const RECYCLING_STATUS_OPTIONS = ['Fully Recycled', 'Partially Recycled', 'Rejected by Vendor'];
-const RECYCLING_METHOD_OPTIONS = ['Material Recovery / Recycled', 'Reused', 'Downcycled', 'Energy Recovery'];
+const RECYCLING_STATUS_OPTIONS = [
+  { label: 'Confirmed', value: 'confirmed' },
+  { label: 'Partially Confirmed', value: 'partially_confirmed' },
+  { label: 'Rejected', value: 'rejected' },
+];
+const RECYCLING_METHOD_OPTIONS = ['Material Recovery / Recycled', 'Reused', 'Downcycled', 'Energy Recovery', 'Composting', 'Chemical Treatment'];
 
 const statusBadgeClass = (status: string) => {
   const s = status.toLowerCase();
@@ -126,7 +131,8 @@ const RecycleEntryPage: React.FC = () => {
     return DUMMY_DISPATCH_RECORDS.find((r) => r.id === id) ?? DUMMY_DISPATCH_RECORDS[0] ?? null;
   }, [location.state, id]);
 
-  const [attachmentName, setAttachmentName] = useState('');
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     recycledQuantityKg: '',
     recycledQuantityLtr: '',
@@ -157,14 +163,19 @@ const RecycleEntryPage: React.FC = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAttachmentName(e.target.files?.[0]?.name || '');
+    setAttachmentFile(e.target.files?.[0] ?? null);
   };
 
   const handleBack = () => navigate('/maintenance/waste/dispatch');
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedRecord) {
       toast.error('Validation Error: No dispatch selected to record recycling against.');
+      return;
+    }
+    const wasteDispatchId = parseInt(selectedRecord.dispatchId, 10);
+    if (isNaN(wasteDispatchId)) {
+      toast.error('Validation Error: This dispatch record has no valid dispatch ID to record recycling against.');
       return;
     }
     if (!formData.recycledQuantityKg && !formData.recycledQuantityLtr) {
@@ -180,25 +191,34 @@ const RecycleEntryPage: React.FC = () => {
       return;
     }
 
-    // TODO: wire this up to a real recycle-entry API endpoint once the backend exposes one.
     const payload = {
-      dispatch_id: selectedRecord.dispatchId,
-      recycled_quantity_kg: recycledQuantityKg,
-      recycled_quantity_ltr: recycledQuantityLtr,
-      recycling_method_kg: formData.recyclingMethodKg || null,
-      recycling_method_ltr: formData.recyclingMethodLtr || null,
-      wastage_kg: wastageKg,
-      wastage_ltr: wastageLtr,
-      confirmation_date: formData.confirmationDate,
-      recycling_status: formData.recyclingStatus,
-      certificate_number: formData.certificateNumber || null,
-      confirmed_by: formData.confirmedBy || null,
-      comments: formData.comments || null,
-      attachment_name: attachmentName || null,
+      waste_dispatch_id: wasteDispatchId,
+      pms_waste_recycle_entry: {
+        recycled_quantity_kg: recycledQuantityKg ?? 0,
+        recycled_quantity_ltr: recycledQuantityLtr ?? 0,
+        recycling_method_kg: formData.recyclingMethodKg || null,
+        recycling_method_ltr: formData.recyclingMethodLtr || null,
+        recycling_confirmation_date: formData.confirmationDate,
+        recycling_status: formData.recyclingStatus,
+        recycling_certificate_no: formData.certificateNumber || null,
+        confirmed_by_vendor_contact: formData.confirmedBy || null,
+        comments: formData.comments || null,
+      },
+      attachments: attachmentFile ? [attachmentFile] : [],
     };
-    console.log('Recycle entry payload (pending backend integration):', payload);
-    toast.success('Recycle entry saved.');
-    navigate('/maintenance/waste/dispatch');
+
+    setIsSubmitting(true);
+    try {
+      await createWasteRecycleEntry(payload);
+      toast.success('Recycle entry saved.');
+      navigate('/maintenance/waste/dispatch');
+    } catch (error) {
+      console.error('Error saving recycle entry:', error);
+      const message = error instanceof Error && error.message ? error.message : 'Failed to save recycle entry. Please try again.';
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const dispatchFields: Field[] = selectedRecord
@@ -410,7 +430,7 @@ const RecycleEntryPage: React.FC = () => {
                   <em>Select Status</em>
                 </MenuItem>
                 {RECYCLING_STATUS_OPTIONS.map((opt) => (
-                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                  <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -448,7 +468,7 @@ const RecycleEntryPage: React.FC = () => {
               Choose File
               <input type="file" className="hidden" onChange={handleFileChange} />
             </label>
-            <span className="text-sm text-gray-500">{attachmentName || 'No file chosen'}</span>
+            <span className="text-sm text-gray-500">{attachmentFile?.name || 'No file chosen'}</span>
           </div>
         </div>
 
@@ -465,11 +485,11 @@ const RecycleEntryPage: React.FC = () => {
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <Button variant="outline" onClick={handleBack}>
+          <Button variant="outline" onClick={handleBack} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button onClick={handleSave} className="fm-button-fix fm-button-brand px-4 py-2">
-            Save Recycle Entry
+          <Button onClick={handleSave} disabled={isSubmitting} className="fm-button-fix fm-button-brand px-4 py-2">
+            {isSubmitting ? 'Saving...' : 'Save Recycle Entry'}
           </Button>
         </div>
       </div>

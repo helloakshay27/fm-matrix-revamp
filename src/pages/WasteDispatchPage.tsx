@@ -6,8 +6,10 @@ import { TextField, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent
 import { toast } from 'sonner';
 import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
 import { fetchBuildings, Building, WasteGeneration } from '@/services/wasteGenerationAPI';
-import { useAppDispatch } from '@/store/hooks';
+import { createWasteDispatch } from '@/services/wasteDispatchAPI';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchFMUsers } from '@/store/slices/fmUserSlice';
+import { fetchDepartmentData } from '@/store/slices/departmentSlice';
 
 interface FMUser {
   id: number;
@@ -47,10 +49,9 @@ const DESTINATION_TYPE_OPTIONS = [
 
 const DISPOSAL_METHOD_OPTIONS = ['Recycle', 'Incinerate', 'Landfill', 'Compost', 'Resell / Reuse'];
 
-const DEPARTMENT_OPTIONS = [
-  'Facilities Management',
-  'EHS (Environment, Health & Safety)',
-  'Operations',
+const APPROVAL_STATUS_OPTIONS = [
+  { label: 'Pending Approval', value: 'pending_approval' },
+  { label: 'Approved', value: 'approved' },
 ];
 
 // Table 1.3 "Dispatch Table" columns — a subset of the Waste Generation list
@@ -106,9 +107,15 @@ const WasteDispatchPage: React.FC = () => {
 
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loadingBuildings, setLoadingBuildings] = useState(false);
-  const [attachmentName, setAttachmentName] = useState('');
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [users, setUsers] = useState<FMUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const {
+    data: departments,
+    loading: loadingDepartments,
+  } = useAppSelector((state) => state.department);
 
   const [formData, setFormData] = useState({
     destinationType: '',
@@ -125,7 +132,7 @@ const WasteDispatchPage: React.FC = () => {
     manifestNumber: '',
     department: '',
     approvedBy: '',
-    approvalStatus: 'Pending Approval',
+    approvalStatus: 'pending_approval',
     comments: '',
   });
 
@@ -134,6 +141,12 @@ const WasteDispatchPage: React.FC = () => {
   const siteLabel = useMemo(() => {
     if (typeof window === 'undefined') return '';
     return localStorage.getItem('selectedSiteName') || localStorage.getItem('selectedSite') || '';
+  }, []);
+
+  const sourceSiteId = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    const id = localStorage.getItem('selectedSiteId');
+    return id ? parseInt(id, 10) : null;
   }, []);
 
   useEffect(() => {
@@ -150,6 +163,10 @@ const WasteDispatchPage: React.FC = () => {
     };
     loadBuildings();
   }, []);
+
+  useEffect(() => {
+    dispatch(fetchDepartmentData());
+  }, [dispatch]);
 
   // Fetch FM users lazily, only once the "User" authorization option is switched on
   useEffect(() => {
@@ -199,12 +216,12 @@ const WasteDispatchPage: React.FC = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAttachmentName(e.target.files?.[0]?.name || '');
+    setAttachmentFile(e.target.files?.[0] ?? null);
   };
 
   const handleBack = () => navigate('/maintenance/waste/generation');
 
-  const handleDispatch = () => {
+  const handleDispatch = async () => {
     if (items.length === 0) {
       toast.error('No waste items selected to dispatch.');
       return;
@@ -237,32 +254,59 @@ const WasteDispatchPage: React.FC = () => {
       toast.error('Validation Error: Disposal Method (Kg) is required.');
       return;
     }
+    if (!authorizeBy.department && !authorizeBy.user) {
+      toast.error('Validation Error: Select an "Authorized By" option (Department or User).');
+      return;
+    }
+    if (authorizeBy.department && !formData.department) {
+      toast.error('Validation Error: Department is required.');
+      return;
+    }
+    if (authorizeBy.user && !formData.approvedBy) {
+      toast.error('Validation Error: Approved By (User) is required.');
+      return;
+    }
+    if (!sourceSiteId) {
+      toast.error('No site selected. Please select a site and try again.');
+      return;
+    }
 
-    // TODO: wire this up to the real dispatch API endpoint once the backend exposes one.
     const payload = {
       waste_generation_ids: items.map((item) => item.id),
-      destination_type: formData.destinationType,
-      vendor_id: formData.vendorId,
-      building_id: formData.buildingId || null,
-      vehicle_number: formData.vehicleNumber,
-      driver_name: formData.driverName,
-      driver_contact: formData.driverContact,
-      dispatch_date: formData.dispatchDate,
-      total_waste_captured_kg: totalCaptured,
-      dispatch_weight_kg: parseFloat(formData.dispatchWeightKg),
-      disposal_method_kg: formData.disposalMethodKg,
-      dispatch_weight_ltr: formData.dispatchWeightLtr ? parseFloat(formData.dispatchWeightLtr) : null,
-      disposal_method_ltr: formData.disposalMethodLtr || null,
-      manifest_number: formData.manifestNumber,
-      authorized_by_department: authorizeBy.department ? formData.department : null,
-      authorized_by_user: authorizeBy.user ? formData.approvedBy : null,
-      approval_status: formData.approvalStatus,
-      comments: formData.comments,
-      attachment_name: attachmentName || null,
+      pms_waste_dispatch: {
+        destination_type: formData.destinationType,
+        vendor_id: parseInt(formData.vendorId, 10),
+        source_site_id: sourceSiteId,
+        source_building_id: formData.buildingId ? parseInt(formData.buildingId, 10) : null,
+        vehicle_number: formData.vehicleNumber,
+        driver_name: formData.driverName,
+        driver_contact: formData.driverContact,
+        dispatch_date: formData.dispatchDate,
+        dispatch_weight_kg: parseFloat(formData.dispatchWeightKg),
+        disposal_method_kg: formData.disposalMethodKg,
+        dispatch_weight_ltr: formData.dispatchWeightLtr ? parseFloat(formData.dispatchWeightLtr) : 0,
+        disposal_method_ltr: formData.disposalMethodLtr || null,
+        waste_transfer_note: formData.manifestNumber,
+        authorized_by_type: authorizeBy.department ? 'Department' : 'User',
+        department_id: authorizeBy.department ? parseInt(formData.department, 10) : null,
+        approved_by_id: authorizeBy.user ? parseInt(formData.approvedBy, 10) : null,
+        approval_status: formData.approvalStatus,
+      },
+      attachments: attachmentFile ? [attachmentFile] : [],
     };
-    console.log('Waste dispatch payload (pending backend integration):', payload);
-    toast.success('Waste dispatch submitted.');
-    navigate('/maintenance/waste/generation');
+
+    setIsSubmitting(true);
+    try {
+      await createWasteDispatch(payload);
+      toast.success('Waste dispatch submitted.');
+      navigate('/maintenance/waste/generation');
+    } catch (error) {
+      console.error('Error submitting waste dispatch:', error);
+      const message = error instanceof Error && error.message ? error.message : 'Failed to submit waste dispatch. Please try again.';
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -582,9 +626,9 @@ const WasteDispatchPage: React.FC = () => {
             </label>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FormControl fullWidth>
+            <FormControl fullWidth disabled={!authorizeBy.department || loadingDepartments}>
               <InputLabel shrink id="department-label" sx={{ backgroundColor: 'white', px: 1 }}>
-                Department
+                Department {authorizeBy.department && <span className="text-red-500">*</span>}
               </InputLabel>
               <Select
                 labelId="department-label"
@@ -595,10 +639,16 @@ const WasteDispatchPage: React.FC = () => {
                 MenuProps={selectMenuProps}
               >
                 <MenuItem value="">
-                  <em>Select Department</em>
+                  <em>
+                    {!authorizeBy.department
+                      ? 'Enable "Department" above first'
+                      : loadingDepartments
+                      ? 'Loading...'
+                      : 'Select Department'}
+                  </em>
                 </MenuItem>
-                {DEPARTMENT_OPTIONS.map((opt) => (
-                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                {departments?.map((dept) => (
+                  <MenuItem key={dept.id} value={dept.id?.toString()}>{dept.department_name}</MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -641,8 +691,9 @@ const WasteDispatchPage: React.FC = () => {
                 sx={fieldStyles}
                 MenuProps={selectMenuProps}
               >
-                <MenuItem value="Pending Approval">Pending Approval</MenuItem>
-                <MenuItem value="Approved">Approved</MenuItem>
+                {APPROVAL_STATUS_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                ))}
               </Select>
             </FormControl>
           </div>
@@ -659,7 +710,7 @@ const WasteDispatchPage: React.FC = () => {
               Choose File
               <input type="file" className="hidden" onChange={handleFileChange} />
             </label>
-            <span className="text-sm text-gray-500">{attachmentName || 'No file chosen'}</span>
+            <span className="text-sm text-gray-500">{attachmentFile?.name || 'No file chosen'}</span>
           </div>
         </div>
 
@@ -676,12 +727,12 @@ const WasteDispatchPage: React.FC = () => {
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <Button variant="outline" onClick={handleBack}>
+          <Button variant="outline" onClick={handleBack} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button onClick={handleDispatch} className="fm-button-fix fm-button-brand px-4 py-2">
+          <Button onClick={handleDispatch} disabled={isSubmitting} className="fm-button-fix fm-button-brand px-4 py-2">
             <Truck className="w-4 h-4 mr-2" />
-            Dispatch Waste
+            {isSubmitting ? 'Dispatching...' : 'Dispatch Waste'}
           </Button>
         </div>
       </div>

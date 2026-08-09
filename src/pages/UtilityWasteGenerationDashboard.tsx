@@ -329,7 +329,12 @@ useEffect(() => {
   const handleApplyFilters = (filters: WasteGenerationFilters) => { setActiveFilters(filters); setCurrentPage(1); };
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedItems(checked ? wasteGenerations.map((item) => item.id.toString()) : []);
+    // Already-dispatched rows are locked (see isRowDisabled on the table below)
+    // and must never end up in selectedItems, or "select all" would let them
+    // be dispatched a second time.
+    setSelectedItems(
+      checked ? wasteGenerations.filter((item) => !item.dispatch_status).map((item) => item.id.toString()) : []
+    );
   };
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
@@ -503,6 +508,10 @@ useEffect(() => {
               selectedItems={selectedItems}
               onSelectAll={handleSelectAll}
               onSelectItem={handleSelectItem}
+              // Once a waste generation has been dispatched, it can no longer be
+              // selected for another dispatch — the row is locked to view-only.
+              isRowDisabled={(item: WasteGeneration) => !!item.dispatch_status}
+              rowClassName={(item: WasteGeneration) => (item.dispatch_status ? 'opacity-60 bg-gray-50/50' : '')}
               onSearchChange={setSearchTerm}
               onFilterClick={() => setIsFilterModalOpen(true)}
               enableExport={true}

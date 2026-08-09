@@ -498,3 +498,20 @@ When building a new page or feature, default to:
 - [ ] Buttons/badges/dialogs: shadcn primitives from `src/components/ui/`
 - [ ] Routing: add the route inline in `src/App.tsx`, `lazy`-imported, grouped under the correct module URL prefix
 - [ ] Permissions: gate create/edit actions with `useDynamicPermissions().shouldShow(...)`
+
+---
+
+## 12. Assisted Code Reviews with Claude
+
+Every PR goes through two layers of review: a manual pass by the buddy pair, and an automated pass through Claude against the fixed checklist below. Neither layer replaces the other — Claude catches the mechanical, easy-to-miss issues fast and consistently on every PR; the human pass catches judgment calls Claude can't make (is this the right approach, does this fit the module's actual purpose). Together they mean nothing ships on "looked fine to me."
+
+### The checklist Claude reviews against
+
+- **UI standardization** — the PR uses the shared loader, table, and component patterns rather than a one-off implementation.
+- **Base URL / environment config** — no hardcoded URLs; env variables match the build tool (Vite vs CRA) and point to the correct environment.
+- **Page break / layout** — pagination and page structure render correctly, no cut-off content or broken responsive layout.
+- **Role / permission gating** — `useDynamicPermissions` and `shouldShow` are actually applied to every action button (Add, Edit, View, bulk actions), not just some.
+- **API working without error** — the endpoint is correct, the call succeeds, and errors are handled instead of failing silently.
+- **Understanding the flow / module** — the change fits how that module is actually supposed to work end-to-end, not just the one function touched.
+- **Branch hygiene** — the PR is raised from the correct base branch, named correctly, and won't cause a messy merge.
+- **Deploy readiness** — the change builds clean and deploys to the server without breaking anything else already live.

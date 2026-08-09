@@ -603,7 +603,7 @@ const Comments = ({ comments, baseUrl, token, id }: any) => {
                 comment: {
                     body: comment,
                     commentable_id: issueId || id,
-                    commentable_type: "Issue",
+                    commentable_type: "BusinessCompassIssue",
                     commentor_id: currentUser?.id,
                     active: true,
                 },

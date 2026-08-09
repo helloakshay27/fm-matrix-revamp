@@ -312,7 +312,7 @@ const Comments = ({
                 comment: {
                     body: comment,
                     commentable_id: taskId,
-                    commentable_type: "Task",
+                    commentable_type: "BusinessCompassTask",
                     commentor_id: currentUser?.id,
                     active: true,
                 },
