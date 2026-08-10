@@ -59,11 +59,10 @@ const adminCompassNavigation: Record<string, any> = {
     icon: Users,
     href: "/admin-compass/team-setup",
   },
-  // Jobs module hidden
-  // Jobs: {
-  //   icon: Briefcase,
-  //   href: "/admin-compass/jobs",
-  // },
+  Jobs: {
+    icon: Briefcase,
+    href: "/admin-compass/jobs",
+  },
 };
 
 export const AdminCompassSidebar: React.FC = () => {
