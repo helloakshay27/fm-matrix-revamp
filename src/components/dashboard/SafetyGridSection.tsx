@@ -1,8 +1,34 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import GridLayout, { Responsive, WidthProvider } from "react-grid-layout";
 import { RotateCcw } from "lucide-react";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
+
+/**
+ * WidthProvider only remeasures on the window's `resize` event. On the Safety tab the grid
+ * sits next to the "Safety Intelligence" side panel and behind tab/sidebar transitions, so the
+ * grid's *own* container width can change (panel mounts, sidebar collapses, fonts load) without
+ * the window itself ever resizing — WidthProvider then keeps rendering at a stale, narrower
+ * width forever, which is what makes the grid look "not responsive" even on a wide screen.
+ * A ResizeObserver on the container catches those cases directly.
+ */
+function useContainerWidth() {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width;
+      if (typeof w === "number") setWidth(w);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return { ref, width };
+}
 
 function loadStoredLayout(storageKey: string): GridLayout.Layout[] | null {
   try {
@@ -66,6 +92,7 @@ function stackLayoutFullWidth(layout: GridLayout.Layout[], toCols: number): Grid
 export function SafetyGridSection({ storageKey, items, static: isStatic, responsive }: SafetyGridSectionProps) {
   const defaultLayout: GridLayout.Layout[] = items.map((item) => ({ i: item.key, ...item.layout }));
   const [layout, setLayout] = useState<GridLayout.Layout[]>(defaultLayout);
+  const { ref: measuredRef, width: measuredWidth } = useContainerWidth();
 
   useEffect(() => {
     if (isStatic) return;
@@ -99,39 +126,66 @@ export function SafetyGridSection({ storageKey, items, static: isStatic, respons
         </div>
       )}
 
-      <ResponsiveGridLayout
-        className="layout"
-        layouts={
-          responsive
-            ? {
+      {responsive ? (
+        <div ref={measuredRef}>
+          {measuredWidth > 0 && (
+            <Responsive
+              width={measuredWidth}
+              className="layout"
+              layouts={{
                 lg: isStatic ? defaultLayout : layout,
                 md: isStatic ? defaultLayout : layout,
                 sm: stackLayoutFullWidth(isStatic ? defaultLayout : layout, COLS.sm),
                 xs: stackLayoutFullWidth(isStatic ? defaultLayout : layout, COLS.xs),
                 xxs: stackLayoutFullWidth(isStatic ? defaultLayout : layout, COLS.xxs),
-              }
-            : { lg: isStatic ? defaultLayout : layout }
-        }
-        onDragStop={isStatic ? undefined : persistLayout}
-        onResizeStop={isStatic ? undefined : persistLayout}
-        breakpoints={BREAKPOINTS}
-        cols={COLS}
-        rowHeight={48}
-        margin={[16, 16]}
-        resizeHandles={["se"]}
-        isBounded
-        containerPadding={[0, 0]}
-        compactType="vertical"
-        draggableCancel=".no-drag"
-        isDraggable
-        isResizable
-      >
-        {items.map((item) => (
-          <div key={item.key} className="h-full overflow-auto">
-            {item.content}
-          </div>
-        ))}
-      </ResponsiveGridLayout>
+              }}
+              onDragStop={isStatic ? undefined : persistLayout}
+              onResizeStop={isStatic ? undefined : persistLayout}
+              breakpoints={BREAKPOINTS}
+              cols={COLS}
+              rowHeight={48}
+              margin={[16, 16]}
+              resizeHandles={["se"]}
+              isBounded
+              containerPadding={[0, 0]}
+              compactType="vertical"
+              draggableCancel=".no-drag"
+              isDraggable
+              isResizable
+            >
+              {items.map((item) => (
+                <div key={item.key} className="h-full overflow-auto">
+                  {item.content}
+                </div>
+              ))}
+            </Responsive>
+          )}
+        </div>
+      ) : (
+        <ResponsiveGridLayout
+          className="layout"
+          layouts={{ lg: isStatic ? defaultLayout : layout }}
+          onDragStop={isStatic ? undefined : persistLayout}
+          onResizeStop={isStatic ? undefined : persistLayout}
+          breakpoints={BREAKPOINTS}
+          cols={COLS}
+          rowHeight={48}
+          margin={[16, 16]}
+          resizeHandles={["se"]}
+          isBounded
+          containerPadding={[0, 0]}
+          compactType="vertical"
+          draggableCancel=".no-drag"
+          isDraggable
+          isResizable
+        >
+          {items.map((item) => (
+            <div key={item.key} className="h-full overflow-auto">
+              {item.content}
+            </div>
+          ))}
+        </ResponsiveGridLayout>
+      )}
     </div>
   );
 }
