@@ -1013,7 +1013,7 @@ export const AddGatePassInwardPage = () => {
                     <td className="px-4 py-2 pt-4"><TextField variant="outlined" size="small" placeholder='Enter Description' value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
                     <td className="px-4 py-2 pt-4" style={{ width: '80px' }}>
                       <button type="button" onClick={() => handleDeleteRow(row.id)}>
-                        <Trash2 className="w-4 h-4 text-red-600" />
+                        <Trash2 className="w-4 h-4 text-black" />
                       </button>
                     </td>
                   </tr>

@@ -2,13 +2,53 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FormControl, Select as MuiSelect, MenuItem } from '@mui/material';
 import { X } from 'lucide-react';
 
 interface GVehicleFilterModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const fieldStyles = {
+  height: '45px',
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& .MuiOutlinedInput-root': {
+    height: '45px',
+    '& fieldset': {
+      borderColor: '#ddd',
+    },
+    '&:hover fieldset': {
+      borderColor: '#C72030',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
+
+const selectMenuProps = {
+  sx: { pointerEvents: 'auto' },
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 export const GVehicleFilterModal = ({ isOpen, onClose }: GVehicleFilterModalProps) => {
   const [personToMeet, setPersonToMeet] = useState('');
@@ -47,16 +87,23 @@ export const GVehicleFilterModal = ({ isOpen, onClose }: GVehicleFilterModalProp
               <label className="text-sm font-medium text-gray-700">
                 Select Person To Meet
               </label>
-              <Select value={personToMeet} onValueChange={setPersonToMeet}>
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Select Person To Meet" className="text-gray-400" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="person1">Person 1</SelectItem>
-                  <SelectItem value="person2">Person 2</SelectItem>
-                  <SelectItem value="person3">Person 3</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <MuiSelect
+                  displayEmpty
+                  notched
+                  value={personToMeet}
+                  onChange={(e) => setPersonToMeet(e.target.value)}
+                  renderValue={(value) => value ? (value as string) : <em style={{ color: '#9ca3af', fontStyle: 'normal' }}>Select Person To Meet</em>}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select Person To Meet</em>
+                  </MenuItem>
+                  <MenuItem value="person1">Person 1</MenuItem>
+                  <MenuItem value="person2">Person 2</MenuItem>
+                  <MenuItem value="person3">Person 3</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             {/* In Date */}
@@ -64,17 +111,24 @@ export const GVehicleFilterModal = ({ isOpen, onClose }: GVehicleFilterModalProp
               <label className="text-sm font-medium text-gray-700">
                 In Date
               </label>
-              <Select value={inDate} onValueChange={setInDate}>
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Select Created Date" className="text-gray-400" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="yesterday">Yesterday</SelectItem>
-                  <SelectItem value="last7days">Last 7 Days</SelectItem>
-                  <SelectItem value="last30days">Last 30 Days</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <MuiSelect
+                  displayEmpty
+                  notched
+                  value={inDate}
+                  onChange={(e) => setInDate(e.target.value)}
+                  renderValue={(value) => value ? (value as string) : <em style={{ color: '#9ca3af', fontStyle: 'normal' }}>Select Created Date</em>}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select Created Date</em>
+                  </MenuItem>
+                  <MenuItem value="today">Today</MenuItem>
+                  <MenuItem value="yesterday">Yesterday</MenuItem>
+                  <MenuItem value="last7days">Last 7 Days</MenuItem>
+                  <MenuItem value="last30days">Last 30 Days</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 

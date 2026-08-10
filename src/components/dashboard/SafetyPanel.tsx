@@ -115,7 +115,6 @@ const INCIDENT_COLUMNS: DataTableColumn<IncidentRow>[] = [
 ];
 
 const PERMIT_LEVEL_COLORS = ["#9EC8BA", "#8E7BE0", "#DA7756"];
-const PERMIT_RISK_COLORS = ["#9EC8BA", "#8E7BE0", "#DA7756", "#DA7756", "#DA7756"];
 
 interface PermitExceptionTableRow {
   ref: string;
@@ -833,7 +832,6 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
           data={quietEscalationData}
           categoryKey="location"
           orientation="horizontal"
-          categoryColors={["#9EC8BA", "#8E7BE0", "#DA7756", "#DA7756", "#DA7756"]}
           series={[{ dataKey: "count", name: "Incidents" }]}
           insightVariant="plain"
           insight='Low Risk dominates the raw count and gets ignored in favor of rarer severe incidents. A location that keeps generating "Low Risk" incidents over and over is quietly escalating toward something serious — the severity label resets every time, so nobody aggregates it by place.'
@@ -1107,7 +1105,6 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
           data={permitRiskWeightedData}
           categoryKey="type"
           orientation="horizontal"
-          categoryColors={PERMIT_RISK_COLORS}
           series={[{ dataKey: "count", name: "Permits" }]}
           insightVariant="plain"
           insight="A handful of expired Height Work permits sitting unactioned is a materially bigger exposure than the same count of expired Cold Work permits — a flat volume bar can't tell the two apart."
@@ -1283,8 +1280,8 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
   return (
     <div className="space-y-4">
       {/* Safety Alerts strip */}
-      <div className="rounded-lg bg-brand-error-bg px-5 py-4">
-        <div className="flex items-center gap-2 text-brand-body-5 font-bold uppercase tracking-wide text-brand-error mb-3">
+      <div className="rounded-lg bg-brand-light px-5 py-4">
+        <div className="flex items-center gap-2 text-brand-body-5 font-bold uppercase tracking-wide text-brand mb-3">
           <AlertTriangle className="w-3.5 h-3.5" />
           Safety Alerts
         </div>
@@ -1292,7 +1289,7 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
           {safetyAlerts.map((alert) => (
             <span
               key={alert}
-              className="rounded-full bg-white px-3 py-1.5 text-brand-body-5 font-semibold text-brand-error border border-brand-error/40"
+              className="rounded-full bg-white px-3 py-1.5 text-brand-body-5 font-semibold text-brand border border-brand/40"
             >
               {alert}
             </span>
