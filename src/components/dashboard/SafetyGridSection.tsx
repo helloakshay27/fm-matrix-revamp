@@ -24,6 +24,8 @@ export interface SafetyGridItem {
 interface SafetyGridSectionProps {
   storageKey: string;
   items: SafetyGridItem[];
+  /** Renders the coded default layout with drag/resize/reset disabled — for modules that shouldn't be user-repositionable. */
+  static?: boolean;
 }
 
 /**
@@ -34,15 +36,16 @@ interface SafetyGridSectionProps {
  * screenshots) on first load; a saved layout only applies after the user has
  * actually dragged/resized something in this section.
  */
-export function SafetyGridSection({ storageKey, items }: SafetyGridSectionProps) {
+export function SafetyGridSection({ storageKey, items, static: isStatic }: SafetyGridSectionProps) {
   const defaultLayout: GridLayout.Layout[] = items.map((item) => ({ i: item.key, ...item.layout }));
   const [layout, setLayout] = useState<GridLayout.Layout[]>(defaultLayout);
 
   useEffect(() => {
+    if (isStatic) return;
     const stored = loadStoredLayout(storageKey);
     if (stored) setLayout(stored);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageKey]);
+  }, [storageKey, isStatic]);
 
   const persistLayout = (nextLayout: GridLayout.Layout[]) => {
     setLayout(nextLayout);
@@ -56,27 +59,30 @@ export function SafetyGridSection({ storageKey, items }: SafetyGridSectionProps)
 
   return (
     <div className="relative w-full">
-      <div className="flex justify-end mb-2">
-        <button
-          type="button"
-          onClick={resetLayout}
-          className="flex items-center gap-1.5 text-brand-body-5 text-brand-text-light hover:text-brand-green"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Reset layout
-        </button>
-      </div>
+      {!isStatic && (
+        <div className="flex justify-end mb-2">
+          <button
+            type="button"
+            onClick={resetLayout}
+            className="flex items-center gap-1.5 text-brand-body-5 text-brand-text-light hover:text-brand-green"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset layout
+          </button>
+        </div>
+      )}
 
       <ResponsiveGridLayout
         className="layout"
-        layouts={{ lg: layout }}
-        onDragStop={persistLayout}
-        onResizeStop={persistLayout}
+        layouts={{ lg: isStatic ? defaultLayout : layout }}
+        onDragStop={isStatic ? undefined : persistLayout}
+        onResizeStop={isStatic ? undefined : persistLayout}
         breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
         cols={{ lg: 12, md: 12, sm: 6, xs: 4, xxs: 2 }}
         rowHeight={48}
         margin={[16, 16]}
         resizeHandles={["se"]}
+        isBounded
         containerPadding={[0, 0]}
         compactType="vertical"
         draggableCancel=".no-drag"
