@@ -484,7 +484,7 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
       key: "sohi-contradiction",
       layout: { x: 0, y: 3, w: 12, h: 6, minW: 4, minH: 4 },
       content: (
-        <div className="rounded-lg bg-brand-error-bg p-4 h-full">
+        <div className="rounded-lg bg-brand-light p-4 h-full">
           <div className="text-brand-body-4 font-bold text-brand-text">
             SOHI score vs the number it doesn&apos;t include
           </div>
@@ -501,8 +501,8 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
               <div className="text-brand-body-5 text-brand-text-light mt-0.5">SOHI score</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-brand-error">
-                {typeof permitCompliancePercent === "number" ? permitCompliancePercent : "—"}
+              <div className="text-2xl font-bold text-brand">
+                {typeof permitCompliancePercent === "number" ? permitCompliancePercent : 0}
                 <span className="text-brand-body-3 text-brand-text-light">%</span>
               </div>
               <div className="text-brand-body-5 text-brand-text-light mt-0.5">
@@ -511,7 +511,7 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
             </div>
           </div>
 
-          <div className="text-brand-body-5 text-brand-error mt-3">
+          <div className="text-brand-body-5 text-brand mt-3">
             {typeof openCount === "number" &&
             typeof totalPermits === "number" &&
             typeof expiredCount === "number" &&
@@ -550,8 +550,12 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
       layout: { x: 6, y: 9, w: 6, h: 6, minW: 4, minH: 4 },
       content: (
         <div className="bg-white border border-brand-border rounded-lg flex flex-col items-center justify-center text-center p-6 h-full">
-          <div className="text-4xl font-bold text-brand-error">
-            {typeof externalSupportPercent === "number" ? `${externalSupportPercent}%` : incidentsLoadingLabel}
+          <div className="text-4xl font-bold text-brand">
+            {typeof externalSupportPercent === "number"
+              ? `${externalSupportPercent}%`
+              : incidentsLoading
+                ? incidentsLoadingLabel
+                : "0%"}
           </div>
           <div className="text-brand-body-5 text-brand-text-light mt-1 max-w-[240px]">
             {typeof externalSupportCount === "number" && typeof totalIncidents === "number"
