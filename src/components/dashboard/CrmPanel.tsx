@@ -156,7 +156,7 @@ export function CrmPanel({ activeSection }: CrmPanelProps) {
       layout: { x: 0, y: 4, w: 6, h: 8, minW: 4, minH: 6 },
       content: (
         <div className="h-full relative">
-          <div className="absolute top-4 right-4 z-10 flex gap-1">
+          <div className="absolute top-4 right-4 z-20 flex gap-1 no-drag">
             <button
               type="button"
               onClick={() => setTrendMode("line")}
