@@ -524,7 +524,8 @@ const fetchItemDetail = async (
 
   let url: string | null = null;
   if (type === "task") url = `${getBaseUrl()}/task_managements/${id}.json`;
-  else if (type === "todo") url = `${getBaseUrl()}/todos/${id}.json`;
+  else if (type === "todo")
+    url = `${getBaseUrl()}/business_compass/todos/${id}.json`;
   else if (type === "issue") url = `${getBaseUrl()}/issues/${id}.json`;
   if (!url) return null;
 
@@ -1519,11 +1520,15 @@ const DailyTab = ({
     if (!sourceType) return;
 
     if (sourceType === "task") {
-      const navPath = sourceId ? `/vas/tasks/${sourceId}` : '/vas/tasks';
+      const navPath = sourceId
+        ? `/business-compass/tasks/${sourceId}`
+        : '/business-compass/tasks';
       console.log("Navigating to task path:", navPath);
       navigate(navPath);
     } else if (sourceType === "issue") {
-      const navPath = sourceId ? `/vas/issues/${sourceId}` : '/vas/issues';
+      const navPath = sourceId
+        ? `/business-compass/issues/${sourceId}`
+        : '/business-compass/issues';
       console.log("Navigating to issue path:", navPath);
       navigate(navPath);
     }
@@ -1541,9 +1546,10 @@ const DailyTab = ({
 
       if (todoId) {
         try {
-          const res = await fetch(`${getBaseUrl()}/todos/${todoId}.json`, {
-            headers: getAuthHeaders(),
-          });
+          const res = await fetch(
+            `${getBaseUrl()}/business_compass/todos/${todoId}.json`,
+            { headers: getAuthHeaders() }
+          );
           if (res.ok) {
             const json = await res.json();
             const todoDetails = json?.todo || json?.data?.todo || json?.data || json;
@@ -1561,7 +1567,7 @@ const DailyTab = ({
         toast.error("Task details not found for this item.");
         return;
       }
-      navigate(`/vas/tasks/${sourceId}`);
+      navigate(`/business-compass/tasks/${sourceId}`);
       return;
     }
 
@@ -1570,7 +1576,7 @@ const DailyTab = ({
         toast.error("Issue details not found for this item.");
         return;
       }
-      navigate(`/vas/issues/${sourceId}`);
+      navigate(`/business-compass/issues/${sourceId}`);
     }
   };
 
