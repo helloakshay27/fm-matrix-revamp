@@ -30,8 +30,13 @@ interface SafetyGridSectionProps {
   responsive?: boolean;
 }
 
-const BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
-const COLS = { lg: 12, md: 12, sm: 6, xs: 4, xxs: 2 };
+// Mac browser windows are frequently opened un-maximized (unlike Windows, which
+// tends to open full-screen), so a MacBook's actual browser content width often
+// sits in the 900-1150px range even on a 13"/14" screen. Keep the full 12-col
+// desktop layout all the way down to 900px so that range still renders as the
+// coded multi-column layout instead of prematurely stacking to a single column.
+const BREAKPOINTS = { lg: 1200, md: 900, sm: 640, xs: 480, xxs: 0 };
+const COLS = { lg: 12, md: 12, sm: 4, xs: 4, xxs: 2 };
 
 /**
  * Stacks every item to full width, one per row, in original top-to-bottom/left-to-right
