@@ -51,6 +51,7 @@ import { toast } from "@/components/ui/sonner";
 import { ANALYTICS_PALETTE, getPaletteColor } from "@/styles/chartPalette";
 import { SafetyPanel } from "@/components/dashboard/SafetyPanel";
 import { FinancePanel } from "@/components/dashboard/FinancePanel";
+import { CrmPanel } from "@/components/dashboard/CrmPanel";
 import { fetchAllowedSites } from "@/services/sitesAPI";
 import {
   useTicketsDashboardData,
@@ -1593,6 +1594,7 @@ export default function RevampDashboardPage() {
       activeSubTab === "Vendor");
   const isSafetyView = activeModule === "safety";
   const isFinanceView = activeModule === "finance";
+  const isCrmView = activeModule === "crm";
 
   const maintenanceSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const registerMaintenanceSectionRef = (key: string) => (el: HTMLDivElement | null) => {
@@ -5684,6 +5686,8 @@ export default function RevampDashboardPage() {
           />
         ) : isFinanceView ? (
           <FinancePanel activeSection={activeSubTab} />
+        ) : isCrmView ? (
+          <CrmPanel activeSection={activeSubTab} />
         ) : (
           <div className="bg-white border border-brand-border rounded-lg p-6">
             <h2 className="text-brand-body-3 font-bold text-brand-text uppercase tracking-wide mb-1">
