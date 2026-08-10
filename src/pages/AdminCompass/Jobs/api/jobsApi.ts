@@ -148,6 +148,12 @@ function mapJdAssignees(apiJd) {
     apiJd.assignee_ids.forEach((id) => {
       if (id !== undefined && id !== null) ids.push(Number(id));
     });
+  // List API singular `assignee_id`/`assignee_name` bhi bhejta hai jab
+  // `assignees` array khali ho — usse bhi uthate hain.
+  if (!ids.length && apiJd?.assignee_id !== undefined && apiJd?.assignee_id !== null)
+    ids.push(Number(apiJd.assignee_id));
+  if (!names.length && apiJd?.assignee_name)
+    names.push(String(apiJd.assignee_name).trim());
   if (!names.length) {
     const rawNames = apiJd?.assignee_names ?? apiJd?.assigned_to;
     if (Array.isArray(rawNames))
