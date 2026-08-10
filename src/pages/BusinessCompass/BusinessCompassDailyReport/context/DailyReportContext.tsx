@@ -33,7 +33,6 @@ import type {
 import {
   cleanReportText,
   getNonEmptyReportItems,
-  getOverdueLabel,
   getPriorityClass,
   getPriorityColors,
   getReportDateKey,
@@ -1109,10 +1108,6 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
       const st = item.status;
       const isPlayed = item.originalData?.is_started || item.is_started || playingTaskIds.has(item.originalData?.id);
       const isDone = st === "completed" || st === "closed" || st === "done";
-      const d = item.originalData;
-      const isOverdueByDate =
-        !isDone &&
-        !!getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
       const isInPlanForToday =
         (yesterdaySourceIds.has(item.id) || noteMatchedTaskIssueIds.has(item.id)) &&
         !isPlayed;
@@ -1120,7 +1115,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
         // Shown only in "Plan for Today" / already moved to tomorrow's plan —
         // don't double-count it into a status bucket too.
       } else if (isDone) completed++;
-      else if (isOverdueByDate || st === "overdue" || st === "overdued") overdue++;
+      else if (st === "overdue" || st === "overdued") overdue++;
       else if (st === "on_hold") onHold++;
       else if (st === "in_progress" || (["open", "pending"].includes(st) && isPlayed)) inProgress++;
       else if ((st === "open" || st === "reopen") && !isPlayed) open++;
@@ -1477,15 +1472,7 @@ export const DailyReportProvider: React.FC<{ children: React.ReactNode }> = ({
       .filter((item) => {
         const isDone = ["completed", "closed", "done"].includes(item.status);
         if (isDone) return false;
-        const d = item.originalData;
-        const isOverdueByDate = !!getOverdueLabel(
-          d?.target_date || d?.due_date || d?.end_date
-        );
-        return (
-          isOverdueByDate ||
-          item.status === "overdue" ||
-          item.status === "overdued"
-        );
+        return item.status === "overdue" || item.status === "overdued";
       })
       .forEach(addItemToTomorrow);
   };

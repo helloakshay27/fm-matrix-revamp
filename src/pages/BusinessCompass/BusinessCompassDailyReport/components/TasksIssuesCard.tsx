@@ -69,10 +69,10 @@ const TASK_GROUPS = [
     key: "reopened",
     label: "Reopened",
     statuses: ["reopen", "reopened"],
-    colorClass: "text-purple-700",
-    bgItem: "bg-purple-50/60 border-purple-200",
-    headerBg: "bg-purple-50 hover:bg-purple-100",
-    pillBg: "bg-purple-100 text-purple-700",
+    colorClass: "text-fuchsia-700",
+    bgItem: "bg-fuchsia-50 border-fuchsia-200",
+    headerBg: "bg-fuchsia-50 hover:bg-fuchsia-100",
+    pillBg: "bg-fuchsia-100 text-fuchsia-700",
     showAddToTomorrow: true,
     showBulkAdd: false,
   },
@@ -721,16 +721,8 @@ export const TasksIssuesCard = () => {
                 const isDone = ["completed", "closed", "done"].includes(
                   item.status
                 );
-                const isOverdueByDate =
-                  !isDone &&
-                  !!getOverdueLabel(
-                    item.originalData?.target_date ||
-                    item.originalData?.due_date ||
-                    item.originalData?.end_date
-                  );
-                const effectiveStatus = isOverdueByDate
-                  ? "overdue"
-                  : isPlayedOrStarted && !isDone
+                const effectiveStatus =
+                  isPlayedOrStarted && !isDone
                     ? "in_progress"
                     : item.status;
                 return (
