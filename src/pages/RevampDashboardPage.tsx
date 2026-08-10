@@ -376,15 +376,8 @@ const MODULES: ModuleDefinition[] = [
     icon: Users,
     summary: "Tenant sentiment, loyalty redemption and engagement adoption.",
     subTabs: ["Overview", "My Pipeline", "Calendar", "My Tasks", "Campaigns"],
-    stats: [
-      { label: "Negative Feedback", value: "73%", tone: "red" },
-      { label: "Points Unredeemed", value: "99.5K", tone: "amber" },
-    ],
-    chips: [
-      { label: "73% Neg Feedback", tone: "red" },
-      { label: "99.5K pts Unredeemed", tone: "amber" },
-      { label: "Low Adoption", tone: "grey" },
-    ],
+    stats: [],
+    chips: [],
   },
   {
     key: "utility",

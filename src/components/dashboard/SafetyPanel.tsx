@@ -1280,8 +1280,8 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
   return (
     <div className="space-y-4">
       {/* Safety Alerts strip */}
-      <div className="rounded-lg bg-brand-error-bg px-5 py-4">
-        <div className="flex items-center gap-2 text-brand-body-5 font-bold uppercase tracking-wide text-brand-error mb-3">
+      <div className="rounded-lg bg-brand-light px-5 py-4">
+        <div className="flex items-center gap-2 text-brand-body-5 font-bold uppercase tracking-wide text-brand mb-3">
           <AlertTriangle className="w-3.5 h-3.5" />
           Safety Alerts
         </div>
@@ -1289,7 +1289,7 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
           {safetyAlerts.map((alert) => (
             <span
               key={alert}
-              className="rounded-full bg-white px-3 py-1.5 text-brand-body-5 font-semibold text-brand-error border border-brand-error/40"
+              className="rounded-full bg-white px-3 py-1.5 text-brand-body-5 font-semibold text-brand border border-brand/40"
             >
               {alert}
             </span>
