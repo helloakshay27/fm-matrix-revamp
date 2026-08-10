@@ -38,9 +38,11 @@ export default function JdList() {
       ),
     [escalateUsers]
   );
-  const filteredJds = (apiJds || [])
-    .filter((j) => j.title.toLowerCase().includes(jdSearch.toLowerCase()))
-    .map((jd) => ({
+  // Search title ke alawa department, experience level, employment type,
+  // status aur assignee names par bhi chalta hai. Filter mapping ke BAAD hota
+  // hai, warna sirf ids waale JDs ke assignee naam search me miss ho jate.
+  const filteredJds = useMemo(() => {
+    const rows = (apiJds || []).map((jd) => ({
       ...jd,
       assigned: jd.assigned?.length
         ? jd.assigned
@@ -48,6 +50,35 @@ export default function JdList() {
             (id) => nameById.get(String(id)) || `User ${id}`
           ),
     }));
+
+    const query = jdSearch.trim().toLowerCase();
+    if (!query) return rows;
+
+    // "Full-time" vs "full time" vs "full_time" — separators hata kar
+    // dono taraf compare karte hain, taki API value type karne par bhi mile.
+    const loose = (value) => value.replace(/[\s\-_/]+/g, "");
+    const tokens = query.split(/\s+/).filter(Boolean);
+
+    return rows.filter((jd) => {
+      const haystack = [
+        jd.title,
+        jd.dept,
+        jd.level,
+        jd.type,
+        jd.status,
+        ...(jd.assigned || []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      const looseHaystack = loose(haystack);
+
+      // Multi-word query — har token match karna chahiye ("senior tech").
+      return tokens.every(
+        (token) => haystack.includes(token) || looseHaystack.includes(loose(token))
+      );
+    });
+  }, [apiJds, jdSearch, nameById]);
 
   return (
     <div>
@@ -86,7 +117,7 @@ export default function JdList() {
               fontFamily: T.font,
               color: T.ink,
             }}
-            placeholder="Search job descriptions..."
+            placeholder="Search job descriptions & more..."
             value={jdSearch}
             onChange={(e) => setJdSearch(e.target.value)}
           />
