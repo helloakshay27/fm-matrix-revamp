@@ -246,7 +246,7 @@ export default function UtilityDailyReadingsDashboard() {
 
       const transformedData = measurementsArray.map(transformMeasurement);
       setDailyReadingsData(transformedData);
-      
+
       const filterNames = filters ? Object.keys(filters).filter(k => filters[k]).join(',') : '';
       onDailyReadingsListViewed({ row_count: transformedData.length, filter_used: filterNames });
     } catch (err) {

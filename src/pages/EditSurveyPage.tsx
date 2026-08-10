@@ -458,18 +458,20 @@ export const EditSurveyPage = () => {
                     : q.qtype === "time"
                       ? "time"
                       : q.qtype === "input"
-                      ? "input-box"
-                      : q.qtype === "input_box"
                         ? "input-box"
-                        : q.qtype === "rating"
-                          ? "rating"
-                          : q.qtype === "emoji"
-                            ? "emojis"
-                            : q.qtype === "text"
-                              ? "input-box"
-                              : q.qtype === "description"
-                                ? "description"
-                                : "description",
+                        : q.qtype === "input_box"
+                          ? "input-box"
+                          : q.qtype === "input_box"
+                            ? "input-box"
+                            : q.qtype === "rating"
+                              ? "rating"
+                              : q.qtype === "emoji"
+                                ? "emojis"
+                                : q.qtype === "text"
+                                  ? "input-box"
+                                  : q.qtype === "description"
+                                    ? "description"
+                                    : "description",
             mandatory: q.quest_mandatory,
             placeholderText: q.placeholder_text || "",
             maxLength: q.max_length ? String(q.max_length) : "",
@@ -707,12 +709,12 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              answerOptions: [
-                ...(q.answerOptions || []),
-                { text: "", type: "P" },
-              ],
-            }
+            ...q,
+            answerOptions: [
+              ...(q.answerOptions || []),
+              { text: "", type: "P" },
+            ],
+          }
           : q
       )
     );
@@ -753,11 +755,11 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              answerOptions: q.answerOptions?.map((option, index) =>
-                index === optionIndex ? { ...option, text: value } : option
-              ),
-            }
+            ...q,
+            answerOptions: q.answerOptions?.map((option, index) =>
+              index === optionIndex ? { ...option, text: value } : option
+            ),
+          }
           : q
       )
     );
@@ -772,11 +774,11 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              answerOptions: q.answerOptions?.map((option, index) =>
-                index === optionIndex ? { ...option, type: value } : option
-              ),
-            }
+            ...q,
+            answerOptions: q.answerOptions?.map((option, index) =>
+              index === optionIndex ? { ...option, type: value } : option
+            ),
+          }
           : q
       )
     );
@@ -788,12 +790,12 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: [
-                ...(q.additionalFields || []),
-                { title: "", files: [], existingFiles: [] },
-              ],
-            }
+            ...q,
+            additionalFields: [
+              ...(q.additionalFields || []),
+              { title: "", files: [], existingFiles: [] },
+            ],
+          }
           : q
       )
     );
@@ -840,11 +842,11 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: q.additionalFields?.map((field, index) =>
-                index === fieldIndex ? { ...field, title: value } : field
-              ),
-            }
+            ...q,
+            additionalFields: q.additionalFields?.map((field, index) =>
+              index === fieldIndex ? { ...field, title: value } : field
+            ),
+          }
           : q
       )
     );
@@ -859,11 +861,11 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: q.additionalFields?.map((field, index) =>
-                index === fieldIndex ? { ...field, files } : field
-              ),
-            }
+            ...q,
+            additionalFields: q.additionalFields?.map((field, index) =>
+              index === fieldIndex ? { ...field, files } : field
+            ),
+          }
           : q
       )
     );
@@ -878,16 +880,16 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: q.additionalFields?.map((field, index) =>
-                index === fieldIndex
-                  ? {
-                      ...field,
-                      files: field.files.filter((_, i) => i !== fileIndex),
-                    }
-                  : field
-              ),
-            }
+            ...q,
+            additionalFields: q.additionalFields?.map((field, index) =>
+              index === fieldIndex
+                ? {
+                  ...field,
+                  files: field.files.filter((_, i) => i !== fileIndex),
+                }
+                : field
+            ),
+          }
           : q
       )
     );
@@ -905,18 +907,18 @@ export const EditSurveyPage = () => {
       questions.map((q) =>
         q.id === questionId
           ? {
-              ...q,
-              additionalFields: q.additionalFields?.map((field, index) =>
-                index === fieldIndex
-                  ? {
-                      ...field,
-                      existingFiles: field.existingFiles?.filter(
-                        (file) => file.id !== fileId
-                      ),
-                    }
-                  : field
-              ),
-            }
+            ...q,
+            additionalFields: q.additionalFields?.map((field, index) =>
+              index === fieldIndex
+                ? {
+                  ...field,
+                  existingFiles: field.existingFiles?.filter(
+                    (file) => file.id !== fileId
+                  ),
+                }
+                : field
+            ),
+          }
           : q
       )
     );
@@ -1131,12 +1133,12 @@ export const EditSurveyPage = () => {
                 : question.answerType === "time"
                   ? "time"
                   : question.answerType === "input-box"
-                  ? "input_box"
-                  : question.answerType === "rating"
-                    ? "rating"
-                    : question.answerType === "emojis"
-                      ? "emoji"
-                      : "description";
+                    ? "input_box"
+                    : question.answerType === "rating"
+                      ? "rating"
+                      : question.answerType === "emojis"
+                        ? "emoji"
+                        : "description";
 
         formData.append(`question[][qtype]`, qtype);
         formData.append(
@@ -1292,9 +1294,8 @@ export const EditSurveyPage = () => {
       // Show detailed error message
       if (error.response) {
         toast.error("Update Failed", {
-          description: `Server error: ${error.response.status} - ${
-            error.response.data?.message || "Unknown error"
-          }`,
+          description: `Server error: ${error.response.status} - ${error.response.data?.message || "Unknown error"
+            }`,
           duration: 5000,
         });
       } else if (error.request) {
@@ -1534,11 +1535,10 @@ export const EditSurveyPage = () => {
                     />
                     <label
                       htmlFor="survey-image"
-                      className={`block w-full px-4 py-2 text-sm text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                        isSubmitting
-                          ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
-                          : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
-                      }`}
+                      className={`block w-full px-4 py-2 text-sm text-center border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isSubmitting
+                        ? "border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed"
+                        : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-600 hover:text-gray-600"
+                        }`}
                     >
                       {surveyImage
                         ? `Selected: ${surveyImage.name}`
@@ -1828,113 +1828,240 @@ export const EditSurveyPage = () => {
                       )}
 
                       {/* Multiple Choice, Rating, and Emoji Options */}
-      {["multiple-choice", "rating", "emojis", "checkbox"].includes(
-        question.answerType
-      ) && (
-                        <div className="space-y-3 pt-2">
-                          <Label className="text-sm font-medium text-gray-700">
-                            {question.answerType === "rating"
-                              ? "Rating Options"
-                              : question.answerType === "emojis"
-                                ? "Emoji Options"
-                                : "Answer Options"}
-                          </Label>
-                          {(question.answerOptions || []).map(
-                            (option, optionIndex) => (
-                              <div
-                                key={optionIndex}
-                                className="flex items-center gap-3"
-                              >
-                                {question.answerType === "emojis" ? (
-                                  <div className="flex items-center justify-center w-12 h-12">
-                                    <span className="text-3xl">
-                                      {EMOJIS[optionIndex]}
-                                    </span>
-                                  </div>
-                                ) : question.answerType === "rating" ? (
-                                  <div className="flex items-center justify-center w-28 h-12">
-                                    <span className="text-base">
-                                      {RATING_STARS[optionIndex]}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <div className="w-12 h-12 flex items-center justify-center text-gray-400">
-                                    {optionIndex + 1}
-                                  </div>
-                                )}
-                                <TextField
-                                  placeholder={
-                                    question.answerType === "rating"
-                                      ? `Enter rating description`
-                                      : question.answerType === "emojis"
-                                        ? `Enter description for ${EMOJIS[optionIndex]}`
-                                        : `Option ${optionIndex + 1}`
-                                  }
-                                  value={option.text}
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    handleAnswerOptionChange(
-                                      question.id!,
-                                      optionIndex,
-                                      value
-                                    );
-                                  }}
-                                  fullWidth
-                                  variant="outlined"
-                                  InputProps={{
-                                    sx: {
+                      {["multiple-choice", "rating", "emojis", "checkbox"].includes(
+                        question.answerType
+                      ) && (
+                          <div className="space-y-3 pt-2">
+                            <Label className="text-sm font-medium text-gray-700">
+                              {question.answerType === "rating"
+                                ? "Rating Options"
+                                : question.answerType === "emojis"
+                                  ? "Emoji Options"
+                                  : "Answer Options"}
+                            </Label>
+                            {(question.answerOptions || []).map(
+                              (option, optionIndex) => (
+                                <div
+                                  key={optionIndex}
+                                  className="flex items-center gap-3"
+                                >
+                                  {question.answerType === "emojis" ? (
+                                    <div className="flex items-center justify-center w-12 h-12">
+                                      <span className="text-3xl">
+                                        {EMOJIS[optionIndex]}
+                                      </span>
+                                    </div>
+                                  ) : question.answerType === "rating" ? (
+                                    <div className="flex items-center justify-center w-28 h-12">
+                                      <span className="text-base">
+                                        {RATING_STARS[optionIndex]}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="w-12 h-12 flex items-center justify-center text-gray-400">
+                                      {optionIndex + 1}
+                                    </div>
+                                  )}
+                                  <TextField
+                                    placeholder={
+                                      question.answerType === "rating"
+                                        ? `Enter rating description`
+                                        : question.answerType === "emojis"
+                                          ? `Enter description for ${EMOJIS[optionIndex]}`
+                                          : `Option ${optionIndex + 1}`
+                                    }
+                                    value={option.text}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      handleAnswerOptionChange(
+                                        question.id!,
+                                        optionIndex,
+                                        value
+                                      );
+                                    }}
+                                    fullWidth
+                                    variant="outlined"
+                                    InputProps={{
+                                      sx: {
+                                        ...fieldStyles,
+                                        height: "40px",
+                                        backgroundColor: "white",
+                                      },
+                                    }}
+                                  />
+                                  <MuiSelect
+                                    value={option.type}
+                                    onChange={(e) =>
+                                      handleAnswerOptionTypeChange(
+                                        question.id!,
+                                        optionIndex,
+                                        e.target.value as "P" | "N"
+                                      )
+                                    }
+                                    sx={{
                                       ...fieldStyles,
-                                      height: "40px",
-                                      backgroundColor: "white",
-                                    },
-                                  }}
-                                />
-                                <MuiSelect
-                                  value={option.type}
-                                  onChange={(e) =>
-                                    handleAnswerOptionTypeChange(
-                                      question.id!,
-                                      optionIndex,
-                                      e.target.value as "P" | "N"
-                                    )
-                                  }
-                                  sx={{
-                                    ...fieldStyles,
-                                    width: "80px",
-                                    minWidth: "80px",
-                                  }}
-                                  MenuProps={selectMenuProps}
-                                >
-                                  <MenuItem value="P">P</MenuItem>
-                                  <MenuItem value="N">N</MenuItem>
-                                </MuiSelect>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() =>
-                                    handleRemoveAnswerOption(
-                                      question.id!,
-                                      optionIndex
-                                    )
-                                  }
-                                  className="p-2 text-gray-400 hover:text-red-500"
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            )
-                          )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleAddAnswerOption(question.id!)}
-                            className="p-0 h-auto font-medium text-red-600 hover:text-red-700 flex items-center"
-                          >
-                            <Plus className="w-4 h-4 mr-1" />
-                            Add Option
-                          </Button>
+                                      width: "80px",
+                                      minWidth: "80px",
+                                    }}
+                                    MenuProps={selectMenuProps}
+                                  >
+                                    <MenuItem value="P">P</MenuItem>
+                                    <MenuItem value="N">N</MenuItem>
+                                  </MuiSelect>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() =>
+                                      handleRemoveAnswerOption(
+                                        question.id!,
+                                        optionIndex
+                                      )
+                                    }
+                                    className="p-2 text-gray-400 hover:text-red-500"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              )
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleAddAnswerOption(question.id!)}
+                              className="p-0 h-auto font-medium text-red-600 hover:text-red-700 flex items-center"
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Add Option
+                            </Button>
+                          </div>
+                        )}
+
+                      {question.answerType === "input-box" && (
+                        <div className="space-y-2">
+                          <Label>Max Length</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={question.maxLength || ""}
+                            onChange={(e) =>
+                              handleQuestionChange(
+                                question.id!,
+                                "maxLength",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Enter max length"
+                          />
                         </div>
                       )}
+
+                      {/* Multiple Choice, Rating, and Emoji Options */}
+                      {["multiple-choice", "rating", "emojis", "checkbox"].includes(
+                        question.answerType
+                      ) && (
+                          <div className="space-y-3 pt-2">
+                            <Label className="text-sm font-medium text-gray-700">
+                              {question.answerType === "rating"
+                                ? "Rating Options"
+                                : question.answerType === "emojis"
+                                  ? "Emoji Options"
+                                  : "Answer Options"}
+                            </Label>
+                            {(question.answerOptions || []).map(
+                              (option, optionIndex) => (
+                                <div
+                                  key={optionIndex}
+                                  className="flex items-center gap-3"
+                                >
+                                  {question.answerType === "emojis" ? (
+                                    <div className="flex items-center justify-center w-12 h-12">
+                                      <span className="text-3xl">
+                                        {EMOJIS[optionIndex]}
+                                      </span>
+                                    </div>
+                                  ) : question.answerType === "rating" ? (
+                                    <div className="flex items-center justify-center w-28 h-12">
+                                      <span className="text-base">
+                                        {RATING_STARS[optionIndex]}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="w-12 h-12 flex items-center justify-center text-gray-400">
+                                      {optionIndex + 1}
+                                    </div>
+                                  )}
+                                  <TextField
+                                    placeholder={
+                                      question.answerType === "rating"
+                                        ? `Enter rating description`
+                                        : question.answerType === "emojis"
+                                          ? `Enter description for ${EMOJIS[optionIndex]}`
+                                          : `Option ${optionIndex + 1}`
+                                    }
+                                    value={option.text}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      handleAnswerOptionChange(
+                                        question.id!,
+                                        optionIndex,
+                                        value
+                                      );
+                                    }}
+                                    fullWidth
+                                    variant="outlined"
+                                    InputProps={{
+                                      sx: {
+                                        ...fieldStyles,
+                                        height: "40px",
+                                        backgroundColor: "white",
+                                      },
+                                    }}
+                                  />
+                                  <Select
+                                    value={option.type}
+                                    onValueChange={(value: "P" | "N") =>
+                                      handleAnswerOptionTypeChange(
+                                        question.id!,
+                                        optionIndex,
+                                        value
+                                      )
+                                    }
+                                  >
+                                    <SelectTrigger className="w-20">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="P">P</SelectItem>
+                                      <SelectItem value="N">N</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() =>
+                                      handleRemoveAnswerOption(
+                                        question.id!,
+                                        optionIndex
+                                      )
+                                    }
+                                    className="p-2 text-gray-400 hover:text-red-500"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              )
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleAddAnswerOption(question.id!)}
+                              className="p-0 h-auto font-medium text-red-600 hover:text-red-700 flex items-center"
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Add Option
+                            </Button>
+                          </div>
+                        )}
 
                       <div className="flex items-center space-x-2">
                         <Checkbox
@@ -1960,29 +2087,29 @@ export const EditSurveyPage = () => {
                       {(question.answerType === "multiple-choice" ||
                         question.answerType === "rating" ||
                         question.answerType === "emojis") && (
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`additional-${question.id}`}
-                            checked={
-                              question.additionalFieldOnNegative || false
-                            }
-                            onCheckedChange={(checked) =>
-                              handleQuestionChange(
-                                question.id!,
-                                "additionalFieldOnNegative",
-                                checked
-                              )
-                            }
-                          />
-                          <Label
-                            htmlFor={`additional-${question.id}`}
-                            className="text-sm text-black"
-                          >
-                            Do you want to open additional field on negative
-                            selection
-                          </Label>
-                        </div>
-                      )}
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`additional-${question.id}`}
+                              checked={
+                                question.additionalFieldOnNegative || false
+                              }
+                              onCheckedChange={(checked) =>
+                                handleQuestionChange(
+                                  question.id!,
+                                  "additionalFieldOnNegative",
+                                  checked
+                                )
+                              }
+                            />
+                            <Label
+                              htmlFor={`additional-${question.id}`}
+                              className="text-sm text-black"
+                            >
+                              Do you want to open additional field on negative
+                              selection
+                            </Label>
+                          </div>
+                        )}
 
                       {/* Additional Fields */}
                       {question.additionalFieldOnNegative &&
@@ -2001,11 +2128,10 @@ export const EditSurveyPage = () => {
                                   return (
                                     <div
                                       key={fieldIndex}
-                                      className={`grid gap-3 items-end ${
-                                        isOnlyField
-                                          ? "grid-cols-1 md:grid-cols-2"
-                                          : "grid-cols-1 md:grid-cols-3"
-                                      }`}
+                                      className={`grid gap-3 items-end ${isOnlyField
+                                        ? "grid-cols-1 md:grid-cols-2"
+                                        : "grid-cols-1 md:grid-cols-3"
+                                        }`}
                                     >
                                       <TextField
                                         label="Title"
@@ -2129,155 +2255,155 @@ export const EditSurveyPage = () => {
                                   field.existingFiles &&
                                   field.existingFiles.length > 0
                               ) && (
-                                <div className="space-y-2">
-                                  <Label className="text-xs text-gray-600">
-                                    Existing Files
-                                  </Label>
-                                  <div className="flex flex-wrap gap-3">
-                                    {question.additionalFields.map(
-                                      (field, fieldIndex) =>
-                                        field.existingFiles?.map(
-                                          (existingFile) => (
-                                            <div
-                                              key={`existing-${existingFile.id}`}
-                                              className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm"
-                                            >
-                                              <img
-                                                src={existingFile.url}
-                                                alt={existingFile.file_name}
-                                                className="w-[40px] h-[40px] object-cover rounded border mb-1"
-                                              />
-                                              <span className="text-[10px] text-center truncate max-w-[100px] mb-1">
-                                                {existingFile.file_name}
-                                              </span>
-                                              <button
-                                                type="button"
-                                                className="absolute top-1 right-1 text-gray-600 hover:text-red-600 p-0"
-                                                onClick={() =>
-                                                  removeExistingFile(
-                                                    question.id!,
-                                                    fieldIndex,
-                                                    existingFile.id
-                                                  )
-                                                }
+                                  <div className="space-y-2">
+                                    <Label className="text-xs text-gray-600">
+                                      Existing Files
+                                    </Label>
+                                    <div className="flex flex-wrap gap-3">
+                                      {question.additionalFields.map(
+                                        (field, fieldIndex) =>
+                                          field.existingFiles?.map(
+                                            (existingFile) => (
+                                              <div
+                                                key={`existing-${existingFile.id}`}
+                                                className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm"
                                               >
-                                                <X className="w-3 h-3" />
-                                              </button>
-                                            </div>
+                                                <img
+                                                  src={existingFile.url}
+                                                  alt={existingFile.file_name}
+                                                  className="w-[40px] h-[40px] object-cover rounded border mb-1"
+                                                />
+                                                <span className="text-[10px] text-center truncate max-w-[100px] mb-1">
+                                                  {existingFile.file_name}
+                                                </span>
+                                                <button
+                                                  type="button"
+                                                  className="absolute top-1 right-1 text-gray-600 hover:text-red-600 p-0"
+                                                  onClick={() =>
+                                                    removeExistingFile(
+                                                      question.id!,
+                                                      fieldIndex,
+                                                      existingFile.id
+                                                    )
+                                                  }
+                                                >
+                                                  <X className="w-3 h-3" />
+                                                </button>
+                                              </div>
+                                            )
                                           )
-                                        )
-                                    )}
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
 
                               {/* Display uploaded files */}
                               {question.additionalFields.some(
                                 (field) => field.files.length > 0
                               ) && (
-                                <div className="space-y-2">
-                                  <Label className="text-xs text-gray-600">
-                                    New Files
-                                  </Label>
-                                  <div className="flex flex-wrap gap-3">
-                                    {question.additionalFields.map(
-                                      (field, fieldIndex) =>
-                                        field.files.map((file, fileIndex) => {
-                                          const isImage =
-                                            file.type.startsWith("image/");
-                                          const isPdf =
-                                            file.type === "application/pdf";
-                                          const isExcel =
-                                            file.name.endsWith(".xlsx") ||
-                                            file.name.endsWith(".xls") ||
-                                            file.name.endsWith(".csv");
-                                          const fileURL =
-                                            URL.createObjectURL(file);
-                                          return (
-                                            <div
-                                              key={`${file.name}-${file.lastModified}`}
-                                              className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm"
-                                            >
-                                              {isImage ? (
-                                                <img
-                                                  src={fileURL}
-                                                  alt={file.name}
-                                                  className="w-[40px] h-[40px] object-cover rounded border mb-1"
-                                                />
-                                              ) : isPdf ? (
-                                                <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
-                                                  <svg
-                                                    className="w-5 h-5"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                    viewBox="0 0 24 24"
-                                                  >
-                                                    <path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z" />
-                                                    <path d="M14 2v6h6" />
-                                                  </svg>
-                                                </div>
-                                              ) : isExcel ? (
-                                                <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
-                                                  <svg
-                                                    className="w-5 h-5"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                    viewBox="0 0 24 24"
-                                                  >
-                                                    <rect
-                                                      width="20"
-                                                      height="20"
-                                                      x="2"
-                                                      y="2"
-                                                      rx="2"
-                                                    />
-                                                    <path d="M8 11h8M8 15h8" />
-                                                  </svg>
-                                                </div>
-                                              ) : (
-                                                <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-600 bg-white mb-1">
-                                                  <svg
-                                                    className="w-5 h-5"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="2"
-                                                    viewBox="0 0 24 24"
-                                                  >
-                                                    <rect
-                                                      width="20"
-                                                      height="20"
-                                                      x="2"
-                                                      y="2"
-                                                      rx="2"
-                                                    />
-                                                  </svg>
-                                                </div>
-                                              )}
-                                              <span className="text-[10px] text-center truncate max-w-[100px] mb-1">
-                                                {file.name}
-                                              </span>
-                                              <button
-                                                type="button"
-                                                className="absolute top-1 right-1 text-gray-600 hover:text-red-600 p-0"
-                                                onClick={() =>
-                                                  removeAdditionalFieldFile(
-                                                    question.id!,
-                                                    fieldIndex,
-                                                    fileIndex
-                                                  )
-                                                }
+                                  <div className="space-y-2">
+                                    <Label className="text-xs text-gray-600">
+                                      New Files
+                                    </Label>
+                                    <div className="flex flex-wrap gap-3">
+                                      {question.additionalFields.map(
+                                        (field, fieldIndex) =>
+                                          field.files.map((file, fileIndex) => {
+                                            const isImage =
+                                              file.type.startsWith("image/");
+                                            const isPdf =
+                                              file.type === "application/pdf";
+                                            const isExcel =
+                                              file.name.endsWith(".xlsx") ||
+                                              file.name.endsWith(".xls") ||
+                                              file.name.endsWith(".csv");
+                                            const fileURL =
+                                              URL.createObjectURL(file);
+                                            return (
+                                              <div
+                                                key={`${file.name}-${file.lastModified}`}
+                                                className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm"
                                               >
-                                                <X className="w-3 h-3" />
-                                              </button>
-                                            </div>
-                                          );
-                                        })
-                                    )}
+                                                {isImage ? (
+                                                  <img
+                                                    src={fileURL}
+                                                    alt={file.name}
+                                                    className="w-[40px] h-[40px] object-cover rounded border mb-1"
+                                                  />
+                                                ) : isPdf ? (
+                                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                                                    <svg
+                                                      className="w-5 h-5"
+                                                      fill="none"
+                                                      stroke="currentColor"
+                                                      strokeWidth="2"
+                                                      viewBox="0 0 24 24"
+                                                    >
+                                                      <path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z" />
+                                                      <path d="M14 2v6h6" />
+                                                    </svg>
+                                                  </div>
+                                                ) : isExcel ? (
+                                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                                                    <svg
+                                                      className="w-5 h-5"
+                                                      fill="none"
+                                                      stroke="currentColor"
+                                                      strokeWidth="2"
+                                                      viewBox="0 0 24 24"
+                                                    >
+                                                      <rect
+                                                        width="20"
+                                                        height="20"
+                                                        x="2"
+                                                        y="2"
+                                                        rx="2"
+                                                      />
+                                                      <path d="M8 11h8M8 15h8" />
+                                                    </svg>
+                                                  </div>
+                                                ) : (
+                                                  <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-600 bg-white mb-1">
+                                                    <svg
+                                                      className="w-5 h-5"
+                                                      fill="none"
+                                                      stroke="currentColor"
+                                                      strokeWidth="2"
+                                                      viewBox="0 0 24 24"
+                                                    >
+                                                      <rect
+                                                        width="20"
+                                                        height="20"
+                                                        x="2"
+                                                        y="2"
+                                                        rx="2"
+                                                      />
+                                                    </svg>
+                                                  </div>
+                                                )}
+                                                <span className="text-[10px] text-center truncate max-w-[100px] mb-1">
+                                                  {file.name}
+                                                </span>
+                                                <button
+                                                  type="button"
+                                                  className="absolute top-1 right-1 text-gray-600 hover:text-red-600 p-0"
+                                                  onClick={() =>
+                                                    removeAdditionalFieldFile(
+                                                      question.id!,
+                                                      fieldIndex,
+                                                      fileIndex
+                                                    )
+                                                  }
+                                                >
+                                                  <X className="w-3 h-3" />
+                                                </button>
+                                              </div>
+                                            );
+                                          })
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
 
                               <Button
                                 size="sm"

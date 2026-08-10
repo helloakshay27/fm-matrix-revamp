@@ -100,19 +100,19 @@ const getPaginationFromResponse = (
 ): GDNPagination => ({
   current_page: Number(
     result.pagination?.current_page ||
-      result.current_page ||
-      result.page ||
-      page
+    result.current_page ||
+    result.page ||
+    page
   ),
   total_pages: Number(
     result.pagination?.total_pages || result.total_pages || 0
   ),
   total_entries: Number(
     result.pagination?.total_entries ||
-      result.pagination?.total_count ||
-      result.total_entries ||
-      result.total_count ||
-      0
+    result.pagination?.total_count ||
+    result.total_entries ||
+    result.total_count ||
+    0
   ),
   per_page: Number(result.pagination?.per_page || result.per_page || 15),
 });
@@ -238,8 +238,7 @@ export const GDNPendingApprovalsDashboard = () => {
     queryParams.set("type", "approval");
 
     navigate(
-      `/finance/gdn/pending-approvals/details/${item.gdnId}${
-        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      `/finance/gdn/pending-approvals/details/${item.gdnId}${queryParams.toString() ? `?${queryParams.toString()}` : ""
       }`
     );
   };
@@ -429,7 +428,7 @@ export const GDNPendingApprovalsDashboard = () => {
                   }
                   className={
                     pagination.current_page === pagination.total_pages ||
-                    loading
+                      loading
                       ? "pointer-events-none opacity-50"
                       : "cursor-pointer"
                   }

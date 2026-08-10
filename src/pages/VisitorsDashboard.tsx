@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag } from 'lucide-react';
-import { useNavigate,useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
 import { VisitorFilterDialog, VisitorFilters } from '@/components/VisitorFilterDialog';
@@ -252,7 +252,7 @@ export const VisitorsDashboard = () => {
     totalEntries: 0,
     perPage: 20
   });
- const [historyPagination, setHistoryPagination] = useState(() => {
+  const [historyPagination, setHistoryPagination] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return {
       currentPage: Number(params.get('page')) || 1,
@@ -1553,7 +1553,7 @@ export const VisitorsDashboard = () => {
     navigate(`${location.pathname}?page=${historyPagination.currentPage}`, { replace: true });
   }, [historyPagination.currentPage]);
 
-const handlePageChange = (page: number) => {
+  const handlePageChange = (page: number) => {
     navigate(`${location.pathname}?page=${page}`, { replace: true });
     setHistoryPagination(prev => ({ ...prev, currentPage: page }));
     if (mainTab === 'visitor') {
@@ -1794,7 +1794,7 @@ const handlePageChange = (page: number) => {
               handleExport={handleExport}
               exportFileName="visitor-history"
               pagination={false}
-               loading={historyLoading}
+              loading={historyLoading}
               storageKey="visitor-history-table"
               emptyMessage="No visitor history available"
               searchPlaceholder="Search visitors..."
@@ -1804,10 +1804,10 @@ const handlePageChange = (page: number) => {
                   {shouldShow("visitor", "create") && (
                     <Button
                       onClick={() => setIsActionPanelOpen(true)}
+                      variant="ghost"
                       className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
                     >
-                      <Plus  className="fm-button-fix fm-button-brand px-4 py-2"
-          variant="ghost" />
+                      <Plus className="fm-button-fix fm-button-brand px-4 py-2" />
                       Action
                     </Button>
                   )}

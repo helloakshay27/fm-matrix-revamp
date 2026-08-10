@@ -174,10 +174,10 @@ export const OperationalAuditConductedDashboard = () => {
 
   const filteredData = searchTerm
     ? conductedData.filter((item) =>
-        Object.values(item).some((value) =>
-          String(value ?? "").toLowerCase().includes(searchTerm.toLowerCase())
-        )
+      Object.values(item).some((value) =>
+        String(value ?? "").toLowerCase().includes(searchTerm.toLowerCase())
       )
+    )
     : conductedData;
 
   const renderCell = (item: AuditConductedOccurrence, columnKey: string) => {

@@ -1030,7 +1030,6 @@ export const WODetailsPage = () => {
           <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Invoices/SES Details</h3>
         </div>
 
-
         <div className="overflow-x-auto">
           <EnhancedTable
             data={invoices}

@@ -96,10 +96,10 @@ export const TrainingScheduledDashboard = () => {
 
   const filteredData = searchTerm
     ? scheduleData.filter((item) =>
-        Object.values(item).some((value) =>
-          String(value ?? '').toLowerCase().includes(searchTerm.toLowerCase())
-        )
+      Object.values(item).some((value) =>
+        String(value ?? '').toLowerCase().includes(searchTerm.toLowerCase())
       )
+    )
     : scheduleData;
 
   const handleAddSchedule = () => {

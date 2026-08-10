@@ -144,7 +144,7 @@ export const EditSlotConfigurationPage = () => {
 
         // The API returns grouped_parking_configurations structure
         if (data.grouped_parking_configurations &&
-            data.grouped_parking_configurations.length > 0) {
+          data.grouped_parking_configurations.length > 0) {
 
           const groupData = data.grouped_parking_configurations[0];
           const configs: ParkingConfiguration[] = groupData.parking_configurations;
@@ -435,29 +435,29 @@ export const EditSlotConfigurationPage = () => {
   }) => {
 
     const generateSlotName = (index: number) => {
-        const key = `${categoryId}_${type}_${index}`;
-        const customName = customSlotNames[key];
-        if (customName) return customName;
+      const key = `${categoryId}_${type}_${index}`;
+      const customName = customSlotNames[key];
+      if (customName) return customName;
 
-        const prefix = 'P';
-        const categoryData = formData.categories[categoryId];
+      const prefix = 'P';
+      const categoryData = formData.categories[categoryId];
 
-        if (isStack) {
-            const stackPairIndex = Math.floor(index / 2);
-            const nonStackCount = categoryData?.nonStack || 0;
-            const stackSlotNumber = nonStackCount + stackPairIndex + 1;
-            const suffix = index % 2 === 0 ? 'A' : 'B';
-            return `${prefix}${stackSlotNumber}${suffix}`;
-        }
+      if (isStack) {
+        const stackPairIndex = Math.floor(index / 2);
+        const nonStackCount = categoryData?.nonStack || 0;
+        const stackSlotNumber = nonStackCount + stackPairIndex + 1;
+        const suffix = index % 2 === 0 ? 'A' : 'B';
+        return `${prefix}${stackSlotNumber}${suffix}`;
+      }
 
-        let baseNumber = 1;
-        if (type === 'stack') {
-             baseNumber = (categoryData?.nonStack || 0) + 1;
-        } else if (type === 'reserved') {
-             baseNumber = (categoryData?.nonStack || 0) + (categoryData?.stack || 0) + 1;
-        }
+      let baseNumber = 1;
+      if (type === 'stack') {
+        baseNumber = (categoryData?.nonStack || 0) + 1;
+      } else if (type === 'reserved') {
+        baseNumber = (categoryData?.nonStack || 0) + (categoryData?.stack || 0) + 1;
+      }
 
-        return `${prefix}${baseNumber + index}`;
+      return `${prefix}${baseNumber + index}`;
     };
 
     const handleSlotNameChange = (index: number, newName: string) => {
@@ -498,21 +498,21 @@ export const EditSlotConfigurationPage = () => {
                 return nameA.localeCompare(nameB);
               })
               .map((index) => (
-              <div key={index} className="relative">
-                <Input
-                  value={generateSlotName(index)}
-                  onChange={(e) => handleSlotNameChange(index, e.target.value)}
-                  className="w-full h-10 text-xs text-center bg-white border-gray-300 rounded-lg font-medium"
-                  placeholder="Slot name"
-                />
-                <button
-                  className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs border-2 border-white"
-                  onClick={() => handleSlotCountChange(categoryId, type, count - 1)}
-                >
-                  &#x2715;
-                </button>
-              </div>
-            ))}
+                <div key={index} className="relative">
+                  <Input
+                    value={generateSlotName(index)}
+                    onChange={(e) => handleSlotNameChange(index, e.target.value)}
+                    className="w-full h-10 text-xs text-center bg-white border-gray-300 rounded-lg font-medium"
+                    placeholder="Slot name"
+                  />
+                  <button
+                    className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs border-2 border-white"
+                    onClick={() => handleSlotCountChange(categoryId, type, count - 1)}
+                  >
+                    &#x2715;
+                  </button>
+                </div>
+              ))}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -694,10 +694,10 @@ export const EditSlotConfigurationPage = () => {
                 Choose File
               </label>
               <div className="">
-              <span className="text-gray-500">
-                {formData.floorMap ? formData.floorMap.name : 'No file chosen'}
-              </span>
-            </div>
+                <span className="text-gray-500">
+                  {formData.floorMap ? formData.floorMap.name : 'No file chosen'}
+                </span>
+              </div>
             </div>
 
 
@@ -736,7 +736,7 @@ export const EditSlotConfigurationPage = () => {
                   )}
                   {/* Fallback for broken images */}
                   {!formData.floorMap && (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs" style={{display: 'none'}}>
+                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs" style={{ display: 'none' }}>
                       Image Not Available
                     </div>
                   )}

@@ -303,7 +303,8 @@ export const InvoicesDashboard = () => {
           size="sm"
           variant="ghost"
           className="p-1"
-          onClick={() => { try { procurementEvents.onInvoiceOpened(item.approved_status || null); } catch (err) {};
+          onClick={() => {
+            try { procurementEvents.onInvoiceOpened(item.approved_status || null); } catch (err) { };
             navigate(`/finance/invoices/${item.id}`, { state: { returnTo: buildReturnToPath(location.pathname, location.search) }, });
           }}
         >

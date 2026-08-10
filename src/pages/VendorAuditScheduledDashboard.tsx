@@ -167,14 +167,14 @@ export const VendorAuditScheduledDashboard = () => {
           loading={loading}
           leftActions={
             shouldShow("Vendor Audit", "create") ? (
-            <Button
-              onClick={handleAddSchedule}
-              className="fm-button-fix fm-button-brand px-4 py-2"
-              variant="ghost"
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </Button>
+              <Button
+                onClick={handleAddSchedule}
+                className="fm-button-fix fm-button-brand px-4 py-2"
+                variant="ghost"
+              >
+                <Plus className="w-4 h-4" />
+                Add
+              </Button>
             ) : undefined
           }
         />

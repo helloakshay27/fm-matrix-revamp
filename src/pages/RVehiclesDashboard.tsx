@@ -235,10 +235,10 @@ export const RVehiclesDashboard = () => {
 
   const filteredData = searchTerm
     ? vehicleData.filter((vehicle) =>
-        Object.values(vehicle).some((value) =>
-          String(value ?? '').toLowerCase().includes(searchTerm.toLowerCase())
-        )
+      Object.values(vehicle).some((value) =>
+        String(value ?? '').toLowerCase().includes(searchTerm.toLowerCase())
       )
+    )
     : vehicleData;
 
   const renderCell = (vehicle: Vehicle, columnKey: string) => {
@@ -310,11 +310,10 @@ export const RVehiclesDashboard = () => {
           <button
             key={tab}
             onClick={() => handleTabClick(tab)}
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${
-              activeTab === tab
+            className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === tab
                 ? 'bg-[#DA7756] text-white'
                 : 'bg-[#F2EEE9] text-[#8a7e72] hover:bg-[#ece4db]'
-            }`}
+              }`}
           >
             {tab}
           </button>

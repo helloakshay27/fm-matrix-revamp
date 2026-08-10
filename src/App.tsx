@@ -232,7 +232,6 @@ const EditPermitPage = lazy(() => import("./pages/EditPermitPage").then(m => ({ 
 
 const LeadDashboard = lazy(() => import("./pages/LeadDashboard").then(m => ({ default: m.LeadDashboard })));
 const EnergyDashboard = lazy(() => import("./pages/EnergyDashboard").then(m => ({ default: m.EnergyDashboard })));
-
 // // Import Inventory pages
 // import { InventoryDashboard } from "./pages/InventoryDashboard";
 // import { InventoryDetailsPage } from "./pages/InventoryDetailsPage";
@@ -971,6 +970,8 @@ const EditFolderPage = lazy(() => import("./pages/EditFolderPage").then(m => ({ 
 const OnlyOfficeEditorPage = lazy(() => import("./pages/OnlyOfficeEditorPage").then(m => ({ default: m.OnlyOfficeEditorPage })));
 
 const DocumentShareLinkPage = lazy(() => import("./pages/DocumentShareLinkPage").then(m => ({ default: m.DocumentShareLinkPage })));
+const BookingWebviewPage = lazy(() => import("./pages/BookingWebviewPage").then(m => ({ default: m.BookingWebviewPage })));
+const BookingConfirmedPage = lazy(() => import("./pages/BookingConfirmedPage").then(m => ({ default: m.BookingConfirmedPage })));
 const GroupConversation = lazy(() => import("./components/GroupConversation"));
 const ChannelTasksAll = lazy(() => import("./pages/ChannelTasksAll"));
 const ChatTaskDetailsPage = lazy(() => import("./pages/ChatTaskDetailsPage"));
@@ -4595,6 +4596,16 @@ function App() {
                             <Route path="/vendor/other-bills/details/:id" element={<VendorOtherBillDetailPage />} />
                             <Route path="/vendor/permits/details/:id" element={<VendorPermitDetailPage />} />
 
+
+                            <Route path="/vendor/po/details/:id" element={<VendorPODetailPage />} />
+                            <Route path="/vendor/grn/details/:id" element={<VendorGRNDetailPage />} />
+                            <Route path="/vendor/wo/details/:id" element={<VendorWODetailPage />} />
+                            <Route path="/vendor/invoice/details/:id" element={<VendorInvoiceDetailPage />} />
+                            <Route path="/vendor/other-bills/details/:id" element={<VendorOtherBillDetailPage />} />
+                            <Route path="/vendor/permits/details/:id" element={<VendorPermitDetailPage />} />
+
+
+
                             <Route path="/finance/po" element={<PODashboard />} />
                             <Route
                               path="/finance/po/add"
@@ -5367,7 +5378,11 @@ function App() {
                               path="/security/patrolling/response/details/:id"
                               element={<PatrollingDetailPage />}
                             />
-                              <Route
+                            <Route
+                              path="/security/patrolling/checkpoints/:checkpointId/history"
+                              element={<PatrollingCheckpointHistoryPage />}
+                            />
+                            <Route
                               path="/security/patrolling/checkpoints/:checkpointId/history"
                               element={<PatrollingCheckpointHistoryPage />}
                             />

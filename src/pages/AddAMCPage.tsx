@@ -1164,34 +1164,34 @@ export const AddAMCPage = () => {
       const amcId = result?.id;
 
       if (amcId) {
-          onAMCCreated({
-            amc_id: String(amcId),
-            coverage: formData.details.toLowerCase(),
-            amc_type: formData.amcType,
-            grouping: formData.type.toLowerCase(),
-            associated_count: formData.details === 'Asset' && formData.type === 'Individual' 
-               ? formData.asset_ids.length 
-               : (formData.details === 'Service' && formData.type === 'Individual' ? formData.service_ids.length : 1),
-            supplier_id: String(formData.supplier),
-            cost: Number(formData.cost) || 0,
-            payment_terms: formData.paymentTerms,
-            no_of_visits: Number(formData.noOfVisits) || 0,
-            frequency: selectedFrequencies[0] || 'unassigned',
-            start_date: formData.startDate,
-            end_date: formData.endDate,
-            first_service_date: formData.firstService,
-            critical_assets_covered: 0
-          });
+        onAMCCreated({
+          amc_id: String(amcId),
+          coverage: formData.details.toLowerCase(),
+          amc_type: formData.amcType,
+          grouping: formData.type.toLowerCase(),
+          associated_count: formData.details === 'Asset' && formData.type === 'Individual'
+            ? formData.asset_ids.length
+            : (formData.details === 'Service' && formData.type === 'Individual' ? formData.service_ids.length : 1),
+          supplier_id: String(formData.supplier),
+          cost: Number(formData.cost) || 0,
+          payment_terms: formData.paymentTerms,
+          no_of_visits: Number(formData.noOfVisits) || 0,
+          frequency: selectedFrequencies[0] || 'unassigned',
+          start_date: formData.startDate,
+          end_date: formData.endDate,
+          first_service_date: formData.firstService,
+          critical_assets_covered: 0
+        });
 
-          if (formData.details === 'Asset' && formData.type === 'Individual') {
-              formData.asset_ids.forEach((id: string | number) => {
-                  onAMCAssetLinked({
-                      amc_id: String(amcId),
-                      asset_id: String(id),
-                      is_critical: false
-                  });
-              });
-          }
+        if (formData.details === 'Asset' && formData.type === 'Individual') {
+          formData.asset_ids.forEach((id: string | number) => {
+            onAMCAssetLinked({
+              amc_id: String(amcId),
+              asset_id: String(id),
+              is_critical: false
+            });
+          });
+        }
       }
 
       if (action === 'show') {

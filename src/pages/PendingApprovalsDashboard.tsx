@@ -52,6 +52,13 @@ const columns: ColumnConfig[] = [
     key: "siteName",
     label: "Site Name",
     sortable: true,
+    draggable: true,  
+    defaultVisible: true,
+  },
+  {
+    key: "prType",
+    label: "Pr Type",
+    sortable: true,
     draggable: true,
     defaultVisible: true,
   },
