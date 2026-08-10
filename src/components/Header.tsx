@@ -384,7 +384,6 @@ export const Header = () => {
   const tempSwitchToEmployee = tempType === "pms_organization_admin";
 
   const canShowMsafeForSelectedCompany = localStorage.getItem("org_id") === "34";
-  const canShowMsafeForSelectedCompany = localStorage.getItem("org_id") === "34";
   const canShowMSafeDashboard =
     !isRestrictedUser && canShowMsafeForSelectedCompany;
   const hasHeaderDashboardActions = !isRestrictedUser;
