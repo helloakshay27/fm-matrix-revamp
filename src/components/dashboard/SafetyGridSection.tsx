@@ -26,6 +26,28 @@ interface SafetyGridSectionProps {
   items: SafetyGridItem[];
   /** Renders the coded default layout with drag/resize/reset disabled — for modules that shouldn't be user-repositionable. */
   static?: boolean;
+  /** Stacks cards to full width, one per row, at the sm/xs/xxs breakpoints instead of letting react-grid-layout naively clamp x/w (which leaves items overlapping or clipped off-canvas on narrower laptop screens). Opt-in so existing CRM/Finance grids keep their current behavior. */
+  responsive?: boolean;
+}
+
+const BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 };
+const COLS = { lg: 12, md: 12, sm: 6, xs: 4, xxs: 2 };
+
+/**
+ * Stacks every item to full width, one per row, in original top-to-bottom/left-to-right
+ * order. Proportionally rescaling x/w to a low column count (2-6) produces fractional
+ * positions that collide or leave dead gaps — full-width stacking is the only layout that
+ * reads cleanly at narrow/laptop-split widths, matching the standard "multi-column desktop,
+ * single column narrow" responsive pattern.
+ */
+function stackLayoutFullWidth(layout: GridLayout.Layout[], toCols: number): GridLayout.Layout[] {
+  const ordered = [...layout].sort((a, b) => a.y - b.y || a.x - b.x);
+  let y = 0;
+  return ordered.map((item) => {
+    const placed = { ...item, x: 0, w: toCols, y };
+    y += item.h;
+    return placed;
+  });
 }
 
 /**
@@ -36,7 +58,7 @@ interface SafetyGridSectionProps {
  * screenshots) on first load; a saved layout only applies after the user has
  * actually dragged/resized something in this section.
  */
-export function SafetyGridSection({ storageKey, items, static: isStatic }: SafetyGridSectionProps) {
+export function SafetyGridSection({ storageKey, items, static: isStatic, responsive }: SafetyGridSectionProps) {
   const defaultLayout: GridLayout.Layout[] = items.map((item) => ({ i: item.key, ...item.layout }));
   const [layout, setLayout] = useState<GridLayout.Layout[]>(defaultLayout);
 
@@ -74,11 +96,21 @@ export function SafetyGridSection({ storageKey, items, static: isStatic }: Safet
 
       <ResponsiveGridLayout
         className="layout"
-        layouts={{ lg: isStatic ? defaultLayout : layout }}
+        layouts={
+          responsive
+            ? {
+                lg: isStatic ? defaultLayout : layout,
+                md: isStatic ? defaultLayout : layout,
+                sm: stackLayoutFullWidth(isStatic ? defaultLayout : layout, COLS.sm),
+                xs: stackLayoutFullWidth(isStatic ? defaultLayout : layout, COLS.xs),
+                xxs: stackLayoutFullWidth(isStatic ? defaultLayout : layout, COLS.xxs),
+              }
+            : { lg: isStatic ? defaultLayout : layout }
+        }
         onDragStop={isStatic ? undefined : persistLayout}
         onResizeStop={isStatic ? undefined : persistLayout}
-        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-        cols={{ lg: 12, md: 12, sm: 6, xs: 4, xxs: 2 }}
+        breakpoints={BREAKPOINTS}
+        cols={COLS}
         rowHeight={48}
         margin={[16, 16]}
         resizeHandles={["se"]}

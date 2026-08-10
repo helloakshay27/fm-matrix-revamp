@@ -1298,7 +1298,7 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
       </div>
 
       <div ref={registerRef("SOHI")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="safetySohiGridLayout" items={sohiItems} />
+        <SafetyGridSection storageKey="safetySohiGridLayout" items={sohiItems} responsive />
       </div>
 
       <div ref={registerRef("Incidents")} className="scroll-mt-24">
@@ -1308,7 +1308,7 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
             Loading incident analytics for the selected sites and date range…
           </div>
         )}
-        <SafetyGridSection storageKey="safetyIncidentsGridLayout" items={incidentsItems} />
+        <SafetyGridSection storageKey="safetyIncidentsGridLayout" items={incidentsItems} responsive />
       </div>
 
       <div ref={registerRef("Permits")} className="scroll-mt-24">
@@ -1318,11 +1318,11 @@ export function SafetyPanel({ activeSection, permits, permitsLoading, incidents,
             Loading permit analytics for the selected sites and date range…
           </div>
         )}
-        <SafetyGridSection storageKey="safetyPermitsGridLayout" items={permitsItems} />
+        <SafetyGridSection storageKey="safetyPermitsGridLayout" items={permitsItems} responsive />
       </div>
 
       <div ref={registerRef("Emergency")} className="scroll-mt-24">
-        <SafetyGridSection storageKey="safetyEmergencyGridLayout" items={emergencyItems} />
+        <SafetyGridSection storageKey="safetyEmergencyGridLayout" items={emergencyItems} responsive />
       </div>
     </div>
   );
