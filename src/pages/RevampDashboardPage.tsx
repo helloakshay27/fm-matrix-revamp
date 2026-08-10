@@ -50,6 +50,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
 import { ANALYTICS_PALETTE, getPaletteColor } from "@/styles/chartPalette";
 import { SafetyPanel } from "@/components/dashboard/SafetyPanel";
+import { FinancePanel } from "@/components/dashboard/FinancePanel";
 import { fetchAllowedSites } from "@/services/sitesAPI";
 import {
   useTicketsDashboardData,
@@ -375,15 +376,8 @@ const MODULES: ModuleDefinition[] = [
     icon: Users,
     summary: "Tenant sentiment, loyalty redemption and engagement adoption.",
     subTabs: ["Overview", "My Pipeline", "Calendar", "My Tasks", "Campaigns"],
-    stats: [
-      { label: "Negative Feedback", value: "73%", tone: "red" },
-      { label: "Points Unredeemed", value: "99.5K", tone: "amber" },
-    ],
-    chips: [
-      { label: "73% Neg Feedback", tone: "red" },
-      { label: "99.5K pts Unredeemed", tone: "amber" },
-      { label: "Low Adoption", tone: "grey" },
-    ],
+    stats: [],
+    chips: [],
   },
   {
     key: "utility",
@@ -443,70 +437,70 @@ const MODULES: ModuleDefinition[] = [
       { label: "Booking: 56pg Real Usage", tone: "green" },
     ],
   },
-  {
-    key: "marketplace",
-    label: "Market Place",
-    icon: Store,
-    summary: "Redemption marketplace listings, vendor payouts and catalogue health.",
-    subTabs: ["Listings", "Vendors", "Payouts", "Catalogue"],
-    stats: [
-      { label: "Active Listings", value: "12", tone: "green" },
-      { label: "Vendor Payouts Pending", value: "3", tone: "amber" },
-    ],
-    chips: [
-      { label: "99.5K pts Unredeemed", tone: "amber" },
-      { label: "3 Vendor Payouts Pending", tone: "amber" },
-      { label: "12 Active Listings", tone: "green" },
-    ],
-  },
-  {
-    key: "master",
-    label: "Master",
-    icon: Database,
-    summary: "Master-data completeness across sites, entities and duplicate records.",
-    subTabs: ["Locations", "Assets Master", "Vendors Master", "Categories"],
-    stats: [
-      { label: "Master Entities", value: "48", tone: "grey" },
-      { label: "Duplicate Records Flagged", value: "2", tone: "amber" },
-    ],
-    chips: [
-      { label: "48 Master Data Entities", tone: "grey" },
-      { label: "6 Pending Approvals", tone: "amber" },
-      { label: "2 Duplicate Records Flagged", tone: "amber" },
-    ],
-  },
-  {
-    key: "settings",
-    label: "Settings",
-    icon: SettingsIcon,
-    summary: "Role configuration, permission conflicts and integration health.",
-    subTabs: ["Roles", "Permissions", "Integrations", "Notifications"],
-    stats: [
-      { label: "Roles Configured", value: "14", tone: "grey" },
-      { label: "Permission Conflicts", value: "3", tone: "amber" },
-    ],
-    chips: [
-      { label: "14 Roles Configured", tone: "grey" },
-      { label: "3 Permission Conflicts", tone: "amber" },
-      { label: "Integration Health: OK", tone: "green" },
-    ],
-  },
-  {
-    key: "accounting",
-    label: "Accounting",
-    icon: Calculator,
-    summary: "Ledger reconciliation, tax setup and bill-approval throughput.",
-    subTabs: ["Ledger", "Tax Setup", "Bills", "Reconciliation"],
-    stats: [
-      { label: "Unreconciled Entries", value: "27", tone: "amber" },
-      { label: "Bills Pending Approval", value: "9", tone: "amber" },
-    ],
-    chips: [
-      { label: "27 Unreconciled Entries", tone: "amber" },
-      { label: "9 Bills Pending Approval", tone: "amber" },
-      { label: "Tax Setup: Up to Date", tone: "green" },
-    ],
-  },
+  // {
+  //   key: "marketplace",
+  //   label: "Market Place",
+  //   icon: Store,
+  //   summary: "Redemption marketplace listings, vendor payouts and catalogue health.",
+  //   subTabs: ["Listings", "Vendors", "Payouts", "Catalogue"],
+  //   stats: [
+  //     { label: "Active Listings", value: "12", tone: "green" },
+  //     { label: "Vendor Payouts Pending", value: "3", tone: "amber" },
+  //   ],
+  //   chips: [
+  //     { label: "99.5K pts Unredeemed", tone: "amber" },
+  //     { label: "3 Vendor Payouts Pending", tone: "amber" },
+  //     { label: "12 Active Listings", tone: "green" },
+  //   ],
+  // },
+  // {
+  //   key: "master",
+  //   label: "Master",
+  //   icon: Database,
+  //   summary: "Master-data completeness across sites, entities and duplicate records.",
+  //   subTabs: ["Locations", "Assets Master", "Vendors Master", "Categories"],
+  //   stats: [
+  //     { label: "Master Entities", value: "48", tone: "grey" },
+  //     { label: "Duplicate Records Flagged", value: "2", tone: "amber" },
+  //   ],
+  //   chips: [
+  //     { label: "48 Master Data Entities", tone: "grey" },
+  //     { label: "6 Pending Approvals", tone: "amber" },
+  //     { label: "2 Duplicate Records Flagged", tone: "amber" },
+  //   ],
+  // },
+  // {
+  //   key: "settings",
+  //   label: "Settings",
+  //   icon: SettingsIcon,
+  //   summary: "Role configuration, permission conflicts and integration health.",
+  //   subTabs: ["Roles", "Permissions", "Integrations", "Notifications"],
+  //   stats: [
+  //     { label: "Roles Configured", value: "14", tone: "grey" },
+  //     { label: "Permission Conflicts", value: "3", tone: "amber" },
+  //   ],
+  //   chips: [
+  //     { label: "14 Roles Configured", tone: "grey" },
+  //     { label: "3 Permission Conflicts", tone: "amber" },
+  //     { label: "Integration Health: OK", tone: "green" },
+  //   ],
+  // },
+  // {
+  //   key: "accounting",
+  //   label: "Accounting",
+  //   icon: Calculator,
+  //   summary: "Ledger reconciliation, tax setup and bill-approval throughput.",
+  //   subTabs: ["Ledger", "Tax Setup", "Bills", "Reconciliation"],
+  //   stats: [
+  //     { label: "Unreconciled Entries", value: "27", tone: "amber" },
+  //     { label: "Bills Pending Approval", value: "9", tone: "amber" },
+  //   ],
+  //   chips: [
+  //     { label: "27 Unreconciled Entries", tone: "amber" },
+  //     { label: "9 Bills Pending Approval", tone: "amber" },
+  //     { label: "Tax Setup: Up to Date", tone: "green" },
+  //   ],
+  // },
 ];
 
 // Maintenance › Ticket analytics — wired to the live /fm_dashboard/tickets/*
@@ -1598,6 +1592,7 @@ export default function RevampDashboardPage() {
       activeSubTab === "Survey" ||
       activeSubTab === "Vendor");
   const isSafetyView = activeModule === "safety";
+  const isFinanceView = activeModule === "finance";
 
   const maintenanceSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const registerMaintenanceSectionRef = (key: string) => (el: HTMLDivElement | null) => {
@@ -5687,6 +5682,8 @@ export default function RevampDashboardPage() {
             incidents={incidentsApiData}
             incidentsLoading={incidentsLoading || sitesLoading}
           />
+        ) : isFinanceView ? (
+          <FinancePanel activeSection={activeSubTab} />
         ) : (
           <div className="bg-white border border-brand-border rounded-lg p-6">
             <h2 className="text-brand-body-3 font-bold text-brand-text uppercase tracking-wide mb-1">

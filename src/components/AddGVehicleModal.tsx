@@ -2,15 +2,54 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { TextField, FormControl, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X } from 'lucide-react';
 
 interface AddGVehicleModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const fieldStyles = {
+  height: '45px',
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& .MuiOutlinedInput-root': {
+    height: '45px',
+    '& fieldset': {
+      borderColor: '#ddd',
+    },
+    '&:hover fieldset': {
+      borderColor: '#C72030',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
+
+const selectMenuProps = {
+  sx: { pointerEvents: 'auto' },
+  PaperProps: {
+    sx: {
+      maxHeight: 224,
+      backgroundColor: 'white',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
 
 export const AddGVehicleModal = ({ isOpen, onClose }: AddGVehicleModalProps) => {
   const [type, setType] = useState('Occupants');
@@ -82,16 +121,23 @@ export const AddGVehicleModal = ({ isOpen, onClose }: AddGVehicleModalProps) => 
               <Label htmlFor="occupantUser" className="text-sm font-medium">
                 Occupant User
               </Label>
-              <Select value={occupantUser} onValueChange={setOccupantUser}>
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Select Name" className="text-red-500" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user1">User 1</SelectItem>
-                  <SelectItem value="user2">User 2</SelectItem>
-                  <SelectItem value="user3">User 3</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <MuiSelect
+                  displayEmpty
+                  notched
+                  value={occupantUser}
+                  onChange={(e) => setOccupantUser(e.target.value)}
+                  renderValue={(value) => value ? (value as string) : <em style={{ color: '#9ca3af', fontStyle: 'normal' }}>Select Name</em>}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select Name</em>
+                  </MenuItem>
+                  <MenuItem value="user1">User 1</MenuItem>
+                  <MenuItem value="user2">User 2</MenuItem>
+                  <MenuItem value="user3">User 3</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
 
             {/* Vehicle Number */}
@@ -99,12 +145,15 @@ export const AddGVehicleModal = ({ isOpen, onClose }: AddGVehicleModalProps) => 
               <Label htmlFor="vehicleNumber" className="text-sm font-medium">
                 Vehicle Number
               </Label>
-              <Input
+              <TextField
                 id="vehicleNumber"
                 placeholder="Vehicle Number"
+                fullWidth
+                variant="outlined"
                 value={vehicleNumber}
                 onChange={(e) => setVehicleNumber(e.target.value)}
-                className="border-gray-300"
+                slotProps={{ inputLabel: { shrink: true } }}
+                InputProps={{ sx: fieldStyles }}
               />
             </div>
 
@@ -113,16 +162,23 @@ export const AddGVehicleModal = ({ isOpen, onClose }: AddGVehicleModalProps) => 
               <Label htmlFor="parkingSlot" className="text-sm font-medium">
                 Parking Slot
               </Label>
-              <Select value={parkingSlot} onValueChange={setParkingSlot}>
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Select Parking Slot" className="text-red-500" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="slot1">Slot 1</SelectItem>
-                  <SelectItem value="slot2">Slot 2</SelectItem>
-                  <SelectItem value="slot3">Slot 3</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <MuiSelect
+                  displayEmpty
+                  notched
+                  value={parkingSlot}
+                  onChange={(e) => setParkingSlot(e.target.value)}
+                  renderValue={(value) => value ? (value as string) : <em style={{ color: '#9ca3af', fontStyle: 'normal' }}>Select Parking Slot</em>}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select Parking Slot</em>
+                  </MenuItem>
+                  <MenuItem value="slot1">Slot 1</MenuItem>
+                  <MenuItem value="slot2">Slot 2</MenuItem>
+                  <MenuItem value="slot3">Slot 3</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
@@ -132,16 +188,23 @@ export const AddGVehicleModal = ({ isOpen, onClose }: AddGVehicleModalProps) => 
               <Label htmlFor="entryGate" className="text-sm font-medium">
                 Entry Gate
               </Label>
-              <Select value={entryGate} onValueChange={setEntryGate}>
-                <SelectTrigger className="border-gray-300">
-                  <SelectValue placeholder="Select Entry Gate" className="text-red-500" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="gate1">Gate 1</SelectItem>
-                  <SelectItem value="gate2">Gate 2</SelectItem>
-                  <SelectItem value="gate3">Gate 3</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <MuiSelect
+                  displayEmpty
+                  notched
+                  value={entryGate}
+                  onChange={(e) => setEntryGate(e.target.value)}
+                  renderValue={(value) => value ? (value as string) : <em style={{ color: '#9ca3af', fontStyle: 'normal' }}>Select Entry Gate</em>}
+                  MenuProps={selectMenuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select Entry Gate</em>
+                  </MenuItem>
+                  <MenuItem value="gate1">Gate 1</MenuItem>
+                  <MenuItem value="gate2">Gate 2</MenuItem>
+                  <MenuItem value="gate3">Gate 3</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 

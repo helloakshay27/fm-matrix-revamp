@@ -928,7 +928,7 @@ const BusinessCompassTodoPage = () => {
         try {
             const isCompleting = todoToToggle?.status === "open";
             await axios.put(
-                `https://${baseUrl}/business_compass/todos/${todoToToggle.id}`,
+                `https://${baseUrl}/business_compass/todos/${todoToToggle.id}.json`,
                 { todo: { status: isCompleting ? "completed" : "open" } },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -1021,7 +1021,7 @@ const BusinessCompassTodoPage = () => {
             };
 
             await axios.put(
-                `https://${baseUrl}/business_compass/todos/${original.id}`,
+                `https://${baseUrl}/business_compass/todos/${original.id}.json`,
                 payload,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -1057,7 +1057,7 @@ const BusinessCompassTodoPage = () => {
             };
 
             const response = await axios.post(
-                `https://${baseUrl}/business_compass/tasks`,
+                `https://${baseUrl}/business_compass/tasks.json`,
                 payload,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -1066,7 +1066,7 @@ const BusinessCompassTodoPage = () => {
 
             if (newTaskId) {
                 await axios.put(
-                    `https://${baseUrl}/business_compass/todos/${original.id}`,
+                    `https://${baseUrl}/business_compass/todos/${original.id}.json`,
                     { todo: { task_management_id: newTaskId } },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -1143,7 +1143,7 @@ const BusinessCompassTodoPage = () => {
         try {
             if (over.id === "pending-section" && currentStatus === "completed") {
                 await axios.put(
-                    `https://${baseUrl}/business_compass/todos/${todoId}`,
+                    `https://${baseUrl}/business_compass/todos/${todoId}.json`,
                     { todo: { status: "open" } },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -1151,7 +1151,7 @@ const BusinessCompassTodoPage = () => {
                 refetch();
             } else if (over.id === "completed-section" && currentStatus !== "completed") {
                 await axios.put(
-                    `https://${baseUrl}/business_compass/todos/${todoId}`,
+                    `https://${baseUrl}/business_compass/todos/${todoId}.json`,
                     { todo: { status: "completed" } },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -1166,7 +1166,7 @@ const BusinessCompassTodoPage = () => {
 
                 if (newPriority && newPriority !== currentPriority) {
                     await axios.put(
-                        `https://${baseUrl}/business_compass/todos/${todoId}`,
+                        `https://${baseUrl}/business_compass/todos/${todoId}.json`,
                         { todo: { priority: newPriority } },
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
