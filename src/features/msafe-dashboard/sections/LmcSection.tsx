@@ -351,6 +351,8 @@ export function LmcSection() {
           sub="Number of LMC sign-offs recorded per day"
           infoKey="lmc-daily"
           showPdf
+          pdfLabel="Daily LMC Volume"
+          exportData={dailyData.map((d) => ({ Date: d.d, 'LMC Sign-offs': d.n }))}
           chartSwitch={<ChartSwitch modes={['line', 'bar']} value={dailyMode} onChange={setDailyMode} />}
         >
           {dailyLoading || dailyData.length === 0 ? (
@@ -454,6 +456,8 @@ export function LmcSection() {
         sub="Monthly LMC sign-off volume, long-term view"
         infoKey="lmc-trend-12mo"
         showPdf
+        pdfLabel="LMC Completion Trend"
+        exportData={trendData.map((d) => ({ Month: d.m, 'Sign-offs': d.n }))}
         style={{ marginTop: 16 }}
         chartSwitch={<ChartSwitch modes={['line', 'bar', 'table']} value={trendMode} onChange={setTrendMode} />}
       >
