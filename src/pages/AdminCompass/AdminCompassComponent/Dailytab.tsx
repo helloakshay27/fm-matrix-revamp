@@ -523,7 +523,8 @@ const fetchItemDetail = async (
   if (itemDetailInflight[key]) return itemDetailInflight[key];
 
   let url: string | null = null;
-  if (type === "task") url = `${getBaseUrl()}/task_managements/${id}.json`;
+  if (type === "task")
+    url = `${getBaseUrl()}/business_compass/tasks/${id}.json`;
   else if (type === "todo")
     url = `${getBaseUrl()}/business_compass/todos/${id}.json`;
   else if (type === "issue") url = `${getBaseUrl()}/issues/${id}.json`;
