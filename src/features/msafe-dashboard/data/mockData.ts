@@ -10,6 +10,8 @@ export type DirectoryUser = {
   tr: StatusCode;
   kr: StatusCode;
   lm: StatusCode;
+  /** Raw overall-status label from the API (e.g. "In Progress", "Need Action"), when available. */
+  overallLabel?: string;
 };
 
 export const DIRECTORY: DirectoryUser[] = [
@@ -436,6 +438,14 @@ export const ADMIN_KPIS: KpiDef[] = [
 ];
 
 export function overallStatus(u: DirectoryUser): { t: string; c: string } {
+  const label = u.overallLabel?.trim();
+  if (label) {
+    const s = label.toLowerCase();
+    if (/action|fail|reject/.test(s)) return { t: label, c: 'b-err' };
+    if (/progress|pending/.test(s)) return { t: label, c: 'b-warn' };
+    if (/clear|complete|compliant/.test(s)) return { t: label, c: 'b-ok' };
+    return { t: label, c: 'b-warn' };
+  }
   if (u.tr === 'fail' || u.kr === 'fail') return { t: 'Needs Action', c: 'b-err' };
   if (u.tr === 'pending' || u.kr === 'pending' || u.lm === 'pending' || u.kr === 'na' || u.lm === 'na') {
     return { t: 'In Progress', c: 'b-warn' };
