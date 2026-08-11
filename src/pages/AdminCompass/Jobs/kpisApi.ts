@@ -127,6 +127,7 @@ export const toKpiPayload = (form = {}) => {
   put("target_value", toNum(form.target));
   put("weight", toNum(form.weightage));
   put("measurement_type", form.measurementType);
+  put("update_type", form.updateType);
   put("data_source", form.dataSource);
   put("module_name", form.module);
   put("department_id", toNum(form.departmentId));

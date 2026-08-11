@@ -32,6 +32,38 @@ export default function KpiList() {
     jdTitle, kraName,
     kpisLoading, kpisError, refreshKpis,
   } = useJobs();
+  const listColumns =
+    "minmax(220px, 1.6fr) minmax(120px, .8fr) minmax(140px, 1fr) 56px 72px 84px minmax(130px, 170px) 76px";
+  const tableMinWidth = 960;
+  const cell = { minWidth: 0 };
+  const softCell = {
+    ...cell,
+    color: T.inkSoft,
+    fontSize: 11.5,
+    lineHeight: 1.35,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  };
+  const chip = {
+    justifySelf: "start",
+    display: "inline-flex",
+    alignItems: "center",
+    maxWidth: "100%",
+    minWidth: 0,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    padding: "2px 8px",
+    borderRadius: 999,
+    fontSize: 10,
+    fontWeight: 600,
+  };
+  const actions = {
+    display: "flex",
+    gap: 4,
+    justifyContent: "flex-end",
+    minWidth: 0,
+  };
 
   return (
     <div>
@@ -84,7 +116,7 @@ export default function KpiList() {
       {kpisLoading && filteredKpis.length === 0 && (kpiViewMode === "card" ? (
         <SkeletonCards count={6} minWidth={240} height={128} />
       ) : (
-        <SkeletonTable rows={8} columns="1fr 110px 110px 50px 60px 70px 90px 100px" />
+        <SkeletonTable rows={8} columns={listColumns} />
       ))}
 
       {!kpisLoading && filteredKpis.length === 0 && (
@@ -131,36 +163,37 @@ export default function KpiList() {
           ))}
         </div>
       ) : (
-        <div style={{ background: T.surface, border: `1px solid ${T.borderSoft}`, borderRadius: T.rlg, overflow: "hidden" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 50px 60px 70px 90px 100px", gap: 10, padding: "12px 20px", fontSize: 11, fontWeight: 700, color: T.inkMuted, textTransform: "uppercase", letterSpacing: ".05em", borderBottom: `1px solid ${T.borderSoft}` }}>
-            <span>KPI Name</span>
-            <span>Job Desc</span>
-            <span>Linked KRA</span>
-            <span>Wt%</span>
-            <span>Target</span>
-            <span>Freq</span>
-            <span>Update</span>
-            <span>Actions</span>
+        <div style={{ background: T.surface, border: `1px solid ${T.borderSoft}`, borderRadius: T.rlg, overflowX: "auto", overflowY: "hidden" }}>
+          <div style={{ minWidth: tableMinWidth }}>
+          <div style={{ display: "grid", gridTemplateColumns: listColumns, gap: 10, padding: "12px 16px", fontSize: 11, fontWeight: 700, color: T.inkMuted, textTransform: "uppercase", letterSpacing: ".05em", borderBottom: `1px solid ${T.borderSoft}` }}>
+            <span style={cell}>KPI Name</span>
+            <span style={cell}>Job Desc</span>
+            <span style={cell}>Linked KRA</span>
+            <span style={cell}>Wt%</span>
+            <span style={cell}>Target</span>
+            <span style={cell}>Freq</span>
+            <span style={cell}>Update</span>
+            <span style={{ ...cell, textAlign: "right" }}>Actions</span>
           </div>
           {filteredKpis.map((kpi, i) => (
             <div
               key={kpi.id}
-              style={{ display: "grid", gridTemplateColumns: "1fr 110px 110px 50px 60px 70px 90px 100px", gap: 10, padding: "12px 20px", fontSize: 12.5, borderBottom: i < filteredKpis.length - 1 ? `1px solid ${T.borderSoft}` : "none", alignItems: "center" }}
+              style={{ display: "grid", gridTemplateColumns: listColumns, gap: 10, padding: "12px 16px", fontSize: 12.5, borderBottom: i < filteredKpis.length - 1 ? `1px solid ${T.borderSoft}` : "none", alignItems: "center" }}
               onMouseOver={(e) => (e.currentTarget.style.background = T.warm)}
               onMouseOut={(e) => (e.currentTarget.style.background = "transparent")}
             >
-              <span style={{ fontWeight: 600 }}>{kpi.name}</span>
-              <span style={{ color: T.inkSoft, fontSize: 11.5 }}>{jdTitle(kpi.jdId)}</span>
-              <span style={{ color: T.inkSoft, fontSize: 11.5 }}>{kraName(kpi.kraId)}</span>
-              <span style={{ fontWeight: 600 }}>{kpi.weightage}%</span>
-              <span style={{ fontWeight: 600 }}>{kpi.target}</span>
+              <span style={{ ...cell, fontWeight: 700, lineHeight: 1.35 }}>{kpi.name}</span>
+              <span style={softCell} title={jdTitle(kpi.jdId)}>{jdTitle(kpi.jdId)}</span>
+              <span style={softCell} title={kraName(kpi.kraId)}>{kraName(kpi.kraId)}</span>
+              <span style={{ ...cell, fontWeight: 700 }}>{kpi.weightage}%</span>
+              <span style={{ ...cell, fontWeight: 700 }}>{kpi.target}</span>
               {/* Pills apne text ko hug karein — grid cell ki poori width par
                   stretch na hon. */}
-              <span style={{ justifySelf: "start", display: "inline-flex", alignItems: "center", whiteSpace: "nowrap", padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600, background: T.kpiLav }}>{kpi.freq}</span>
-              <span style={{ justifySelf: "start", display: "inline-flex", alignItems: "center", whiteSpace: "nowrap", padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600, background: kpi.updateType === "automatic" ? T.kpiMint : T.kpiCream }}>
-                {kpi.updateType === "automatic" ? `Auto · ${kpi.dataSource}` : "Manual"}
+              <span style={{ ...chip, background: T.kpiLav }}>{kpi.freq}</span>
+              <span style={{ ...chip, background: kpi.updateType === "automatic" ? T.kpiMint : T.kpiCream }} title={kpi.updateType === "automatic" ? `Auto · ${kpi.dataSource || "API"}` : "Manual"}>
+                {kpi.updateType === "automatic" ? `Auto · ${kpi.dataSource || "API"}` : "Manual"}
               </span>
-              <div style={{ display: "flex", gap: 4 }}>
+              <div style={actions}>
                 <button style={aBtn} title="Edit" onClick={() => openEditKpi(kpi)}
                   onMouseOver={(e) => { e.currentTarget.style.background = T.orangeSoft; e.currentTarget.style.color = T.orange; }}
                   onMouseOut={(e) => { e.currentTarget.style.background = T.raised; e.currentTarget.style.color = T.inkMuted; }}
@@ -172,6 +205,7 @@ export default function KpiList() {
               </div>
             </div>
           ))}
+          </div>
         </div>
       ))}
     </div>

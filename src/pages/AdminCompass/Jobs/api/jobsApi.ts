@@ -74,6 +74,7 @@ export function buildJobPayload(jobForm, formKras, formKpis, departments) {
           target: kpi.target || null,
           freq: kpi.freq || null,
           measurement_type: kpi.measurementType || "positive",
+          update_type: kpi.updateType || "manual",
           data_source: kpi.dataSource || null,
           module: kpi.module || null,
           description: null,
