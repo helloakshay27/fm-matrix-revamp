@@ -2387,6 +2387,11 @@ const ProjectTasksPage = () => {
         return `${wholeHours} hr${wholeHours !== 1 ? "s" : ""} ${remainingMinutes} min${remainingMinutes !== 1 ? "s" : ""}`;
     }
 
+    const getEffortsDuration = (item: any): number =>
+        item?.total_allocated_hours
+            ? item.total_allocated_hours
+            : (item?.estimated_hour || 0) + (item?.estimated_min || 0) / 60;
+
     const renderCell = (
         item: any,
         columnKey: string,
@@ -2511,7 +2516,7 @@ const ProjectTasksPage = () => {
                             </span>
                             <span>•</span>
                             <span>
-                                Duration: {formatHours(item?.total_allocated_hours || 0)}
+                                Duration: {formatHours(getEffortsDuration(item))}
                             </span>
                         </div>
                     </div>
