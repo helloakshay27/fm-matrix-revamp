@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ResponsiveContainer,
   BarChart,
@@ -13,20 +13,301 @@ import { AccordionShell, ChartCard } from '../components/ChartCard';
 import { ChartSwitch } from '../components/ChartSwitch';
 import { ChartTable, DonutChart, SideLegendDonut, SliceBarChart } from '../components/DonutChart';
 import { C } from '../data/constants';
-import {
-  TRAIN_BY_NAME,
-  TRAIN_CATEGORY,
-  TRAIN_FAILS,
-  TRAIN_INT_EXT_BARS,
-  TRAIN_PF,
-  TRAIN_SCORE,
-} from '../data/mockData';
+import { TRAIN_INT_EXT_BARS, TRAIN_PF } from '../data/mockData';
 import { useMsafeDashboard } from '../context/MsafeDashboardContext';
+
+type TrainSlice = { name: string; value: number; color: string };
+
+function getMsafeBaseUrl(): string {
+  const fromLS = localStorage.getItem('baseUrl') || '';
+  const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  return host ? `https://${host}` : 'https://live-api.gophygital.work';
+}
+
+async function fetchMsafeTrainingJson(endpoint: string, signal?: AbortSignal): Promise<unknown> {
+  const token = localStorage.getItem('token') || '';
+  const companyId =
+    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '';
+  const params = new URLSearchParams({ company_id: companyId });
+  if (token) {
+    params.set('access_token', token);
+    params.set('token', token);
+  }
+  const url = `${getMsafeBaseUrl()}/msafe_tranning_dashboard/${endpoint}?${params.toString()}`;
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(url, { signal, headers });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+const TRAIN_CHART_PALETTE = [C.terra, C.blue, C.vi, C.sage, C.lav, C.warn, C.err, C.ok, '#B4A38A'];
+
+const normalizeTrainingCounts = (payload: unknown): TrainSlice[] => {
+  const source = Array.isArray(payload)
+    ? payload
+    : payload && typeof payload === 'object'
+      ? (payload as Record<string, unknown>)
+      : null;
+
+  let list: unknown[] = Array.isArray(source) ? source : [];
+  if (!Array.isArray(source)) {
+    for (const key of ['data', 'result', 'categories', 'training_categories', 'records']) {
+      const candidate = (source as Record<string, unknown>)?.[key];
+      if (Array.isArray(candidate)) {
+        list = candidate;
+        break;
+      }
+    }
+  }
+
+  return list
+    .map((item, index) => {
+      if (!item || typeof item !== 'object') return null;
+      const record = item as Record<string, unknown>;
+
+      const name = [
+        record.category_name,
+        record.training_name,
+        record.name,
+        record.label,
+        record.title,
+      ].find((value): value is string => typeof value === 'string' && value.trim().length > 0);
+      if (!name) return null;
+
+      let value: number | null = null;
+      for (const key of ['count', 'value', 'total', 'training_count']) {
+        const raw = record[key];
+        if (typeof raw === 'number' && Number.isFinite(raw)) {
+          value = raw;
+          break;
+        }
+        if (typeof raw === 'string' && raw.trim() && Number.isFinite(Number(raw))) {
+          value = Number(raw);
+          break;
+        }
+      }
+      if (value === null) return null;
+
+      return { name, value, color: TRAIN_CHART_PALETTE[index % TRAIN_CHART_PALETTE.length] };
+    })
+    .filter((item): item is TrainSlice => Boolean(item));
+};
+
+type ScoreBucket = { bucket: string; n: number; color: string };
+type TrainFailure = { user: string; tr: string; type: 'Internal' | 'External'; date: string; score: number };
+
+function colorForScoreBucket(bucket: string): string {
+  const nums = bucket.match(/\d+/g)?.map(Number) ?? [];
+  const upper = nums.length ? Math.max(...nums) : 0;
+  if (upper <= 40) return '#E7848E';
+  if (upper <= 60) return '#EDC488';
+  if (upper <= 80) return '#9EC8BA';
+  return '#108C72';
+}
+
+const normalizeScoreDistribution = (payload: unknown): ScoreBucket[] => {
+  const source = Array.isArray(payload)
+    ? payload
+    : payload && typeof payload === 'object'
+      ? (payload as Record<string, unknown>)
+      : null;
+
+  let list: unknown[] = Array.isArray(source) ? source : [];
+  if (!Array.isArray(source)) {
+    for (const key of ['data', 'result', 'buckets', 'distribution', 'scores']) {
+      const candidate = (source as Record<string, unknown>)?.[key];
+      if (Array.isArray(candidate)) {
+        list = candidate;
+        break;
+      }
+    }
+  }
+
+  return list
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const record = item as Record<string, unknown>;
+
+      const bucket = [record.bucket, record.range, record.score_range, record.label, record.name].find(
+        (value): value is string => typeof value === 'string' && value.trim().length > 0,
+      );
+      if (!bucket) return null;
+
+      let n: number | null = null;
+      for (const key of ['count', 'value', 'n', 'total', 'users_count']) {
+        const raw = record[key];
+        if (typeof raw === 'number' && Number.isFinite(raw)) {
+          n = raw;
+          break;
+        }
+        if (typeof raw === 'string' && raw.trim() && Number.isFinite(Number(raw))) {
+          n = Number(raw);
+          break;
+        }
+      }
+      if (n === null) return null;
+
+      return { bucket, n, color: colorForScoreBucket(bucket) };
+    })
+    .filter((item): item is ScoreBucket => Boolean(item));
+};
+
+function mapEmploymentType(raw: unknown): 'Internal' | 'External' {
+  const s = String(raw ?? '').trim().toLowerCase();
+  if (/external|contractor|vendor|non[- ]?fte/.test(s)) return 'External';
+  return 'Internal';
+}
+
+const normalizeTrainingFailures = (payload: unknown): TrainFailure[] => {
+  const source = Array.isArray(payload)
+    ? payload
+    : payload && typeof payload === 'object'
+      ? (payload as Record<string, unknown>)
+      : null;
+
+  let list: unknown[] = Array.isArray(source) ? source : [];
+  if (!Array.isArray(source)) {
+    for (const key of ['data', 'result', 'failures', 'records', 'users']) {
+      const candidate = (source as Record<string, unknown>)?.[key];
+      if (Array.isArray(candidate)) {
+        list = candidate;
+        break;
+      }
+    }
+  }
+
+  return list
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const record = item as Record<string, unknown>;
+
+      const user = [record.user_name, record.employee_name, record.name, record.emp_name].find(
+        (value): value is string => typeof value === 'string' && value.trim().length > 0,
+      );
+      if (!user) return null;
+
+      const tr =
+        [record.training_name, record.training, record.tr, record.programme_name].find(
+          (value): value is string => typeof value === 'string' && value.trim().length > 0,
+        ) ?? '—';
+
+      const date =
+        [record.date, record.failed_date, record.training_date, record.created_at].find(
+          (value): value is string => typeof value === 'string' && value.trim().length > 0,
+        ) ?? '—';
+
+      let score: number | null = null;
+      for (const key of ['score', 'marks', 'result_score', 'obtained_score']) {
+        const raw = record[key];
+        if (typeof raw === 'number' && Number.isFinite(raw)) {
+          score = raw;
+          break;
+        }
+        if (typeof raw === 'string' && raw.trim() && Number.isFinite(Number(raw))) {
+          score = Number(raw);
+          break;
+        }
+      }
+      if (score === null) return null;
+
+      const type = mapEmploymentType(record.employment_type ?? record.type ?? record.user_type);
+
+      return { user, tr, type, date, score };
+    })
+    .filter((item): item is TrainFailure => Boolean(item));
+};
+
+function DataState({ loading, empty, label }: { loading: boolean; empty: boolean; label: string }) {
+  if (!loading && !empty) return null;
+  return (
+    <div style={{ fontSize: 12, color: C.sage, padding: '24px 0', textAlign: 'center' }}>
+      {loading ? 'Loading…' : `No ${label} available`}
+    </div>
+  );
+}
 
 export function TrainingSection() {
   const { openDrill } = useMsafeDashboard();
   const [pfMode, setPfMode] = useState('donut');
   const [catMode, setCatMode] = useState('donut');
+  const [trainByNameData, setTrainByNameData] = useState<TrainSlice[]>([]);
+  const [trainCategoryData, setTrainCategoryData] = useState<TrainSlice[]>([]);
+  const [scoreDistribution, setScoreDistribution] = useState<ScoreBucket[]>([]);
+  const [trainFailures, setTrainFailures] = useState<TrainFailure[]>([]);
+  const [trainCountsLoading, setTrainCountsLoading] = useState(true);
+  const [scoreLoading, setScoreLoading] = useState(true);
+  const [failuresLoading, setFailuresLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTrainingCounts = async () => {
+      try {
+        const payload = await fetchMsafeTrainingJson('category_wise_training_count.json');
+        const normalized = normalizeTrainingCounts(payload);
+        if (isMounted) {
+          setTrainByNameData(normalized);
+          setTrainCategoryData(normalized);
+        }
+      } catch (error) {
+        console.warn('M-Safe category-wise-training-count API failed.', error);
+      } finally {
+        if (isMounted) setTrainCountsLoading(false);
+      }
+    };
+
+    loadTrainingCounts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadScoreDistribution = async () => {
+      try {
+        const payload = await fetchMsafeTrainingJson('training_score_distribution.json');
+        const normalized = normalizeScoreDistribution(payload);
+        if (isMounted) setScoreDistribution(normalized);
+      } catch (error) {
+        console.warn('M-Safe training-score-distribution API failed.', error);
+      } finally {
+        if (isMounted) setScoreLoading(false);
+      }
+    };
+
+    loadScoreDistribution();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTrainingFailures = async () => {
+      try {
+        const payload = await fetchMsafeTrainingJson('recent_training_failures.json');
+        const normalized = normalizeTrainingFailures(payload);
+        if (isMounted) setTrainFailures(normalized);
+      } catch (error) {
+        console.warn('M-Safe recent-training-failures API failed.', error);
+      } finally {
+        if (isMounted) setFailuresLoading(false);
+      }
+    };
+
+    loadTrainingFailures();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <AccordionShell
@@ -85,17 +366,21 @@ export function TrainingSection() {
         </ChartCard>
 
         <ChartCard title="Training by Name" sub="Volume by training programme" infoKey="train-name">
-          <div className="chart-wrap">
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={TRAIN_BY_NAME} layout="vertical" margin={{ left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                <XAxis type="number" tick={{ fontSize: 10, fill: C.sage }} />
-                <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 10, fill: C.sage }} />
-                <Tooltip />
-                <Bar dataKey="value" fill={C.sage} radius={[0, 5, 5, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {trainCountsLoading || trainByNameData.length === 0 ? (
+            <DataState loading={trainCountsLoading} empty={trainByNameData.length === 0} label="training data" />
+          ) : (
+            <div className="chart-wrap">
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={trainByNameData} layout="vertical" margin={{ left: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: C.sage }} />
+                  <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 10, fill: C.sage }} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill={C.sage} radius={[0, 5, 5, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </ChartCard>
       </div>
 
@@ -107,28 +392,38 @@ export function TrainingSection() {
         style={{ marginTop: 16 }}
         chartSwitch={<ChartSwitch modes={['donut', 'bar', 'table']} value={catMode} onChange={setCatMode} />}
       >
-        {catMode === 'donut' && <DonutChart data={TRAIN_CATEGORY} />}
-        {catMode === 'bar' && <SliceBarChart data={TRAIN_CATEGORY} />}
-        {catMode === 'table' && <ChartTable data={TRAIN_CATEGORY} valueLabel="Records" />}
+        {trainCountsLoading || trainCategoryData.length === 0 ? (
+          <DataState loading={trainCountsLoading} empty={trainCategoryData.length === 0} label="category data" />
+        ) : (
+          <>
+            {catMode === 'donut' && <DonutChart data={trainCategoryData} />}
+            {catMode === 'bar' && <SliceBarChart data={trainCategoryData} />}
+            {catMode === 'table' && <ChartTable data={trainCategoryData} valueLabel="Records" />}
+          </>
+        )}
       </ChartCard>
 
       <div className="g g-2-1" style={{ marginTop: 16 }}>
         <ChartCard title="Score Distribution" sub="Histogram of actual scores where recorded (n=15,842)" infoKey="train-score">
-          <div className="chart-wrap">
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={TRAIN_SCORE}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
-                <XAxis dataKey="bucket" tick={{ fontSize: 10, fill: C.sage }} />
-                <YAxis tick={{ fontSize: 10, fill: C.sage }} />
-                <Tooltip />
-                <Bar dataKey="n" radius={[5, 5, 0, 0]}>
-                  {TRAIN_SCORE.map((d) => (
-                    <Cell key={d.bucket} fill={d.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {scoreLoading || scoreDistribution.length === 0 ? (
+            <DataState loading={scoreLoading} empty={scoreDistribution.length === 0} label="score data" />
+          ) : (
+            <div className="chart-wrap">
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={scoreDistribution}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#EDE7D7" />
+                  <XAxis dataKey="bucket" tick={{ fontSize: 10, fill: C.sage }} />
+                  <YAxis tick={{ fontSize: 10, fill: C.sage }} />
+                  <Tooltip />
+                  <Bar dataKey="n" radius={[5, 5, 0, 0]}>
+                    {scoreDistribution.map((d) => (
+                      <Cell key={d.bucket} fill={d.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </ChartCard>
 
         <ChartCard
@@ -160,21 +455,35 @@ export function TrainingSection() {
                 </tr>
               </thead>
               <tbody>
-                {TRAIN_FAILS.map((t) => (
-                  <tr key={t.user + t.tr} onClick={() => openDrill('train-fail', t.user)}>
-                    <td className="cell-strong">{t.user}</td>
-                    <td>{t.tr}</td>
-                    <td>
-                      <span className={`badge ${t.type === 'Internal' ? 'b-info' : 'b-neutral'}`}>
-                        {t.type}
-                      </span>
-                    </td>
-                    <td>{t.date}</td>
-                    <td>
-                      <span className="badge b-fail">{t.score}/100</span>
+                {failuresLoading ? (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: 'center', color: C.sage, padding: '16px 0' }}>
+                      Loading…
                     </td>
                   </tr>
-                ))}
+                ) : trainFailures.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: 'center', color: C.sage, padding: '16px 0' }}>
+                      No training failures available
+                    </td>
+                  </tr>
+                ) : (
+                  trainFailures.map((t) => (
+                    <tr key={t.user + t.tr} onClick={() => openDrill('train-fail', t.user)}>
+                      <td className="cell-strong">{t.user}</td>
+                      <td>{t.tr}</td>
+                      <td>
+                        <span className={`badge ${t.type === 'Internal' ? 'b-info' : 'b-neutral'}`}>
+                          {t.type}
+                        </span>
+                      </td>
+                      <td>{t.date}</td>
+                      <td>
+                        <span className="badge b-fail">{t.score}/100</span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
