@@ -68,6 +68,7 @@ const normalizeTrainingCounts = (payload: unknown): TrainSlice[] => {
       const record = item as Record<string, unknown>;
 
       const name = [
+        record.training_category,
         record.category_name,
         record.training_name,
         record.name,
@@ -96,7 +97,7 @@ const normalizeTrainingCounts = (payload: unknown): TrainSlice[] => {
 };
 
 type ScoreBucket = { bucket: string; n: number; color: string };
-type TrainFailure = { user: string; tr: string; type: 'Internal' | 'External'; date: string; score: number };
+type TrainFailure = { user: string; tr: string; type: 'Internal' | 'External'; date: string; score: string };
 
 function colorForScoreBucket(bucket: string): string {
   const nums = bucket.match(/\d+/g)?.map(Number) ?? [];
@@ -116,7 +117,7 @@ const normalizeScoreDistribution = (payload: unknown): ScoreBucket[] => {
 
   let list: unknown[] = Array.isArray(source) ? source : [];
   if (!Array.isArray(source)) {
-    for (const key of ['data', 'result', 'buckets', 'distribution', 'scores']) {
+    for (const key of ['training_score_distribution', 'data', 'result', 'buckets', 'distribution', 'scores']) {
       const candidate = (source as Record<string, unknown>)?.[key];
       if (Array.isArray(candidate)) {
         list = candidate;
@@ -136,7 +137,7 @@ const normalizeScoreDistribution = (payload: unknown): ScoreBucket[] => {
       if (!bucket) return null;
 
       let n: number | null = null;
-      for (const key of ['count', 'value', 'n', 'total', 'users_count']) {
+      for (const key of ['count', 'value', 'n', 'total', 'users_count', 'training_count']) {
         const raw = record[key];
         if (typeof raw === 'number' && Number.isFinite(raw)) {
           n = raw;
@@ -158,6 +159,12 @@ function mapEmploymentType(raw: unknown): 'Internal' | 'External' {
   const s = String(raw ?? '').trim().toLowerCase();
   if (/external|contractor|vendor|non[- ]?fte/.test(s)) return 'External';
   return 'Internal';
+}
+
+function formatDateDisplay(raw: string): string {
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return raw;
+  return parsed.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 const normalizeTrainingFailures = (payload: unknown): TrainFailure[] => {
@@ -183,30 +190,30 @@ const normalizeTrainingFailures = (payload: unknown): TrainFailure[] => {
       if (!item || typeof item !== 'object') return null;
       const record = item as Record<string, unknown>;
 
-      const user = [record.user_name, record.employee_name, record.name, record.emp_name].find(
+      const user = [record.user, record.user_name, record.employee_name, record.name, record.emp_name].find(
         (value): value is string => typeof value === 'string' && value.trim().length > 0,
       );
       if (!user) return null;
 
       const tr =
-        [record.training_name, record.training, record.tr, record.programme_name].find(
+        [record.category, record.training_name, record.training, record.tr, record.programme_name].find(
           (value): value is string => typeof value === 'string' && value.trim().length > 0,
         ) ?? '—';
 
-      const date =
-        [record.date, record.failed_date, record.training_date, record.created_at].find(
-          (value): value is string => typeof value === 'string' && value.trim().length > 0,
-        ) ?? '—';
+      const rawDate = [record.date, record.failed_date, record.training_date, record.created_at].find(
+        (value): value is string => typeof value === 'string' && value.trim().length > 0,
+      );
+      const date = rawDate ? formatDateDisplay(rawDate) : '—';
 
-      let score: number | null = null;
+      let score: string | null = null;
       for (const key of ['score', 'marks', 'result_score', 'obtained_score']) {
         const raw = record[key];
         if (typeof raw === 'number' && Number.isFinite(raw)) {
-          score = raw;
+          score = String(raw);
           break;
         }
-        if (typeof raw === 'string' && raw.trim() && Number.isFinite(Number(raw))) {
-          score = Number(raw);
+        if (typeof raw === 'string' && raw.trim()) {
+          score = raw.trim();
           break;
         }
       }
@@ -396,7 +403,9 @@ export function TrainingSection() {
           <DataState loading={trainCountsLoading} empty={trainCategoryData.length === 0} label="category data" />
         ) : (
           <>
-            {catMode === 'donut' && <DonutChart data={trainCategoryData} />}
+            {catMode === 'donut' && (
+              <DonutChart data={trainCategoryData} height={Math.max(220, trainCategoryData.length * 26)} />
+            )}
             {catMode === 'bar' && <SliceBarChart data={trainCategoryData} />}
             {catMode === 'table' && <ChartTable data={trainCategoryData} valueLabel="Records" />}
           </>
@@ -479,7 +488,7 @@ export function TrainingSection() {
                       </td>
                       <td>{t.date}</td>
                       <td>
-                        <span className="badge b-fail">{t.score}/100</span>
+                        <span className="badge b-fail">{t.score}</span>
                       </td>
                     </tr>
                   ))
