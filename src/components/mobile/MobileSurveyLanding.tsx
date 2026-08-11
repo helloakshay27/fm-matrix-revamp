@@ -167,8 +167,7 @@ export const MobileSurveyLanding: React.FC = () => {
       try {
         setIsLoading(true);
         const response = await baseClient.get(
-          `survey_mappings/${mappingId}/survey.json`,
-          { baseURL: "https://lockated-api.gophygital.work" }
+          `survey_mappings/${mappingId}/survey.json`
         );
         const data = response.data;
         console.log("Survey data fetched:", data);
