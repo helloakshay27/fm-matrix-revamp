@@ -1220,6 +1220,25 @@
 .msafe-dash .mini-chip.active {background:var(--dark);color:#fff;border-color:var(--dark)}
 .msafe-dash .mini-chip:hover:not(.active) {color:var(--dark)}
 
+/* Table pagination */
+.msafe-dash .tbl-pagination {
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;
+  padding:10px 2px 2px;
+  font-size:11px;color:var(--sage);
+}
+.msafe-dash .tbl-pagination .pg-controls {display:flex;align-items:center;gap:4px}
+.msafe-dash .tbl-pagination .pg-btn {
+  padding:4px 10px;border-radius:8px;
+  background:var(--bg);
+  border:1px solid var(--div);
+  font-size:11px;font-weight:600;color:var(--sage);
+  cursor:pointer;
+}
+.msafe-dash .tbl-pagination .pg-btn:hover:not(:disabled) {color:var(--dark);border-color:var(--dark)}
+.msafe-dash .tbl-pagination .pg-btn:disabled {opacity:.45;cursor:not-allowed}
+.msafe-dash .tbl-pagination .pg-page {padding:0 4px;font-weight:600;color:var(--dark)}
+
 /* Persona-specific hint block */
 .msafe-dash .persona-hint {
   background:linear-gradient(135deg,rgba(158,200,186,.10) 0%,rgba(206,203,246,.06) 100%);

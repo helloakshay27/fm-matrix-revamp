@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   FormControl,
   InputLabel,
@@ -9,8 +9,67 @@ import {
   TextField,
   OutlinedInput,
 } from '@mui/material';
-import { CIRCLES, FUNCTIONS, ZONES } from '../data/constants';
 import { useMsafeDashboard } from '../context/MsafeDashboardContext';
+
+function getMsafeBaseUrl(): string {
+  const fromLS = localStorage.getItem('baseUrl') || '';
+  const host = fromLS.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  return host ? `https://${host}` : 'https://live-api.gophygital.work';
+}
+
+async function fetchMsafeTrainingJson(endpoint: string, signal?: AbortSignal): Promise<unknown> {
+  const token = localStorage.getItem('token') || '';
+  const companyId =
+    localStorage.getItem('selectedCompanyId') || localStorage.getItem('company_id') || '';
+  const params = new URLSearchParams({ company_id: companyId });
+  if (token) {
+    params.set('access_token', token);
+    params.set('token', token);
+  }
+  const url = `${getMsafeBaseUrl()}/msafe_tranning_dashboard/${endpoint}?${params.toString()}`;
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(url, { signal, headers });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+function extractFilterOptions(data: unknown, arrayKeys: string[], nameKeys: string[]): string[] {
+  const record = data as Record<string, unknown> | null;
+  let arr: unknown = undefined;
+  for (const key of arrayKeys) {
+    if (record && Array.isArray(record[key])) {
+      arr = record[key];
+      break;
+    }
+  }
+  if (arr === undefined) arr = Array.isArray(data) ? data : [];
+
+  const names = (arr as unknown[])
+    .map((item) => {
+      if (typeof item === 'string') return item.trim();
+      const obj = item as Record<string, unknown>;
+      for (const key of nameKeys) {
+        const v = obj?.[key];
+        if (typeof v === 'string' && v.trim()) return v.trim();
+      }
+      return null;
+    })
+    .filter((v): v is string => Boolean(v));
+
+  return Array.from(new Set(names)).sort((a, b) => a.localeCompare(b));
+}
+
+async function fetchFilterOptions(
+  endpoint: string,
+  arrayKeys: string[],
+  nameKeys: string[],
+  signal: AbortSignal,
+): Promise<string[]> {
+  const data = await fetchMsafeTrainingJson(endpoint, signal);
+  return extractFilterOptions(data, arrayKeys, nameKeys);
+}
 
 const VI_FOCUS = '#C72030';
 
@@ -88,6 +147,48 @@ export function CircleManagerFilterBar() {
   } = useMsafeDashboard();
 
   const [funcOpen, setFuncOpen] = useState(false);
+  const [circleOptions, setCircleOptions] = useState<string[]>([]);
+  const [functionOptions, setFunctionOptions] = useState<string[]>([]);
+  const [zoneOptions, setZoneOptions] = useState<string[]>(['All Zones']);
+  const [loadingFilters, setLoadingFilters] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    (async () => {
+      const [circles, funcs, zones] = await Promise.all([
+        fetchFilterOptions('circle_level_filter.json', ['circles'], ['circle_name', 'name'], controller.signal).catch(
+          (err) => {
+            if ((err as Error).name !== 'AbortError') console.error('Failed to load circle filter:', err);
+            return [] as string[];
+          },
+        ),
+        fetchFilterOptions(
+          'function_level_filter.json',
+          ['functions'],
+          ['function_name', 'name'],
+          controller.signal,
+        ).catch((err) => {
+          if ((err as Error).name !== 'AbortError') console.error('Failed to load function filter:', err);
+          return [] as string[];
+        }),
+        fetchFilterOptions('zone_level_filter.json', ['zones'], ['zone_name', 'name'], controller.signal).catch(
+          (err) => {
+            if ((err as Error).name !== 'AbortError') console.error('Failed to load zone filter:', err);
+            return [] as string[];
+          },
+        ),
+      ]);
+
+      if (controller.signal.aborted) return;
+      setCircleOptions(circles);
+      setFunctionOptions(funcs);
+      setZoneOptions(['All Zones', ...zones]);
+      setLoadingFilters(false);
+    })();
+
+    return () => controller.abort();
+  }, []);
 
   if (persona !== 'circle') return null;
 
@@ -120,8 +221,9 @@ export function CircleManagerFilterBar() {
           }}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
+          disabled={loadingFilters}
         >
-          {CIRCLES.map((c) => (
+          {circleOptions.map((c) => (
             <MenuItem key={c} value={c}>
               {c}
             </MenuItem>
@@ -158,8 +260,9 @@ export function CircleManagerFilterBar() {
           )}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
+          disabled={loadingFilters}
         >
-          {FUNCTIONS.map((fn) => (
+          {functionOptions.map((fn) => (
             <MenuItem key={fn} value={fn} dense>
               <Checkbox
                 checked={functions.includes(fn)}
@@ -201,8 +304,9 @@ export function CircleManagerFilterBar() {
           }}
           sx={fieldStyles}
           MenuProps={selectMenuProps}
+          disabled={loadingFilters}
         >
-          {ZONES.map((z) => (
+          {zoneOptions.map((z) => (
             <MenuItem key={z} value={z}>
               {z}
             </MenuItem>
