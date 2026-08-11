@@ -25,6 +25,16 @@ const actionLabels = {
   achievement: "Achieved",
 };
 
+const logColumns =
+  "112px 106px 62px 180px minmax(320px, 1fr) 140px";
+const logTableMinWidth = 920;
+const logCell = { minWidth: 0 };
+const mutedTruncateCell = {
+  ...logCell,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+};
+
 export default function ActivityLogs() {
   const {
     activityLogs,
@@ -73,13 +83,15 @@ export default function ActivityLogs() {
           background: T.surface,
           border: `1px solid ${T.borderSoft}`,
           borderRadius: T.rlg,
-          overflow: "hidden",
+          overflowX: "auto",
+          overflowY: "hidden",
         }}
       >
+        <div style={{ minWidth: logTableMinWidth }}>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "112px 106px 62px 190px minmax(360px, 1fr) 130px",
+            gridTemplateColumns: logColumns,
             justifyContent: "start",
             gap: 8,
             padding: "12px 14px",
@@ -91,17 +103,17 @@ export default function ActivityLogs() {
             borderBottom: `1px solid ${T.borderSoft}`,
           }}
         >
-          <span>Date & Time</span>
-          <span>Action</span>
-          <span>Entity</span>
-          <span>Name</span>
-          <span>Detail</span>
-          <span>By</span>
+          <span style={logCell}>Date & Time</span>
+          <span style={logCell}>Action</span>
+          <span style={logCell}>Entity</span>
+          <span style={logCell}>Name</span>
+          <span style={logCell}>Detail</span>
+          <span style={logCell}>By</span>
         </div>
         {logsLoading ? (
           <SkeletonRows
             rows={8}
-            columns="112px 106px 62px 190px minmax(360px, 1fr) 130px"
+            columns={logColumns}
           />
         ) : logsError ? (
           <div
@@ -131,7 +143,7 @@ export default function ActivityLogs() {
               key={log.id}
               style={{
                 display: "grid",
-                gridTemplateColumns: "112px 106px 62px 190px minmax(360px, 1fr) 130px",
+                gridTemplateColumns: logColumns,
                 justifyContent: "start",
                 gap: 8,
                 padding: "12px 14px",
@@ -151,6 +163,7 @@ export default function ActivityLogs() {
             >
               <span
                 style={{
+                  ...logCell,
                   fontSize: 11.5,
                   color: T.inkMuted,
                   fontFamily: "monospace",
@@ -188,7 +201,7 @@ export default function ActivityLogs() {
               >
                 {log.entity}
               </span>
-              <span style={{ fontWeight: 600, fontSize: 12 }}>
+              <span style={{ ...mutedTruncateCell, fontWeight: 600, fontSize: 12 }} title={log.name || undefined}>
                 {log.name}
               </span>
               {/* Detail — "Weightage 50 → 60": label muted, purani value
@@ -200,7 +213,9 @@ export default function ActivityLogs() {
                   alignItems: "center",
                   gap: 6,
                   minWidth: 0,
+                  maxWidth: "100%",
                   fontSize: 12,
+                  lineHeight: 1.45,
                   color: T.inkSoft,
                 }}
                 title={log.detail || undefined}
@@ -213,7 +228,10 @@ export default function ActivityLogs() {
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 5,
-                        whiteSpace: "nowrap",
+                        minWidth: 0,
+                        maxWidth: "100%",
+                        flexBasis: "100%",
+                        flexWrap: "wrap",
                       }}
                     >
                       {change.label && (
@@ -252,12 +270,13 @@ export default function ActivityLogs() {
                   <span style={{ color: T.inkMuted }}>No field changes</span>
                 )}
               </span>
-              <span style={{ fontSize: 12, color: T.inkSoft }}>
+              <span style={{ ...mutedTruncateCell, fontSize: 12, color: T.inkSoft }} title={log.user || undefined}>
                 {log.user}
               </span>
             </div>
           ))
         )}
+        </div>
       </div>
       {(logsPage > 1 || logsMeta.hasMore) && (
         <div
