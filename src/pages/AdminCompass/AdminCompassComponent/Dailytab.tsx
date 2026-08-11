@@ -2550,6 +2550,18 @@ const DailyTab = ({
     return !raw || /^no\s*department$/i.test(raw) ? NO_DEPARTMENT_KEY : raw;
   };
 
+  // Tech is handled first company-wide (their standups run earliest), so it
+  // always sorts to the front of any department list/dropdown; the
+  // no-department catch-all still sorts last, everything else stays A-Z.
+  const isTechDepartmentKey = (key: string) => /^tech$/i.test(key.trim());
+  const compareDepartmentKeys = (a: string, b: string): number => {
+    if (a === NO_DEPARTMENT_KEY) return 1;
+    if (b === NO_DEPARTMENT_KEY) return -1;
+    if (isTechDepartmentKey(a)) return -1;
+    if (isTechDepartmentKey(b)) return 1;
+    return a.localeCompare(b, undefined, { sensitivity: "base" });
+  };
+
   // The Members dropdown is scoped to the selected meeting: its participants are
   // the report owners (and anyone listed as missed) — not every user in the org,
   // which is what `membersList` holds.
@@ -2587,12 +2599,7 @@ const DailyTab = ({
   // HODs, so departments without an HOD are still reachable.
   const departmentFilterKeys = Array.from(
     new Set(memberReports.map((report: any) => resolveDepartmentKey(report)))
-  ).sort((a: string, b: string) => {
-    // Keep the catch-all bucket last.
-    if (a === NO_DEPARTMENT_KEY) return 1;
-    if (b === NO_DEPARTMENT_KEY) return -1;
-    return a.localeCompare(b, undefined, { sensitivity: "base" });
-  });
+  ).sort(compareDepartmentKeys);
   const hodOptions = [
     { value: "all", label: "All Departments" },
     ...departmentFilterKeys.map((key: string) => ({
@@ -3498,34 +3505,33 @@ const DailyTab = ({
         });
       groups.get(key)!.reports.push(report);
     });
-    return Array.from(groups.values()).sort((a, b) => {
-      // Keep the catch-all bucket last.
-      if (a.key === NO_DEPARTMENT_KEY) return 1;
-      if (b.key === NO_DEPARTMENT_KEY) return -1;
-      return a.label.localeCompare(b.label, undefined, { sensitivity: "base" });
-    });
+    return Array.from(groups.values()).sort((a, b) =>
+      compareDepartmentKeys(a.key, b.key)
+    );
   })();
 
   // Same one-level-up grouping for the "failed to submit" list. Keys are
   // prefixed so a department card here doesn't share expand state with the
   // report card of the same department above.
   const failedMemberGroups = (() => {
-    const groups = new Map<string, { key: string; label: string; members: any[] }>();
+    const groups = new Map<
+      string,
+      { key: string; rawKey: string; label: string; members: any[] }
+    >();
     failedMembers.forEach((member: any) => {
       const key = resolveDepartmentKey(member);
       if (!groups.has(key))
         groups.set(key, {
           key: `missed:${key}`,
+          rawKey: key,
           label: key === NO_DEPARTMENT_KEY ? key : `${key} Department`,
           members: [],
         });
       groups.get(key)!.members.push(member);
     });
-    return Array.from(groups.values()).sort((a, b) => {
-      if (a.label === NO_DEPARTMENT_KEY) return 1;
-      if (b.label === NO_DEPARTMENT_KEY) return -1;
-      return a.label.localeCompare(b.label, undefined, { sensitivity: "base" });
-    });
+    return Array.from(groups.values()).sort((a, b) =>
+      compareDepartmentKeys(a.rawKey, b.rawKey)
+    );
   })();
 
   // Saare meeting members ek hi department ke hon to department-wise
