@@ -1299,6 +1299,7 @@ interface TaskDetails {
   target_date?: string;
   allocation_date?: string;
   estimated_hour?: number;
+  estimated_min?: number;
   project_title?: string;
   todo_converted?: boolean;
   milestone?: {
@@ -1654,6 +1655,11 @@ export const ProjectTaskDetails = () => {
     return `${wholeHours} hr${wholeHours !== 1 ? "s" : ""} ${remainingMinutes} min${remainingMinutes !== 1 ? "s" : ""}`;
   }
 
+  const getEffortsDuration = (details: TaskDetails): number =>
+    details.total_allocated_hours
+      ? details.total_allocated_hours
+      : (details.estimated_hour || 0) + (details.estimated_min || 0) / 60;
+
   const fetchProjectAndMilestoneNames = async () => {
     try {
       // Fetch project name
@@ -2004,7 +2010,7 @@ export const ProjectTaskDetails = () => {
                       Efforts Duration:
                     </div>
                     <div className="text-left">
-                      {formatHours(taskDetails.total_allocated_hours)}
+                      {formatHours(getEffortsDuration(taskDetails))}
                     </div>
                   </div>
                 </div>
@@ -2121,7 +2127,7 @@ export const ProjectTaskDetails = () => {
                       </div>
                       <div className="flex-1">
                         <p className="text-sm text-gray-900">
-                          {formatHours(taskDetails.total_allocated_hours || 0)}
+                          {formatHours(getEffortsDuration(taskDetails))}
                         </p>
                       </div>
                     </div>
